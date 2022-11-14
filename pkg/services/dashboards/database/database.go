@@ -17,6 +17,8 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -43,8 +45,23 @@ type DashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*DashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) *DashboardStore {
-	return &DashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (*DashboardStore, error) {
+	s := &DashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     dashboards.QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      s.Count,
+	}); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func (d *DashboardStore) emitEntityEvent() bool {
@@ -290,6 +307,50 @@ func (d *DashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context
 
 		return nil
 	})
+}
+
+func (d *DashboardStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	type result struct {
+		Count int64
+	}
+
+	r := result{}
+	if err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE is_folder=%s", d.store.GetDialect().BooleanStr(false))
+		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return nil, err
+		}
+		u.Set(tag, r.Count)
+	}
+
+	if scopeParams.OrgID != 0 {
+		if err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.GetDialect().BooleanStr(false))
+			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return u, err
+		} else {
+			tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+			if err != nil {
+				return nil, err
+			}
+			u.Set(tag, r.Count)
+		}
+	}
+
+	return u, nil
 }
 
 func getExistingDashboardByIdOrUidForUpdate(sess *db.Session, dash *models.Dashboard, dialect migrator.Dialect, overwrite bool) (bool, error) {
@@ -1035,4 +1096,25 @@ func (d *DashboardStore) CountDashboardsInFolder(
 		return err
 	})
 	return count, err
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+	orgQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
+	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
+	return limits, nil
 }
