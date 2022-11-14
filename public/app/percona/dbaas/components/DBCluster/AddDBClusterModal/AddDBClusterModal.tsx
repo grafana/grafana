@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { Modal } from '@percona/platform-core';
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import { FormRenderProps } from 'react-final-form';
 import { useSelector } from 'react-redux';
 
@@ -17,6 +17,7 @@ import { AddDBClusterModalProps, AddDBClusterFields } from './AddDBClusterModal.
 import { getInitialValues, updateDatabaseClusterNameInitialValue } from './AddDBClusterModal.utils';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
+import { UnsafeConfigurationWarning } from './UnsafeConfigurationsWarning/UnsafeConfigurationWarning';
 
 export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
   kubernetes,
@@ -28,6 +29,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
   const styles = useStyles(getStyles);
   const { loading } = useSelector(getAddDbCluster);
   const [showPMMAddressWarning] = useShowPMMAddressWarning();
+  const [showUnsafeConfigurationWarning, setShowUnsafeConfigurationWarning] = useState(false);
 
   const initialValues = useMemo(
     () => getInitialValues(kubernetes, preSelectedKubernetesCluster),
@@ -56,7 +58,12 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
           AddDBClusterFields.cpu,
           AddDBClusterFields.disk,
         ],
-        render: (renderProps) => <DBClusterAdvancedOptions {...renderProps} />,
+        render: (renderProps) => (
+          <DBClusterAdvancedOptions
+            setShowUnsafeConfigurationWarning={setShowUnsafeConfigurationWarning}
+            {...renderProps}
+          />
+        ),
         dataTestId: 'dbcluster-advanced-options-step',
       },
     ],
@@ -68,6 +75,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
       <Modal title={Messages.dbcluster.addModal.title} isVisible={isVisible} onClose={() => setVisible(false)}>
         <div className={styles.stepProgressWrapper}>
           {showPMMAddressWarning && <PMMServerUrlWarning />}
+          {showUnsafeConfigurationWarning && <UnsafeConfigurationWarning />}
           <StepProgress
             steps={steps}
             initialValues={updatedItialValues}

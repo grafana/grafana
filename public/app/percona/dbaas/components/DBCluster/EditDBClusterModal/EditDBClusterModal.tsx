@@ -1,12 +1,12 @@
 import { Modal, logger } from '@percona/platform-core';
-import React, { FC, useRef } from 'react';
+import React, { FC, useRef, useState } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 
 import { useStyles } from '@grafana/ui';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 
 import { MIN_NODES } from '../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
-import { DBCluster } from '../DBCluster.types';
+import { UnsafeConfigurationWarning } from '../AddDBClusterModal/UnsafeConfigurationsWarning/UnsafeConfigurationWarning';
 import { newDBClusterService } from '../DBCluster.utils';
 
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
@@ -23,6 +23,7 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
 }) => {
   const styles = useStyles(getStyles);
   const initialValues = useRef<EditDBClusterRenderProps>();
+  const [showUnsafeConfigurationWarning, setShowUnsafeConfigurationWarning] = useState(false);
   const onSubmit = async ({ topology, nodes, single, memory, cpu, disk }: Record<string, any>) => {
     if (!selectedCluster) {
       setVisible(false);
@@ -88,12 +89,17 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
   return (
     <div className={styles.modalWrapper}>
       <Modal title={editModalTitle} isVisible={isVisible} onClose={() => setVisible(false)}>
+        {showUnsafeConfigurationWarning && <UnsafeConfigurationWarning />}
         <FormFinal
           onSubmit={onSubmit}
           initialValues={initialValues.current}
           render={(renderProps) => (
             <form onSubmit={renderProps.handleSubmit}>
-              <DBClusterAdvancedOptions selectedCluster={selectedCluster as DBCluster} renderProps={renderProps} />
+              <DBClusterAdvancedOptions
+                selectedCluster={selectedCluster}
+                renderProps={renderProps}
+                setShowUnsafeConfigurationWarning={setShowUnsafeConfigurationWarning}
+              />
             </form>
           )}
         />
