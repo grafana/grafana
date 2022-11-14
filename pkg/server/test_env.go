@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -15,6 +16,7 @@ func ProvideTestEnv(
 	grpcServer grpcserver.Provider,
 	pluginRegistry registry.Service,
 	httpClientProvider httpclient.Provider,
+	oAuthTokenService *oauthtokentest.Service,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		server,
@@ -22,7 +24,9 @@ func ProvideTestEnv(
 		ns,
 		grpcServer,
 		pluginRegistry,
-		httpClientProvider}, nil
+		httpClientProvider,
+		oAuthTokenService,
+	}, nil
 }
 
 type TestEnv struct {
@@ -32,4 +36,5 @@ type TestEnv struct {
 	GRPCServer          grpcserver.Provider
 	PluginRegistry      registry.Service
 	HTTPClientProvider  httpclient.Provider
+	OAuthTokenService   *oauthtokentest.Service
 }

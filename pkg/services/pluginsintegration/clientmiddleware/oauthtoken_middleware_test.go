@@ -1,7 +1,6 @@
 package clientmiddleware
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -9,9 +8,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -22,7 +20,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
 		require.NoError(t, err)
 
-		oAuthTokenService := &fakeOAuthTokenService{}
+		oAuthTokenService := &oauthtokentest.Service{}
 		cdt := clienttest.NewClientDecoratorTest(t,
 			clienttest.WithReqContext(req, &user.SignedInUser{}),
 			clienttest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
@@ -87,8 +85,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			AccessToken: "access-token",
 		}
 		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
-		oAuthTokenService := &fakeOAuthTokenService{
-			token: token,
+		oAuthTokenService := &oauthtokentest.Service{
+			Token: token,
 		}
 		cdt := clienttest.NewClientDecoratorTest(t,
 			clienttest.WithReqContext(req, &user.SignedInUser{}),
@@ -157,28 +155,4 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 		})
 	})
-}
-
-type fakeOAuthTokenService struct {
-	token *oauth2.Token
-}
-
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
-	return ts.token
-}
-
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
-	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
-}
-
-func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
-	return nil, false, nil
-}
-
-func (ts *fakeOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {
-	return nil
-}
-
-func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(context.Context, *models.UserAuth) error {
-	return nil
 }

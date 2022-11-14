@@ -82,6 +82,7 @@ import (
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
@@ -240,10 +241,8 @@ var wireBasicSet = wire.NewSet(
 	social.ProvideService,
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
-	oauthtoken.ProvideService,
 	auth.ProvideActiveAuthTokenService,
 	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
-	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
@@ -361,6 +360,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
+	oauthtoken.ProvideService,
+	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -377,6 +378,9 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
+	oauthtoken.ProvideService,
+	oauthtokentest.ProvideService,
+	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
