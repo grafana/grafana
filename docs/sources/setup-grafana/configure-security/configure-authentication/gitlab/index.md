@@ -91,7 +91,7 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-GitLab by default does provide a refresh token.
+By default, GitLab provides a refresh token.
 
 ### allowed_groups
 
