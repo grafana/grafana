@@ -142,66 +142,16 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
   SelectableValue<string>
 > {
   const options: Array<SelectableValue<string>> = intervals.map((interval) => {
-    const duration = parseDuration(getIntervalTranslated(interval));
+    const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
 
     return {
-      label: getIntervalTranslated(interval),
-      value: getIntervalTranslated(interval),
+      label: interval,
+      value: interval,
       ariaLabel: ariaLabel,
     };
   });
 
   options.unshift(translateOption(RefreshPicker.offOption.value));
   return options;
-}
-
-export function getIntervalTranslated(interval: string): string {
-  let translate = () => '';
-  switch (interval) {
-    case '5s':
-      translate = () => t('refresh-picker.default-intervals.5s', '5s');
-      interval = translate();
-      break;
-    case '10s':
-      translate = () => t('refresh-picker.default-intervals.10s', '10s');
-      interval = translate();
-      break;
-    case '30s':
-      translate = () => t('refresh-picker.default-intervals.30s', '30s');
-      interval = translate();
-      break;
-    case '1m':
-      translate = () => t('refresh-picker.default-intervals.1m', '1m');
-      interval = translate();
-      break;
-    case '5m':
-      translate = () => t('refresh-picker.default-intervals.5m', '5m');
-      interval = translate();
-      break;
-    case '15m':
-      translate = () => t('refresh-picker.default-intervals.15m', '15m');
-      interval = translate();
-      break;
-    case '30m':
-      translate = () => t('refresh-picker.default-intervals.30m', '30m');
-      interval = translate();
-      break;
-    case '1h':
-      translate = () => t('refresh-picker.default-intervals.1h', '1h');
-      interval = translate();
-      break;
-    case '2h':
-      translate = () => t('refresh-picker.default-intervals.2h', '2h');
-      interval = translate();
-      break;
-    case '1d':
-      translate = () => t('refresh-picker.default-intervals.1d', '1d');
-      interval = translate();
-      break;
-    default:
-      interval = interval;
-      break;
-  }
-  return interval;
 }
