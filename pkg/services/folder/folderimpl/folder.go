@@ -15,6 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -33,6 +36,7 @@ type Service struct {
 	searchService    *search.SearchService
 	features         *featuremgmt.FeatureManager
 	permissions      accesscontrol.FolderPermissionsService
+	accessControl    accesscontrol.AccessControl
 
 	// bus is currently used to publish events that cause scheduler to update rules.
 	bus bus.Bus
@@ -52,7 +56,7 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
 	store := ProvideStore(db, cfg, features)
-	return &Service{
+	svr := &Service{
 		cfg:              cfg,
 		log:              log.New("folder-service"),
 		dashboardService: dashboardService,
@@ -61,7 +65,60 @@ func ProvideService(
 		searchService:    searchService,
 		features:         features,
 		permissions:      folderPermissionsService,
+		accessControl:    ac,
 		bus:              bus,
+	}
+	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		svr.DBMigration(db)
+	}
+	return svr
+}
+
+func (s *Service) DBMigration(db db.DB) {
+	ctx := context.Background()
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		if db.GetDialect().DriverName() == migrator.SQLite {
+			_, err = sess.Exec("INSERT OR REPLACE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+		} else if db.GetDialect().DriverName() == migrator.Postgres {
+			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING")
+		} else {
+			_, err = sess.Exec("INSERT IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+		}
+		return err
+	})
+	if err != nil {
+		s.log.Error("DB migration on folder service start failed.")
+	}
+}
+
+func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
+		if ok, err := s.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+			dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.UID),
+		)); !ok {
+			if err != nil {
+				return nil, toFolderError(err)
+			}
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+		return s.store.Get(ctx, *cmd)
+	}
+
+	switch {
+	case cmd.UID != nil:
+		return s.getFolderByUID(ctx, user, cmd.OrgID, *cmd.UID)
+	case cmd.ID != nil:
+		return s.getFolderByID(ctx, user, *cmd.ID, cmd.OrgID)
+	case cmd.Title != nil:
+		return s.getFolderByTitle(ctx, user, cmd.OrgID, *cmd.Title)
+	default:
+		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
 }
 
@@ -94,9 +151,9 @@ func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID
 	return folders, nil
 }
 
-func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
+func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
 	if id == 0 {
-		return &models.Folder{Id: id, Title: "General"}, nil
+		return &folder.Folder{ID: id, Title: "General"}, nil
 	}
 
 	dashFolder, err := s.dashboardStore.GetFolderByID(ctx, orgID, id)
@@ -104,7 +161,7 @@ func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, orgID, user)
+	g := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -115,13 +172,13 @@ func (s *Service) GetFolderByID(ctx context.Context, user *user.SignedInUser, id
 	return dashFolder, nil
 }
 
-func (s *Service) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
+func (s *Service) getFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*folder.Folder, error) {
 	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, orgID, uid)
 	if err != nil {
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, orgID, user)
+	g := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -132,13 +189,13 @@ func (s *Service) GetFolderByUID(ctx context.Context, user *user.SignedInUser, o
 	return dashFolder, nil
 }
 
-func (s *Service) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
+func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*folder.Folder, error) {
 	dashFolder, err := s.dashboardStore.GetFolderByTitle(ctx, orgID, title)
 	if err != nil {
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, orgID, user)
+	g := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -188,7 +245,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, toFolderError(err)
 	}
 
-	var createdFolder *models.Folder
+	var createdFolder *folder.Folder
 	createdFolder, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
@@ -208,9 +265,9 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 		}...)
 
-		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.Uid, permissions...)
+		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.UID, permissions...)
 	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, cmd.OrgID, userID, createdFolder.Id, true)
+		permissionErr = s.MakeUserAdmin(ctx, cmd.OrgID, userID, createdFolder.ID, true)
 	}
 
 	if permissionErr != nil {
@@ -241,7 +298,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
 			s.log.Error("error saving folder to nested folder store", err)
-			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.Uid, OrgID: cmd.OrgID, ForceDeleteRules: true})
+			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.UID, OrgID: cmd.OrgID, ForceDeleteRules: true})
 			if err != nil {
 				s.log.Error("error deleting folder after failed save to nested folder store", err)
 			}
@@ -253,17 +310,54 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	return folder.FromDashboard(dash), nil
 }
 
-func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
+func (s *Service) Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
+	foldr, err := s.legacyUpdate(ctx, user, orgID, existingUid, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		if cmd.Uid != "" {
+			if !util.IsValidShortUID(cmd.Uid) {
+				return nil, dashboards.ErrDashboardInvalidUid
+			} else if util.IsShortUIDTooLong(cmd.Uid) {
+				return nil, dashboards.ErrDashboardUidTooLong
+			}
+		}
+
+		getFolder, err := s.store.Get(ctx, folder.GetFolderQuery{
+			UID:   &existingUid,
+			OrgID: orgID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
+			Folder:         getFolder,
+			NewUID:         &cmd.Uid,
+			NewTitle:       &cmd.Title,
+			NewDescription: &cmd.Description,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return foldr, nil
+	}
+	return foldr, nil
+}
+
+func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
-	if _, err := s.dashboardStore.GetDashboard(ctx, &query); err != nil {
-		return toFolderError(err)
+	_, err := s.dashboardStore.GetDashboard(ctx, &query)
+	if err != nil {
+		return nil, toFolderError(err)
 	}
 
 	dashFolder := query.Result
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
-		return dashboards.ErrFolderNotFound
+		return nil, dashboards.ErrFolderNotFound
 	}
 
 	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserID)
@@ -277,34 +371,32 @@ func (s *Service) UpdateFolder(ctx context.Context, user *user.SignedInUser, org
 
 	saveDashboardCmd, err := s.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
-		return toFolderError(err)
+		return nil, toFolderError(err)
 	}
 
 	dash, err := s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
 	if err != nil {
-		return toFolderError(err)
+		return nil, toFolderError(err)
 	}
 
-	var folder *models.Folder
-	folder, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
+	var foldr *folder.Folder
+	foldr, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	cmd.Result = folder
 
-	if currentTitle != folder.Title {
+	if currentTitle != foldr.Title {
 		if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
-			Timestamp: folder.Updated,
-			Title:     folder.Title,
+			Timestamp: foldr.Updated,
+			Title:     foldr.Title,
 			ID:        dash.Id,
 			UID:       dash.Uid,
 			OrgID:     orgID,
 		}); err != nil {
-			s.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserID, "error", err)
+			s.log.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
 		}
 	}
-
-	return nil
+	return foldr, nil
 }
 
 func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
@@ -324,7 +416,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return err
 	}
 
-	guard := guardian.New(ctx, dashFolder.Id, cmd.OrgID, user)
+	guard := guardian.New(ctx, dashFolder.ID, cmd.OrgID, user)
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return toFolderError(err)
@@ -332,7 +424,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return toFolderError(err)
@@ -340,16 +432,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 	return nil
 }
 
-func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.Update(ctx, *cmd)
-}
-
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-
 	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
 		UID:   &cmd.UID,
 		OrgID: cmd.OrgID,
@@ -359,8 +442,8 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
-		Folder:       foldr,
-		NewParentUID: &cmd.NewParentUID,
+		Folder: foldr,
+		// NewParentUID: &cmd.NewParentUID,
 	})
 }
 
@@ -388,12 +471,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 	return nil
-}
-
-func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.Get(ctx, *cmd)
 }
 
 func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
