@@ -204,7 +204,6 @@ func TestParseMetricRequest(t *testing.T) {
 		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
 	})
-
 }
 
 func TestQueryDataMultipleSources(t *testing.T) {
