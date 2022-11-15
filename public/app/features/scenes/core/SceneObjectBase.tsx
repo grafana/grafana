@@ -237,6 +237,11 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     throw new Error('No editor found in scene tree');
   }
 
+  /** Force a re-render, should only be needed when variable values change */
+  public forceRender(): void {
+    this.setState({});
+  }
+
   /**
    * Will create new SceneObject with shallow-cloned state, but all state items of type SceneObject are deep cloned
    */

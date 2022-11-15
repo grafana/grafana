@@ -98,6 +98,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** To be replaced by declarative method */
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
+
+  /** Force a re-render, should only be needed when variable values change */
+  forceRender(): void;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;
