@@ -7,7 +7,7 @@ import { AccessControlAction, TeamMember, ThunkResult } from 'app/types';
 import { buildNavModel } from './navModel';
 import { teamGroupsLoaded, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
 
-export function loadTeams(): ThunkResult<void> {
+export function loadTeams(query: string, perpage: number, page: number): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Early return if the user cannot list teams
     if (!contextSrv.hasPermission(AccessControlAction.ActionTeamsRead)) {
@@ -15,11 +15,7 @@ export function loadTeams(): ThunkResult<void> {
       return;
     }
 
-    const currentPage = getState().teams.currentPage;
-    const response = await getBackendSrv().get(
-      '/api/teams/search',
-      accessControlQueryParam({ perpage: 30, page: currentPage })
-    );
+    const response = await getBackendSrv().get('/api/teams/search', accessControlQueryParam({ query, perpage, page }));
     dispatch(teamsLoaded({ teams: response.teams, totalCount: response.totalCount }));
   };
 }

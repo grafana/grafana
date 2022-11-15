@@ -13,7 +13,7 @@ import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams } from './state/actions';
 import { initialTeamsState, setSearchQuery, setCurrentPage } from './state/reducers';
-import { getTeams, isPermissionTeamAdmin } from './state/selectors';
+import { isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
 
@@ -35,12 +35,12 @@ export interface State {
   roleOptions: Role[];
 }
 
-export const TeamList = ({ hasFetched, loadTeams, deleteTeam, ...rest }: Props) => {
+export const TeamList = ({ hasFetched, loadTeams, deleteTeam, searchQuery, currentPage, ...rest }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
   useEffect(() => {
-    loadTeams();
-  }, [loadTeams]);
+    loadTeams(searchQuery, pageLimit, currentPage);
+  }, [loadTeams, searchQuery, currentPage]);
 
   useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
@@ -52,6 +52,7 @@ export const TeamList = ({ hasFetched, loadTeams, deleteTeam, ...rest }: Props) 
     const { teams, totalCount } = rest;
 
     if (totalCount === 0) {
+      /*
       return (
         <EmptyListCTA
           title="You haven't created any teams yet."
@@ -65,9 +66,10 @@ export const TeamList = ({ hasFetched, loadTeams, deleteTeam, ...rest }: Props) 
           proTipTarget="_blank"
         />
       );
+        */
     }
 
-    const { searchQuery, editorsCanAdmin, setCurrentPage, signedInUser, currentPage } = rest;
+    const { editorsCanAdmin, setCurrentPage, signedInUser } = rest;
     const canCreate = canCreateTeam(editorsCanAdmin);
     const displayRolePicker = shouldDisaplyRolePicker();
 
@@ -136,6 +138,7 @@ function canCreateTeam(editorsCanAdmin: boolean): boolean {
 }
 
 function shouldDisaplyRolePicker(): boolean {
+  return false;
   return (
     contextSrv.licensedAccessControlEnabled() &&
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
@@ -145,7 +148,7 @@ function shouldDisaplyRolePicker(): boolean {
 
 function mapStateToProps(state: StoreState) {
   return {
-    teams: getTeams(state.teams),
+    teams: state.teams.teams,
     totalCount: state.teams.totalCount,
     currentPage: state.teams.currentPage,
     searchQuery: state.teams.searchQuery,
