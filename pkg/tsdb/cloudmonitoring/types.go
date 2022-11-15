@@ -80,6 +80,7 @@ type (
 		QueryType    string
 		MetricQuery  metricQuery
 		SloQuery     sloQuery
+		Type         string
 	}
 
 	cloudMonitoringBucketOptions struct {

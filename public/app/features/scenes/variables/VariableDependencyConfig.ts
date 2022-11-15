@@ -55,7 +55,7 @@ export class VariableDependencyConfig<TState extends SceneObjectState> implement
    * Only way to force a re-render is to update state right now
    */
   private defaultHandlerReferencedVariableValueChanged = () => {
-    this._sceneObject.setState({});
+    this._sceneObject.forceRender();
   };
 
   public getNames(): Set<string> {

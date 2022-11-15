@@ -165,9 +165,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {
+    const refId = 'A';
     return lastValueFrom(
       getBackendSrv()
-        .fetch({
+        .fetch<BackendDataSourceResponse>({
           url: '/api/ds/query',
           method: 'POST',
           data: {
@@ -175,7 +176,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
             to: 'now',
             queries: [
               {
-                refId: 'A',
+                refId: refId,
                 intervalMs: 1,
                 maxDataPoints: 1,
                 datasource: this.getRef(),
@@ -187,7 +188,13 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           },
         })
         .pipe(
-          map(() => ({ status: 'success', message: 'Database Connection OK' })),
+          map((r) => {
+            const error = r.data.results[refId].error;
+            if (error) {
+              return { status: 'error', message: error };
+            }
+            return { status: 'success', message: 'Database Connection OK' };
+          }),
           catchError((err) => {
             return of(toTestingStatus(err));
           })

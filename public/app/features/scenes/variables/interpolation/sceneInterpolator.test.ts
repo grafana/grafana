@@ -2,6 +2,7 @@ import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../../core/types';
 import { SceneVariableSet } from '../sets/SceneVariableSet';
 import { ConstantVariable } from '../variants/ConstantVariable';
+import { ObjectVariable } from '../variants/ObjectVariable';
 import { TestVariable } from '../variants/TestVariable';
 
 import { sceneInterpolator } from './sceneInterpolator';
@@ -42,6 +43,23 @@ describe('sceneInterpolator', () => {
     expect(sceneInterpolator(scene, '${test}')).toBe('hello');
     expect(sceneInterpolator(scene.state.nested!, '${test}')).toBe('nestedValue');
     expect(sceneInterpolator(scene.state.nested!, '${atRootOnly}')).toBe('RootValue');
+  });
+
+  describe('Given an expression with fieldPath', () => {
+    it('Should interpolate correctly', () => {
+      const scene = new TestScene({
+        $variables: new SceneVariableSet({
+          variables: [
+            new ObjectVariable({
+              name: 'test',
+              value: { prop1: 'prop1Value' },
+            }),
+          ],
+        }),
+      });
+
+      expect(sceneInterpolator(scene, '${test.prop1}')).toBe('prop1Value');
+    });
   });
 
   it('Can use format', () => {
