@@ -6,13 +6,12 @@ import (
 	"sort"
 	"time"
 
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/types"
 	prometheus_model "github.com/prometheus/common/model"
-
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 var (
@@ -35,13 +34,13 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 
 	matchers, err := parseFilter(filter)
 	if err != nil {
-		am.logger.Error("Failed to parse matchers", "error", err)
+		am.logger.Error("failed to parse matchers", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
-		am.logger.Error("Failed to parse receiver regex", "error", err)
+		am.logger.Error("failed to parse receiver regex", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
 	}
 
@@ -78,7 +77,7 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 	am.reloadConfigMtx.RUnlock()
 
 	if err != nil {
-		am.logger.Error("Failed to iterate through the alerts", "error", err)
+		am.logger.Error("failed to iterate through the alerts", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsInternal)
 	}
 	sort.Slice(res, func(i, j int) bool {
@@ -91,13 +90,13 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 func (am *Alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.AlertGroups, error) {
 	matchers, err := parseFilter(filter)
 	if err != nil {
-		am.logger.Error("Failed to parse matchers", "error", err)
+		am.logger.Error("msg", "failed to parse matchers", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
-		am.logger.Error("Failed to compile receiver regex", "error", err)
+		am.logger.Error("msg", "failed to compile receiver regex", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
 	}
 
