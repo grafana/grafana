@@ -275,7 +275,6 @@ type RoleRegistration struct {
 // Role is the model for Role in RBAC.
 type Role struct {
 	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
 	Permissions []Permission `json:"permissions"`
 }

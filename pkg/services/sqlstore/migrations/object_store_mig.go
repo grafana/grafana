@@ -46,9 +46,9 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 
-			// For objects that are synchronized from an external source (ie provisioning or git)
-			{Name: "sync_src", Type: migrator.DB_Text, Nullable: true},
-			{Name: "sync_time", Type: migrator.DB_BigInt, Nullable: true},
+			// Mark objects with origin metadata
+			{Name: "origin", Type: migrator.DB_Text, Nullable: true},
+			{Name: "origin_ts", Type: migrator.DB_BigInt, Nullable: false},
 
 			// Summary data (always extracted from the `body` column)
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -134,7 +134,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v2)" // change this when we want to wipe and reset the object tables
+	suffix := " (v5)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
 	`)))

@@ -7,11 +7,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/object"
 )
 
+// Make sure we implement both store + admin
+var _ object.ObjectStoreServer = &fakeObjectStore{}
+var _ object.ObjectStoreAdminServer = &fakeObjectStore{}
+
 func ProvideFakeObjectServer() object.ObjectStoreServer {
 	return &fakeObjectStore{}
 }
 
 type fakeObjectStore struct{}
+
+func (i fakeObjectStore) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
+	return nil, fmt.Errorf("unimplemented")
+}
 
 func (i fakeObjectStore) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
 	return nil, fmt.Errorf("unimplemented")
