@@ -9,12 +9,12 @@ import { AccessControlAction, TeamMember, ThunkResult } from 'app/types';
 import { buildNavModel } from './navModel';
 import { teamGroupsLoaded, queryChanged, pageChanged, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
 
-export function loadTeams(): ThunkResult<void> {
+export function loadTeams(initial = false): ThunkResult<void> {
   return async (dispatch, getState) => {
     const { query, page, perPage } = getState().teams;
     // Early return if the user cannot list teams
     if (!contextSrv.hasPermission(AccessControlAction.ActionTeamsRead)) {
-      dispatch(teamsLoaded({ teams: [], totalCount: 0, page: 1, perPage }));
+      dispatch(teamsLoaded({ teams: [], totalCount: 0, page: 1, perPage, noTeams: true }));
       return;
     }
 
@@ -22,7 +22,15 @@ export function loadTeams(): ThunkResult<void> {
       '/api/teams/search',
       accessControlQueryParam({ query, page, perpage: perPage })
     );
-    dispatch(teamsLoaded(response));
+
+    // We only want to check if there is no teams on the initial request.
+    // A query that returns no teams should not render the empty list banner.
+    let noTeams = false;
+    if (initial) {
+      noTeams = response.teams.length === 0;
+    }
+
+    dispatch(teamsLoaded({ noTeams, ...response }));
   };
 }
 

@@ -8,6 +8,7 @@ export const initialTeamsState: TeamsState = {
   query: '',
   perPage: 30,
   totalPages: 0,
+  noTeams: false,
   hasFetched: false,
 };
 
@@ -15,6 +16,7 @@ type TeamsFetched = {
   teams: Team[];
   page: number;
   perPage: number;
+  noTeams: boolean;
   totalCount: number;
 };
 

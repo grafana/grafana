@@ -17,6 +17,7 @@ jest.mock('app/core/config', () => ({
 const setup = (propOverrides?: object) => {
   const props: Props = {
     teams: [] as Team[],
+    noTeams: false,
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
     changePage: jest.fn(),

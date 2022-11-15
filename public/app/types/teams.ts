@@ -32,6 +32,7 @@ export interface TeamsState {
   page: number;
   query: string;
   perPage: number;
+  noTeams: boolean;
   totalPages: number;
   hasFetched: boolean;
 }

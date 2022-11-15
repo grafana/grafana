@@ -19,6 +19,7 @@ export interface Props {
   teams: Team[];
   page: number;
   query: string;
+  noTeams: boolean;
   totalPages: number;
   hasFetched: boolean;
   loadTeams: typeof loadTeams;
@@ -37,6 +38,7 @@ export const TeamList = ({
   teams,
   page,
   query,
+  noTeams,
   totalPages,
   hasFetched,
   loadTeams,
@@ -49,7 +51,7 @@ export const TeamList = ({
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
   useEffect(() => {
-    loadTeams();
+    loadTeams(true);
   }, [loadTeams]);
 
   useEffect(() => {
@@ -58,7 +60,6 @@ export const TeamList = ({
     }
   }, []);
 
-  const noTeams = false;
   const canCreate = canCreateTeam(editorsCanAdmin);
   const displayRolePicker = shouldDisaplyRolePicker();
 
@@ -142,6 +143,7 @@ function canCreateTeam(editorsCanAdmin: boolean): boolean {
 }
 
 function shouldDisaplyRolePicker(): boolean {
+  return false;
   return (
     contextSrv.licensedAccessControlEnabled() &&
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
@@ -155,6 +157,7 @@ function mapStateToProps(state: StoreState) {
     page: state.teams.page,
     query: state.teams.query,
     perPage: state.teams.perPage,
+    noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
