@@ -1,4 +1,4 @@
-package pluginmeta
+package plugindef
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 )
 
 thema.#Lineage
-name: "pluginmeta"
+name: "plugindef"
 seqs: [
 	{
 		schemas: [
@@ -16,7 +16,7 @@ seqs: [
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
-				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
+				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
 
 				// The set of all plugin types. This hidden field exists solely
 				// so that the set can be string-interpolated into other fields.
@@ -132,7 +132,7 @@ seqs: [
 				autoEnabled?: bool
 
 				// Optional list of RBAC RoleRegistrations.
-				// Describes and organizes the default permissions associated with any of the Grafana basic roles, 
+				// Describes and organizes the default permissions associated with any of the Grafana basic roles,
 				// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
 				// The Admin basic role inherits its default permissions from the Editor basic role which in turn
 				// inherits them from the Viewer basic role.
@@ -167,7 +167,7 @@ seqs: [
 				// scope.
 				// Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
 				#Permission: {
-					action: string,
+					action: string
 					scope?: string
 				}
 

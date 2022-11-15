@@ -109,9 +109,6 @@ func main() {
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
-	// for _, f := range jfs.AsFiles() {
-	// 	fmt.Println(filepath.Join(groot, f.RelativePath))
-	// }
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
