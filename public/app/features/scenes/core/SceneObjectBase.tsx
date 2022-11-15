@@ -7,7 +7,15 @@ import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
+import {
+  SceneDataState,
+  SceneObject,
+  SceneComponent,
+  SceneEditor,
+  SceneTimeRange,
+  SceneObjectState,
+  SceneLayoutState,
+} from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
   implements SceneObject<TState>
@@ -206,6 +214,21 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     }
 
     throw new Error('No data found in scene tree');
+  }
+
+  /**
+   * Will walk up the scene object graph to the closest $layout scene object
+   */
+  public getLayout(): SceneObject<SceneLayoutState> {
+    if (this.constructor.name === 'SceneFlexLayout' || this.constructor.name === 'SceneGridLayout') {
+      return this as SceneObject<SceneLayoutState>;
+    }
+
+    if (this.parent) {
+      return this.parent.getLayout();
+    }
+
+    throw new Error('No layout found in scene tree');
   }
 
   /**

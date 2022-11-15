@@ -2,11 +2,11 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbarInput } from '../components/SceneToolbarButton';
 import { VizPanel } from '../components/VizPanel';
+import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -18,12 +18,12 @@ export function getFlexLayoutTest(): Scene {
       direction: 'row',
       children: [
         new VizPanel({
+          size: { minWidth: '70%' },
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
-          size: { minWidth: '70%' },
         }),
+
         new SceneFlexLayout({
-          // size: { width: 450 },
           direction: 'column',
           children: [
             new VizPanel({
@@ -35,15 +35,15 @@ export function getFlexLayoutTest(): Scene {
               title: 'Fill height',
             }),
             new SceneCanvasText({
+              size: { ySizing: 'content' },
               text: 'Size to content',
               fontSize: 20,
-              size: { ySizing: 'content' },
               align: 'center',
             }),
             new VizPanel({
+              size: { height: 300 },
               pluginId: 'timeseries',
               title: 'Fixed height',
-              size: { height: 300 },
             }),
           ],
         }),
@@ -92,6 +92,7 @@ export function getScenePanelRepeaterTest(): Scene {
         direction: 'column',
         children: [
           new SceneFlexLayout({
+            direction: 'row',
             size: { minHeight: 200 },
             children: [
               new VizPanel({
