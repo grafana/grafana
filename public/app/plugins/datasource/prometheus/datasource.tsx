@@ -773,6 +773,7 @@ export class PrometheusDatasource
         .fetch<BackendDataSourceResponse>({
           url: '/api/ds/query',
           method: 'POST',
+          headers: this.getRequestHeaders(),
           data: {
             from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
             to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),

@@ -7,6 +7,9 @@ import { Field, PanelChrome, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
+import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
+
+import { SceneDragHandle } from './SceneDragHandle';
 
 export interface VizPanelState extends SceneLayoutChildState {
   title?: string;
@@ -18,6 +21,10 @@ export interface VizPanelState extends SceneLayoutChildState {
 export class VizPanel extends SceneObjectBase<VizPanelState> {
   public static Component = ScenePanelRenderer;
   public static Editor = VizPanelEditor;
+
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['title'],
+  });
 
   public onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();
@@ -33,8 +40,13 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 }
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, pluginId, options, fieldConfig } = model.useState();
+  const { title, pluginId, options, fieldConfig, ...state } = model.useState();
   const { data } = model.getData().useState();
+  const layout = model.getLayout();
+  const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
+  const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
+
+  const titleInterpolated = model.interpolate(title);
 
   return (
     <AutoSizer>
@@ -44,7 +56,12 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
         }
 
         return (
-          <PanelChrome title={title} width={width} height={height}>
+          <PanelChrome
+            title={titleInterpolated}
+            width={width}
+            height={height}
+            leftItems={isDraggable ? [dragHandle] : undefined}
+          >
             {(innerWidth, innerHeight) => (
               <>
                 <PanelRenderer
