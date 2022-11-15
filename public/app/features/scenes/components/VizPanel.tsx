@@ -6,6 +6,7 @@ import { PanelRenderer } from '@grafana/runtime';
 import { Field, PanelChrome, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
 import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
@@ -25,7 +26,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
   });
 
   public onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
-    const sceneTimeRange = this.getTimeRange();
+    const sceneTimeRange = sceneGraph.getTimeRangeFor(this);
     sceneTimeRange.setState({
       raw: {
         from: toUtc(timeRange.from),
@@ -39,7 +40,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useState();
-  const { data } = model.getData().useState();
+  const { data } = sceneGraph.getDataFor(model).useState();
 
   const titleInterpolated = model.interpolate(title);
 

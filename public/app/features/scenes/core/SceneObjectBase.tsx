@@ -6,11 +6,11 @@ import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/d
 import { useForceUpdate } from '@grafana/ui';
 
 import { sceneInterpolator } from '../variables/interpolation/sceneInterpolator';
-import { SceneVariables, SceneVariableDependencyConfigLike } from '../variables/types';
+import { SceneVariableDependencyConfigLike } from '../variables/types';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
+import { SceneObject, SceneComponent, SceneObjectState } from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
@@ -175,66 +175,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   public useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useSceneObjectState(this);
-  }
-
-  /**
-   * Will walk up the scene object graph to the closest $timeRange scene object
-   */
-  public getTimeRange(): SceneTimeRange {
-    const { $timeRange } = this.state;
-    if ($timeRange) {
-      return $timeRange;
-    }
-
-    if (this.parent) {
-      return this.parent.getTimeRange();
-    }
-
-    throw new Error('No time range found in scene tree');
-  }
-
-  /**
-   * Will walk up the scene object graph to the closest $data scene object
-   */
-  public getData(): SceneObject<SceneDataState> {
-    const { $data } = this.state;
-    if ($data) {
-      return $data;
-    }
-
-    if (this.parent) {
-      return this.parent.getData();
-    }
-
-    throw new Error('No data found in scene tree');
-  }
-
-  public getVariables(): SceneVariables | undefined {
-    if (this.state.$variables) {
-      return this.state.$variables;
-    }
-
-    if (this.parent) {
-      return this.parent.getVariables();
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Will walk up the scene object graph to the closest $editor scene object
-   */
-  public getSceneEditor(): SceneEditor {
-    const { $editor } = this.state;
-    if ($editor) {
-      return $editor;
-    }
-
-    if (this.parent) {
-      return this.parent.getSceneEditor();
-    }
-
-    throw new Error('No editor found in scene tree');
   }
 
   /** Force a re-render, should only be needed when variable values change */

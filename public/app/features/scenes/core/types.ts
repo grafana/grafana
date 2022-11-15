@@ -75,20 +75,8 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Called when component unmounts. Unsubscribe and closes all subscriptions  */
   deactivate(): void;
 
-  /** Get the scene editor */
-  getSceneEditor(): SceneEditor;
-
   /** Get the scene root */
   getRoot(): SceneObject;
-
-  /** Get the closest node with data */
-  getData(): SceneObject<SceneDataState>;
-
-  /** Get the closest node with variables */
-  getVariables(): SceneVariables | undefined;
-
-  /** Get the closest node with time range */
-  getTimeRange(): SceneTimeRange;
 
   /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;

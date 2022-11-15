@@ -147,6 +147,8 @@ export class ScopedVarsVariable implements SceneVariable<ScopedVarsProxyVariable
   public Editor(props: SceneComponentProps<SceneObject<ScopedVarsProxyVariableState>>): ReactElement {
     throw new Error('Method not implemented.');
   }
+
+  public forceRender(): void {}
 }
 
 interface FieldAccessorCache {

@@ -64,8 +64,7 @@ export interface SceneVariableDependencyConfigLike {
   hasDependencyOn(name: string): boolean;
 
   /**
-   * Will be called when any variable value has changed, not just variable names returned by getNames().
-   * It is up the implementation of this interface to filter it by actual dependencies.
+   * Will be called when any variable value has changed.
    **/
   variableValuesChanged(variables: Set<SceneVariable>): void;
 }
