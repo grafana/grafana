@@ -140,7 +140,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	am := &Alertmanager{
 		Settings:            cfg,
 		stopc:               make(chan struct{}),
-		logger:              log.New("alertmanager", "org", orgID),
+		logger:              log.New("ngalert.notifier.alertmanager", "orgID", orgID),
 		marker:              types.NewMarker(m.Registerer),
 		stageMetrics:        notify.NewMetrics(m.Registerer),
 		dispatcherMetrics:   dispatch.NewDispatcherMetrics(false, m.Registerer),
@@ -197,7 +197,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := am.silences.GC(); err != nil {
-				am.logger.Error("silence garbage collection", "error", err)
+				am.logger.Error("Failed to perform garbage collection of silences", "error", err)
 				// Don't return here - we need to snapshot our state first.
 			}
 
@@ -389,7 +389,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
 	if !configChanged && !templatesChanged {
-		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
+		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
 		return nil
 	}
 

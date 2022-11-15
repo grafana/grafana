@@ -52,7 +52,7 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 		currentConfig, err := Load([]byte(query.Result.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
-			c.log.Warn("last known alertmanager configuration was invalid. Overwriting...")
+			c.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
 		} else {
 			currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 		}
