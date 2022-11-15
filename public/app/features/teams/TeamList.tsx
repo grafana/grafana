@@ -57,18 +57,6 @@ export class TeamList extends PureComponent<Props, State> {
     this.setState({ roleOptions });
   }
 
-  deleteTeam = (team: Team) => {
-    this.props.deleteTeam(team.id);
-  };
-
-  onSearchQueryChange = (value: string) => {
-    this.props.setSearchQuery(value);
-  };
-
-  getPaginatedTeams = (teams: Team[]) => {
-    const offset = (this.props.currentPage - 1) * pageLimit;
-    return teams.slice(offset, offset + pageLimit);
-  };
   renderList() {
     const { teams, totalCount, currentPage, hasFetched } = this.props;
 
@@ -95,13 +83,12 @@ export class TeamList extends PureComponent<Props, State> {
     const { searchQuery, editorsCanAdmin, setCurrentPage, signedInUser } = this.props;
     const canCreate = canCreateTeam(editorsCanAdmin);
     const displayRolePicker = shouldDisaplyRolePicker();
-    const paginatedTeams = this.getPaginatedTeams(teams);
 
     return (
       <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.onSearchQueryChange} />
+            <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.props.setSearchQuery} />
           </div>
 
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
@@ -123,14 +110,14 @@ export class TeamList extends PureComponent<Props, State> {
                 </tr>
               </thead>
               <tbody>
-                {paginatedTeams.map((team) => (
+                {teams.map((team) => (
                   <TeamListRow
                     key={team.id}
                     team={team}
                     roleOptions={this.state.roleOptions}
                     displayRolePicker={displayRolePicker}
                     isTeamAdmin={isPermissionTeamAdmin({ permission: team.permission, editorsCanAdmin, signedInUser })}
-                    onDelete={(t: Team) => this.deleteTeam(t)}
+                    onDelete={this.props.deleteTeam}
                   />
                 ))}
               </tbody>
@@ -166,6 +153,7 @@ function canCreateTeam(editorsCanAdmin: boolean): boolean {
 }
 
 function shouldDisaplyRolePicker(): boolean {
+  return false;
   return (
     contextSrv.licensedAccessControlEnabled() &&
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&

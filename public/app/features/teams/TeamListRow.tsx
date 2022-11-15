@@ -10,7 +10,7 @@ type Props = {
   roleOptions: Role[];
   isTeamAdmin: boolean;
   displayRolePicker: boolean;
-  onDelete: (team: Team) => void;
+  onDelete: (id: number) => void;
 };
 
 export const TeamListRow = ({ team, roleOptions, isTeamAdmin, displayRolePicker, onDelete }: Props) => {
@@ -57,7 +57,7 @@ export const TeamListRow = ({ team, roleOptions, isTeamAdmin, displayRolePicker,
           aria-label={`Delete team ${team.name}`}
           size="sm"
           disabled={!canDelete}
-          onConfirm={() => onDelete(team)}
+          onConfirm={() => onDelete(team.id)}
         />
       </td>
     </tr>
