@@ -503,5 +503,14 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Enter variable value",
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    }
   }
 }

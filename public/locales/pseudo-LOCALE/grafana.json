@@ -503,5 +503,14 @@
   },
   "user-sessions": {
     "loading": "Ŀőäđįŉģ şęşşįőŉş..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Ēŉŧęř väřįäþľę väľūę",
+      "link-all": "Åľľ",
+      "option-all": "Åľľ",
+      "option-selected-values": "Ŝęľęčŧęđ",
+      "option-tooltip": "Cľęäř şęľęčŧįőŉş"
+    }
   }
 }
