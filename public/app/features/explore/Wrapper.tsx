@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { inRange } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
+import { useDebounce, useWindowSize } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
@@ -42,7 +43,8 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const { warning } = useAppNotification();
   const panelCtx = usePanelContext();
   const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
-  const [rightPaneWidth, setRightPaneWidth] = useState(window.innerWidth / 2);
+  const [rightPaneWidthRatio, setRightPaneWidthRatio] = useState(0.5);
+  const { width: windowWidth } = useWindowSize();
   const minWidth = 200;
   const exploreState = useSelector((state) => state.explore);
 
@@ -102,8 +104,29 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
   }, []);
 
+  useDebounce(
+    () => {
+      let rightPaneRatio = undefined;
+      let rightPaneWidth = Math.floor(windowWidth * rightPaneWidthRatio);
+      if (rightPaneWidth < minWidth) {
+        // if right pane is too narrow, make min width
+        rightPaneRatio = minWidth / windowWidth;
+      } else if (windowWidth - rightPaneWidth < minWidth) {
+        // if left pane is too narrow, make right pane = window - minWidth
+        rightPaneWidth = windowWidth - minWidth;
+        rightPaneRatio = rightPaneWidth / windowWidth;
+      }
+
+      if (rightPaneRatio !== undefined) {
+        setRightPaneWidthRatio(rightPaneRatio);
+      }
+    },
+    500,
+    [windowWidth, rightPaneWidthRatio]
+  );
+
   const updateSplitSize = (size: number) => {
-    const evenSplitWidth = window.innerWidth / 2;
+    const evenSplitWidth = windowWidth / 2;
     const areBothSimilar = inRange(size, evenSplitWidth - 100, evenSplitWidth + 100);
     if (areBothSimilar) {
       dispatch(splitSizeUpdateAction({ largerExploreId: undefined }));
@@ -115,18 +138,18 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       );
     }
 
-    setRightPaneWidth(size);
+    setRightPaneWidthRatio(size / windowWidth);
   };
 
   const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
   let widthCalc = 0;
   if (hasSplit) {
     if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
-      widthCalc = exploreState.maxedExploreId === ExploreId.right ? window.innerWidth - minWidth : minWidth;
+      widthCalc = exploreState.maxedExploreId === ExploreId.right ? windowWidth - minWidth : minWidth;
     } else if (exploreState.evenSplitPanes) {
-      widthCalc = Math.floor(window.innerWidth / 2);
-    } else if (rightPaneWidth !== undefined) {
-      widthCalc = rightPaneWidth;
+      widthCalc = Math.floor(windowWidth / 2);
+    } else if (rightPaneWidthRatio !== undefined) {
+      widthCalc = windowWidth * rightPaneWidthRatio;
     }
   }
 
@@ -136,7 +159,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
       <div className={styles.exploreWrapper}>
         <SplitPaneWrapper
           splitOrientation="vertical"
-          minSize={minWidth}
           paneSize={widthCalc}
           primary="second"
           splitVisible={hasSplit}
