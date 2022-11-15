@@ -13,7 +13,7 @@ import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams } from './state/actions';
 import { initialTeamsState, setSearchQuery, setTeamsSearchPage } from './state/reducers';
-import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
+import { getSearchQuery, getTeams, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
 
@@ -21,7 +21,6 @@ export interface Props {
   teams: Team[];
   searchQuery: string;
   searchPage: number;
-  teamsCount: number;
   hasFetched: boolean;
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
@@ -150,17 +149,17 @@ export class TeamList extends PureComponent<Props, State> {
   }
 
   renderList() {
-    const { teamsCount, hasFetched } = this.props;
+    const { teams, hasFetched } = this.props;
 
     if (!hasFetched) {
       return null;
     }
 
-    if (teamsCount > 0) {
-      return this.renderTeamList();
-    } else {
+    if (teams.length === 0) {
       return this.renderEmptyList();
     }
+
+    return this.renderTeamList();
   }
 
   render() {
@@ -179,7 +178,6 @@ function mapStateToProps(state: StoreState) {
     teams: getTeams(state.teams),
     searchQuery: getSearchQuery(state.teams),
     searchPage: getTeamsSearchPage(state.teams),
-    teamsCount: getTeamsCount(state.teams),
     hasFetched: state.teams.hasFetched,
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
     signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,

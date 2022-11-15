@@ -4,7 +4,6 @@ import { Team, TeamsState, TeamState, TeamMember, OrgRole, TeamPermissionLevel }
 export const getSearchQuery = (state: TeamsState) => state.searchQuery;
 export const getSearchMemberQuery = (state: TeamState) => state.searchMemberQuery;
 export const getTeamGroups = (state: TeamState) => state.groups;
-export const getTeamsCount = (state: TeamsState) => state.teams.length;
 export const getTeamsSearchPage = (state: TeamsState) => state.searchPage;
 
 export const getTeam = (state: TeamState, currentTeamId: any): Team | null => {
