@@ -10,7 +10,15 @@ import { SceneVariables, SceneVariableDependencyConfigLike } from '../variables/
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
+import {
+  SceneDataState,
+  SceneObject,
+  SceneComponent,
+  SceneEditor,
+  SceneTimeRange,
+  SceneObjectState,
+  SceneLayoutState,
+} from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
@@ -219,6 +227,21 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     }
 
     return undefined;
+  }
+
+  /**
+   * Will walk up the scene object graph to the closest $layout scene object
+   */
+  public getLayout(): SceneObject<SceneLayoutState> {
+    if (this.constructor.name === 'SceneFlexLayout' || this.constructor.name === 'SceneGridLayout') {
+      return this as SceneObject<SceneLayoutState>;
+    }
+
+    if (this.parent) {
+      return this.parent.getLayout();
+    }
+
+    throw new Error('No layout found in scene tree');
   }
 
   /**
