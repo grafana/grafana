@@ -108,6 +108,13 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   onMouseEnterObject(model: SceneObject): void;
   onMouseLeaveObject(model: SceneObject): void;
   onSelectObject(model: SceneObject): void;
+  getEditComponentWrapper(): React.ComponentType<SceneComponentEditWrapperProps>;
+}
+
+interface SceneComponentEditWrapperProps {
+  editor: SceneEditor;
+  model: SceneObject;
+  children: React.ReactNode;
 }
 
 export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
