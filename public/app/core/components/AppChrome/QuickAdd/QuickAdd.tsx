@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Menu, Dropdown, Button, Icon, useStyles2, useTheme2, ToolbarButton } from '@grafana/ui';
@@ -19,7 +19,7 @@ export const QuickAdd = ({}: Props) => {
   const breakpoint = theme.breakpoints.values.sm;
 
   const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
-  const createActions = findCreateActions(navBarTree);
+  const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
 
   useMediaQueryChange({
     breakpoint,
