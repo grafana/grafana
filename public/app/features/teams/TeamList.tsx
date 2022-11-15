@@ -35,22 +35,21 @@ export interface State {
   roleOptions: Role[];
 }
 
-const TeamList = ({ hasFetched, loadTeams, ...rest }: Props) => {
+export const TeamList = ({ hasFetched, loadTeams, deleteTeam, ...rest }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
   useEffect(() => {
     loadTeams();
+  }, [loadTeams]);
+
+  useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       fetchRoleOptions().then((roles) => setRoleOptions(roles));
     }
-  }, [loadTeams]);
+  }, []);
 
   const render = () => {
-    const { teams, totalCount, currentPage } = rest;
-
-    if (!hasFetched) {
-      return null;
-    }
+    const { teams, totalCount } = rest;
 
     if (totalCount === 0) {
       return (
@@ -68,7 +67,7 @@ const TeamList = ({ hasFetched, loadTeams, ...rest }: Props) => {
       );
     }
 
-    const { searchQuery, editorsCanAdmin, setCurrentPage, signedInUser } = rest;
+    const { searchQuery, editorsCanAdmin, setCurrentPage, signedInUser, currentPage } = rest;
     const canCreate = canCreateTeam(editorsCanAdmin);
     const displayRolePicker = shouldDisaplyRolePicker();
 
@@ -105,17 +104,17 @@ const TeamList = ({ hasFetched, loadTeams, ...rest }: Props) => {
                     roleOptions={roleOptions}
                     displayRolePicker={displayRolePicker}
                     isTeamAdmin={isPermissionTeamAdmin({ permission: team.permission, editorsCanAdmin, signedInUser })}
-                    onDelete={rest.deleteTeam}
+                    onDelete={deleteTeam}
                   />
                 ))}
               </tbody>
             </table>
             <HorizontalGroup justify="flex-end">
               <Pagination
+                hideWhenSinglePage
                 onNavigate={setCurrentPage}
                 currentPage={currentPage}
                 numberOfPages={Math.ceil(totalCount / pageLimit)}
-                hideWhenSinglePage={true}
               />
             </HorizontalGroup>
           </VerticalGroup>

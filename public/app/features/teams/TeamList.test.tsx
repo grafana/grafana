@@ -9,7 +9,7 @@ import { OrgRole, Team } from '../../types';
 
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
-import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import { setSearchQuery, setCurrentPage } from './state/reducers';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
@@ -22,9 +22,9 @@ const setup = (propOverrides?: object) => {
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
     setSearchQuery: mockToolkitActionCreator(setSearchQuery),
-    setTeamsSearchPage: mockToolkitActionCreator(setTeamsSearchPage),
+    setCurrentPage: mockToolkitActionCreator(setCurrentPage),
     searchQuery: '',
-    searchPage: 1,
+    currentPage: 1,
     totalCount: 0,
     hasFetched: false,
     editorsCanAdmin: false,
