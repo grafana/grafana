@@ -492,5 +492,12 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Enter variable value",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    }
   }
 }

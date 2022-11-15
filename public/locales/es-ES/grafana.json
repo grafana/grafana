@@ -492,5 +492,12 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

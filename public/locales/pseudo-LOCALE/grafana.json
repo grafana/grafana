@@ -492,5 +492,12 @@
   },
   "user-sessions": {
     "loading": "Ŀőäđįŉģ şęşşįőŉş..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Ēŉŧęř väřįäþľę väľūę",
+      "option-selected-values": "Ŝęľęčŧęđ",
+      "option-tooltip": "Cľęäř şęľęčŧįőŉş"
+    }
   }
 }
