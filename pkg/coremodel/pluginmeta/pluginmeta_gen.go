@@ -537,7 +537,6 @@ type ReleaseState string
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Role struct {
 	Description string `json:"description"`
-	DisplayName string `json:"displayName"`
 	Name        string `json:"name"`
 	Permissions []struct {
 		Action string  `json:"action"`
@@ -562,7 +561,6 @@ type RoleRegistration struct {
 	// RBAC role definition to bundle related RBAC permissions on the plugin.
 	Role struct {
 		Description string `json:"description"`
-		DisplayName string `json:"displayName"`
 		Name        string `json:"name"`
 		Permissions []struct {
 			Action string  `json:"action"`
