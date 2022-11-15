@@ -3,7 +3,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 
 import { SceneCanvasText } from '../../components/SceneCanvasText';
-import { SceneFlexLayout } from '../../components/SceneFlexLayout';
+import { SceneFlexLayout } from '../../components/layout/SceneFlexLayout';
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../../core/types';
 import { TestVariable } from '../variants/TestVariable';

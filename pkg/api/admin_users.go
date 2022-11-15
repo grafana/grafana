@@ -250,7 +250,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.QuotaService.DeleteByUser(ctx, cmd.UserID); err != nil {
+		if err := hs.QuotaService.DeleteQuotaForUser(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil

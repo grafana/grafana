@@ -59,12 +59,6 @@
       "rows": "Gesamtanzahl an Zeilen",
       "table-title": "Statistiken"
     },
-    "refresh-picker": {
-      "off-arialabel": "Automatische Aktualisierung deaktivieren",
-      "off-description": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "off-label": "Aus",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
       "comments-show": "Dashboard-Kommentare anzeigen",
@@ -315,6 +309,23 @@
       "view": "Anzeigen"
     }
   },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "select-button": {
+      "auto-refresh": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Teilen"
@@ -435,6 +446,14 @@
       "from-input": "",
       "range-error": "",
       "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
     },
     "time-range": {
       "aria-role": "",

@@ -227,30 +227,28 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
-	/*
-		if folder.CreatedBy > 0 {
-			creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
-		}
-		if folder.UpdatedBy > 0 {
-			updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
-		}
-	*/
+	if folder.CreatedBy > 0 {
+		creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+	}
+	if folder.UpdatedBy > 0 {
+		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+	}
 
 	return dtos.Folder{
-		Id:    folder.ID,
-		Uid:   folder.UID,
-		Title: folder.Title,
-		//Url:           folder.Url,
-		//HasACL:        folder.HasACL,
-		CanSave:   canSave,
-		CanEdit:   canEdit,
-		CanAdmin:  canAdmin,
-		CanDelete: canDelete,
-		CreatedBy: creator,
-		Created:   folder.Created,
-		UpdatedBy: updater,
-		Updated:   folder.Updated,
-		//Version:       folder.Version,
+		Id:            folder.ID,
+		Uid:           folder.UID,
+		Title:         folder.Title,
+		Url:           folder.Url,
+		HasACL:        folder.HasACL,
+		CanSave:       canSave,
+		CanEdit:       canEdit,
+		CanAdmin:      canAdmin,
+		CanDelete:     canDelete,
+		CreatedBy:     creator,
+		Created:       folder.Created,
+		UpdatedBy:     updater,
+		Updated:       folder.Updated,
+		Version:       folder.Version,
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
 	}
 }
