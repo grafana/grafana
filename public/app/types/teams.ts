@@ -29,9 +29,10 @@ export interface TeamGroup {
 
 export interface TeamsState {
   teams: Team[];
-  totalCount: number;
-  currentPage: number;
-  searchQuery: string;
+  page: number;
+  query: string;
+  perPage: number;
+  totalPages: number;
   hasFetched: boolean;
 }
 

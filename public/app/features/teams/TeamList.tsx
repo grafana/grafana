@@ -11,22 +11,20 @@ import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 
 import { TeamListRow } from './TeamListRow';
-import { deleteTeam, loadTeams } from './state/actions';
-import { initialTeamsState, setSearchQuery, setCurrentPage } from './state/reducers';
+import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
+import { initialTeamsState } from './state/reducers';
 import { isPermissionTeamAdmin } from './state/selectors';
-
-const pageLimit = 30;
 
 export interface Props {
   teams: Team[];
-  totalCount: number;
-  currentPage: number;
-  searchQuery: string;
+  page: number;
+  query: string;
+  totalPages: number;
   hasFetched: boolean;
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
-  setCurrentPage: typeof setCurrentPage;
-  setSearchQuery: typeof setSearchQuery;
+  changePage: typeof changePage;
+  changeQuery: typeof changeQuery;
   editorsCanAdmin: boolean;
   signedInUser: User;
 }
@@ -35,12 +33,12 @@ export interface State {
   roleOptions: Role[];
 }
 
-export const TeamList = ({ hasFetched, loadTeams, deleteTeam, searchQuery, currentPage, ...rest }: Props) => {
+export const TeamList = ({ teams, hasFetched, loadTeams, deleteTeam, query, page, totalPages, ...rest }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
   useEffect(() => {
-    loadTeams(searchQuery, pageLimit, currentPage);
-  }, [loadTeams, searchQuery, currentPage]);
+    loadTeams();
+  }, [loadTeams]);
 
   useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
@@ -49,9 +47,7 @@ export const TeamList = ({ hasFetched, loadTeams, deleteTeam, searchQuery, curre
   }, []);
 
   const render = () => {
-    const { teams, totalCount } = rest;
-
-    if (totalCount === 0) {
+    if (totalPages === 0) {
       /*
       return (
         <EmptyListCTA
@@ -69,7 +65,7 @@ export const TeamList = ({ hasFetched, loadTeams, deleteTeam, searchQuery, curre
         */
     }
 
-    const { editorsCanAdmin, setCurrentPage, signedInUser } = rest;
+    const { editorsCanAdmin, signedInUser } = rest;
     const canCreate = canCreateTeam(editorsCanAdmin);
     const displayRolePicker = shouldDisaplyRolePicker();
 
@@ -77,7 +73,7 @@ export const TeamList = ({ hasFetched, loadTeams, deleteTeam, searchQuery, curre
       <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <FilterInput placeholder="Search teams" value={searchQuery} onChange={rest.setSearchQuery} />
+            <FilterInput placeholder="Search teams" value={query} onChange={rest.changeQuery} />
           </div>
 
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
@@ -114,9 +110,9 @@ export const TeamList = ({ hasFetched, loadTeams, deleteTeam, searchQuery, curre
             <HorizontalGroup justify="flex-end">
               <Pagination
                 hideWhenSinglePage
-                onNavigate={setCurrentPage}
-                currentPage={currentPage}
-                numberOfPages={Math.ceil(totalCount / pageLimit)}
+                currentPage={page}
+                numberOfPages={totalPages}
+                onNavigate={rest.changePage}
               />
             </HorizontalGroup>
           </VerticalGroup>
@@ -138,7 +134,6 @@ function canCreateTeam(editorsCanAdmin: boolean): boolean {
 }
 
 function shouldDisaplyRolePicker(): boolean {
-  return false;
   return (
     contextSrv.licensedAccessControlEnabled() &&
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
@@ -149,9 +144,10 @@ function shouldDisaplyRolePicker(): boolean {
 function mapStateToProps(state: StoreState) {
   return {
     teams: state.teams.teams,
-    totalCount: state.teams.totalCount,
-    currentPage: state.teams.currentPage,
-    searchQuery: state.teams.searchQuery,
+    page: state.teams.page,
+    query: state.teams.query,
+    perPage: state.teams.perPage,
+    totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
     signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
@@ -161,8 +157,8 @@ function mapStateToProps(state: StoreState) {
 const mapDispatchToProps = {
   loadTeams,
   deleteTeam,
-  setCurrentPage,
-  setSearchQuery,
+  changePage,
+  changeQuery,
 };
 
 export default connectWithCleanUp(

@@ -4,29 +4,39 @@ import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 
 export const initialTeamsState: TeamsState = {
   teams: [],
-  currentPage: 1,
-  searchQuery: '',
-  totalCount: 0,
+  page: 1,
+  query: '',
+  perPage: 30,
+  totalPages: 0,
   hasFetched: false,
+};
+
+type TeamsFetched = {
+  teams: Team[];
+  page: number;
+  perPage: number;
+  totalCount: number;
 };
 
 const teamsSlice = createSlice({
   name: 'teams',
   initialState: initialTeamsState,
   reducers: {
-    teamsLoaded: (state, action: PayloadAction<{ teams: Team[]; totalCount: number }>): TeamsState => {
-      return { ...state, hasFetched: true, teams: action.payload.teams, totalCount: action.payload.totalCount };
+    teamsLoaded: (state, action: PayloadAction<TeamsFetched>): TeamsState => {
+      const { totalCount, perPage, ...rest } = action.payload;
+      const totalPages = Math.ceil(totalCount / perPage);
+      return { ...state, ...rest, totalPages, perPage, hasFetched: true };
     },
-    setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
-      return { ...state, searchQuery: action.payload, currentPage: initialTeamsState.currentPage };
+    queryChanged: (state, action: PayloadAction<string>): TeamsState => {
+      return { ...state, page: 1, query: action.payload };
     },
-    setCurrentPage: (state, action: PayloadAction<number>): TeamsState => {
-      return { ...state, currentPage: action.payload };
+    pageChanged: (state, action: PayloadAction<number>): TeamsState => {
+      return { ...state, page: action.payload };
     },
   },
 });
 
-export const { teamsLoaded, setSearchQuery, setCurrentPage } = teamsSlice.actions;
+export const { teamsLoaded, queryChanged, pageChanged } = teamsSlice.actions;
 
 export const teamsReducer = teamsSlice.reducer;
 
