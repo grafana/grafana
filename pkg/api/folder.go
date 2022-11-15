@@ -240,7 +240,7 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		Id:    folder.ID,
 		Uid:   folder.UID,
 		Title: folder.Title,
-		//Url:           folder.Url,
+		Url:   folder.Url,
 		//HasACL:        folder.HasACL,
 		CanSave:   canSave,
 		CanEdit:   canEdit,

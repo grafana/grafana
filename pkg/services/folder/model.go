@@ -35,7 +35,7 @@ type Folder struct {
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
 	// Version   int
-	// Url       string
+	Url string
 	// UpdatedBy int64
 	// CreatedBy int64
 	// HasACL    bool
@@ -146,7 +146,7 @@ func FromDashboard(dash *models.Dashboard) *Folder {
 		UID:   dash.Uid,
 		Title: dash.Title,
 		//HasACL:    dash.HasACL,
-		//Url:       dash.GetUrl(),
+		Url: models.GetFolderUrl(dash.Uid, dash.Slug),
 		//Version:   dash.Version,
 		Created: dash.Created,
 		//CreatedBy: dash.CreatedBy,
