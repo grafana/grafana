@@ -11,6 +11,7 @@ import {
   SceneDataState,
   SceneTimeRange,
   SceneComponentProps,
+  SceneLayoutState,
 } from '../../core/types';
 import {
   SceneVariable,
@@ -145,6 +146,14 @@ export class ScopedVarsVariable implements SceneVariable<ScopedVarsProxyVariable
   }
 
   public Editor(props: SceneComponentProps<SceneObject<ScopedVarsProxyVariableState>>): ReactElement {
+    throw new Error('Method not implemented.');
+  }
+
+  public getLayout(): SceneObject<SceneLayoutState> {
+    throw new Error('Method not implemented.');
+  }
+
+  public forceRender(): void {
     throw new Error('Method not implemented.');
   }
 }
