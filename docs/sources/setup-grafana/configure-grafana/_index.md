@@ -632,7 +632,7 @@ You can enable both policies simultaneously.
 
 ### content_security_policy_template
 
-Set the policy template that will be used when adding the Content-Security-Policy-Report-Only header to your requests. `$NONCE` in the template includes a random nonce.
+Set the policy template that will be used when adding the `Content-Security-Policy-Report-Only` header to your requests. `$NONCE` in the template includes a random nonce.
 
 <hr />
 
