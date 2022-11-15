@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -35,30 +35,18 @@ export interface State {
   roleOptions: Role[];
 }
 
-export class TeamList extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { roleOptions: [] };
-  }
+const TeamList = ({ hasFetched, loadTeams, ...rest }: Props) => {
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
-  componentDidMount() {
-    this.fetchTeams();
+  useEffect(() => {
+    loadTeams();
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-      this.fetchRoleOptions();
+      fetchRoleOptions().then((roles) => setRoleOptions(roles));
     }
-  }
+  }, [loadTeams]);
 
-  async fetchTeams() {
-    await this.props.loadTeams();
-  }
-
-  async fetchRoleOptions() {
-    const roleOptions = await fetchRoleOptions();
-    this.setState({ roleOptions });
-  }
-
-  renderList() {
-    const { teams, totalCount, currentPage, hasFetched } = this.props;
+  const render = () => {
+    const { teams, totalCount, currentPage } = rest;
 
     if (!hasFetched) {
       return null;
@@ -80,7 +68,7 @@ export class TeamList extends PureComponent<Props, State> {
       );
     }
 
-    const { searchQuery, editorsCanAdmin, setCurrentPage, signedInUser } = this.props;
+    const { searchQuery, editorsCanAdmin, setCurrentPage, signedInUser } = rest;
     const canCreate = canCreateTeam(editorsCanAdmin);
     const displayRolePicker = shouldDisaplyRolePicker();
 
@@ -88,7 +76,7 @@ export class TeamList extends PureComponent<Props, State> {
       <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.props.setSearchQuery} />
+            <FilterInput placeholder="Search teams" value={searchQuery} onChange={rest.setSearchQuery} />
           </div>
 
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
@@ -114,10 +102,10 @@ export class TeamList extends PureComponent<Props, State> {
                   <TeamListRow
                     key={team.id}
                     team={team}
-                    roleOptions={this.state.roleOptions}
+                    roleOptions={roleOptions}
                     displayRolePicker={displayRolePicker}
                     isTeamAdmin={isPermissionTeamAdmin({ permission: team.permission, editorsCanAdmin, signedInUser })}
-                    onDelete={this.props.deleteTeam}
+                    onDelete={rest.deleteTeam}
                   />
                 ))}
               </tbody>
@@ -134,18 +122,14 @@ export class TeamList extends PureComponent<Props, State> {
         </div>
       </>
     );
-  }
+  };
 
-  render() {
-    const { hasFetched } = this.props;
-
-    return (
-      <Page navId="teams">
-        <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
-      </Page>
-    );
-  }
-}
+  return (
+    <Page navId="teams">
+      <Page.Contents isLoading={!hasFetched}>{render()}</Page.Contents>
+    </Page>
+  );
+};
 
 function canCreateTeam(editorsCanAdmin: boolean): boolean {
   const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
@@ -153,7 +137,6 @@ function canCreateTeam(editorsCanAdmin: boolean): boolean {
 }
 
 function shouldDisaplyRolePicker(): boolean {
-  return false;
   return (
     contextSrv.licensedAccessControlEnabled() &&
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
