@@ -117,11 +117,11 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	message, truncated := TruncateInBytes(tmpl(wn.settings.Message), 4096)
 	if truncated {
-		wn.log.Warn("Webex message too long, truncating message", "OriginalMessage", wn.settings.Message)
+		wn.log.Warn("Webex message too long, truncating message", "originalMessage", wn.settings.Message)
 	}
 
 	if tmplErr != nil {
-		wn.log.Warn("Failed to template webex message", "Error", tmplErr.Error())
+		wn.log.Warn("Failed to template webex message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 

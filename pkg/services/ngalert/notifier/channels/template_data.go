@@ -76,7 +76,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 	u, err := url.Parse(externalURL)
 	if err != nil {
-		logger.Debug("failed to parse external URL while extending template data", "url", externalURL, "error", err.Error())
+		logger.Debug("Failed to parse external URL while extending template data", "url", externalURL, "error", err.Error())
 		return extended
 	}
 	externalPath := u.Path
@@ -92,13 +92,13 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 
 		generatorUrl, err := url.Parse(extended.GeneratorURL)
 		if err != nil {
-			logger.Debug("failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "err", err.Error())
+			logger.Debug("Failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "err", err.Error())
 			return extended
 		}
 
 		dashboardUrl, err := url.Parse(extended.DashboardURL)
 		if err != nil {
-			logger.Debug("failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "err", err.Error())
+			logger.Debug("Failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "err", err.Error())
 			return extended
 		}
 
@@ -113,7 +113,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	if alert.Annotations != nil {
 		if s, ok := alert.Annotations[ngmodels.ValuesAnnotation]; ok {
 			if err := json.Unmarshal([]byte(s), &extended.Values); err != nil {
-				logger.Warn("failed to unmarshal values annotation", "error", err)
+				logger.Warn("Failed to unmarshal values annotation", "error", err)
 			}
 		}
 		// TODO: Remove in Grafana 10

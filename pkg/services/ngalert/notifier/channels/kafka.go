@@ -88,7 +88,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		kn.log.Warn("failed to template Kafka message", "error", tmplErr.Error())
+		kn.log.Warn("Failed to template Kafka message", "error", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -102,7 +102,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if err = kn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		kn.log.Error("Failed to send notification to Kafka", "error", err, "body", body)
+		kn.log.Error("Failed to send notification", "error", err, "body", body)
 		return false, err
 	}
 
@@ -120,7 +120,7 @@ func (kn *KafkaNotifier) buildBody(ctx context.Context, tmpl func(string) string
 	bodyJSON.Set("details", tmpl(kn.settings.Details))
 
 	state := buildState(as...)
-	kn.log.Debug("notifying Kafka", "alert_state", state)
+	kn.log.Debug("Sending notification", "alert_state", state)
 	bodyJSON.Set("alert_state", state)
 
 	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)

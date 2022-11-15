@@ -99,7 +99,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
-		pn.log.Debug("not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
+		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
@@ -113,7 +113,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	pn.log.Info("notifying Pagerduty", "event_type", eventType)
+	pn.log.Info("Sending notification", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
 		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
@@ -193,7 +193,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		pn.log.Warn("failed to template PagerDuty message", "error", tmplErr.Error())
+		pn.log.Warn("Failed to template PagerDuty message", "error", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

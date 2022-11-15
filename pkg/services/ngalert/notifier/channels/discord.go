@@ -105,7 +105,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON.Set("content", tmpl(d.settings.Content))
 	if tmplErr != nil {
-		d.log.Warn("failed to template Discord notification content", "error", tmplErr.Error())
+		d.log.Warn("Failed to template Discord notification content", "error", tmplErr.Error(), "template", d.settings.Content)
 		// Reset tmplErr for templating other fields.
 		tmplErr = nil
 	}
@@ -113,7 +113,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	if d.settings.AvatarURL != "" {
 		bodyJSON.Set("avatar_url", tmpl(d.settings.AvatarURL))
 		if tmplErr != nil {
-			d.log.Warn("failed to template Discord Avatar URL", "error", tmplErr.Error(), "fallback", d.settings.AvatarURL)
+			d.log.Warn("Failed to template Discord Avatar URL", "error", tmplErr.Error(), "fallback", d.settings.AvatarURL, "template", d.settings.AvatarURL)
 			bodyJSON.Set("avatar_url", d.settings.AvatarURL)
 			tmplErr = nil
 		}
@@ -128,7 +128,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	linkEmbed.Set("title", tmpl(d.settings.Title))
 	if tmplErr != nil {
-		d.log.Warn("failed to template Discord notification title", "error", tmplErr.Error())
+		d.log.Warn("Failed to template Discord notification title", "error", tmplErr.Error(), "template", d.settings.Title)
 		// Reset tmplErr for templating other fields.
 		tmplErr = nil
 	}
@@ -159,13 +159,14 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("embeds", embeds)
 
 	if tmplErr != nil {
-		d.log.Warn("failed to template Discord message", "error", tmplErr.Error())
+		d.log.Warn("Failed to template Discord message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
 	u := tmpl(d.settings.WebhookURL)
 	if tmplErr != nil {
-		d.log.Warn("failed to template Discord URL", "error", tmplErr.Error(), "fallback", d.settings.WebhookURL)
+		d.log.Warn("Failed to template Discord URL", "error", tmplErr.Error(), "fallback", d.settings.WebhookURL, "template", d.settings.WebhookURL)
+		tmplErr = nil
 		u = d.settings.WebhookURL
 	}
 
@@ -180,7 +181,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
-		d.log.Error("failed to send notification to Discord", "error", err)
+		d.log.Error("Failed to send notification", "error", err)
 		return false, err
 	}
 	return true, nil
@@ -215,7 +216,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
 				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
-					d.log.Warn("failed to retrieve image data from store", "error", err)
+					d.log.Warn("Failed to retrieve image data from store", "error", err)
 					return nil
 				}
 
@@ -252,7 +253,7 @@ func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []dis
 	defer func() {
 		if err := w.Close(); err != nil {
 			// Shouldn't matter since we already close w explicitly on the non-error path
-			d.log.Warn("failed to close multipart writer", "error", err)
+			d.log.Warn("Failed to close multipart writer", "error", err)
 		}
 	}()
 

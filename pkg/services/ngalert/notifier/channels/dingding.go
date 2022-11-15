@@ -80,7 +80,7 @@ type DingDingNotifier struct {
 
 // Notify sends the alert notification to dingding.
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	dd.log.Info("sending dingding")
+	dd.log.Info("Sending notification")
 
 	msgUrl := buildDingDingURL(dd)
 
@@ -97,13 +97,13 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if tmplErr != nil {
-		dd.log.Warn("failed to template DingDing message", "error", tmplErr.Error())
+		dd.log.Warn("Failed to template DingDing message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
 	u := tmpl(dd.settings.URL)
 	if tmplErr != nil {
-		dd.log.Warn("failed to template DingDing URL", "error", tmplErr.Error(), "fallback", dd.settings.URL)
+		dd.log.Warn("Failed to template DingDing URL", "error", tmplErr.Error(), "fallback", dd.settings.URL)
 		u = dd.settings.URL
 	}
 

@@ -72,7 +72,7 @@ func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
 
 // Notify send an alert notification to LINE
 func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	ln.log.Debug("executing line notification", "notification", ln.Name)
+	ln.log.Debug("Sending notification")
 
 	body := ln.buildMessage(ctx, as...)
 
@@ -90,7 +90,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
-		ln.log.Error("failed to send notification to LINE", "error", err, "body", body)
+		ln.log.Error("Failed to send notification", "error", err, "body", body)
 		return false, err
 	}
 
@@ -114,7 +114,7 @@ func (ln *LineNotifier) buildMessage(ctx context.Context, as ...*types.Alert) st
 		tmpl(ln.settings.description),
 	)
 	if tmplErr != nil {
-		ln.log.Warn("failed to template Line message", "error", tmplErr.Error())
+		ln.log.Warn("Failed to template Line message", "error", tmplErr.Error())
 	}
 	return body
 }

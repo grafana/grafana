@@ -103,7 +103,7 @@ func NewSensuGoNotifier(config *SensuGoConfig, images ImageStore, ns notificatio
 
 // Notify sends an alert notification to Sensu Go
 func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	sn.log.Debug("sending Sensu Go result")
+	sn.log.Debug("Sending notification")
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
@@ -176,7 +176,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Warn("failed to template sensugo message", "error", tmplErr.Error())
+		sn.log.Warn("Failed to template sensugo message", "error", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)
@@ -194,7 +194,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		sn.log.Error("failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
+		sn.log.Error("Failed to send notification", "error", err)
 		return false, err
 	}
 

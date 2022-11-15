@@ -127,7 +127,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 			}
 			defer func() {
 				if err := f.Close(); err != nil {
-					tn.log.Warn("failed to close image", "error", err)
+					tn.log.Warn("Failed to close image", "error", err)
 				}
 			}()
 			fw, err := w.CreateFormFile("photo", image.Path)
@@ -153,17 +153,15 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*types.Alert) (map[string]string, error) {
 	var tmplErr error
-	defer func() {
-		if tmplErr != nil {
-			tn.log.Warn("failed to template Telegram message", "error", tmplErr)
-		}
-	}()
-
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 	// Telegram supports 4096 chars max
 	messageText, truncated := notify.Truncate(tmpl(tn.settings.Message), 4096)
 	if truncated {
-		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.settings.Message)
+		tn.log.Warn("Telegram message too long, truncate message", "originalMessage", tn.settings.Message)
+	}
+	if tmplErr != nil {
+		tn.log.Warn("Failed to template Telegram message", "error", tmplErr, "template", tn.settings.Message)
+		tmplErr = nil
 	}
 
 	m := make(map[string]string)

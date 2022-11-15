@@ -119,13 +119,13 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 
 // Notify sends an alert notification to Opsgenie
 func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	on.log.Debug("executing Opsgenie notification", "notification", on.Name)
-
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !on.SendResolved() {
-		on.log.Debug("not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
+		on.log.Debug("Not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
 		return true, nil
 	}
+
+	on.log.Debug("Sending notification")
 
 	bodyJSON, url, err := on.buildOpsgenieMessage(ctx, alerts, as)
 	if err != nil {
@@ -225,7 +225,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 	// Check for templating errors
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie message", "error", tmplErr.Error())
+		on.log.Warn("Failed to template Opsgenie message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
@@ -272,7 +272,8 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	bodyJSON.Set("details", details)
 	apiURL = tmpl(on.APIUrl)
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie URL", "error", tmplErr.Error(), "fallback", on.APIUrl)
+		on.log.Warn("Failed to template Opsgenie URL", "error", tmplErr.Error(), "fallback", on.APIUrl, "template", on.APIUrl)
+		tmplErr = nil
 		apiURL = on.APIUrl
 	}
 

@@ -114,7 +114,7 @@ func NewThreemaNotifier(fc FactoryConfig) (*ThreemaNotifier, error) {
 
 // Notify send an alert notification to Threema
 func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	tn.log.Debug("sending threema alert notification", "from", tn.settings.GatewayID, "to", tn.settings.RecipientID)
+	tn.log.Debug("Sending notification", "from", tn.settings.GatewayID, "to", tn.settings.RecipientID)
 
 	// Set up basic API request data
 	data := url.Values{}
@@ -132,7 +132,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
+		tn.log.Error("Failed to send notification", "error", err)
 		return false, err
 	}
 
@@ -155,7 +155,7 @@ func (tn *ThreemaNotifier) buildMessage(ctx context.Context, as ...*types.Alert)
 	)
 
 	if tmplErr != nil {
-		tn.log.Warn("failed to template Threema message", "error", tmplErr.Error())
+		tn.log.Warn("Failed to template Threema message", "error", tmplErr.Error())
 	}
 
 	_ = withStoredImages(ctx, tn.log, tn.images,

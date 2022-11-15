@@ -134,7 +134,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		pn.log.Error("failed to send pushover notification", "error", err, "webhook", pn.Name)
+		pn.log.Error("Failed to send notification", "error", err)
 		return false, err
 	}
 
@@ -218,7 +218,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				pn.log.Error("failed to close the image", "file", image.Path)
+				pn.log.Error("Failed to close the image", "file", image.Path)
 			}
 		}()
 
@@ -264,7 +264,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	if tmplErr != nil {
-		pn.log.Warn("failed to template pushover message", "error", tmplErr.Error())
+		pn.log.Warn("Failed to template pushover message", "error", tmplErr.Error())
 	}
 
 	headers := map[string]string{

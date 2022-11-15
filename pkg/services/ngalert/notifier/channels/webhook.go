@@ -106,11 +106,11 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 		case string:
 			maxAlerts, err = strconv.Atoi(value)
 			if err != nil {
-				logger.Warn("failed to convert setting maxAlerts to integer. Using default", "error", err, "original", value)
+				logger.Warn("Failed to convert setting maxAlerts to integer. Using default", "error", err, "original", value)
 				maxAlerts = 0
 			}
 		default:
-			logger.Warn("unexpected type of setting maxAlerts. Expected integer. Using default", "type", fmt.Sprintf("%T", settings.MaxAlerts))
+			logger.Warn("Unexpected type of setting maxAlerts. Expected integer. Using default", "type", fmt.Sprintf("%T", settings.MaxAlerts))
 		}
 	}
 
@@ -183,7 +183,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		wn.log.Warn("failed to template webhook message", "error", tmplErr.Error())
+		wn.log.Warn("Failed to template webhook message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 

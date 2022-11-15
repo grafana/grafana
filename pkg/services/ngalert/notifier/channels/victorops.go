@@ -104,7 +104,7 @@ type VictoropsNotifier struct {
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	vn.log.Debug("sending notification", "notification", vn.Name)
+	vn.log.Debug("Sending notification")
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
@@ -126,7 +126,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	if tmplErr != nil {
-		vn.log.Warn("failed to expand message template. "+
+		vn.log.Warn("Failed to expand message template. "+
 			"", "error", tmplErr.Error())
 		tmplErr = nil
 	}
@@ -145,7 +145,8 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	u := tmpl(vn.settings.URL)
 	if tmplErr != nil {
-		vn.log.Info("failed to expand URL template", "error", tmplErr.Error(), "fallback", vn.settings.URL)
+		vn.log.Info("Failed to expand URL template", "error", tmplErr.Error(), "fallback", vn.settings.URL, "template", vn.settings.URL)
+		tmplErr = nil
 		u = vn.settings.URL
 	}
 
@@ -159,7 +160,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		vn.log.Error("failed to send notification", "error", err, "webhook", vn.Name)
+		vn.log.Error("Failed to send notification", "error", err)
 		return false, err
 	}
 
@@ -177,6 +178,6 @@ func buildMessageType(l log.Logger, tmpl func(string) string, msgType string, as
 	if messageType := strings.ToUpper(tmpl(msgType)); messageType != "" {
 		return messageType
 	}
-	l.Warn("expansion of message type template resulted in an empty string. Using fallback", "fallback", victoropsAlertStateCritical, "template", msgType)
+	l.Warn("Expansion of message type template resulted in an empty string. Using fallback", "fallback", victoropsAlertStateCritical, "template", msgType)
 	return victoropsAlertStateCritical
 }

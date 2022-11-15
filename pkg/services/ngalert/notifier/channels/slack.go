@@ -153,7 +153,7 @@ type attachment struct {
 
 // Notify sends an alert notification to Slack.
 func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
-	sn.log.Debug("building slack message", "alerts", len(alerts))
+	sn.log.Debug("Sending notification", "alerts", len(alerts))
 	msg, err := sn.buildSlackMessage(ctx, alerts)
 	if err != nil {
 		return false, fmt.Errorf("build slack message: %w", err)
@@ -164,7 +164,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	sn.log.Debug("sending Slack API request", "url", sn.settings.URL, "data", string(b))
+	sn.log.Debug("Sending Slack API request", "url", sn.settings.URL, "data", string(b))
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, sn.settings.URL, bytes.NewReader(b))
 	if err != nil {
 		return false, fmt.Errorf("failed to create HTTP request: %w", err)
@@ -177,7 +177,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
-		sn.log.Debug("adding authorization header to HTTP request")
+		sn.log.Debug("Adding authorization header to HTTP request")
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sn.settings.Token))
 	}
 
@@ -193,7 +193,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr error) {
 	defer func() {
 		if retErr != nil {
-			logger.Warn("failed to send slack request", "error", retErr)
+			logger.Warn("Failed to send slack request", "error", retErr)
 		}
 	}()
 
@@ -217,7 +217,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Warn("failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -250,7 +250,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 		return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 	}
 
-	logger.Debug("sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
+	logger.Debug("Sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
 	return nil
 }
 
@@ -289,7 +289,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 	}, alrts...)
 
 	if tmplErr != nil {
-		sn.log.Warn("failed to template Slack message", "error", tmplErr.Error())
+		sn.log.Warn("Failed to template Slack message", "error", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}

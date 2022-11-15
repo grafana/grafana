@@ -139,7 +139,7 @@ type WeComNotifier struct {
 
 // Notify send an alert notification to WeCom.
 func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	w.log.Info("executing WeCom notification", "notification", w.Name)
+	w.log.Info("Sending notification")
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, w.tmpl, as, w.log, &tmplErr)
@@ -180,7 +180,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if tmplErr != nil {
-		w.log.Warn("failed to template WeCom message", "error", tmplErr.Error())
+		w.log.Warn("Failed to template WeCom message", "error", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -189,7 +189,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	}
 
 	if err = w.ns.SendWebhookSync(ctx, cmd); err != nil {
-		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
+		w.log.Error("Failed to send notification", "error", err)
 		return false, err
 	}
 

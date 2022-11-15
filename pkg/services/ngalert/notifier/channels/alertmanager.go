@@ -79,7 +79,7 @@ func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *t
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
 		basicAuthPassword: config.BasicAuthPassword,
-		logger:            log.New(config.LogContext("alerting.notifier.prometheus-alertmanager")...),
+		log:               log.New(config.LogContext("alerting.notifier.prometheus-alertmanager")...),
 	}
 }
 
@@ -91,17 +91,17 @@ type AlertmanagerNotifier struct {
 	urls              []*url.URL
 	basicAuthUser     string
 	basicAuthPassword string
-	logger            log.Logger
+	log               log.Logger
 }
 
 // Notify sends alert notifications to Alertmanager.
 func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	n.logger.Debug("sending Alertmanager alert", "alertmanager", n.Name)
+	n.log.Debug("Sending notification")
 	if len(as) == 0 {
 		return true, nil
 	}
 
-	_ = withStoredImages(ctx, n.logger, n.images,
+	_ = withStoredImages(ctx, n.log, n.images,
 		func(index int, image ngmodels.Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then include it as an annotation
@@ -125,8 +125,8 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			user:     n.basicAuthUser,
 			password: n.basicAuthPassword,
 			body:     body,
-		}, n.logger); err != nil {
-			n.logger.Warn("failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
+		}, n.log); err != nil {
+			n.log.Warn("Failed to send notification", "error", err, "url", u.String())
 			lastErr = err
 			numErrs++
 		}
@@ -134,7 +134,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	if numErrs == len(n.urls) {
 		// All attempts to send alerts have failed
-		n.logger.Warn("all attempts to send to Alertmanager failed", "alertmanager", n.Name)
+		n.log.Warn("All attempts to send to Alertmanager failed")
 		return false, fmt.Errorf("failed to send alert to Alertmanager: %w", lastErr)
 	}
 

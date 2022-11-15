@@ -80,7 +80,7 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 
 // Notify send an alert notification to Google Chat.
 func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	gcn.log.Debug("executing Google Chat notification")
+	gcn.log.Debug("Sending notification")
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
@@ -94,7 +94,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	if tmplErr != nil {
-		gcn.log.Warn("failed to template Google Chat message", "error", tmplErr.Error())
+		gcn.log.Warn("Failed to template Google Chat message", "error", tmplErr.Error(), "template", gcn.settings.Content)
 		tmplErr = nil
 	}
 
@@ -145,13 +145,14 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	if tmplErr != nil {
-		gcn.log.Warn("failed to template GoogleChat message", "error", tmplErr.Error())
+		gcn.log.Warn("Failed to template GoogleChat message", "error", tmplErr.Error(), "template", gcn.settings.Title)
 		tmplErr = nil
 	}
 
 	u := tmpl(gcn.settings.URL)
 	if tmplErr != nil {
-		gcn.log.Warn("failed to template GoogleChat URL", "error", tmplErr.Error(), "fallback", gcn.settings.URL)
+		gcn.log.Warn("Failed to template GoogleChat URL", "error", tmplErr.Error(), "fallback", gcn.settings.URL, "template", gcn.settings.URL)
+		tmplErr = nil
 		u = gcn.settings.URL
 	}
 
@@ -170,7 +171,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	if err := gcn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		gcn.log.Error("Failed to send Google Hangouts Chat alert", "error", err, "webhook", gcn.Name)
+		gcn.log.Error("Failed to send notification", "error", err)
 		return false, err
 	}
 
@@ -184,7 +185,7 @@ func (gcn *GoogleChatNotifier) SendResolved() bool {
 func (gcn *GoogleChatNotifier) isUrlAbsolute(urlToCheck string) bool {
 	parsed, err := url.Parse(urlToCheck)
 	if err != nil {
-		gcn.log.Warn("could not parse URL", "urlToCheck", urlToCheck)
+		gcn.log.Warn("Could not parse URL", "urlToCheck", urlToCheck)
 		return false
 	}
 
