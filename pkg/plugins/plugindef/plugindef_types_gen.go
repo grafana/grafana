@@ -465,7 +465,7 @@ type JWTTokenAuth struct {
 	Url string `json:"url"`
 }
 
-// Permission describes an RBAC permission on the plugin. A permission has an action and an option
+// Permission describes an RBAC permission on the plugin. A permission has an action and an optional
 // scope.
 // Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
 type Permission struct {
