@@ -1,7 +1,6 @@
 package channels
 
 import (
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -13,7 +12,7 @@ type Base struct {
 	IsDefault             bool
 	DisableResolveMessage bool
 
-	log log.Logger
+	// log log.Logger
 }
 
 func (n *Base) GetDisableResolveMessage() bool {
@@ -27,6 +26,6 @@ func NewBase(model *models.AlertNotification) *Base {
 		IsDefault:             model.IsDefault,
 		Type:                  model.Type,
 		DisableResolveMessage: model.DisableResolveMessage,
-		log:                   log.New("alerting.notifier." + model.Name),
+		// log:                   log.New("alerting.notifier." + model.Name),
 	}
 }
