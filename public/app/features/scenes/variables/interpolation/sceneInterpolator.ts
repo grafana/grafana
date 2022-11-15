@@ -2,6 +2,7 @@ import { ScopedVars } from '@grafana/data';
 import { VariableModel } from '@grafana/schema';
 import { variableRegex } from 'app/features/variables/utils';
 
+import { EmptyVariableSet, sceneGraph } from '../../core/sceneGraph';
 import { SceneObject } from '../../core/types';
 import { SceneVariable, VariableValue } from '../types';
 
@@ -31,8 +32,8 @@ export function sceneInterpolator(
     return target ?? '';
   }
 
-  // Skip any interpolation if there are no variables in the scene object graph?
-  if (!sceneObject.getVariables()) {
+  // Skip any interpolation if there are no variables in the scene object graph
+  if (sceneGraph.getVariables(sceneObject) === EmptyVariableSet) {
     return target;
   }
 
