@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { VariableOption } from '../../types';
 
@@ -63,8 +63,12 @@ class VariableOptions extends PureComponent<Props> {
     const selectClass = option.selected ? 'variable-option pointer selected' : 'variable-option pointer';
     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
 
+    const isAllOption = option.value === '$__all';
+
     return (
       <li key={`${option.value}`}>
+        {' '}
+        {console.log(option.value === '$__all')}
         <button
           role="checkbox"
           type="button"
@@ -74,7 +78,7 @@ class VariableOptions extends PureComponent<Props> {
         >
           <span className="variable-option-icon"></span>
           <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
-            {option.text}
+            {isAllOption ? t('variable.picker.option-all', 'All') : option.text}
           </span>
         </button>
       </li>
