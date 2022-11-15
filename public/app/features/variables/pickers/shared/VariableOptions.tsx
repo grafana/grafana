@@ -4,6 +4,7 @@ import React, { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { VariableOption } from '../../types';
 
@@ -87,8 +88,10 @@ class VariableOptions extends PureComponent<Props> {
       return null;
     }
 
+    const tooltipContent = () => <Trans i18nKey="variable.picker.option-tooltip">Clear selections</Trans>;
+
     return (
-      <Tooltip content={'Clear selections'} placement={'top'}>
+      <Tooltip content={tooltipContent} placement={'top'}>
         <button
           className={`${
             selectedValues.length > 1
@@ -102,7 +105,7 @@ class VariableOptions extends PureComponent<Props> {
           data-placement="top"
         >
           <span className="variable-option-icon"></span>
-          Selected ({selectedValues.length})
+          <Trans i18nKey="variable.picker.option-selected-values">Selected</Trans> ({selectedValues.length})
         </button>
       </Tooltip>
     );
