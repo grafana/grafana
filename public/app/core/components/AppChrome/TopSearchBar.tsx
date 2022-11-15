@@ -36,14 +36,14 @@ export function TopSearchBar() {
       <TopSearchBarSection align="right">
         <QuickAdd />
         {helpNode && (
-          <Dropdown overlay={<TopNavBarMenu node={helpNode} />} placement="bottom-end">
+          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
         <NewsContainer className={styles.newsButton} />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
-          <Dropdown overlay={<TopNavBarMenu node={profileNode} />} placement="bottom-end">
+          <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
             <ToolbarButton
               className={styles.profileButton}
               imgSrc={contextSrv.user.gravatarUrl}
