@@ -6,6 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { ALL_VARIABLE_TEXT } from '../../constants';
+
 interface Props {
   onClick: () => void;
   text: string;
@@ -66,7 +68,11 @@ interface VariableLinkTextProps {
 
 const VariableLinkText: FC<VariableLinkTextProps> = ({ text }) => {
   const styles = useStyles2(getStyles);
-  return <span className={styles.textAndTags}>{text === 'All' ? t('variable.picker.link-all', 'All') : text}</span>;
+  return (
+    <span className={styles.textAndTags}>
+      {text === ALL_VARIABLE_TEXT ? t('variable.picker.link-all', 'All') : text}
+    </span>
+  );
 };
 
 const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {

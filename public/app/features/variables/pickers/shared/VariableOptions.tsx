@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
+import { ALL_VARIABLE_VALUE } from '../../constants';
 import { VariableOption } from '../../types';
 
 export interface Props extends React.HTMLProps<HTMLUListElement>, Themeable2 {
@@ -63,12 +64,10 @@ class VariableOptions extends PureComponent<Props> {
     const selectClass = option.selected ? 'variable-option pointer selected' : 'variable-option pointer';
     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
 
-    const isAllOption = option.value === '$__all';
+    const isAllOption = option.value === ALL_VARIABLE_VALUE;
 
     return (
       <li key={`${option.value}`}>
-        {' '}
-        {console.log(option.value === '$__all')}
         <button
           role="checkbox"
           type="button"
