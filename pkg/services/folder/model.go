@@ -142,15 +142,15 @@ func (f *Folder) ToLegacyModel() *models.Folder {
 
 func FromDashboard(dash *models.Dashboard) *Folder {
 	return &Folder{
-		ID:      dash.Id,
-		UID:     dash.Uid,
-		Title:   dash.Title,
-		HasACL:  dash.HasACL,
-		Url:     models.GetFolderUrl(dash.Uid, dash.Slug),
-		Version: dash.Version,
-		Created: dash.Created,
-		//CreatedBy: dash.CreatedBy,
-		Updated: dash.Updated,
-		//UpdatedBy: dash.UpdatedBy,
+		ID:        dash.Id,
+		UID:       dash.Uid,
+		Title:     dash.Title,
+		HasACL:    dash.HasACL,
+		Url:       models.GetFolderUrl(dash.Uid, dash.Slug),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
 	}
 }
