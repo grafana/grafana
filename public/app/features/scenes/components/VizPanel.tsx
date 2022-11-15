@@ -42,7 +42,7 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useState();
   const { data } = sceneGraph.getDataFor(model).useState();
 
-  const titleInterpolated = model.interpolate(title);
+  const titleInterpolated = sceneGraph.interpolateFor(model, title);
 
   return (
     <AutoSizer>

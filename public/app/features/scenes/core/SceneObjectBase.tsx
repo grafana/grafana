@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
-import { sceneInterpolator } from '../variables/interpolation/sceneInterpolator';
 import { SceneVariableDependencyConfigLike } from '../variables/types';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
@@ -187,19 +186,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
    */
   public clone(withState?: Partial<TState>): this {
     return cloneSceneObject(this, withState);
-  }
-
-  /**
-   * Interpolates the given string using the current scene object as context.
-   * TODO: Cache interpolatinos?
-   */
-  public interpolate(value: string | undefined) {
-    // Skip interpolation if there are no variable dependencies
-    if (!value || !this._variableDependency || this._variableDependency.getNames().size === 0) {
-      return value ?? '';
-    }
-
-    return sceneInterpolator(this, value);
   }
 }
 

@@ -3,6 +3,7 @@ import { Observable, Subject } from 'rxjs';
 
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
+import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
 import { VariableDependencyConfig } from '../VariableDependencyConfig';
 import { VariableValueSelect } from '../components/VariableValueSelect';
@@ -66,7 +67,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   }
 
   private issueQuery() {
-    const interpolatedQuery = this.interpolate(this.state.query);
+    const interpolatedQuery = sceneGraph.interpolateFor(this.state.query);
     const options = queryMetricTree(interpolatedQuery).map((x) => ({ label: x.name, value: x.name }));
 
     this.setState({

@@ -1,5 +1,6 @@
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 
+import { sceneInterpolator } from '../variables/interpolation/sceneInterpolator';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { SceneVariables } from '../variables/types';
 
@@ -70,6 +71,18 @@ export function getSceneEditorFor(sceneObject: SceneObject): SceneEditor {
   throw new Error('No editor found in scene tree');
 }
 
+/**
+ * Interpolates the given string using the current scene object as context.   *
+ */
+export function interpolateFor(sceneObject: SceneObject, value: string | undefined | null): string {
+  // Skip interpolation if there are no variable dependencies
+  if (!value || !sceneObject.variableDependency || sceneObject.variableDependency.getNames().size === 0) {
+    return value ?? '';
+  }
+
+  return sceneInterpolator(sceneObject, value);
+}
+
 export const EmptyVariableSet = new SceneVariableSet({ variables: [] });
 
 export const EmptyDataNode = new SceneDataNode({
@@ -87,4 +100,5 @@ export const sceneGraph = {
   getDataFor,
   getTimeRangeFor,
   getSceneEditorFor,
+  interpolateFor,
 };
