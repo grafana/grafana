@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabContent, Alert } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AppNotificationSeverity } from 'app/types';
 
 import { Loader } from '../components/Loader';
@@ -17,17 +17,13 @@ import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
 import { PluginTabIds } from '../types';
 
-type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
-
-export default function PluginDetails({ match, queryParams }: Props): JSX.Element | null {
-  const {
-    params: { pluginId = '' },
-    url,
-  } = match;
-  const parentUrl = url.substring(0, url.lastIndexOf('/'));
-
-  const plugin = useGetSingle(pluginId); // fetches the localplugin settings
-  const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.page as PluginTabIds);
+export default function PluginDetails(): JSX.Element {
+  const { pluginId } = useParams<{ pluginId: string }>();
+  const location = useLocation();
+  const parentUrl = location.pathname.substring(0, location.pathname.lastIndexOf('/'));
+  const queryParams = new URLSearchParams(location.search);
+  const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
+  const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.get('page') as PluginTabIds);
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
@@ -58,7 +54,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
         <TabContent className={styles.tabContent}>
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
-          <PluginDetailsBody queryParams={queryParams} plugin={plugin} pageId={activePageId} />
+          <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
         </TabContent>
       </Page.Contents>
     </Page>
