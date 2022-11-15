@@ -355,7 +355,7 @@
                 color,           // fill color
                 blur);
             
-            if(gaugeOptionsi.gauge.neutralValue != null)  
+            if(gaugeOptionsi.gauge.neutralValue != null)  {
                 drawZeroMarker(gaugeOptionsi, layout, cellLayout, color);
             }
         }
