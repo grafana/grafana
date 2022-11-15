@@ -12,7 +12,7 @@ import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 
 import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams } from './state/actions';
-import { initialTeamsState, setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import { initialTeamsState, setSearchQuery, setCurrentPage } from './state/reducers';
 import { getTeams, isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
@@ -20,13 +20,13 @@ const pageLimit = 30;
 export interface Props {
   teams: Team[];
   totalCount: number;
+  currentPage: number;
   searchQuery: string;
-  searchPage: number;
   hasFetched: boolean;
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
+  setCurrentPage: typeof setCurrentPage;
   setSearchQuery: typeof setSearchQuery;
-  setTeamsSearchPage: typeof setTeamsSearchPage;
   editorsCanAdmin: boolean;
   signedInUser: User;
 }
@@ -66,11 +66,11 @@ export class TeamList extends PureComponent<Props, State> {
   };
 
   getPaginatedTeams = (teams: Team[]) => {
-    const offset = (this.props.searchPage - 1) * pageLimit;
+    const offset = (this.props.currentPage - 1) * pageLimit;
     return teams.slice(offset, offset + pageLimit);
   };
   renderList() {
-    const { teams, totalCount, hasFetched } = this.props;
+    const { teams, totalCount, currentPage, hasFetched } = this.props;
 
     if (!hasFetched) {
       return null;
@@ -92,7 +92,7 @@ export class TeamList extends PureComponent<Props, State> {
       );
     }
 
-    const { searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage, signedInUser } = this.props;
+    const { searchQuery, editorsCanAdmin, setCurrentPage, signedInUser } = this.props;
     const canCreate = canCreateTeam(editorsCanAdmin);
     const displayRolePicker = shouldDisaplyRolePicker();
     const paginatedTeams = this.getPaginatedTeams(teams);
@@ -137,8 +137,8 @@ export class TeamList extends PureComponent<Props, State> {
             </table>
             <HorizontalGroup justify="flex-end">
               <Pagination
-                onNavigate={setTeamsSearchPage}
-                currentPage={searchPage}
+                onNavigate={setCurrentPage}
+                currentPage={currentPage}
                 numberOfPages={Math.ceil(totalCount / pageLimit)}
                 hideWhenSinglePage={true}
               />
@@ -177,8 +177,8 @@ function mapStateToProps(state: StoreState) {
   return {
     teams: getTeams(state.teams),
     totalCount: state.teams.totalCount,
+    currentPage: state.teams.currentPage,
     searchQuery: state.teams.searchQuery,
-    searchPage: state.teams.searchPage,
     hasFetched: state.teams.hasFetched,
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
     signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
@@ -188,8 +188,8 @@ function mapStateToProps(state: StoreState) {
 const mapDispatchToProps = {
   loadTeams,
   deleteTeam,
+  setCurrentPage,
   setSearchQuery,
-  setTeamsSearchPage,
 };
 
 export default connectWithCleanUp(

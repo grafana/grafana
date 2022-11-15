@@ -4,8 +4,8 @@ import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 
 export const initialTeamsState: TeamsState = {
   teams: [],
+  currentPage: 1,
   searchQuery: '',
-  searchPage: 1,
   totalCount: 0,
   hasFetched: false,
 };
@@ -18,15 +18,15 @@ const teamsSlice = createSlice({
       return { ...state, hasFetched: true, teams: action.payload.teams, totalCount: action.payload.totalCount };
     },
     setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
-      return { ...state, searchQuery: action.payload, searchPage: initialTeamsState.searchPage };
+      return { ...state, searchQuery: action.payload, currentPage: initialTeamsState.currentPage };
     },
-    setTeamsSearchPage: (state, action: PayloadAction<number>): TeamsState => {
-      return { ...state, searchPage: action.payload };
+    setCurrentPage: (state, action: PayloadAction<number>): TeamsState => {
+      return { ...state, currentPage: action.payload };
     },
   },
 });
 
-export const { teamsLoaded, setSearchQuery, setTeamsSearchPage } = teamsSlice.actions;
+export const { teamsLoaded, setSearchQuery, setCurrentPage } = teamsSlice.actions;
 
 export const teamsReducer = teamsSlice.reducer;
 

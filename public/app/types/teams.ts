@@ -30,8 +30,8 @@ export interface TeamGroup {
 export interface TeamsState {
   teams: Team[];
   totalCount: number;
+  currentPage: number;
   searchQuery: string;
-  searchPage: number;
   hasFetched: boolean;
 }
 
