@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 
-import { DeleteButton, LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
+import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
-import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
@@ -11,6 +10,7 @@ import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 
+import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams } from './state/actions';
 import { initialTeamsState, setSearchQuery, setTeamsSearchPage } from './state/reducers';
 import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
@@ -65,64 +65,6 @@ export class TeamList extends PureComponent<Props, State> {
     this.props.setSearchQuery(value);
   };
 
-  renderTeam(team: Team) {
-    const { editorsCanAdmin, signedInUser } = this.props;
-    const permission = team.permission;
-    const teamUrl = `org/teams/edit/${team.id}`;
-    const isTeamAdmin = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
-    const canDelete = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsDelete, team, isTeamAdmin);
-    const canReadTeam = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRead, team, isTeamAdmin);
-    const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
-    const displayRolePicker =
-      contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList);
-
-    return (
-      <tr key={team.id}>
-        <td className="width-4 text-center link-td">
-          {canReadTeam ? (
-            <a href={teamUrl}>
-              <img className="filter-table__avatar" src={team.avatarUrl} alt="Team avatar" />
-            </a>
-          ) : (
-            <img className="filter-table__avatar" src={team.avatarUrl} alt="Team avatar" />
-          )}
-        </td>
-        <td className="link-td">
-          {canReadTeam ? <a href={teamUrl}>{team.name}</a> : <div style={{ padding: '0px 8px' }}>{team.name}</div>}
-        </td>
-        <td className="link-td">
-          {canReadTeam ? (
-            <a href={teamUrl} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
-              {team.email}
-            </a>
-          ) : (
-            <div style={{ padding: '0px 8px' }} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
-              {team.email}
-            </div>
-          )}
-        </td>
-        <td className="link-td">
-          {canReadTeam ? (
-            <a href={teamUrl}>{team.memberCount}</a>
-          ) : (
-            <div style={{ padding: '0px 8px' }}>{team.memberCount}</div>
-          )}
-        </td>
-        {displayRolePicker && (
-          <td>{canSeeTeamRoles && <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />}</td>
-        )}
-        <td className="text-right">
-          <DeleteButton
-            aria-label={`Delete team ${team.name}`}
-            size="sm"
-            disabled={!canDelete}
-            onConfirm={() => this.deleteTeam(team)}
-          />
-        </td>
-      </tr>
-    );
-  }
-
   renderEmptyList() {
     return (
       <EmptyListCTA
@@ -145,7 +87,7 @@ export class TeamList extends PureComponent<Props, State> {
   };
 
   renderTeamList() {
-    const { teams, searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage } = this.props;
+    const { teams, searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage, signedInUser } = this.props;
     const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
     const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
     const displayRolePicker =
@@ -181,7 +123,17 @@ export class TeamList extends PureComponent<Props, State> {
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>
-              <tbody>{paginatedTeams.map((team) => this.renderTeam(team))}</tbody>
+              <tbody>
+                {paginatedTeams.map((team) => (
+                  <TeamListRow
+                    key={team.id}
+                    team={team}
+                    roleOptions={this.state.roleOptions}
+                    isTeamAdmin={isPermissionTeamAdmin({ permission: team.permission, editorsCanAdmin, signedInUser })}
+                    onDelete={(t: Team) => this.deleteTeam(t)}
+                  />
+                ))}
+              </tbody>
             </table>
             <HorizontalGroup justify="flex-end">
               <Pagination
