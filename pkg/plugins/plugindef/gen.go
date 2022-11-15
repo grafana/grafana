@@ -33,7 +33,7 @@ func main() {
 	lin := elsedie(thema.BindLineage(v, cuectx.GrafanaThemaRuntime()))("plugindef lineage is invalid")
 
 	jl := &codejen.JennyList[thema.Lineage]{}
-	jl.AppendOneToOne(&jennytypego{}, &jennybindgo{}, &jennyjschema{})
+	jl.AppendOneToOne(&jennytypego{}, &jennybindgo{})
 	jl.AddPostprocessors(codegen.SlashHeaderMapper(filepath.Join(dirPlugindef, "gen.go")))
 
 	cwd, err := os.Getwd()
