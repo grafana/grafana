@@ -6,21 +6,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 var _ fs.FS = (*LocalFS)(nil)
-
-type FS interface {
-	fs.FS
-
-	Base() string
-	Exists(name string) bool
-	FullPath(name string) (string, bool)
-	Files() []string
-	Read(name string) ([]byte, bool)
-	Remove(name string) error
-}
 
 type LocalFS struct {
 	m        map[string]*LocalFile
@@ -67,7 +57,7 @@ func (f LocalFS) Files() []string {
 	var files []string
 	for p := range f.m {
 		r, err := filepath.Rel(f.basePath, p)
-		if err != nil {
+		if strings.Contains(r, "..") || err != nil {
 			continue
 		}
 		files = append(files, r)

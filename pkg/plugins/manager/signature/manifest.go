@@ -53,8 +53,8 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-// pluginManifest holds details for the file manifest
-type pluginManifest struct {
+// PluginManifest holds details for the file manifest
+type PluginManifest struct {
 	Plugin  string            `json:"plugin"`
 	Version string            `json:"version"`
 	KeyID   string            `json:"keyId"`
@@ -69,20 +69,20 @@ type pluginManifest struct {
 	RootURLs        []string              `json:"rootUrls"`
 }
 
-func (m *pluginManifest) isV2() bool {
+func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
 
-// readPluginManifest attempts to read and verify the plugin manifest
+// ReadPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func readPluginManifest(body []byte) (*pluginManifest, error) {
+func ReadPluginManifest(body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
 	}
 
 	// Convert to a well typed object
-	var manifest pluginManifest
+	var manifest PluginManifest
 	err := json.Unmarshal(block.Plaintext, &manifest)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
@@ -120,7 +120,7 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 		}, nil
 	}
 
-	manifest, err := readPluginManifest(byteValue)
+	manifest, err := ReadPluginManifest(byteValue)
 	if err != nil {
 		mlog.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
@@ -267,7 +267,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func validateManifest(m pluginManifest, block *clearsign.Block) error {
+func validateManifest(m PluginManifest, block *clearsign.Block) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}

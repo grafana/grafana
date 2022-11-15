@@ -35,7 +35,11 @@ func Newv2() Finderv2 {
 	return Finderv2{log: log.New("plugin.finder")}
 }
 
-func (f *Finderv2) Find(pluginPaths []string) ([]*plugins.FoundBundle, error) {
+func (f *Finderv2) Find(pluginPaths ...string) ([]*plugins.FoundBundle, error) {
+	if len(pluginPaths) == 0 {
+		return []*plugins.FoundBundle{}, nil
+	}
+
 	var pluginJSONPaths []string
 	for _, path := range pluginPaths {
 		exists, err := fs.Exists(path)

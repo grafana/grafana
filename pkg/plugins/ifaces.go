@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"io/fs"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -37,6 +38,17 @@ type CompatOpts struct {
 type UpdateInfo struct {
 	PluginZipURL string
 }
+
+type FS interface {
+	fs.FS
+
+	Base() string
+	Exists(name string) bool
+	FullPath(name string) (string, bool)
+	Files() []string
+	Read(name string) ([]byte, bool)
+}
+
 
 type FoundBundle struct {
 	Primary  FoundPlugin

@@ -2,7 +2,6 @@ package loader
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -23,11 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/util"
-)
-
-var (
-	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
-	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
 var _ plugins.ErrorResolver = (*Loader)(nil)
@@ -69,12 +63,21 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 }
 
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	//pluginJSONPaths, err := l.pluginFinder.Find(paths)
+	var res []*plugins.FoundBundle
+	var err error
+	if class == plugins.Remote {
+		r := finder.NewRemote()
 
-	f := finder.Newv2()
-	res, err := f.Find(paths)
-	if err != nil {
-		return nil, err
+		res, err = r.Find(paths...)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		f := finder.Newv2()
+		res, err = f.Find(paths...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return l.loadPlugins(ctx, class, res)
