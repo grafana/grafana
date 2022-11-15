@@ -56,7 +56,7 @@
     "rollup": "3.3.0",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
-    "rollup-plugin-node-externals": "^5.0.0",
+    "rollup-plugin-node-externals": "^5.0.2",
     "webpack": "5.74.0"
   },
   "dependencies": {
