@@ -358,6 +358,11 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "accessTokenExpirationCheck",
+			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
+			State:       FeatureStateStable,
+		},
+		{
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,

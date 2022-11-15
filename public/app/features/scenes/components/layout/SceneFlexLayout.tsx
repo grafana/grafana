@@ -2,8 +2,8 @@ import React, { CSSProperties } from 'react';
 
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneLayoutChild } from '../core/types';
+import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { SceneComponentProps, SceneLayoutChild, SceneLayoutState, SceneObjectSize } from '../../core/types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 

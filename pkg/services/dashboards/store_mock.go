@@ -7,6 +7,7 @@ import (
 
 	models "github.com/grafana/grafana/pkg/models"
 	folder "github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/quota"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -472,6 +473,10 @@ func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(ctx context.Context, d
 type mockConstructorTestingTNewFakeDashboardStore interface {
 	mock.TestingT
 	Cleanup(func())
+}
+
+func (_m *FakeDashboardStore) Count(context.Context, *quota.ScopeParameters) (*quota.Map, error) {
+	return nil, nil
 }
 
 // NewFakeDashboardStore creates a new instance of FakeDashboardStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

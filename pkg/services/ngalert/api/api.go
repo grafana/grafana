@@ -145,3 +145,28 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		alertRules:          api.AlertRules,
 	}), m)
 }
+
+func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	if orgUsage, err := api.RuleStore.Count(ctx, scopeParams.OrgID); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, orgUsage)
+	}
+
+	if globalUsage, err := api.RuleStore.Count(ctx, 0); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, globalUsage)
+	}
+
+	return u, nil
+}
