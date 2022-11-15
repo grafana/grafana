@@ -36,7 +36,7 @@ export function TopSearchBar() {
       <TopSearchBarSection align="right">
         <QuickAdd />
         {helpNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
+          <Dropdown overlay={<TopNavBarMenu node={helpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
