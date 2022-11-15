@@ -234,7 +234,8 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext) func(pluginID string, include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(pluginID string, include *plugins.Includes) bool {
-		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && include.IsRBACReady()
+		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) &&
+			!s.accessControl.IsDisabled() && include.IsRBACReady()
 		if useRBAC && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
