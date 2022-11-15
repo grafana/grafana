@@ -25,7 +25,7 @@ const setup = (propOverrides?: object) => {
     setTeamsSearchPage: mockToolkitActionCreator(setTeamsSearchPage),
     searchQuery: '',
     searchPage: 1,
-    teamsCount: 0,
+    totalCount: 0,
     hasFetched: false,
     editorsCanAdmin: false,
     signedInUser: {

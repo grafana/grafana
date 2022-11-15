@@ -1,10 +1,8 @@
 import { User } from 'app/core/services/context_srv';
 import { Team, TeamsState, TeamState, TeamMember, OrgRole, TeamPermissionLevel } from 'app/types';
 
-export const getSearchQuery = (state: TeamsState) => state.searchQuery;
 export const getSearchMemberQuery = (state: TeamState) => state.searchMemberQuery;
 export const getTeamGroups = (state: TeamState) => state.groups;
-export const getTeamsSearchPage = (state: TeamsState) => state.searchPage;
 
 export const getTeam = (state: TeamState, currentTeamId: any): Team | null => {
   if (state.team.id === parseInt(currentTeamId, 10)) {

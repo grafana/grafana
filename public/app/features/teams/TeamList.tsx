@@ -13,12 +13,13 @@ import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams } from './state/actions';
 import { initialTeamsState, setSearchQuery, setTeamsSearchPage } from './state/reducers';
-import { getSearchQuery, getTeams, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
+import { getTeams, isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
 
 export interface Props {
   teams: Team[];
+  totalCount: number;
   searchQuery: string;
   searchPage: number;
   hasFetched: boolean;
@@ -64,35 +65,36 @@ export class TeamList extends PureComponent<Props, State> {
     this.props.setSearchQuery(value);
   };
 
-  renderEmptyList() {
-    return (
-      <EmptyListCTA
-        title="You haven't created any teams yet."
-        buttonIcon="users-alt"
-        buttonLink="org/teams/new"
-        buttonTitle=" New team"
-        buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
-        proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
-        proTipLink=""
-        proTipLinkTitle=""
-        proTipTarget="_blank"
-      />
-    );
-  }
-
   getPaginatedTeams = (teams: Team[]) => {
     const offset = (this.props.searchPage - 1) * pageLimit;
     return teams.slice(offset, offset + pageLimit);
   };
+  renderList() {
+    const { teams, totalCount, hasFetched } = this.props;
 
-  renderTeamList() {
-    const { teams, searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage, signedInUser } = this.props;
-    const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
-    const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
-    const displayRolePicker =
-      contextSrv.licensedAccessControlEnabled() &&
-      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
-      contextSrv.hasPermission(AccessControlAction.ActionRolesList);
+    if (!hasFetched) {
+      return null;
+    }
+
+    if (totalCount === 0) {
+      return (
+        <EmptyListCTA
+          title="You haven't created any teams yet."
+          buttonIcon="users-alt"
+          buttonLink="org/teams/new"
+          buttonTitle=" New team"
+          buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
+          proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
+          proTipLink=""
+          proTipLinkTitle=""
+          proTipTarget="_blank"
+        />
+      );
+    }
+
+    const { searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage, signedInUser } = this.props;
+    const canCreate = canCreateTeam(editorsCanAdmin);
+    const displayRolePicker = shouldDisaplyRolePicker();
     const newTeamHref = canCreate ? 'org/teams/new' : '#';
     const paginatedTeams = this.getPaginatedTeams(teams);
     const totalPages = Math.ceil(teams.length / pageLimit);
@@ -128,6 +130,7 @@ export class TeamList extends PureComponent<Props, State> {
                     key={team.id}
                     team={team}
                     roleOptions={this.state.roleOptions}
+                    displayRolePicker={displayRolePicker}
                     isTeamAdmin={isPermissionTeamAdmin({ permission: team.permission, editorsCanAdmin, signedInUser })}
                     onDelete={(t: Team) => this.deleteTeam(t)}
                   />
@@ -148,20 +151,6 @@ export class TeamList extends PureComponent<Props, State> {
     );
   }
 
-  renderList() {
-    const { teams, hasFetched } = this.props;
-
-    if (!hasFetched) {
-      return null;
-    }
-
-    if (teams.length === 0) {
-      return this.renderEmptyList();
-    }
-
-    return this.renderTeamList();
-  }
-
   render() {
     const { hasFetched } = this.props;
 
@@ -173,11 +162,25 @@ export class TeamList extends PureComponent<Props, State> {
   }
 }
 
+function canCreateTeam(editorsCanAdmin: boolean): boolean {
+  const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
+  return contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
+}
+
+function shouldDisaplyRolePicker(): boolean {
+  return (
+    contextSrv.licensedAccessControlEnabled() &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
+    contextSrv.hasPermission(AccessControlAction.ActionRolesList)
+  );
+}
+
 function mapStateToProps(state: StoreState) {
   return {
     teams: getTeams(state.teams),
-    searchQuery: getSearchQuery(state.teams),
-    searchPage: getTeamsSearchPage(state.teams),
+    totalCount: state.teams.totalCount,
+    searchQuery: state.teams.searchQuery,
+    searchPage: state.teams.searchPage,
     hasFetched: state.teams.hasFetched,
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
     signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,

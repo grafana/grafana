@@ -19,7 +19,7 @@ export function loadTeams(): ThunkResult<void> {
       '/api/teams/search',
       accessControlQueryParam({ perpage: 1000, page: 1 })
     );
-    dispatch(teamsLoaded(response.teams));
+    dispatch(teamsLoaded({ teams: response.teams, totalCount: response.totalCount }));
   };
 }
 

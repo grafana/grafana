@@ -14,8 +14,8 @@ const teamsSlice = createSlice({
   name: 'teams',
   initialState: initialTeamsState,
   reducers: {
-    teamsLoaded: (state, action: PayloadAction<Team[]>): TeamsState => {
-      return { ...state, hasFetched: true, teams: action.payload };
+    teamsLoaded: (state, action: PayloadAction<{ teams: Team[]; totalCount: number }>): TeamsState => {
+      return { ...state, hasFetched: true, teams: action.payload.teams, totalCount: action.payload.totalCount };
     },
     setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
       return { ...state, searchQuery: action.payload, searchPage: initialTeamsState.searchPage };
