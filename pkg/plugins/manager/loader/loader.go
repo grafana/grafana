@@ -100,7 +100,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 		plugin.Signature = sig.Status
 		plugin.SignatureType = sig.Type
 		plugin.SignatureOrg = sig.SigningOrg
-		plugin.SignedFiles = sig.Files
 
 		loadedPlugins = append(loadedPlugins, plugin)
 
@@ -232,11 +231,11 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 
 func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	plugin := &plugins.Plugin{
-		JSONData:  pluginJSON,
-		Files:     files,
-		BaseURL:   path.Join("public/plugins", pluginJSON.ID),
-		Module:    path.Join("plugins", pluginJSON.ID, "module"),
-		Class:     class,
+		JSONData: pluginJSON,
+		Files:    files,
+		BaseURL:  path.Join("public/plugins", pluginJSON.ID),
+		Module:   path.Join("plugins", pluginJSON.ID, "module"),
+		Class:    class,
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))

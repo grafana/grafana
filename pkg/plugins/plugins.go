@@ -22,8 +22,8 @@ import (
 type Plugin struct {
 	JSONData
 
-	Files     FS
-	Class     Class
+	Files FS
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -36,7 +36,6 @@ type Plugin struct {
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
@@ -65,7 +64,6 @@ type PluginDTO struct {
 	Signature     SignatureStatus
 	SignatureType SignatureType
 	SignatureOrg  string
-	signedFiles   PluginFiles
 
 	// SystemJS fields
 	Module  string
@@ -399,7 +397,6 @@ func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
 		files:             p.Files,
 		class:             p.Class,
-		signedFiles:       p.SignedFiles,
 		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
 		JSONData:          p.JSONData,
 		IncludedInAppID:   p.IncludedInAppID,
