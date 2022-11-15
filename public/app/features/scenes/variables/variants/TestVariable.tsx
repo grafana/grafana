@@ -67,7 +67,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   }
 
   private issueQuery() {
-    const interpolatedQuery = sceneGraph.interpolateFor(this.state.query);
+    const interpolatedQuery = sceneGraph.interpolateFor(this, this.state.query);
     const options = queryMetricTree(interpolatedQuery).map((x) => ({ label: x.name, value: x.name }));
 
     this.setState({
