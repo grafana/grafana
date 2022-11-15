@@ -198,6 +198,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"unifiedAlerting": map[string]interface{}{
 			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
 		},
+		"oauth":       hs.getEnabledOAuthProviders(),
+		"samlEnabled": hs.samlEnabled(),
+		"samlName":    hs.samlName(),
 	}
 
 	if hs.ThumbService != nil {
@@ -500,4 +503,15 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	}
 
 	return pluginSettings, nil
+}
+
+func (hs *HTTPServer) getEnabledOAuthProviders() map[string]interface{} {
+	providers := make(map[string]interface{})
+	for key, oauth := range hs.SocialService.GetOAuthInfoProviders() {
+		providers[key] = map[string]string{
+			"name": oauth.Name,
+			"icon": oauth.Icon,
+		}
+	}
+	return providers
 }
