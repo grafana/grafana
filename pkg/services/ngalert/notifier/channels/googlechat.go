@@ -66,7 +66,7 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		log:    log.New("alerting.notifier.googlechat"),
+		log:    log.New(fc.Config.LogContext("alerting.notifier.googlechat")...),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
 		tmpl:   fc.Template,

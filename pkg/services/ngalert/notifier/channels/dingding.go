@@ -62,7 +62,7 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		log:      log.New("alerting.notifier.dingding"),
+		log:      log.New(fc.Config.LogContext("alerting.notifier.dingding")...),
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
 		settings: *settings,

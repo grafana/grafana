@@ -63,7 +63,7 @@ func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		log:      log.New("alerting.notifier.line"),
+		log:      log.New(fc.Config.LogContext("alerting.notifier.line")...),
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
 		settings: lineSettings{token: token, title: title, description: description},

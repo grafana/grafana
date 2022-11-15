@@ -75,7 +75,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 			Settings:              fc.Config.Settings,
 		}),
 		tmpl:   fc.Template,
-		log:    log.New("alerting.notifier." + fc.Config.Name),
+		log:    log.New(fc.Config.LogContext("alerting.notifier.pagerduty")...),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
 		settings: pagerdutySettings{

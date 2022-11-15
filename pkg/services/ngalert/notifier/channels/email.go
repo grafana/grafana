@@ -82,7 +82,7 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images 
 		SingleEmail: config.SingleEmail,
 		Message:     config.Message,
 		Subject:     config.Subject,
-		log:         log.New("alerting.notifier.email"),
+		log:         log.New(config.LogContext("alerting.notifier.email")...),
 		ns:          ns,
 		images:      images,
 		tmpl:        t,

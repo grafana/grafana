@@ -79,7 +79,7 @@ func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *t
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
 		basicAuthPassword: config.BasicAuthPassword,
-		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
+		logger:            log.New(config.LogContext("alerting.notifier.prometheus-alertmanager")...),
 	}
 }
 

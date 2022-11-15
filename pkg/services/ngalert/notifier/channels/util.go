@@ -173,6 +173,12 @@ type NotificationChannelConfig struct {
 	SecureSettings        map[string][]byte `json:"secureSettings"`
 }
 
+func (c NotificationChannelConfig) LogContext(logger string) []interface{} {
+	return []interface{}{
+		logger, "orgID", c.OrgID, "uID", c.UID, "name", c.Name,
+	}
+}
+
 func (c NotificationChannelConfig) unmarshalSettings(v interface{}) error {
 	ser, err := c.Settings.Encode()
 	if err != nil {

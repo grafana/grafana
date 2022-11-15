@@ -94,7 +94,7 @@ func NewSensuGoNotifier(config *SensuGoConfig, images ImageStore, ns notificatio
 		Handler:   config.Handler,
 		APIKey:    config.APIKey,
 		Message:   config.Message,
-		log:       log.New("alerting.notifier.sensugo"),
+		log:       log.New(config.LogContext("alerting.notifier.sensugo")...),
 		images:    images,
 		ns:        ns,
 		tmpl:      t,

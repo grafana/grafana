@@ -85,7 +85,7 @@ func NewTelegramNotifier(fc FactoryConfig) (*TelegramNotifier, error) {
 			Settings:              fc.Config.Settings,
 		}),
 		tmpl:     fc.Template,
-		log:      log.New("alerting.notifier.telegram"),
+		log:      log.New(fc.Config.LogContext("alerting.notifier.telegram")...),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		settings: settings,

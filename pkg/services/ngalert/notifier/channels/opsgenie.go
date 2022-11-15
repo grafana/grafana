@@ -111,7 +111,7 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 		OverridePriority: config.OverridePriority,
 		SendTagsAs:       config.SendTagsAs,
 		tmpl:             t,
-		log:              log.New("alerting.notifier." + config.Name),
+		log:              log.New(config.LogContext("alerting.notifier.opsgenie")...),
 		ns:               ns,
 		images:           images,
 	}
