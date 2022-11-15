@@ -2,7 +2,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 
-export const initialTeamsState: TeamsState = { teams: [], searchQuery: '', searchPage: 1, hasFetched: false };
+export const initialTeamsState: TeamsState = {
+  teams: [],
+  searchQuery: '',
+  searchPage: 1,
+  totalCount: 0,
+  hasFetched: false,
+};
 
 const teamsSlice = createSlice({
   name: 'teams',
