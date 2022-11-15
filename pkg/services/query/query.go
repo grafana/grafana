@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,6 +23,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	HeaderPluginID      = "X-Plugin-Id"      // can be used for routing
+	HeaderDatasourceUID = "X-Datasource-Uid" // can be used for routing/ load balancing
+	HeaderDashboardUID  = "X-Dashboard-Uid"  // mainly useful for debuging slow queries
+	HeaderPanelID       = "X-Panel-Id"       // mainly useful for debuging slow queries
 )
 
 func ProvideService(
@@ -67,6 +76,7 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	if err != nil {
 		return nil, err
 	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
@@ -197,6 +207,7 @@ type parsedQuery struct {
 type parsedRequest struct {
 	hasExpression bool
 	parsedQueries map[string][]parsedQuery
+	dsTypes       map[string]bool
 }
 
 func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
@@ -205,6 +216,57 @@ func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
 		queries = append(queries, pq...)
 	}
 	return queries
+}
+
+func (pr parsedRequest) validateRequest(ctx context.Context) error {
+	reqCtx := contexthandler.FromContext(ctx)
+
+	if reqCtx == nil || reqCtx.Req == nil {
+		return nil
+	}
+
+	httpReq := reqCtx.Req
+
+	vals := splitHeaders(httpReq.Header.Values(HeaderDatasourceUID))
+	count := len(vals)
+	if count > 0 { // header exists
+		if count != len(pr.parsedQueries) {
+			return ErrQueryParamMismatch
+		}
+		for _, t := range vals {
+			if pr.parsedQueries[t] == nil {
+				return ErrQueryParamMismatch
+			}
+		}
+	}
+
+	vals = splitHeaders(httpReq.Header.Values(HeaderPluginID))
+	count = len(vals)
+	if count > 0 { // header exists
+		if count != len(pr.dsTypes) {
+			return ErrQueryParamMismatch
+		}
+		for _, t := range vals {
+			if !pr.dsTypes[t] {
+				return ErrQueryParamMismatch
+			}
+		}
+	}
+	return nil
+}
+
+func splitHeaders(headers []string) []string {
+	out := []string{}
+	for _, v := range headers {
+		if strings.Contains(v, ",") {
+			for _, sub := range strings.Split(v, ",") {
+				out = append(out, strings.TrimSpace(sub))
+			}
+		} else {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
@@ -217,6 +279,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
+		dsTypes:       make(map[string]bool),
 	}
 
 	// Parse the queries and store them by datasource
@@ -233,6 +296,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		datasourcesByUid[ds.Uid] = ds
 		if expr.IsDataSource(ds.Uid) {
 			req.hasExpression = true
+		} else {
+			req.dsTypes[ds.Type] = true
 		}
 
 		if _, ok := req.parsedQueries[ds.Uid]; !ok {
@@ -263,7 +328,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		})
 	}
 
-	return req, nil
+	return req, req.validateRequest(ctx)
 }
 
 func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {

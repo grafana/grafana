@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -15,8 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -27,6 +30,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestParseMetricRequest(t *testing.T) {
@@ -166,6 +170,47 @@ func TestParseMetricRequest(t *testing.T) {
 		// Make sure we end up with something valid
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Header validation", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "sEx6ZvSVk",
+				"type": "testdata"
+			}
+		}`)
+		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		require.NoError(t, err)
+
+		reqCtx := &models.ReqContext{
+			Context: &web.Context{},
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		*httpreq = *httpreq.WithContext(ctx)
+		reqCtx.Req = httpreq
+
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
+		require.Error(t, err)
+
+		// With the second value it is OK
+		httpreq.Header.Add("X-Datasource-Uid", "sEx6ZvSVk")
+		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+
+		// Single header with comma syntax
+		httpreq, _ = http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq.Header.Set("X-Datasource-Uid", "gIEkMvIVz, sEx6ZvSVk")
+		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
 	})
 }
 
