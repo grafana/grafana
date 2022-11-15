@@ -25,6 +25,7 @@ const props: Props = {
   showThresholdMarkers: true,
   showThresholdLabels: false,
   field,
+  neutral: 0,
   width: 300,
   height: 300,
   value: {
