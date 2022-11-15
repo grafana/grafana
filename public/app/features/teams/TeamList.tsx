@@ -33,7 +33,19 @@ export interface State {
   roleOptions: Role[];
 }
 
-export const TeamList = ({ teams, hasFetched, loadTeams, deleteTeam, query, page, totalPages, ...rest }: Props) => {
+export const TeamList = ({
+  teams,
+  page,
+  query,
+  totalPages,
+  hasFetched,
+  loadTeams,
+  deleteTeam,
+  changeQuery,
+  changePage,
+  signedInUser,
+  editorsCanAdmin,
+}: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
   useEffect(() => {
@@ -46,84 +58,80 @@ export const TeamList = ({ teams, hasFetched, loadTeams, deleteTeam, query, page
     }
   }, []);
 
-  const render = () => {
-    if (totalPages === 0) {
-      /*
-      return (
-        <EmptyListCTA
-          title="You haven't created any teams yet."
-          buttonIcon="users-alt"
-          buttonLink="org/teams/new"
-          buttonTitle=" New team"
-          buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
-          proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
-          proTipLink=""
-          proTipLinkTitle=""
-          proTipTarget="_blank"
-        />
-      );
-        */
-    }
-
-    const { editorsCanAdmin, signedInUser } = rest;
-    const canCreate = canCreateTeam(editorsCanAdmin);
-    const displayRolePicker = shouldDisaplyRolePicker();
-
-    return (
-      <>
-        <div className="page-action-bar">
-          <div className="gf-form gf-form--grow">
-            <FilterInput placeholder="Search teams" value={query} onChange={rest.changeQuery} />
-          </div>
-
-          <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-            New Team
-          </LinkButton>
-        </div>
-
-        <div className="admin-list-table">
-          <VerticalGroup spacing="md">
-            <table className="filter-table filter-table--hover form-inline">
-              <thead>
-                <tr>
-                  <th />
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Members</th>
-                  {displayRolePicker && <th>Roles</th>}
-                  <th style={{ width: '1%' }} />
-                </tr>
-              </thead>
-              <tbody>
-                {teams.map((team) => (
-                  <TeamListRow
-                    key={team.id}
-                    team={team}
-                    roleOptions={roleOptions}
-                    displayRolePicker={displayRolePicker}
-                    isTeamAdmin={isPermissionTeamAdmin({ permission: team.permission, editorsCanAdmin, signedInUser })}
-                    onDelete={deleteTeam}
-                  />
-                ))}
-              </tbody>
-            </table>
-            <HorizontalGroup justify="flex-end">
-              <Pagination
-                hideWhenSinglePage
-                currentPage={page}
-                numberOfPages={totalPages}
-                onNavigate={rest.changePage}
-              />
-            </HorizontalGroup>
-          </VerticalGroup>
-        </div>
-      </>
-    );
-  };
+  const noTeams = false;
+  const canCreate = canCreateTeam(editorsCanAdmin);
+  const displayRolePicker = shouldDisaplyRolePicker();
 
   return (
     <Page navId="teams">
-      <Page.Contents isLoading={!hasFetched}>{render()}</Page.Contents>
+      <Page.Contents isLoading={!hasFetched}>
+        {noTeams ? (
+          <EmptyListCTA
+            title="You haven't created any teams yet."
+            buttonIcon="users-alt"
+            buttonLink="org/teams/new"
+            buttonTitle=" New team"
+            buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
+            proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
+            proTipLink=""
+            proTipLinkTitle=""
+            proTipTarget="_blank"
+          />
+        ) : (
+          <>
+            <div className="page-action-bar">
+              <div className="gf-form gf-form--grow">
+                <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
+              </div>
+
+              <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
+                New Team
+              </LinkButton>
+            </div>
+
+            <div className="admin-list-table">
+              <VerticalGroup spacing="md">
+                <table className="filter-table filter-table--hover form-inline">
+                  <thead>
+                    <tr>
+                      <th />
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Members</th>
+                      {displayRolePicker && <th>Roles</th>}
+                      <th style={{ width: '1%' }} />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teams.map((team) => (
+                      <TeamListRow
+                        key={team.id}
+                        team={team}
+                        roleOptions={roleOptions}
+                        displayRolePicker={displayRolePicker}
+                        isTeamAdmin={isPermissionTeamAdmin({
+                          permission: team.permission,
+                          editorsCanAdmin,
+                          signedInUser,
+                        })}
+                        onDelete={deleteTeam}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+                <HorizontalGroup justify="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </HorizontalGroup>
+              </VerticalGroup>
+            </div>
+          </>
+        )}
+      </Page.Contents>
     </Page>
   );
 };
