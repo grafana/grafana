@@ -68,7 +68,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       return false;
     }
 
-    // If no hardset max data points we need might to wait for container width to be set from the outside
+    // If no maxDataPoints specified we need might to wait for container width to be set from the outside
     if (!this.state.maxDataPoints && this.state.maxDataPointsFromWidth && !this._containerWidth) {
       return false;
     }
@@ -95,7 +95,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       this._containerWidth = width;
       // as this is called from render path we need to wait for next tick before running queries
       setTimeout(() => {
-        if (this.isActive) {
+        if (this.isActive && !this._querySub) {
           this.runQueries();
         }
       }, 0);
