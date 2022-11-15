@@ -12,5 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const getProcessServiceName = (proc) => proc.serviceName;
-export const getProcessTags = (proc) => proc.tags;
+import { TraceProcess } from '../types/trace';
+
+export const getProcessServiceName = (proc: TraceProcess) => proc.serviceName;
+export const getProcessTags = (proc: TraceProcess) => proc.tags;

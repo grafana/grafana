@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -584,7 +585,8 @@ func TestIntegrationGetChildren(t *testing.T) {
 func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
-	orgService := orgimpl.ProvideService(db, db.Cfg)
+	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
 	t.Cleanup(func() {

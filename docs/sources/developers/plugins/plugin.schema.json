@@ -9,15 +9,7 @@
     "schemas": {
       "plugindef": {
         "type": "object",
-        "required": [
-          "id",
-          "type",
-          "name",
-          "builtIn",
-          "hideFromList",
-          "dependencies",
-          "info"
-        ],
+        "required": ["id", "type", "name", "builtIn", "hideFromList", "dependencies", "info"],
         "properties": {
           "id": {
             "description": "Unique name of the plugin. If the plugin is published on\ngrafana.com, then the plugin id has to follow the naming\nconventions.",
@@ -28,13 +20,7 @@
           "type": {
             "description": "type indicates which type of Grafana plugin this is, of the defined\nset of Grafana plugin types.",
             "type": "string",
-            "enum": [
-              "app",
-              "datasource",
-              "panel",
-              "renderer",
-              "secretsmanager"
-            ]
+            "enum": ["app", "datasource", "panel", "renderer", "secretsmanager"]
           },
           "name": {
             "description": "Human-readable name of the plugin that is shown to the user in\nthe UI.",
@@ -43,16 +29,7 @@
           "category": {
             "description": "Plugin category used on the Add data source page.",
             "type": "string",
-            "enum": [
-              "tsdb",
-              "logging",
-              "cloud",
-              "tracing",
-              "sql",
-              "enterprise",
-              "profiling",
-              "other"
-            ]
+            "enum": ["tsdb", "logging", "cloud", "tracing", "sql", "enterprise", "profiling", "other"]
           },
           "annotations": {
             "description": "For data source plugins, if the plugin supports annotation\nqueries.",
@@ -136,9 +113,7 @@
           "dependencies": {
             "description": "Dependencies needed by the plugin.",
             "type": "object",
-            "required": [
-              "grafanaDependency"
-            ],
+            "required": ["grafanaDependency"],
             "properties": {
               "grafanaVersion": {
                 "description": "(Deprecated) Required Grafana version for this plugin, e.g.\n`6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or\nv7.x.x.",
@@ -162,9 +137,7 @@
           "info": {
             "description": "Metadata about the plugin.",
             "type": "object",
-            "required": [
-              "keywords"
-            ],
+            "required": ["keywords"],
             "properties": {
               "author": {
                 "description": "Information about the plugin author.",
@@ -216,10 +189,7 @@
               "logos": {
                 "description": "SVG images that are used as plugin icons.",
                 "type": "object",
-                "required": [
-                  "small",
-                  "large"
-                ],
+                "required": ["small", "large"],
                 "properties": {
                   "small": {
                     "description": "Link to the \"small\" version of the plugin logo, which must be\nan SVG image. \"Large\" and \"small\" logos can be the same image.",
@@ -300,12 +270,7 @@
       "plugindef.BasicRole": {
         "description": "BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.\nWith RBAC, the Admin basic role inherits its default permissions from the Editor basic role which\nin turn inherits them from the Viewer basic role.",
         "type": "string",
-        "enum": [
-          "Grafana Admin",
-          "Admin",
-          "Editor",
-          "Viewer"
-        ],
+        "enum": ["Grafana Admin", "Admin", "Editor", "Viewer"],
         "$schema": "http://json-schema.org/draft-04/schema#"
       },
       "plugindef.BuildInfo": {
@@ -341,9 +306,7 @@
       },
       "plugindef.Dependencies": {
         "type": "object",
-        "required": [
-          "grafanaDependency"
-        ],
+        "required": ["grafanaDependency"],
         "properties": {
           "grafanaVersion": {
             "description": "(Deprecated) Required Grafana version for this plugin, e.g.\n`6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or\nv7.x.x.",
@@ -368,12 +331,7 @@
       "plugindef.Dependency": {
         "description": "Dependency describes another plugin on which a plugin depends.\nThe id refers to the plugin package identifier, as given on\nthe grafana.com plugin marketplace.",
         "type": "object",
-        "required": [
-          "id",
-          "type",
-          "name",
-          "version"
-        ],
+        "required": ["id", "type", "name", "version"],
         "properties": {
           "id": {
             "type": "string",
@@ -381,11 +339,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "app",
-              "datasource",
-              "panel"
-            ]
+            "enum": ["app", "datasource", "panel"]
           },
           "name": {
             "type": "string"
@@ -399,10 +353,7 @@
       "plugindef.Header": {
         "description": "Header describes an HTTP header that is forwarded with a proxied request for\na plugin route.",
         "type": "object",
-        "required": [
-          "name",
-          "content"
-        ],
+        "required": ["name", "content"],
         "properties": {
           "name": {
             "type": "string"
@@ -416,9 +367,7 @@
       "plugindef.Include": {
         "description": "A resource to be included in a plugin.",
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "properties": {
           "uid": {
             "description": "Unique identifier of the included resource",
@@ -426,15 +375,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "app",
-              "datasource",
-              "panel",
-              "renderer",
-              "secretsmanager",
-              "dashboard",
-              "page"
-            ]
+            "enum": ["app", "datasource", "panel", "renderer", "secretsmanager", "dashboard", "page"]
           },
           "name": {
             "type": "string"
@@ -445,11 +386,7 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "Admin",
-              "Editor",
-              "Viewer"
-            ]
+            "enum": ["Admin", "Editor", "Viewer"]
           },
           "path": {
             "description": "Used for app plugins.",
@@ -473,23 +410,13 @@
       "plugindef.IncludeType": {
         "description": "IncludeType is a string identifier of a plugin include type, which is\na superset of plugin types.",
         "type": "string",
-        "enum": [
-          "app",
-          "datasource",
-          "panel",
-          "renderer",
-          "secretsmanager",
-          "dashboard",
-          "page"
-        ],
+        "enum": ["app", "datasource", "panel", "renderer", "secretsmanager", "dashboard", "page"],
         "$schema": "http://json-schema.org/draft-04/schema#"
       },
       "plugindef.Info": {
         "description": "Metadata about a Grafana plugin. Some fields are used on the plugins\npage in Grafana and others on grafana.com, if the plugin is published.",
         "type": "object",
-        "required": [
-          "keywords"
-        ],
+        "required": ["keywords"],
         "properties": {
           "author": {
             "description": "Information about the plugin author.",
@@ -541,10 +468,7 @@
           "logos": {
             "description": "SVG images that are used as plugin icons.",
             "type": "object",
-            "required": [
-              "small",
-              "large"
-            ],
+            "required": ["small", "large"],
             "properties": {
               "small": {
                 "description": "Link to the \"small\" version of the plugin logo, which must be\nan SVG image. \"Large\" and \"small\" logos can be the same image.",
@@ -587,11 +511,7 @@
       "plugindef.JWTTokenAuth": {
         "description": "TODO docs\nTODO should this really be separate from TokenAuth?",
         "type": "object",
-        "required": [
-          "url",
-          "scopes",
-          "params"
-        ],
+        "required": ["url", "scopes", "params"],
         "properties": {
           "url": {
             "description": "URL to fetch the JWT token.",
@@ -614,9 +534,7 @@
       "plugindef.Permission": {
         "description": "Permission describes an RBAC permission on the plugin. A permission has an action and an option\nscope.\nExample: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'",
         "type": "object",
-        "required": [
-          "action"
-        ],
+        "required": ["action"],
         "properties": {
           "action": {
             "type": "string"
@@ -630,30 +548,18 @@
       "plugindef.ReleaseState": {
         "description": "ReleaseState indicates release maturity state of a plugin.",
         "type": "string",
-        "enum": [
-          "stable",
-          "beta",
-          "deprecated",
-          "alpha"
-        ],
+        "enum": ["stable", "beta", "deprecated", "alpha"],
         "default": "stable",
         "$schema": "http://json-schema.org/draft-04/schema#"
       },
       "plugindef.Role": {
         "description": "Role describes an RBAC role which allows grouping multiple related permissions on the plugin,\neach of which has an action and an optional scope.\nExample: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.",
         "type": "object",
-        "required": [
-          "name",
-          "displayName",
-          "description",
-          "permissions"
-        ],
+        "required": ["name", "description", "permissions"],
         "properties": {
           "name": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^([A-Z][0-9A-Za-z ]+)$"
           },
           "description": {
             "type": "string"
@@ -662,9 +568,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": [
-                "action"
-              ],
+              "required": ["action"],
               "properties": {
                 "action": {
                   "type": "string"
@@ -681,26 +585,16 @@
       "plugindef.RoleRegistration": {
         "description": "RoleRegistration describes an RBAC role and its assignments to basic roles.\nIt organizes related RBAC permissions on the plugin into a role and defines which basic roles\nwill get them by default.\nExample: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin\nwhich will be granted to Admins by default.",
         "type": "object",
-        "required": [
-          "role",
-          "grants"
-        ],
+        "required": ["role", "grants"],
         "properties": {
           "role": {
             "description": "RBAC role definition to bundle related RBAC permissions on the plugin.",
             "type": "object",
-            "required": [
-              "name",
-              "displayName",
-              "description",
-              "permissions"
-            ],
+            "required": ["name", "description", "permissions"],
             "properties": {
               "name": {
-                "type": "string"
-              },
-              "displayName": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^([A-Z][0-9A-Za-z ]+)$"
               },
               "description": {
                 "type": "string"
@@ -709,9 +603,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": [
-                    "action"
-                  ],
+                  "required": ["action"],
                   "properties": {
                     "action": {
                       "type": "string"
@@ -729,12 +621,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "Grafana Admin",
-                "Admin",
-                "Editor",
-                "Viewer"
-              ]
+              "enum": ["Grafana Admin", "Admin", "Editor", "Viewer"]
             }
           }
         },
@@ -791,9 +678,7 @@
       "plugindef.TokenAuth": {
         "description": "TODO docs",
         "type": "object",
-        "required": [
-          "params"
-        ],
+        "required": ["params"],
         "properties": {
           "url": {
             "description": "URL to fetch the authentication token.",
@@ -816,10 +701,7 @@
       "plugindef.URLParam": {
         "description": "URLParam describes query string parameters for\na url in a plugin route",
         "type": "object",
-        "required": [
-          "name",
-          "content"
-        ],
+        "required": ["name", "content"],
         "properties": {
           "name": {
             "type": "string"

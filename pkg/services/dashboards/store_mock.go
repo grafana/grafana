@@ -6,6 +6,8 @@ import (
 	context "context"
 
 	models "github.com/grafana/grafana/pkg/models"
+	folder "github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/quota"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -194,15 +196,15 @@ func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query
 }
 
 // GetFolderByID provides a mock function with given fields: ctx, orgID, id
-func (_m *FakeDashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error) {
+func (_m *FakeDashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
 	ret := _m.Called(ctx, orgID, id)
 
-	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *models.Folder); ok {
+	var r0 *folder.Folder
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *folder.Folder); ok {
 		r0 = rf(ctx, orgID, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Folder)
+			r0 = ret.Get(0).(*folder.Folder)
 		}
 	}
 
@@ -217,15 +219,15 @@ func (_m *FakeDashboardStore) GetFolderByID(ctx context.Context, orgID int64, id
 }
 
 // GetFolderByTitle provides a mock function with given fields: ctx, orgID, title
-func (_m *FakeDashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error) {
+func (_m *FakeDashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
 	ret := _m.Called(ctx, orgID, title)
 
-	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *models.Folder); ok {
+	var r0 *folder.Folder
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *folder.Folder); ok {
 		r0 = rf(ctx, orgID, title)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Folder)
+			r0 = ret.Get(0).(*folder.Folder)
 		}
 	}
 
@@ -240,15 +242,15 @@ func (_m *FakeDashboardStore) GetFolderByTitle(ctx context.Context, orgID int64,
 }
 
 // GetFolderByUID provides a mock function with given fields: ctx, orgID, uid
-func (_m *FakeDashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error) {
+func (_m *FakeDashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
 	ret := _m.Called(ctx, orgID, uid)
 
-	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *models.Folder); ok {
+	var r0 *folder.Folder
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *folder.Folder); ok {
 		r0 = rf(ctx, orgID, uid)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Folder)
+			r0 = ret.Get(0).(*folder.Folder)
 		}
 	}
 
@@ -471,6 +473,10 @@ func (_m *FakeDashboardStore) ValidateDashboardBeforeSave(ctx context.Context, d
 type mockConstructorTestingTNewFakeDashboardStore interface {
 	mock.TestingT
 	Cleanup(func())
+}
+
+func (_m *FakeDashboardStore) Count(context.Context, *quota.ScopeParameters) (*quota.Map, error) {
+	return nil, nil
 }
 
 // NewFakeDashboardStore creates a new instance of FakeDashboardStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

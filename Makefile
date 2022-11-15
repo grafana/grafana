@@ -76,7 +76,7 @@ gen-go: $(WIRE) gen-cue
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
 gen-jsonnet:
-	go generate ./devenv/dev-dashboards
+	go generate ./devenv/jsonnet
 
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"

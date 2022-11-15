@@ -157,9 +157,9 @@ seqs: [
 				// each of which has an action and an optional scope.
 				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
 				#Role: {
-					name:        string
-					displayName: string
-					description: string
+					name: string,
+					name: =~"^([A-Z][0-9A-Za-z ]+)$"
+					description: string,
 					permissions: [...#Permission]
 				}
 

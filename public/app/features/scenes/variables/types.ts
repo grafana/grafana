@@ -13,16 +13,9 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   loading?: boolean;
   error?: any | null;
   description?: string | null;
-  //text: string | string[];
-  //value: string | string[]; // old current.value
 }
 
 export interface SceneVariable<TState extends SceneVariableState = SceneVariableState> extends SceneObject<TState> {
-  /**
-   * Should return a string array of other variables this variable is using in it's definition.
-   */
-  getDependencies?(): string[];
-
   /**
    * This function is called on activation or when a dependency changes.
    */
@@ -59,4 +52,18 @@ export interface SceneVariables extends SceneObject<SceneVariableSetState> {
 
 export class SceneVariableValueChangedEvent extends BusEventWithPayload<SceneVariable> {
   public static type = 'scene-variable-changed-value';
+}
+
+export interface SceneVariableDependencyConfigLike {
+  /** Return all variable names this object depend on */
+  getNames(): Set<string>;
+
+  /** Used to check for dependency on a specific variable */
+  hasDependencyOn(name: string): boolean;
+
+  /**
+   * Will be called when any variable value has changed, not just variable names returned by getNames().
+   * It is up the implementation of this interface to filter it by actual dependencies.
+   **/
+  variableValuesChanged(variables: Set<SceneVariable>): void;
 }

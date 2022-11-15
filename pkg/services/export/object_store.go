@@ -123,14 +123,21 @@ func (e *objectStoreJob) start(ctx context.Context) {
 			rowUser.UserID = 0 // avoid Uint64Val issue????
 		}
 
-		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
+		_, err = e.store.AdminWrite(ctx, &object.AdminWriteObjectRequest{
 			GRN: &object.GRN{
 				Scope: models.ObjectStoreScopeEntity,
 				UID:   dash.UID,
 				Kind:  models.StandardKindDashboard,
 			},
-			Body:    dash.Body,
-			Comment: "export from dashboard table",
+			ClearHistory: true,
+			Version:      fmt.Sprintf("%d", dash.Version),
+			CreatedAt:    dash.Created.UnixMilli(),
+			UpdatedAt:    dash.Updated.UnixMilli(),
+			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
+			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
+			Origin:       "export-from-sql",
+			Body:         dash.Data,
+			Comment:      "(exported from SQL)",
 		})
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
@@ -254,34 +261,25 @@ func (e *objectStoreJob) start(ctx context.Context) {
 }
 
 type dashInfo struct {
-	OrgID     int64
+	OrgID     int64 `db:"org_id"`
 	UID       string
-	Body      []byte
-	UpdatedBy int64
+	Version   int64
+	Slug      string
+	Data      []byte
+	Created   time.Time
+	Updated   time.Time
+	CreatedBy int64 `db:"created_by"`
+	UpdatedBy int64 `db:"updated_by"`
 }
 
+// TODO, paging etc
 func (e *objectStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) {
 	e.status.Last = "find dashbaords...."
 	e.broadcaster(e.status)
 
 	dash := make([]dashInfo, 0)
-	rows, err := e.sess.Query(ctx, "SELECT org_id,uid,data,updated_by FROM dashboard WHERE is_folder=false")
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		if e.stopRequested {
-			return dash, nil
-		}
-
-		row := dashInfo{}
-		err = rows.Scan(&row.OrgID, &row.UID, &row.Body, &row.UpdatedBy)
-		if err != nil {
-			return nil, err
-		}
-		dash = append(dash, row)
-	}
-	return dash, nil
+	err := e.sess.Select(ctx, &dash, "SELECT org_id,uid,version,slug,data,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=false")
+	return dash, err
 }
 
 func (e *objectStoreJob) getStatus() ExportStatus {

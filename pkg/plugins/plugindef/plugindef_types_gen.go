@@ -478,7 +478,6 @@ type ReleaseState string
 // Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
 type Role struct {
 	Description string `json:"description"`
-	DisplayName string `json:"displayName"`
 	Name        string `json:"name"`
 	Permissions []struct {
 		Action string  `json:"action"`
@@ -500,7 +499,6 @@ type RoleRegistration struct {
 	// RBAC role definition to bundle related RBAC permissions on the plugin.
 	Role struct {
 		Description string `json:"description"`
-		DisplayName string `json:"displayName"`
 		Name        string `json:"name"`
 		Permissions []struct {
 			Action string  `json:"action"`
