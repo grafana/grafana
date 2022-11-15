@@ -1,24 +1,28 @@
-package coremodel
+package kindsys
 
 import (
 	"cuelang.org/go/cue"
 )
 
-// Slot represents one of Grafana's named Thema composition slot definitions.
+// Slot represents one of Grafana's named slot definitions.
+// TODO link to framework docs
 type Slot struct {
 	name    string
 	raw     cue.Value
 	plugins map[string]bool
 }
 
-// Name returns the name of the Slot. The name is also used as the path at which
-// a Slot lineage is defined in a plugin models.cue file.
+// Name returns the name of the Slot.
+//
+// The name is also used as the path at which a Slot lineage is defined in a
+// plugin models.cue file.
 func (s Slot) Name() string {
 	return s.name
 }
 
-// MetaSchema returns the meta-schema that is the contract between coremodels
-// that compose the Slot, and plugins that implement it.
+// MetaSchema returns the meta-schema that is the contract between core or
+// custom kinds that compose the meta-schema, and the plugin-declared composable
+// kinds that implement the meta-schema.
 func (s Slot) MetaSchema() cue.Value {
 	return s.raw
 }
@@ -28,15 +32,15 @@ func (s Slot) MetaSchema() cue.Value {
 // may, whether they must produce one (second return value).
 //
 // Expected values here are those in the set of
-// ["github.com/grafana/grafana/pkg/coremodel/pluginmeta".Type], though passing
+// ["github.com/grafana/grafana/pkg/plugins/plugindef".Type], though passing
 // a string not in that set will harmlessly return {false, false}. That type is
 // not used here to avoid import cycles.
 //
 // Note that, at least for now, plugins are not required to provide any slot
-// implementations, and do so by simply not containing a models.cue file.
-// Consequently, the "must" return value here is best understood as, "IF a
-// plugin provides a models.cue file, it MUST contain an implementation of this
-// slot."
+// implementations, and do so by simply not containing any .cue files in the
+// "grafanaplugin" package. Consequently, the "must" return value is best
+// understood as, "IF a plugin provides a *.cue files, it MUST contain an
+// implementation of this slot."
 func (s Slot) ForPluginType(plugintype string) (may, must bool) {
 	must, may = s.plugins[plugintype]
 	return
@@ -58,8 +62,12 @@ func (s Slot) IsGroup() bool {
 	}
 }
 
-func AllSlots() map[string]*Slot {
-	fw := CUEFramework()
+// AllSlots returns a map of all [Slot]s defined in the Grafana kindsys
+// framework.
+//
+// TODO cache this for core context
+func AllSlots(ctx *cue.Context) map[string]*Slot {
+	fw := CUEFramework(ctx)
 	slots := make(map[string]*Slot)
 
 	// Ignore err, can only happen if we change structure of fw files, and all we'd
