@@ -86,7 +86,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			continue
 		}
 
-		if include.Type == "page" && include.AddToNav {
+		if include.Type == "page" {
 			link := &navtree.NavLink{
 				Text:     include.Name,
 				Icon:     include.Icon,
@@ -95,7 +95,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 			if len(include.Path) > 0 {
 				link.Url = s.cfg.AppSubURL + include.Path
-				if include.DefaultNav {
+				if include.DefaultNav && include.AddToNav {
 					appLink.Url = link.Url
 				}
 			} else {
@@ -127,7 +127,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 						sectionForPage.Children = append(sectionForPage.Children, link)
 					}
 				}
-			} else {
+
+				// Register the page under the app
+			} else if include.AddToNav {
 				appLink.Children = append(appLink.Children, link)
 			}
 		}
@@ -169,11 +171,15 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
-	sectionID := "apps"
+	sectionID := navtree.NavIDApps
 
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
 		appLink.SortWeight = navConfig.SortWeight
 		sectionID = navConfig.SectionID
+
+		if len(navConfig.Text) > 0 {
+			appLink.Text = navConfig.Text
+		}
 	}
 
 	if navNode := treeRoot.FindById(sectionID); navNode != nil {
@@ -226,11 +232,12 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
-		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1},
-		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
-		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1},
-		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2},
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"},
+		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Synthetics"},
+		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
+		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3},
+		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

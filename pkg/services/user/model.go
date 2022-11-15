@@ -306,6 +306,9 @@ func (u *SignedInUser) GetCacheKey() (string, error) {
 	if u.IsApiKeyUser() {
 		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
 	}
+	if u.IsServiceAccountUser() { // not considered a real user
+		return fmt.Sprintf("%d-service-%d", u.OrgID, u.UserID), nil
+	}
 	return "", ErrNoUniqueID
 }
 
@@ -354,3 +357,8 @@ type SearchUserFilter interface {
 }
 
 type FilterHandler func(params []string) (Filter, error)
+
+const (
+	QuotaTargetSrv string = "user"
+	QuotaTarget    string = "user"
+)

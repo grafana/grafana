@@ -7,18 +7,28 @@ import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import { SceneDataState, SceneObject, SceneComponent, SceneEditor, SceneTimeRange, SceneObjectState } from './types';
+import {
+  SceneDataState,
+  SceneObject,
+  SceneComponent,
+  SceneEditor,
+  SceneTimeRange,
+  SceneObjectState,
+  SceneLayoutState,
+} from './types';
 
-export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
+export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
+  implements SceneObject<TState>
+{
   private _isActive = false;
   private _subject = new Subject<TState>();
   private _state: TState;
   private _events = new EventBusSrv();
 
   protected _parent?: SceneObject;
-  protected subs = new Subscription();
+  protected _subs = new Subscription();
 
-  constructor(state: TState) {
+  public constructor(state: TState) {
     if (!state.key) {
       state.key = uuidv4();
     }
@@ -29,17 +39,17 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   /** Current state */
-  get state(): TState {
+  public get state(): TState {
     return this._state;
   }
 
   /** True if currently being active (ie displayed for visual objects) */
-  get isActive(): boolean {
+  public get isActive(): boolean {
     return this._isActive;
   }
 
   /** Returns the parent, undefined for root object */
-  get parent(): SceneObject | undefined {
+  public get parent(): SceneObject | undefined {
     return this._parent;
   }
 
@@ -47,14 +57,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Used in render functions when rendering a SceneObject.
    * Wraps the component in an EditWrapper that handles edit mode
    */
-  get Component(): SceneComponent<this> {
+  public get Component(): SceneComponent<this> {
     return SceneComponentWrapper;
   }
 
   /**
    * Temporary solution, should be replaced by declarative options
    */
-  get Editor(): SceneComponent<this> {
+  public get Editor(): SceneComponent<this> {
     return ((this as any).constructor['Editor'] ?? (() => null)) as SceneComponent<this>;
   }
 
@@ -77,18 +87,18 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Subscribe to the scene state subject
    **/
-  subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
+  public subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
     return this._subject.subscribe(observerOrNext);
   }
 
   /**
    * Subscribe to the scene event
    **/
-  subscribeToEvent<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+  public subscribeToEvent<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
     return this._events.subscribe(eventType, handler);
   }
 
-  setState(update: Partial<TState>) {
+  public setState(update: Partial<TState>) {
     const prevState = this._state;
     this._state = {
       ...this._state,
@@ -112,7 +122,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /*
    * Publish an event and optionally bubble it up the scene
    **/
-  publishEvent(event: BusEvent, bubble?: boolean) {
+  public publishEvent(event: BusEvent, bubble?: boolean) {
     this._events.publish(event);
 
     if (bubble && this.parent) {
@@ -120,11 +130,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
   }
 
-  getRoot(): SceneObject {
+  public getRoot(): SceneObject {
     return !this._parent ? this : this._parent.getRoot();
   }
 
-  activate() {
+  /**
+   * Called by the SceneComponentWrapper when the react component is mounted
+   */
+  public activate() {
     this._isActive = true;
 
     const { $data, $variables } = this.state;
@@ -138,7 +151,10 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
   }
 
-  deactivate(): void {
+  /**
+   * Called by the SceneComponentWrapper when the react component is unmounted
+   */
+  public deactivate(): void {
     this._isActive = false;
 
     const { $data, $variables } = this.state;
@@ -153,14 +169,17 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
     // Clear subscriptions and listeners
     this._events.removeAllListeners();
-    this.subs.unsubscribe();
-    this.subs = new Subscription();
+    this._subs.unsubscribe();
+    this._subs = new Subscription();
 
     this._subject.complete();
     this._subject = new Subject<TState>();
   }
 
-  useState() {
+  /**
+   * Utility hook to get and subscribe to state
+   */
+  public useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useSceneObjectState(this);
   }
@@ -168,7 +187,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
-  getTimeRange(): SceneTimeRange {
+  public getTimeRange(): SceneTimeRange {
     const { $timeRange } = this.state;
     if ($timeRange) {
       return $timeRange;
@@ -184,7 +203,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $data scene object
    */
-  getData(): SceneObject<SceneDataState> {
+  public getData(): SceneObject<SceneDataState> {
     const { $data } = this.state;
     if ($data) {
       return $data;
@@ -198,9 +217,24 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   }
 
   /**
+   * Will walk up the scene object graph to the closest $layout scene object
+   */
+  public getLayout(): SceneObject<SceneLayoutState> {
+    if (this.constructor.name === 'SceneFlexLayout' || this.constructor.name === 'SceneGridLayout') {
+      return this as SceneObject<SceneLayoutState>;
+    }
+
+    if (this.parent) {
+      return this.parent.getLayout();
+    }
+
+    throw new Error('No layout found in scene tree');
+  }
+
+  /**
    * Will walk up the scene object graph to the closest $editor scene object
    */
-  getSceneEditor(): SceneEditor {
+  public getSceneEditor(): SceneEditor {
     const { $editor } = this.state;
     if ($editor) {
       return $editor;
@@ -216,7 +250,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will create new SceneItem with shalled cloned state, but all states items of type SceneObject are deep cloned
    */
-  clone(withState?: Partial<TState>): this {
+  public clone(withState?: Partial<TState>): this {
     const clonedState = { ...this.state };
 
     // Clone any SceneItems in state

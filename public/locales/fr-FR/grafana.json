@@ -59,12 +59,6 @@
       "rows": "Nombre total de lignes",
       "table-title": "Statistiques"
     },
-    "refresh-picker": {
-      "off-arialabel": "Désactiver l'actualisation automatique",
-      "off-description": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
-      "off-label": "Désactivé",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Ajouter un panneau",
       "comments-show": "Afficher les commentaires du tableau de bord",
@@ -315,6 +309,23 @@
       "view": "Afficher"
     }
   },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "select-button": {
+      "auto-refresh": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Partager"
@@ -413,13 +424,46 @@
       "title": "Période temporelle absolue"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
       "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
     },
     "time-range": {
       "aria-role": "",
       "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {

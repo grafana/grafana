@@ -27,10 +27,10 @@ message RawObject {
   GRN GRN = 1;
 
   // Time in epoch milliseconds that the object was created
-  int64 created = 2;
+  int64 created_at = 2;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 3;
+  int64 updated_at = 3;
 
   // Who created the object
   string created_by = 4;
@@ -53,10 +53,10 @@ message RawObject {
   string version = 9;
 
   // External location info
-  RawObjectSyncInfo sync = 10;
+  ObjectOriginInfo origin = 10;
 }
 
-message RawObjectSyncInfo {
+message ObjectOriginInfo {
   // NOTE: currently managed by the dashboard_provisioning table
   string source = 1;
 
@@ -83,7 +83,7 @@ message ObjectVersionInfo {
   string version = 1;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 2;
+  int64 updated_at = 2;
 
   // Who updated the object
   string updated_by = 3;
@@ -154,6 +154,51 @@ message WriteObjectRequest {
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
   string previous_version = 4;
+}
+
+// This operation is useful when syncing a resource from external sources
+// that have more accurate metadata information (git, or an archive).
+// This process can bypass the forced checks that 
+message AdminWriteObjectRequest {
+  // Object identifier
+  GRN GRN = 1;
+
+  // The raw object body
+  bytes body = 2;
+
+  // Message that can be seen when exploring object history
+  string comment = 3;
+
+  // Time in epoch milliseconds that the object was created
+  // Optional, if 0 it will use the current time
+  int64 created_at = 4;
+
+  // Time in epoch milliseconds that the object was updated
+  // Optional, if empty it will use the current user
+  int64 updated_at = 5;
+
+  // Who created the object
+  // Optional, if 0 it will use the current time
+  string created_by = 6;
+
+  // Who updated the object
+  // Optional, if empty it will use the current user
+  string updated_by = 7;
+
+  // An explicit version identifier
+  // Optional, if set, this will overwrite/define an explicit version
+  string version = 8;
+
+  // Used for optimistic locking.  If missing, the previous version will be replaced regardless
+  // This may not be used along with an explicit version in the request
+  string previous_version = 9;
+
+  // Request that all previous versions are removed from the history
+  // This will make sense for systems that manage history explicitly externallay
+  bool clear_history = 10;
+
+  // Optionally define where the object came from
+  string origin = 11;
 }
 
 message WriteObjectResponse {
@@ -266,10 +311,13 @@ message ObjectSearchResult {
   GRN GRN = 1;
 
   // The current veresion of this object
-  string version = 3;
+  string version = 2;
+
+  // Content Length
+  int64 size = 3;
 
   // Time in epoch milliseconds that the object was updated
-  int64 updated = 4;
+  int64 updated_at = 4;
 
   // Who updated the object
   string updated_by = 5;
@@ -309,8 +357,7 @@ message ObjectSearchResponse {
 // Storage interface
 //-----------------------------------------------
 
-// This assumes a future grpc interface where the user info is passed in context, not in each message body
-// for now it will only work with an admin API key
+// The object store provides a basic CRUD (+watch eventually) interface for generic objects
 service ObjectStore {
   rpc Read(ReadObjectRequest) returns (ReadObjectResponse);
   rpc BatchRead(BatchReadObjectRequest) returns (BatchReadObjectResponse);
@@ -322,4 +369,13 @@ service ObjectStore {
 // Ideally an additional search endpoint with more flexibility to limit what you actually care about
 //  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/proto/backend.proto#L129
 //  rpc SearchEX(ObjectSearchRequest) returns (DataResponse);
+
+  // TEMPORARY... while we split this into a new service (see below)
+  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
+}
+
+// The admin service extends the basic object store interface, but provides
+// more explicit control that can support bulk operations like efficient git sync
+service ObjectStoreAdmin {
+  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
 }

@@ -109,18 +109,6 @@ export class DashNavTimeControls extends Component<Props> {
           isOnCanvas={isOnCanvas}
           tooltip={t('dashboard.toolbar.refresh', 'Refresh dashboard')}
           noIntervalPicker={hideIntervalPicker}
-          offDescriptionAriaLabelMsg={t(
-            'dashboard.refresh-picker.off-description',
-            'Auto refresh turned off. Choose refresh time interval'
-          )}
-          onDescriptionAriaLabelMsg={(durationAriaLabel) =>
-            t(
-              'dashboard.refresh-picker.on-description',
-              `Choose refresh time interval with current interval ${durationAriaLabel} selected`
-            )
-          }
-          offOptionLabelMsg={t('dashboard.refresh-picker.off-label', 'Off')}
-          offOptionAriaLabelMsg={t('dashboard.refresh-picker.off-arialabel', 'Turn off auto refresh')}
         />
       </>
     );

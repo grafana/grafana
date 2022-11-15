@@ -13,9 +13,20 @@ export interface SceneObjectStatePlain {
   $variables?: SceneVariables;
 }
 
-export interface SceneLayoutChildState extends SceneObjectStatePlain {
+export interface SceneLayoutChildSize {
   size?: SceneObjectSize;
 }
+export interface SceneLayoutChildInteractions {
+  isDraggable?: boolean;
+  isResizable?: boolean;
+  isCollapsible?: boolean;
+  isCollapsed?: boolean;
+}
+
+export interface SceneLayoutChildState
+  extends SceneObjectStatePlain,
+    SceneLayoutChildSize,
+    SceneLayoutChildInteractions {}
 
 export type SceneObjectState = SceneObjectStatePlain | SceneLayoutState | SceneLayoutChildState;
 
@@ -84,6 +95,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Get the closest node with time range */
   getTimeRange(): SceneTimeRange;
 
+  /** Get the closest layout node */
+  getLayout(): SceneObject<SceneLayoutState>;
+
   /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;
 
@@ -114,6 +128,7 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
 }
 
 export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
+
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;
