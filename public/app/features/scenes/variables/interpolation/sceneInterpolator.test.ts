@@ -14,7 +14,7 @@ interface TestSceneState extends SceneObjectStatePlain {
 class TestScene extends SceneObjectBase<TestSceneState> {}
 
 describe('sceneInterpolator', () => {
-  it('Should be interpolate and use closest variable', () => {
+  it('Should be interpolated and use closest variable', () => {
     const scene = new TestScene({
       $variables: new SceneVariableSet({
         variables: [
