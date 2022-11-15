@@ -34,13 +34,13 @@ Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud A
 
 We have a new feature as part of our Public Dashboard efforts. We have introduced a new menu item under Dashboards → Public Dashboards. This new view is a list of all of the public dashboards in your Grafana instance. From here you can navigate to the underlying dashboard, see if it is enabled, get a quick link out to the public version of the dashboard, or get quick access to the configuration. You will be able to see a dashboard if you have view access, you will be able to navigate to the configuration if you have public dashboard privileges (RBAC “Dashboard Public” or ADMIN basic).
 
+[image public-dashboard-audit-table.png]
+
 ## Public Dashboards - Annotations
 
 Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud Advanced
 
 Annotations are now supported in public dashboards, with the exception of query annotations. They are turned off by default, but can be turned on in the public dashboard settings modal.
-
-[image public-dashboard-audit-table.png]
 
 ## Transformations - Partition by values
 
