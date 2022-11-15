@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { useStyles2 } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 import { BackupStatus } from 'app/percona/backup/Backup.types';
 import { Action, MultipleActions } from 'app/percona/dbaas/components/MultipleActions';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
@@ -60,8 +60,12 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({
 
   return (
     <div className={styles.actionsWrapper}>
+      <Tooltip content={Messages.details} placement="top">
+        <span>
+          <ExpandableRowButton row={row} />
+        </span>
+      </Tooltip>
       <MultipleActions actions={getActions} dataTestId="backup-inventory-actions" />
-      <ExpandableRowButton row={row} />
     </div>
   );
 };
