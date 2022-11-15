@@ -21,6 +21,7 @@ import {
   Select,
   useStyles2,
 } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
@@ -60,6 +61,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     });
   };
 
+  const onConnectionTimeoutChanged = (connectionTimeout?: number) => {
+    updateDatasourcePluginJsonDataOption(props, 'connectionTimeout', connectionTimeout ?? 0);
+  };
+
   const authenticationOptions: Array<SelectableValue<MSSQLAuthenticationType>> = [
     { value: MSSQLAuthenticationType.sqlAuth, label: 'SQL Server Authentication' },
     { value: MSSQLAuthenticationType.windowsAuth, label: 'Windows Authentication' },
@@ -74,6 +79,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const shortWidth = 15;
   const longWidth = 46;
   const labelWidthSSL = 25;
+  const labelWidthDetails = 20;
 
   return (
     <>
@@ -233,12 +239,30 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             </span>
           }
           label="Min time interval"
+          labelWidth={labelWidthDetails}
         >
           <Input
             placeholder="1m"
             value={jsonData.timeInterval || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
           ></Input>
+        </InlineField>
+        <InlineField
+          tooltip={
+            <span>
+              The number of seconds to wait before canceling the request when connecting to the database. The default is{' '}
+              <code>0</code>, meaning no timeout.
+            </span>
+          }
+          label="Connection timeout"
+          labelWidth={labelWidthDetails}
+        >
+          <NumberInput
+            placeholder="60"
+            min={0}
+            value={jsonData.connectionTimeout}
+            onChange={onConnectionTimeoutChanged}
+          ></NumberInput>
         </InlineField>
       </FieldSet>
 

@@ -59,12 +59,6 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
-    "refresh-picker": {
-      "off-arialabel": "Turn off auto refresh",
-      "off-description": "Auto refresh turned off. Choose refresh time interval",
-      "off-label": "Off",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Add panel",
       "comments-show": "Show dashboard comments",
@@ -315,6 +309,23 @@
       "view": "View"
     }
   },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Auto refresh turned off. Choose refresh time interval",
+      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+    },
+    "live-option": {
+      "aria-label": "Turn on live streaming",
+      "label": "Live"
+    },
+    "off-option": {
+      "aria-label": "Turn off auto refresh",
+      "label": "Off"
+    },
+    "select-button": {
+      "auto-refresh": "Set auto refresh interval"
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Share"
@@ -435,6 +446,14 @@
       "from-input": "From",
       "range-error": "\"From\" can't be after \"To\"",
       "to-input": "To"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Move time range backwards",
+      "current-time-selected": "Time range selected: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Move time range forwards",
+      "to": "to",
+      "zoom-out-button": "Zoom out time range",
+      "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
     },
     "time-range": {
       "aria-role": "Time range selection",

@@ -18,6 +18,7 @@ import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../core/types';
+import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
 export interface QueryRunnerState extends SceneObjectStatePlain {
   data?: PanelData;
@@ -36,6 +37,11 @@ export interface DataQueryExtended extends DataQuery {
 export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   private _querySub?: Unsubscribable;
   private _containerWidth?: number;
+
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['queries'],
+    onReferencedVariableValueChanged: () => this.runQueries(),
+  });
 
   public activate() {
     super.activate();

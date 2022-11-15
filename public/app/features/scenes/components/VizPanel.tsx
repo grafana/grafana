@@ -20,6 +20,8 @@ import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
+import { SceneDragHandle } from './SceneDragHandle';
+
 export interface VizPanelState extends SceneLayoutChildState {
   title: string;
   pluginId: string;
@@ -117,10 +119,15 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 }
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, options, fieldConfig, pluginId, pluginLoadError, $data } = model.useState();
+  const { title, options, fieldConfig, pluginId, pluginLoadError, $data, ...state } = model.useState();
   const [ref, { width, height }] = useMeasure();
   const { data } = model.getData().useState();
   const plugin = model.getPlugin();
+  const layout = model.getLayout();
+  const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
+  const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
+
+  const titleInterpolated = model.interpolate(title);
 
   // Not sure we need to subscribe to this state
   const timeZone = model.getTimeRange().state.timeZone;
@@ -148,7 +155,12 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
 
   return (
     <div ref={ref as RefCallback<HTMLDivElement>} style={{ width: '100%', height: '100%' }}>
-      <PanelChrome title={title} width={width} height={height}>
+      <PanelChrome
+        title={titleInterpolated}
+        width={width}
+        height={height}
+        leftItems={isDraggable ? [dragHandle] : undefined}
+      >
         {(innerWidth, innerHeight) => (
           <>
             {!dataWithOverrides && <div>No data...</div>}
