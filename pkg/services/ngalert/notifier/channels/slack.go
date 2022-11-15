@@ -119,7 +119,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 
 		images:        factoryConfig.ImageStore,
 		webhookSender: factoryConfig.NotificationService,
-		log:           log.New(factoryConfig.Config.LogContext("alerting.notifier.slack")...),
+		log:           log.New(factoryConfig.Config.LogContext("ngalert.notifier.receivers.slack")...),
 		tmpl:          factoryConfig.Template,
 	}, nil
 }

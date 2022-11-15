@@ -84,7 +84,7 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 		return nil, err
 	}
 
-	logger := log.New(factoryConfig.Config.LogContext("alerting.notifier.webex")...)
+	logger := log.New(factoryConfig.Config.LogContext("ngalert.notifier.receivers.webex")...)
 
 	return &WebexNotifier{
 		Base: NewBase(&models.AlertNotification{

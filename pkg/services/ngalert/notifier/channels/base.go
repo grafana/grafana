@@ -26,6 +26,6 @@ func NewBase(model *models.AlertNotification) *Base {
 		IsDefault:             model.IsDefault,
 		Type:                  model.Type,
 		DisableResolveMessage: model.DisableResolveMessage,
-		// log:                   log.New("alerting.notifier." + model.Name),
+		// log:                   log.New("ngalert.notifier.receivers." + model.Name),
 	}
 }

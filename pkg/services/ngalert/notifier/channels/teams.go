@@ -272,7 +272,7 @@ func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, image
 		Message:      config.Message,
 		Title:        config.Title,
 		SectionTitle: config.SectionTitle,
-		log:          log.New(config.LogContext("alerting.notifier.teams")...),
+		log:          log.New(config.LogContext("ngalert.notifier.receivers.teams")...),
 		ns:           ns,
 		images:       images,
 		tmpl:         t,

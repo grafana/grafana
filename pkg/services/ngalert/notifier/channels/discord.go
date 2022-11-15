@@ -77,7 +77,7 @@ func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
 			Settings:              fc.Config.Settings,
 			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		log:    log.New(fc.Config.LogContext("alerting.notifier.discord")...),
+		log:    log.New(fc.Config.LogContext("ngalert.notifier.receivers.discord")...),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
 		tmpl:   fc.Template,

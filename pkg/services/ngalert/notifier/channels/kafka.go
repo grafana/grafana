@@ -67,7 +67,7 @@ func newKafkaNotifier(fc FactoryConfig) (*KafkaNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		log:      log.New(fc.Config.LogContext("alerting.notifier.kafka")...),
+		log:      log.New(fc.Config.LogContext("ngalert.notifier.receivers.kafka")...),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
