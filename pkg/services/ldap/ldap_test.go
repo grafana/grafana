@@ -234,6 +234,12 @@ func TestServer_Users(t *testing.T) {
 				{Name: "username", Values: []string{"groot"}},
 				{Name: "name", Values: []string{"I am Groot"}},
 			}}}}
+		babyGrootDN := "dn=babygroot," + usersOU
+		babyGrootSearch := ldap.SearchResult{Entries: []*ldap.Entry{{DN: grootDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"babygroot"}},
+				{Name: "name", Values: []string{"I am baby Groot"}},
+			}}}}
 		peterDN := "dn=peter," + usersOU
 		peterSearch := ldap.SearchResult{Entries: []*ldap.Entry{{DN: peterDN,
 			Attributes: []*ldap.EntryAttribute{
@@ -245,6 +251,12 @@ func TestServer_Users(t *testing.T) {
 		grootGroups := ldap.SearchResult{Entries: []*ldap.Entry{{DN: creaturesDN,
 			Attributes: []*ldap.EntryAttribute{
 				{Name: "member", Values: []string{grootDN}},
+			}}},
+		}
+		babyCreaturesDN := "dn=babycreatures," + groupsOU
+		babyGrootGroups := ldap.SearchResult{Entries: []*ldap.Entry{{DN: babyCreaturesDN,
+			Attributes: []*ldap.EntryAttribute{
+				{Name: "member", Values: []string{babyGrootDN}},
 			}}},
 		}
 		humansDN := "dn=humans," + groupsOU
@@ -260,6 +272,8 @@ func TestServer_Users(t *testing.T) {
 				switch request.Filter {
 				case "(|(username=groot))":
 					return &grootSearch, nil
+				case "(|(username=babygroot))":
+					return &babyGrootSearch, nil
 				case "(|(username=peter))":
 					return &peterSearch, nil
 				default:
@@ -269,6 +283,8 @@ func TestServer_Users(t *testing.T) {
 				switch request.Filter {
 				case "(member=groot)":
 					return &grootGroups, nil
+				case "(member=babygroot)":
+					return &babyGrootGroups, nil
 				case "(member=peter)":
 					return &peterGroups, nil
 				default:
@@ -279,6 +295,7 @@ func TestServer_Users(t *testing.T) {
 			}
 		})
 
+		isGrafanaAdmin := true
 		server := &Server{
 			Config: &ServerConfig{
 				Attr: AttributeMap{
@@ -293,8 +310,13 @@ func TestServer_Users(t *testing.T) {
 					{
 						GroupDN:        creaturesDN,
 						OrgId:          2,
-						IsGrafanaAdmin: new(bool),
+						IsGrafanaAdmin: &isGrafanaAdmin,
 						OrgRole:        "Admin",
+					},
+					{
+						GroupDN: babyCreaturesDN,
+						OrgId:   2,
+						OrgRole: "Editor",
 					},
 				},
 			},
@@ -337,6 +359,22 @@ func TestServer_Users(t *testing.T) {
 			require.True(t, mappingExist)
 			require.Equal(t, roletype.RoleAdmin, role)
 			require.False(t, res[0].IsDisabled)
+			require.NotNil(t, res[0].IsGrafanaAdmin)
+			assert.True(t, *res[0].IsGrafanaAdmin)
+		})
+		t.Run("set Grafana Admin to false by default", func(t *testing.T) {
+			res, err := server.Users([]string{"babygroot"})
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+			require.Equal(t, "I am baby Groot", res[0].Name)
+			require.ElementsMatch(t, res[0].Groups, []string{babyCreaturesDN})
+			require.Len(t, res[0].OrgRoles, 1)
+			role, mappingExist := res[0].OrgRoles[2]
+			require.True(t, mappingExist)
+			require.Equal(t, roletype.RoleEditor, role)
+			require.False(t, res[0].IsDisabled)
+			require.NotNil(t, res[0].IsGrafanaAdmin)
+			assert.False(t, *res[0].IsGrafanaAdmin)
 		})
 	})
 }
