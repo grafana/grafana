@@ -95,9 +95,7 @@ export class TeamList extends PureComponent<Props, State> {
     const { searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage, signedInUser } = this.props;
     const canCreate = canCreateTeam(editorsCanAdmin);
     const displayRolePicker = shouldDisaplyRolePicker();
-    const newTeamHref = canCreate ? 'org/teams/new' : '#';
     const paginatedTeams = this.getPaginatedTeams(teams);
-    const totalPages = Math.ceil(teams.length / pageLimit);
 
     return (
       <>
@@ -106,7 +104,7 @@ export class TeamList extends PureComponent<Props, State> {
             <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.onSearchQueryChange} />
           </div>
 
-          <LinkButton href={newTeamHref} disabled={!canCreate}>
+          <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
             New Team
           </LinkButton>
         </div>
@@ -141,7 +139,7 @@ export class TeamList extends PureComponent<Props, State> {
               <Pagination
                 onNavigate={setTeamsSearchPage}
                 currentPage={searchPage}
-                numberOfPages={totalPages}
+                numberOfPages={Math.ceil(totalCount / pageLimit)}
                 hideWhenSinglePage={true}
               />
             </HorizontalGroup>
