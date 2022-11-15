@@ -98,7 +98,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	code := ctx.Query("code")
 	if code == "" {
 		// FIXME: access_type is a Google OAuth2 specific thing, consider refactoring this and moving to google_oauth.go
-		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOffline}
+		// ApprovalForce is required to get the refresh token every time the user logs in with Google OAuth (without this the
+		// refresh token is only provided when the user first gives consent)
+		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOffline, oauth2.ApprovalForce}
 
 		if provider.UsePKCE {
 			ascii, pkce, err := genPKCECode()
