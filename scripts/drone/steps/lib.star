@@ -274,7 +274,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     step = {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(edition),
+        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -956,7 +956,7 @@ def release_canary_npm_packages_step(edition, trigger=None):
     step = {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': end_to_end_tests_deps(edition),
+        'depends_on': end_to_end_tests_deps(),
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -980,12 +980,12 @@ def upload_packages_step(edition, ver_mode, trigger=None):
         return None
 
     deps = []
-    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
+    if edition in 'enterprise2' or not end_to_end_tests_deps():
         deps.extend([
             'package' + enterprise2_suffix(edition),
         ])
     else:
-        deps.extend(end_to_end_tests_deps(edition))
+        deps.extend(end_to_end_tests_deps())
 
     step = {
         'name': 'upload-packages' + enterprise2_suffix(edition),
@@ -1250,14 +1250,14 @@ def artifacts_page_step():
         ],
     }
 
-def end_to_end_tests_deps(edition):
+def end_to_end_tests_deps():
     if disable_tests:
         return []
     return [
-        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-dashboards-suite',
+        'end-to-end-tests-panels-suite',
+        'end-to-end-tests-smoke-tests-suite',
+        'end-to-end-tests-various-suite',
     ]
 
 def compile_build_cmd(edition='oss'):
