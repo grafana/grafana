@@ -16,9 +16,13 @@ import (
 )
 
 func TestClearAuthHeadersMiddleware(t *testing.T) {
+	const otherHeader = "test"
+
 	t.Run("When no auth headers in reqContext", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
 		require.NoError(t, err)
+
+		req.Header.Set(otherHeader, "test")
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
 			cdt := clienttest.NewClientDecoratorTest(t,
@@ -33,11 +37,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should not attach delete headers middleware when calling QueryData", func(t *testing.T) {
 				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
-				require.Len(t, cdt.QueryDataReq.Headers, 0)
+				require.Len(t, cdt.QueryDataReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 0)
@@ -46,11 +50,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should not attach delete headers middleware when calling CallResource", func(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string][]string{},
+					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nil)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
-				require.Len(t, cdt.CallResourceReq.Headers, 0)
+				require.Len(t, cdt.CallResourceReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 0)
@@ -59,11 +63,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should not attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
-				require.Len(t, cdt.CheckHealthReq.Headers, 0)
+				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 0)
@@ -83,11 +87,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should not attach delete headers middleware when calling QueryData", func(t *testing.T) {
 				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
-				require.Len(t, cdt.QueryDataReq.Headers, 0)
+				require.Len(t, cdt.QueryDataReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 0)
@@ -96,11 +100,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should not attach delete headers middleware when calling CallResource", func(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string][]string{},
+					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nil)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
-				require.Len(t, cdt.CallResourceReq.Headers, 0)
+				require.Len(t, cdt.CallResourceReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 0)
@@ -109,11 +113,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should not attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
-				require.Len(t, cdt.CheckHealthReq.Headers, 0)
+				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 0)
@@ -136,6 +140,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
 			req = req.WithContext(ctx)
 
+			const otherHeader = "X-Other"
+			req.Header.Set(otherHeader, "test")
+
 			pluginCtx := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}
@@ -143,11 +150,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should attach delete headers middleware when calling QueryData", func(t *testing.T) {
 				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
-				require.Len(t, cdt.QueryDataReq.Headers, 0)
+				require.Len(t, cdt.QueryDataReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 1)
@@ -157,17 +164,19 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 1)
 				require.Empty(t, reqClone.Header[customHeader])
+				require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			})
 
 			t.Run("Should attach delete headers middleware when calling CallResource", func(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string][]string{},
+					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nil)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
-				require.Len(t, cdt.CallResourceReq.Headers, 0)
+				require.Len(t, cdt.CallResourceReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 1)
@@ -177,17 +186,19 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 1)
 				require.Empty(t, reqClone.Header[customHeader])
+				require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			})
 
 			t.Run("Should attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
-				require.Len(t, cdt.CheckHealthReq.Headers, 0)
+				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 1)
@@ -197,7 +208,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 1)
 				require.Empty(t, reqClone.Header[customHeader])
+				require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			})
 		})
 
@@ -212,6 +225,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
 			req = req.WithContext(ctx)
 
+			const otherHeader = "X-Other"
+			req.Header.Set(otherHeader, "test")
+
 			pluginCtx := backend.PluginContext{
 				AppInstanceSettings: &backend.AppInstanceSettings{},
 			}
@@ -219,11 +235,11 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			t.Run("Should attach delete headers middleware when calling QueryData", func(t *testing.T) {
 				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
-				require.Len(t, cdt.QueryDataReq.Headers, 0)
+				require.Len(t, cdt.QueryDataReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 1)
@@ -233,17 +249,19 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 1)
 				require.Empty(t, reqClone.Header[customHeader])
+				require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			})
 
 			t.Run("Should attach delete headers middleware when calling CallResource", func(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string][]string{},
+					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nil)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
-				require.Len(t, cdt.CallResourceReq.Headers, 0)
+				require.Len(t, cdt.CallResourceReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 1)
@@ -253,17 +271,19 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 1)
 				require.Empty(t, reqClone.Header[customHeader])
+				require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			})
 
 			t.Run("Should attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
 				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
-					Headers:       map[string]string{},
+					Headers:       map[string]string{otherHeader: "test"},
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
-				require.Len(t, cdt.CheckHealthReq.Headers, 0)
+				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 1)
@@ -273,7 +293,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 1)
 				require.Empty(t, reqClone.Header[customHeader])
+				require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			})
 		})
 	})
