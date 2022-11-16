@@ -271,7 +271,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 			if errors.Is(err, plugins.ErrFileNotExist) {
 				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
 			}
-			return response.Error(http.StatusInternalServerError, "Could not get markdown file", err)
+			return response.Error(http.StatusNotImplemented, "Could not get markdown file", err)
 		}
 	}
 
