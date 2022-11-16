@@ -4,9 +4,9 @@ import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoa
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
-import { SceneGridLayout } from '../components/SceneGridLayout';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
+import { SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneObject } from '../core/types';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -20,9 +20,9 @@ export interface DashboardLoaderState {
 }
 
 export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
-  cache: Record<string, DashboardScene> = {};
+  private cache: Record<string, DashboardScene> = {};
 
-  async load(uid: string) {
+  public async load(uid: string) {
     const fromCache = this.cache[uid];
     if (fromCache) {
       this.setState({ dashboard: fromCache });
@@ -44,7 +44,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
     }
   }
 
-  initDashboard(rsp: DashboardDTO) {
+  private initDashboard(rsp: DashboardDTO) {
     // Just to have migrations run
     const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
     const panels: SceneObject[] = [];
