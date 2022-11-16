@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { inRange } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
-import { useDebounce, useWindowSize } from 'react-use';
+import { useWindowSize } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
@@ -104,27 +104,6 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
   }, []);
 
-  useDebounce(
-    () => {
-      let rightPaneRatio = undefined;
-      let rightPaneWidth = Math.floor(windowWidth * rightPaneWidthRatio);
-      if (rightPaneWidth < minWidth) {
-        // if right pane is too narrow, make min width
-        rightPaneRatio = minWidth / windowWidth;
-      } else if (windowWidth - rightPaneWidth < minWidth) {
-        // if left pane is too narrow, make right pane = window - minWidth
-        rightPaneWidth = windowWidth - minWidth;
-        rightPaneRatio = rightPaneWidth / windowWidth;
-      }
-
-      if (rightPaneRatio !== undefined) {
-        setRightPaneWidthRatio(rightPaneRatio);
-      }
-    },
-    500,
-    [windowWidth, rightPaneWidthRatio]
-  );
-
   const updateSplitSize = (size: number) => {
     const evenSplitWidth = windowWidth / 2;
     const areBothSimilar = inRange(size, evenSplitWidth - 100, evenSplitWidth + 100);
@@ -160,6 +139,8 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
         <SplitPaneWrapper
           splitOrientation="vertical"
           paneSize={widthCalc}
+          minSize={minWidth}
+          maxSize={minWidth * -1}
           primary="second"
           splitVisible={hasSplit}
           paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
