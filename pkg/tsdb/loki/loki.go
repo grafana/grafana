@@ -133,15 +133,12 @@ func getAuthHeadersForCallResource(headers map[string][]string) map[string]strin
 		switch k {
 		case "Authorization":
 			data["Authorization"] = firstValue
-			continue
 		case "X-Id-Token":
 			data["X-ID-Token"] = firstValue
-			continue
 		case "Cookie":
 			data["Cookie"] = firstValue
 		}
 	}
-
 	return data
 }
 
