@@ -1,11 +1,9 @@
 ######################## IMPORTANT ########################
 #
-# There are 4 Dockerfiles which must be kept in sync:
+# There are 2 Dockerfiles which must be kept in sync:
 #
 # - Dockerfile
-# - Dockerfile.ubuntu
 # - packaging/docker/Dockerfile
-# - packaging/docker/ubuntu.Dockerfile
 #
 ###########################################################
 
@@ -18,7 +16,9 @@ WORKDIR /tmp/grafana
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
 # Make sure we have Gnu tar
-RUN apk add --no-cache tar
+RUN if grep -i -q alpine /etc/issue; then \
+      apk add --no-cache tar; \
+    fi
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
@@ -44,11 +44,21 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
-RUN apk add --no-cache ca-certificates bash tzdata musl-utils && \
-    apk info -vv | sort
+RUN if grep -i -q alpine /etc/issue; then \
+      apk add --no-cache ca-certificates bash tzdata musl-utils && \
+      apk info -vv | sort; \
+    elif grep -i -q ubuntu /etc/issue; then \
+      DEBIAN_FRONTEND=noninteractive && \
+      apt-get update && \
+      apt-get install -y ca-certificates curl tzdata && \
+      apt-get autoremove -y && \
+      rm -rf /var/lib/apt/lists/*; \
+    else \
+      echo 'ERROR: Unsupported base image' && /bin/false; \
+    fi
 
 # Oracle Support for x86_64 only
-RUN if [ `arch` = "x86_64" ]; then \
+RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-2.35-r0.apk \
         -O /tmp/glibc-2.35-r0.apk && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-bin-2.35-r0.apk \
@@ -62,14 +72,22 @@ RUN if [ `arch` = "x86_64" ]; then \
       rm -f /etc/ld.so.cache; \
     fi
 
-COPY --from=grafana-builder /tmp/grafana .
+COPY --from=grafana-builder /tmp/grafana/conf ./conf
 
 RUN if [ ! $(getent group "$GF_GID") ]; then \
-      addgroup -S -g $GF_GID grafana; \
+      if grep -i -q alpine /etc/issue; then \
+        addgroup -S -g $GF_GID grafana; \
+      else \
+        addgroup --system --gid $GF_GID grafana; \
+      fi; \
     fi && \
     GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
     mkdir -p "$GF_PATHS_HOME/.aws" && \
-    adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
+    if grep -i -q alpine /etc/issue; then \
+      adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana; \
+    else \
+      adduser --system --uid $GF_UID --ingroup "$GF_GID_NAME" grafana; \
+    fi && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
@@ -83,6 +101,9 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
     cp conf/ldap.toml /etc/grafana/ldap.toml && \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
+
+COPY --from=grafana-builder /tmp/grafana/bin/grafana-server /tmp/grafana/bin/grafana-cli ./bin/
+COPY --from=grafana-builder /tmp/grafana/public ./public
 
 EXPOSE 3000
 

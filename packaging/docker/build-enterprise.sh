@@ -2,11 +2,13 @@
 set -e
 
 UBUNTU_BASE=0
+TAG_SUFFIX=""
 
 while [ "$1" != "" ]; do
   case "$1" in
     "--ubuntu")
       UBUNTU_BASE=1
+      TAG_SUFFIX="-ubuntu"
       echo "Ubuntu base image enabled"
       shift
       ;;
@@ -28,20 +30,11 @@ else
   _grafana_tag="${_raw_grafana_tag}"
 fi
 
-if [ ${UBUNTU_BASE} = "0" ]; then
-  TAG_SUFFIX=""
-  DOCKERFILE="Dockerfile"
-else
-  TAG_SUFFIX="-ubuntu"
-  DOCKERFILE="ubuntu.Dockerfile"
-fi
-
 echo "Building and deploying ${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}"
 
 docker build \
   --tag "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}" \
   --no-cache=true \
-  -f ${DOCKERFILE} \
   .
 
 docker push "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}"
@@ -56,4 +49,3 @@ if echo "${_raw_grafana_tag}" | grep -q "^main-" && [ ${UBUNTU_BASE} = "1" ]; th
   docker tag "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}" "grafana/grafana-enterprise-dev:${_raw_grafana_tag}"
   docker push "grafana/grafana-enterprise-dev:${_raw_grafana_tag}"
 fi
-
