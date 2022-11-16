@@ -86,8 +86,12 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   return (
     <div className={styles.container} style={containerStyles}>
       {hasHeader && !hoverHeader && (
-        <div title={title} className={styles.headerContainer} style={headerStyles} data-testid="header-container">
-          {title && <div className={styles.title}>{title}</div>}
+        <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+          {title && (
+            <div title={title} className={styles.title}>
+              {title}
+            </div>
+          )}
 
           {titleItems.length > 0 && (
             <div className={styles.items} data-testid="title-items-container">
@@ -111,7 +115,8 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
             <Dropdown overlay={menu} placement="bottom">
               <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
                 <IconButton
-                  tooltip={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                  ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                  tooltip="Menu"
                   name="ellipsis-v"
                   size="sm"
                   onClick={handleMenuOpen}
