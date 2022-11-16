@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-
 var walk = util.Walk
 
 var (

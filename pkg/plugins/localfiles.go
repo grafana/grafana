@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -33,26 +32,18 @@ func NewLocalFS(m map[string]struct{}, basePath string) LocalFS {
 	}
 }
 
+func (f LocalFS) Open(name string) (fs.File, error) {
+	if kv, exists := f.m[filepath.Join(f.basePath, name)]; exists {
+		if kv.f != nil {
+			return kv.f, nil
+		}
+		return os.Open(kv.path)
+	}
+	return nil, ErrFileNotExist
+}
+
 func (f LocalFS) Base() string {
 	return f.basePath
-}
-
-func (f LocalFS) Exists(name string) bool {
-	if _, exists := f.m[filepath.Join(f.basePath, name)]; exists {
-		return true
-	}
-	if _, exists := f.m[name]; exists {
-		return true
-	}
-	return false
-}
-
-func (f LocalFS) FullPath(name string) (string, bool) {
-	fp := filepath.Join(f.basePath, name)
-	if _, exists := f.m[fp]; exists {
-		return fp, true
-	}
-	return "", false
 }
 
 func (f LocalFS) Files() []string {
@@ -66,33 +57,6 @@ func (f LocalFS) Files() []string {
 	}
 
 	return files
-}
-
-func (f LocalFS) Read(name string) ([]byte, bool) {
-	m, err := f.Open(name)
-	if err != nil {
-		return []byte{}, false
-	}
-
-	b, err := io.ReadAll(m)
-	if err != nil {
-		return []byte{}, false
-	}
-
-	if err = m.Close(); err != nil {
-		return []byte{}, false
-	}
-	return b, true
-}
-
-func (f LocalFS) Open(name string) (fs.File, error) {
-	if kv, exists := f.m[filepath.Join(f.basePath, name)]; exists {
-		if kv.f != nil {
-			return kv.f, nil
-		}
-		return os.Open(kv.path)
-	}
-	return nil, ErrFileNotExist
 }
 
 var _ fs.File = (*LocalFile)(nil)

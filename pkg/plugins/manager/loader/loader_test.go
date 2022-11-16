@@ -99,7 +99,7 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Module:  "app/plugins/datasource/cloudwatch/module",
 					BaseURL: "public/app/plugins/datasource/cloudwatch",
-					Files: plugins.NewLocalFS(
+					FS: plugins.NewLocalFS(
 						filesInDir(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 						filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureInternal,
@@ -140,7 +140,7 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Module:  "plugins/test-datasource/module",
 					BaseURL: "public/plugins/test-datasource",
-					Files: plugins.NewLocalFS(
+					FS: plugins.NewLocalFS(
 						filesInDir(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
 						filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/"),
 					),
@@ -220,7 +220,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:   plugins.External,
 					Module:  "plugins/test-app/module",
 					BaseURL: "public/plugins/test-app",
-					Files: plugins.NewLocalFS(
+					FS: plugins.NewLocalFS(
 						map[string]struct{}{
 							filepath.Join(parentDir, "testdata/includes-symlinks", "/MANIFEST.txt"):                {},
 							filepath.Join(parentDir, "testdata/includes-symlinks", "dashboards/connections.json"):  {},
@@ -270,7 +270,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:   plugins.External,
 					Module:  "plugins/test-datasource/module",
 					BaseURL: "public/plugins/test-datasource",
-					Files: plugins.NewLocalFS(
+					FS: plugins.NewLocalFS(
 						filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 						filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
 					),
@@ -324,7 +324,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:   plugins.External,
 					Module:  "plugins/test-datasource/module",
 					BaseURL: "public/plugins/test-datasource",
-					Files: plugins.NewLocalFS(
+					FS: plugins.NewLocalFS(
 						filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 						filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
 					),
@@ -431,7 +431,7 @@ func TestLoader_Load(t *testing.T) {
 					Backend: false,
 				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					Files: plugins.NewLocalFS(map[string]struct{}{
+					FS: plugins.NewLocalFS(map[string]struct{}{
 						filepath.Join(parentDir, "testdata/test-app-with-includes", "dashboards/memory.json"): {},
 						filepath.Join(parentDir, "testdata/test-app-with-includes", "plugin.json"):            {},
 					}, filepath.Join(parentDir, "testdata/test-app-with-includes")),
@@ -583,7 +583,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Class:   plugins.External,
 						Module:  "plugins/test-datasource/module",
 						BaseURL: "public/plugins/test-datasource",
-						Files: plugins.NewLocalFS(map[string]struct{}{
+						FS: plugins.NewLocalFS(map[string]struct{}{
 							filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin/plugin.json"):  {},
 							filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin/MANIFEST.txt"): {},
 						}, filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin")),
@@ -700,7 +700,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						},
 						Backend: false,
 					},
-					Files: plugins.NewLocalFS(map[string]struct{}{
+					FS: plugins.NewLocalFS(map[string]struct{}{
 						filepath.Join(pluginDir, "plugin.json"):  {},
 						filepath.Join(pluginDir, "MANIFEST.txt"): {},
 					}, pluginDir),
@@ -785,7 +785,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 					Backend:      true,
 					Executable:   "test",
 				},
-				Files: plugins.NewLocalFS(map[string]struct{}{
+				FS: plugins.NewLocalFS(map[string]struct{}{
 					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "plugin.json"):  {},
 					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "MANIFEST.txt"): {},
 				}, filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin")),
@@ -868,7 +868,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				Files:         plugins.NewLocalFS(filesInDir(t, pluginDir), pluginDir),
+				FS:            plugins.NewLocalFS(filesInDir(t, pluginDir), pluginDir),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.GrafanaSignature,
@@ -931,7 +931,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:  "plugins/test-datasource/module",
 		BaseURL: "public/plugins/test-datasource",
-		Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
+		FS: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
 			filepath.Join(rootDir, "testdata/nested-plugins/parent")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
@@ -964,7 +964,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:  "plugins/test-panel/module",
 		BaseURL: "public/plugins/test-panel",
-		Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
+		FS: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
 			filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
@@ -1092,7 +1092,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:  "plugins/myorgid-simple-app/module",
 			BaseURL: "public/plugins/myorgid-simple-app",
-			Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
+			FS: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
 				filepath.Join(rootDir, "testdata/app-with-child/dist")),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
 			Signature:     plugins.SignatureValid,
@@ -1131,7 +1131,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:  "plugins/myorgid-simple-app/child/module",
 			BaseURL: "public/plugins/myorgid-simple-app",
-			Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
+			FS: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
 				filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureValid,
@@ -1173,7 +1173,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 func Test_setPathsBasedOnApp(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		child := &plugins.Plugin{
-			Files: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
+			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -1181,7 +1181,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 				ID:   "testdata-app",
 			},
 			Class:   plugins.Core,
-			Files:   fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
+			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
 			BaseURL: "public/app/plugins/app/testdata-app",
 		}
 

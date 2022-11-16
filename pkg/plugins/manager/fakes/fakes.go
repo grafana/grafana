@@ -370,7 +370,7 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 }
 
 type FakePluginFiles struct {
-	fs.FS
+	FS fs.FS
 
 	base string
 }
@@ -381,22 +381,14 @@ func NewFakePluginFiles(base string) *FakePluginFiles {
 	}
 }
 
+func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+	return f.FS.Open(name)
+}
+
 func (f *FakePluginFiles) Base() string {
 	return f.base
 }
 
-func (f *FakePluginFiles) Exists(_ string) bool {
-	return false
-}
-
-func (f *FakePluginFiles) FullPath(_ string) (string, bool) {
-	return "", false
-}
-
 func (f *FakePluginFiles) Files() []string {
 	return []string{}
-}
-
-func (f *FakePluginFiles) Read(_ string) ([]byte, bool) {
-	return []byte{}, false
 }

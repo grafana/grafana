@@ -66,8 +66,8 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
 	res, err := l.pluginFinder.Find(paths...)
 	if err != nil {
-			return nil, err
-		}
+		return nil, err
+	}
 
 	return l.loadPlugins(ctx, class, res)
 }
@@ -128,7 +128,14 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 
 		// verify module.js exists for SystemJS to load
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			if exists := plugin.Files.Exists("module.js"); !exists {
+			moduleExists := false
+			for _, f := range plugin.FS.Files() {
+				if f == "module.js" {
+					moduleExists = true
+					break
+				}
+			}
+			if !moduleExists {
 				l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 			}
@@ -192,7 +199,7 @@ func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 	}
 
 	if p.IsExternalPlugin() {
-		if err := l.pluginStorage.Register(ctx, p.ID, p.Files.Base()); err != nil {
+		if err := l.pluginStorage.Register(ctx, p.ID, p.FS.Base()); err != nil {
 			return err
 		}
 	}
@@ -221,7 +228,7 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData: pluginJSON,
-		Files:    files,
+		FS:       files,
 		BaseURL:  baseURL(pluginJSON, class, files.Base()),
 		Module:   module(pluginJSON, class, files.Base()),
 		Class:    class,
@@ -286,7 +293,7 @@ func configureAppChildOfPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
-	appSubPath := strings.ReplaceAll(strings.Replace(child.Files.Base(), parent.Files.Base(), "", 1), "\\", "/")
+	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -22,7 +23,7 @@ import (
 type Plugin struct {
 	JSONData
 
-	Files FS
+	FS    FS
 	Class Class
 
 	// App fields
@@ -51,7 +52,7 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	files FS
+	fs FS
 
 	class Class
 
@@ -88,7 +89,7 @@ func (p PluginDTO) SupportsStreaming() bool {
 }
 
 func (p PluginDTO) Base() string {
-	return p.files.Base()
+	return p.fs.Base()
 }
 
 func (p PluginDTO) IsApp() bool {
@@ -107,20 +108,36 @@ func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
 
-func (p PluginDTO) Markdown(name string) []byte {
-	for _, f := range p.files.Files() {
+func (p PluginDTO) Markdown(name string) ([]byte, error) {
+	for _, f := range p.fs.Files() {
 		if filepath.Ext(f) == "md" {
 			if strings.EqualFold(fmt.Sprintf("%s.md", name), f) {
-				data, _ := p.files.Read(f)
-				return data
+				return p.readFile(name)
 			}
 		}
 	}
-	return make([]byte, 0)
+	return make([]byte, 0), ErrFileNotExist
+}
+
+func (p PluginDTO) readFile(name string) ([]byte, error) {
+	m, err := p.fs.Open(name)
+	if err != nil {
+		return make([]byte, 0), ErrFileNotExist
+	}
+
+	b, err := io.ReadAll(m)
+	if err != nil {
+		return make([]byte, 0), err
+	}
+
+	if err = m.Close(); err != nil {
+		return make([]byte, 0), err
+	}
+	return b, nil
 }
 
 func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
-	f, err := p.files.Open(name)
+	f, err := p.fs.Open(name)
 	if err != nil {
 		return nil, time.Time{}, err
 	}
@@ -140,10 +157,6 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	}
 
 	return bytes.NewReader(b), fi.ModTime(), nil
-}
-
-func mdFilepath(mdFilename string) string {
-	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
 }
 
 // JSONData represents the plugin's plugin.json
@@ -378,11 +391,7 @@ func pluginExecutable(p *Plugin, f string) string {
 	if os == "windows" {
 		extension = ".exe"
 	}
-	fp, exists := p.Files.FullPath(fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
-	if !exists {
-		return ""
-	}
-	return fp
+	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
 }
 
 type PluginClient interface {
@@ -395,7 +404,7 @@ type PluginClient interface {
 
 func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
-		files:             p.Files,
+		fs:                p.FS,
 		class:             p.Class,
 		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
 		JSONData:          p.JSONData,
@@ -415,11 +424,11 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 		return nil
 	}
 
-	if p.Files == nil {
+	if p.FS == nil {
 		return nil
 	}
 
-	return &StaticRoute{Directory: p.Files.Base(), PluginID: p.ID}
+	return &StaticRoute{Directory: p.FS.Base(), PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {

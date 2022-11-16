@@ -169,7 +169,7 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	t.Helper()
 
 	p1 := &plugins.Plugin{
-		JSONData:        plugins.JSONData{
+		JSONData: plugins.JSONData{
 			ID: "pluginWithoutDashboards",
 			Includes: []*plugins.Includes{
 				{
@@ -196,7 +196,7 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 				},
 			},
 		},
-		Files: &fakes.FakePluginFiles{
+		FS: &fakes.FakePluginFiles{
 			FS: fstest.MapFS{
 				"dashboards/dash1.json": {
 					Data: []byte("dash1"),

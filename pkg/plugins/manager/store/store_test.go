@@ -97,11 +97,11 @@ func TestStore_Plugins(t *testing.T) {
 
 func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, Files: fakes.NewFakePluginFiles("/some/dir")}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, Files: fakes.NewFakePluginFiles( "/grafana/")}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, Files: fakes.NewFakePluginFiles("./secrets"), Class: plugins.Core}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource},Files: fakes.NewFakePluginFiles( "../test")}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}, Files: fakes.NewFakePluginFiles( "any/path")}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, FS: fakes.NewFakePluginFiles("/some/dir")}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, FS: fakes.NewFakePluginFiles("/grafana/")}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, FS: fakes.NewFakePluginFiles("./secrets"), Class: plugins.Core}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource}, FS: fakes.NewFakePluginFiles("../test")}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}, FS: fakes.NewFakePluginFiles("any/path")}
 		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.App}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
@@ -115,7 +115,7 @@ func TestStore_Routes(t *testing.T) {
 		}))
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
-			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.Files.Base()}
+			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
 		}
 
 		rs := ps.Routes()

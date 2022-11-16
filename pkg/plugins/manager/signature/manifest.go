@@ -112,9 +112,38 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
 	// on plugin the folder structure on disk and not user input.
-	byteValue, exists := plugin.FS.Read("MANIFEST.txt")
-	if !exists || len(byteValue) < 10 {
-		mlog.Debug("Plugin is unsigned", "id", plugin.JSONData.ID)
+	f, err := plugin.FS.Open("MANIFEST.txt")
+	if err != nil {
+		if errors.Is(err, plugins.ErrFileNotExist) {
+			mlog.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+			return plugins.Signature{
+				Status: plugins.SignatureUnsigned,
+			}, nil
+		}
+
+		mlog.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
+		}, nil
+	}
+
+	byteValue, err := io.ReadAll(f)
+	if err != nil {
+		mlog.Debug("Could not read MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
+		}, nil
+	}
+
+	if err = f.Close(); err != nil {
+		mlog.Debug("Could not close MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
+		}, nil
+	}
+
+	if len(byteValue) < 10 {
+		mlog.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureUnsigned,
 		}, nil

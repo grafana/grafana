@@ -258,17 +258,20 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
-		return response.Error(500, "Could not get markdown file", err)
+		return response.Error(http.StatusInternalServerError, "Could not get markdown file", err)
 	}
 
-	// fallback try readme
+	// fallback try alternative name
 	if len(content) == 0 {
 		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "help")
 		if err != nil {
-			return response.Error(501, "Could not get markdown file", err)
+			if errors.Is(err, plugins.ErrFileNotExist) {
+				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
+			}
+			return response.Error(http.StatusInternalServerError, "Could not get markdown file", err)
 		}
 	}
 
@@ -466,5 +469,5 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	return plugin.Markdown(name), nil
+	return plugin.Markdown(name)
 }

@@ -449,12 +449,12 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		}}, plugins.External, plugins.NewLocalFS(map[string]struct{}{}, ""))
 	p2 := createPluginDTO(
 		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
-		Info: plugins.Info{
-			Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
-			Description: "Data source for MySQL databases",
-		}}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{}, ""))
+			Info: plugins.Info{
+				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
+				Description: "Data source for MySQL databases",
+			}}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{}, ""))
 
-	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p1,p2}}
+	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{p1, p2}}
 
 	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
@@ -520,7 +520,7 @@ func createPluginDTO(jd plugins.JSONData, class plugins.Class, files plugins.FS)
 	p := &plugins.Plugin{
 		JSONData: jd,
 		Class:    class,
-		Files:    files,
+		FS:       files,
 	}
 
 	return p.ToDTO()

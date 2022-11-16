@@ -43,12 +43,8 @@ type FS interface {
 	fs.FS
 
 	Base() string
-	Exists(name string) bool
-	FullPath(name string) (string, bool)
 	Files() []string
-	Read(name string) ([]byte, bool)
 }
-
 
 type FoundBundle struct {
 	Primary  FoundPlugin
