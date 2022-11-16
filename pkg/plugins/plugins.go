@@ -108,19 +108,15 @@ func (p PluginDTO) IsSecretsManager() bool {
 }
 
 func (p PluginDTO) Markdown(name string) []byte {
-	path := mdFilepath(strings.ToUpper(name))
-	exists := p.files.Exists(path)
-	if !exists {
-		path = mdFilepath(strings.ToLower(name))
+	for _, f := range p.files.Files() {
+		if filepath.Ext(f) == "md" {
+			if strings.EqualFold(fmt.Sprintf("%s.md", name), f) {
+				data, _ := p.files.Read(f)
+				return data
+			}
+		}
 	}
-
-	exists = p.files.Exists(path)
-	if !exists {
-		return make([]byte, 0)
-	}
-
-	data, _ := p.files.Read(path)
-	return data
+	return make([]byte, 0)
 }
 
 func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
