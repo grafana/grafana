@@ -82,4 +82,4 @@ As part of our efforts to improve security of Grafana, we introduce a long-await
 
 This feature is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default.
 
-Complete documentation on how to configure obtaining a refresh token can be found on the specific Identity Provider's [configuration page]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
+Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}), in the instructions for your Oauth identity provider.
