@@ -394,7 +394,8 @@
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
-      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel."
+      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Incrustar",

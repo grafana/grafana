@@ -394,7 +394,8 @@
       "mistake-message": "Avez-vous commis une erreur\u00a0? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
-      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps."
+      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Intégrer",
