@@ -1407,8 +1407,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
   depends_on:
   - build-docker-images
   - build-docker-images-ubuntu
@@ -1428,8 +1427,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss
   depends_on:
   - build-docker-images
   - build-docker-images-ubuntu
@@ -3433,8 +3431,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --version-tag
+    ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3450,8 +3448,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --version-tag
+    ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3522,8 +3520,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
-    ${TAG}
+    --version-tag ${TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -3594,8 +3591,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana/grafana-enterprise
-    --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
-    ${TAG}
+    --version-tag ${TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -5625,6 +5621,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: b982fb6ded3969d879e9f4b3be5043094e5dd48211f7b30cb5e9ef212aa89928
+hmac: 0917581158865ce294a75dbb92b036908d5d126211c4b35cbf38fba143944665
 
 ...
