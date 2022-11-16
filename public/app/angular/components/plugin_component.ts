@@ -6,7 +6,18 @@ import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
 
 import { importPanelPlugin } from '../../features/plugins/importPanelPlugin';
+import { cdnHost } from '../../features/plugins/pluginCDN';
 import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
+
+// ⚠️ POC plugin CDN stuffs! ⚠️
+export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
+  if (!templateUrl) {
+    return undefined;
+  }
+
+  // We are using a subdomain of 'plugin-cdn.(...)' instead of specifying the bucket in the path...
+  return `${baseUrl.replace('plugin-cdn/', `${cdnHost}/`)}/${templateUrl}`;
+}
 
 /** @ngInject */
 function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $location: ILocationService) {
@@ -28,14 +39,20 @@ function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $
       return undefined;
     }
     if (templateUrl.indexOf('public') === 0) {
+      // "public/wawdawd"
       return templateUrl;
     }
+
     return baseUrl + '/' + templateUrl;
   }
 
   function getPluginComponentDirective(options: any) {
-    // handle relative template urls for plugin templates
-    options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
+    if (options.baseUrl.includes('plugin-cdn')) {
+      options.Component.templateUrl = relativeTemplateUrlToCDN(options.Component.templateUrl, options.baseUrl);
+    } else {
+      // handle relative template urls for plugin templates
+      options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
+    }
 
     return () => {
       return {
@@ -85,13 +102,17 @@ function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $
       }
 
       if (panelInfo) {
-        PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
+        if (panelInfo.baseUrl.includes('plugin-cdn')) {
+          PanelCtrl.templateUrl = relativeTemplateUrlToCDN(PanelCtrl.templateUrl, panelInfo.baseUrl);
+        } else {
+          PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
+        }
       }
 
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then((template: any) => {
         PanelCtrl.templateUrl = null;
         PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-height-helper">${template}</grafana-panel>`;
-        return componentInfo;
+        return { ...componentInfo, baseUrl: panelInfo.baseUrl };
       });
 
       return PanelCtrl.templatePromise;

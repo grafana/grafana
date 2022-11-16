@@ -48,7 +48,11 @@ if (typeof window !== 'undefined') {
       var link = document.createElement('link');
       link.type = 'text/css';
       link.rel = 'stylesheet';
-      link.href = url + bust;
+      link.href = url;
+      // YOLO Plugin CDN FTW 🤘
+      if (!link.href.match('plugin-cdn.')) {
+        link.href = link.href + bust;
+      }
       if (!isWebkit) {
         link.onload = function () {
           _callback();
@@ -70,4 +74,16 @@ if (typeof window !== 'undefined') {
         return '';
     return loadCSS(load.address);
   };
+
+  // ⚠️ Plugin CDN PoC stuff ⚠️
+  // imported css creates relative css paths in Systemjs.register which are troublesome to transform in pluginCDN
+  // systemjs plugin. Prefer to let systemjs resolve to localhost then replace in locate hook.
+  exports.locate = function (load) {
+    if (load.metadata.loader === 'cdn-loader') {
+      if (load.address.startsWith('http://localhost:3000/public/plugin-cdn')) {
+        load.address = load.address.replace('http://localhost:3000/public/plugin-cdn', 'https://plugin-cdn.storage.googleapis.com');
+      }
+    }
+    return load.address;
+  }
 }

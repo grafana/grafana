@@ -81,6 +81,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { remotePanels } from './pluginCDNDummyData';
 import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
@@ -106,6 +107,12 @@ export class GrafanaApp {
       parent.postMessage('GrafanaAppInit', '*');
 
       const initI18nPromise = initializeI18n(config.bootData.user.language);
+
+      // WOOOHOOOO! 🚀 --------------------
+      config.panels = {
+        ...config.panels,
+        ...remotePanels,
+      };
 
       setBackendSrv(backendSrv);
       initEchoSrv();

@@ -32,6 +32,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
+import { locateFromCDN, translateForCDN } from './pluginCDN';
 import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
@@ -44,6 +45,10 @@ grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
+grafanaRuntime.SystemJS.registry.set(
+  'cdn-loader',
+  grafanaRuntime.SystemJS.newModule({ locate: locateFromCDN, translate: translateForCDN })
+);
 
 grafanaRuntime.SystemJS.config({
   baseURL: 'public',
@@ -52,16 +57,25 @@ grafanaRuntime.SystemJS.config({
     plugins: {
       defaultExtension: 'js',
     },
+    'plugin-cdn': {
+      defaultExtension: 'js',
+    },
   },
   map: {
     text: 'vendor/plugin-text/text.js',
     css: 'vendor/plugin-css/css.js',
   },
+  paths: {},
   meta: {
-    '/*': {
+    'plugins/*': {
       esModule: true,
       authorization: true,
       loader: 'plugin-loader',
+    },
+    'plugin-cdn/*': {
+      esModule: true,
+      authorization: false,
+      loader: 'cdn-loader',
     },
   },
 });
