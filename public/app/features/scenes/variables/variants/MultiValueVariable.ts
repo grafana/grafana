@@ -87,11 +87,14 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
       }
     }
 
+    // Remember current value and text
+    const { value: prevValue, text: prevText } = this.state;
+
     // Perform state change
     this.setStateHelper(stateUpdate);
 
     // Publish value changed event only if value changed
-    if (stateUpdate.value !== this.state.value || stateUpdate.text !== this.state.text) {
+    if (stateUpdate.value !== prevValue || stateUpdate.text !== prevText || this.hasAllValue()) {
       this.publishEvent(new SceneVariableValueChangedEvent(this), true);
     }
   }
