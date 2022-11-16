@@ -1,5 +1,4 @@
-import { screen, render, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, render } from '@testing-library/react';
 import React from 'react';
 
 import { PanelChrome, PanelChromeProps } from './PanelChrome';
@@ -100,26 +99,6 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
   expect(screen.getByTestId('menu-icon')).toBeInTheDocument();
   expect(screen.getByTestId('menu-icon')).not.toBeVisible();
 });
-
-it('can see menu icon when hovering on the panel', async () => {
-  const { asFragment } = setup({ menu: <div> Menu </div> });
-  const user = userEvent.setup();
-
-  const panelContainer = asFragment().firstElementChild;
-  if (panelContainer && panelContainer !== null) {
-    await user.hover(panelContainer!);
-    // fireEvent.mouseOver(panelContainer!);
-    // await waitFor(() => screen.getByTestId('menu-icon'));
-    expect(screen.getByTestId('menu-icon')).toBeVisible();
-  }
-});
-
-// it('opens a menu when clicking on menu icon', () => {
-//   setup({ menu: <div> Menu </div> });
-
-//   // TODO show on hover, then click
-//   expect(screen.getByTestId('menu-container')).toBeInTheDocument();
-// });
 
 it('renders states in the panel header if any given', () => {});
 

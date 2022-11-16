@@ -9,6 +9,7 @@ import { PanelChrome, useTheme2, PanelChromeProps } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { Menu } from '../Menu/Menu';
 
 import { PanelChromeInfoState } from './PanelChrome';
 
@@ -170,7 +171,7 @@ const leftItems = { LoadingIcon, ErrorIcon, Default };
 
 const titleItems: PanelChromeInfoState[] = [
   {
-    icon: 'info-circle',
+    icon: 'info',
     tooltip:
       'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
   },
@@ -187,9 +188,39 @@ const titleItems: PanelChromeInfoState[] = [
   {
     icon: 'heart',
     tooltip: 'Health of the panel',
-    onClick: () => {},
   },
 ];
+
+const menu = (
+  <Menu>
+    <Menu.Item label="View" icon="eye" />
+    <Menu.Item label="Edit" icon="edit" />
+    <Menu.Item label="Share" icon="share-alt" />
+    <Menu.Item label="Explore" icon="compass" />
+    <Menu.Item
+      label="Inspect"
+      icon="info-circle"
+      childItems={[
+        <Menu.Item key="subitem1" label="Data" />,
+        <Menu.Item key="subitem2" label="Query" />,
+        <Menu.Item key="subitem3" label="Panel JSON" />,
+      ]}
+    />
+    <Menu.Item
+      label="More"
+      icon="cube"
+      childItems={[
+        <Menu.Item key="subitem1" label="Duplicate" />,
+        <Menu.Item key="subitem2" label="Copy" />,
+        <Menu.Item key="subitem3" label="Create library panel" />,
+        <Menu.Item key="subitem4" label="Hide legend" />,
+        <Menu.Item key="subitem5" label="Get help" />,
+      ]}
+    />
+    <Menu.Divider />
+    <Menu.Item label="Remove" icon="trash-alt" />
+  </Menu>
+);
 
 Basic.argTypes = {
   leftItems: {
@@ -211,7 +242,7 @@ Basic.args = {
   height: 200,
   title: 'Very long title that should get ellipsis when there is no more space',
   titleItems,
-  menu: <div> Menu </div>,
+  menu,
 };
 
 export default meta;

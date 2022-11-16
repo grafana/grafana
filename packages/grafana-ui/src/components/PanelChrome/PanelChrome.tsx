@@ -5,8 +5,10 @@ import { GrafanaTheme2, LoadingState, isIconName } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
+import { Dropdown } from '../Dropdown/Dropdown';
+import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
-import { PopoverContent } from '../Tooltip';
+import { PopoverContent, Tooltip } from '../Tooltip';
 
 /**
  * @internal
@@ -27,7 +29,7 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   titleItems?: PanelChromeInfoState[];
-  menu?: ReactNode;
+  menu?: React.ReactElement;
   dragClass?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
@@ -84,7 +86,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   return (
     <div className={styles.container} style={containerStyles}>
       {hasHeader && !hoverHeader && (
-        <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+        <div title={title} className={styles.headerContainer} style={headerStyles} data-testid="header-container">
           {title && <div className={styles.title}>{title}</div>}
 
           {titleItems.length > 0 && (
@@ -93,22 +95,29 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
                 .filter((item) => isIconName(item.icon))
                 .map((item, i) => (
                   <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
-                    <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
+                    {item.onClick ? (
+                      <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
+                    ) : (
+                      <Tooltip content={item.tooltip ?? ''}>
+                        <Icon name={item.icon} size="sm" />
+                      </Tooltip>
+                    )}
                   </div>
                 ))}
             </div>
           )}
 
           {menu && (
-            <div className={cx(styles.item, styles.menuItem, 'menu-icon')} style={itemStyles}>
-              <IconButton
-                tooltip={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                name="ellipsis-v"
-                size="sm"
-                onClick={handleMenuOpen}
-                data-testid="menu-icon"
-              />
-            </div>
+            <Dropdown overlay={menu} placement="bottom">
+              <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
+                <IconButton
+                  tooltip={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                  name="ellipsis-v"
+                  size="sm"
+                  onClick={handleMenuOpen}
+                />
+              </div>
+            </Dropdown>
           )}
 
           {leftItems.length > 0 && (
