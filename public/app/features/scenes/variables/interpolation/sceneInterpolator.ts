@@ -4,10 +4,10 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { EmptyVariableSet, sceneGraph } from '../../core/sceneGraph';
 import { SceneObject } from '../../core/types';
-import { SceneVariable, VariableValue } from '../types';
+import { VariableValue } from '../types';
 
 import { getSceneVariableForScopedVar } from './ScopedVarsVariable';
-import { formatRegistry, FormatRegistryID } from './formatRegistry';
+import { formatRegistry, FormatRegistryID, FormatVariable } from './formatRegistry';
 
 type CustomFormatterFn = (
   value: unknown,
@@ -42,7 +42,7 @@ export function sceneInterpolator(
   return target.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
     const variableName = var1 || var2 || var3;
     const fmt = fmt2 || fmt3 || format;
-    let variable: SceneVariable | undefined | null;
+    let variable: FormatVariable | undefined | null;
 
     if (scopedVars && scopedVars[variableName]) {
       variable = getSceneVariableForScopedVar(variableName, scopedVars[variableName]);
@@ -58,7 +58,7 @@ export function sceneInterpolator(
   });
 }
 
-function lookupSceneVariable(name: string, sceneObject: SceneObject): SceneVariable | null | undefined {
+function lookupSceneVariable(name: string, sceneObject: SceneObject): FormatVariable | null | undefined {
   const variables = sceneObject.state.$variables;
   if (!variables) {
     if (sceneObject.parent) {
@@ -79,7 +79,7 @@ function lookupSceneVariable(name: string, sceneObject: SceneObject): SceneVaria
 }
 
 function formatValue(
-  variable: SceneVariable,
+  variable: FormatVariable,
   value: VariableValue | undefined | null,
   formatNameOrFn: string | CustomFormatterFn
 ): string {
