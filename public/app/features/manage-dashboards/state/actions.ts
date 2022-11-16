@@ -204,7 +204,7 @@ async function moveDashboard(uid: string, toFolder: FolderInfo) {
   const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
 
   if (
-    (fullDash.meta.folderUid === undefined && fullDash.meta.folderId === null && toFolder.uid === '') ||
+    ((fullDash.meta.folderUid === undefined || fullDash.meta.folderUid === null) && toFolder.uid === '') ||
     fullDash.meta.folderUid === toFolder.uid
   ) {
     return { alreadyInFolder: true };
