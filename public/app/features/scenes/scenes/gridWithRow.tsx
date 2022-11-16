@@ -6,7 +6,8 @@ import { VizPanel } from '../components/VizPanel';
 import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
 export function getGridWithRowLayoutTest(): Scene {
   const scene = new Scene({
@@ -78,18 +79,7 @@ export function getGridWithRowLayoutTest(): Scene {
     }),
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 
