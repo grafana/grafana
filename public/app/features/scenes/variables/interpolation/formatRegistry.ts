@@ -4,10 +4,24 @@ import { dateTime, Registry, RegistryItem, textUtil } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { SceneVariable, VariableValue, VariableValueSingle } from '../types';
+import { VariableValue, VariableValueSingle } from '../types';
 
 export interface FormatRegistryItem extends RegistryItem {
-  formatter(value: VariableValue, args: string[], variable: SceneVariable): string;
+  formatter(value: VariableValue, args: string[], variable: FormatVariable): string;
+}
+
+/**
+ * Slimmed down version of the SceneVariable interface so that it only contains what the formatters actually use.
+ * This is useful as we have some implementations of this interface that does not need to be full scene objects.
+ * For example ScopedVarsVariable and LegacyVariableWrapper.
+ */
+export interface FormatVariable {
+  state: {
+    name: string;
+  };
+
+  getValue(fieldPath?: string): VariableValue | undefined | null;
+  getValueText?(fieldPath?: string): string;
 }
 
 export enum FormatRegistryID {
@@ -231,14 +245,16 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       name: 'Date',
       description: 'Format date in different ways',
       formatter: (value, args) => {
-        let nrValue = 0;
+        let nrValue = NaN;
 
         if (typeof value === 'number') {
           nrValue = value;
         } else if (typeof value === 'string') {
           nrValue = parseInt(value, 10);
-        } else {
-          return '';
+        }
+
+        if (isNaN(nrValue)) {
+          return 'NaN';
         }
 
         const arg = args[0] ?? 'iso';
@@ -270,10 +286,6 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       name: 'Text',
       description: 'Format variables in their text representation. Example in multi-variable scenario A + B + C.',
       formatter: (value, _args, variable) => {
-        // if (typeof options.text === 'string') {
-        //   return options.value === ALL_VARIABLE_VALUE ? ALL_VARIABLE_TEXT : options.text;
-        // }
-
         if (variable.getValueText) {
           return variable.getValueText();
         }
