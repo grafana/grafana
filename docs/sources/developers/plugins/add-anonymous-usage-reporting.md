@@ -10,7 +10,7 @@ The Grafana server administrator has the possiblity to configure [anonymous usag
 
 By adding usage tracking to your plugin you will send events of how your plugin is being used to the configured tracking system.
 
-Lets say we have a QueryEditor that looks something like the example below. It it has an editor field where you can write your query and a query type selector so you can select what kind of query result you are expecting that query to return.
+Lets say we have a QueryEditor that looks something like the example below. It has an editor field where you can write your query and a query type selector so you can select what kind of query result you are expecting that query to return.
 
 ```ts
 import React, { ReactElement } from 'react';
