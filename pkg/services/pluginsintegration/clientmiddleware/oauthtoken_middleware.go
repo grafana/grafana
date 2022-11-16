@@ -3,6 +3,7 @@ package clientmiddleware
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -79,7 +80,14 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 				}
 			}
 
-			ctx = httpclient.WithContextualMiddleware(ctx, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
+			httpHeaders := http.Header{}
+			httpHeaders.Set("Authorization", authorizationHeader)
+
+			if idTokenHeader != "" {
+				httpHeaders.Set("X-ID-Token", idTokenHeader)
+			}
+
+			ctx = httpclient.WithContextualMiddleware(ctx, httpclientprovider.SetHeadersMiddleware(httpHeaders))
 		}
 	}
 

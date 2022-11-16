@@ -128,7 +128,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 			require.Len(t, middlewares, 1)
-			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+			require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 			reqClone := req.Clone(req.Context())
 			res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
@@ -156,7 +156,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 			require.Len(t, middlewares, 1)
-			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+			require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 			reqClone := req.Clone(req.Context())
 			res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
@@ -182,7 +182,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 			require.Len(t, middlewares, 1)
-			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+			require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 			reqClone := req.Clone(req.Context())
 			res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
