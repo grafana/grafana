@@ -222,7 +222,6 @@ describe('Wrapper', () => {
         right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
       };
       setupExplore({ urlParams });
-
       const closeButtons = await screen.findAllByLabelText(/Close split pane/i);
       await userEvent.click(closeButtons[1]);
 

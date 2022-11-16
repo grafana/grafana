@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
-  children: [ReactNode, ReactNode];
+  children: [ReactNode, ReactNode] | ReactNode;
   splitOrientation?: Split;
   paneSize: number;
   splitVisible?: boolean;
@@ -53,6 +53,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
 
   render() {
     const {
+      children,
       paneSize,
       splitOrientation,
       maxSize,
@@ -62,6 +63,13 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       secondaryPaneStyle,
       splitVisible = true,
     } = this.props;
+
+    let childrenArr = [];
+    if (Array.isArray(children)) {
+      childrenArr = children;
+    } else {
+      childrenArr.push(children);
+    }
 
     // Limit options pane width to 90% of screen.
     const styles = getStyles(config.theme2, splitVisible);
@@ -74,8 +82,8 @@ export class SplitPaneWrapper extends PureComponent<Props> {
 
     // the react split pane library always wants 2 children. This logic ensures that happens, even if one child is passed in
     const childrenFragments = [
-      <React.Fragment key="leftPane">{this.props?.children[0]}</React.Fragment>,
-      <React.Fragment key="rightPane">{this.props?.children[1]}</React.Fragment>,
+      <React.Fragment key="leftPane">{childrenArr[0]}</React.Fragment>,
+      <React.Fragment key="rightPane">{childrenArr[1] || undefined}</React.Fragment>,
     ];
 
     return (
