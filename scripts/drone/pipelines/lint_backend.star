@@ -13,12 +13,9 @@ load(
 )
 
 def lint_backend_pipeline(trigger, ver_mode):
-    wire_step = wire_install_step()
-    wire_step.update({ 'depends_on': [] })
     init_steps = [
         identify_runner_step(),
         compile_build_cmd(),
-        wire_step,
     ]
     test_steps = [
         lint_backend_step(edition="oss"),

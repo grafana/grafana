@@ -276,15 +276,8 @@ steps:
   image: golang:1.19.3
   name: compile-build-cmd
 - commands:
-  - make gen-go
-  depends_on: []
-  image: grafana/build-container:1.6.4
-  name: wire-install
-- commands:
   - apt-get update && apt-get install make
   - make lint-go
-  depends_on:
-  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: golang:1.19.3
@@ -1151,15 +1144,8 @@ steps:
   image: golang:1.19.3
   name: compile-build-cmd
 - commands:
-  - make gen-go
-  depends_on: []
-  image: grafana/build-container:1.6.4
-  name: wire-install
-- commands:
   - apt-get update && apt-get install make
   - make lint-go
-  depends_on:
-  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: golang:1.19.3
@@ -5512,6 +5498,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 2b1b5ade4e8007a9d5b76ec2dbc9e647ca0938e00713b3ad8e8163bce2db40a6
+hmac: e5f4a2f2bdd46ea136b38ee6c03035aa9d95b2ce4989f0e0faa79a23fab36e71
 
 ...

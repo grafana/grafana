@@ -10,7 +10,6 @@ load(
     'build_image',
     'identify_runner_step',
     'publish_image',
-    'lint_backend_step',
     'lint_frontend_step',
     'test_backend_step',
     'test_backend_integration_step',

@@ -208,9 +208,6 @@ def lint_backend_step(edition):
             # We need CGO because of go-sqlite3
             'CGO_ENABLED': '1',
         },
-        'depends_on': [
-            'wire-install',
-        ],
         'commands': [
             'apt-get update && apt-get install make',
             # Don't use Make since it will re-download the linters
