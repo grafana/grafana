@@ -104,7 +104,7 @@ func (e Includes) DashboardURLPath() string {
 	return "/d/" + e.UID
 }
 
-func (e Includes) IsRBACReady() bool {
+func (e Includes) RequireRBACAction() bool {
 	return e.Action != ""
 }
 

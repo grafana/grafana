@@ -235,7 +235,7 @@ func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext) func(pluginID str
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(pluginID string, include *plugins.Includes) bool {
 		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) &&
-			!s.accessControl.IsDisabled() && include.IsRBACReady()
+			!s.accessControl.IsDisabled() && include.RequireRBACAction()
 		if useRBAC && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
