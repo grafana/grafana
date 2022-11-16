@@ -13,8 +13,10 @@ import (
 )
 
 func TestIntegrationCreateAndDelete(t *testing.T) {
-	// TODO: re-enable after fixing its flakiness
-	t.Skip()
+	if true {
+		// TODO: re-enable after fixing its flakiness
+		t.Skip()
+	}
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -127,8 +129,10 @@ func createQuery(t *testing.T, ctx context.Context, testCtx testContext) string 
 }
 
 func TestIntegrationDashboardGetWithLatestSavedQueries(t *testing.T) {
-	// TODO: re-enable after fixing its flakiness
-	t.Skip()
+	if true {
+		// TODO: re-enable after fixing its flakiness
+		t.Skip()
+	}
 
 	if testing.Short() {
 		t.Skip("skipping integration test")
