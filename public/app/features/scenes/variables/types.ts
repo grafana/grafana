@@ -13,16 +13,9 @@ export interface SceneVariableState extends SceneObjectStatePlain {
   loading?: boolean;
   error?: any | null;
   description?: string | null;
-  //text: string | string[];
-  //value: string | string[]; // old current.value
 }
 
 export interface SceneVariable<TState extends SceneVariableState = SceneVariableState> extends SceneObject<TState> {
-  /**
-   * Should return a string array of other variables this variable is using in it's definition.
-   */
-  getDependencies?(): string[];
-
   /**
    * This function is called on activation or when a dependency changes.
    */
@@ -31,7 +24,7 @@ export interface SceneVariable<TState extends SceneVariableState = SceneVariable
   /**
    * Should return the value for the given field path
    */
-  getValue(fieldPath?: string): VariableValue;
+  getValue(fieldPath?: string): VariableValue | undefined | null;
 
   /**
    * Should return the value display text, used by the "text" formatter
@@ -41,7 +34,9 @@ export interface SceneVariable<TState extends SceneVariableState = SceneVariable
   getValueText?(): string;
 }
 
-export type VariableValue = string | string[] | number | number[] | boolean | boolean[] | null | undefined;
+export type VariableValue = VariableValueSingle | VariableValueSingle[];
+
+export type VariableValueSingle = string | boolean | number;
 
 export interface ValidateAndUpdateResult {}
 export interface VariableValueOption {
@@ -59,4 +54,17 @@ export interface SceneVariables extends SceneObject<SceneVariableSetState> {
 
 export class SceneVariableValueChangedEvent extends BusEventWithPayload<SceneVariable> {
   public static type = 'scene-variable-changed-value';
+}
+
+export interface SceneVariableDependencyConfigLike {
+  /** Return all variable names this object depend on */
+  getNames(): Set<string>;
+
+  /** Used to check for dependency on a specific variable */
+  hasDependencyOn(name: string): boolean;
+
+  /**
+   * Will be called when any variable value has changed.
+   **/
+  variableValuesChanged(variables: Set<SceneVariable>): void;
 }

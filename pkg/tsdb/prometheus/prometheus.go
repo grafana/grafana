@@ -93,11 +93,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParser) || s.features.IsEnabled(featuremgmt.FlagPrometheusWideSeries) {
-		return i.queryData.Execute(ctx, req)
+	if s.features.IsEnabled(featuremgmt.FlagPrometheusBufferedClient) {
+		return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
 	}
 
-	return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
+	return i.queryData.Execute(ctx, req)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
