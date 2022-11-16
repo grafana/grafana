@@ -125,3 +125,54 @@ func SetAcceptListForTest(list map[string]struct{}) func() {
 		sqlIDAcceptList = original
 	}
 }
+
+func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {
+	var params []interface{}
+	builder := strings.Builder{}
+
+	// This is an additional security. We should never have permissions granted to userID 0.
+	// Only allow real users to get user/team permissions (anonymous/apikeys)
+	if userID > 0 {
+		builder.WriteString(`
+			SELECT ur.role_id
+			FROM user_role AS ur
+			WHERE ur.user_id = ?
+			AND (ur.org_id = ? OR ur.org_id = ?)
+		`)
+		params = []interface{}{userID, orgID, GlobalOrgID}
+	}
+
+	if len(teamIDs) > 0 {
+		if builder.Len() > 0 {
+			builder.WriteString("UNION")
+		}
+		builder.WriteString(`
+			SELECT tr.role_id FROM team_role as tr
+			WHERE tr.team_id IN(?` + strings.Repeat(", ?", len(teamIDs)-1) + `)
+			AND tr.org_id = ?
+		`)
+		for _, id := range teamIDs {
+			params = append(params, id)
+		}
+		params = append(params, orgID)
+	}
+
+	if len(roles) != 0 {
+		if builder.Len() > 0 {
+			builder.WriteString("UNION")
+		}
+
+		builder.WriteString(`
+			SELECT br.role_id FROM builtin_role AS br
+			WHERE br.role IN (?` + strings.Repeat(", ?", len(roles)-1) + `)
+			AND (br.org_id = ? OR br.org_id = ?)
+		`)
+		for _, role := range roles {
+			params = append(params, role)
+		}
+
+		params = append(params, orgID, GlobalOrgID)
+	}
+
+	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
+}

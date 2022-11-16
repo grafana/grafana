@@ -91,19 +91,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	enabledOAuths := make(map[string]interface{})
-	providers := hs.SocialService.GetOAuthInfoProviders()
-	for key, oauth := range providers {
-		enabledOAuths[key] = map[string]string{
-			"name": oauth.Name,
-			"icon": oauth.Icon,
-		}
-	}
-
-	viewData.Settings["oauth"] = enabledOAuths
-	viewData.Settings["samlEnabled"] = hs.samlEnabled()
-	viewData.Settings["samlName"] = hs.samlName()
-
 	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
 		// therefore the loginError should be passed to the view data
@@ -304,6 +291,13 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		}
 	}
 
+	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
+	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
+			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
+		}
+	}
+
 	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
 	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
@@ -346,7 +340,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 }
 
 func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
-	ctx.Logger.Error(err.Error(), v...)
+	ctx.Logger.Warn(err.Error(), v...)
 	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}

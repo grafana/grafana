@@ -99,26 +99,31 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     lineHeight: number,
     letterSpacing: number,
     casing?: object
-  ): ThemeTypographyVariant => ({
-    fontFamily,
-    fontWeight,
-    fontSize: pxToRem(size),
-    lineHeight,
-    ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
-    ...casing,
-  });
+  ): ThemeTypographyVariant => {
+    if (lineHeight % 2 !== 0 || size % 2 !== 0) {
+      throw new Error('Font size and line height should be integer multiples of 2 to prevent issues with alignment');
+    }
 
+    return {
+      fontFamily,
+      fontWeight,
+      fontSize: pxToRem(size),
+      lineHeight: lineHeight / size,
+      ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
+      ...casing,
+    };
+  };
+
+  // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
   const variants = {
-    h1: buildVariant(fontWeightLight, 28, 1.167, -0.25),
-    h2: buildVariant(fontWeightLight, 24, 1.2, 0),
-    h3: buildVariant(fontWeightRegular, 21, 1.167, 0),
-    h4: buildVariant(fontWeightRegular, 18, 1.235, 0.25),
-    h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
-    h6: buildVariant(fontWeightMedium, 14, 1.6, 0.15),
-    // The line-height of 1.5714285714285714 results in a real line-height of 22px for the default font size. Which is an even number and result in more perfect vertical alignment
-    body: buildVariant(fontWeightRegular, fontSize, 1.5714285714285714, 0.15),
-    // The line-height of 1.5 results in a real line height of 18px for the font size of 12px
-    bodySmall: buildVariant(fontWeightRegular, 12, 1.5, 0.15),
+    h1: buildVariant(fontWeightRegular, 28, 32, -0.25),
+    h2: buildVariant(fontWeightRegular, 24, 28, 0),
+    h3: buildVariant(fontWeightRegular, 22, 24, 0),
+    h4: buildVariant(fontWeightRegular, 18, 22, 0.25),
+    h5: buildVariant(fontWeightRegular, 16, 22, 0),
+    h6: buildVariant(fontWeightMedium, 14, 22, 0.15),
+    body: buildVariant(fontWeightRegular, fontSize, 22, 0.15),
+    bodySmall: buildVariant(fontWeightRegular, 12, 18, 0.15),
   };
 
   const size = {

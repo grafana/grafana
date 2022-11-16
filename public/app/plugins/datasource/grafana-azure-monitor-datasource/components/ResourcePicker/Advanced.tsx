@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import { Icon, Input, Tooltip, Collapse, Label, InlineField } from '@grafana/ui';
 
+import { selectors } from '../../e2e/selectors';
 import { AzureMetricResource } from '../../types';
 import { Space } from '../Space';
 
@@ -14,7 +15,7 @@ const Advanced = ({ resource, onChange }: ResourcePickerProps<string | AzureMetr
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!!resource && JSON.stringify(resource).includes('$'));
 
   return (
-    <div>
+    <div data-testid={selectors.components.queryEditor.resourcePicker.advanced.collapse}>
       <Collapse
         collapsible
         label="Advanced"
@@ -63,6 +64,7 @@ const Advanced = ({ resource, onChange }: ResourcePickerProps<string | AzureMetr
               transparent
               htmlFor="input-advanced-resource-picker-subscription"
               labelWidth={15}
+              data-testid={selectors.components.queryEditor.resourcePicker.advanced.subscription.input}
             >
               <Input
                 id="input-advanced-resource-picker-subscription"
@@ -77,6 +79,7 @@ const Advanced = ({ resource, onChange }: ResourcePickerProps<string | AzureMetr
               transparent
               htmlFor="input-advanced-resource-picker-resourceGroup"
               labelWidth={15}
+              data-testid={selectors.components.queryEditor.resourcePicker.advanced.resourceGroup.input}
             >
               <Input
                 id="input-advanced-resource-picker-resourceGroup"
@@ -91,6 +94,7 @@ const Advanced = ({ resource, onChange }: ResourcePickerProps<string | AzureMetr
               transparent
               htmlFor="input-advanced-resource-picker-metricNamespace"
               labelWidth={15}
+              data-testid={selectors.components.queryEditor.resourcePicker.advanced.namespace.input}
             >
               <Input
                 id="input-advanced-resource-picker-metricNamespace"
@@ -105,6 +109,7 @@ const Advanced = ({ resource, onChange }: ResourcePickerProps<string | AzureMetr
               transparent
               htmlFor="input-advanced-resource-picker-resourceName"
               labelWidth={15}
+              data-testid={selectors.components.queryEditor.resourcePicker.advanced.resource.input}
             >
               <Input
                 id="input-advanced-resource-picker-resourceName"

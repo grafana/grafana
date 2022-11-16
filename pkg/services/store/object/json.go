@@ -46,34 +46,29 @@ func (obj *RawObject) UnmarshalJSON(b []byte) error {
 
 func (codec *rawObjectCodec) IsEmpty(ptr unsafe.Pointer) bool {
 	f := (*RawObject)(ptr)
-	return f.UID == "" && f.Body == nil
+	return f.GRN == nil && f.Body == nil
 }
 
 func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	obj := (*RawObject)(ptr)
 	stream.WriteObjectStart()
-	stream.WriteObjectField("UID")
-	stream.WriteString(obj.UID)
+	stream.WriteObjectField("GRN")
+	stream.WriteVal(obj.GRN)
 
-	if obj.Kind != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("kind")
-		stream.WriteString(obj.Kind)
-	}
 	if obj.Version != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("version")
 		stream.WriteString(obj.Version)
 	}
-	if obj.Created > 0 {
+	if obj.CreatedAt > 0 {
 		stream.WriteMore()
-		stream.WriteObjectField("created")
-		stream.WriteInt64(obj.Created)
+		stream.WriteObjectField("createdAt")
+		stream.WriteInt64(obj.CreatedAt)
 	}
-	if obj.Updated > 0 {
+	if obj.UpdatedAt > 0 {
 		stream.WriteMore()
-		stream.WriteObjectField("updated")
-		stream.WriteInt64(obj.Updated)
+		stream.WriteObjectField("updatedAt")
+		stream.WriteInt64(obj.UpdatedAt)
 	}
 	if obj.CreatedBy != "" {
 		stream.WriteMore()
@@ -107,10 +102,10 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteInt64(obj.Size)
 	}
 
-	if obj.Sync != nil {
+	if obj.Origin != nil {
 		stream.WriteMore()
-		stream.WriteObjectField("sync")
-		stream.WriteVal(obj.Sync)
+		stream.WriteObjectField("origin")
+		stream.WriteVal(obj.Origin)
 	}
 
 	stream.WriteObjectEnd()
@@ -125,16 +120,15 @@ func (codec *rawObjectCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator)
 func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
-		case "UID":
-			raw.UID = iter.ReadString()
-		case "kind":
-			raw.Kind = iter.ReadString()
-		case "updated":
-			raw.Updated = iter.ReadInt64()
+		case "GRN":
+			raw.GRN = &GRN{}
+			iter.ReadVal(raw.GRN)
+		case "updatedAt":
+			raw.UpdatedAt = iter.ReadInt64()
 		case "updatedBy":
 			raw.UpdatedBy = iter.ReadString()
-		case "created":
-			raw.Created = iter.ReadInt64()
+		case "createdAt":
+			raw.CreatedAt = iter.ReadInt64()
 		case "createdBy":
 			raw.CreatedBy = iter.ReadString()
 		case "size":
@@ -143,9 +137,9 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 			raw.ETag = iter.ReadString()
 		case "version":
 			raw.Version = iter.ReadString()
-		case "sync":
-			raw.Sync = &RawObjectSyncInfo{}
-			iter.ReadVal(raw.Sync)
+		case "origin":
+			raw.Origin = &ObjectOriginInfo{}
+			iter.ReadVal(raw.Origin)
 
 		case "body":
 			var val interface{}
@@ -211,20 +205,15 @@ func (obj *ObjectSearchResult) MarshalJSON() ([]byte, error) {
 
 func (codec *searchResultCodec) IsEmpty(ptr unsafe.Pointer) bool {
 	f := (*ObjectSearchResult)(ptr)
-	return f.UID == "" && f.Body == nil
+	return f.GRN == nil && f.Body == nil
 }
 
 func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	obj := (*ObjectSearchResult)(ptr)
 	stream.WriteObjectStart()
-	stream.WriteObjectField("UID")
-	stream.WriteString(obj.UID)
+	stream.WriteObjectField("GRN")
+	stream.WriteVal(obj.GRN)
 
-	if obj.Kind != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("kind")
-		stream.WriteString(obj.Kind)
-	}
 	if obj.Name != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("name")
@@ -235,10 +224,15 @@ func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 		stream.WriteObjectField("description")
 		stream.WriteString(obj.Description)
 	}
-	if obj.Updated > 0 {
+	if obj.Size > 0 {
 		stream.WriteMore()
-		stream.WriteObjectField("updated")
-		stream.WriteInt64(obj.Updated)
+		stream.WriteObjectField("size")
+		stream.WriteInt64(obj.Size)
+	}
+	if obj.UpdatedAt > 0 {
+		stream.WriteMore()
+		stream.WriteObjectField("updatedAt")
+		stream.WriteInt64(obj.UpdatedAt)
 	}
 	if obj.UpdatedBy != "" {
 		stream.WriteMore()
@@ -297,6 +291,11 @@ func (codec *writeResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Str
 		stream.WriteMore()
 		stream.WriteObjectField("error")
 		stream.WriteVal(obj.Error)
+	}
+	if obj.GRN != nil {
+		stream.WriteMore()
+		stream.WriteObjectField("GRN")
+		stream.WriteVal(obj.GRN)
 	}
 	if obj.Object != nil {
 		stream.WriteMore()

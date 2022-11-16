@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { PanelData } from '@grafana/data/src/types';
-import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/ui';
+import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
 
 import type Datasource from '../../datasource';
 import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMetricResource } from '../../types';

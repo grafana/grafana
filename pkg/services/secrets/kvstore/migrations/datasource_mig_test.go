@@ -4,21 +4,24 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 )
 
-func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, secretsStore secretskvs.SecretsKVStore, compatibility bool) *DataSourceSecretMigrationService {
+func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvStore kvstore.KVStore, secretsStore secretskvs.SecretsKVStore, compatibility bool) *DataSourceSecretMigrationService {
 	t.Helper()
 	cfg := &setting.Cfg{}
 	features := featuremgmt.WithFeatures()
@@ -26,14 +29,16 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore *sqlstore.
 		features = featuremgmt.WithFeatures(featuremgmt.FlagDisableSecretsCompatibility, true)
 	}
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New().WithDisabled(), acmock.NewMockedPermissionsService())
+	quotaService := quotatest.New(false, nil)
+	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New().WithDisabled(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService
 }
 
 func TestMigrate(t *testing.T) {
 	t.Run("should migrate from legacy to unified without compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -97,7 +102,7 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -163,7 +168,7 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should replicate from unified to legacy for compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -255,7 +260,7 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should delete from legacy to remove compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))

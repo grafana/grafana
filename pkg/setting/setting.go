@@ -137,13 +137,14 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	GoogleAnalyticsId       string
-	GoogleAnalytics4Id      string
-	GoogleTagManagerId      string
-	RudderstackDataPlaneUrl string
-	RudderstackWriteKey     string
-	RudderstackSdkUrl       string
-	RudderstackConfigUrl    string
+	GoogleAnalyticsId                   string
+	GoogleAnalytics4Id                  string
+	GoogleAnalytics4SendManualPageViews bool
+	GoogleTagManagerId                  string
+	RudderstackDataPlaneUrl             string
+	RudderstackWriteKey                 string
+	RudderstackSdkUrl                   string
+	RudderstackConfigUrl                string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -152,9 +153,6 @@ var (
 	LDAPSyncCron          string
 	LDAPAllowSignup       bool
 	LDAPActiveSyncEnabled bool
-
-	// Quota
-	Quota QuotaSettings
 
 	// Alerting
 	AlertingEnabled            *bool
@@ -204,6 +202,8 @@ type Cfg struct {
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
+	SocketGid        int
+	SocketMode       int
 	SocketPath       string
 	RouterLogging    bool
 	Domain           string
@@ -245,6 +245,7 @@ type Cfg struct {
 	RendererCallbackUrl            string
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
+	RendererRenderKeyLifeTime      time.Duration
 
 	// Security
 	DisableInitAdminCreation          bool
@@ -419,11 +420,11 @@ type Cfg struct {
 	LDAPSkipOrgRoleSync bool
 	LDAPAllowSignup     bool
 
-	Quota QuotaSettings
-
 	DefaultTheme  string
 	DefaultLocale string
 	HomePage      string
+
+	Quota QuotaSettings
 
 	AutoAssignOrg              bool
 	AutoAssignOrgId            int
@@ -992,6 +993,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
+	GoogleAnalytics4SendManualPageViews = analytics.Key("google_analytics_4_send_manual_page_views").MustBool(false)
+
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
@@ -1050,10 +1053,11 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readAzureSettings()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
-	cfg.readQuotaSettings()
 	if err := cfg.readAnnotationSettings(); err != nil {
 		return err
 	}
+
+	cfg.readQuotaSettings()
 
 	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
@@ -1484,6 +1488,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	}
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
@@ -1622,6 +1627,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
 	}
 

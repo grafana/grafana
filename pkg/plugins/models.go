@@ -266,3 +266,24 @@ type PreloadPlugin struct {
 	Path    string `json:"path"`
 	Version string `json:"version"`
 }
+
+// Access-Control related definitions
+
+// RoleRegistration stores a role and its assignments to basic roles
+// (Viewer, Editor, Admin, Grafana Admin)
+type RoleRegistration struct {
+	Role   Role     `json:"role"`
+	Grants []string `json:"grants"`
+}
+
+// Role is the model for Role in RBAC.
+type Role struct {
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Permissions []Permission `json:"permissions"`
+}
+
+type Permission struct {
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
+}

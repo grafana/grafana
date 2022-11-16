@@ -408,6 +408,15 @@ func AddManagedFolderAlertActionsRepeatMigration(mg *migrator.Migrator) {
 	mg.AddMigration(managedFolderAlertActionsRepeatMigratorID, &managedFolderAlertActionsRepeatMigrator{})
 }
 
+const managedFolderAlertActionsRepeatMigratorFixedID = "managed folder permissions alert actions repeated fixed migration"
+
+/*
+AddManagedFolderAlertActionsRepeatFixedMigration is a fixed version of AddManagedFolderAlertActionsRepeatMigration.
+*/
+func AddManagedFolderAlertActionsRepeatFixedMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderAlertActionsRepeatMigratorFixedID, &managedFolderAlertActionsRepeatMigrator{})
+}
+
 type managedFolderAlertActionsRepeatMigrator struct {
 	migrator.MigrationBase
 }
@@ -444,8 +453,17 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 
 	for id, a := range mapped {
 		for scope, p := range a {
+			// previous migration added this permission, but it was not added to the toAdd slice
+			// because we were checking all permissions on top of folders, not just the scoped ones
+			//
+			// what we had:
+			// if !hasAction(ac.<Action>, permissions) {
+			// should have been:
+			// if !hasAction(ac.<Action>, p) {
+			//
+			// see PR for explanation: https://github.com/grafana/grafana/pull/58054
 			if hasFolderView(p) {
-				if !hasAction(ac.ActionAlertingRuleRead, permissions) {
+				if !hasAction(ac.ActionAlertingRuleRead, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,
@@ -457,7 +475,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 			}
 
 			if hasFolderAdmin(p) || hasFolderEdit(p) {
-				if !hasAction(ac.ActionAlertingRuleCreate, permissions) {
+				if !hasAction(ac.ActionAlertingRuleCreate, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,
@@ -466,7 +484,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 						Action:  ac.ActionAlertingRuleCreate,
 					})
 				}
-				if !hasAction(ac.ActionAlertingRuleDelete, permissions) {
+				if !hasAction(ac.ActionAlertingRuleDelete, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,
@@ -475,7 +493,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 						Action:  ac.ActionAlertingRuleDelete,
 					})
 				}
-				if !hasAction(ac.ActionAlertingRuleUpdate, permissions) {
+				if !hasAction(ac.ActionAlertingRuleUpdate, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,

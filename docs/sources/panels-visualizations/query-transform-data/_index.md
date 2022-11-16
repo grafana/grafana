@@ -13,84 +13,92 @@ aliases:
   - /docs/grafana/latest/panels/query-options/
   - /docs/grafana/latest/panels/reference-query-options/
   - /docs/grafana/latest/panels-visualizations/query-options/
-
 title: Query and transform data
 weight: 200
 ---
 
 # Query and transform data
 
-Data source queries return data that can then be transformed via transformations and then visualized by different types of visualizations. The query language and query builder UI depends on the data source type. Grafana supports many different types of data sources.
+Grafana supports many types of [data sources]({{< relref "../../datasources/" >}}).
+Data source **queries** return data that Grafana can **transform** and visualize.
+Each data source uses its own query language, and data source plugins each implement a query-building user interface called a query editor.
 
 ## About queries
 
-_Queries_ are how Grafana panels communicate with data sources to get data for the visualization. A query is a question written in the query language used by the data source. How often the query is sent to the data source and how many data points are collected can be adjusted in the panel data source options.
+Grafana panels communicate with data sources via queries, which retrieve data for the visualization.
+A query is a question written in the query language used by the data source.
 
-Use you a query editor to write a query. Each data source has its own query editor that we have customized to include the features and capabilities of the data source. Grafana supports up to 26 queries per panel.
+You can configure query frequency and data collection limits in the panel's data source options.
+Grafana supports up to 26 queries per panel.
 
-> Important! You must be familiar with the query language of the data source. For more information about data sources, refer to [Data sources](../../../datasources/).
+> **Important:** You **must** be familiar with a data source's query language.
+> For more information, refer to [Data sources]({{< relref "../../datasources/" >}}).
 
 ### Query editors
 
-Depending on your data source, the query editor might provide auto-completion, metric names, or variable suggestions.
+{{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" caption="The InfluxDB query editor" >}}
 
-Because of the difference between query languages, data sources have query editors that look different. Here are two examples of query editors.
+Each data source's **query editor** provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
 
-**InfluxDB query editor**
+Because of the differences between query languages, each data source query editor looks and functions differently.
+Depending on your data source, the query editor might provide auto-completion features, metric names, variable suggestions, or a visual query-building interface.
 
-{{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
+For example, this video demonstrates the visual Prometheus query builder:
 
-**Prometheus (PromQL) query editor**
+{{< vimeo 720004179 >}}
 
-{{< figure src="/static/img/docs/queries/prometheus-query-editor-7-4.png" class="docs-image--no-shadow" max-width="1000px" >}}
+For details on a specific data source's unique query editor features, refer to its documentation:
+
+- For data sources included with Grafana, refer to [Built-in core data sources]({{< relref "../../datasources/#data-source-plugins" >}}), which links to each core data source's documentation.
+- For data sources installed as plugins, refer to its own documentation.
+  - Data source plugins in Grafana's [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
+    For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
+  - For links to [Grafana Enterprise]({{< relref "../../enterprise/" >}}) data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
 
 ### Query syntax
 
-Data sources use different query languages to return data. Here are two query examples:
+Each data source uses a different query languages to request data.
+For details on a specific data source's unique query language, refer to its documentation.
 
-**PostgreSQL**
+**PostgreSQL example:**
 
 ```
-SELECT hostname FROM host  WHERE region IN($region)
+SELECT hostname FROM host WHERE region IN($region)
 ```
 
-**PromQL**
+**PromQL example:**
 
 ```
 query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ```
 
-### Data sources used in queries
+### Special data sources
 
-In addition to the data sources that you have configured in Grafana, there are three special data sources available:
+Grafana also includes three special data sources: **Grafana**, **Mixed**, and **Dashboard**.
+For details, refer to [Data sources]({{< relref "../../datasources/#special-data-sources" >}})
 
-- **Grafana -** A built-in data source that generates random walk data, which can be useful for testing visualizations and running experiments.
-- **Mixed -** Select this option to query multiple data sources in the same panel. When you select this data source, Grafana enables you to select a data source for every new query that you add.
-  - The first query uses the data source that was selected before you selected **Mixed**.
-  - You cannot change an existing query to use the Mixed Data Source.
-- **Dashboard -** Select this option to use a result set from another panel in the same dashboard.
+## Navigate the Query tab
 
-You can combine data from multiple data sources onto a single dashboard, but each panel is tied to a specific data source that belongs to a particular Organization.
+A panel's Query tab consists of the following elements:
 
-## Navigate the query tab
-
-The Query tab consists of the following elements:
-
-- Data source selector: Use the data source selector to select the source of the data you want to query. For more information about data sources, refer to [Data sources](../../../datasources/).
-- Query options: Enables you to set maximum data retrieved parameters and query execution time intervals.
-- Query inspector button: Open the query inspector panel where you can view and optimize your query.
-- Query editor list: Lists the queries you have written.
-- Expressions: Use the expression builder to create alert expressions. For more information about expressions, refer to [Use expressions to manipulate data](../use-expressions-to-manipulate-data/).
+- **Data source selector:** Selects the data source to query.
+  For more information about data sources, refer to [Data sources]({{< relref "../../datasources/" >}}).
+- **Query options:** Sets maximum data retrieval parameters and query execution time intervals.
+- **Query inspector button:** Opens the query inspector panel, where you can view and optimize your query.
+- **Query editor list:** Lists the queries you've written.
+- **Expressions:** Uses the expression builder to create alert expressions.
+  For more information about expressions, refer to [Use expressions to manipulate data]({{< relref "expression-queries/" >}}).
 
 {{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 ## Add a query
 
-A query returns data that Grafana visualizes in dashboards. When you create a panel, Grafana automatically selects the default data source.
+A query returns data that Grafana visualizes in dashboard panels.
+When you create a panel, Grafana automatically selects the default data source.
 
-**To add a query**:
+**To add a query:**
 
-1. Edit the panel to which you are adding a query.
+1. Edit the panel to which you're adding a query.
 1. Click the **Query** tab.
 1. Click the **Data source** drop-down menu and select a data source.
 1. Click **Query options** to configure the maximum number of data points you need.
@@ -98,80 +106,90 @@ A query returns data that Grafana visualizes in dashboards. When you create a pa
 1. Write the query using the query editor.
 1. Click **Apply**.
 
-The system queries the data source and presents the data in the visualization.
+Grafana queries the data source and visualizes the data.
 
 ## Manage queries
 
-Queries are organized in collapsible query rows. Each query row contains a query editor and is identified with a letter (A, B, C, and so on).
+Grafana organizes queries in collapsible query rows.
+Each query row contains a query editor and is identified with a letter (A, B, C, and so on).
 
 You can:
 
-|                                                                    Icon                                                                     | Description                                                                                                                                                                                                                                    |
-| :-----------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Toggle query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
-| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copy a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                     |
-|   {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Hide a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
-|  {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Remove a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
-|   {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Reorder queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
+|                                                                    Icon                                                                     | Description                                                                                                                                                                                                                                     |
+| :-----------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
+| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                    |
+|   {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Hides a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
+|  {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Removes a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
+|   {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Reorders queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
 
 ## Query options
 
-Click **Query options** next to the data source selector to see settings for your selected data source. Changes you make here affect only queries made in this panel.
+Click **Query options** next to the data source selector to see settings for the selected data source.
+Changes you make here affect only queries made in this panel.
 
 {{< figure src="/static/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
-Grafana sets defaults that are shown in dark gray text. Changes are displayed in white text. To return a field to the default setting, delete the white text from the field.
+Grafana sets defaults that are shown in dark gray text.
+Changes are displayed in white text.
+To return a field to the default setting, delete the white text from the field.
 
-Panel data source query options:
+Panel data source query options include:
 
-- **Max data points -** If the data source supports it, sets the maximum numbers of data points for each series returned. If the query returns more data points than the max data points setting, then the data source consolidates them (reduces the number of points returned by aggregating them together by average or max or other function).
+- **Max data points:** If the data source supports it, this sets the maximum number of data points for each series returned.
+  If the query returns more data points than the max data points setting, then the data source reduces the number of points returned by aggregating them together by average, max, or another function.
 
-  There are two main reasons for limiting the number of points, performance and smoothing the line. The default value is the width (or number of pixels) of the graph as there is no point in having more data points than the graph panel can display.
+  You can limit the number of points to improve query performance or smooth the visualized line.
+  The default value is the width (or number of pixels) of the graph, because you can only visualize as many data points as the graph panel has room to display.
 
-  With streaming data, the max data points value is used for the rolling buffer. (Streaming is a continuous flow of data and buffering is a way of dividing the stream into chunks). Loki streams data in the live tailing mode.
+  With streaming data, Grafana uses the max data points value for the rolling buffer.
+  Streaming is a continuous flow of data, and buffering divides the stream into chunks.
+  For example, Loki streams data in its live tailing mode.
 
-- **Min interval -** Sets a minimum limit for the automatically calculated interval, typically the minimum scrape interval. If a data point is saved every 15 seconds, then there's no point in having an interval lower than that. Another use case is to set it to a higher minimum than the scrape interval to get more coarse-grained, well-functioning queries.
+- **Min interval:** Sets a minimum limit for the automatically calculated interval, which is typically the minimum scrape interval.
+  If a data point is saved every 15 seconds, you don't benefit from having an interval lower than that.
+  You can also set this to a higher minimum than the scrape interval to retrieve queries that are more coarse-grained and well-functioning.
+- **Interval:** Sets a time span that you can use when aggregating or grouping data points by time.
 
-- **Interval -** The interval is a time span that you can use when aggregating or grouping data points by time.
+  Grafana automatically calculates an appropriate interval that you can use as a variable in templated queries.
+  The variable is measured in either seconds (`$__interval`) or milliseconds (`$__interval_ms`).
 
-  Grafana automatically calculates an appropriate interval and it can be used as a variable in templated queries. The variable is either in seconds: `$__interval` or in milliseconds: `$__interval_ms`. It is typically used in aggregation functions like sum or average. For example, a Prometheus query using the interval variable: `rate(http_requests_total[$__interval])`.
+  Intervals are typically used in aggregation functions like sum or average.
+  For example, this is a Prometheus query that uses the interval variable: `rate(http_requests_total[$__interval])`.
 
-  This automatic interval is calculated based on the width of the graph. If the user zooms out a lot then the interval becomes greater, resulting in a more coarse grained aggregation whereas if the user zooms in then the interval decreases resulting in a more fine grained aggregation.
+  This automatic interval is calculated based on the width of the graph.
+  As the user zooms out on a visualization, the interval grows, resulting in a more coarse-grained aggregation.
+  Likewise, if the user zooms in, the interval decreases, resulting in a more fine-grained aggregation.
 
   For more information, refer to [Global variables]({{< relref "../../dashboards/variables/add-template-variables/#global-variables" >}}).
 
-- **Relative time -** You can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the top right corner of the dashboard. This allows you to show metrics from different time periods or days on the same dashboard.
+- **Relative time:** Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard.
+  You can use this to show metrics from different time periods or days on the same dashboard.
 
-- **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range.
+  > **Note:** Panel time overrides have no effect when the dashboard's time range is absolute.
 
-  For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}).
+  | Example          | Relative time field |
+  | ---------------- | ------------------- |
+  | Last 5 minutes   | `now-5m`            |
+  | The day so far   | `now/d`             |
+  | Last 5 days      | `now-5d/d`          |
+  | This week so far | `now/w`             |
+  | Last 2 years     | `now-2y/y`          |
 
-- **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
+- **Time shift:** Overrides the time range for individual panels by shifting its start and end relative to the time picker.
+  For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker.
 
-### Examples
+  For more information, refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}).
 
-- **Relative time:**
+  > **Note:** Panel time overrides have no effect when the dashboard's time range is absolute.
 
-| Example          | Relative time field |
-| ---------------- | ------------------- |
-| Last 5 minutes   | `now-5m`            |
-| The day so far   | `now/d`             |
-| Last 5 days      | `now-5d/d`          |
-| This week so far | `now/w`             |
-| Last 2 years     | `now-2y/y`          |
+  | Example              | Time shift field |
+  | -------------------- | ---------------- |
+  | Last entire week     | `1w/w`           |
+  | Two entire weeks ago | `2w/w`           |
+  | Last entire month    | `1M/M`           |
+  | This entire year     | `1d/y`           |
+  | Last entire year     | `1y/y`           |
 
-- **Time shift:**
-
-| Example              | Time shift field |
-| -------------------- | ---------------- |
-| Last entire week     | `1w/w`           |
-| Two entire weeks ago | `2w/w`           |
-| Last entire month    | `1M/M`           |
-| This entire year     | `1d/y`           |
-| Last entire year     | `1y/y`           |
-
-### Panel time overrides and timeshift
-
-In [Query options]({{< relref "#query-options" >}}), you can override the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker located in the upper right. This enables you to show metrics from different time periods or days at the same time.
-
-> **Note:** Panel time overrides have no effect when the time range for the dashboard is absolute.
+- **Cache timeout:** _(Visible only if available in the data source)_ Overrides the default cache timeout if your time series store has a query cache.
+  Specify this value as a numeric value in seconds.
