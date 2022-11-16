@@ -11,7 +11,9 @@ export interface FormatRegistryItem extends RegistryItem {
 }
 
 /**
- * Slimmed down version of the SceneVariable interface to only what the formatters need
+ * Slimmed down version of the SceneVariable interface so that it only contains what the formatters actually use.
+ * This is useful as we have some implementations of this interface that does not need to be full scene objects.
+ * For example ScopedVarsVariable and LegacyVariableWrapper.
  */
 export interface FormatVariable {
   state: {
