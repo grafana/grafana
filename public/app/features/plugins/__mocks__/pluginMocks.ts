@@ -63,7 +63,7 @@ export function getPanelPlugin(
       version: '',
     },
     hideFromList: options.hideFromList === true,
-    module: '',
+    module: options.module ?? '',
     baseUrl: '',
   };
   return plugin;

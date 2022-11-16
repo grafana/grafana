@@ -22,18 +22,20 @@ import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
 import { SceneDragHandle } from './SceneDragHandle';
 
-export interface VizPanelState extends SceneLayoutChildState {
+export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLayoutChildState {
   title: string;
   pluginId: string;
-  options: object;
-  fieldConfig: FieldConfigSource;
+  options: TOptions;
+  fieldConfig: FieldConfigSource<TFieldConfig>;
   pluginVersion?: string;
   // internal state
   pluginLoadError?: string;
 }
 
-export class VizPanel extends SceneObjectBase<VizPanelState> {
-  public static Component = ScenePanelRenderer;
+export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
+  VizPanelState<Partial<TOptions>, TFieldConfig>
+> {
+  public static Component = VizPanelRenderer;
   public static Editor = VizPanelEditor;
 
   // Not part of state as this is not serializable
@@ -43,7 +45,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
     return this._plugin;
   }
 
-  public constructor(state: Partial<VizPanelState>) {
+  public constructor(state: Partial<VizPanelState<Partial<TOptions>, TFieldConfig>>) {
     super({
       options: {},
       fieldConfig: { defaults: {}, overrides: [] },
@@ -109,7 +111,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
     });
   };
 
-  public onOptionsChange = (options: object) => {
+  public onOptionsChange = (options: TOptions) => {
     this.setState({ options });
   };
 
@@ -118,7 +120,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
   };
 }
 
-function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
+function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, options, fieldConfig, pluginId, pluginLoadError, $data, ...state } = model.useState();
   const [ref, { width, height }] = useMeasure();
   const { data } = model.getData().useState();
@@ -195,7 +197,7 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   );
 }
 
-ScenePanelRenderer.displayName = 'ScenePanelRenderer';
+VizPanelRenderer.displayName = 'ScenePanelRenderer';
 
 function VizPanelEditor({ model }: SceneComponentProps<VizPanel>) {
   const { title } = model.useState();
