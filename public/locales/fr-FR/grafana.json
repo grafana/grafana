@@ -253,6 +253,9 @@
     "search": {
       "placeholder": "Rechercher dans Grafana"
     },
+    "search-dashboards": {
+      "title": ""
+    },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
       "title": "Paramètres"
@@ -301,11 +304,13 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
       "share": "Partager",
+      "show-legend": "",
       "view": "Afficher"
     }
   },
@@ -381,7 +386,8 @@
       "mistake-message": "Avez-vous commis une erreur\u00a0? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
-      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps."
+      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Intégrer",

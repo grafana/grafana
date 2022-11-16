@@ -17,6 +17,7 @@ import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneObjectStatePlain } from '../core/types';
 import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
@@ -40,7 +41,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   public activate() {
     super.activate();
 
-    const timeRange = this.getTimeRange();
+    const timeRange = sceneGraph.getTimeRange(this);
 
     this._subs.add(
       timeRange.subscribeToState({
@@ -65,7 +66,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   }
 
   public runQueries() {
-    const timeRange = this.getTimeRange();
+    const timeRange = sceneGraph.getTimeRange(this);
     this.runWithTimeRange(timeRange.state);
   }
 

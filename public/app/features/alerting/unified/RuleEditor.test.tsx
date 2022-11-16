@@ -102,7 +102,9 @@ const ui = {
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 
-describe('RuleEditor', () => {
+// Until flakiness is fixed
+// https://github.com/grafana/grafana/issues/58747
+describe.skip('RuleEditor', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;

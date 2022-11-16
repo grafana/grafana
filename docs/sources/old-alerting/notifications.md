@@ -194,7 +194,7 @@ Example json body:
       "tags": {}
     }
   ],
-  "imageUrl": "https://grafana.com/assets/img/blog/mixed_styles.png",
+  "imageUrl": "https://grafana.com/static/assets/img/blog/mixed_styles.png",
   "message": "Notification Message",
   "orgId": 1,
   "panelId": 2,
