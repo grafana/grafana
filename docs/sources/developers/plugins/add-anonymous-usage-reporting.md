@@ -6,7 +6,7 @@ title: Add anonymous usage reporting
 
 # Add anonymous usage reporting to you plugin
 
-The Grafana server administrator has the possiblity to configure [anonymous usage tracking]({{< relref "../../setup-grafana/configure-grafana/#reporting_enabled" >}}).
+The Grafana server administrator has the possibility to configure [anonymous usage tracking]({{< relref "../../setup-grafana/configure-grafana/#reporting_enabled" >}}).
 
 By adding usage tracking to your plugin you will send events of how your plugin is being used to the configured tracking system.
 
