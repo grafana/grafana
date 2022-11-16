@@ -65,7 +65,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 }
 
 func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
-	hasAccessToInclude := s.hasAccessToInclude(c)
+	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -83,7 +83,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 
 	for _, include := range plugin.Includes {
-		if !hasAccessToInclude(plugin.ID, include) {
+		if !hasAccessToInclude(include) {
 			continue
 		}
 
@@ -231,9 +231,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	return nil
 }
 
-func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext) func(pluginID string, include *plugins.Includes) bool {
+func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext, pluginID string) func(include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
-	return func(pluginID string, include *plugins.Includes) bool {
+	return func(include *plugins.Includes) bool {
 		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) &&
 			!s.accessControl.IsDisabled() && include.RequireRBACAction()
 		if useRBAC && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
