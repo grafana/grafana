@@ -147,6 +147,7 @@ Another benefit of using the `usePluginInteractionReporter` is that the report f
     plugin_id: 'grafana-example-datasource',
     plugin_name: 'Example',
     datasource_uid: 'qeSI8VV7z', // will only be added for datasources
+    query_type: 'timeserie'
   }
 }
 ```
