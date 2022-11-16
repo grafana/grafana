@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { createRef, MutableRefObject, PureComponent } from 'react';
+import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
 import SplitPane, { Split } from 'react-split-pane';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
+  children: [ReactNode, ReactNode];
   splitOrientation?: Split;
   paneSize: number;
   splitVisible?: boolean;
@@ -71,6 +72,12 @@ export class SplitPaneWrapper extends PureComponent<Props> {
         ? paneSize * (splitOrientation === 'horizontal' ? window.innerHeight : window.innerWidth)
         : paneSize;
 
+    // the react split pane library always wants 2 children. This logic ensures that happens, even if one child is passed in
+    const childrenFragments = [
+      <React.Fragment key="leftPane">{this.props?.children[0]}</React.Fragment>,
+      <React.Fragment key="rightPane">{this.props?.children[1]}</React.Fragment>,
+    ];
+
     return (
       <SplitPane
         split={splitOrientation}
@@ -84,7 +91,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
         paneStyle={paneStyle}
         pane2Style={secondaryPaneStyle}
       >
-        {this.props.children}
+        {childrenFragments}
       </SplitPane>
     );
   }

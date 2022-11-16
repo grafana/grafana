@@ -163,7 +163,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           Split
         </ToolbarButton>
       ) : (
-        <>
+        <React.Fragment key="splitActions">
           <ToolbarButton
             tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
             disabled={isLive}
@@ -177,7 +177,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
             Close
           </ToolbarButton>
-        </>
+        </React.Fragment>
       ),
 
       showExploreToDashboard && (
