@@ -59,7 +59,7 @@ describe('DataLinksListItem', () => {
       setupTestContext({ link });
 
       expect(screen.getByText(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
-      expect(screen.getByTitle(/Explore data link is deprecated./i)).toBeInTheDocument();
+      expect(screen.getByTitle(/Explore data link format is deprecated./i)).toBeInTheDocument();
     });
   });
 
