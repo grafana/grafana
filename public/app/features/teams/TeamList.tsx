@@ -61,7 +61,7 @@ export const TeamList = ({
   }, []);
 
   const canCreate = canCreateTeam(editorsCanAdmin);
-  const displayRolePicker = shouldDisaplyRolePicker();
+  const displayRolePicker = shouldDisplayRolePicker();
 
   return (
     <Page navId="teams">
@@ -142,8 +142,7 @@ function canCreateTeam(editorsCanAdmin: boolean): boolean {
   return contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
 }
 
-function shouldDisaplyRolePicker(): boolean {
-  return false;
+function shouldDisplayRolePicker(): boolean {
   return (
     contextSrv.licensedAccessControlEnabled() &&
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
