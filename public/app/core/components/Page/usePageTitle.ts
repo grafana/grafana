@@ -1,30 +1,23 @@
 import { useEffect } from 'react';
 
 import { NavModel, NavModelItem } from '@grafana/data';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useSelector } from 'app/types';
 
 import { Branding } from '../Branding/Branding';
+import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
 export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   useEffect(() => {
-    const parts: string[] = [];
-    if (pageNav) {
-      addTitleSegment(parts, pageNav);
-    } else if (navModel) {
-      if (navModel.node !== navModel.main) {
-        addTitleSegment(parts, navModel.node);
-      } else {
-        addTitleSegment(parts, navModel.main);
-      }
-    }
+    const sectionNav = (navModel?.node !== navModel?.main ? navModel?.node : navModel?.main) ?? { text: 'Grafana' };
+    const parts: string[] = buildBreadcrumbs(homeNav, sectionNav, pageNav)
+      .map((crumb) => crumb.text)
+      .reverse();
 
-    parts.push(Branding.AppTitle);
+    // Override `Home` with the custom brand title
+    parts[parts.length - 1] = Branding.AppTitle;
 
     document.title = parts.join(' - ');
-  }, [navModel, pageNav]);
-}
-
-function addTitleSegment(parts: string[], node: NavModelItem) {
-  if (!node.hideFromBreadcrumbs) {
-    parts.push(node.text);
-  }
+  }, [homeNav, navModel, pageNav]);
 }
