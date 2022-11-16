@@ -2320,6 +2320,14 @@ func TestStaleResults(t *testing.T) {
 		}
 		return result
 	}
+	checkExpectedStateTransitions := func(t *testing.T, actual []state.StateTransition, expected map[string]struct{}) {
+		t.Helper()
+		require.Len(t, actual, len(expected))
+		for _, currentState := range actual {
+			_, ok := expected[currentState.CacheID]
+			require.Truef(t, ok, "State %s is not expected. States: %v", currentState.CacheID, expected)
+		}
+	}
 
 	ctx := context.Background()
 	clk := clock.NewMock()
@@ -2348,7 +2356,7 @@ func TestStaleResults(t *testing.T) {
 
 	// Init
 	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
-	checkExpectedStates(t, processed, initStates)
+	checkExpectedStateTransitions(t, processed, initStates)
 
 	currentStates := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 	statesMap := checkExpectedStates(t, currentStates, initStates)
@@ -2365,7 +2373,7 @@ func TestStaleResults(t *testing.T) {
 	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
 		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
-		checkExpectedStates(t, processed, initStates)
+		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
 			if s.CacheID == state1 {
 				continue
