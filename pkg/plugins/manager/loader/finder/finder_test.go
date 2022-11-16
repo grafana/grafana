@@ -4,66 +4,288 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/services/org"
-
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestFinder_Find(t *testing.T) {
+	testData, err := filepath.Abs("../../testdata")
+	if err != nil {
+		require.NoError(t, err)
+	}
 	testCases := []struct {
-		name               string
-		pluginDirs         []string
-		expectedPathSuffix []string
-		err                error
+		name            string
+		pluginDirs      []string
+		expectedBundles []*plugins.FoundBundle
+		err             error
 	}{
 		{
-			name:               "Dir with single plugin",
-			pluginDirs:         []string{"../../testdata/valid-v2-signature"},
-			expectedPathSuffix: []string{"/pkg/plugins/manager/testdata/valid-v2-signature/plugin/plugin.json"},
+			name:       "Dir with single plugin",
+			pluginDirs: []string{filepath.Join(testData, "valid-v2-signature")},
+			expectedBundles: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID:   "test-datasource",
+							Type: plugins.DataSource,
+							Name: "Test",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Will Browne",
+									URL:  "https://willbrowne.com",
+								},
+								Description: "Test",
+								Version:     "1.0.0",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "*",
+								Plugins:        []plugins.Dependency{},
+							},
+							State:      plugins.AlphaRelease,
+							Backend:    true,
+							Executable: "test",
+						},
+						FS: plugins.NewLocalFS(map[string]struct{}{
+							filepath.Join(testData, "valid-v2-signature/plugin/plugin.json"):  {},
+							filepath.Join(testData, "valid-v2-signature/plugin/MANIFEST.txt"): {},
+						}, filepath.Join(testData, "valid-v2-signature/plugin")),
+					},
+				},
+			},
 		},
 		{
 			name:       "Dir with nested plugins",
 			pluginDirs: []string{"../../testdata/duplicate-plugins"},
-			expectedPathSuffix: []string{
-				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",
-				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/plugin.json",
+			expectedBundles: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID:   "test-app",
+							Type: plugins.DataSource,
+							Name: "Parent",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Grafana Labs",
+									URL:  "http://grafana.com",
+								},
+								Description: "Parent plugin",
+								Version:     "1.0.0",
+								Updated:     "2020-10-20",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "*",
+								Plugins:        []plugins.Dependency{},
+							},
+						},
+						FS: plugins.NewLocalFS(map[string]struct{}{
+							filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
+							filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
+							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
+							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
+						}, filepath.Join(testData, "duplicate-plugins/nested")),
+					},
+					Children: []*plugins.FoundPlugin{
+						{
+							JSONData: plugins.JSONData{
+								ID:   "test-app",
+								Type: plugins.DataSource,
+								Name: "Child",
+								Info: plugins.Info{
+									Author: plugins.InfoLink{
+										Name: "Grafana Labs",
+										URL:  "http://grafana.com",
+									},
+									Description: "Child plugin",
+									Version:     "1.0.0",
+									Updated:     "2020-10-20",
+								},
+								Dependencies: plugins.Dependencies{
+									GrafanaVersion: "*",
+									Plugins:        []plugins.Dependency{},
+								},
+							},
+							FS: plugins.NewLocalFS(map[string]struct{}{
+								filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
+								filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
+							}, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+						},
+					},
+				},
 			},
 		},
 		{
-			name:               "Dir with single plugin which has symbolic link root directory",
-			pluginDirs:         []string{"../../testdata/symbolic-plugin-dirs"},
-			expectedPathSuffix: []string{"/pkg/plugins/manager/testdata/includes-symlinks/plugin.json"},
+			name:       "Dir with single plugin which has symbolic link root directory",
+			pluginDirs: []string{"../../testdata/symbolic-plugin-dirs"},
+			expectedBundles: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID:   "test-app",
+							Type: plugins.App,
+							Name: "Test App",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Test Inc.",
+									URL:  "http://test.com",
+								},
+								Description: "Official Grafana Test App & Dashboard bundle",
+								Version:     "1.0.0",
+								Links: []plugins.InfoLink{
+									{Name: "Project site", URL: "http://project.com"},
+									{Name: "License & Terms", URL: "http://license.com"},
+								},
+								Updated: "2015-02-10",
+								Logos: plugins.Logos{
+									Small: "img/logo_small.png",
+									Large: "img/logo_large.png",
+								},
+								Screenshots: []plugins.Screenshots{
+									{Name: "img1", Path: "img/screenshot1.png"},
+									{Name: "img2", Path: "img/screenshot2.png"},
+								},
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "3.x.x",
+								Plugins: []plugins.Dependency{
+									{ID: "graphite", Type: "datasource", Name: "Graphite", Version: "1.0.0"},
+									{ID: "graph", Type: "panel", Name: "Graph", Version: "1.0.0"},
+								},
+							},
+							Includes: []*plugins.Includes{
+								{
+									Name: "Nginx Connections",
+									Path: "dashboards/connections.json",
+									Type: "dashboard",
+									Role: "Viewer",
+								},
+								{
+									Name: "Nginx Memory",
+									Path: "dashboards/memory.json",
+									Type: "dashboard",
+									Role: "Viewer",
+								},
+								{Name: "Nginx Panel", Type: "panel", Role: "Viewer"},
+								{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer"},
+							},
+						},
+						FS: plugins.NewLocalFS(map[string]struct{}{
+							filepath.Join(testData, "includes-symlinks/MANIFEST.txt"):                 {},
+							filepath.Join(testData, "includes-symlinks/dashboards/connections.json"):  {},
+							filepath.Join(testData, "includes-symlinks/dashboards/extra/memory.json"): {},
+							filepath.Join(testData, "includes-symlinks/plugin.json"):                  {},
+							filepath.Join(testData, "includes-symlinks/symlink_to_txt"):               {},
+							filepath.Join(testData, "includes-symlinks/text.txt"):                     {},
+						}, filepath.Join(testData, "includes-symlinks")),
+					},
+				},
+			},
 		},
 		{
 			name:       "Multiple plugin dirs",
 			pluginDirs: []string{"../../testdata/duplicate-plugins", "../../testdata/invalid-v1-signature"},
-			expectedPathSuffix: []string{
-				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",
-				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/plugin.json",
-				"/pkg/plugins/manager/testdata/invalid-v1-signature/plugin/plugin.json"},
+			expectedBundles: []*plugins.FoundBundle{{
+				Primary: plugins.FoundPlugin{
+					JSONData: plugins.JSONData{
+						ID:   "test-app",
+						Type: plugins.DataSource,
+						Name: "Parent",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "http://grafana.com",
+							},
+							Description: "Parent plugin",
+							Version:     "1.0.0",
+							Updated:     "2020-10-20",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+					},
+					FS: plugins.NewLocalFS(map[string]struct{}{
+						filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
+						filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
+						filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
+						filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
+					}, filepath.Join(testData, "duplicate-plugins/nested")),
+				},
+				Children: []*plugins.FoundPlugin{
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test-app",
+							Type: plugins.DataSource,
+							Name: "Child",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Grafana Labs",
+									URL:  "http://grafana.com",
+								},
+								Description: "Child plugin",
+								Version:     "1.0.0",
+								Updated:     "2020-10-20",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "*",
+								Plugins:        []plugins.Dependency{},
+							},
+						},
+						FS: plugins.NewLocalFS(map[string]struct{}{
+							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
+							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
+						}, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+					},
+				},
+			},
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID:   "test-datasource",
+							Type: plugins.DataSource,
+							Name: "Test",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Grafana Labs",
+									URL:  "https://grafana.com",
+								},
+								Description: "Test",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "*",
+								Plugins:        []plugins.Dependency{},
+							},
+							State:   plugins.AlphaRelease,
+							Backend: true,
+						},
+						FS: plugins.NewLocalFS(map[string]struct{}{
+							filepath.Join(testData, "invalid-v1-signature/plugin/plugin.json"):  {},
+							filepath.Join(testData, "invalid-v1-signature/plugin/MANIFEST.txt"): {},
+						}, filepath.Join(testData, "invalid-v1-signature/plugin")),
+					},
+				},
+			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := New()
-			pluginPaths, err := f.Find(tc.pluginDirs)
+			pluginBundles, err := f.Find(tc.pluginDirs...)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
 				return
 			}
 
-			assert.Equal(t, len(tc.expectedPathSuffix), len(pluginPaths))
-			for i := 0; i < len(tc.expectedPathSuffix); i++ {
-				assert.True(t, strings.HasSuffix(pluginPaths[i], tc.expectedPathSuffix[i]))
+			if !cmp.Equal(pluginBundles, tc.expectedBundles, localFSComparer) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, localFSComparer))
 			}
 		})
 	}
@@ -235,7 +457,7 @@ func TestFinder_readPluginJSON(t *testing.T) {
 		},
 	}
 
-	f := Newv2()
+	f := New()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := f.readPluginJSON(tt.pluginPath)
@@ -243,9 +465,24 @@ func TestFinder_readPluginJSON(t *testing.T) {
 				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
 				return
 			}
-			if !cmp.Equal(got, tt.expected, compareOpts) {
-				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected, compareOpts))
+			if !cmp.Equal(got, tt.expected) {
+				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected))
 			}
 		})
 	}
 }
+
+var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS) bool {
+	fs1Files := fs1.Files()
+	fs2Files := fs2.Files()
+
+	sort.SliceStable(fs1Files, func(i, j int) bool {
+		return fs1Files[i] < fs1Files[j]
+	})
+
+	sort.SliceStable(fs2Files, func(i, j int) bool {
+		return fs2Files[i] < fs2Files[j]
+	})
+
+	return cmp.Equal(fs1Files, fs2Files) && fs1.Base() == fs2.Base()
+})

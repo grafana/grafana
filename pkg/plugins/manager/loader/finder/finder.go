@@ -9,8 +9,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/google/go-cmp/cmp/cmpopts"
-
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -18,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var compareOpts = cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log")
 
 var walk = util.Walk
 

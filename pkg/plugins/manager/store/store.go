@@ -125,7 +125,6 @@ func pluginSources(gCfg *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
 		{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
 		{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
-		{Class: plugins.Remote, Paths: pluginSettingSources(cfg.PluginSettings)},
 	}
 }
 
@@ -147,17 +146,4 @@ func pluginSettingPaths(ps map[string]map[string]string) []string {
 		pluginSettingDirs = append(pluginSettingDirs, path)
 	}
 	return pluginSettingDirs
-}
-
-// pluginSettingSources provides a plugin sources defined in cfg.PluginSettings which need to be scanned on init()
-func pluginSettingSources(ps map[string]map[string]string) []string {
-	var pluginSettingSrcs []string
-	for _, s := range ps {
-		src, exists := s["source"]
-		if !exists || src == "" {
-			continue
-		}
-		pluginSettingSrcs = append(pluginSettingSrcs, src)
-	}
-	return pluginSettingSrcs
 }
