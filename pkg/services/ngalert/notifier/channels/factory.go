@@ -45,7 +45,7 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 		NotificationService: notificationService,
 		DecryptFunc:         decryptFunc,
 		Template:            template,
-		Logger:              log.New("ngalert.notifiers.receivers."+config.Type, "orgID", config.OrgID, "uID", config.UID, "name", config.Name),
+		Logger:              log.New("ngalert.notifiers.receivers", "integration", config.Type, "orgID", config.OrgID, "uID", config.UID, "name", config.Name),
 		ImageStore:          imageStore,
 	}, nil
 }
