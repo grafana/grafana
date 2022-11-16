@@ -288,8 +288,16 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
+		// without query parameter
 		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		require.NoError(t, err)
 
+		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+		reqDTO.HTTPRequest = httpreq
+
+		// with query parameter
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 	})
 
