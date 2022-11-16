@@ -419,6 +419,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, treeRoot.Children, 1)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
+		require.Len(t, treeRoot.Children[0].Children, 2)
 		require.Equal(t, "/a/test-app1/catalog", treeRoot.Children[0].Children[0].Url)
 		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[1].Url)
 	})
@@ -433,6 +434,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, treeRoot.Children, 1)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
+		require.Len(t, treeRoot.Children[0].Children, 1)
 		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[0].Url)
 	})
 	t.Run("Should add both includes when the user is a viewer with catalog read", func(t *testing.T) {
@@ -447,6 +449,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, treeRoot.Children, 1)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
+		require.Len(t, treeRoot.Children[0].Children, 2)
 		require.Equal(t, "/a/test-app1/catalog", treeRoot.Children[0].Children[0].Url)
 		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[1].Url)
 	})
@@ -462,6 +465,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, treeRoot.Children, 1)
 		require.Equal(t, "Test app1 name", treeRoot.Children[0].Text)
+		require.Len(t, treeRoot.Children[0].Children, 1)
 		require.Equal(t, "/a/test-app1/page2", treeRoot.Children[0].Children[0].Url)
 	})
 }
