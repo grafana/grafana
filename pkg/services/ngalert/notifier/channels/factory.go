@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
@@ -16,6 +17,7 @@ type FactoryConfig struct {
 	NotificationService notifications.Service
 	DecryptFunc         GetDecryptedValueFn
 	ImageStore          ImageStore
+	Logger              log.Logger
 	// Used to retrieve image URLs for messages, or data for uploads.
 	Template *template.Template
 }
@@ -43,6 +45,7 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 		NotificationService: notificationService,
 		DecryptFunc:         decryptFunc,
 		Template:            template,
+		Logger:              log.New("ngalert.notifiers.receivers."+config.Type, "orgID", config.OrgID, "uID", config.UID, "name", config.Name),
 		ImageStore:          imageStore,
 	}, nil
 }

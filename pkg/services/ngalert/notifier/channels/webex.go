@@ -84,8 +84,6 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 		return nil, err
 	}
 
-	logger := log.New(factoryConfig.Config.LogContext("ngalert.notifier.receivers.webex")...)
-
 	return &WebexNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   factoryConfig.Config.UID,
@@ -95,7 +93,7 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 			Settings:              factoryConfig.Config.Settings,
 		}),
 		orgID:    factoryConfig.Config.OrgID,
-		log:      logger,
+		log:      factoryConfig.Logger,
 		ns:       factoryConfig.NotificationService,
 		images:   factoryConfig.ImageStore,
 		tmpl:     factoryConfig.Template,

@@ -104,7 +104,7 @@ func NewThreemaNotifier(fc FactoryConfig) (*ThreemaNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		log:      log.New(fc.Config.LogContext("ngalert.notifier.receivers.threema")...),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,

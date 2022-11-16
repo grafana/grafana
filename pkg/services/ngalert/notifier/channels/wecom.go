@@ -119,7 +119,7 @@ func buildWecomNotifier(factoryConfig FactoryConfig) (*WeComNotifier, error) {
 			Settings:              factoryConfig.Config.Settings,
 		}),
 		tmpl:     factoryConfig.Template,
-		log:      log.New(factoryConfig.Config.LogContext("ngalert.notifier.receivers.wecom")...),
+		log:      factoryConfig.Logger,
 		ns:       factoryConfig.NotificationService,
 		settings: settings,
 	}, nil

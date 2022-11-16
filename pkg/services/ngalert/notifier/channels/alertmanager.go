@@ -63,11 +63,11 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewAlertmanagerNotifier(config, fc.ImageStore, nil, fc.DecryptFunc), nil
+	return NewAlertmanagerNotifier(fc.Logger, config, fc.ImageStore, nil, fc.DecryptFunc), nil
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
+func NewAlertmanagerNotifier(logger log.Logger, config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -79,7 +79,7 @@ func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *t
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
 		basicAuthPassword: config.BasicAuthPassword,
-		log:               log.New(config.LogContext("ngalert.notifier.receivers.prometheus-alertmanager")...),
+		log:               logger,
 	}
 }
 

@@ -259,7 +259,7 @@ type TeamsNotifier struct {
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *TeamsNotifier {
+func NewTeamsNotifier(logger log.Logger, config *TeamsConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *TeamsNotifier {
 	return &TeamsNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -272,7 +272,7 @@ func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, image
 		Message:      config.Message,
 		Title:        config.Title,
 		SectionTitle: config.SectionTitle,
-		log:          log.New(config.LogContext("ngalert.notifier.receivers.teams")...),
+		log:          logger,
 		ns:           ns,
 		images:       images,
 		tmpl:         t,
@@ -287,7 +287,7 @@ func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewTeamsNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return NewTeamsNotifier(fc.Logger, cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {

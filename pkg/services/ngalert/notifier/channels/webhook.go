@@ -97,7 +97,7 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 		return nil, err
 	}
 
-	logger := log.New(factoryConfig.Config.LogContext("ngalert.notifier.receivers.webhook")...)
+	logger := factoryConfig.Logger
 	maxAlerts := 0
 	if settings.MaxAlerts != nil {
 		switch value := settings.MaxAlerts.(type) {

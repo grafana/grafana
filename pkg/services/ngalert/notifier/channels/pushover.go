@@ -98,7 +98,7 @@ func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 			SecureSettings:        fc.Config.SecureSettings,
 		}),
 		tmpl:   fc.Template,
-		log:    log.New(fc.Config.LogContext("ngalert.notifier.receivers.pushover")...),
+		log:    fc.Logger,
 		images: fc.ImageStore,
 		ns:     fc.NotificationService,
 		settings: pushoverSettings{

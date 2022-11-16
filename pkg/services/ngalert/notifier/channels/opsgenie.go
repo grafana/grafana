@@ -67,7 +67,7 @@ func OpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template, fc.DecryptFunc), nil
+	return NewOpsgenieNotifier(fc.Logger, cfg, fc.NotificationService, fc.ImageStore, fc.Template, fc.DecryptFunc), nil
 }
 
 func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*OpsgenieConfig, error) {
@@ -94,7 +94,7 @@ func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecrypt
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
+func NewOpsgenieNotifier(logger log.Logger, config *OpsgenieConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
 	return &OpsgenieNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -111,7 +111,7 @@ func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender,
 		OverridePriority: config.OverridePriority,
 		SendTagsAs:       config.SendTagsAs,
 		tmpl:             t,
-		log:              log.New(config.LogContext("ngalert.notifier.receivers.opsgenie")...),
+		log:              logger,
 		ns:               ns,
 		images:           images,
 	}

@@ -82,7 +82,7 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		log:      log.New(fc.Config.LogContext("ngalert.notifier.receivers.victorops")...),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,

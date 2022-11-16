@@ -48,7 +48,7 @@ func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewEmailNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return NewEmailNotifier(fc.Logger, cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
@@ -69,7 +69,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
+func NewEmailNotifier(logger log.Logger, config *EmailConfig, ns notifications.EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -82,7 +82,7 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images 
 		SingleEmail: config.SingleEmail,
 		Message:     config.Message,
 		Subject:     config.Subject,
-		log:         log.New(config.LogContext("ngalert.notifier.receivers.email")...),
+		log:         logger,
 		ns:          ns,
 		images:      images,
 		tmpl:        t,

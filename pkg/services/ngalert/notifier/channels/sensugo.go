@@ -52,7 +52,7 @@ func SensuGoFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewSensuGoNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
+	return NewSensuGoNotifier(fc.Logger, cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
 func NewSensuGoConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*SensuGoConfig, error) {
@@ -77,7 +77,7 @@ func NewSensuGoConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 }
 
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
-func NewSensuGoNotifier(config *SensuGoConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *SensuGoNotifier {
+func NewSensuGoNotifier(logger log.Logger, config *SensuGoConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *SensuGoNotifier {
 	return &SensuGoNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -94,7 +94,7 @@ func NewSensuGoNotifier(config *SensuGoConfig, images ImageStore, ns notificatio
 		Handler:   config.Handler,
 		APIKey:    config.APIKey,
 		Message:   config.Message,
-		log:       log.New(config.LogContext("ngalert.notifier.receivers.sensugo")...),
+		log:       logger,
 		images:    images,
 		ns:        ns,
 		tmpl:      t,
