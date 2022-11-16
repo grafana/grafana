@@ -227,6 +227,14 @@ func (pr parsedRequest) validateRequest(ctx context.Context) error {
 
 	httpReq := reqCtx.Req
 
+	if pr.hasExpression {
+		hasExpr := httpReq.URL.Query().Get("expression")
+		if hasExpr == "" || hasExpr == "true" {
+			return nil
+		}
+		return ErrQueryParamMismatch
+	}
+
 	vals := splitHeaders(httpReq.Header.Values(HeaderDatasourceUID))
 	count := len(vals)
 	if count > 0 { // header exists

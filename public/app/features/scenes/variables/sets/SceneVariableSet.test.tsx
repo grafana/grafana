@@ -1,3 +1,9 @@
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { act } from 'react-dom/test-utils';
+
+import { SceneCanvasText } from '../../components/SceneCanvasText';
+import { SceneFlexLayout } from '../../components/layout/SceneFlexLayout';
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../../core/types';
 import { TestVariable } from '../variants/TestVariable';
@@ -66,7 +72,7 @@ describe('SceneVariableList', () => {
       C.signalUpdateCompleted();
 
       // When changing A should start B but not C (yet)
-      A.onSingleValueChange({ value: 'AB', text: 'AB' });
+      A.changeValueTo('AB');
 
       expect(B.state.loading).toBe(true);
       expect(C.state.loading).toBe(false);
@@ -90,6 +96,42 @@ describe('SceneVariableList', () => {
 
       scene.deactivate();
       expect(A.isGettingValues).toBe(false);
+    });
+
+    describe('When update process completed and variables have changed values', () => {
+      it('Should trigger re-renders of dependent scene objects', async () => {
+        const A = new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] });
+        const B = new TestVariable({ name: 'B', query: 'A.$A.*', value: '', text: '', options: [] });
+
+        const helloText = new SceneCanvasText({ text: 'Hello' });
+        const sceneObjectWithVariable = new SceneCanvasText({ text: '$A - $B' });
+
+        const scene = new SceneFlexLayout({
+          $variables: new SceneVariableSet({ variables: [B, A] }),
+          children: [helloText, sceneObjectWithVariable],
+        });
+
+        render(<scene.Component model={scene} />);
+
+        expect(screen.getByText('Hello')).toBeInTheDocument();
+
+        act(() => {
+          A.signalUpdateCompleted();
+          B.signalUpdateCompleted();
+        });
+
+        expect(screen.getByText('AA - AAA')).toBeInTheDocument();
+        expect((helloText as any)._renderCount).toBe(1);
+        expect((sceneObjectWithVariable as any)._renderCount).toBe(2);
+
+        act(() => {
+          B.changeValueTo('B');
+        });
+
+        expect(screen.getByText('AA - B')).toBeInTheDocument();
+        expect((helloText as any)._renderCount).toBe(1);
+        expect((sceneObjectWithVariable as any)._renderCount).toBe(3);
+      });
     });
   });
 });

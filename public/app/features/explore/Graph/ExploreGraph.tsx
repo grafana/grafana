@@ -31,9 +31,9 @@ import {
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
+import { ExploreGraphStyle } from 'app/types';
 
-import { ExploreGraphStyle } from '../../types';
-import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';
 
@@ -52,7 +52,7 @@ interface Props {
   splitOpenFn: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
-  anchorToZero: boolean;
+  anchorToZero?: boolean;
   eventBus: EventBus;
 }
 
@@ -69,13 +69,14 @@ export function ExploreGraph({
   splitOpenFn,
   graphStyle,
   tooltipDisplayMode = TooltipDisplayMode.Single,
-  anchorToZero,
+  anchorToZero = false,
   eventBus,
 }: Props) {
   const theme = useTheme2();
   const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
-  const [structureRev, { inc: incrementStructureRev }] = useCounter(1);
+  const [structureRev, { inc }] = useCounter(0);
+
   const fieldConfigRegistry = useMemo(
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
     []
@@ -118,12 +119,10 @@ export function ExploreGraph({
     });
   }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
 
-  // structureRev should be incremented when either the number of series or the config changes.
-  // like useEffect, but runs before rendering.
-  // TODO: while this works as it is supposed to, we are forced to do this now because of the way
-  // ExploreGraph is implemented. We should refactor it to a single component that handles structureRev increments
-  // when a user changes the viz style and not react to the value change itself.
-  useMemo(incrementStructureRev, [dataWithConfig.length, styledFieldConfig, incrementStructureRev]);
+  // We need to increment structureRev when the number of series changes.
+  // the function passed to useMemo runs during rendering, so when we get a different
+  // amount of data, structureRev is incremented before we render it
+  useMemo(inc, [dataWithConfig.length, styledFieldConfig, inc]);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {

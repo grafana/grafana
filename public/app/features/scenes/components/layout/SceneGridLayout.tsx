@@ -8,6 +8,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PANEL_SPAN, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { sceneGraph } from '../../core/sceneGraph';
 import {
   SceneComponentProps,
   SceneLayoutChild,
@@ -411,7 +412,7 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
   const { isCollapsible, isCollapsed, isDraggable, title } = model.useState();
-  const layout = model.getLayout();
+  const layout = sceneGraph.getLayout(model);
   const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
 
   return (

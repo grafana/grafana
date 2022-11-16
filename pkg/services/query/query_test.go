@@ -294,8 +294,25 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			PublicDashboardAccessToken: "abc123",
 		}
 
+		// without query parameter
 		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		require.NoError(t, err)
 
+		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
+		require.NoError(t, err)
+
+		reqCtx := &models.ReqContext{
+			Context: &web.Context{},
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		*httpreq = *httpreq.WithContext(ctx)
+		reqCtx.Req = httpreq
+
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+
+		// with query parameter
+		_, err = tc.queryService.QueryData(httpreq.Context(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 	})
 

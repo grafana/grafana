@@ -172,6 +172,7 @@ func TestParseTreeTestdata(t *testing.T) {
 			if tst.err == nil {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
+				require.Error(t, err)
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
 			}
