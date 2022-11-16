@@ -59,12 +59,6 @@
       "rows": "Número total de filas",
       "table-title": "Estadísticas"
     },
-    "refresh-picker": {
-      "off-arialabel": "Desactivar actualización automática",
-      "off-description": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
-      "off-label": "Apagado",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Añadir panel",
       "comments-show": "Mostrar comentarios del panel de control",
@@ -315,6 +309,23 @@
       "view": "Vista"
     }
   },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "select-button": {
+      "auto-refresh": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Compartir"
@@ -413,11 +424,46 @@
       "title": "Intervalo de tiempo absoluto"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
       "select-time": ""
     },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
     "time-range": {
+      "aria-role": "",
+      "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -446,5 +492,14 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

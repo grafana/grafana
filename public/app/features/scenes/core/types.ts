@@ -3,7 +3,7 @@ import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
 import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
 
-import { SceneVariables } from '../variables/types';
+import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
@@ -13,9 +13,20 @@ export interface SceneObjectStatePlain {
   $variables?: SceneVariables;
 }
 
-export interface SceneLayoutChildState extends SceneObjectStatePlain {
+export interface SceneLayoutChildSize {
   size?: SceneObjectSize;
 }
+export interface SceneLayoutChildInteractions {
+  isDraggable?: boolean;
+  isResizable?: boolean;
+  isCollapsible?: boolean;
+  isCollapsed?: boolean;
+}
+
+export interface SceneLayoutChildState
+  extends SceneObjectStatePlain,
+    SceneLayoutChildSize,
+    SceneLayoutChildInteractions {}
 
 export type SceneObjectState = SceneObjectStatePlain | SceneLayoutState | SceneLayoutChildState;
 
@@ -51,6 +62,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** SceneObject parent */
   readonly parent?: SceneObject;
 
+  /** This abtractions declares what variables the scene object depends on and how to handle when they change value. **/
+  readonly variableDependency?: SceneVariableDependencyConfigLike;
+
   /** Subscribe to state changes */
   subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
 
@@ -81,8 +95,14 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Get the closest node with data */
   getData(): SceneObject<SceneDataState>;
 
+  /** Get the closest node with variables */
+  getVariables(): SceneVariables | undefined;
+
   /** Get the closest node with time range */
   getTimeRange(): SceneTimeRange;
+
+  /** Get the closest layout node */
+  getLayout(): SceneObject<SceneLayoutState>;
 
   /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;
@@ -92,6 +112,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** To be replaced by declarative method */
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
+
+  /** Force a re-render, should only be needed when variable values change */
+  forceRender(): void;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;
@@ -114,6 +137,7 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
 }
 
 export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
+
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;

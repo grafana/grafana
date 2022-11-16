@@ -3,7 +3,7 @@ import { negate } from 'lodash';
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
+import { isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -25,6 +25,7 @@ import { AccessControlAction } from 'app/types';
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
+import type { RemoveCorrelationParams } from './types';
 import { CorrelationData, useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
@@ -53,10 +54,30 @@ export default function CorrelationsPage() {
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
-  const handleAdd = useCallback(() => {
+  const handleAdded = useCallback(() => {
+    reportInteraction('grafana_correlations_added');
     fetchCorrelations();
     setIsAdding(false);
   }, [fetchCorrelations]);
+
+  const handleUpdated = useCallback(() => {
+    reportInteraction('grafana_correlations_edited');
+    fetchCorrelations();
+  }, [fetchCorrelations]);
+
+  const handleDelete = useCallback(
+    (params: RemoveCorrelationParams) => {
+      remove.execute(params);
+    },
+    [remove]
+  );
+
+  // onDelete - triggers when deleting a correlation
+  useEffect(() => {
+    if (remove.value) {
+      reportInteraction('grafana_correlations_deleted');
+    }
+  }, [remove.value]);
 
   useEffect(() => {
     if (!remove.error && !remove.loading && remove.value) {
@@ -76,11 +97,11 @@ export default function CorrelationsPage() {
       !readOnly && (
         <DeleteButton
           aria-label="delete correlation"
-          onConfirm={() => remove.execute({ sourceUID, uid })}
+          onConfirm={() => handleDelete({ sourceUID, uid })}
           closeOnConfirm
         />
       ),
-    [remove]
+    [handleDelete]
   );
 
   const columns = useMemo<Array<Column<CorrelationData>>>(
@@ -154,15 +175,15 @@ export default function CorrelationsPage() {
             )
           }
 
-          {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdd} />}
+          {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
           {data && data.length >= 1 && (
             <DataTable
-              renderExpandedRow={({ target, source, ...correlation }) => (
-                <EditCorrelationForm
-                  correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}
-                  onUpdated={fetchCorrelations}
-                  readOnly={isSourceReadOnly({ source }) || !canWriteCorrelations}
+              renderExpandedRow={(correlation) => (
+                <ExpendedRow
+                  correlation={correlation}
+                  onUpdated={handleUpdated}
+                  readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
                 />
               )}
               columns={columns}
@@ -173,6 +194,28 @@ export default function CorrelationsPage() {
         </div>
       </Page.Contents>
     </Page>
+  );
+}
+
+interface ExpandedRowProps {
+  correlation: CorrelationData;
+  readOnly: boolean;
+  onUpdated: () => void;
+}
+function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
+  useEffect(
+    () => reportInteraction('grafana_correlations_details_expanded'),
+    // we only want to fire this on first render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  return (
+    <EditCorrelationForm
+      correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}
+      onUpdated={onUpdated}
+      readOnly={readOnly}
+    />
   );
 }
 

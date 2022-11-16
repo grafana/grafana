@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"time"
 
@@ -11,12 +10,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var ResendDelay = 30 * time.Second
+var (
+	ResendDelay           = 30 * time.Second
+	MetricsScrapeInterval = 15 * time.Second // TODO: parameterize? // Setting to a reasonable default scrape interval for Prometheus.
+)
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
@@ -30,47 +31,47 @@ type Manager struct {
 
 	clock       clock.Clock
 	cache       *cache
-	quit        chan struct{}
 	ResendDelay time.Duration
 
-	ruleStore     RuleReader
 	instanceStore InstanceStore
-	imageService  image.ImageService
+	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL,
-	ruleStore RuleReader, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
-	manager := &Manager{
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
+	return &Manager{
 		cache:         newCache(),
-		quit:          make(chan struct{}),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           log.New("ngalert.state.manager"),
 		metrics:       metrics,
-		ruleStore:     ruleStore,
 		instanceStore: instanceStore,
-		imageService:  imageService,
+		images:        images,
 		historian:     historian,
 		clock:         clock,
 		externalURL:   externalURL,
 	}
-	if manager.metrics != nil {
-		go manager.recordMetrics()
+}
+
+func (st *Manager) Run(ctx context.Context) error {
+	ticker := st.clock.Ticker(MetricsScrapeInterval)
+	for {
+		select {
+		case <-ticker.C:
+			st.log.Debug("Recording state cache metrics", "now", st.clock.Now())
+			st.cache.recordMetrics(st.metrics)
+		case <-ctx.Done():
+			st.log.Debug("Stopping")
+			ticker.Stop()
+			return ctx.Err()
+		}
 	}
-	return manager
 }
 
-func (st *Manager) Close() {
-	st.quit <- struct{}{}
-}
-
-func (st *Manager) Warm(ctx context.Context) {
+func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	if st.instanceStore == nil {
 		st.log.Info("Skip warming the state because instance store is not configured")
-	}
-	if st.ruleStore == nil {
-		st.log.Info("Skip warming the state because rule store is not configured")
+		return
 	}
 	startTime := time.Now()
 	st.log.Info("Warming state cache for startup")
@@ -87,7 +88,7 @@ func (st *Manager) Warm(ctx context.Context) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.ListAlertRules(ctx, &ruleCmd); err != nil {
+		if err := rulesReader.ListAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
 
@@ -169,23 +170,34 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []*State
-	processedResults := make(map[string]*State, len(results))
+	var states []StateTransition
+
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
-		processedResults[s.CacheID] = s
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults, logger)
-	if len(states) > 0 && st.instanceStore != nil {
-		logger.Debug("Saving new states to the database", "count", len(states))
-		_, _ = st.saveAlertStates(ctx, states...)
+	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
+	st.deleteAlertStates(ctx, logger, staleStates)
+
+	st.saveAlertStates(ctx, logger, states...)
+
+	st.logStateTransitions(ctx, alertRule, states, staleStates)
+
+	nextStates := make([]*State, 0, len(states))
+	for _, s := range states {
+		nextStates = append(nextStates, s.State)
 	}
-	return append(states, resolvedStates...)
+	// TODO refactor further. Do not filter because it will be filtered downstream
+	for _, s := range staleStates {
+		if s.PreviousState == eval.Alerting {
+			nextStates = append(nextStates, s.State)
+		}
+	}
+	return nextStates
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) *State {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
 	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -228,11 +240,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
-		image, err := takeImage(ctx, st.imageService, alertRule)
+		image, err := takeImage(ctx, st.images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
-				"dashboard", alertRule.DashboardUID,
-				"panel", alertRule.PanelID,
+				"dashboard", alertRule.GetDashboardUID(),
+				"panel", alertRule.GetPanelID(),
 				"error", err)
 		} else if image != nil {
 			currentState.Image = image
@@ -241,13 +253,13 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	st.cache.set(currentState)
 
-	shouldUpdateAnnotation := oldState != currentState.State || oldReason != currentState.StateReason
-	if shouldUpdateAnnotation && st.historian != nil {
-		go st.historian.RecordState(ctx, alertRule, currentState, result.EvaluatedAt,
-			InstanceStateAndReason{State: currentState.State, Reason: currentState.StateReason},
-			InstanceStateAndReason{State: oldState, Reason: oldReason})
+	nextState := StateTransition{
+		State:               currentState,
+		PreviousState:       oldState,
+		PreviousStateReason: oldReason,
 	}
-	return currentState
+
+	return nextState
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
@@ -258,24 +270,6 @@ func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*Stat
 	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
 }
 
-func (st *Manager) recordMetrics() {
-	// TODO: parameterize?
-	// Setting to a reasonable default scrape interval for Prometheus.
-	dur := time.Duration(15) * time.Second
-	ticker := st.clock.Ticker(dur)
-	for {
-		select {
-		case <-ticker.C:
-			st.log.Debug("Recording state cache metrics", "now", st.clock.Now())
-			st.cache.recordMetrics(st.metrics)
-		case <-st.quit:
-			st.log.Debug("Stopping state cache metrics recording", "now", st.clock.Now())
-			ticker.Stop()
-			return
-		}
-	}
-}
-
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.cache.set(s)
@@ -283,38 +277,24 @@ func (st *Manager) Put(states []*State) {
 }
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
-	if st.instanceStore == nil {
-		return 0, 0
+func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
+	if st.instanceStore == nil || len(states) == 0 {
+		return
 	}
 
-	st.log.Debug("Saving alert states", "count", len(states))
+	logger.Debug("Saving alert states", "count", len(states))
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
-	type debugInfo struct {
-		OrgID  int64
-		Uid    string
-		State  string
-		Labels string
-	}
-	debug := make([]debugInfo, 0)
-
 	for _, s := range states {
-		labels := ngModels.InstanceLabels(s.Labels)
-		_, hash, err := labels.StringAndHash()
+		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
-			st.log.Error("Failed to save alert instance with invalid labels", "orgID", s.OrgID, "rule", s.AlertRuleUID, "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
 			continue
 		}
 		fields := ngModels.AlertInstance{
-			AlertInstanceKey: ngModels.AlertInstanceKey{
-				RuleOrgID:  s.OrgID,
-				RuleUID:    s.AlertRuleUID,
-				LabelsHash: hash,
-			},
+			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.String()),
+			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
@@ -324,14 +304,59 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved
 	}
 
 	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
-		for _, inst := range instances {
-			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
+		type debugInfo struct {
+			State  string
+			Labels string
 		}
-		st.log.Error("Failed to save alert states", "states", debug, "error", err)
-		return 0, len(debug)
+		debug := make([]debugInfo, 0)
+		for _, inst := range instances {
+			debug = append(debug, debugInfo{string(inst.CurrentState), data.Labels(inst.Labels).String()})
+		}
+		logger.Error("Failed to save alert states", "states", debug, "error", err)
+	}
+}
+
+func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.AlertRule, newStates, staleStates []StateTransition) {
+	if st.historian == nil {
+		return
+	}
+	changedStates := make([]StateTransition, 0, len(staleStates))
+	for _, s := range newStates {
+		if s.changed() {
+			changedStates = append(changedStates, s)
+		}
 	}
 
-	return len(instances), len(debug)
+	// TODO refactor further. Let historian decide what to log. Current logic removes states `Normal (reason-X) -> Normal (reason-Y)`
+	for _, t := range staleStates {
+		if t.PreviousState == eval.Alerting {
+			changedStates = append(changedStates, t)
+		}
+	}
+	st.historian.RecordStates(ctx, alertRule, changedStates)
+}
+
+func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
+	if st.instanceStore == nil || len(states) == 0 {
+		return
+	}
+
+	logger.Debug("Deleting alert states", "count", len(states))
+	toDelete := make([]ngModels.AlertInstanceKey, 0, len(states))
+
+	for _, s := range states {
+		key, err := s.GetAlertInstanceKey()
+		if err != nil {
+			logger.Error("Failed to delete alert instance with invalid labels", "cacheID", s.CacheID, "error", err)
+			continue
+		}
+		toDelete = append(toDelete, key)
+	}
+
+	err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...)
+	if err != nil {
+		logger.Error("Failed to delete stale states", "error", err)
+	}
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?
@@ -346,77 +371,49 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-// This struct provides grouping of state with reason, and string formatting.
-type InstanceStateAndReason struct {
-	State  eval.State
-	Reason string
-}
-
-func (i InstanceStateAndReason) String() string {
-	s := fmt.Sprintf("%v", i.State)
-	if len(i.Reason) > 0 {
-		s += fmt.Sprintf(" (%v)", i.Reason)
-	}
-	return s
-}
-
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State, logger log.Logger) []*State {
+func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
-	var resolvedStates []*State
-	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-	toDelete := make([]ngModels.AlertInstanceKey, 0)
+	var resolvedStates []StateTransition
+	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+	})
 
-	for _, s := range allStates {
-		// Is the cached state in our recently processed results? If not, is it stale?
-		if _, ok := states[s.CacheID]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
-			logger.Info("Removing stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
-			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
-			ilbs := ngModels.InstanceLabels(s.Labels)
-			_, labelsHash, err := ilbs.StringAndHash()
-			if err != nil {
-				logger.Error("Unable to get labelsHash", "error", err.Error(), s.AlertRuleUID)
-			}
+	for _, s := range staleStates {
+		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+		oldState := s.State
+		oldReason := s.StateReason
 
-			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
+		s.State = eval.Normal
+		s.StateReason = ngModels.StateReasonMissingSeries
+		s.EndsAt = evaluatedAt
+		s.LastEvaluationTime = evaluatedAt
 
-			if s.State == eval.Alerting {
-				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
-				s.State = eval.Normal
-				s.StateReason = ngModels.StateReasonMissingSeries
-				s.EndsAt = evaluatedAt
-				s.Resolved = true
-				if st.historian != nil {
-					st.historian.RecordState(ctx, alertRule, s, evaluatedAt,
-						InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
-						previousState,
-					)
+		if oldState == eval.Alerting {
+			s.Resolved = true
+			// If there is no resolved image for this rule then take one
+			if resolvedImage == nil {
+				image, err := takeImage(ctx, st.images, alertRule)
+				if err != nil {
+					logger.Warn("Failed to take an image",
+						"dashboard", alertRule.GetDashboardUID(),
+						"panel", alertRule.GetPanelID(),
+						"error", err)
+				} else if image != nil {
+					resolvedImage = image
 				}
-
-				// If there is no resolved image for this rule then take one
-				if resolvedImage == nil {
-					image, err := takeImage(ctx, st.imageService, alertRule)
-					if err != nil {
-						logger.Warn("Failed to take an image",
-							"dashboard", alertRule.DashboardUID,
-							"panel", alertRule.PanelID,
-							"error", err)
-					} else if image != nil {
-						resolvedImage = image
-					}
-				}
-				s.Image = resolvedImage
-				resolvedStates = append(resolvedStates, s)
 			}
+			s.Image = resolvedImage
 		}
-	}
 
-	if st.instanceStore != nil {
-		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
-			logger.Error("Unable to delete stale instances from database", "error", err, "count", len(toDelete))
+		record := StateTransition{
+			State:               s,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
 		}
+		resolvedStates = append(resolvedStates, record)
 	}
 	return resolvedStates
 }

@@ -59,12 +59,6 @@
       "rows": "总行数",
       "table-title": "统计信息"
     },
-    "refresh-picker": {
-      "off-arialabel": "关闭自动刷新",
-      "off-description": "自动刷新已关闭。选择刷新时间间隔",
-      "off-label": "关",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "添加面板",
       "comments-show": "显示仪表板备注",
@@ -315,6 +309,23 @@
       "view": "查看"
     }
   },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "select-button": {
+      "auto-refresh": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "分享"
@@ -413,11 +424,46 @@
       "title": "绝对时间范围"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
       "select-time": ""
     },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
     "time-range": {
+      "aria-role": "",
+      "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -446,5 +492,14 @@
   },
   "user-sessions": {
     "loading": "正在加载会话..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }
