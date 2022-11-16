@@ -61,7 +61,7 @@ export const NavBar = React.memo(() => {
     menuOpen
   );
 
-  const navTree = cloneDeep(navBarTree);
+  const navTree = cloneDeep(navBarTree).filter((item) => item.hideFromMenu !== true);
 
   const coreItems = navTree
     .filter((item) => item.section === NavSection.Core)

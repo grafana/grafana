@@ -11,7 +11,7 @@ export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   useEffect(() => {
     const sectionNav = (navModel?.node !== navModel?.main ? navModel?.node : navModel?.main) ?? { text: 'Grafana' };
-    const parts: string[] = buildBreadcrumbs(homeNav, sectionNav, pageNav)
+    const parts: string[] = buildBreadcrumbs(sectionNav, pageNav, homeNav)
       .map((crumb) => crumb.text)
       .reverse();
 
