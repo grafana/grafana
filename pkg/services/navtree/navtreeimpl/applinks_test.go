@@ -355,7 +355,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 
 func TestAddAppLinksAccessControl(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	user := &user.SignedInUser{}
+	user := &user.SignedInUser{OrgID: 1}
 	reqCtx := &models.ReqContext{SignedInUser: user, Context: &web.Context{Req: httpReq}}
 	catalogReadAction := "test-app1.catalog:read"
 
@@ -403,7 +403,6 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	t.Run("Should not add app links when the user cannot access app plugins", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		user.Permissions = map[int64]map[string][]string{}
-		user.OrgID = 1
 		user.OrgRole = roletype.RoleAdmin
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -415,7 +414,6 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {plugins.ActionAppAccess: []string{"*"}},
 		}
-		user.OrgID = 1
 		user.OrgRole = roletype.RoleEditor
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -430,7 +428,6 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {plugins.ActionAppAccess: []string{"*"}},
 		}
-		user.OrgID = 1
 		user.OrgRole = roletype.RoleViewer
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
@@ -444,7 +441,6 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {plugins.ActionAppAccess: []string{"*"}, catalogReadAction: []string{}},
 		}
-		user.OrgID = 1
 		user.OrgRole = roletype.RoleViewer
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
@@ -460,7 +456,6 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		user.Permissions = map[int64]map[string][]string{
 			1: {plugins.ActionAppAccess: []string{"*"}},
 		}
-		user.OrgID = 1
 		user.OrgRole = roletype.RoleEditor
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 
