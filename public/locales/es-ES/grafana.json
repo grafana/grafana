@@ -59,12 +59,6 @@
       "rows": "Número total de filas",
       "table-title": "Estadísticas"
     },
-    "refresh-picker": {
-      "off-arialabel": "Desactivar actualización automática",
-      "off-description": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
-      "off-label": "Apagado",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Añadir panel",
       "comments-show": "Mostrar comentarios del panel de control",
@@ -259,6 +253,9 @@
     "search": {
       "placeholder": "Buscar Grafana"
     },
+    "search-dashboards": {
+      "title": ""
+    },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
       "title": "Configuración"
@@ -307,12 +304,31 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
       "share": "Compartir",
+      "show-legend": "",
       "view": "Vista"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
@@ -370,7 +386,8 @@
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
-      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel."
+      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Incrustar",
@@ -436,6 +453,14 @@
       "range-error": "",
       "to-input": ""
     },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
     "time-range": {
       "aria-role": "",
       "default-title": "",
@@ -473,5 +498,14 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

@@ -87,6 +87,7 @@ type Includes struct {
 	Type       string       `json:"type"`
 	Component  string       `json:"component"`
 	Role       org.RoleType `json:"role"`
+	Action     string       `json:"action,omitempty"`
 	AddToNav   bool         `json:"addToNav"`
 	DefaultNav bool         `json:"defaultNav"`
 	Slug       string       `json:"slug"`
@@ -101,6 +102,10 @@ func (e Includes) DashboardURLPath() string {
 		return ""
 	}
 	return "/d/" + e.UID
+}
+
+func (e Includes) RequiresRBACAction() bool {
+	return e.Action != ""
 }
 
 type Dependency struct {
@@ -279,7 +284,6 @@ type RoleRegistration struct {
 // Role is the model for Role in RBAC.
 type Role struct {
 	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
 	Permissions []Permission `json:"permissions"`
 }

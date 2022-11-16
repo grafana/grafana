@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -167,6 +169,40 @@ func TestParseMetricRequest(t *testing.T) {
 		// Make sure we end up with something valid
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Header validation", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "sEx6ZvSVk",
+				"type": "testdata"
+			}
+		}`)
+		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+		mr.HTTPRequest = httpreq
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.Error(t, err)
+
+		// With the second value it is OK
+		httpreq.Header.Add("X-Datasource-Uid", "sEx6ZvSVk")
+		mr.HTTPRequest = httpreq
+		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+
+		// Single header with comma syntax
+		httpreq, _ = http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq.Header.Set("X-Datasource-Uid", "gIEkMvIVz, sEx6ZvSVk")
+		mr.HTTPRequest = httpreq
+		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
 	})
 }
 
@@ -389,7 +425,9 @@ func setup(t *testing.T) *testContext {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	ssvc := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+	quotaService := quotatest.New(false, nil)
+	ds, err := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
 		DataSources:           nil,
 		SimulatePluginFailure: false,

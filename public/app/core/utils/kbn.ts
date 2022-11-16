@@ -24,7 +24,7 @@ const kbn = {
     s: 1,
     ms: 0.001,
   } as { [index: string]: number },
-  regexEscape: (value: string) => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
+  regexEscape: (value: string): string => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
 
   /** @deprecated since 7.2, use grafana/data */
   roundInterval: (interval: number) => {

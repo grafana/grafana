@@ -102,10 +102,10 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteInt64(obj.Size)
 	}
 
-	if obj.Sync != nil {
+	if obj.Origin != nil {
 		stream.WriteMore()
-		stream.WriteObjectField("sync")
-		stream.WriteVal(obj.Sync)
+		stream.WriteObjectField("origin")
+		stream.WriteVal(obj.Origin)
 	}
 
 	stream.WriteObjectEnd()
@@ -137,9 +137,9 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 			raw.ETag = iter.ReadString()
 		case "version":
 			raw.Version = iter.ReadString()
-		case "sync":
-			raw.Sync = &RawObjectSyncInfo{}
-			iter.ReadVal(raw.Sync)
+		case "origin":
+			raw.Origin = &ObjectOriginInfo{}
+			iter.ReadVal(raw.Origin)
 
 		case "body":
 			var val interface{}
