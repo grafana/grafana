@@ -389,7 +389,7 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 			labels[key] = val.(string) // TODO check assertion / return error
 		}
 
-		n := mathexp.NewNumber("", labels)
+		n := mathexp.NewNumber(frame.Fields[numericField].Name, labels)
 
 		// The new value fields' configs gets pointed to the one in the original frame
 		n.Frame.Fields[0].Config = frame.Fields[numericField].Config
