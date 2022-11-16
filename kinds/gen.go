@@ -105,7 +105,7 @@ func main() {
 		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
 	})
 
-	jfs, err := coreKindsGen.GenerateFS(all)
+	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
