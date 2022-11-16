@@ -86,23 +86,8 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Called when component unmounts. Unsubscribe and closes all subscriptions  */
   deactivate(): void;
 
-  /** Get the scene editor */
-  getSceneEditor(): SceneEditor;
-
   /** Get the scene root */
   getRoot(): SceneObject;
-
-  /** Get the closest node with data */
-  getData(): SceneObject<SceneDataState>;
-
-  /** Get the closest node with variables */
-  getVariables(): SceneVariables | undefined;
-
-  /** Get the closest node with time range */
-  getTimeRange(): SceneTimeRange;
-
-  /** Get the closest layout node */
-  getLayout(): SceneObject<SceneLayoutState>;
 
   /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;
@@ -134,6 +119,13 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   onMouseEnterObject(model: SceneObject): void;
   onMouseLeaveObject(model: SceneObject): void;
   onSelectObject(model: SceneObject): void;
+  getEditComponentWrapper(): React.ComponentType<SceneComponentEditWrapperProps>;
+}
+
+interface SceneComponentEditWrapperProps {
+  editor: SceneEditor;
+  model: SceneObject;
+  children: React.ReactNode;
 }
 
 export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
