@@ -15,7 +15,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
 	tsast "github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/framework/coremodel"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
@@ -146,7 +146,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 		// whether the slot is a grouped lineage:
 		// https://github.com/grafana/thema/issues/62
 		if isGroupLineage(slotname) {
-			tsf, err := cuetsy.GenerateAST(sch.UnwrapCUE(), cuetsy.Config{
+			tsf, err := cuetsy.GenerateAST(sch.Underlying(), cuetsy.Config{
 				Export: true,
 			})
 			if err != nil {
@@ -154,7 +154,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 			}
 			f.Nodes = append(f.Nodes, tsf.Nodes...)
 		} else {
-			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.UnwrapCUE(), cuetsy.TypeInterface)
+			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.Underlying(), cuetsy.TypeInterface)
 			if err != nil {
 				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
 			}
@@ -169,7 +169,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 }
 
 func isGroupLineage(slotname string) bool {
-	sl, has := coremodel.AllSlots()[slotname]
+	sl, has := kindsys.AllSlots(nil)[slotname]
 	if !has {
 		panic("unknown slotname name: " + slotname)
 	}

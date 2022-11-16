@@ -252,3 +252,7 @@ func (f *FakeUserStore) Disable(ctx context.Context, cmd *user.DisableUserComman
 func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return f.ExpectedSearchUserQueryResult, f.ExpectedError
 }
+
+func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
+	return 0, nil
+}

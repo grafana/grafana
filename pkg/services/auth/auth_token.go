@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,19 +42,38 @@ type UserAuthTokenService struct {
 	log               log.Logger
 }
 
+type ActiveTokenService interface {
+	ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error)
+}
+
 type ActiveAuthTokenService struct {
 	cfg      *setting.Cfg
 	sqlStore db.DB
 }
 
-func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB) *ActiveAuthTokenService {
-	return &ActiveAuthTokenService{
+func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, quotaService quota.Service) (*ActiveAuthTokenService, error) {
+	s := &ActiveAuthTokenService{
 		cfg:      cfg,
 		sqlStore: sqlStore,
 	}
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return s, err
+	}
+
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      s.ActiveTokenCount,
+	}); err != nil {
+		return s, err
+	}
+
+	return s, nil
 }
 
-func (a *ActiveAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
+func (a *ActiveAuthTokenService) ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
 	var count int64
 	var err error
 	err = a.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -66,7 +86,14 @@ func (a *ActiveAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, e
 		return err
 	})
 
-	return count, err
+	tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return nil, err
+	}
+	u := &quota.Map{}
+	u.Set(tag, count)
+
+	return u, err
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
@@ -471,4 +498,20 @@ func (s *UserAuthTokenService) rotatedAfterParam() int64 {
 func hashToken(token string) string {
 	hashBytes := sha256.Sum256([]byte(token + setting.SecretKey))
 	return hex.EncodeToString(hashBytes[:])
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Session)
+	return limits, nil
 }

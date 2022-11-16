@@ -154,9 +154,6 @@ var (
 	LDAPAllowSignup       bool
 	LDAPActiveSyncEnabled bool
 
-	// Quota
-	Quota QuotaSettings
-
 	// Alerting
 	AlertingEnabled            *bool
 	ExecuteAlerts              bool
@@ -423,11 +420,11 @@ type Cfg struct {
 	LDAPSkipOrgRoleSync bool
 	LDAPAllowSignup     bool
 
-	Quota QuotaSettings
-
 	DefaultTheme  string
 	DefaultLocale string
 	HomePage      string
+
+	Quota QuotaSettings
 
 	AutoAssignOrg              bool
 	AutoAssignOrgId            int
@@ -1056,10 +1053,11 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readAzureSettings()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
-	cfg.readQuotaSettings()
 	if err := cfg.readAnnotationSettings(); err != nil {
 		return err
 	}
+
+	cfg.readQuotaSettings()
 
 	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
