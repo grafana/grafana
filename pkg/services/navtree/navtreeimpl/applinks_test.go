@@ -314,7 +314,6 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, app3Node.Children, 1) // It should only have a single child now
 		require.Equal(t, "Random page", app3Node.Children[0].Text)
 	})
-
 }
 
 func TestReadingNavigationSettings(t *testing.T) {
