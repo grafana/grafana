@@ -8,20 +8,13 @@ export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
   useEffect(() => {
     const parts: string[] = [];
     if (pageNav) {
-      if (pageNav.children) {
-        const activePage = pageNav.children.find((x) => x.active);
-        if (activePage) {
-          addTitleSegment(parts, activePage);
-        }
-      }
       addTitleSegment(parts, pageNav);
-    }
-
-    if (navModel) {
+    } else if (navModel) {
       if (navModel.node !== navModel.main) {
         addTitleSegment(parts, navModel.node);
+      } else {
+        addTitleSegment(parts, navModel.main);
       }
-      addTitleSegment(parts, navModel.main);
     }
 
     parts.push(Branding.AppTitle);
