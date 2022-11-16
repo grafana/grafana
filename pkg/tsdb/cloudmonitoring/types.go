@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -14,7 +16,6 @@ type (
 		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
 			*backend.DataResponse, cloudMonitoringResponse, string, error)
 		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
-		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text string) error
 		buildDeepLink() string
 		getRefID() string
 	}
@@ -30,6 +31,7 @@ type (
 		Selector    string
 		Service     string
 		Slo         string
+		logger      log.Logger
 	}
 
 	// Used to build MQL queries
@@ -41,6 +43,7 @@ type (
 		AliasBy     string
 		timeRange   backend.TimeRange
 		GraphPeriod string
+		logger      log.Logger
 	}
 
 	metricQuery struct {
@@ -77,6 +80,7 @@ type (
 		QueryType    string
 		MetricQuery  metricQuery
 		SloQuery     sloQuery
+		Type         string
 	}
 
 	cloudMonitoringBucketOptions struct {

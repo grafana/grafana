@@ -22,6 +22,9 @@ interface Props {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   typeaheadItem: css`
+    border: none;
+    background: none;
+    text-align: left;
     label: type-ahead-item;
     height: auto;
     font-family: ${theme.typography.fontFamilyMonospace};
@@ -77,27 +80,31 @@ export const TypeaheadItem = (props: Props) => {
   }
 
   return (
-    <li
-      className={className}
-      style={style}
-      onMouseDown={onClickItem}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      {item.highlightParts !== undefined ? (
-        <PartialHighlighter
-          text={label}
-          highlightClassName={highlightClassName}
-          highlightParts={item.highlightParts}
-        ></PartialHighlighter>
-      ) : (
-        <Highlighter
-          textToHighlight={label}
-          searchWords={[prefix ?? '']}
-          autoEscape={true}
-          highlightClassName={highlightClassName}
-        />
-      )}
+    <li role="none">
+      <button
+        role="menuitem"
+        className={className}
+        style={style}
+        onMouseDown={onClickItem}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        type="button"
+      >
+        {item.highlightParts !== undefined ? (
+          <PartialHighlighter
+            text={label}
+            highlightClassName={highlightClassName}
+            highlightParts={item.highlightParts}
+          ></PartialHighlighter>
+        ) : (
+          <Highlighter
+            textToHighlight={label}
+            searchWords={[prefix ?? '']}
+            autoEscape={true}
+            highlightClassName={highlightClassName}
+          />
+        )}
+      </button>
     </li>
   );
 };

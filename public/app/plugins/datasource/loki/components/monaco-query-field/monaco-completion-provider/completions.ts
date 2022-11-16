@@ -109,48 +109,32 @@ async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): P
   }));
 }
 
-async function getLabelNamesForCompletions(
-  suffix: string,
-  triggerOnInsert: boolean,
-  addExtractedLabels: boolean,
-  otherLabels: Label[],
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  const labelNames = await dataProvider.getLabelNames(otherLabels);
-  const result: Completion[] = labelNames.map((text) => ({
-    type: 'LABEL_NAME',
-    label: text,
-    insertText: `${text}${suffix}`,
-    triggerOnInsert,
-  }));
-
-  if (addExtractedLabels) {
-    const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
-    extractedLabelKeys.forEach((key) => {
-      result.push({
-        type: 'LABEL_NAME',
-        label: `${key} (parsed)`,
-        insertText: `${key}${suffix}`,
-        triggerOnInsert,
-      });
-    });
-  }
-
-  return result;
-}
-
 async function getLabelNamesForSelectorCompletions(
   otherLabels: Label[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions('=', true, false, otherLabels, dataProvider);
+  const labelNames = await dataProvider.getLabelNames(otherLabels);
+
+  return labelNames.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: `${label}=`,
+    triggerOnInsert: true,
+  }));
 }
 
 async function getInGroupingCompletions(
   otherLabels: Label[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions('', false, true, otherLabels, dataProvider);
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
+
+  return extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
 }
 
 const PARSERS = ['json', 'logfmt', 'pattern', 'regexp', 'unpack'];
@@ -204,7 +188,7 @@ async function getAfterSelectorCompletions(
   extractedLabelKeys.forEach((key) => {
     completions.push({
       type: 'LINE_FILTER',
-      label: `unwrap ${key} (detected)`,
+      label: `unwrap ${key}`,
       insertText: `${prefix}unwrap ${key}`,
     });
   });
