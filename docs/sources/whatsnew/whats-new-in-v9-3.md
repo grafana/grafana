@@ -89,3 +89,14 @@ As part of our efforts to improve security of Grafana, we introduce a long-await
 This feature is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default.
 
 Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}), in the instructions for your Oauth identity provider.
+
+
+## Terraform - Extended support for provisioning permissions
+
+All Grafana users can now use the latest release of [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) (version 1.31.0) to provision [user and team access to service accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/#manage-users-and-teams-permissions-for-a-service-account-in-grafana). This allows full management of service accounts through Terraform - from creating a service account and allowing users to access it to assigning roles to the service account and generating service account tokens.
+
+Grafana Enterprise and Cloud Pro and Advanced users can now provision [access to data sources](https://grafana.com/docs/grafana/latest/administration/data-source-management/#data-source-permissions) for Grafana's `Viewer`, `Editor` and `Admin` basic roles, as well as assign `Edit` permission.
+
+We have also added [documentation on provisioning RBAC roles and role assignments](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/) to guide our Grafana Enterprise and Cloud Pro and Advanced users through this process.
+
+Finally, we have fixed several access control related bugs to ensure a smoother provisioning experience.
