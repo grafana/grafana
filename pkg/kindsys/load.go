@@ -227,7 +227,7 @@ func (decl *Decl[T]) Some() *SomeDecl {
 // For representations of core kinds that are useful in Go programs at runtime,
 // see ["github.com/grafana/grafana/pkg/registry/corekind"].
 func LoadCoreKind[T RawMeta | CoreStructuredMeta](declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[T], error) {
-	vk, err := cuectx.BuildGrafanaInstance(declpath, "kind", ctx, overlay)
+	vk, err := cuectx.BuildGrafanaInstance(ctx, declpath, "kind", overlay)
 	if err != nil {
 		return nil, err
 	}

@@ -71,7 +71,6 @@ beforeEach(() => {
   config.featureToggles.publicDashboards = true;
   mockDashboard = new DashboardModel({
     uid: 'mockDashboardUid',
-    timezone: 'utc',
   });
 
   mockPanel = new PanelModel({
@@ -146,7 +145,7 @@ describe('SharePublic', () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
-    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 00:59:59')).toBeInTheDocument();
+    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 01:59:59')).toBeInTheDocument();
   });
   it('when modal is opened, then loader spinner appears and inputs are disabled', async () => {
     mockDashboard.meta.hasPublicDashboard = true;
