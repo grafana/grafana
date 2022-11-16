@@ -12,6 +12,7 @@ const patchMock = jest.fn().mockResolvedValue({});
 const putMock = jest.fn().mockResolvedValue({});
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     post: postMock,
     patch: patchMock,
