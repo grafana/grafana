@@ -12,13 +12,12 @@ class MyReporter extends Mocha.reporters.JSON {
 
     runner.once(EVENT_RUN_END, () => {
       console.log('\n---- LOKI REPORTER ----\n');
-      console.log(runner.testResults);
       runner.testResults.failures.forEach((failure) => {
         const timestamp = Date.now();
         const suiteName = String(failure.fullTitle).replace(failure.title, '').trim();
         const testName = failure.title;
         const errorMessage = failure.err.message;
-        console.error(`{timestamp=${timestamp}} {suite=${suiteName}} {test=${testName}} {error=${errorMessage}}`);
+        console.error(`E2E Error {suite=${suiteName}} {test=${testName}} {error=${errorMessage}}`);
       });
     });
   }
