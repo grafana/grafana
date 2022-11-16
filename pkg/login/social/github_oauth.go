@@ -37,6 +37,10 @@ func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
 }
 
+func (s *SocialGithub) GetCustomAuthParams() []oauth2.AuthCodeOption {
+	return []oauth2.AuthCodeOption{}
+}
+
 func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true

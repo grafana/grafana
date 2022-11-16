@@ -50,6 +50,10 @@ func (s *SocialAzureAD) Type() int {
 	return int(models.AZUREAD)
 }
 
+func (s *SocialAzureAD) GetCustomAuthParams() []oauth2.AuthCodeOption {
+	return []oauth2.AuthCodeOption{}
+}
+
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {

@@ -36,6 +36,10 @@ func (s *SocialGenericOAuth) Type() int {
 	return int(models.GENERIC)
 }
 
+func (s *SocialGenericOAuth) GetCustomAuthParams() []oauth2.AuthCodeOption {
+	return []oauth2.AuthCodeOption{oauth2.AccessTypeOffline}
+}
+
 func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true

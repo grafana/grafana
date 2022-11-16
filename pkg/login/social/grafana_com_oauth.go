@@ -25,6 +25,10 @@ func (s *SocialGrafanaCom) Type() int {
 	return int(models.GRAFANA_COM)
 }
 
+func (s *SocialGrafanaCom) GetCustomAuthParams() []oauth2.AuthCodeOption {
+	return []oauth2.AuthCodeOption{}
+}
+
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }

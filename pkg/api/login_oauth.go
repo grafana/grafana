@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -97,10 +98,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		// FIXME: access_type is a Google OAuth2 specific thing, consider refactoring this and moving to google_oauth.go
-		// ApprovalForce is required to get the refresh token every time the user logs in with Google OAuth (without this the
-		// refresh token is only provided when the user first gives consent)
-		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOffline, oauth2.ApprovalForce}
+		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOnline}
+
+		if hs.Features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+			// Change the defaults to AccessTypeOffline if accessTokenExpirationCheck is enabled
+			// and get the custom parameters from the specific OAuth connector
+			opts = connect.GetCustomAuthParams()
+		}
 
 		if provider.UsePKCE {
 			ascii, pkce, err := genPKCECode()

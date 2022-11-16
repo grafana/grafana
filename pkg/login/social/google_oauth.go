@@ -20,6 +20,10 @@ func (s *SocialGoogle) Type() int {
 	return int(models.GOOGLE)
 }
 
+func (s *SocialGoogle) GetCustomAuthParams() []oauth2.AuthCodeOption {
+	return []oauth2.AuthCodeOption{oauth2.AccessTypeOffline, oauth2.ApprovalForce}
+}
+
 func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    string `json:"id"`

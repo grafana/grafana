@@ -48,6 +48,10 @@ func (s *SocialOkta) Type() int {
 	return int(models.OKTA)
 }
 
+func (s *SocialOkta) GetCustomAuthParams() []oauth2.AuthCodeOption {
+	return []oauth2.AuthCodeOption{}
+}
+
 func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
