@@ -64,28 +64,16 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 }
 
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	var res []*plugins.FoundBundle
-	var err error
-	if class == plugins.Remote {
-		r := finder.NewRemote()
-
-		res, err = r.Find(paths...)
-		if err != nil {
+	res, err := l.pluginFinder.Find(paths...)
+	if err != nil {
 			return nil, err
 		}
-	} else {
-		f := finder.Newv2()
-		res, err = f.Find(paths...)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	return l.loadPlugins(ctx, class, res)
 }
 
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
-	loadedPlugins := []*plugins.Plugin{}
+	var loadedPlugins []*plugins.Plugin
 	for _, r := range res {
 		if _, exists := l.pluginRegistry.Plugin(ctx, r.Primary.JSONData.ID); exists {
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", r.Primary.JSONData.ID)

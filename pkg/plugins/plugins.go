@@ -460,7 +460,6 @@ const (
 	Core     Class = "core"
 	Bundled  Class = "bundled"
 	External Class = "external"
-	Remote   Class = "remote"
 )
 
 var PluginTypes = []Type{

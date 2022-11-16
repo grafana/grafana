@@ -155,14 +155,6 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 		}
 	}
 
-	if class == plugins.Remote {
-		return plugins.Signature{
-			Status:     plugins.SignatureValid,
-			Type:       manifest.SignatureType,
-			SigningOrg: manifest.SignedByOrg,
-		}, nil
-	}
-
 	manifestFiles := make(map[string]struct{}, len(manifest.Files))
 
 	// Verify the manifest contents
