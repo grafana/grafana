@@ -253,6 +253,9 @@
     "search": {
       "placeholder": "Buscar Grafana"
     },
+    "search-dashboards": {
+      "title": ""
+    },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
       "title": "Configuración"
@@ -301,11 +304,13 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
       "share": "Compartir",
+      "show-legend": "",
       "view": "Vista"
     }
   },
@@ -381,7 +386,8 @@
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
-      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel."
+      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Incrustar",
