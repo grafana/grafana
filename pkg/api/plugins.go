@@ -314,6 +314,11 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 
 	f, mod, err := plugin.File(rel)
 	if err != nil {
+		if errors.Is(err, plugins.ErrFileNotExist) {
+			c.JsonApiErr(404, "Plugin file not found", nil)
+			return
+		}
+
 		c.JsonApiErr(500, "Failed to get plugin file", err)
 		return
 	}

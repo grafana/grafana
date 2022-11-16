@@ -3,6 +3,7 @@ package fakes
 import (
 	"archive/zip"
 	"context"
+	"io/fs"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -367,3 +368,37 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
 	return f.ExpectedErr
 }
+
+type FakePluginFiles struct {
+	fs.FS
+
+	base string
+}
+
+func NewFakePluginFiles(base string) *FakePluginFiles {
+	return &FakePluginFiles{
+		base: base,
+	}
+}
+
+func (f *FakePluginFiles) Base() string {
+	return f.base
+}
+
+func (f *FakePluginFiles) Exists(name string) bool {
+	return false
+}
+
+func (f *FakePluginFiles) FullPath(name string) (string, bool) {
+	return "", false
+}
+
+func (f *FakePluginFiles) Files() []string {
+return []string{}
+}
+
+func (f *FakePluginFiles) Read(name string) ([]byte, bool) {
+	return []byte{}, false
+}
+
+

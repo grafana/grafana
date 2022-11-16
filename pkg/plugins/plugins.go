@@ -87,6 +87,10 @@ func (p PluginDTO) SupportsStreaming() bool {
 	return p.supportsStreaming
 }
 
+func (p PluginDTO) Base() string {
+	return p.files.Base()
+}
+
 func (p PluginDTO) IsApp() bool {
 	return p.Type == App
 }
@@ -412,6 +416,10 @@ func (p *Plugin) ToDTO() PluginDTO {
 
 func (p *Plugin) StaticRoute() *StaticRoute {
 	if p.IsCorePlugin() {
+		return nil
+	}
+
+	if p.Files == nil {
 		return nil
 	}
 

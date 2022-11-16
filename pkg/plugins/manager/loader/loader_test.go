@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -19,7 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var compareOpts = cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log")
+var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), localFSComparer}
+
+var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS) bool {
+	fs1Files := fs1.Files()
+	fs2Files := fs2.Files()
+
+	return len(fs1Files) == len(fs2Files) && fs1.Base() == fs2.Base()
+})
 
 func TestLoader_Load(t *testing.T) {
 	corePluginDir, err := filepath.Abs("./../../../../public")
@@ -83,7 +91,9 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Module:    "app/plugins/datasource/cloudwatch/module",
 					BaseURL:   "public/app/plugins/datasource/cloudwatch",
-					PluginDir: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
+					Files:     plugins.NewLocalFS(
+						filesInDir(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
+					filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureInternal,
 					Class:     plugins.Core,
 				},
@@ -122,7 +132,10 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Module:        "plugins/test-datasource/module",
 					BaseURL:       "public/plugins/test-datasource",
-					PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/"),
+					Files: plugins.NewLocalFS(
+						filesInDir(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
+						filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/"),
+					),
 					Signature:     "valid",
 					SignatureType: plugins.GrafanaSignature,
 					SignatureOrg:  "Grafana Labs",
@@ -199,7 +212,17 @@ func TestLoader_Load(t *testing.T) {
 					Class:         plugins.External,
 					Module:        "plugins/test-app/module",
 					BaseURL:       "public/plugins/test-app",
-					PluginDir:     filepath.Join(parentDir, "testdata/includes-symlinks"),
+					Files: plugins.NewLocalFS(
+						map[string]struct{}{
+							filepath.Join(parentDir, "testdata/includes-symlinks", "/MANIFEST.txt"):                 {},
+							filepath.Join(parentDir, "testdata/includes-symlinks", "dashboards/connections.json"):  {},
+							filepath.Join(parentDir, "testdata/includes-symlinks", "dashboards/extra/memory.json"): {},
+							filepath.Join(parentDir, "testdata/includes-symlinks", "plugin.json"):                  {},
+							filepath.Join(parentDir, "testdata/includes-symlinks", "symlink_to_txt"):               {},
+							filepath.Join(parentDir, "testdata/includes-symlinks", "text.txt"):                     {},
+						},
+						filepath.Join(parentDir, "testdata/includes-symlinks"),
+					),
 					Signature:     "valid",
 					SignatureType: plugins.GrafanaSignature,
 					SignatureOrg:  "Grafana Labs",
@@ -239,7 +262,10 @@ func TestLoader_Load(t *testing.T) {
 					Class:     plugins.External,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
-					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					Files: plugins.NewLocalFS(
+						filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+						filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					),
 					Signature: "unsigned",
 				},
 			},
@@ -290,7 +316,10 @@ func TestLoader_Load(t *testing.T) {
 					Class:     plugins.External,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
-					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					Files: plugins.NewLocalFS(
+						filesInDir(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+						filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					),
 					Signature: plugins.SignatureUnsigned,
 				},
 			},
@@ -394,7 +423,10 @@ func TestLoader_Load(t *testing.T) {
 					Backend: false,
 				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-includes"),
+					Files:     plugins.NewLocalFS(map[string]struct{}{
+						filepath.Join(parentDir, "testdata/test-app-with-includes", "plugin.json"): {},
+						filepath.Join(parentDir, "testdata/test-app-with-includes", "MANIFEST.txt"): {},
+					},filepath.Join(parentDir, "testdata/test-app-with-includes")),
 					Class:         plugins.External,
 					Signature:     plugins.SignatureUnsigned,
 					Module:        "plugins/test-app/module",
@@ -418,8 +450,8 @@ func TestLoader_Load(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths)
 			require.NoError(t, err)
-			if !cmp.Equal(got, tt.want, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+			if !cmp.Equal(got, tt.want, compareOpts...) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 			}
 
 			pluginErrs := l.PluginErrors()
@@ -543,7 +575,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Class:         plugins.External,
 						Module:        "plugins/test-datasource/module",
 						BaseURL:       "public/plugins/test-datasource",
-						PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin"),
+						Files: plugins.NewLocalFS(map[string]struct{}{
+							filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin/plugin.json"): {},
+							filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin/MANIFEST.txt"): {},
+						},filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin")),
 						Signature:     "valid",
 						SignatureType: plugins.PrivateSignature,
 						SignatureOrg:  "Will Browne",
@@ -581,8 +616,8 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
 				})
-				if !cmp.Equal(got, tt.want, compareOpts) {
-					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+				if !cmp.Equal(got, tt.want, compareOpts...) {
+					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 				}
 				pluginErrs := l.PluginErrors()
 				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
@@ -657,7 +692,10 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						},
 						Backend: false,
 					},
-					PluginDir:     pluginDir,
+					Files:     plugins.NewLocalFS(map[string]struct{}{
+						filepath.Join(pluginDir, "plugin.json"): {},
+						filepath.Join(pluginDir, "MANIFEST.txt"): {},
+					},pluginDir),
 					Class:         plugins.External,
 					Signature:     plugins.SignatureValid,
 					SignatureType: plugins.PrivateSignature,
@@ -689,8 +727,8 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
 		require.NoError(t, err)
 
-		if !cmp.Equal(got, tt.want, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+		if !cmp.Equal(got, tt.want, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 		}
 		pluginErrs := l.PluginErrors()
 		require.Len(t, pluginErrs, 0)
@@ -739,7 +777,11 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 					Backend:      true,
 					Executable:   "test",
 				},
-				PluginDir:     filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
+				Files:     plugins.NewLocalFS(map[string]struct{}{
+					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "plugin.json"): {},
+					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "MANIFEST.txt"): {},
+				},filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin")),
+				//PluginDir:     filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.PrivateSignature,
@@ -762,8 +804,8 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		got, err := l.Load(context.Background(), plugins.External, paths)
 		require.NoError(t, err)
 
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
 	})
@@ -818,7 +860,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				PluginDir:     pluginDir,
+				Files: plugins.NewLocalFS(filesInDir(t, pluginDir), pluginDir),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.GrafanaSignature,
@@ -841,8 +883,8 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
 		require.NoError(t, err)
 
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
 		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
@@ -881,7 +923,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-datasource/module",
 		BaseURL:       "public/plugins/test-datasource",
-		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent"),
+		Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
+			filepath.Join(rootDir, "testdata/nested-plugins/parent")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -913,7 +956,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-panel/module",
 		BaseURL:       "public/plugins/test-panel",
-		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent/nested"),
+		Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
+			filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -944,8 +988,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		})
 
 		expected := []*plugins.Plugin{parent, child}
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
 		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
@@ -959,8 +1003,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				return got[i].ID < got[j].ID
 			})
 
-			if !cmp.Equal(got, []*plugins.Plugin{}, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+			if !cmp.Equal(got, []*plugins.Plugin{}, compareOpts...) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 			}
 
 			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
@@ -1040,7 +1084,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:        "plugins/myorgid-simple-app/module",
 			BaseURL:       "public/plugins/myorgid-simple-app",
-			PluginDir:     filepath.Join(rootDir, "testdata/app-with-child/dist"),
+			Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
+				filepath.Join(rootDir, "testdata/app-with-child/dist")),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
 			Signature:     plugins.SignatureValid,
 			SignatureType: plugins.GrafanaSignature,
@@ -1078,7 +1123,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:          "plugins/myorgid-simple-app/child/module",
 			BaseURL:         "public/plugins/myorgid-simple-app",
-			PluginDir:       filepath.Join(rootDir, "testdata/app-with-child/dist/child"),
+			Files: plugins.NewLocalFS(filesInDir(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
+				filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureValid,
 			SignatureType:   plugins.GrafanaSignature,
@@ -1108,8 +1154,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			return got[i].ID < got[j].ID
 		})
 
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
 		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
@@ -1119,7 +1165,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 func Test_setPathsBasedOnApp(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		child := &plugins.Plugin{
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource",
+			Files: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -1127,7 +1173,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 				ID:   "testdata-app",
 			},
 			Class:     plugins.Core,
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata-app",
+			Files: fakes.NewFakePluginFiles( "c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
 			BaseURL:   "public/app/plugins/app/testdata-app",
 		}
 
@@ -1156,8 +1202,8 @@ func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegist
 	t.Helper()
 
 	for _, p := range ps {
-		if !cmp.Equal(p, reg.Store[p.ID], compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, reg.Store[p.ID], compareOpts))
+		if !cmp.Equal(p, reg.Store[p.ID], compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, reg.Store[p.ID], compareOpts...))
 		}
 
 		if p.Backend {
@@ -1178,4 +1224,42 @@ func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegist
 		require.Equal(t, 1, procMngr.Started[p.ID])
 		require.Zero(t, procMngr.Stopped[p.ID])
 	}
+}
+
+
+func filesInDir(t* testing.T, dir string) map[string]struct{} {
+	files, err := collectFilesWithin(dir)
+	if err!= nil {
+		t.Logf("Could not collect plugin file info. Err: %v", err)
+		return map[string]struct{}{}
+	}
+	return files
+}
+
+func collectFilesWithin(dir string) (map[string]struct{}, error) {
+	files := map[string]struct{}{}
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// skip directories
+		if info.IsDir() {
+			return nil
+		}
+
+		// verify that file is within plugin directory
+		//file, err := filepath.Rel(dir, path)
+		//if err != nil {
+		//	return err
+		//}
+		//if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
+		//	return fmt.Errorf("file '%s' not inside of plugin directory", file)
+		//}
+
+		files[path] = struct{}{}
+		return nil
+	})
+
+	return files, err
 }

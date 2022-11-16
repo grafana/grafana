@@ -181,7 +181,7 @@ func TestFinder_readPluginJSON(t *testing.T) {
 	}{
 		{
 			name:       "Valid plugin",
-			pluginPath: "../testdata/test-app/plugin.json",
+			pluginPath: "../../testdata/test-app/plugin.json",
 			expected: plugins.JSONData{
 				ID:   "test-app",
 				Type: "app",

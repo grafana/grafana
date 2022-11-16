@@ -257,7 +257,7 @@ func collectFilesWithin(dir string) (map[string]struct{}, error) {
 			}
 		}
 
-		// skip directories and MANIFEST.txt
+		// skip directories
 		if info.IsDir() {
 			return nil
 		}

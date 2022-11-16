@@ -201,7 +201,9 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{}, ""))
+		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(map[string]struct{}{
+			requestedFile: {},
+		}, ""))
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -266,7 +265,7 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 
 	for _, pluginID := range []string{"input"} {
 		require.Contains(t, pluginRoutes, pluginID)
-		require.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, inputPlugin.PluginDir))
+		require.Equal(t, pluginRoutes[pluginID].Directory, inputPlugin.Base())
 	}
 }
 
@@ -280,11 +279,11 @@ func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, ps *store.Servi
 
 	inputPlugin, _ := ps.Plugin(ctx, "input")
 	require.NotNil(t, routes["input"])
-	require.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
+	require.Equal(t, routes["input"].Directory, inputPlugin.Base())
 
 	testAppPlugin, _ := ps.Plugin(ctx, "test-app")
 	require.Contains(t, routes, "test-app")
-	require.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
+	require.Equal(t, routes["test-app"].Directory, testAppPlugin.Base())
 }
 
 func verifyBackendProcesses(t *testing.T, ps []*plugins.Plugin) {

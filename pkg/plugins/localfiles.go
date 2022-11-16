@@ -12,6 +12,8 @@ import (
 
 var _ fs.FS = (*LocalFS)(nil)
 
+var ErrFileNotExist =  fmt.Errorf("file does not exist")
+
 type LocalFS struct {
 	m        map[string]*LocalFile
 	basePath string
@@ -90,7 +92,7 @@ func (f LocalFS) Open(name string) (fs.File, error) {
 		}
 		return os.Open(kv.path)
 	}
-	return nil, fmt.Errorf("file does not exist")
+	return nil, ErrFileNotExist
 }
 
 func (f LocalFS) Remove(name string) error {

@@ -3,9 +3,6 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,12 +19,6 @@ func ProvideFileStoreManager(pluginStore plugins.Store) *FileStoreManager {
 	return &FileStoreManager{
 		pluginStore: pluginStore,
 	}
-}
-
-var openDashboardFile = func(name string) (fs.File, error) {
-	// Wrapping in filepath.Clean to properly handle
-	// gosec G304 Potential file inclusion via variable rule.
-	return os.Open(filepath.Clean(name))
 }
 
 func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error) {

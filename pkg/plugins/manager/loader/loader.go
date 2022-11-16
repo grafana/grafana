@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/gosimple/slug"
@@ -233,8 +234,8 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files pl
 	plugin := &plugins.Plugin{
 		JSONData: pluginJSON,
 		Files:    files,
-		BaseURL:  path.Join("public/plugins", pluginJSON.ID),
-		Module:   path.Join("plugins", pluginJSON.ID, "module"),
+		BaseURL:  baseURL(pluginJSON, class, files.Base()),
+		Module:   module(pluginJSON, class, files.Base()),
 		Class:    class,
 	}
 
@@ -242,6 +243,20 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files pl
 	setImages(plugin)
 
 	return plugin
+}
+
+func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+	}
+	return path.Join("public/plugins", pluginJSON.ID)
+}
+
+func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+	}
+	return path.Join("plugins", pluginJSON.ID, "module")
 }
 
 func setImages(p *plugins.Plugin) {
