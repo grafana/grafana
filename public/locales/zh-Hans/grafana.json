@@ -264,6 +264,9 @@
     "search": {
       "placeholder": "搜索 Grafana"
     },
+    "search-dashboards": {
+      "title": ""
+    },
     "server-settings": {
       "subtitle": "查看 Grafana 配置中定义的设置",
       "title": "设置"
