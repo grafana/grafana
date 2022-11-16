@@ -75,6 +75,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
     const dashboard = new DashboardScene({
       title: oldModel.title,
+      uid: oldModel.uid,
       layout: new SceneGridLayout({
         children: panels,
       }),

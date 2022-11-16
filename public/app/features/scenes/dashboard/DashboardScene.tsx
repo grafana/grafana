@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { PageToolbar } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import { Button, PageToolbar } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -11,6 +11,7 @@ import { SceneComponentProps, SceneLayout, SceneObject, SceneObjectStatePlain } 
 
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
+  uid: string;
   layout: SceneLayout;
   actions?: SceneObject[];
 }
@@ -20,10 +21,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { title, layout, actions = [] } = model.useState();
+  const { title, layout, actions = [], uid } = model.useState();
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
+  toolbarActions.push(
+    <Button size="sm" variant="secondary" onClick={() => locationService.push(`/d/${uid}`)}>
+      View as Dashboard
+    </Button>
+  );
   const pageToolbar = config.featureToggles.topnav ? (
     <AppChromeUpdate actions={toolbarActions} />
   ) : (
