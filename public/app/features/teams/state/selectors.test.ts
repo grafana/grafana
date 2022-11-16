@@ -1,7 +1,7 @@
 import { User } from 'app/core/services/context_srv';
 
 import { Team, TeamGroup, TeamState, OrgRole } from '../../../types';
-import { getMockTeam, getMockTeamMembers, getMultipleMockTeams } from '../__mocks__/teamMocks';
+import { getMockTeam, getMockTeamMembers } from '../__mocks__/teamMocks';
 
 import { getTeam, getTeamMembers, isSignedInUserTeamAdmin, Config } from './selectors';
 
