@@ -518,7 +518,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 	}
 
 	cacheKey = newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
-	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
+	ss.CacheService.Set(cacheKey, *query.Result, time.Second*60) // LOGZ.IO GRAFANA CHANGE :: DEV-34631 Increase cache duration for signed in users
 	return nil
 }
 

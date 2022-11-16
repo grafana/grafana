@@ -126,7 +126,7 @@ func (f *ForkedRulerApi) forkRouteGetGrafanaRuleGroupConfig(ctx *models.ReqConte
 }
 
 func (f *ForkedRulerApi) forkRouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteGetRulesConfig(ctx)
+	return f.GrafanaRuler.LogzioRouteGetRulesConfig(ctx) // LOGZ.IO GRAFANA CHANGE :: DEV-34631 - Refactor query to retrieve visible namespaces for unified alerting rules
 }
 
 func (f *ForkedRulerApi) forkRoutePostNameGrafanaRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {

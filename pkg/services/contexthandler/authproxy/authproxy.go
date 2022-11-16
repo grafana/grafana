@@ -340,7 +340,7 @@ func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*models.Signe
 		UserId: userID,
 	}
 
-	if err := auth.sqlStore.GetSignedInUser(context.Background(), query); err != nil {
+	if err := auth.sqlStore.GetSignedInUserWithCacheCtx(context.Background(), query); err != nil { // LOGZ.IO GRAFANA CHANGE :: Use cache to get signed in user
 		return nil, err
 	}
 
