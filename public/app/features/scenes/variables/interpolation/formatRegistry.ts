@@ -245,14 +245,16 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       name: 'Date',
       description: 'Format date in different ways',
       formatter: (value, args) => {
-        let nrValue = 0;
+        let nrValue = NaN;
 
         if (typeof value === 'number') {
           nrValue = value;
         } else if (typeof value === 'string') {
           nrValue = parseInt(value, 10);
-        } else {
-          return '';
+        }
+
+        if (isNaN(nrValue)) {
+          return 'NaN';
         }
 
         const arg = args[0] ?? 'iso';
