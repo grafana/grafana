@@ -367,5 +367,10 @@ var (
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "datasourceOnboarding",
+			Description: "Enable data source onboarding page",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
