@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -34,7 +35,7 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := h.buildAnnotations(rule, states, logger)
