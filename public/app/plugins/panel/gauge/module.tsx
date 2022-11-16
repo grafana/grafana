@@ -30,7 +30,7 @@ export const plugin = new PanelPlugin<PanelOptions>(GaugePanel)
       .addNumberInput({
         path: 'neutral',
         name: 'Neutral',
-        description: 'Set the neutral point of the gauge',
+        description: 'Leave empty to use Min as neutral point',
         settings: {
           placeholder: 'auto',
         },
