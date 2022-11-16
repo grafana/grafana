@@ -38,7 +38,7 @@ func TestSetHeadersMiddleware(t *testing.T) {
 		headers := http.Header{
 			"X-Header-A": []string{"value a"},
 			"X-Header-B": []string{"value b"},
-			"X-Header-C": []string{"value c"},
+			"X-HEader-C": []string{"value c"},
 		}
 		mw := SetHeadersMiddleware(headers)
 		rt := mw.CreateMiddleware(httpclient.Options{}, finalRoundTripper)

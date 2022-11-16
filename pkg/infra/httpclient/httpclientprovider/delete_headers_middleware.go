@@ -12,7 +12,7 @@ const DeleteHeadersMiddlewareName = "delete-headers"
 // request if header names provided.
 func DeleteHeadersMiddleware(headerNames ...string) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(DeleteHeadersMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
-		if headerNames == nil {
+		if len(headerNames) == 0 {
 			return next
 		}
 

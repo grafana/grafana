@@ -2,11 +2,12 @@ package httpclientprovider
 
 import (
 	"net/http"
+	"net/textproto"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
-const SetHeadersMiddlewareName = "forwarded-headers"
+const SetHeadersMiddlewareName = "set-headers"
 
 // SetHeadersMiddleware middleware that sets headers on the outgoing
 // request if headers provided.
@@ -14,13 +15,14 @@ const SetHeadersMiddlewareName = "forwarded-headers"
 // will be overwritten.
 func SetHeadersMiddleware(headers http.Header) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(SetHeadersMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
-		if headers == nil {
+		if len(headers) == 0 {
 			return next
 		}
 
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			for k, v := range headers {
-				req.Header[k] = v
+				canonicalKey := textproto.CanonicalMIMEHeaderKey(k)
+				req.Header[canonicalKey] = v
 			}
 
 			return next.RoundTrip(req)
