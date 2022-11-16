@@ -1,17 +1,17 @@
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useMemo } from 'react';
 
-import { DataTable, Column, CellProps, LinkButton } from '@grafana/ui';
+import { InteractiveTable, Column, CellProps, LinkButton } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import mdx from './DataTable.mdx';
+import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
 
-const meta: ComponentMeta<typeof DataTable> = {
-  title: 'Experimental/DataTable',
-  component: DataTable,
+const meta: ComponentMeta<typeof InteractiveTable> = {
+  title: 'Experimental/InteractiveTable',
+  component: InteractiveTable,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -31,7 +31,7 @@ interface TableData {
   noheader?: string;
 }
 
-export const Basic: ComponentStory<typeof DataTable> = (args) => {
+export const Basic: ComponentStory<typeof InteractiveTable> = (args) => {
   const columns = useMemo<Array<Column<TableData>>>(
     () => [
       { id: 'header1', header: 'Header 1', sortType: 'alphanumeric' },
@@ -52,7 +52,7 @@ export const Basic: ComponentStory<typeof DataTable> = (args) => {
     []
   );
 
-  return <DataTable columns={columns} data={data} getRowId={(r) => r.header1} />;
+  return <InteractiveTable columns={columns} data={data} getRowId={(r) => r.header1} />;
 };
 
 interface WithRowExpansionData {
@@ -65,7 +65,7 @@ const ExpandedCell = ({ description }: WithRowExpansionData) => {
   return <p>{description}</p>;
 };
 
-export const WithRowExpansion: ComponentStory<typeof DataTable> = (args) => {
+export const WithRowExpansion: ComponentStory<typeof InteractiveTable> = (args) => {
   const tableData: WithRowExpansionData[] = [
     {
       datasource: 'Prometheus',
@@ -90,7 +90,12 @@ export const WithRowExpansion: ComponentStory<typeof DataTable> = (args) => {
   ];
 
   return (
-    <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} renderExpandedRow={ExpandedCell} />
+    <InteractiveTable
+      columns={columns}
+      data={tableData}
+      getRowId={(r) => r.datasource}
+      renderExpandedRow={ExpandedCell}
+    />
   );
 };
 
@@ -111,7 +116,7 @@ const RepoCell = ({
   );
 };
 
-export const WithCustomCell: ComponentStory<typeof DataTable> = (args) => {
+export const WithCustomCell: ComponentStory<typeof InteractiveTable> = (args) => {
   const tableData: WithCustomCellData[] = [
     {
       datasource: 'Prometheus',
@@ -132,7 +137,7 @@ export const WithCustomCell: ComponentStory<typeof DataTable> = (args) => {
     { id: 'repo', header: 'Repo', cell: RepoCell },
   ];
 
-  return <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
+  return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
 };
 
 export default meta;

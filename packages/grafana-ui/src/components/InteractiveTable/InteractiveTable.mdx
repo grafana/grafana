@@ -1,15 +1,15 @@
 import { Meta, Props, Story, Canvas } from '@storybook/addon-docs/blocks';
 
-import { DataTable } from './DataTable';
+import { InteractiveTable } from './InteractiveTable';
 import { Badge } from '../Badge/Badge';
 
-<Meta title="MDX|DataTable" component={DataTable} />
+<Meta title="MDX|InteractiveTable" component={InteractiveTable} />
 
-# DataTable
+# InteractiveTable
 
 <Badge text="Alpha" icon="rocket" color="blue" tooltip="This component is still experimental." />
 
-The DataTable is used to display and select data efficiently.
+The InteractiveTable is used to display and select data efficiently.
 It allows for the display and modification of detailed information.
 With additional functionality it allows for batch editing, as needed by your feature's users.
 
@@ -17,16 +17,16 @@ It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for 
 
 ### When to use
 
-The DataTable can be used to allow users to perform administrative tasks workflows.
+The InteractiveTable can be used to allow users to perform administrative tasks workflows.
 
 ### When not to use
 
-Avoid using the DataTable where mobile or responsiveness may be a requirement.
+Avoid using the InteractiveTable where mobile or responsiveness may be a requirement.
 Consider an alternative pattern where the user is presented with a summary list and can click/tap to an individual page for each row in that list.
 
 ### Usage
 
-<Props of={DataTable} />
+<Props of={InteractiveTable} />
 
 #### About `columns` and `data` Props
 
@@ -81,7 +81,7 @@ The expanded row area should be used to declutter the primary presentation of da
 
 In general, data-types that are consistent across all dataset are in the primary table, variances are pushed to the expanded section for each individual row.
 
-<Story id="experimental-datatable--with-row-expansion" />
+<Story id="experimental-InteractiveTable--with-row-expansion" />
 
 Row expansion is enabled whenever the `renderExpanded` prop is provided. The `renderExpanded` function is called with the row's data and should return a ReactNode.
 
@@ -106,7 +106,12 @@ const ExpandedCell = ({ description }: TableData) => {
 
 export const MyComponent = () => {
   return (
-    <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} renderExpandedRow={ExpandedCell} />
+    <InteractiveTable
+      columns={columns}
+      data={tableData}
+      getRowId={(r) => r.datasource}
+      renderExpandedRow={ExpandedCell}
+    />
   );
 };
 ```
@@ -115,7 +120,7 @@ export const MyComponent = () => {
 
 Individual cells can be rendered using custom content dy defining a `cell` property on the column definition.
 
-<Story id="experimental-datatable--with-custom-cell" />
+<Story id="experimental-InteractiveTable--with-custom-cell" />
 
 ```tsx
 interface TableData {
@@ -156,6 +161,6 @@ const columns: Array<Column<WithCustomCellData>> = [
 ];
 
 export const MyComponent = () => {
-  return <DataTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
+  return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
 };
 ```

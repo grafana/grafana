@@ -12,7 +12,7 @@ import {
   LoadingPlaceholder,
   useStyles2,
   Alert,
-  DataTable,
+  InteractiveTable,
   type Column,
   type CellProps,
   type SortByFn,
@@ -178,7 +178,7 @@ export default function CorrelationsPage() {
           {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
           {data && data.length >= 1 && (
-            <DataTable
+            <InteractiveTable
               renderExpandedRow={(correlation) => (
                 <ExpendedRow
                   correlation={correlation}

@@ -71,7 +71,7 @@ interface Props<TableData extends object> {
 }
 
 /** @alpha */
-export function DataTable<TableData extends object>({
+export function InteractiveTable<TableData extends object>({
   data,
   className,
   columns,
@@ -189,5 +189,5 @@ export function DataTable<TableData extends object>({
 }
 
 const useUniqueId = () => {
-  return useMemo(() => uniqueId('datatable'), []);
+  return useMemo(() => uniqueId('InteractiveTable'), []);
 };
