@@ -29,7 +29,8 @@ Description. Include an overview of the feature and problem it solves, and where
 Add a screenshot to this enablement material folder and link to it here.
 
 ## New navigation
-*Available in beta in all editions.*
+
+_Available in beta in all editions._
 
 Use Grafana’s redesigned navigation to get full visibility into the health of your systems, by quickly jumping between features as part of your incident response workflow.
 
@@ -42,7 +43,8 @@ Use the `topnav` feature toggle to try out Grafana’s new navigation.
 **Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
 
 ## New languages
-*Generally available in all editions.*
+
+_Generally available in all editions._
 
 We have added 4 new languages to Grafana: Spanish, French, German and Simplified Chinese.
 
