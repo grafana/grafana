@@ -5,6 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2, EventBus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import store from 'app/core/store';
@@ -117,6 +118,10 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
             }
           }
         }
+      }
+
+      if (isFromCompactUrl) {
+        reportInteraction('grafana_explore_compact_notice');
       }
 
       this.props.initializeExplore(

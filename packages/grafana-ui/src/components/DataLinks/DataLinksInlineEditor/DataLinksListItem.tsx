@@ -5,6 +5,7 @@ import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { isCompactUrl } from '../../../utils/dataLinks';
+import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { IconButton } from '../../IconButton/IconButton';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 
@@ -42,10 +43,13 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
         </HorizontalGroup>
         <div
           className={cx(styles.url, styles.notConfigured, isCompactExploreUrl && styles.errored)}
-          title={isCompactExploreUrl ? 'Explore data link is deprecated.' : url}
+          title={isCompactExploreUrl ? 'Explore data link format is deprecated.' : url}
         >
           {hasUrl ? url : 'Data link url not provided'}
         </div>
+        {isCompactExploreUrl && (
+          <FieldValidationMessage>Explore data link may not work in the future. Please edit.</FieldValidationMessage>
+        )}
       </VerticalGroup>
     </div>
   );

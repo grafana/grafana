@@ -54,7 +54,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
         <Field
           label="URL"
           invalid={isCompactUrl(value.url)}
-          error="URL is a compact Explore URL. Please visit URL to be redirected, and paste that URL here."
+          error="Data link is an Explore URL in a deprecated format. Please visit the URL to be redirected, and edit this data link to use that URL."
         >
           <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
         </Field>

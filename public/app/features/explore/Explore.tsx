@@ -272,7 +272,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderCompactUrlWarning() {
-    reportInteraction('grafana_explore_compact_notice');
     return (
       <FadeIn in={true} duration={100}>
         <Alert severity="warning" title="Compact URL Deprecation Notice" topSpacing={2}>
