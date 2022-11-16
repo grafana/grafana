@@ -77,9 +77,6 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
 
-  /** How to modify state */
-  setState(state: Partial<TState>): void;
-
   /** Called when the Component is mounted. A place to register event listeners add subscribe to state changes */
   activate(): void;
 

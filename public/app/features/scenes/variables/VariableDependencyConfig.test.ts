@@ -22,6 +22,10 @@ class TestObj extends SceneObjectBase<TestState> {
       },
     });
   }
+
+  public setState(state: Partial<TestState>) {
+    super.setState(state);
+  }
 }
 
 describe('VariableDependencySet', () => {

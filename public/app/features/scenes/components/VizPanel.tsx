@@ -27,9 +27,13 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
     statePaths: ['title'],
   });
 
+  public changeTitle(title: string) {
+    this.setState({ title });
+  }
+
   public onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = sceneGraph.getTimeRange(this);
-    sceneTimeRange.setState({
+    sceneTimeRange.onTimeRangeChange({
       raw: {
         from: toUtc(timeRange.from),
         to: toUtc(timeRange.to),
@@ -93,7 +97,7 @@ function VizPanelEditor({ model }: SceneComponentProps<VizPanel>) {
 
   return (
     <Field label="Title">
-      <Input defaultValue={title} onBlur={(evt) => model.setState({ title: evt.currentTarget.value })} />
+      <Input defaultValue={title} onBlur={(evt) => model.changeTitle(evt.currentTarget.value)} />
     </Field>
   );
 }

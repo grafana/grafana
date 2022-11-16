@@ -4,7 +4,6 @@ import { map, Observable } from 'rxjs';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneObject } from '../../core/types';
 import {
   SceneVariable,
   SceneVariableValueChangedEvent,
@@ -142,7 +141,6 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
    * This helper function is to counter the contravariance of setState
    */
   private setStateHelper(state: Partial<MultiValueVariableState>) {
-    const test: SceneObject<MultiValueVariableState> = this;
-    test.setState(state);
+    this.setState(state as Partial<TState>);
   }
 }

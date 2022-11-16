@@ -122,6 +122,14 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       console.error('PanelQueryRunner Error', err);
     }
   }
+
+  public updateQueries(state: Partial<QueryRunnerState>, runQueries = false) {
+    this.setState(state);
+
+    if (runQueries) {
+      this.runQueries();
+    }
+  }
 }
 
 async function getDataSource(

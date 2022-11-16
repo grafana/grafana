@@ -65,7 +65,7 @@ export function getSceneVariableForScopedVar(name: string, value: ScopedVar) {
   if (!scopedVarsVariable) {
     scopedVarsVariable = new ScopedVarsVariable({ name, value });
   } else {
-    scopedVarsVariable.setState({ name, value });
+    //scopedVarsVariable.setState({ name, value });
   }
 
   return scopedVarsVariable;

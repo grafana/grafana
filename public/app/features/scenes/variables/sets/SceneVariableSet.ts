@@ -92,7 +92,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * Not sure if this should be handled here on in MultiValueVariable
    */
   private handleVariableError(variable: SceneVariable, err: Error) {
-    variable.setState({ loading: false, error: err });
+    //variable.setState({ loading: false, error: err });
   }
 
   /**

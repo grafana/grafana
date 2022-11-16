@@ -103,15 +103,17 @@ export function getScenePanelRepeaterTest(): Scene {
       new SceneToolbarInput({
         value: '2',
         onChange: (newValue) => {
-          queryRunner.setState({
-            queries: [
-              {
-                ...queryRunner.state.queries[0],
-                seriesCount: newValue,
-              },
-            ],
-          });
-          queryRunner.runQueries();
+          queryRunner.updateQueries(
+            {
+              queries: [
+                {
+                  ...queryRunner.state.queries[0],
+                  seriesCount: newValue,
+                },
+              ],
+            },
+            true
+          );
         },
       }),
       new SceneTimePicker({}),

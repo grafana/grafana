@@ -90,7 +90,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     return this._events.subscribe(eventType, handler);
   }
 
-  public setState(update: Partial<TState>) {
+  protected setState(update: Partial<TState>) {
     const prevState = this._state;
     this._state = {
       ...this._state,
