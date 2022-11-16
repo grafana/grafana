@@ -385,20 +385,18 @@ func (f *FakePluginFiles) Base() string {
 	return f.base
 }
 
-func (f *FakePluginFiles) Exists(name string) bool {
+func (f *FakePluginFiles) Exists(_ string) bool {
 	return false
 }
 
-func (f *FakePluginFiles) FullPath(name string) (string, bool) {
+func (f *FakePluginFiles) FullPath(_ string) (string, bool) {
 	return "", false
 }
 
 func (f *FakePluginFiles) Files() []string {
-return []string{}
+	return []string{}
 }
 
-func (f *FakePluginFiles) Read(name string) ([]byte, bool) {
+func (f *FakePluginFiles) Read(_ string) ([]byte, bool) {
 	return []byte{}, false
 }
-
-

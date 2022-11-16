@@ -79,8 +79,8 @@ func NewPluginDTO(jsonData JSONData, class Class) PluginDTO {
 	}
 }
 
-func (p PluginDTO) Upgradeable() bool {
-	return !p.IsCorePlugin()
+func (p PluginDTO) Immutable() bool {
+	return p.IsCorePlugin()
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -456,19 +456,6 @@ func (p *Plugin) IsBundledPlugin() bool {
 
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
-}
-
-func (p *Plugin) Manifest() []byte {
-	f, err := p.Files.Open("MANIFEST.txt")
-	if err != nil {
-		return []byte{}
-	}
-
-	m, err := io.ReadAll(f)
-	if err != nil {
-		return []byte{}
-	}
-	return m
 }
 
 type Class string

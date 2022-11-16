@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -321,6 +322,12 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 
 		c.JsonApiErr(500, "Failed to get plugin file", err)
 		return
+	}
+
+	if hs.Cfg.Env == setting.Dev {
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	http.ServeContent(c.Resp, c.Req, rel, mod, f)

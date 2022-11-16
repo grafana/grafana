@@ -157,7 +157,7 @@ func (s *PluginsService) pluginIDsCSV(m map[string]plugins.PluginDTO) string {
 func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map[string]plugins.PluginDTO {
 	result := make(map[string]plugins.PluginDTO)
 	for _, p := range s.pluginStore.Plugins(ctx) {
-		if !p.Upgradeable() {
+		if p.Immutable() {
 			continue
 		}
 		result[p.ID] = p
