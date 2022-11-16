@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
+import React, { createRef, MutableRefObject, PureComponent } from 'react';
 import SplitPane, { Split } from 'react-split-pane';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
 
 interface Props {
-  children: [ReactNode, ReactNode] | ReactNode;
   splitOrientation?: Split;
   paneSize: number;
   splitVisible?: boolean;
