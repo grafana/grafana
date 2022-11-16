@@ -586,7 +586,9 @@
             }
             
             var neutral = gaugeOptionsi.gauge.neutralValue;
-            if (neutral != null) {
+            if (neutral != null && 
+                neutral>gaugeOptionsi.gauge.min && 
+                neutral<gaugeOptionsi.gauge.max) {
                 drawThresholdValue(gaugeOptionsi, layout, cellLayout, "Neutral" + i, neutral, calculateAngle(gaugeOptionsi, layout, neutral));
             }
         }

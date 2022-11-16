@@ -31,6 +31,9 @@ export const plugin = new PanelPlugin<PanelOptions>(GaugePanel)
         path: 'neutral',
         name: 'Neutral',
         description: 'Set the neutral point of the gauge',
+        settings: {
+          placeholder: 'auto',
+        },
       });
 
     commonOptionsBuilder.addTextSizeOptions(builder);

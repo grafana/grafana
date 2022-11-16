@@ -29,7 +29,7 @@ Panel: thema.#Lineage & {
 						ui.SingleStatBaseOptions
 						showThresholdLabels:  bool | *false
 						showThresholdMarkers: bool | *true
-						neutral: number
+						neutral?: number
 					} @cuetsy(kind="interface")
 				},
 			]
