@@ -312,11 +312,13 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
       "share": "Partager",
+      "show-legend": "",
       "view": "Afficher"
     }
   },
