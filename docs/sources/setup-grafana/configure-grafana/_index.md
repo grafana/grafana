@@ -557,7 +557,7 @@ Default is `admin`.
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
 
-# admin_email
+### admin_email
 
 The email of the default Grafana Admin, created on startup. Default is `admin@localhost`.
 
@@ -623,7 +623,16 @@ Set to `true` to add the Content-Security-Policy header to your requests. CSP al
 
 ### content_security_policy_template
 
-Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+Set the policy template that will be used when adding the `Content-Security-Policy` header to your requests. `$NONCE` in the template includes a random nonce.
+
+### content_security_policy_report_only
+
+Set to `true` to add the `Content-Security-Policy-Report-Only` header to your requests. CSP in Report Only mode enables you to experiment with policies by monitoring their effects without enforcing them.
+You can enable both policies simultaneously.
+
+### content_security_policy_template
+
+Set the policy template that will be used when adding the `Content-Security-Policy-Report-Only` header to your requests. `$NONCE` in the template includes a random nonce.
 
 <hr />
 

@@ -69,8 +69,8 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 }
 
 type prefixmod struct {
-	str     string
-	base    string
+	prefix  string
+	replace string
 	rxp     *regexp.Regexp
 	rxpsuff *regexp.Regexp
 }
@@ -80,7 +80,22 @@ type prefixmod struct {
 // comments in a generated Go file.
 func PrefixDropper(prefix string) astutil.ApplyFunc {
 	return (&prefixmod{
-		str:     prefix,
+		prefix:  prefix,
+		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]+)`, prefix)),
+		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, prefix)),
+	}).applyfunc
+}
+
+// PrefixReplacer returns an astutil.ApplyFunc that removes the provided prefix
+// string when it appears as a leading sequence in type names, var names, and
+// comments in a generated Go file.
+//
+// When an exact match for prefix is found, the provided replace string
+// is substituted.
+func PrefixReplacer(prefix, replace string) astutil.ApplyFunc {
+	return (&prefixmod{
+		prefix:  prefix,
+		replace: replace,
 		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]+)`, prefix)),
 		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, prefix)),
 	}).applyfunc
@@ -113,8 +128,8 @@ func (d prefixmod) applyfunc(c *astutil.Cursor) bool {
 	case *ast.CommentGroup:
 		for _, c := range x.List {
 			c.Text = d.rxpsuff.ReplaceAllString(c.Text, "$1")
-			if d.base != "" {
-				c.Text = d.rxp.ReplaceAllString(c.Text, d.base+"$1")
+			if d.replace != "" {
+				c.Text = d.rxp.ReplaceAllString(c.Text, d.replace+"$1")
 			}
 		}
 	}
@@ -142,9 +157,9 @@ func (d prefixmod) handleExpr(e ast.Expr) {
 }
 
 func (d prefixmod) do(n *ast.Ident) {
-	if n.Name != d.str {
-		n.Name = strings.TrimPrefix(n.Name, d.str)
-	} else if d.base != "" {
-		n.Name = d.base
+	if n.Name != d.prefix {
+		n.Name = strings.TrimPrefix(n.Name, d.prefix)
+	} else if d.replace != "" {
+		n.Name = d.replace
 	}
 }

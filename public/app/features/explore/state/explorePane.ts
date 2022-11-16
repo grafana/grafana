@@ -24,7 +24,7 @@ import {
 } from 'app/core/utils/explore';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { ThunkResult } from 'app/types';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
@@ -36,7 +36,6 @@ import {
   loadAndInitDatasource,
   createEmptyQueryResponse,
   getUrlStateFromPaneState,
-  storeGraphStyle,
 } from './utils';
 // Types
 
@@ -117,20 +116,6 @@ export function changeSize(
   { height, width }: { height: number; width: number }
 ): PayloadAction<ChangeSizePayload> {
   return changeSizeAction({ exploreId, height, width });
-}
-
-interface ChangeGraphStylePayload {
-  exploreId: ExploreId;
-  graphStyle: ExploreGraphStyle;
-}
-
-const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
-
-export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    storeGraphStyle(graphStyle);
-    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
-  };
 }
 
 /**
@@ -282,11 +267,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
-  }
-
-  if (changeGraphStyleAction.match(action)) {
-    const { graphStyle } = action.payload;
-    return { ...state, graphStyle };
   }
 
   if (changePanelsStateAction.match(action)) {
