@@ -373,17 +373,17 @@ func (p *Plugin) Client() (PluginClient, bool) {
 
 func (p *Plugin) ExecutablePath() string {
 	if p.IsRenderer() {
-		return pluginExecutable(p, "plugin_start")
+		return p.executablePath("plugin_start")
 	}
 
 	if p.IsSecretsManager() {
-		return pluginExecutable(p, "secrets_plugin_start")
+		return p.executablePath("secrets_plugin_start")
 	}
 
-	return pluginExecutable(p, p.Executable)
+	return p.executablePath(p.Executable)
 }
 
-func pluginExecutable(p *Plugin, f string) string {
+func (p *Plugin) executablePath(f string) string {
 	os := strings.ToLower(runtime.GOOS)
 	arch := runtime.GOARCH
 	extension := ""
