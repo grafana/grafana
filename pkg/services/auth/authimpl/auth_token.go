@@ -1,4 +1,4 @@
-package auth
+package authimpl
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -59,7 +60,7 @@ func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, quotaServic
 	}
 
 	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     QuotaTargetSrv,
+		TargetSrv:     auth.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
 		Reporter:      s.ActiveTokenCount,
 	}); err != nil {
@@ -82,7 +83,7 @@ func (a *ActiveAuthTokenService) ActiveTokenCount(ctx context.Context, _ *quota.
 		return err
 	})
 
-	tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 	if err != nil {
 		return nil, err
 	}
@@ -503,7 +504,7 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 		return limits, nil
 	}
 
-	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	globalQuotaTag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 	if err != nil {
 		return limits, err
 	}

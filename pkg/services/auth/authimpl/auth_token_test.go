@@ -1,4 +1,4 @@
-package auth
+package authimpl
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -43,7 +44,7 @@ func TestUserAuthToken(t *testing.T) {
 		t.Run("Can count active tokens", func(t *testing.T) {
 			m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
 			require.Nil(t, err)
-			tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+			tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 			require.NoError(t, err)
 			count, ok := m.Get(tag)
 			require.True(t, ok)
@@ -215,7 +216,7 @@ func TestUserAuthToken(t *testing.T) {
 			t.Run("should not find active token when expired", func(t *testing.T) {
 				m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
 				require.Nil(t, err)
-				tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+				tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 				require.NoError(t, err)
 				count, ok := m.Get(tag)
 				require.True(t, ok)
