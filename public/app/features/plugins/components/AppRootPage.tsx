@@ -48,9 +48,10 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     loadAppPlugin(pluginId, dispatch);
   }, [pluginId]);
 
-  const onNavChanged = useCallback((newPluginNav: NavModel) => {
-    dispatch(stateSlice.actions.changeNav(newPluginNav));
-  }, []);
+  const onNavChanged = useCallback(
+    (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),
+    []
+  );
 
   if (!plugin || pluginId !== plugin.meta.id) {
     return <Page navModel={navModel}>{loading && <PageLoader />}</Page>;
