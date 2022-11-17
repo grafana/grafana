@@ -276,6 +276,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  channels.DefaultMessageTitleEmbed,
 					PropertyName: "summary",
 				},
+				{ // New in 9.4.
+					Label:        "Source",
+					Description:  "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "<hostname>",
+					PropertyName: "source",
+				},
 			},
 		},
 		{
