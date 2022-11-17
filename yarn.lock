@@ -4334,7 +4334,7 @@ __metadata:
     eventemitter3: 4.0.7
     fast_array_intersect: 1.1.0
     history: 4.10.1
-    i18next: ^22.0.5
+    i18next: ^22.0.0
     lodash: 4.17.21
     marked: 4.2.0
     moment: 2.29.4
@@ -22723,15 +22723,6 @@ __metadata:
   dependencies:
     "@babel/runtime": ^7.17.2
   checksum: aa49e6e48583833ee673c0dd9568081a5e15fde9549aa3e47a99ad91d3fdb7469f8a315864fc45ec466b1e60caa00d5fc8371e47840068048b4ab79a69dc2b19
-  languageName: node
-  linkType: hard
-
-"i18next@npm:^22.0.5":
-  version: 22.0.5
-  resolution: "i18next@npm:22.0.5"
-  dependencies:
-    "@babel/runtime": ^7.17.2
-  checksum: fb0233ac096456a1a2f85ebeb08dbec26fe9f86056a5c082b8e86b1eb2b4443fd7c582fafddca86afab43583e9e7a92a2c215a29a7ac1e37eb5cb61b1e0c6173
   languageName: node
   linkType: hard
 
