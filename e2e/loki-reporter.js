@@ -35,7 +35,7 @@ class MyReporter extends Mocha.reporters.JSON {
   }
 
   escapeValue(str) {
-    return String(str).replace('"', '\\"');
+    return String(str).replaceAll('"', '\\"');
   }
 }
 
