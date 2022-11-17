@@ -291,7 +291,9 @@ export default function SpanDetail(props: SpanDetailProps) {
         {topOfViewRefType === TopOfViewRefType.Explore && (
           <small className={styles.debugInfo}>
             <a
-              {...focusSpanLink}
+              title={focusSpanLink.title}
+              href={focusSpanLink.href}
+              target={focusSpanLink.target}
               onClick={(e) => {
                 // click handling logic copied from react router:
                 // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
