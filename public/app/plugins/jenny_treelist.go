@@ -18,8 +18,8 @@ import (
 
 const prefix = "github.com/grafana/grafana/public/app/plugins"
 
-func PluginTreeListJenny(root string) codejen.ManyToOne[*PluginDecl] {
-	target := filepath.Join(root, "pkg", "plugins", "pfs", "corelist", "loadlist_gen.go")
+func PluginTreeListJenny() codejen.ManyToOne[*PluginDecl] {
+	target := filepath.Join("pkg", "plugins", "pfs", "corelist", "loadlist_gen.go")
 
 	return &ptlJenny{
 		target: target,

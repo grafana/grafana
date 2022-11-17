@@ -54,7 +54,7 @@ func main() {
 		return decl.Tree.RootPlugin().Meta().Id
 	})
 
-	pluginKindGen.Append(plugins.PluginTreeListJenny(groot))
+	pluginKindGen.Append(plugins.PluginTreeListJenny())
 
 	var decls []*plugins.PluginDecl
 	for _, typ := range []string{"datasource", "panel"} {
