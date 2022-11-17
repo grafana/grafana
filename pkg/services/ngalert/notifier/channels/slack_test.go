@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -267,6 +268,7 @@ func TestSlackNotifier(t *testing.T) {
 				NotificationService: notificationService,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := buildSlackNotifier(fc)

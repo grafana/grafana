@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
 func TestDingdingNotifier(t *testing.T) {
@@ -179,6 +180,7 @@ func TestDingdingNotifier(t *testing.T) {
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 			pn, err := newDingDingNotifier(fc)
 			if c.expInitError != "" {

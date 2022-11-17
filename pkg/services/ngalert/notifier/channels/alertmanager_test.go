@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -66,7 +67,7 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &UnavailableImageStore{}, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(&logtest.Fake{}, cfg, &UnavailableImageStore{}, tmpl, decryptFn)
 			require.NotNil(t, sn)
 		})
 	}
@@ -159,7 +160,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			decryptFn := secretsService.GetDecryptedValue
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, images, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(&logtest.Fake{}, cfg, images, tmpl, decryptFn)
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -204,6 +205,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				ImageStore:          images,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := NewVictoropsNotifier(fc)

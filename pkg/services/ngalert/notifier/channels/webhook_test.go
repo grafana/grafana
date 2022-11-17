@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -358,6 +359,7 @@ func TestWebhookNotifier(t *testing.T) {
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          &UnavailableImageStore{},
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := buildWebhookNotifier(fc)

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -177,6 +178,7 @@ func TestWeComNotifier(t *testing.T) {
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          nil,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -362,6 +364,7 @@ func TestWeComNotifierAPIAPP(t *testing.T) {
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          nil,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -547,6 +550,7 @@ func TestWeComFactory(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          nil,
+				Logger:              &logtest.Fake{},
 			}
 
 			_, err = WeComFactory(fc)

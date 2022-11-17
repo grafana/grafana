@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -185,6 +186,7 @@ func TestPushoverNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 			pn, err := newPushoverNotifier(fc)
 			if c.expInitError != "" {

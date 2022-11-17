@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -124,6 +125,7 @@ func TestWebexNotifier(t *testing.T) {
 				NotificationService: notificationService,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			n, err := buildWebexNotifier(fc)

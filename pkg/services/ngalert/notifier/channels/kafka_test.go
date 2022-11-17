@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
 func TestKafkaNotifier(t *testing.T) {
@@ -128,6 +129,7 @@ func TestKafkaNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         nil,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := newKafkaNotifier(fc)

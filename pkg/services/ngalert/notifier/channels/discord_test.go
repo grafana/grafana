@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -302,6 +303,7 @@ func TestDiscordNotifier(t *testing.T) {
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			dn, err := newDiscordNotifier(fc)

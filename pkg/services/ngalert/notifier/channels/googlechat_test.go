@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -477,6 +478,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 				ImageStore:          imageStore,
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := newGoogleChatNotifier(fc)

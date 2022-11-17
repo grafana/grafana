@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -135,6 +136,7 @@ func TestThreemaNotifier(t *testing.T) {
 				ImageStore:          images,
 				Template:            tmpl,
 				DecryptFunc:         secretsService.GetDecryptedValue,
+				Logger:              &logtest.Fake{},
 			}
 
 			pn, err := NewThreemaNotifier(fc)

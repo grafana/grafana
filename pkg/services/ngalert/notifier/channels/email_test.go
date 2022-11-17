@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -50,7 +51,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		})
 		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, emailSender, &UnavailableImageStore{}, tmpl)
+		emailNotifier := NewEmailNotifier(&logtest.Fake{}, cfg, emailSender, &UnavailableImageStore{}, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -286,7 +287,7 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 		Settings: settingsJSON,
 	})
 	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, ns, &UnavailableImageStore{}, emailTmpl)
+	emailNotifier := NewEmailNotifier(&logtest.Fake{}, cfg, ns, &UnavailableImageStore{}, emailTmpl)
 
 	return emailNotifier
 }
