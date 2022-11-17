@@ -54,7 +54,7 @@
         "type": "testdata",
         "uid": "PD8C576611E62080A"
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -89,7 +89,7 @@
               },
               {
                 "color": "green",
-                "value": 30
+                "value": 10
               }
             ]
           },
@@ -472,7 +472,7 @@
                 },
                 "size": 14,
                 "text": {
-                  "fixed": "kW/s"
+                  "fixed": "MW"
                 },
                 "valign": "middle"
               },
@@ -656,7 +656,7 @@
                 },
                 "size": 14,
                 "text": {
-                  "fixed": "kW/s"
+                  "fixed": "MW"
                 },
                 "valign": "middle"
               },
@@ -790,7 +790,7 @@
             {
               "background": {
                 "color": {
-                  "field": "w1_energy_output",
+                  "field": "w2_energy_output",
                   "fixed": "#D9D9D9"
                 }
               },
@@ -843,7 +843,7 @@
                 },
                 "size": 14,
                 "text": {
-                  "fixed": "kW/s"
+                  "fixed": "MW"
                 },
                 "valign": "middle"
               },
@@ -863,7 +863,7 @@
             {
               "background": {
                 "color": {
-                  "field": "w1_rpm",
+                  "field": "w2_rpm",
                   "fixed": "#D9D9D9"
                 }
               },
@@ -1030,7 +1030,7 @@
                 },
                 "size": 14,
                 "text": {
-                  "fixed": "kW/s"
+                  "fixed": "MW"
                 },
                 "valign": "middle"
               },
@@ -1133,7 +1133,7 @@
       },
       "targets": [
         {
-          "csvContent": "w1_rpm, w1_energy_output, w1_status, w2_rpm, w2_energy_output, w2_status, w3_rpm, w3_energy_output, w3_status, w4_rpm, w4_energy_output, w4_status\n50, 1.2, operational, 75, 1.8, operational, 25, 0.6, operational, 0, 0, needs maintenance",
+          "csvContent": "w1_rpm, w1_energy_output, w1_status, w2_rpm, w2_energy_output, w2_status, w3_rpm, w3_energy_output, w3_status, w4_rpm, w4_energy_output, w4_status\n12, 1.2, operational, 22, 1.8, operational, 8, 0.6, operational, 0, 0, needs maintenance",
           "datasource": {
             "type": "testdata",
             "uid": "PD8C576611E62080A"
@@ -1164,7 +1164,7 @@
         "content": "#### Wind Energy Demo\n\nIn this demo we are showcasing a basic wind farm. We are using the wind turbine element to visualize the rpm of each turbine. We also use metric value elements with text element labels to visualize each turbines operational status, energy output, and rpm.\n\nThe wind turbine element is an \"advanced\" element type that can be accessed by enabling \"Show advanced element types\" in canvas options.",
         "mode": "markdown"
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "transparent": true,
       "type": "text"
     },
@@ -3314,7 +3314,7 @@
         },
         "showAdvancedTypes": false
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "targets": [
         {
           "csvContent": "Status_12, Status_13, Status_14, Throughput_12, Throughput_13, Throughput_14, Color_12, Color_13, Color_14\nReady, Blocked, Ready, 205, 0, 205, red, Red, Green",
@@ -3350,7 +3350,7 @@
         "content": "#### Level 2 Conveyance Demo\n\nThis example shows a basic factory conveyor layout from the top view. Using a similar approach, material flow metrics and equipment status can be monitored on a factory floor.",
         "mode": "markdown"
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "transparent": true,
       "type": "text"
     },
@@ -3592,7 +3592,7 @@
         },
         "showAdvancedTypes": false
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "targets": [
         {
           "csvContent": "house_draw, battery_charge, solar_output\n1.1, 2.2, 3.3",
@@ -3628,7 +3628,7 @@
         "content": "#### Home Solar Energy Demo (Day)\n\nThis demo show cases an example off grid home solar system with batteries. In this example we set a background animated gif to represent our home solar system. We then overlayed metric values to represent the solar output, battery charging rate, and house energy drain.",
         "mode": "markdown"
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "transparent": true,
       "type": "text"
     },
@@ -3808,7 +3808,7 @@
         },
         "showAdvancedTypes": false
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "targets": [
         {
           "csvContent": "solar_output, battery_draw\n0.0, 2.2",
@@ -3844,7 +3844,7 @@
         "content": "#### Home Solar Energy Demo (Night)\n\nThis demo show cases an example off grid home solar system with batteries at night. In this example we set a background animated gif to represent our home solar system. We then overlayed metric values to represent the solar output and battery draining rate / house energy drain.",
         "mode": "markdown"
       },
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "transparent": true,
       "type": "text"
     }

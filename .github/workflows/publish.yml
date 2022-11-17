@@ -17,13 +17,13 @@ jobs:
     - uses: actions/checkout@v3
     - run: git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.GH_BOT_ACCESS_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync
     - name: setup node
-      uses: actions/setup-node@v3.4.0      
+      uses: actions/setup-node@v3.5.1      
       with:
         node-version: '16'
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
-      run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-    - uses: actions/cache@v2.1.7
+      run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+    - uses: actions/cache@v3.0.11
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
         key: yarn-${{ hashFiles('**/yarn.lock') }}

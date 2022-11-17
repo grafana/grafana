@@ -6,6 +6,7 @@ import {
   DataFrame,
   dataFrameToJSON,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -33,7 +34,6 @@ let mockObservable: () => Observable<any>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    reportInteraction: jest.fn(),
     getBackendSrv: () => ({
       fetch: mockObservable,
       _request: mockObservable,
@@ -364,6 +364,64 @@ describe('Tempo data source', () => {
       const response = await ds.metadataRequest('/api/search/tags');
       expect(response).toBe('456');
     });
+  });
+
+  it('should include time shift when querying for traceID', () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: { traceQuery: { timeShiftEnabled: true, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
+    });
+
+    const request = ds.traceIdQueryRequest(
+      {
+        requestId: 'test',
+        interval: '',
+        intervalMs: 5,
+        scopedVars: {},
+        targets: [],
+        timezone: '',
+        app: '',
+        startTime: 0,
+        range: {
+          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+          raw: { from: '15m', to: 'now' },
+        },
+      },
+      [{ refId: 'refid1', queryType: 'traceId', query: '' } as TempoQuery]
+    );
+
+    expect(request.range.from.unix()).toBe(dateTime(new Date(2022, 8, 13, 15, 58, 0, 0)).unix());
+    expect(request.range.to.unix()).toBe(dateTime(new Date(2022, 8, 13, 16, 19, 0, 0)).unix());
+  });
+
+  it('should not include time shift when querying for traceID and time shift config is off', () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: { traceQuery: { timeShiftEnabled: false, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
+    });
+
+    const request = ds.traceIdQueryRequest(
+      {
+        requestId: 'test',
+        interval: '',
+        intervalMs: 5,
+        scopedVars: {},
+        targets: [],
+        timezone: '',
+        app: '',
+        startTime: 0,
+        range: {
+          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+          raw: { from: '15m', to: 'now' },
+        },
+      },
+      [{ refId: 'refid1', queryType: 'traceId', query: '' } as TempoQuery]
+    );
+
+    expect(request.range.from.unix()).toBe(dateTime(0).unix());
+    expect(request.range.to.unix()).toBe(dateTime(0).unix());
   });
 });
 

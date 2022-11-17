@@ -3,7 +3,9 @@ import React, { CSSProperties } from 'react';
 import { Field, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
+import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
 export interface SceneCanvasTextState extends SceneLayoutChildState {
   text: string;
@@ -12,9 +14,12 @@ export interface SceneCanvasTextState extends SceneLayoutChildState {
 }
 
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
-  static Editor = Editor;
-  static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
-    const { text, fontSize = 20, align = 'left' } = model.useState();
+  public static Editor = Editor;
+
+  protected _variableDependency = new VariableDependencyConfig(this, { statePaths: ['text'] });
+
+  public static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
+    const { text, fontSize = 20, align = 'left', key } = model.useState();
 
     const style: CSSProperties = {
       fontSize: fontSize,
@@ -25,7 +30,11 @@ export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
       justifyContent: align,
     };
 
-    return <div style={style}>{text}</div>;
+    return (
+      <div style={style} data-testid={key}>
+        {sceneGraph.interpolate(model, text)}
+      </div>
+    );
   };
 }
 

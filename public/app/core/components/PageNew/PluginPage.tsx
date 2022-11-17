@@ -5,11 +5,19 @@ import { PluginPageContext } from 'app/features/plugins/components/PluginPageCon
 
 import { Page } from '../Page/Page';
 
-export function PluginPage({ children, pageNav, layout, subTitle }: PluginPageProps) {
+export function PluginPage({ actions, children, info, pageNav, layout, renderTitle, subTitle }: PluginPageProps) {
   const context = useContext(PluginPageContext);
 
   return (
-    <Page navModel={context.sectionNav} pageNav={pageNav} layout={layout} subTitle={subTitle}>
+    <Page
+      navModel={context.sectionNav}
+      pageNav={pageNav}
+      layout={layout}
+      actions={actions}
+      renderTitle={renderTitle}
+      info={info}
+      subTitle={subTitle}
+    >
       <Page.Contents>{children}</Page.Contents>
     </Page>
   );

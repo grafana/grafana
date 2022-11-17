@@ -187,8 +187,6 @@ export interface ExploreItemState {
   logsVolumeDataSubscription?: SubscriptionLike;
   logsVolumeData?: DataQueryResponse;
 
-  /* explore graph style */
-  graphStyle: ExploreGraphStyle;
   panelsState: ExplorePanelsState;
 }
 
