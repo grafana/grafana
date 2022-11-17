@@ -15,7 +15,7 @@ var tsDatasourcesTemplate = `
 
 export const supportedDatasources: { [key: string]: boolean } = {
 {{- range . }}
-	"{{ printf "%s" . }}": true,
+	'{{ printf "%s" . }}': true,
 {{- end }}
 }
 `
