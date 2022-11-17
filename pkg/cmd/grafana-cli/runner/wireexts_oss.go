@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
@@ -49,8 +50,8 @@ var wireExtsSet = wire.NewSet(
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	authimpl.ProvideUserAuthTokenService,
-	wire.Bind(new(models.UserTokenService), new(*authimpl.UserAuthTokenService)),
-	wire.Bind(new(models.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
+	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
+	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
 	acimpl.ProvideService,
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),

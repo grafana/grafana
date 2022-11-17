@@ -44,7 +44,7 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
+func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore db.DB,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 // ContextHandler is a middleware.
 type ContextHandler struct {
 	Cfg               *setting.Cfg
-	AuthTokenService  models.UserTokenService
+	AuthTokenService  auth.UserTokenService
 	JWTAuthService    models.JWTService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
@@ -474,7 +474,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 					}
 
 					err = h.AuthTokenService.RevokeToken(ctx, token, false)
-					if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
+					if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 						reqContext.Logger.Error("failed to revoke auth token", "error", err)
 					}
 					return false
@@ -506,8 +506,8 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
-	token *models.UserToken) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService auth.UserTokenService,
+	token *auth.UserToken) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
