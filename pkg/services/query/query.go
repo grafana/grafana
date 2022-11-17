@@ -132,7 +132,6 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
-
 	exprReq := expr.Request{
 		Queries: []expr.Query{},
 	}
