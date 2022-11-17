@@ -69,6 +69,27 @@ describe('InteractiveTable', () => {
     expect(valueColumnHeader).not.toHaveAttribute('aria-sort');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
   });
-});
 
-// TODO: TEST expansion
+  it('correctly expands rows', () => {
+    const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+    const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+    render(
+      <InteractiveTable
+        columns={columns}
+        data={data}
+        getRowId={getRowId}
+        renderExpandedRow={(row) => <div data-testid={`test-${row.id}`}>{row.country}</div>}
+      />
+    );
+
+    const expanderButton = screen.getByRole('button', { name: /expand row/i });
+    fireEvent.click(expanderButton);
+
+    expect(screen.getByTestId('test-1')).toHaveTextContent('Sweden');
+
+    expect(expanderButton.getAttribute('aria-controls')).toBe(
+      // anchestor tr's id should match the expander button's aria-controls attribute
+      screen.getByTestId('test-1').parentElement?.parentElement?.id
+    );
+  });
+});
