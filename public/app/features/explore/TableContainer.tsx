@@ -37,7 +37,7 @@ type Props = TableContainerProps & ConnectedProps<typeof connector>;
 export class TableContainer extends PureComponent<Props> {
   getMainFrame() {
     const { tableResult } = this.props;
-    return tableResult?.find((df) => df.meta?.custom?.depth === 0) || tableResult?.[0];
+    return tableResult?.find((df) => !df.meta?.custom?.parentRowIndex) || tableResult?.[0];
   }
 
   getTableHeight() {
@@ -88,7 +88,7 @@ export class TableContainer extends PureComponent<Props> {
     }
 
     const mainFrame = this.getMainFrame();
-    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.depth > 0);
+    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex);
 
     return (
       <Collapse label="Table" loading={loading} isOpen>

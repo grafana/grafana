@@ -312,8 +312,9 @@ export const Table = memo((props: Props) => {
       if (expandedIndexes.has(rowIndex)) {
         const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === rowIndex);
         if (rowSubData) {
+          const noHeader = !!rowSubData.meta?.custom?.noHeader;
           const subTableStyle: CSSProperties = {
-            height: tableStyles.rowHeight * (rowSubData.length + 1), // account for the header with + 1
+            height: tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)), // account for the header with + 1
             background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
             paddingLeft: 50,
             position: 'absolute',
@@ -325,6 +326,7 @@ export const Table = memo((props: Props) => {
                 data={rowSubData}
                 width={width - EXPANDER_WIDTH}
                 height={tableStyles.rowHeight * (rowSubData.length + 1)}
+                noHeader={noHeader}
               />
             </div>
           );
@@ -403,7 +405,8 @@ export const Table = memo((props: Props) => {
     if (expandedIndexes.has(index)) {
       const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === index);
       if (rowSubData) {
-        return tableStyles.rowHeight * (rowSubData.length + 2); // account for the header and the row data with + 1 + 1
+        const noHeader = !!rowSubData.meta?.custom?.noHeader;
+        return tableStyles.rowHeight * (rowSubData.length + 1 + (noHeader ? 0 : 1)); // account for the header and the row data with + 1 + 1
       }
     }
     return tableStyles.rowHeight;

@@ -36,7 +36,7 @@ const meta: ComponentMeta<typeof Table> = {
   args: {
     width: 700,
     height: 500,
-    columnMinWidth: 150,
+    columnMinWidth: 130,
   },
 };
 
@@ -118,19 +118,10 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
             decimals: 0,
             custom: {
               align: 'center',
-              width: 80,
             },
           },
         },
-        { name: 'Status', type: FieldType.string, values: [] }, // The time field
-        {
-          name: 'Value',
-          type: FieldType.number,
-          values: [],
-          config: {
-            decimals: 2,
-          },
-        },
+        { name: 'Quality', type: FieldType.string, values: [] }, // The time field
         {
           name: 'Progress',
           type: FieldType.number,
@@ -139,9 +130,6 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
             unit: 'percent',
             min: 0,
             max: 100,
-            custom: {
-              width: 150,
-            },
           },
         },
       ],
@@ -155,8 +143,7 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
       data.appendRow([
         new Date().getTime(),
         Math.random() * 2,
-        Math.random() > 0.7 ? 'Active' : 'Cancelled',
-        Math.random() * 100,
+        Math.random() > 0.7 ? 'Good' : 'Bad',
         Math.random() * 100,
       ]);
     }
@@ -266,7 +253,14 @@ Pagination.args = {
 export const SubTables: ComponentStory<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
-  const subData = buildSubTablesData(theme, {});
+  const subData = buildSubTablesData(theme, {
+    Progress: {
+      custom: {
+        displayMode: 'gradient-gauge',
+      },
+      thresholds: defaultThresholds,
+    },
+  });
 
   return (
     <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
