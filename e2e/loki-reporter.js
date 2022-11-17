@@ -17,7 +17,7 @@ class MyReporter extends Mocha.reporters.JSON {
         const suiteName = String(failure.fullTitle).replace(failure.title, '').trim();
         const testName = failure.title;
         const errorMessage = failure.err.message;
-        console.error(`CypressError suite=${suiteName} test=${testName} error=${errorMessage}`);
+        console.error(`CypressError suite="${suiteName}" test="${testName}" error="${errorMessage}"`);
       });
     });
   }
