@@ -34,7 +34,6 @@ interface TableData {
 export const Basic: ComponentStory<typeof InteractiveTable> = (args) => {
   const columns = useMemo<Array<Column<TableData>>>(
     () => [
-      { id: 'header1', header: 'Header 1', sortType: 'alphanumeric' },
       { id: 'header2', header: 'With missing values', sortType: 'number', disableGrow: true },
       {
         id: 'noheader',

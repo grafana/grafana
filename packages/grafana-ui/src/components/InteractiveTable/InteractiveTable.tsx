@@ -1,7 +1,7 @@
 import { cx, css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { useMemo, Fragment, ReactNode, useCallback } from 'react';
-import { useExpanded, useSortBy, useTable, TableOptions, Row } from 'react-table';
+import { useExpanded, useSortBy, useTable, TableOptions, Row, HeaderGroup } from 'react-table';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 
@@ -17,12 +17,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: solid 1px ${theme.colors.border.weak};
     background-color: ${theme.colors.background.secondary};
     width: 100%;
-    th {
-      position: relative;
-      white-space: nowrap;
-      padding: ${theme.spacing(1)};
-      padding-right: ${theme.spacing(2.5)};
-    }
 
     td {
       padding: ${theme.spacing(1)};
@@ -39,13 +33,32 @@ const getStyles = (theme: GrafanaTheme2) => ({
   disableGrow: css`
     width: 0%;
   `,
-  sortIcon: css`
-    position: absolute;
-    top: ${theme.spacing(1)};
+  header: css`
+    &,
+    & > button {
+      position: relative;
+      white-space: nowrap;
+      padding: ${theme.spacing(1)};
+    }
+    & > button {
+      &:after {
+        content: '\\00a0';
+      }
+      background: none;
+      border: none;
+      width: 100%;
+      height: 100%;
+      padding-right: ${theme.spacing(2.5)};
+      text-align: left;
+      &:hover {
+        background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.05)};
+      }
+    }
   `,
   sortableHeader: css`
-    &:hover {
-      background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.05)};
+    /* increases selector's specificity so that it always takes precedence over default styles  */
+    && {
+      padding: 0;
     }
   `,
 });
@@ -103,7 +116,7 @@ export function InteractiveTable<TableData extends object>({
         hiddenColumns: [
           !renderExpandedRow && EXPANDER_CELL_ID,
           ...tableColumns
-            .filter((col) => !(col.visible?.(data) ?? true))
+            .filter((col) => !(col.visible ? col.visible(data) : true))
             .map((c) => c.id)
             .filter(isTruthy),
         ].filter(isTruthy),
@@ -126,26 +139,19 @@ export function InteractiveTable<TableData extends object>({
           return (
             <tr key={key} {...headerRowProps}>
               {headerGroup.headers.map((column) => {
-                const { key, ...headerCellProps } = column.getHeaderProps(
-                  column.canSort ? column.getSortByToggleProps() : undefined
-                );
+                const { key, ...headerCellProps } = column.getHeaderProps();
 
                 return (
                   <th
                     key={key}
-                    className={cx({
+                    className={cx(styles.header, {
                       [styles.disableGrow]: column.width === 0,
                       [styles.sortableHeader]: column.canSort,
                     })}
                     {...headerCellProps}
+                    {...(column.isSorted && { 'aria-sort': column.isSortedDesc ? 'descending' : 'ascending' })}
                   >
-                    {column.render('Header')}
-
-                    {column.isSorted && (
-                      <span className={styles.sortIcon}>
-                        <Icon name={column.isSortedDesc ? 'angle-down' : 'angle-up'} />
-                      </span>
-                    )}
+                    <ColumnHeader column={column} />
                   </th>
                 );
               })}
@@ -191,3 +197,41 @@ export function InteractiveTable<TableData extends object>({
 const useUniqueId = () => {
   return useMemo(() => uniqueId('InteractiveTable'), []);
 };
+
+const getColumnheaderStyles = (theme: GrafanaTheme2) => ({
+  sortIcon: css`
+    position: absolute;
+    top: ${theme.spacing(1)};
+  `,
+});
+
+function ColumnHeader<T extends object>({
+  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps },
+}: {
+  column: HeaderGroup<T>;
+}) {
+  const styles = useStyles2(getColumnheaderStyles);
+  const { onClick } = getSortByToggleProps();
+
+  const children = (
+    <>
+      {render('Header')}
+
+      {isSorted && (
+        <span aria-hidden="true" className={styles.sortIcon}>
+          <Icon name={isSortedDesc ? 'angle-down' : 'angle-up'} />
+        </span>
+      )}
+    </>
+  );
+
+  if (canSort) {
+    return (
+      <button type="button" onClick={onClick}>
+        {children}
+      </button>
+    );
+  }
+
+  return children;
+}
