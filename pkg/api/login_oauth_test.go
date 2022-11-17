@@ -39,7 +39,6 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
 		HooksService:   hooks.ProvideService(),
 		SecretsService: fakes.NewFakeSecretsService(),
-		Features:       featuremgmt.WithFeatures(),
 	}
 
 	m := web.New()

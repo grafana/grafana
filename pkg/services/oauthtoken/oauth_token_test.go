@@ -290,10 +290,6 @@ func (m *MockSocialConnector) AuthCodeURL(state string, opts ...oauth2.AuthCodeO
 	panic("not implemented")
 }
 
-func (m *MockSocialConnector) GetCustomAuthParams() []oauth2.AuthCodeOption {
-	panic("not implemented")
-}
-
 func (m *MockSocialConnector) Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
 	panic("not implemented")
 }
