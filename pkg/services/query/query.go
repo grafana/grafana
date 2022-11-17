@@ -134,7 +134,6 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 
 	exprReq := expr.Request{
-		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 	}
 
@@ -145,6 +144,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 			Email: user.Email,
 			Role:  string(user.OrgRole),
 		}
+		exprReq.OrgId = user.OrgID
 	}
 
 	if parsedReq.httpRequest != nil && parsedReq.httpRequest.Header != nil {
