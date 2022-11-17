@@ -87,9 +87,9 @@ describe('getFieldDisplayValuesProxy', () => {
 
   it('should return undefined when value of a field is missing', () => {
     const proxyByRow = [
-      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 0 }),
-      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 1 }),
-      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 2 }),
+      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 0, skipEmptyValuesFormatting: true }),
+      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 1, skipEmptyValuesFormatting: true }),
+      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 2, skipEmptyValuesFormatting: true }),
     ];
     expect(proxyByRow[0].Missing).toBeUndefined();
     expect(proxyByRow[1].Missing).toBeUndefined();
