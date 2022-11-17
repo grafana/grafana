@@ -380,8 +380,8 @@ export const getLinksSupplier =
 
         valueVars = {
           raw: field.values.get(config.valueRowIndex),
-          numeric: fieldsProxy[field.name]?.numeric ?? NaN,
-          text: fieldsProxy[field.name]?.text ?? '',
+          numeric: fieldsProxy[field.name].numeric,
+          text: fieldsProxy[field.name].text,
           time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
         };
 

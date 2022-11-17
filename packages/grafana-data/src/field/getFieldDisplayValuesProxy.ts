@@ -18,6 +18,7 @@ export function getFieldDisplayValuesProxy(options: {
   frame: DataFrame;
   rowIndex: number;
   timeZone?: TimeZone;
+  skipEmptyValuesFormatting?: boolean;
 }): Record<string, DisplayValue> {
   return new Proxy({} as Record<string, DisplayValue>, {
     get: (obj: any, key: string): DisplayValue | undefined => {
@@ -46,7 +47,7 @@ export function getFieldDisplayValuesProxy(options: {
       }
 
       const raw = field.values.get(options.rowIndex);
-      if (raw === null || raw === undefined) {
+      if (options.skipEmptyValuesFormatting && (raw === null || raw === undefined)) {
         return undefined;
       }
 

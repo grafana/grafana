@@ -49,6 +49,7 @@ export const getFieldLinksForExplore = (options: {
         fields: getFieldDisplayValuesProxy({
           frame: dataFrame,
           rowIndex,
+          skipEmptyValuesFormatting: true,
         }),
       },
       text: 'Data',
