@@ -571,6 +571,11 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			if _, err := sec.NewKey("connection_string", sqlutil.SQLite3TestDB().ConnStr); err != nil {
 				return nil, err
 			}
+			// set maxmum open connections to 1
+			// to prevent failure due to database locking
+			if _, err := sec.NewKey("max_open_conn", "1"); err != nil {
+				return nil, err
+			}
 		}
 
 		// useful if you already have a database that you want to use for tests.
