@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -45,16 +46,15 @@ func main() {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
 		os.Exit(1)
 	}
-	// grootp := strings.Split(cwd, sep)
-	// groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
+	grootp := strings.Split(cwd, sep)
+	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 	lib := cuectx.GrafanaThemaRuntime()
 
 	pluginKindGen := codejen.JennyListWithNamer(func(decl *plugins.PluginDecl) string {
 		return decl.Tree.RootPlugin().Meta().Id
 	})
 
-	pluginKindGen.Append(plugins.JennyPrint())
-	// 1. lägg till "jennies" som skall köras över listan med pfs.Tree
+	pluginKindGen.Append(plugins.PluginTreeListJenny(groot))
 
 	var decls []*plugins.PluginDecl
 	for _, typ := range []string{"datasource", "panel"} {
@@ -89,11 +89,16 @@ func main() {
 		return decls[i].Path < decls[j].Path
 	})
 
-	_, err = pluginKindGen.GenerateFS(decls...)
+	jfs, err := pluginKindGen.GenerateFS(decls...)
 	if err != nil {
-
+		fmt.Fprintf(os.Stderr, "error writing files to disk: %s\n", err)
+		os.Exit(1)
 	}
 
+	if err = jfs.Write(context.Background(), groot); err != nil {
+		fmt.Fprint(os.Stderr, err, "\n")
+		os.Exit(1)
+	}
 }
 
 func main2() {
