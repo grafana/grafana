@@ -207,7 +207,7 @@ var adminCommands = []*cli.Command{
 						Usage:  `
 This command will find users with multiple entries in the database and try to resolve the conflicts.
 
-the fields that are used to identify a user are:
+explanation of each field:
 * email - the user’s email
 * login - the user’s login/username
 * last_seen_at - the user’s last login
