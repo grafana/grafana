@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/common/model"
 	ptr "github.com/xorcare/pointer"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -77,7 +76,8 @@ func buildOpsgenieSettings(fc FactoryConfig) (*opsgenieSettings, error) {
 	if raw.APIUrl == "" {
 		raw.APIUrl = OpsgenieAlertURL
 	}
-	if raw.Message == "" {
+
+	if strings.TrimSpace(raw.Message) == "" {
 		raw.Message = DefaultMessageTitleEmbed
 	}
 
@@ -152,7 +152,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return true, nil
 	}
 
-	bodyJSON, url, err := on.buildOpsgenieMessage(ctx, alerts, as)
+	body, url, err := on.buildOpsgenieMessage(ctx, alerts, as)
 	if err != nil {
 		return false, fmt.Errorf("build Opsgenie message: %w", err)
 	}
@@ -161,11 +161,6 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		// Resolved alert with no auto close.
 		// Hence skip sending anything.
 		return true, nil
-	}
-
-	body, err := json.Marshal(bodyJSON)
-	if err != nil {
-		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -185,28 +180,24 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	return true, nil
 }
 
-func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (payload *simplejson.Json, apiURL string, err error) {
+func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (payload []byte, apiURL string, err error) {
 	key, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
 		return nil, "", err
 	}
 
-	var (
-		alias    = key.Hash()
-		bodyJSON = simplejson.New()
-		details  = simplejson.New()
-	)
-
 	if alerts.Status() == model.AlertResolved {
 		// For resolved notification, we only need the source.
 		// Don't need to run other templates.
-		if on.settings.AutoClose {
-			bodyJSON := simplejson.New()
-			bodyJSON.Set("source", "Grafana")
-			apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.settings.APIUrl, alias)
-			return bodyJSON, apiURL, nil
+		if !on.settings.AutoClose { // TODO This should be handled by DisableResolveMessage?
+			return nil, "", nil
 		}
-		return nil, "", nil
+		msg := opsGenieCloseMessage{
+			Source: "Grafana",
+		}
+		data, err := json.Marshal(msg)
+		apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.settings.APIUrl, key.Hash())
+		return data, apiURL, err
 	}
 
 	ruleURL := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log)
@@ -214,14 +205,9 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	titleTmpl := on.settings.Message
-	if strings.TrimSpace(titleTmpl) == "" {
-		titleTmpl = `{{ template "default.title" . }}`
-	}
-
-	title := tmpl(titleTmpl)
-	if len(title) > 130 {
-		title = title[:127] + "..."
+	message, truncated := notify.Truncate(tmpl(on.settings.Message), 130)
+	if truncated {
+		on.log.Debug("Truncated message", "originalMessage", message)
 	}
 
 	description := tmpl(on.settings.Description)
@@ -240,8 +226,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	lbls := make(map[string]string, len(data.CommonLabels))
 	for k, v := range data.CommonLabels {
 		lbls[k] = tmpl(v)
-
-		if k == "og_priority" {
+		if k == "og_priority" && on.settings.OverridePriority {
 			if ValidPriorities[v] {
 				priority = v
 			}
@@ -254,18 +239,13 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		tmplErr = nil
 	}
 
-	bodyJSON.Set("message", title)
-	bodyJSON.Set("source", "Grafana")
-	bodyJSON.Set("alias", alias)
-	bodyJSON.Set("description", description)
-	details.Set("url", ruleURL)
-
+	details := make(map[string]interface{})
+	details["url"] = ruleURL
 	if on.sendDetails() {
 		for k, v := range lbls {
-			details.Set(k, v)
+			details[k] = v
 		}
-
-		images := []string{}
+		var images []string
 		_ = withStoredImages(ctx, on.log, on.images,
 			func(_ int, image ngmodels.Image) error {
 				if len(image.URL) == 0 {
@@ -277,7 +257,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 			as...)
 
 		if len(images) != 0 {
-			details.Set("image_urls", images)
+			details["image_urls"] = images
 		}
 	}
 
@@ -289,19 +269,24 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	}
 	sort.Strings(tags)
 
-	if priority != "" && on.settings.OverridePriority {
-		bodyJSON.Set("priority", priority)
+	result := opsGenieCreateMessage{
+		Alias:       key.Hash(),
+		Description: description,
+		Tags:        tags,
+		Source:      "Grafana",
+		Message:     message,
+		Details:     details,
+		Priority:    priority,
 	}
 
-	bodyJSON.Set("tags", tags)
-	bodyJSON.Set("details", details)
 	apiURL = tmpl(on.settings.APIUrl)
 	if tmplErr != nil {
 		on.log.Warn("failed to template Opsgenie URL", "error", tmplErr.Error(), "fallback", on.settings.APIUrl)
 		apiURL = on.settings.APIUrl
 	}
 
-	return bodyJSON, apiURL, nil
+	b, err := json.Marshal(result)
+	return b, apiURL, err
 }
 
 func (on *OpsgenieNotifier) SendResolved() bool {
@@ -314,4 +299,29 @@ func (on *OpsgenieNotifier) sendDetails() bool {
 
 func (on *OpsgenieNotifier) sendTags() bool {
 	return on.settings.SendTagsAs == OpsgenieSendTags || on.settings.SendTagsAs == OpsgenieSendBoth
+}
+
+type opsGenieCreateMessage struct {
+	Alias       string                           `json:"alias"`
+	Message     string                           `json:"message"`
+	Description string                           `json:"description,omitempty"`
+	Details     map[string]interface{}           `json:"details"`
+	Source      string                           `json:"source"`
+	Responders  []opsGenieCreateMessageResponder `json:"responders,omitempty"`
+	Tags        []string                         `json:"tags"`
+	Note        string                           `json:"note,omitempty"`
+	Priority    string                           `json:"priority,omitempty"`
+	Entity      string                           `json:"entity,omitempty"`
+	Actions     []string                         `json:"actions,omitempty"`
+}
+
+type opsGenieCreateMessageResponder struct {
+	ID       string `json:"id,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Username string `json:"username,omitempty"`
+	Type     string `json:"type"` // team, user, escalation, schedule etc.
+}
+
+type opsGenieCloseMessage struct {
+	Source string `json:"source"`
 }
