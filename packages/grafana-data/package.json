@@ -41,7 +41,7 @@
     "eventemitter3": "4.0.7",
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
-    "i18next": "^22.0.5",
+    "i18next": "^22.0.0",
     "lodash": "4.17.21",
     "marked": "4.2.0",
     "moment": "2.29.4",
