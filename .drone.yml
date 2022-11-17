@@ -3366,7 +3366,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana --version-tag
-    ${TAG}
+    ${DRONE_TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3383,7 +3383,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --version-tag
-    ${TAG}
+    ${DRONE_TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3454,7 +3454,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-enterprise
-    --version-tag ${TAG}
+    --version-tag ${DRONE_TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -3525,7 +3525,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana/grafana-enterprise
-    --version-tag ${TAG}
+    --version-tag ${DRONE_TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -5512,6 +5512,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: dc786062929d97b0212cf5bd89c9b461a806e314d5f7b4245ddc15197e0ba1dd
+hmac: 6eab35e7564f6d7bd5c89ab21d66602cabf297335975d54edac9584d5e845247
 
 ...
