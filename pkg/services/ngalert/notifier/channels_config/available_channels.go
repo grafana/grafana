@@ -239,26 +239,11 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 				},
 				{
-					Label:   "Severity",
-					Element: ElementTypeSelect,
-					SelectOptions: []SelectOption{
-						{
-							Value: "critical",
-							Label: "Critical",
-						},
-						{
-							Value: "error",
-							Label: "Error",
-						},
-						{
-							Value: "warning",
-							Label: "Warning",
-						},
-						{
-							Value: "info",
-							Label: "Info",
-						},
-					},
+					Label:        "Severity",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "critical",
+					Description:  "Severity of the event (e.g. critical, error, warning, info). You can use templates",
 					PropertyName: "severity",
 				},
 				{ // New in 8.0.
