@@ -38,14 +38,12 @@ const sep = string(filepath.Separator)
 
 func main() {
 	if len(os.Args) > 1 {
-		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
-		os.Exit(1)
+		log.Fatal(fmt.Errorf("plugin thema code generator does not currently accept any arguments\n, got %q", os.Args))
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
-		os.Exit(1)
+		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
 	}
 	grootp := strings.Split(cwd, sep)
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
@@ -62,8 +60,7 @@ func main() {
 		dir := filepath.Join(cwd, typ)
 		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "extracting plugin trees failed for %s: %s\n", dir, err)
-			os.Exit(1)
+			log.Fatal(fmt.Errorf("extracting plugin trees failed for %s: %s\n", dir, err))
 		}
 
 		for name, option := range treeor {
@@ -77,8 +74,7 @@ func main() {
 					Tree: (pfs.Tree)(*option.Tree),
 				})
 			} else if !errors.Is(option.Err, pfs.ErrNoRootFile) {
-				fmt.Fprintf(os.Stderr, "error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err)
-				os.Exit(1)
+				log.Fatal(fmt.Errorf("error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err))
 			}
 		}
 	}
@@ -92,8 +88,7 @@ func main() {
 
 	jfs, err := pluginKindGen.GenerateFS(decls...)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error writing files to disk: %s\n", err)
-		os.Exit(1)
+		log.Fatal(fmt.Errorf("error writing files to disk: %s\n", err))
 	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
