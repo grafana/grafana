@@ -40,6 +40,7 @@ export interface TimeOption {
   from: string;
   to: string;
   display: string;
+  displayTranslated: () => string;
 }
 
 export interface TimeOptions {
