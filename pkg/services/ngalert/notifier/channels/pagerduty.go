@@ -207,9 +207,9 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 		as...)
 
-	if len(msg.Payload.Summary) > 1024 {
-		// This is the Pagerduty limit.
-		msg.Payload.Summary = msg.Payload.Summary[:1021] + "..."
+	if summary, truncated := notify.Truncate(msg.Payload.Summary, 1024); truncated {
+		pn.log.Debug("Truncated summary", "original", msg.Payload.Summary)
+		msg.Payload.Summary = summary
 	}
 
 	if hostname, err := os.Hostname(); err == nil {
