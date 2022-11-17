@@ -11,9 +11,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/public/app/plugins"
 )
 
 var skipPlugins = map[string]bool{
@@ -33,6 +35,68 @@ var skipPlugins = map[string]bool{
 const sep = string(filepath.Separator)
 
 func main() {
+	if len(os.Args) > 1 {
+		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
+		os.Exit(1)
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
+		os.Exit(1)
+	}
+	// grootp := strings.Split(cwd, sep)
+	// groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
+	lib := cuectx.GrafanaThemaRuntime()
+
+	pluginKindGen := codejen.JennyListWithNamer(func(decl *plugins.PluginDecl) string {
+		return decl.Tree.RootPlugin().Meta().Id
+	})
+
+	pluginKindGen.Append(plugins.PrintJenny())
+	// 1. lägg till "jennies" som skall köras över listan med pfs.Tree
+
+	var decls []*plugins.PluginDecl
+	for _, typ := range []string{"datasource", "panel"} {
+		dir := filepath.Join(cwd, typ)
+		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "extracting plugin trees failed for %s: %s\n", dir, err)
+			os.Exit(1)
+		}
+
+		for name, option := range treeor {
+			if skipPlugins[name] {
+				continue
+			}
+
+			if option.Tree != nil {
+				decls = append(decls, &plugins.PluginDecl{
+					Path: filepath.Join(typ, name),
+					Tree: (pfs.Tree)(*option.Tree),
+				})
+			} else if !errors.Is(option.Err, pfs.ErrNoRootFile) {
+				fmt.Fprintf(os.Stderr, "error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err)
+				os.Exit(1)
+			}
+		}
+	}
+
+	// Ensure ptrees are sorted, so that visit order is deterministic. Otherwise
+	// having multiple core plugins with errors can cause confusing error
+	// flip-flopping
+	sort.Slice(decls, func(i, j int) bool {
+		return decls[i].Path < decls[j].Path
+	})
+
+	_, err = pluginKindGen.GenerateFS(decls...)
+	if err != nil {
+
+	}
+
+}
+
+func main2() {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
 		os.Exit(1)
