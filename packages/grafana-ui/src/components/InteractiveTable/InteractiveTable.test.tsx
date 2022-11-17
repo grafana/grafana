@@ -82,7 +82,7 @@ describe('InteractiveTable', () => {
       />
     );
 
-    const expanderButton = screen.getByRole('button', { name: /expand row/i });
+    const expanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
     fireEvent.click(expanderButton);
 
     expect(screen.getByTestId('test-1')).toHaveTextContent('Sweden');

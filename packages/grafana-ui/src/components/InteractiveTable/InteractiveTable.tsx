@@ -34,20 +34,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 0%;
   `,
   header: css`
+    position: relative;
     &,
     & > button {
-      position: relative;
       white-space: nowrap;
       padding: ${theme.spacing(1)};
     }
     & > button {
-      &:after {
-        content: '\\00a0';
-      }
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
       background: none;
       border: none;
-      width: 100%;
-      height: 100%;
       padding-right: ${theme.spacing(2.5)};
       text-align: left;
       &:hover {
