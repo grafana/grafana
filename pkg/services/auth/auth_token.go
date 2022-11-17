@@ -42,10 +42,6 @@ type UserAuthTokenService struct {
 	log               log.Logger
 }
 
-type ActiveTokenService interface {
-	ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error)
-}
-
 type ActiveAuthTokenService struct {
 	cfg      *setting.Cfg
 	sqlStore db.DB
