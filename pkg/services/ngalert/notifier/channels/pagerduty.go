@@ -21,6 +21,9 @@ import (
 const (
 	pagerDutyEventTrigger = "trigger"
 	pagerDutyEventResolve = "resolve"
+
+	defaultClass = "default"
+	defaultGroup = "default"
 )
 
 var (
@@ -71,13 +74,13 @@ func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
 		settings.Severity = "critical"
 	}
 	if settings.Class == "" {
-		settings.Class = "default"
+		settings.Class = defaultClass
 	}
 	if settings.Component == "" {
 		settings.Component = "Grafana"
 	}
 	if settings.Group == "" {
-		settings.Group = "default"
+		settings.Group = defaultGroup
 	}
 	if settings.Summary == "" {
 		settings.Summary = DefaultMessageTitleEmbed

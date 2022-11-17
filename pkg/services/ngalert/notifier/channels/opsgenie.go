@@ -83,10 +83,8 @@ func buildOpsgenieSettings(fc FactoryConfig) (*opsgenieSettings, error) {
 
 	switch raw.SendTagsAs {
 	case OpsgenieSendTags, OpsgenieSendDetails, OpsgenieSendBoth:
-		break
 	case "":
 		raw.SendTagsAs = OpsgenieSendTags
-		break
 	default:
 		return nil, fmt.Errorf("invalid value for sendTagsAs: %q", raw.SendTagsAs)
 	}
