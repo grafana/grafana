@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -95,9 +96,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = jfs.Write(context.Background(), groot); err != nil {
-		fmt.Fprint(os.Stderr, err, "\n")
-		os.Exit(1)
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		if err = jfs.Verify(context.Background(), groot); err != nil {
+			log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
+		}
+	} else if err = jfs.Write(context.Background(), groot); err != nil {
+		log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
 }
 
