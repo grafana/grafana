@@ -170,12 +170,12 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 	appLink.Children = childrenWithoutDefault
 
-	s.movePlugin(c, treeRoot, plugin, appLink)
+	s.addPluginToSection(c, treeRoot, plugin, appLink)
 
 	return nil
 }
 
-func (s *ServiceImpl) movePlugin(c *models.ReqContext, treeRoot *navtree.NavTreeRoot, plugin plugins.PluginDTO, appLink *navtree.NavLink) {
+func (s *ServiceImpl) addPluginToSection(c *models.ReqContext, treeRoot *navtree.NavTreeRoot, plugin plugins.PluginDTO, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
 	sectionID := navtree.NavIDApps
