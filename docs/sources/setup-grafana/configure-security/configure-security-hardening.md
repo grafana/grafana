@@ -43,7 +43,7 @@ cookie_samesite = strict
 
 ### Add a prefix to cookie names
 
-Further secure the cookie authentication by adding a [Cookie Prefix](https://googlechrome.github.io/samples/cookie-prefixes/). Cookies without a special prefix can be overwritten in a man-in-the-middle attack, even if the site is using HTTPS. A cookie prefix will enforce clients to only accept the cookie if certain criterias are met.
+Further secure the cookie authentication by adding a [Cookie Prefix](https://googlechrome.github.io/samples/cookie-prefixes/). Cookies without a special prefix can be overwritten in a man-in-the-middle attack, even if the site is using HTTPS. A cookie prefix will enforce clients to only accept the cookie if certain criteria are met. 
 Prefix the current cookie name with either `__Secure-` or `__Host-` where the latter adds additional protection by only alloing the cookie to be sat from the host that sent the Set-Cookie header.
 
 Example:
