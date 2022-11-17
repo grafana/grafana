@@ -145,12 +145,15 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 		Headers: clippedHeaders,
-		User: backend.User{
+	}
+
+	if user != nil { // for passthrough authentication, SSE does not authenticate
+		exprReq.User = &backend.User{
 			Login: user.Login,
 			Name:  user.Name,
 			Email: user.Email,
 			Role:  string(user.OrgRole),
-		},
+		}
 	}
 
 	for _, pq := range parsedReq.getFlattenedQueries() {
