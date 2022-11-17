@@ -11,15 +11,31 @@ class MyReporter extends Mocha.reporters.JSON {
     super(runner);
 
     runner.once(EVENT_RUN_END, () => {
-      console.log('\n---- LOKI REPORTER ----\n');
-      runner.testResults.failures.forEach((failure) => {
-        const timestamp = Date.now();
-        const suiteName = String(failure.fullTitle).replace(failure.title, '').trim();
-        const testName = failure.title;
-        const errorMessage = failure.err.message;
-        console.error(`CypressError suite="${suiteName}" test="${testName}" error="${errorMessage}"`);
-      });
+      this.reportStats(runner);
+      this.reportErrors(runner);
     });
+  }
+
+  reportStats(runner) {
+    console.log(`CypressStats ${this.strigifyObj(runner.testResults.stats)}`);
+  }
+
+  reportErrors(runner) {
+    runner.testResults.failures.forEach((failure) => {
+      const suite = String(failure.fullTitle).replace(failure.title, '').trim();
+      const test = failure.title;
+      const error = failure.err.message;
+
+      console.error(`CypressError ${this.strigifyObj({ suite, test, error })}`);
+    });
+  }
+
+  strigifyObj(obj) {
+    return Object.entries(obj).map(([key, value]) => `${key}="${this.escapeValue(value)}"`);
+  }
+
+  escapeValue(str) {
+    return String(str).replace('"', '\\"');
   }
 }
 
