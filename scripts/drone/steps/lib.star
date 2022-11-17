@@ -481,7 +481,7 @@ def test_backend_step(edition):
             'wire-install',
         ],
         'commands': [
-            'go test -short -covermode=atomic -timeout=5m ./pkg/...',
+            'go test -short -covermode=atomic -timeout=10m ./pkg/...',
         ],
     }
 
@@ -495,7 +495,7 @@ def test_backend_integration_step(edition):
             'wire-install',
         ],
         'commands': [
-            'go test -run Integration -covermode=atomic -timeout=5m ./pkg/...',
+            'go test -run Integration -covermode=atomic -timeout=10m ./pkg/...',
         ],
     }
 

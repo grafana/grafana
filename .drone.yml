@@ -217,13 +217,13 @@ steps:
   image: grafana/build-container:1.6.4
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -short -covermode=atomic -timeout=10m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.4
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -run Integration -covermode=atomic -timeout=10m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.4
