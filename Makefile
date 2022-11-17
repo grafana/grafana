@@ -69,7 +69,6 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
-	go generate ./pkg/plugins/
 	go generate ./public/app/plugins/gen.go
 
 gen-go: $(WIRE) gen-cue
