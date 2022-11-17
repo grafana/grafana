@@ -60,7 +60,13 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
 	var sqlError sqlite3.Error
-	if errors.As(err, &sqlError) && retry < ss.dbCfg.TransactionRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+	if errors.As(err, &sqlError) && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+		if retry == ss.dbCfg.TransactionRetries {
+			if retry == ss.dbCfg.QueryRetries {
+				return ErrMaximumRetriesReached.Errorf("maximum transaction retries exceeded: %d: %w (%d %d %d)", retry, err, sqlError.Code, sqlError.ExtendedCode, sqlError.SystemErrno)
+			}
+		}
+
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}

@@ -9,10 +9,12 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-sqlite3"
 )
 
 var sessionLogger = log.New("sqlstore.session")
+var ErrMaximumRetriesReached = errutil.NewBase(errutil.StatusInternal, "sqlstore.max-retries-reached")
 
 type DBSession struct {
 	*xorm.Session
@@ -78,9 +80,13 @@ func (ss *SQLStore) withRetry(ctx context.Context, callback DBTransactionFunc, r
 		ctxLogger := tsclogger.FromContext(ctx)
 
 		var sqlError sqlite3.Error
-		if errors.As(err, &sqlError) && retry < ss.dbCfg.QueryRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+		if errors.As(err, &sqlError) && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+			if retry == ss.dbCfg.QueryRetries {
+				return ErrMaximumRetriesReached.Errorf("maximum query retries exceeded: %d: %w (%d %d %d)", retry, err, sqlError.Code, sqlError.ExtendedCode, sqlError.SystemErrno)
+			}
+
 			time.Sleep(time.Millisecond * time.Duration(10))
-			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
+			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code, "extended_code", sqlError.ExtendedCode, "system_errno", sqlError.SystemErrno)
 			return ss.withRetry(ctx, callback, retry+1)(sess)
 		}
 
