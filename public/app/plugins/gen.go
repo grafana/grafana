@@ -1,6 +1,8 @@
 //go:build ignore
 // +build ignore
 
+//go:generate go run gen.go
+
 package main
 
 import (
@@ -53,7 +55,8 @@ func main() {
 		return decl.Tree.RootPlugin().Meta().Id
 	})
 
-	pluginKindGen.Append(plugins.PluginTreeListJenny())
+	targetDir := filepath.Join("pkg", "plugins", "pfs", "corelist", "loadlist_gen.go")
+	pluginKindGen.Append(plugins.PluginTreeListJenny(targetDir))
 
 	var decls []*plugins.PluginDecl
 	for _, typ := range []string{"datasource", "panel"} {

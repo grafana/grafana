@@ -18,11 +18,9 @@ import (
 
 const prefix = "github.com/grafana/grafana/public/app/plugins"
 
-func PluginTreeListJenny() codejen.ManyToOne[*PluginDecl] {
-	target := filepath.Join("pkg", "plugins", "pfs", "corelist", "loadlist_gen.go")
-
+func PluginTreeListJenny(targetDir string) codejen.ManyToOne[*PluginDecl] {
 	return &ptlJenny{
-		target: target,
+		target: targetDir,
 	}
 }
 
@@ -36,8 +34,8 @@ func (gen *ptlJenny) JennyName() string {
 
 func (gen *ptlJenny) Generate(decls ...*PluginDecl) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
-	vars := tvars_plugin_registry{
-		Header: tvars_autogen_header{
+	vars := templateVars_plugin_registry{
+		Header: templateVars_autogen_header{
 			GenLicense: true,
 		},
 		Plugins: make([]struct {
