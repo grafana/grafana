@@ -44,7 +44,7 @@ func main() {
 	grootp := strings.Split(cwd, string(os.PathSeparator))
 	groot := filepath.Join(string(os.PathSeparator), filepath.Join(grootp[:len(grootp)-3]...))
 
-	jfs := elsedie(jl.GenerateFS([]thema.Lineage{lin}))("plugindef jenny pipeline failed")
+	jfs := elsedie(jl.GenerateFS(lin))("plugindef jenny pipeline failed")
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err := jfs.Verify(context.Background(), groot); err != nil {
 			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
