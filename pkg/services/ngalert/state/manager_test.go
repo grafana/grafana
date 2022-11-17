@@ -2378,7 +2378,7 @@ func TestStaleResults(t *testing.T) {
 			if s.CacheID == state1 {
 				continue
 			}
-			assert.Equal(t, eval.Normal, s.State)
+			assert.Equal(t, eval.Normal, s.State.State)
 			assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)
 			assert.Equal(t, clk.Now(), s.EndsAt)
 			if s.CacheID == state2 {
