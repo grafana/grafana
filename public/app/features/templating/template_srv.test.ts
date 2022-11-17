@@ -427,44 +427,53 @@ describe('templateSrv', () => {
     });
   });
 
-  describe('can check if variable exists', () => {
-    beforeEach(() => {
-      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
-    });
+  [
+    {
+      type: 'global',
+      globalVars: [{ type: 'query', name: 'test', current: { value: 'oogle' } }],
+      scopedVars: undefined,
+    },
+    { type: 'scoped', globalVars: [], scopedVars: { test: 'oogle' } },
+  ].forEach((testCase) => {
+    describe(`can check if ${testCase.type} variable exists`, () => {
+      beforeEach(() => {
+        _templateSrv = initTemplateSrv(key, testCase.globalVars);
+      });
 
-    it('should return true if $test exists', () => {
-      const result = _templateSrv.containsTemplate('$test');
-      expect(result).toBe(true);
-    });
+      it('should return true if $test exists', () => {
+        const result = _templateSrv.containsTemplate('$test', testCase.scopedVars);
+        expect(result).toBe(true);
+      });
 
-    it('should return true if $test exists in string', () => {
-      const result = _templateSrv.containsTemplate('something $test something');
-      expect(result).toBe(true);
-    });
+      it('should return true if $test exists in string', () => {
+        const result = _templateSrv.containsTemplate('something $test something', testCase.scopedVars);
+        expect(result).toBe(true);
+      });
 
-    it('should return true if [[test]] exists in string', () => {
-      const result = _templateSrv.containsTemplate('something [[test]] something');
-      expect(result).toBe(true);
-    });
+      it('should return true if [[test]] exists in string', () => {
+        const result = _templateSrv.containsTemplate('something [[test]] something', testCase.scopedVars);
+        expect(result).toBe(true);
+      });
 
-    it('should return true if [[test:csv]] exists in string', () => {
-      const result = _templateSrv.containsTemplate('something [[test:csv]] something');
-      expect(result).toBe(true);
-    });
+      it('should return true if [[test:csv]] exists in string', () => {
+        const result = _templateSrv.containsTemplate('something [[test:csv]] something', testCase.scopedVars);
+        expect(result).toBe(true);
+      });
 
-    it('should return true if ${test} exists in string', () => {
-      const result = _templateSrv.containsTemplate('something ${test} something');
-      expect(result).toBe(true);
-    });
+      it('should return true if ${test} exists in string', () => {
+        const result = _templateSrv.containsTemplate('something ${test} something', testCase.scopedVars);
+        expect(result).toBe(true);
+      });
 
-    it('should return true if ${test:raw} exists in string', () => {
-      const result = _templateSrv.containsTemplate('something ${test:raw} something');
-      expect(result).toBe(true);
-    });
+      it('should return true if ${test:raw} exists in string', () => {
+        const result = _templateSrv.containsTemplate('something ${test:raw} something', testCase.scopedVars);
+        expect(result).toBe(true);
+      });
 
-    it('should return null if there are no variables in string', () => {
-      const result = _templateSrv.containsTemplate('string without variables');
-      expect(result).toBe(false);
+      it('should return null if there are no variables in string', () => {
+        const result = _templateSrv.containsTemplate('string without variables', testCase.scopedVars);
+        expect(result).toBe(false);
+      });
     });
   });
 

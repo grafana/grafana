@@ -21,6 +21,8 @@ describe('getFieldDisplayValuesProxy', () => {
       },
     },
     { name: 'Last', values: ['a', 'b', 'c'] },
+    { name: 'Missing', values: [null, null, undefined] },
+    { name: 'NotMissing', values: [0, false, ''] },
   ];
 
   const overrides = {
@@ -77,10 +79,24 @@ describe('getFieldDisplayValuesProxy', () => {
     expect(p[1].numeric).toEqual(300);
   });
 
-  it('should return undefined when missing', () => {
+  it('should return undefined when field is missing', () => {
     const p = getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 0 });
     expect(p.xyz).toBeUndefined();
     expect(p[100]).toBeUndefined();
+  });
+
+  it('should return undefined when value of a field is missing', () => {
+    const proxyByRow = [
+      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 0 }),
+      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 1 }),
+      getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 2 }),
+    ];
+    expect(proxyByRow[0].Missing).toBeUndefined();
+    expect(proxyByRow[1].Missing).toBeUndefined();
+    expect(proxyByRow[2].Missing).toBeUndefined();
+    expect(proxyByRow[0].NotMissing).toBeDefined();
+    expect(proxyByRow[1].NotMissing).toBeDefined();
+    expect(proxyByRow[2].NotMissing).toBeDefined();
   });
 
   it('should use default display processor if display is not defined', () => {

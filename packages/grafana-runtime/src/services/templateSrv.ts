@@ -20,8 +20,9 @@ export interface TemplateSrv {
 
   /**
    * Checks if a target contains template variables.
+   * If scopedVars are not provided the function will verify if target contains a variables defined in global state
    */
-  containsTemplate(target?: string): boolean;
+  containsTemplate(target?: string, scopedVars?: ScopedVars): boolean;
 
   /**
    * Update the current time range to be used when interpolating __from / __to variables.

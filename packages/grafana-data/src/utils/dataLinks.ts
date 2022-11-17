@@ -38,20 +38,38 @@ export type LinkToExploreOptions = {
   internalLink: InternalDataLink;
   onClickFn?: SplitOpen;
   replaceVariables: InterpolateFunction;
+  containsTemplate?: (target: string) => boolean;
 };
 
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
-  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
+  const {
+    onClickFn,
+    replaceVariables,
+    link,
+    scopedVars,
+    range,
+    field,
+    internalLink,
+    containsTemplate: containsTemplateFn,
+  } = options;
 
   const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
+
+  let stringifiedQuery = '';
+  let containsTemplate: boolean | undefined = undefined;
+  try {
+    stringifiedQuery = JSON.stringify(interpolatedQuery || {});
+    containsTemplate = containsTemplateFn ? containsTemplateFn(stringifiedQuery) : undefined;
+  } catch (err) {}
 
   return {
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
     href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, range, interpolatedPanelsState),
+    containsTemplate,
     onClick: onClickFn
       ? () => {
           onClickFn({

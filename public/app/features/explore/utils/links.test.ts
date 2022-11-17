@@ -16,6 +16,8 @@ import { setLinkSrv } from '../../panel/panellinks/link_srv';
 import { getFieldLinksForExplore } from './links';
 
 describe('getFieldLinksForExplore', () => {
+  const containsTemplateMock = jest.fn();
+
   beforeEach(() => {
     setTemplateSrv({
       replace(target, scopedVars, format) {
@@ -25,10 +27,11 @@ describe('getFieldLinksForExplore', () => {
         return [];
       },
       containsTemplate() {
-        return false;
+        return containsTemplateMock();
       },
       updateTimeRange(timeRange: TimeRange) {},
     });
+    containsTemplateMock.mockReturnValue(false);
   });
 
   it('returns correct link model for external link', () => {
@@ -121,6 +124,21 @@ describe('getFieldLinksForExplore', () => {
       },
       false
     );
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+    expect(links).toHaveLength(0);
+  });
+
+  it('returns no internal links when target contains template variables after interpolation', () => {
+    containsTemplateMock.mockReturnValue(true);
+    const { field, range } = setup({
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    });
     const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
     expect(links).toHaveLength(0);
   });

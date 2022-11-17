@@ -64,28 +64,33 @@ export const getFieldLinksForExplore = (options: {
       links.push(...field.config.links);
     }
 
-    return links.map((link) => {
-      if (!link.internal) {
-        const replace: InterpolateFunction = (value, vars) =>
-          getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+    return links
+      .map((link) => {
+        if (!link.internal) {
+          const replace: InterpolateFunction = (value, vars) =>
+            getTemplateSrv().replace(value, { ...vars, ...scopedVars });
 
-        const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
-        if (!linkModel.title) {
-          linkModel.title = getTitleFromHref(linkModel.href);
+          const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
+          if (!linkModel.title) {
+            linkModel.title = getTitleFromHref(linkModel.href);
+          }
+          return linkModel;
+        } else {
+          return mapInternalLinkToExplore({
+            link,
+            internalLink: link.internal,
+            scopedVars: scopedVars,
+            range,
+            field,
+            onClickFn: splitOpenFn,
+            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+            containsTemplate: (target) => {
+              return getTemplateSrv().containsTemplate(target, scopedVars);
+            },
+          });
         }
-        return linkModel;
-      } else {
-        return mapInternalLinkToExplore({
-          link,
-          internalLink: link.internal,
-          scopedVars: scopedVars,
-          range,
-          field,
-          onClickFn: splitOpenFn,
-          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-        });
-      }
-    });
+      })
+      .filter((link) => link.containsTemplate !== true);
   }
 
   return [];

@@ -61,6 +61,9 @@ export interface LinkModel<T = any> {
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
+
+  // Additional information that the link when executed will contain template variables
+  containsTemplate?: boolean;
 }
 
 /**

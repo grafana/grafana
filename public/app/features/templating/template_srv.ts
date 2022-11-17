@@ -199,12 +199,12 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variableName;
   }
 
-  containsTemplate(target: string | undefined): boolean {
+  containsTemplate(target: string | undefined, scopedVars?: ScopedVars): boolean {
     if (!target) {
       return false;
     }
     const name = this.getVariableName(target);
-    const variable = name && this.getVariableAtIndex(name);
+    const variable = name && (scopedVars ? scopedVars[name] : this.getVariableAtIndex(name));
     return variable !== null && variable !== undefined;
   }
 
