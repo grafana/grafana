@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { DataLinksListItem, DataLinksListItemProps } from './DataLinksListItem';
@@ -51,15 +51,44 @@ describe('DataLinksListItem', () => {
       expect(screen.getByTitle(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
     });
 
-    it('that is a explore compact url, then the title should be a warning', () => {
-      const link = {
-        ...baseLink,
-        url: 'http://localhost:3000/explore?orgId=1&left=[%22now-1h%22,%22now%22,%22gdev-loki%22,{%22expr%22:%22{place=%22luna%22}%22,%22refId%22:%22A%22}]',
-      };
-      setupTestContext({ link });
+    it('then the link should or shouldnt have a warning, depending on if its a compact URL', () => {
+      const testUrls = [
+        {
+          url: 'http://localhost:3000/explore?orgId=1&left=[%22now-1h%22,%22now%22,%22gdev-loki%22,{%22expr%22:%22{place=%22luna%22}%22,%22refId%22:%22A%22}]',
+          isCompactURL: true,
+        },
+        {
+          url: 'http://localhost:3000/explore?orgId=1&left=[%22now-1h%22,%22now%22,%22gdev-loki%22]',
+          isCompactURL: true,
+        },
+        {
+          url: 'http://localhost:3000/explore?orgId=1&right=[%22now-1h%22,%22now%22,%22gdev-loki%22]',
+          isCompactURL: true,
+        },
+        {
+          url: 'http://localhost:3000/explore?orgId=1&left={"datasource":"test[datasource]","queries":[{"refId":"A","datasource":{"type":"prometheus","uid":"gdev-prometheus"}}],"range":{"from":"now-1h","to":"now"}}',
+          isCompactURL: false,
+        },
+      ];
 
-      expect(screen.getByText(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
-      expect(screen.getByTitle(/Explore data link format is deprecated./i)).toBeInTheDocument();
+      const compactWarning = /Explore data link format is deprecated./i;
+
+      testUrls.forEach(async (value) => {
+        const link = {
+          ...baseLink,
+          url: value.url,
+        };
+        setupTestContext({ link });
+
+        expect(screen.getByText(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
+        if (value.isCompactURL) {
+          expect(screen.getByTitle(compactWarning)).toBeInTheDocument();
+        } else {
+          expect(screen.queryByTitle(compactWarning)).not.toBeInTheDocument();
+        }
+
+        cleanup();
+      });
     });
   });
 

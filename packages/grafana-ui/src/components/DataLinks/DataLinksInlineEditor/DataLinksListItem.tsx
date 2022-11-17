@@ -42,8 +42,8 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
           </HorizontalGroup>
         </HorizontalGroup>
         <div
-          className={cx(styles.url, styles.notConfigured, isCompactExploreUrl && styles.errored)}
-          title={isCompactExploreUrl ? 'Explore data link format is deprecated.' : url}
+          className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
+          title={url}
         >
           {hasUrl ? url : 'Data link url not provided'}
         </div>
