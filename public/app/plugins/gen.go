@@ -16,10 +16,10 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/codegen"
+	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
-	"github.com/grafana/grafana/public/app/plugins"
 )
 
 var skipPlugins = map[string]bool{
@@ -51,14 +51,14 @@ func main() {
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 	lib := cuectx.GrafanaThemaRuntime()
 
-	pluginKindGen := codejen.JennyListWithNamer(func(decl *plugins.PluginDecl) string {
+	pluginKindGen := codejen.JennyListWithNamer(func(decl *codegen.PluginTreeDeclForGen) string {
 		return decl.Tree.RootPlugin().Meta().Id
 	})
 
-	targetDir := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
-	pluginKindGen.Append(plugins.PluginTreeListJenny(targetDir))
+	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
+	pluginKindGen.Append(codegen.PluginTreeListJenny(outputFile))
 
-	var decls []*plugins.PluginDecl
+	var decls []*codegen.PluginTreeDeclForGen
 	for _, typ := range []string{"datasource", "panel"} {
 		dir := filepath.Join(cwd, typ)
 		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
@@ -72,7 +72,7 @@ func main() {
 			}
 
 			if option.Tree != nil {
-				decls = append(decls, &plugins.PluginDecl{
+				decls = append(decls, &codegen.PluginTreeDeclForGen{
 					Path: filepath.Join(typ, name),
 					Tree: (pfs.Tree)(*option.Tree),
 				})
@@ -117,7 +117,7 @@ func main2() {
 	grootp := strings.Split(cwd, sep)
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 
-	wd := codegen.NewWriteDiffer()
+	wd := corecodegen.NewWriteDiffer()
 	lib := cuectx.GrafanaThemaRuntime()
 
 	type ptreepath struct {
@@ -157,7 +157,7 @@ func main2() {
 		return ptrees[i].Path < ptrees[j].Path
 	})
 
-	var wdm codegen.WriteDiffer
+	var wdm corecodegen.WriteDiffer
 	for _, ptp := range ptrees {
 		tfast, err := ptp.Tree.GenerateTypeScriptAST()
 		if err != nil {
