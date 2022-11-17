@@ -14,7 +14,6 @@ import {
   Tag,
   ToolbarButtonRow,
   ModalsContext,
-  Button,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
@@ -342,13 +341,11 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (config.featureToggles.scenes) {
       buttons.push(
-        <Button
-          size="sm"
-          variant="secondary"
+        <ToolbarButton
+          tooltip={'View as Scene'}
+          icon="apps"
           onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
-        >
-          View as Scene
-        </Button>
+        />
       );
     }
     return buttons;

@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, PageToolbar } from '@grafana/ui';
+import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -26,9 +26,7 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   toolbarActions.push(
-    <Button size="sm" variant="secondary" onClick={() => locationService.push(`/d/${uid}`)}>
-      View as Dashboard
-    </Button>
+    <ToolbarButton icon="apps" onClick={() => locationService.push(`/d/${uid}`)} tooltip="View as Dashboard" />
   );
   const pageToolbar = config.featureToggles.topnav ? (
     <AppChromeUpdate actions={toolbarActions} />
