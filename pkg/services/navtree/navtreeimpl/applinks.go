@@ -235,7 +235,6 @@ func (s *ServiceImpl) movePlugin(c *models.ReqContext, treeRoot *navtree.NavTree
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
 	}
-
 }
 
 func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext, pluginID string) func(include *plugins.Includes) bool {
