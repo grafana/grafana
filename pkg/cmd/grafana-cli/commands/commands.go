@@ -201,11 +201,9 @@ var adminCommands = []*cli.Command{
 			{
 				Name:  "conflicts",
 				Usage: "runs a conflict resolution to find users with multiple entries",
-				Subcommands: []*cli.Command{
-					{
-						Name:   "help",
-						Usage:  `
+				CustomHelpTemplate: `
 This command will find users with multiple entries in the database and try to resolve the conflicts.
+explanation of each field:
 
 explanation of each field:
 * email - the user’s email
@@ -219,15 +217,15 @@ explanation of each field:
 grafana-cli user-manager conflicts list
 
 # creates a conflict patch file to edit
-grafana-cli user-manager conflicts generate-file 
+grafana-cli user-manager conflicts generate-file
 
 # reads edited conflict patch file for validation
 grafana-cli user-manager conflicts validate-file <filepath>
 
-# validates and ingests edited patch file 
+# validates and ingests edited patch file
 grafana-cli user-manager conflicts ingest-file <filepath>
 `,
-					},
+				Subcommands: []*cli.Command{
 					{
 						Name:   "list",
 						Usage:  "returns a list of users with more than one entry in the database",
