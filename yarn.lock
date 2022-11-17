@@ -22132,6 +22132,7 @@ __metadata:
     react-highlight-words: 0.18.0
     react-hook-form: 7.5.3
     react-inlinesvg: 3.0.0
+    react-lazily: ^0.9.1
     react-loadable: 5.5.0
     react-moveable: 0.33.0
     react-popper: 2.3.0
@@ -32284,6 +32285,22 @@ __metadata:
   version: 18.2.0
   resolution: "react-is@npm:18.2.0"
   checksum: e72d0ba81b5922759e4aff17e0252bd29988f9642ed817f56b25a3e217e13eea8a7f2322af99a06edb779da12d5d636e9fda473d620df9a3da0df2a74141d53e
+  languageName: node
+  linkType: hard
+
+"react-lazily@npm:^0.9.1":
+  version: 0.9.1
+  resolution: "react-lazily@npm:0.9.1"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+  checksum: 104bba9ffa2aa408bc49f9b243822f11b1167ebaea010149a2551687751a71ca5416c4eee06f6a70ee10fdf57ba229945a39c833fed6925081c900f8c91c3ba6
   languageName: node
   linkType: hard
 

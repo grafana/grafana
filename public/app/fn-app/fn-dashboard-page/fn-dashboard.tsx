@@ -1,30 +1,19 @@
-import React, { ComponentType, FC } from 'react';
+import React, { FC, Suspense } from 'react';
+import { lazily } from 'react-lazily';
 
-import { AngularRoot } from '../../angular/AngularRoot';
-import { FnAppProvider } from '../fn-app-provider';
 import { FNDashboardProps } from '../types';
 
-import { RenderFNDashboard } from './render-fn-dashboard';
+const { RenderFNDashboard } = lazily(() => import('./render-fn-dashboard'));
+const { FnAppProvider } = lazily(() => import('../fn-app-provider'));
+const { AngularRoot } = lazily(() => import('../../angular/AngularRoot'));
 
-/** Used by enterprise */
-const bodyRenderHooks: ComponentType[] = [];
-const pageBanners: ComponentType[] = [];
-
-export function addBodyRenderHook(fn: ComponentType) {
-  bodyRenderHooks.push(fn);
-}
-
-export function addPageBanner(fn: ComponentType) {
-  pageBanners.push(fn);
-}
-
-export const FNDashboard: FC<FNDashboardProps> = (props) => {
-  return (
+export const FNDashboard: FC<FNDashboardProps> = (props) => (
+  <Suspense fallback={<>{props.fnLoader}</>}>
     <FnAppProvider fnError={props.fnError}>
       <div className="page-dashboard">
         <AngularRoot />
         <RenderFNDashboard {...props} />
       </div>
     </FnAppProvider>
-  );
-};
+  </Suspense>
+);

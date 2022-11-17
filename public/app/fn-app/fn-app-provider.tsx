@@ -1,19 +1,19 @@
-import React, { useState, useEffect, FC,  } from 'react';
+import React, { useState, useEffect, FC } from 'react';
 import { Provider } from 'react-redux';
 
 import { config, navigationLogger } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles } from '@grafana/ui';
 import { loadAndInitAngularIfEnabled } from 'app/angular/loadAndInitAngularIfEnabled';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { I18nProvider } from 'app/core/internationalization';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
-import { LiveConnectionWarning } from 'app/features/live/LiveConnectionWarning';
 import { store } from 'app/store/store';
 
+import { GrafanaContext } from '../core/context/GrafanaContext';
 import app from '../fn_app';
+
 import { FNDashboardProps } from './types';
 
-type FnAppProviderProps  = Pick<FNDashboardProps, 'fnError'>;
+type FnAppProviderProps = Pick<FNDashboardProps, 'fnError'>;
 
 export const FnAppProvider: FC<FnAppProviderProps> = (props) => {
   const { children, fnError = null } = props;
@@ -50,13 +50,8 @@ export const FnAppProvider: FC<FnAppProviderProps> = (props) => {
         <ErrorBoundaryAlert style="page">
           <GrafanaContext.Provider value={app.context}>
             <ThemeProvider value={config.theme2}>
-              <ModalsProvider>
-                <GlobalStyles />
-                {children}
-                <LiveConnectionWarning />
-                <ModalRoot />
-                <PortalContainer />
-              </ModalsProvider>
+              <GlobalStyles />
+              {children}
             </ThemeProvider>
           </GrafanaContext.Provider>
         </ErrorBoundaryAlert>

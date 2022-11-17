@@ -371,6 +371,7 @@
     "react-highlight-words": "0.18.0",
     "react-hook-form": "7.5.3",
     "react-inlinesvg": "3.0.0",
+    "react-lazily": "^0.9.1",
     "react-loadable": "5.5.0",
     "react-moveable": "0.33.0",
     "react-popper": "2.3.0",
