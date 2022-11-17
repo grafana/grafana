@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -488,6 +489,11 @@ func (g RulesGroup) SortByGroupIndex() {
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "ngalert"
+	QuotaTarget    quota.Target    = "alert_rule"
+)
 
 type ruleKeyContextKey struct{}
 

@@ -240,7 +240,6 @@ func (b *BasicUserInfo) String() string {
 }
 
 type SocialConnector interface {
-	Type() int
 	UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
