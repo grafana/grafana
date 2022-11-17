@@ -23,14 +23,14 @@ const (
 	pagerDutyEventTrigger = "trigger"
 	pagerDutyEventResolve = "resolve"
 
-	defaultSeverity = "critical"
+	defaultSeverity = "error"
 	defaultClass    = "default"
 	defaultGroup    = "default"
 	defaultClient   = "Grafana"
 )
 
 var (
-	knownSeverity        = map[string]struct{}{defaultSeverity: {}, "error": {}, "warning": {}, "info": {}}
+	knownSeverity        = map[string]struct{}{"critical": {}, defaultSeverity: {}, "warning": {}, "info": {}}
 	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
