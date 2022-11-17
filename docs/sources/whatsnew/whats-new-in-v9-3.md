@@ -89,3 +89,23 @@ As part of our efforts to improve security of Grafana, we introduce a long-await
 This feature is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default.
 
 Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}), in the instructions for your Oauth identity provider.
+
+## Grafana CLI tool user management of conflicts
+
+This new CLI command allows you to resolve user identity conflicts of users within Grafana. The email or login field are case sensitive which can cause two or more accounts created for the same user which we call a user identity conflict. You can now resolve these accounts using this CLI tool.
+
+> Note “As a Grafana Cloud user, there are no user identity conflicts, or if you are running a Grafana instance with MySQL.”
+
+```bash
+# lists all the conflicting users
+$ grafana-cli user-manager conflicts list
+
+# creates a conflict patch file to edit
+$ grafana-cli user-manager conflicts generate-file
+
+# reads edited conflict patch file for validation
+$ grafana-cli user-manager conflicts validate-file <filepath>
+
+# ingests the conflict users file. Can be executed once per file and will change the state of the database.
+$ grafana-cli user-manager conflicts ingest-file <filepath>
+```
