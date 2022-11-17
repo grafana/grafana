@@ -15,9 +15,9 @@ import {
 
 export const usePanelSave = () => {
   const dispatch = useDispatch();
-  const [state, saveLibraryPanel] = useAsyncFn(async (panel: PanelModel, folderId: number) => {
+  const [state, saveLibraryPanel] = useAsyncFn(async (panel: PanelModel, folderUid: string) => {
     try {
-      return await saveAndRefreshLibraryPanel(panel, folderId);
+      return await saveAndRefreshLibraryPanel(panel, folderUid);
     } catch (err) {
       if (isFetchError(err)) {
         err.isHandled = true;

@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	"golang.org/x/oauth2"
 )
 
@@ -15,10 +13,6 @@ type SocialGitlab struct {
 	*SocialBase
 	allowedGroups []string
 	apiUrl        string
-}
-
-func (s *SocialGitlab) Type() int {
-	return int(models.GITLAB)
 }
 
 func (s *SocialGitlab) IsGroupMember(groups []string) bool {

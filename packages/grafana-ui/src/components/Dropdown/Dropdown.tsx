@@ -11,7 +11,7 @@ import { TooltipPlacement } from '../Tooltip/types';
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
-  children: React.ReactElement;
+  children: React.ReactElement | ((isOpen: boolean) => React.ReactElement);
 }
 
 export const Dropdown = React.memo(({ children, overlay, placement }: Props) => {
@@ -38,7 +38,7 @@ export const Dropdown = React.memo(({ children, overlay, placement }: Props) => 
 
   return (
     <>
-      {React.cloneElement(children, {
+      {React.cloneElement(typeof children === 'function' ? children(visible) : children, {
         ref: setTriggerRef,
       })}
       {visible && (
