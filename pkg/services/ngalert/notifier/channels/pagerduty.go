@@ -35,7 +35,7 @@ type PagerdutyNotifier struct {
 	log      log.Logger
 	ns       notifications.WebhookSender
 	images   ImageStore
-	settings pagerdutySettings
+	settings *pagerdutySettings
 }
 
 type pagerdutySettings struct {
@@ -46,6 +46,44 @@ type pagerdutySettings struct {
 	Component     string `json:"component,omitempty" yaml:"component,omitempty"`
 	Group         string `json:"group,omitempty" yaml:"group,omitempty"`
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
+}
+
+func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
+	settings := pagerdutySettings{}
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	settings.Key = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "integrationKey", settings.Key)
+	if settings.Key == "" {
+		return nil, errors.New("could not find integration key property in settings")
+	}
+
+	settings.customDetails = map[string]string{
+		"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
+		"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
+		"num_firing":   `{{ .Alerts.Firing | len }}`,
+		"num_resolved": `{{ .Alerts.Resolved | len }}`,
+	}
+
+	if settings.Severity == "" {
+		settings.Severity = "critical"
+	}
+	if settings.Class == "" {
+		settings.Class = "default"
+	}
+	if settings.Component == "" {
+		settings.Component = "Grafana"
+	}
+	if settings.Group == "" {
+		settings.Group = "default"
+	}
+	if settings.Summary == "" {
+		settings.Summary = DefaultMessageTitleEmbed
+	}
+
+	return &settings, nil
 }
 
 func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -61,9 +99,9 @@ func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
 func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
-	key := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "integrationKey", fc.Config.Settings.Get("integrationKey").MustString())
-	if key == "" {
-		return nil, errors.New("could not find integration key property in settings")
+	settings, err := buildPagerdutySettings(fc)
+	if err != nil {
+		return nil, err
 	}
 
 	return &PagerdutyNotifier{
@@ -74,24 +112,11 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		tmpl:   fc.Template,
-		log:    log.New("alerting.notifier." + fc.Config.Name),
-		ns:     fc.NotificationService,
-		images: fc.ImageStore,
-		settings: pagerdutySettings{
-			Key:      key,
-			Severity: fc.Config.Settings.Get("severity").MustString("critical"),
-			customDetails: map[string]string{
-				"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
-				"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
-				"num_firing":   `{{ .Alerts.Firing | len }}`,
-				"num_resolved": `{{ .Alerts.Resolved | len }}`,
-			},
-			Class:     fc.Config.Settings.Get("class").MustString("default"),
-			Component: fc.Config.Settings.Get("component").MustString("Grafana"),
-			Group:     fc.Config.Settings.Get("group").MustString("default"),
-			Summary:   fc.Config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
-		},
+		tmpl:     fc.Template,
+		log:      log.New("alerting.notifier." + fc.Config.Name),
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		settings: settings,
 	}, nil
 }
 
