@@ -27,7 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -819,14 +819,14 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.userService = usertest.NewUserServiceFake()
 		sc.orgService = orgtest.NewOrgServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
-		sc.oauthTokenService = &auth.FakeOAuthTokenService{}
+		sc.oauthTokenService = &authtest.FakeOAuthTokenService{}
 		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService, sc.orgService, sc.oauthTokenService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
 		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
 
-		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
+		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*authtest.FakeUserAuthTokenService)
 		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
 
@@ -856,7 +856,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.FakeDB,
 	loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service,
 	userService *usertest.FakeUserService, orgService *orgtest.FakeOrgService,
-	oauthTokenService *auth.FakeOAuthTokenService,
+	oauthTokenService *authtest.FakeOAuthTokenService,
 ) *contexthandler.ContextHandler {
 	t.Helper()
 
@@ -868,7 +868,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.Fake
 	}
 
 	remoteCacheSvc := remotecache.NewFakeStore(t)
-	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
