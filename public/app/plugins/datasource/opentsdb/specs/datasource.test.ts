@@ -128,7 +128,7 @@ describe('opentsdb', () => {
       expect(ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
     });
 
-    it('should replace metric variable', () => {
+    it('should replace metric and filter variable', () => {
       const { ds, templateSrv } = getTestcontext();
       const logQuery: OpenTsdbQuery = {
         refId: 'someRefId',
@@ -136,8 +136,8 @@ describe('opentsdb', () => {
         filters: [
           {
             type: 'type',
-            tagk: 'someTagk',
-            filter: 'someTagv',
+            tagk: '$someTagk',
+            filter: '$someTagv',
             groupBy: true,
           },
         ],
@@ -145,8 +145,10 @@ describe('opentsdb', () => {
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
-      expect(templateSrv.replace).toHaveBeenCalledWith('$someVar', {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(1);
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someVar', {}, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagk', {}, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', {}, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledTimes(3);
     });
 
     it('should replace filter tag key and value', () => {
@@ -210,7 +212,7 @@ describe('opentsdb', () => {
         },
       };
 
-      ds.interpolateVariablesInFilters(logQuery, dataQR);
+      ds.interpolateVariablesInFilters(logQuery, dataQR.scopedVars);
 
       expect(templateSrv.replace).toHaveBeenCalledWith('$someTagk', scopedVars, 'pipe');
       expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', scopedVars, 'pipe');
