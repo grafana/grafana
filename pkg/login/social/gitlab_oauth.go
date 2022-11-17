@@ -21,10 +21,6 @@ func (s *SocialGitlab) Type() int {
 	return int(models.GITLAB)
 }
 
-func (s *SocialGitlab) GetCustomAuthParams() []oauth2.AuthCodeOption {
-	return []oauth2.AuthCodeOption{}
-}
-
 func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true

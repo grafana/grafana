@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -98,14 +97,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOnline}
-
-		if hs.Features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-			// Change the defaults to AccessTypeOffline if accessTokenExpirationCheck is enabled
-			// and get the custom parameters from the specific OAuth connector
-			opts = connect.GetCustomAuthParams()
-		}
-
+		var opts []oauth2.AuthCodeOption
 		if provider.UsePKCE {
 			ascii, pkce, err := genPKCECode()
 			if err != nil {

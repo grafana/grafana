@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/oauth2"
 )
 
@@ -34,10 +35,6 @@ type SocialGenericOAuth struct {
 
 func (s *SocialGenericOAuth) Type() int {
 	return int(models.GENERIC)
-}
-
-func (s *SocialGenericOAuth) GetCustomAuthParams() []oauth2.AuthCodeOption {
-	return []oauth2.AuthCodeOption{oauth2.AccessTypeOffline}
 }
 
 func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
@@ -512,4 +509,11 @@ func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, 
 	s.log.Debug("Received organizations", "logins", logins)
 
 	return logins, true
+}
+
+func (s *SocialGenericOAuth) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		opts = append(opts, oauth2.AccessTypeOffline)
+	}
+	return s.SocialBase.AuthCodeURL(state, opts...)
 }
