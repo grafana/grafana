@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.16'
+grabpl_version = 'v3.0.17'
 build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -848,7 +848,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
-        cmd += ' --version-tag ${TAG}'
+        cmd += ' --version-tag ${DRONE_TAG}'
     else:
         deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
