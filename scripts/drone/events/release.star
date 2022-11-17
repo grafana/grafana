@@ -102,7 +102,7 @@ def retrieve_npm_packages_step():
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl artifacts npm retrieve --tag v${TAG}'
+            './bin/grabpl artifacts npm retrieve --tag ${{DRONE_TAG}}'
         ],
     }
 
@@ -118,7 +118,7 @@ def release_npm_packages_step():
             'NPM_TOKEN': from_secret('npm_token'),
         },
         'commands': [
-            './bin/grabpl artifacts npm release --tag v${TAG}'
+            './bin/grabpl artifacts npm release --tag ${{DRONE_TAG}}'
         ],
     }
 
@@ -361,7 +361,7 @@ def publish_artifacts_step(mode):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': ['./bin/grabpl artifacts publish {}--tag ${{TAG}} --src-bucket $${{PRERELEASE_BUCKET}}'.format(security)],
+        'commands': ['./bin/grabpl artifacts publish {}--tag ${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}'.format(security)],
         'depends_on': ['grabpl'],
     }
 

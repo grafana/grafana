@@ -3572,7 +3572,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts publish --security --tag ${TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/grabpl artifacts publish --security --tag ${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - grabpl
   environment:
@@ -3614,7 +3614,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts publish --tag ${TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/grabpl artifacts publish --tag ${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - grabpl
   environment:
@@ -3661,7 +3661,7 @@ steps:
   image: grafana/build-container:1.6.4
   name: yarn-install
 - commands:
-  - ./bin/grabpl artifacts npm retrieve --tag v${TAG}
+  - ./bin/grabpl artifacts npm retrieve --tag ${{DRONE_TAG}}
   depends_on:
   - yarn-install
   environment:
@@ -3673,7 +3673,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: retrieve-npm-packages
 - commands:
-  - ./bin/grabpl artifacts npm release --tag v${TAG}
+  - ./bin/grabpl artifacts npm release --tag ${{DRONE_TAG}}
   depends_on:
   - retrieve-npm-packages
   environment:
@@ -5512,6 +5512,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 2b1b5ade4e8007a9d5b76ec2dbc9e647ca0938e00713b3ad8e8163bce2db40a6
+hmac: 1093617919dd4fd978468d9ae99dcfa69eadb2cad8e6dfd4caa55d4bf59bacb3
 
 ...
