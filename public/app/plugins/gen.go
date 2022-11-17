@@ -55,7 +55,7 @@ func main() {
 		return decl.Tree.RootPlugin().Meta().Id
 	})
 
-	targetDir := filepath.Join("pkg", "plugins", "pfs", "corelist", "loadlist_gen.go")
+	targetDir := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
 	pluginKindGen.Append(plugins.PluginTreeListJenny(targetDir))
 
 	var decls []*plugins.PluginDecl
