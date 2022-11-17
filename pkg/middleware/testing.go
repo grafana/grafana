@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -77,7 +78,11 @@ func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
 	require.NoError(sc.t, err)
-	sc.req = req
+
+	reqCtx := &models.ReqContext{
+		Context: web.FromContext(req.Context()),
+	}
+	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
 
 	return sc
 }
@@ -95,7 +100,11 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	}
 	req.URL.RawQuery = q.Encode()
 	require.NoError(sc.t, err)
-	sc.req = req
+
+	reqCtx := &models.ReqContext{
+		Context: web.FromContext(req.Context()),
+	}
+	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
 
 	return sc
 }

@@ -5,20 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type SocialGoogle struct {
 	*SocialBase
 	hostedDomain string
 	apiUrl       string
-}
-
-func (s *SocialGoogle) Type() int {
-	return int(models.GOOGLE)
 }
 
 func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {

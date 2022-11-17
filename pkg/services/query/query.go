@@ -259,6 +259,14 @@ func (pr parsedRequest) validateRequest() error {
 		return nil
 	}
 
+	if pr.hasExpression {
+		hasExpr := pr.httpRequest.URL.Query().Get("expression")
+		if hasExpr == "" || hasExpr == "true" {
+			return nil
+		}
+		return ErrQueryParamMismatch
+	}
+
 	vals := splitHeaders(pr.httpRequest.Header.Values(HeaderDatasourceUID))
 	count := len(vals)
 	if count > 0 { // header exists

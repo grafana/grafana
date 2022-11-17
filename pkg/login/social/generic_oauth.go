@@ -13,9 +13,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type SocialGenericOAuth struct {
@@ -31,10 +31,6 @@ type SocialGenericOAuth struct {
 	idTokenAttributeName string
 	teamIdsAttributePath string
 	teamIds              []string
-}
-
-func (s *SocialGenericOAuth) Type() int {
-	return int(models.GENERIC)
 }
 
 func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
