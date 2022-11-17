@@ -2,7 +2,7 @@
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
-import { useLocation, useRouteMatch, useParams } from 'react-router-dom';
+import { useLocation, useRouteMatch } from 'react-router-dom';
 
 import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -35,23 +35,22 @@ const initialState: State = { loading: true, pluginNav: null, plugin: null };
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const match = useRouteMatch();
-  const queryParams = useParams();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, pluginNav } = state;
   const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
+  const queryParams = useMemo(() => convertLocationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
 
   useEffect(() => {
     loadAppPlugin(pluginId, dispatch);
   }, [pluginId]);
 
-  const onNavChanged = useCallback(
-    (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),
-    []
-  );
+  const onNavChanged = useCallback((newPluginNav: NavModel) => {
+    dispatch(stateSlice.actions.changeNav(newPluginNav));
+  }, []);
 
   if (!plugin || pluginId !== plugin.meta.id) {
     return <Page navModel={navModel}>{loading && <PageLoader />}</Page>;
@@ -155,6 +154,16 @@ export function getAppPluginPageError(meta: AppPluginMeta) {
     return 'Application Not Enabled';
   }
   return null;
+}
+
+function convertLocationSearchToObject(locationSearch: string) {
+  const result: Record<string, string> = {};
+
+  for (const [key, value] of new URLSearchParams(locationSearch).entries()) {
+    result[key] = value;
+  }
+
+  return result;
 }
 
 export default AppRootPage;
