@@ -132,9 +132,25 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+	clippedHeaders := make(map[string]string, len(parsedReq.httpRequest.Header))
+	for k, v := range parsedReq.httpRequest.Header {
+		if len(v) == 0 {
+			clippedHeaders[k] = ""
+			continue
+		}
+		clippedHeaders[k] = v[0]
+	}
+
 	exprReq := expr.Request{
 		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
+		Headers: clippedHeaders,
+		User: backend.User{
+			Login: user.Login,
+			Name:  user.Name,
+			Email: user.Email,
+			Role:  string(user.OrgRole),
+		},
 	}
 
 	for _, pq := range parsedReq.getFlattenedQueries() {

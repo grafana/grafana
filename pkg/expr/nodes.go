@@ -211,6 +211,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		OrgID:                      dn.orgID,
 		DataSourceInstanceSettings: dsInstanceSettings,
 		PluginID:                   dn.datasource.Type,
+		User:                       &dn.request.User,
 	}
 
 	q := []backend.DataQuery{
