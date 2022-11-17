@@ -53,7 +53,7 @@ func main() {
 		return decl.Tree.RootPlugin().Meta().Id
 	})
 
-	pluginKindGen.Append(plugins.PrintJenny())
+	pluginKindGen.Append(plugins.JennyPrint())
 	// 1. lägg till "jennies" som skall köras över listan med pfs.Tree
 
 	var decls []*plugins.PluginDecl
