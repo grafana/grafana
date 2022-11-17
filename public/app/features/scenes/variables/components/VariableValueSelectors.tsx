@@ -4,12 +4,12 @@ import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
 
-import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { SceneLayoutChildBase } from '../../core/SceneLayoutChildBase';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps, SceneObject, SceneObjectStatePlain } from '../../core/types';
 import { SceneVariableState } from '../types';
 
-export class VariableValueSelectors extends SceneObjectBase<SceneObjectStatePlain> {
+export class VariableValueSelectors extends SceneLayoutChildBase<SceneObjectStatePlain> {
   public static Component = VariableValueSelectorsRenderer;
 }
 

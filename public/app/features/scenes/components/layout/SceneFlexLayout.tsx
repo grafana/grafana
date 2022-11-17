@@ -2,8 +2,14 @@ import React, { CSSProperties } from 'react';
 
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneComponentProps, SceneLayoutChild, SceneLayoutState, SceneObjectSize } from '../../core/types';
+import { SceneLayoutChildBase } from '../../core/SceneLayoutChildBase';
+import {
+  SceneComponentProps,
+  SceneLayout,
+  SceneLayoutChild,
+  SceneLayoutState,
+  SceneObjectSize,
+} from '../../core/types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
@@ -11,14 +17,19 @@ interface SceneFlexLayoutState extends SceneLayoutState {
   direction?: FlexLayoutDirection;
 }
 
-export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
+export class SceneFlexLayout
+  extends SceneLayoutChildBase<SceneFlexLayoutState>
+  implements SceneLayout<SceneFlexLayoutState>
+{
   public static Component = FlexLayoutRenderer;
   public static Editor = FlexLayoutEditor;
 
-  public toggleDirection() {
-    this.setState({
-      direction: this.state.direction === 'row' ? 'column' : 'row',
-    });
+  public setDirection(direction: FlexLayoutDirection): void {
+    this.setState({ direction });
+  }
+
+  public updateChildren(children: SceneLayoutChild[]): void {
+    this.setState({ children });
   }
 }
 
@@ -103,7 +114,7 @@ function FlexLayoutEditor({ model }: SceneComponentProps<SceneFlexLayout>) {
       <RadioButtonGroup
         options={options}
         value={direction}
-        onChange={(value) => model.setState({ direction: value as FlexLayoutDirection })}
+        onChange={(value) => model.setDirection(value as FlexLayoutDirection)}
       />
     </Field>
   );

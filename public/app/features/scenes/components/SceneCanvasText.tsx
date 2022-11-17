@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react';
 
 import { Field, Input } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneLayoutChildBase } from '../core/SceneLayoutChildBase';
 import { sceneGraph } from '../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
 import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
@@ -13,10 +13,14 @@ export interface SceneCanvasTextState extends SceneLayoutChildState {
   align?: 'left' | 'center' | 'right';
 }
 
-export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
+export class SceneCanvasText extends SceneLayoutChildBase<SceneCanvasTextState> {
   public static Editor = Editor;
 
   protected _variableDependency = new VariableDependencyConfig(this, { statePaths: ['text'] });
+
+  public setFontSize(fontSize: number) {
+    this.setState({ fontSize });
+  }
 
   public static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left', key } = model.useState();
@@ -46,7 +50,7 @@ function Editor({ model }: SceneComponentProps<SceneCanvasText>) {
       <Input
         type="number"
         defaultValue={fontSize}
-        onBlur={(evt) => model.setState({ fontSize: parseInt(evt.currentTarget.value, 10) })}
+        onBlur={(evt) => model.setFontSize(parseInt(evt.currentTarget.value, 10))}
       />
     </Field>
   );

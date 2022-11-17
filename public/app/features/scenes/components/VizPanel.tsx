@@ -5,7 +5,7 @@ import { AbsoluteTimeRange, FieldConfigSource, toUtc } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { Field, PanelChrome, Input } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneLayoutChildBase } from '../core/SceneLayoutChildBase';
 import { sceneGraph } from '../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
 import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
@@ -19,7 +19,7 @@ export interface VizPanelState extends SceneLayoutChildState {
   fieldConfig?: FieldConfigSource;
 }
 
-export class VizPanel extends SceneObjectBase<VizPanelState> {
+export class VizPanel extends SceneLayoutChildBase<VizPanelState> {
   public static Component = ScenePanelRenderer;
   public static Editor = VizPanelEditor;
 

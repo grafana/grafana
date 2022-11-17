@@ -99,13 +99,17 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   forceRender(): void;
 }
 
-export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;
-
 export interface SceneLayoutState extends SceneLayoutChildState {
   children: SceneLayoutChild[];
 }
 
-export type SceneLayout<T extends SceneLayoutState = SceneLayoutState> = SceneObject<T>;
+export interface SceneLayoutChild extends SceneObject<SceneLayoutChildState> {
+  setLayoutOptions(state: Partial<SceneLayoutChildState>): void;
+}
+
+export interface SceneLayout<T extends SceneLayoutState = SceneLayoutState> extends SceneObject<T> {
+  updateChildren(children: SceneLayoutChild[]): void;
+}
 
 export interface SceneEditorState extends SceneObjectStatePlain {
   hoverObject?: SceneObjectRef;

@@ -7,10 +7,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PANEL_SPAN, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { SceneLayoutChildBase } from '../../core/SceneLayoutChildBase';
 import { sceneGraph } from '../../core/sceneGraph';
 import {
   SceneComponentProps,
+  SceneLayout,
   SceneLayoutChild,
   SceneLayoutChildState,
   SceneLayoutState,
@@ -21,7 +22,10 @@ import { SceneDragHandle } from '../SceneDragHandle';
 
 interface SceneGridLayoutState extends SceneLayoutState {}
 
-export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
+export class SceneGridLayout
+  extends SceneLayoutChildBase<SceneGridLayoutState>
+  implements SceneLayout<SceneGridLayoutState>
+{
   public static Component = SceneGridLayoutRenderer;
 
   private _skipOnLayoutChange = false;
@@ -34,11 +38,15 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     });
   }
 
+  public updateChildren(children: SceneLayoutChild[]): void {
+    this.setState({ children });
+  }
+
   public toggleRow(row: SceneGridRow) {
     const isCollapsed = row.state.isCollapsed;
 
     if (!isCollapsed) {
-      row.setState({ isCollapsed: true });
+      row.setCollapsed(true);
       // To force re-render
       this.setState({});
       return;
@@ -47,7 +55,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     const rowChildren = row.state.children;
 
     if (rowChildren.length === 0) {
-      row.setState({ isCollapsed: false });
+      row.setCollapsed(false);
       this.setState({});
       return;
     }
@@ -70,7 +78,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       // make sure y is adjusted (in case row moved while collapsed)
       newSize.y -= yDiff;
       if (newSize.y > panel.state.size?.y!) {
-        panel.setState({ size: newSize });
+        panel.setLayoutOptions({ size: newSize });
       }
       // update insert post and y max
       yMax = Math.max(yMax, Number(newSize.y!) + Number(newSize.height!));
@@ -93,9 +101,9 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       }
     }
 
-    row.setState({ isCollapsed: false });
+    row.setCollapsed(isCollapsed);
     // Trigger re-render
-    this.setState({});
+    this.forceRender();
   }
 
   public onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
@@ -116,7 +124,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
       };
 
       if (!isItemSizeEqual(child.state.size!, nextSize)) {
-        child.setState({
+        child.setLayoutOptions({
           size: {
             ...child.state.size,
             ...nextSize,
@@ -151,7 +159,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   public onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
     const child = this.getSceneLayoutChild(n.i);
-    child.setState({
+    child.setLayoutOptions({
       size: {
         ...child.state.size,
         width: n.w,
@@ -161,7 +169,7 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   };
 
   private pushChildDown(child: SceneLayoutChild, amount: number) {
-    child.setState({
+    child.setLayoutOptions({
       size: {
         ...child.state.size,
         y: child.state.size?.y! + amount,
@@ -376,7 +384,7 @@ interface SceneGridRowState extends SceneLayoutChildState {
   children: Array<SceneObject<SceneLayoutChildState>>;
 }
 
-export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
+export class SceneGridRow extends SceneLayoutChildBase<SceneGridRowState> {
   public static Component = SceneGridRowRenderer;
 
   public constructor(state: SceneGridRowState) {
@@ -407,6 +415,10 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 
     layout.toggleRow(this);
   };
+
+  public setCollapsed(isCollapsed: boolean) {
+    this.setState({ isCollapsed });
+  }
 }
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {

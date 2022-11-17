@@ -31,6 +31,10 @@ export class Scene extends SceneObjectBase<SceneState> {
     super.deactivate();
     this.urlSyncManager!.cleanUp();
   }
+
+  public onToggleEditMode = () => {
+    this.setState({ isEditing: !this.state.isEditing });
+  };
 }
 
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
@@ -40,11 +44,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
 
   if ($editor) {
     toolbarActions.push(
-      <ToolbarButton
-        icon="cog"
-        variant={isEditing ? 'primary' : 'default'}
-        onClick={() => model.setState({ isEditing: !model.state.isEditing })}
-      />
+      <ToolbarButton icon="cog" variant={isEditing ? 'primary' : 'default'} onClick={model.onToggleEditMode} />
     );
   }
 

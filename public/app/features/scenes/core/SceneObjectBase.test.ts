@@ -1,6 +1,7 @@
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 
 import { SceneDataNode } from './SceneDataNode';
+import { SceneLayoutChildBase } from './SceneLayoutChildBase';
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneObjectStateChangedEvent } from './events';
 import { SceneLayoutChild, SceneObject, SceneObjectStatePlain } from './types';
@@ -12,7 +13,11 @@ interface TestSceneState extends SceneObjectStatePlain {
   actions?: SceneObject[];
 }
 
-class TestScene extends SceneObjectBase<TestSceneState> {}
+class TestScene extends SceneLayoutChildBase<TestSceneState> {
+  public setName(name: string) {
+    this.setState({ name });
+  }
+}
 
 describe('SceneObject', () => {
   it('Can clone', () => {
@@ -127,5 +132,13 @@ describe('SceneObject', () => {
     it('Should deactivate $variables', () => {
       expect(scene.state.$variables!.isActive).toBe(false);
     });
+  });
+
+  describe('State is immutable', () => {
+    const scene = new TestScene({
+      name: 'hello',
+    });
+
+    scene.setName('world');
   });
 });
