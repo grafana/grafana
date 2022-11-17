@@ -170,6 +170,12 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 	appLink.Children = childrenWithoutDefault
 
+	s.movePlugin(c, treeRoot, plugin, appLink)
+
+	return nil
+}
+
+func (s *ServiceImpl) movePlugin(c *models.ReqContext, treeRoot *navtree.NavTreeRoot, plugin plugins.PluginDTO, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
 	sectionID := navtree.NavIDApps
@@ -230,7 +236,6 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		}
 	}
 
-	return nil
 }
 
 func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext, pluginID string) func(include *plugins.Includes) bool {
