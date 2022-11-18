@@ -167,7 +167,7 @@ export function ExploreGraph({
       {dataWithConfig.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
         <div className={cx([style.timeSeriesDisclaimer])}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
-          {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
+          Showing only {MAX_NUMBER_OF_TIME_SERIES} time series.
           <Button variant="primary" fill="text" onClick={() => setShowAllTimeSeries(true)}>
             Show all {dataWithConfig.length}
           </Button>
