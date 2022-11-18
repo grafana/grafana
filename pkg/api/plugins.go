@@ -1,10 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -12,6 +15,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -27,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -297,6 +300,78 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
+func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
+	absPluginDir, err := filepath.Abs(plugin.PluginDir)
+	if err != nil {
+		// c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
+		return pluginAsset{}, errors.New("failed to get plugin absolute path")
+	}
+
+	pluginFilePath := filepath.Join(absPluginDir, path)
+
+	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
+	// use this with a prefix of the plugin's directory, which is set during plugin loading
+	// nolint:gosec
+	f, err := os.Open(pluginFilePath)
+	if err != nil {
+		/* if os.IsNotExist(err) {
+			c.JsonApiErr(404, "Plugin file not found", err)
+			return r
+		}
+		c.JsonApiErr(500, "Could not open plugin file", err)
+		return r */
+		return pluginAsset{}, errors.New("could not open plugin file")
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			hs.log.Error("Failed to close file", "err", err)
+		}
+	}()
+
+	fi, err := f.Stat()
+	if err != nil {
+		// c.JsonApiErr(500, "Plugin file exists but could not open", err)
+		// return r
+		return pluginAsset{}, errors.New("plugin file exists but could not open")
+	}
+	return pluginAsset{
+		readSeeker: f,
+		modTime:    fi.ModTime(),
+		path:       pluginFilePath,
+	}, nil
+}
+
+const cdnBasePath = "https://storage.googleapis.com/plugin-cdn"
+
+func (hs *HTTPServer) getCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
+	remoteURL := fmt.Sprintf("%s/%s/%s/%s", cdnBasePath, plugin.ID, plugin.Info.Version, path)
+	req, err := http.NewRequestWithContext(c.Req.Context(), http.MethodGet, remoteURL, nil)
+	if err != nil {
+		return pluginAsset{}, fmt.Errorf("get %s: %w", remoteURL, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return pluginAsset{}, fmt.Errorf("do requets %s: %w", remoteURL, err)
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return pluginAsset{}, fmt.Errorf("readall: %w", err)
+	}
+	hs.log.Info("remote downloaded", "url", remoteURL)
+	return pluginAsset{
+		readSeeker: bytes.NewReader(b),
+		modTime:    time.Now(),
+		path:       path,
+	}, nil
+}
+
+type pluginAsset struct {
+	readSeeker io.ReadSeeker
+	modTime    time.Time
+	path       string
+}
+
 // getPluginAssets returns public plugin assets (images, JS, etc.)
 //
 // /public/plugins/:pluginId/*
@@ -306,6 +381,10 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	if !exists {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
+	}
+	cdnPlugins := map[string]struct{}{}
+	for _, k := range strings.Split(os.Getenv("CDN_PLUGINS"), ",") {
+		cdnPlugins[k] = struct{}{}
 	}
 
 	// prepend slash for cleaning relative paths
@@ -322,45 +401,32 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 			"is not included in the plugin signature", "file", requestedFile)
 	}
 
-	absPluginDir, err := filepath.Abs(plugin.PluginDir)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
-		return
-	}
-
-	pluginFilePath := filepath.Join(absPluginDir, rel)
-
-	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	// nolint:gosec
-	f, err := os.Open(pluginFilePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			c.JsonApiErr(404, "Plugin file not found", err)
+	// TODO: Plugins CDN: unhardcode
+	_, useCDN := cdnPlugins[pluginID]
+	useRedirect := true
+	var asset pluginAsset
+	if useCDN {
+		if useRedirect {
+			remoteURL := fmt.Sprintf("%s/%s/%s/%s", cdnBasePath, plugin.ID, plugin.Info.Version, rel)
+			hs.log.Info("redirected asset", "url", remoteURL)
+			http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
 			return
 		}
-		c.JsonApiErr(500, "Could not open plugin file", err)
-		return
+		hs.log.Info("loaded from cdn", "plugin", plugin.ID, "rel", rel)
+		asset, err = hs.getCDNPluginAsset(c, plugin, rel)
+	} else {
+		asset, err = hs.getLocalPluginAssets(c, plugin, rel)
 	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			hs.log.Error("Failed to close file", "err", err)
-		}
-	}()
-
-	fi, err := f.Stat()
 	if err != nil {
-		c.JsonApiErr(500, "Plugin file exists but could not open", err)
+		c.JsonApiErr(500, err.Error(), err)
 		return
 	}
-
 	if hs.Cfg.Env == setting.Dev {
 		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
-
-	http.ServeContent(c.Resp, c.Req, pluginFilePath, fi.ModTime(), f)
+	http.ServeContent(c.Resp, c.Req, asset.path, asset.modTime, asset.readSeeker)
 }
 
 // CheckHealth returns the health of a plugin.
