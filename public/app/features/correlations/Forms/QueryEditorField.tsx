@@ -59,16 +59,17 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
         maxDataPoints: 100,
         minInterval: null,
       });
+
+      await runner.get().subscribe((panelData) => {
+        if (panelData.state === 'Done') {
+          setIsValidQuery(true);
+        } else if (panelData.state === 'Error') {
+          setIsValidQuery(false);
+        } else {
+          setIsValidQuery(undefined);
+        }
+      });
     }
-    await runner.get().subscribe((panelData) => {
-      if (panelData.state === 'Done') {
-        setIsValidQuery(true);
-      } else if (panelData.state === 'Error') {
-        setIsValidQuery(false);
-      } else {
-        setIsValidQuery(undefined);
-      }
-    });
   };
 
   return (

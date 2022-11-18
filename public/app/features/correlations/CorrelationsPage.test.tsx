@@ -226,8 +226,10 @@ const renderWithContext = async (
 };
 
 const mockQueryRunner = () => {
-  let emitter: Subscriber<PanelData> | undefined;
-  const observable: Observable<PanelData> = new Observable((subscriber) => (emitter = subscriber));
+  let emitter: { subscriber: Subscriber<PanelData> | undefined } = {};
+  const observable: Observable<PanelData> = new Observable((subscriber) => {
+    emitter.subscriber = subscriber;
+  });
   const factory: QueryRunnerFactory = () => ({
     get: () => observable,
     run: () => {},
@@ -237,10 +239,10 @@ const mockQueryRunner = () => {
 
   setQueryRunnerFactory(factory);
 
-  return emitter?.next;
+  return emitter;
 };
 
-let emit;
+let emit: ((value?: PanelData | undefined) => void) | undefined;
 
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
@@ -249,7 +251,7 @@ beforeAll(() => {
 
 afterAll(() => {
   jest.restoreAllMocks();
-  // TODO: destroy QueryRunner?
+  // TODO: destroy QueryRunner? Unsubscribe?
 });
 
 describe('CorrelationsPage', () => {
@@ -326,6 +328,15 @@ describe('CorrelationsPage', () => {
       fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
 
       await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
+      // check query validation button and messages
+      // fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+      // expect(screen.getByText('This query is valid.')).toBeInTheDocument();
+
+      // emit.subscriber({state: 'Done'})
+      expect(screen.getByRole('button', { name: /Validate query$/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+      // expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
