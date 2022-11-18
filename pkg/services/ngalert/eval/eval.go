@@ -225,7 +225,8 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 
 	key, ok := models.RuleKeyFromContext(ctx.Ctx)
 	if ok {
-		headers["X-Rule-Uid"] = key.UID
+		headers["X-Grafana-Rule-Uid"] = key.UID
+		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
 	}
 
 	return headers
