@@ -13,8 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -35,7 +36,7 @@ type scenarioContext struct {
 	handlerFunc          handlerFunc
 	defaultHandler       web.Handler
 	url                  string
-	userAuthTokenService *auth.FakeUserAuthTokenService
+	userAuthTokenService *authtest.FakeUserAuthTokenService
 	jwtAuthService       *models.FakeJWTService
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
@@ -45,7 +46,7 @@ type scenarioContext struct {
 	loginService         *loginservice.LoginServiceMock
 	apiKeyService        *apikeytest.Service
 	userService          *usertest.FakeUserService
-	oauthTokenService    *auth.FakeOAuthTokenService
+	oauthTokenService    *authtest.FakeOAuthTokenService
 	orgService           *orgtest.FakeOrgService
 
 	req *http.Request
@@ -77,7 +78,11 @@ func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
 	require.NoError(sc.t, err)
-	sc.req = req
+
+	reqCtx := &models.ReqContext{
+		Context: web.FromContext(req.Context()),
+	}
+	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
 
 	return sc
 }
@@ -95,7 +100,11 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	}
 	req.URL.RawQuery = q.Encode()
 	require.NoError(sc.t, err)
-	sc.req = req
+
+	reqCtx := &models.ReqContext{
+		Context: web.FromContext(req.Context()),
+	}
+	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
 
 	return sc
 }

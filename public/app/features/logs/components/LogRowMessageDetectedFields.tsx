@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { LogRowModel, Field, LinkModel } from '@grafana/data';
+import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
 import { getAllFields } from './logParser';
@@ -10,7 +10,7 @@ export interface Props extends Themeable2 {
   row: LogRowModel;
   showDetectedFields: string[];
   wrapLogMessage: boolean;
-  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
 }
 
 class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {

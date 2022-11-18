@@ -55,7 +55,7 @@ export const TransformationEditor = ({
       React.createElement(uiConfig.editor, {
         options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
         input,
-        onChange: (opts: any) => {
+        onChange: (opts) => {
           onChange(index, { id: config.transformation.id, options: opts });
         },
       }),

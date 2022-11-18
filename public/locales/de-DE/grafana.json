@@ -59,12 +59,6 @@
       "rows": "Gesamtanzahl an Zeilen",
       "table-title": "Statistiken"
     },
-    "refresh-picker": {
-      "off-arialabel": "Automatische Aktualisierung deaktivieren",
-      "off-description": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "off-label": "Aus",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
       "comments-show": "Dashboard-Kommentare anzeigen",
@@ -259,6 +253,9 @@
     "search": {
       "placeholder": "Grafana durchsuchen"
     },
+    "search-dashboards": {
+      "title": ""
+    },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
       "title": "Einstellungen"
@@ -307,12 +304,31 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
       "share": "Teilen",
+      "show-legend": "",
       "view": "Anzeigen"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
@@ -370,7 +386,8 @@
       "mistake-message": "Hast du einen Fehler gemacht? ",
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
-      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen."
+      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Einbetten",
@@ -413,13 +430,46 @@
       "title": "Absoluter Zeitbereich"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
       "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
     },
     "time-range": {
       "aria-role": "",
       "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -448,5 +498,14 @@
   },
   "user-sessions": {
     "loading": "Sitzungen werden geladen …"
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

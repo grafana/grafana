@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.16'
+grabpl_version = 'v3.0.17'
 build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -15,13 +15,6 @@ trigger_oss = {
     'repo': [
         'grafana/grafana',
     ]
-}
-trigger_storybook = {
-    'paths': {
-        'include': [
-            'packages/grafana-ui/**',
-        ],
-    }
 }
 
 
@@ -259,7 +252,7 @@ def build_storybook_step(edition, ver_mode):
             'yarn storybook:build',
             './bin/grabpl verify-storybook',
         ],
-        'when': trigger_storybook,
+        'when': get_trigger_storybook(ver_mode),
     }
 
 
@@ -281,13 +274,13 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     step = {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(edition),
+        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': commands,
-        'when': trigger_storybook,
+        'when': get_trigger_storybook(ver_mode),
     }
     if trigger and ver_mode in ("release-branch", "main"):
         # no dict merge operation available, https://github.com/harness/drone-cli/pull/220
@@ -731,6 +724,41 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         ],
     }
 
+def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false", trigger=None):
+    environment = {}
+    when = {}
+    if trigger:
+        when = trigger
+    if cloud == 'azure':
+        environment = {
+            'CYPRESS_CI': 'true',
+            'HOST': 'grafana-server' + enterprise2_suffix(edition),
+            'GITHUB_TOKEN': from_secret('github_token_pr'),
+            'AZURE_SP_APP_ID': from_secret('azure_sp_app_id'),
+            'AZURE_SP_PASSWORD': from_secret('azure_sp_app_pw'),
+            'AZURE_TENANT': from_secret('azure_tenant')
+        }
+        when= dict(when, paths={
+                'include' : [
+                    'pkg/tsdb/azuremonitor/**',
+                    'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
+                ]
+            })
+    branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
+    step = {
+        'name': 'end-to-end-tests-{}-{}'.format(suite, cloud) + enterprise2_suffix(edition),
+        'image': 'us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest',
+        'depends_on': [
+            'grafana-server',
+        ],
+        'environment': environment,
+        'commands': [
+            'cd /',
+            './cpp-e2e/scripts/ci-run.sh {} {}'.format(cloud, branch)
+        ],
+    }
+    step = dict(step, when=when)
+    return step
 
 def build_docs_website_step():
     return {
@@ -820,7 +848,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
-        cmd += ' --version-tag ${TAG}'
+        cmd += ' --version-tag ${DRONE_TAG}'
     else:
         deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
@@ -928,7 +956,7 @@ def release_canary_npm_packages_step(edition, trigger=None):
     step = {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': end_to_end_tests_deps(edition),
+        'depends_on': end_to_end_tests_deps(),
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -952,12 +980,12 @@ def upload_packages_step(edition, ver_mode, trigger=None):
         return None
 
     deps = []
-    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
+    if edition in 'enterprise2' or not end_to_end_tests_deps():
         deps.extend([
             'package' + enterprise2_suffix(edition),
         ])
     else:
-        deps.extend(end_to_end_tests_deps(edition))
+        deps.extend(end_to_end_tests_deps())
 
     step = {
         'name': 'upload-packages' + enterprise2_suffix(edition),
@@ -1222,14 +1250,14 @@ def artifacts_page_step():
         ],
     }
 
-def end_to_end_tests_deps(edition):
+def end_to_end_tests_deps():
     if disable_tests:
         return []
     return [
-        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-dashboards-suite',
+        'end-to-end-tests-panels-suite',
+        'end-to-end-tests-smoke-tests-suite',
+        'end-to-end-tests-various-suite',
     ]
 
 def compile_build_cmd(edition='oss'):
@@ -1247,3 +1275,19 @@ def compile_build_cmd(edition='oss'):
             'CGO_ENABLED': 0,
     },
 }
+
+def get_trigger_storybook(ver_mode):
+    trigger_storybook = ''
+    if ver_mode == 'release':
+        trigger_storybook = {
+            'event': ['tag']
+        }
+    else:
+        trigger_storybook = {
+            'paths': {
+                'include': [
+                    'packages/grafana-ui/**',
+                ],
+            }
+        }
+    return trigger_storybook

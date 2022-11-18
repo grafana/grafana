@@ -256,7 +256,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             showRoot={false}
             allowEmpty={true}
             initialTitle={props.value?.title}
-            initialFolderId={props.value?.id}
+            initialFolderUid={props.value?.uid}
             permissionLevel={PermissionLevelString.View}
             onClear={() => props.onChange('')}
             {...props}

@@ -13,6 +13,7 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
@@ -49,17 +50,13 @@ export function getAppRoutes(): RouteDescriptor[] {
           path: '/admin/access',
           component: () => <NavLandingPage navId="admin/access" />,
         },
-        {
-          path: '/a/:pluginId',
-          exact: true,
-          component: SafeDynamicImport(
-            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-          ),
-        },
       ]
     : [];
 
   return [
+    // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
+    // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
+    ...getAppPluginRoutes(),
     {
       path: '/',
       pageClass: 'page-dashboard',
@@ -220,14 +217,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     ...topnavRoutes,
-    {
-      path: '/a/:pluginId',
-      exact: false,
-      // Someday * and will get a ReactRouter under that path!
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-      ),
-    },
     {
       path: '/org',
       component: SafeDynamicImport(
@@ -550,6 +539,12 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
+    },
+    {
+      path: '/scenes/dashboard/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/dashboard/DashboardScenePage')
+      ),
     },
     {
       path: '/scenes/:name',

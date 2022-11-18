@@ -76,7 +76,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       showModal(SaveLibraryPanelModal, {
         isUnsavedPrompt: true,
         panel: dashboard.panelInEdit as PanelModelWithLibraryPanel,
-        folderId: dashboard.meta.folderId as number,
+        folderUid: dashboard.meta.folderUid ?? '',
         onConfirm: () => {
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);
@@ -201,8 +201,8 @@ export function hasChanges(current: DashboardModel, original: unknown) {
   const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelClone());
   const originalClean = cleanDashboardFromIgnoredChanges(original);
 
-  const currentTimepicker: any = find((currentClean as any).nav, { type: 'timepicker' });
-  const originalTimepicker: any = find((originalClean as any).nav, { type: 'timepicker' });
+  const currentTimepicker = find((currentClean as any).nav, { type: 'timepicker' });
+  const originalTimepicker = find((originalClean as any).nav, { type: 'timepicker' });
 
   if (currentTimepicker && originalTimepicker) {
     currentTimepicker.now = originalTimepicker.now;

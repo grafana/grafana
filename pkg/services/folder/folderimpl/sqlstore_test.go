@@ -6,15 +6,17 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationCreate(t *testing.T) {
@@ -24,7 +26,7 @@ func TestIntegrationCreate(t *testing.T) {
 	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
 
@@ -162,7 +164,7 @@ func TestIntegrationDelete(t *testing.T) {
 	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
 
@@ -210,7 +212,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
 
@@ -315,7 +317,7 @@ func TestIntegrationGet(t *testing.T) {
 	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
 
@@ -396,7 +398,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
 
@@ -460,7 +462,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	t.Skip("skipping until folder migration is merged")
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, *featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
 
@@ -583,7 +585,8 @@ func TestIntegrationGetChildren(t *testing.T) {
 func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
-	orgService := orgimpl.ProvideService(db, db.Cfg)
+	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
 	t.Cleanup(func() {

@@ -17,7 +17,9 @@ import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneObjectStatePlain } from '../core/types';
+import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
 export interface QueryRunnerState extends SceneObjectStatePlain {
   data?: PanelData;
@@ -31,12 +33,17 @@ export interface DataQueryExtended extends DataQuery {
 export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   private querySub?: Unsubscribable;
 
-  activate() {
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['queries'],
+    onReferencedVariableValueChanged: () => this.runQueries(),
+  });
+
+  public activate() {
     super.activate();
 
-    const timeRange = this.getTimeRange();
+    const timeRange = sceneGraph.getTimeRange(this);
 
-    this.subs.add(
+    this._subs.add(
       timeRange.subscribeToState({
         next: (timeRange) => {
           this.runWithTimeRange(timeRange);
@@ -49,7 +56,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     }
   }
 
-  deactivate(): void {
+  public deactivate(): void {
     super.deactivate();
 
     if (this.querySub) {
@@ -58,8 +65,8 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     }
   }
 
-  runQueries() {
-    const timeRange = this.getTimeRange();
+  public runQueries() {
+    const timeRange = sceneGraph.getTimeRange(this);
     this.runWithTimeRange(timeRange.state);
   }
 
