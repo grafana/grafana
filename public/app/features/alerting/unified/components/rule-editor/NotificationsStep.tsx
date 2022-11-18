@@ -5,8 +5,8 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
