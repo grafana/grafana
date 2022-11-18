@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
-// GetAnnotations returns annotations for a public dashboard
+// FindAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
 	pub, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
@@ -30,7 +30,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 	annoDto, err := UnmarshalDashboardAnnotations(dash.Data)
 	if err != nil {
-		return nil, err
+		return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to unmarshal dashboard annotations: %w", err)
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dash)
@@ -59,7 +59,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 		annotationItems, err := pd.AnnotationsRepo.Find(ctx, annoQuery)
 		if err != nil {
-			return nil, err
+			return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to find annotations: %w", err)
 		}
 
 		for _, item := range annotationItems {
@@ -131,7 +131,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	if len(metricReq.Queries) == 0 {
-		return nil, models.ErrNoPanelQueriesFound
+		return nil, models.ErrPanelQueriesNotFound.Errorf("GetQueryDataResponse: failed to extract queries from panel")
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
@@ -155,7 +155,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
 	if !ok {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
+		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequest: public dashboard panel not found")
 	}
 
 	ts := publicDashboard.BuildTimeSettings(dashboard)

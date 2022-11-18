@@ -16,9 +16,8 @@ import (
 // GET /api/public/dashboards/:accessToken
 func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
-
 	if !tokens.IsValidAccessToken(accessToken) {
-		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
 	}
 
 	pubdash, dash, err := api.PublicDashboardService.FindPublicDashboardAndDashboardByAccessToken(
@@ -26,7 +25,7 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 		accessToken,
 	)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "ViewPublicDashboard: failed to get public dashboard", err)
+		return response.Err(err)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -56,22 +55,22 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !tokens.IsValidAccessToken(accessToken) {
-		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+		return response.Err(ErrInvalidAccessToken.Errorf("QueryPublicDashboard: invalid access token"))
 	}
 
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: invalid panel ID", err)
+		return response.Err(ErrInvalidPanelId.Errorf("QueryPublicDashboard: error parsing panelId %v", err))
 	}
 
 	reqDTO := PublicDashboardQueryDTO{}
 	if err = web.Bind(c.Req, &reqDTO); err != nil {
-		return response.Error(http.StatusBadRequest, "QueryPublicDashboard: bad request data", err)
+		return response.Err(ErrBadRequest.Errorf("QueryPublicDashboard: error parsing request: %v", err))
 	}
 
 	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, accessToken)
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "QueryPublicDashboard: error running public dashboard panel queries", err)
+		return response.Err(err)
 	}
 
 	return toJsonStreamingResponse(api.Features, resp)
@@ -82,7 +81,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !tokens.IsValidAccessToken(accessToken) {
-		return response.Error(http.StatusBadRequest, "Invalid Access Token", nil)
+		return response.Err(ErrInvalidAccessToken.Errorf("GetAnnotations: invalid access token"))
 	}
 
 	reqDTO := AnnotationsQueryDTO{
@@ -91,9 +90,8 @@ func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
 	}
 
 	annotations, err := api.PublicDashboardService.FindAnnotations(c.Req.Context(), reqDTO, accessToken)
-
 	if err != nil {
-		return api.handleError(c.Req.Context(), http.StatusInternalServerError, "error getting public dashboard annotations", err)
+		return response.Err(err)
 	}
 
 	return response.JSON(http.StatusOK, annotations)
