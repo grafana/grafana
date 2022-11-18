@@ -41,9 +41,7 @@ Before you can create your first dashboard, you need to add your data source.
 
 1. Move the cursor over the data source you want to add.
 
-   {{< figure src="/static/img/docs/v75/select-data-source-7-5.png" max-width="700px" class="docs-image--no-shadow">}}
-
-1. Select **Select**.
+1. Click **Select**.
 
    This opens the data source configuration page.
 
