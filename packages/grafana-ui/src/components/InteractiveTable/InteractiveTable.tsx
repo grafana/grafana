@@ -37,15 +37,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
     &,
     & > button {
+      position: relative;
       white-space: nowrap;
       padding: ${theme.spacing(1)};
     }
     & > button {
-      position: absolute;
-      top: 0;
-      right: 0;
-      left: 0;
-      bottom: 0;
+      &:after {
+        content: '\\00a0';
+      }
+      width: 100%;
+      height: 100%;
       background: none;
       border: none;
       padding-right: ${theme.spacing(2.5)};
