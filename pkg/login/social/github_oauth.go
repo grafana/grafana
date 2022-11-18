@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	"golang.org/x/oauth2"
 )
 
@@ -32,10 +30,6 @@ var (
 	ErrMissingTeamMembership         = Error{"user not a member of one of the required teams"}
 	ErrMissingOrganizationMembership = Error{"user not a member of one of the required organizations"}
 )
-
-func (s *SocialGithub) Type() int {
-	return int(models.GITHUB)
-}
 
 func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	if len(s.teamIds) == 0 {

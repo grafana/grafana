@@ -65,6 +65,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqCo
 }
 
 func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqContext, topNavEnabled bool, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
+	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -82,7 +83,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 
 	for _, include := range plugin.Includes {
-		if !c.HasUserRole(include.Role) {
+		if !hasAccessToInclude(include) {
 			continue
 		}
 
@@ -169,6 +170,12 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 	appLink.Children = childrenWithoutDefault
 
+	s.addPluginToSection(c, treeRoot, plugin, appLink)
+
+	return nil
+}
+
+func (s *ServiceImpl) addPluginToSection(c *models.ReqContext, treeRoot *navtree.NavTreeRoot, plugin plugins.PluginDTO, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
 	sectionID := navtree.NavIDApps
@@ -176,9 +183,15 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	if navConfig, hasOverride := s.navigationAppConfig[plugin.ID]; hasOverride {
 		appLink.SortWeight = navConfig.SortWeight
 		sectionID = navConfig.SectionID
+
+		if len(navConfig.Text) > 0 {
+			appLink.Text = navConfig.Text
+		}
 	}
 
-	if navNode := treeRoot.FindById(sectionID); navNode != nil {
+	if sectionID == navtree.NavIDRoot {
+		treeRoot.AddSection(appLink)
+	} else if navNode := treeRoot.FindById(sectionID); navNode != nil {
 		navNode.Children = append(navNode.Children, appLink)
 	} else {
 		switch sectionID {
@@ -222,18 +235,34 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
 	}
+}
 
-	return nil
+func (s *ServiceImpl) hasAccessToInclude(c *models.ReqContext, pluginID string) func(include *plugins.Includes) bool {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	return func(include *plugins.Includes) bool {
+		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) &&
+			!s.accessControl.IsDisabled() && include.RequiresRBACAction()
+		if useRBAC && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
+			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
+				"plugin", pluginID,
+				"include", include.Name)
+			return false
+		} else if !useRBAC && !c.HasUserRole(include.Role) {
+			return false
+		}
+		return true
+	}
 }
 
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
-		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1},
-		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
-		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1},
-		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2},
-		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3},
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"},
+		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Synthetics"},
+		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
+		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
+		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
+		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

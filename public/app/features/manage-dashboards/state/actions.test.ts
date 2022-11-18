@@ -24,7 +24,7 @@ describe('importDashboard', () => {
       ],
       elements: [],
       folder: {
-        id: 1,
+        uid: '5v6e5VH4z',
         title: 'title',
       },
     };
@@ -64,7 +64,7 @@ describe('importDashboard', () => {
         title: 'Asda',
         uid: '12',
       },
-      folderId: 1,
+      folderUid: '5v6e5VH4z',
       inputs: [
         {
           name: 'ds-name',

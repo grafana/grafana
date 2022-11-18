@@ -110,6 +110,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           return getBackendSrv().fetch<PostResponse>({
             url: '/api/ds/query',
             method: 'POST',
+            headers: this.getRequestHeaders(),
             data: {
               from: options.range.from.valueOf().toString(),
               to: options.range.to.valueOf().toString(),
