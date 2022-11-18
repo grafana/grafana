@@ -51,7 +51,9 @@ func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 	if err := fileV1.mapContactPoint(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing contact points: %w", err)
 	}
-	fileV1.mapPolicies(&alertingFile)
+	if err := fileV1.mapPolicies(&alertingFile); err != nil {
+		return AlertingFile{}, fmt.Errorf("failure parsing policies: %w", err)
+	}
 	if err := fileV1.mapMuteTimes(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing mute times: %w", err)
 	}

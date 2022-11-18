@@ -1,9 +1,10 @@
 package alerting
 
 import (
-	"gopkg.in/yaml.v2"
 	"os"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/require"
 )
