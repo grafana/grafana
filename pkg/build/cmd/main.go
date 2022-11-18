@@ -162,6 +162,15 @@ func main() {
 			},
 		},
 		{
+			Name:   "upload-packages",
+			Usage:  "Upload Grafana packages",
+			Action: UploadPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+			},
+		},
+		{
 			Name:  "artifacts",
 			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
