@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
-	"github.com/grafana/grafana/pkg/services/userauth"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -207,7 +206,6 @@ type HTTPServer struct {
 	accesscontrolService   accesscontrol.Service
 	annotationsRepo        annotations.Repository
 	tagService             tag.Service
-	userAuthService        userauth.Service
 	oauthTokenService      oauthtoken.OAuthTokenService
 }
 
@@ -250,8 +248,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
-	userAuthService userauth.Service, queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service,
-	oauthTokenService oauthtoken.OAuthTokenService,
+	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -353,7 +350,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
-		userAuthService:              userAuthService,
 		QueryLibraryHTTPService:      queryLibraryHTTPService,
 		QueryLibraryService:          queryLibraryService,
 		oauthTokenService:            oauthTokenService,

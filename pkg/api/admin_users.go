@@ -239,13 +239,13 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.userAuthService.Delete(ctx, cmd.UserID); err != nil {
+		if err := hs.authInfoService.DeleteUserAuthInfo(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.userAuthService.DeleteToken(ctx, cmd.UserID); err != nil {
+		if err := hs.AuthTokenService.RevokeAllUserTokens(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
