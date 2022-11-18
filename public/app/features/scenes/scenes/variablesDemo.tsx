@@ -31,6 +31,7 @@ export function getVariablesDemo(): Scene {
           query: 'A.$server.*',
           value: 'pod',
           delayMs: 1000,
+          isMulti: true,
           text: '',
           options: [],
         }),
@@ -59,7 +60,7 @@ export function getVariablesDemo(): Scene {
             }),
             new SceneCanvasText({
               size: { width: '40%' },
-              text: 'server - pod: ${server} - ${pod}',
+              text: 'server: ${server} pod:${pod}',
               fontSize: 20,
               align: 'center',
             }),

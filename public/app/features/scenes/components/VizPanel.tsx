@@ -17,6 +17,7 @@ import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/impo
 
 import { getPanelOptionsWithDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
@@ -100,7 +101,7 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
   }
 
   public onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
-    const sceneTimeRange = this.getTimeRange();
+    const sceneTimeRange = sceneGraph.getTimeRange(this);
     sceneTimeRange.setState({
       raw: {
         from: toUtc(timeRange.from),
@@ -123,16 +124,17 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
 function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, options, fieldConfig, pluginId, pluginLoadError, $data, ...state } = model.useState();
   const [ref, { width, height }] = useMeasure();
-  const { data } = model.getData().useState();
   const plugin = model.getPlugin();
-  const layout = model.getLayout();
+  const { data } = sceneGraph.getData(model).useState();
+  const layout = sceneGraph.getLayout(model);
+
   const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
   const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
 
-  const titleInterpolated = model.interpolate(title);
+  const titleInterpolated = sceneGraph.interpolate(model, title);
 
   // Not sure we need to subscribe to this state
-  const timeZone = model.getTimeRange().state.timeZone;
+  const timeZone = sceneGraph.getTimeRange(model).state.timeZone;
 
   const dataWithOverrides = useFieldOverrides(plugin, fieldConfig, data, timeZone);
 

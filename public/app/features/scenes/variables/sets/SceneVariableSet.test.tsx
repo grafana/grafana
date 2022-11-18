@@ -72,7 +72,7 @@ describe('SceneVariableList', () => {
       C.signalUpdateCompleted();
 
       // When changing A should start B but not C (yet)
-      A.onSingleValueChange({ value: 'AB', text: 'AB' });
+      A.changeValueTo('AB');
 
       expect(B.state.loading).toBe(true);
       expect(C.state.loading).toBe(false);
@@ -125,7 +125,7 @@ describe('SceneVariableList', () => {
         expect((sceneObjectWithVariable as any)._renderCount).toBe(2);
 
         act(() => {
-          B.onSingleValueChange({ value: 'B', text: 'B' });
+          B.changeValueTo('B');
         });
 
         expect(screen.getByText('AA - B')).toBeInTheDocument();
