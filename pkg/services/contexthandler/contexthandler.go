@@ -449,20 +449,14 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		return false
 	}
 
-	getTime := h.GetTime
-	if getTime == nil {
-		getTime = time.Now
-	}
-
 	if h.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
 		// Check whether the logged in User has a token (whether the User used an OAuth provider to login)
 		oauthToken, exists, _ := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 		if exists {
-			// Skip where the OAuthExpiry is default/zero/unset
-			if !oauthToken.OAuthExpiry.IsZero() && oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {
+			if h.hasAccessTokenExpired(oauthToken) {
 				reqContext.Logger.Info("access token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
 
-				// If the User doesn't have a refresh_token or refreshing the token was unsuccessful then log out the User and Invalidate the OAuth tokens
+				// If the User doesn't have a refresh_token or refreshing the token was unsuccessful then log out the User and invalidate the OAuth tokens
 				if err = h.oauthTokenService.TryTokenRefresh(ctx, oauthToken); err != nil {
 					if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
 						reqContext.Logger.Error("could not fetch a new access token", "userId", oauthToken.UserId, "error", err)
@@ -731,4 +725,17 @@ func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
 		return list
 	}
 	return nil
+}
+
+func (h *ContextHandler) hasAccessTokenExpired(token *models.UserAuth) bool {
+	if token.OAuthExpiry.IsZero() {
+		return false
+	}
+
+	getTime := h.GetTime
+	if getTime == nil {
+		getTime = time.Now
+	}
+
+	return token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime())
 }
