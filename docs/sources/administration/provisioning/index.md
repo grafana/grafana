@@ -38,6 +38,8 @@ configuration.
 Example:
 
 ```yaml
+apiVersion: 1
+
 datasources:
   - name: Graphite
     url: http://localhost:$PORT
