@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 
 	"github.com/google/go-github/v45/github"
@@ -43,6 +42,9 @@ type CommentService interface {
 }
 
 type ChecksService interface {
+	CreateCheckRun(ctx context.Context, owner, repo string, opts github.CreateCheckRunOptions) (*github.CheckRun, *github.Response, error)
+	GetCheckRun(ctx context.Context, owner, repo string, checkRunID int64) (*github.CheckRun, *github.Response, error)
+	UpdateCheckRun(ctx context.Context, owner, repo string, checkRunID int64, opts github.UpdateCheckRunOptions) (*github.CheckRun, *github.Response, error)
 }
 
 // NewGitHubClient creates a new Client using the provided GitHub token if not empty.
@@ -67,9 +69,9 @@ func PRCheckRegexp() *regexp.Regexp {
 	return reBranch
 }
 
-func AddLabelToPR(ctx context.Context, client LabelsService, pr int, newLabel string) error {
+func AddLabelToPR(ctx context.Context, client LabelsService, prID int, newLabel string) error {
 	// Check existing labels
-	labels, _, err := client.ListLabelsByIssue(ctx, RepoOwner, OSSRepo, pr, nil)
+	labels, _, err := client.ListLabelsByIssue(ctx, RepoOwner, OSSRepo, prID, nil)
 	if err != nil {
 		return err
 	}
@@ -83,7 +85,7 @@ func AddLabelToPR(ctx context.Context, client LabelsService, pr int, newLabel st
 
 		// Delete existing "enterprise-xx" labels
 		if stringutil.Contains(EnterpriseCheckLabels, *label.Name) {
-			_, err := client.RemoveLabelForIssue(ctx, RepoOwner, OSSRepo, pr, *label.Name)
+			_, err := client.RemoveLabelForIssue(ctx, RepoOwner, OSSRepo, prID, *label.Name)
 			if err != nil {
 				return err
 			}
@@ -95,7 +97,7 @@ func AddLabelToPR(ctx context.Context, client LabelsService, pr int, newLabel st
 		return nil
 	}
 
-	_, _, err = client.AddLabelsToIssue(ctx, RepoOwner, OSSRepo, pr, []string{newLabel})
+	_, _, err = client.AddLabelsToIssue(ctx, RepoOwner, OSSRepo, prID, []string{newLabel})
 	if err != nil {
 		return err
 	}
@@ -113,16 +115,11 @@ func DeleteEnterpriseBranch(ctx context.Context, client GitService, branchName s
 	return nil
 }
 
-func CreateEnterpriseBuildCheck(ctx context.Context, client *github.Client, sha string, pr int) (*github.CheckRun, error) {
-	droneLink, ok := os.LookupEnv("DRONE_BUILD_LINK")
-	if !ok {
-		return nil, ErrorNoDroneBuildLink
-	}
-
-	check, _, err := client.Checks.CreateCheckRun(ctx, RepoOwner, OSSRepo, github.CreateCheckRunOptions{
+func CreateEnterpriseBuildCheck(ctx context.Context, client ChecksService, sha string, link string) (*github.CheckRun, error) {
+	check, _, err := client.CreateCheckRun(ctx, RepoOwner, OSSRepo, github.CreateCheckRunOptions{
 		Name:       EnterpriseCheckName,
 		HeadSHA:    sha,
-		DetailsURL: github.String(droneLink),
+		DetailsURL: github.String(link),
 		Status:     github.String("in_progress"),
 	})
 
@@ -133,15 +130,28 @@ func CreateEnterpriseBuildCheck(ctx context.Context, client *github.Client, sha 
 	return check, nil
 }
 
-func UpdateEnterpriseBuildCheck(ctx context.Context, client *github.Client, pr int, status int) error {
+func UpdateEnterpriseBuildCheck(ctx context.Context, client ChecksService, checkID int64, status string) error {
+	check, _, err := client.GetCheckRun(ctx, RepoOwner, OSSRepo, checkID)
+	if err != nil {
+		return err
+	}
+
+	if _, _, err := client.UpdateCheckRun(ctx, RepoOwner, OSSRepo, checkID, github.UpdateCheckRunOptions{
+		Name:       *check.Name,
+		DetailsURL: check.DetailsURL,
+		Status:     github.String("completed"),
+		Conclusion: github.String(status),
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func CreateEnterpriseBuildFailedComment(ctx context.Context, client CommentService, prNumber int) error {
-	droneLink, _ := os.LookupEnv("DRONE_BUILD_LINK")
-	body := fmt.Sprintf("Drone build failed: %s", droneLink)
+func CreateEnterpriseBuildFailedComment(ctx context.Context, client CommentService, link string, prID int) error {
+	body := fmt.Sprintf("Drone build failed: %s", link)
 
-	_, _, err := client.CreateComment(ctx, RepoOwner, OSSRepo, prNumber, &github.IssueComment{
+	_, _, err := client.CreateComment(ctx, RepoOwner, OSSRepo, prID, &github.IssueComment{
 		Body: &body,
 	})
 	if err != nil {
