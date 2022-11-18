@@ -53,27 +53,27 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 			now: func() time.Time { return mockTime },
 		}
 
-		err := s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
+		err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusOneMinute
-		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusTwoMinutes
-		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
-		count, err := s.GetUserLoginAttemptCount(context.Background(), &test.Query)
+		count, err := s.GetUserLoginAttemptCount(context.Background(), test.Query)
 		require.Equal(t, test.Err, err, test.Name)
 		require.Equal(t, test.Result, count, test.Name)
 	}
@@ -118,27 +118,27 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 			now: func() time.Time { return mockTime },
 		}
 
-		err := s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
+		err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusOneMinute
-		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusTwoMinutes
-		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
-		deletedRows, err := s.DeleteOldLoginAttempts(context.Background(), &test.Cmd)
+		deletedRows, err := s.DeleteOldLoginAttempts(context.Background(), test.Cmd)
 		require.Equal(t, test.Err, err, test.Name)
 		require.Equal(t, test.DeletedRows, deletedRows, test.Name)
 	}
