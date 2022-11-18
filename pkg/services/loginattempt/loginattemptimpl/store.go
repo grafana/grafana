@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 )
 
 type xormStore struct {
@@ -15,14 +15,14 @@ type xormStore struct {
 }
 
 type store interface {
-	CreateLoginAttempt(context.Context, *models.CreateLoginAttemptCommand) error
-	DeleteOldLoginAttempts(context.Context, *models.DeleteOldLoginAttemptsCommand) error
-	GetUserLoginAttemptCount(context.Context, *models.GetUserLoginAttemptCountQuery) error
+	CreateLoginAttempt(context.Context, *loginattempt.CreateLoginAttemptCommand) error
+	DeleteOldLoginAttempts(context.Context, *loginattempt.DeleteOldLoginAttemptsCommand) error
+	GetUserLoginAttemptCount(context.Context, *loginattempt.GetUserLoginAttemptCountQuery) error
 }
 
-func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *loginattempt.CreateLoginAttemptCommand) error {
 	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		loginAttempt := models.LoginAttempt{
+		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
 			Created:   xs.now().Unix(),
@@ -38,7 +38,7 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateL
 	})
 }
 
-func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
+func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattempt.DeleteOldLoginAttemptsCommand) error {
 	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var maxId int64
 		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
@@ -69,9 +69,9 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *models.Del
 	})
 }
 
-func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
+func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *loginattempt.GetUserLoginAttemptCountQuery) error {
 	return xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		loginAttempt := new(models.LoginAttempt)
+		loginAttempt := new(loginattempt.LoginAttempt)
 		total, err := dbSession.
 			Where("username = ?", query.Username).
 			And("created >= ?", query.Since.Unix()).

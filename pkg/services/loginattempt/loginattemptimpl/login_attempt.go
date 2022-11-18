@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 )
 
@@ -19,7 +18,7 @@ func ProvideService(db db.DB) loginattempt.Service {
 	}
 }
 
-func (s *Service) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+func (s *Service) CreateLoginAttempt(ctx context.Context, cmd *loginattempt.CreateLoginAttemptCommand) error {
 	err := s.store.CreateLoginAttempt(ctx, cmd)
 	if err != nil {
 		return err
@@ -27,7 +26,7 @@ func (s *Service) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLogi
 	return nil
 }
 
-func (s *Service) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
+func (s *Service) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattempt.DeleteOldLoginAttemptsCommand) error {
 	err := s.store.DeleteOldLoginAttempts(ctx, cmd)
 	if err != nil {
 		return err
@@ -35,7 +34,7 @@ func (s *Service) DeleteOldLoginAttempts(ctx context.Context, cmd *models.Delete
 	return nil
 }
 
-func (s *Service) GetUserLoginAttemptCount(ctx context.Context, cmd *models.GetUserLoginAttemptCountQuery) error {
+func (s *Service) GetUserLoginAttemptCount(ctx context.Context, cmd *loginattempt.GetUserLoginAttemptCountQuery) error {
 	err := s.store.GetUserLoginAttemptCount(ctx, cmd)
 	if err != nil {
 		return err

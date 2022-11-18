@@ -244,7 +244,7 @@ func (srv *CleanUpService) deleteOldLoginAttemptsWithoutLock(ctx context.Context
 		return
 	}
 
-	cmd := models.DeleteOldLoginAttemptsCommand{
+	cmd := loginattempt.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
 	if err := srv.loginAttemptService.DeleteOldLoginAttempts(ctx, &cmd); err != nil {

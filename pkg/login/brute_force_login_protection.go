@@ -18,7 +18,7 @@ var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQue
 		return nil
 	}
 
-	loginAttemptCountQuery := models.GetUserLoginAttemptCountQuery{
+	loginAttemptCountQuery := loginattempt.GetUserLoginAttemptCountQuery{
 		Username: query.Username,
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
@@ -39,7 +39,7 @@ var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQ
 		return nil
 	}
 
-	loginAttemptCommand := models.CreateLoginAttemptCommand{
+	loginAttemptCommand := loginattempt.CreateLoginAttemptCommand{
 		Username:  query.Username,
 		IpAddress: query.IpAddress,
 	}
