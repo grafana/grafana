@@ -372,6 +372,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		req.httpRequest = reqDTO.HTTPRequest
 	}
 
+	_ = req.validateRequest()
 	return req, nil // TODO req.validateRequest()
 }
 
