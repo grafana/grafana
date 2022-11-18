@@ -461,23 +461,34 @@ func TestValidate(t *testing.T) {
 			name:  "fail if datasource is not backend one",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
-				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+				dsQuery1 := models.GenerateAlertQuery()
+				dsQuery2 := models.GenerateAlertQuery()
+				ds1 := &datasources.DataSource{
+					Uid:  dsQuery1.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
-				services.cache.DataSources = append(services.cache.DataSources, ds)
+				ds2 := &datasources.DataSource{
+					Uid:  dsQuery2.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds1, ds2)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
 					JSONData: plugins.JSONData{
-						ID:      ds.Type,
+						ID:      ds1.Type,
 						Backend: false,
+					},
+				}, plugins.PluginDTO{
+					JSONData: plugins.JSONData{
+						ID:      ds2.Type,
+						Backend: true,
 					},
 				})
 				// do not update the plugin store
 				return models.Condition{
-					Condition: dsQuery.RefID,
+					Condition: dsQuery1.RefID,
 					Data: []models.AlertQuery{
-						dsQuery,
+						dsQuery1,
+						dsQuery2,
 					},
 				}
 			},
