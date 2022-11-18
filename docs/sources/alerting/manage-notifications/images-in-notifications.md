@@ -88,8 +88,8 @@ Include images from URL refers to using the external image store.
 Grafana provides the following metrics to observe the performance and failure rate of images in notifications.
 For example, if a screenshot could not be taken within the expected time (10 seconds) then the counter `grafana_screenshot_failures_total` is updated.
 
-- `grafana_screenshot_cache_hits_total`
-- `grafana_screenshot_cache_misses_total`
+- `grafana_alerting_image_cache_hits_total`
+- `grafana_alerting_image_cache_misses_total`
 - `grafana_screenshot_duration_seconds`
 - `grafana_screenshot_failures_total`
 - `grafana_screenshot_successes_total`
