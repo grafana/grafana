@@ -270,7 +270,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
+		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "help")
 		if err != nil {
 			return response.Error(501, "Could not get markdown file", err)
 		}

@@ -3,20 +3,30 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "iteration": 1573479899663,
+  "id": 147,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "alert": {
@@ -24,11 +34,17 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [177],
+              "params": [
+                177
+              ],
               "type": "gt"
             },
             "query": {
-              "params": ["A", "5m", "now"]
+              "params": [
+                "A",
+                "5m",
+                "now"
+              ]
             },
             "reducer": {
               "params": [],
@@ -50,9 +66,18 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -78,9 +103,10 @@
       "links": [],
       "nullPointMode": "connected",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -90,6 +116,10 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
           "refId": "A",
           "scenario": "random_walk",
           "scenarioId": "csv_metric_values",
@@ -106,9 +136,7 @@
           "value": 177
         }
       ],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Always Alerting",
       "tooltip": {
         "msResolution": false,
@@ -118,9 +146,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -129,7 +155,6 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
@@ -137,14 +162,11 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -153,14 +175,20 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [100],
+              "params": [
+                100
+              ],
               "type": "gt"
             },
             "operator": {
               "type": "and"
             },
             "query": {
-              "params": ["A", "5m", "now"]
+              "params": [
+                "A",
+                "5m",
+                "now"
+              ]
             },
             "reducer": {
               "params": [],
@@ -181,9 +209,18 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -209,7 +246,7 @@
       "links": [],
       "nullPointMode": "connected",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
       "pointradius": 5,
@@ -221,6 +258,10 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
           "refId": "A",
           "scenario": "random_walk",
           "scenarioId": "csv_metric_values",
@@ -237,9 +278,7 @@
           "value": 100
         }
       ],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Always Pending with For",
       "tooltip": {
         "msResolution": false,
@@ -249,9 +288,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -260,7 +297,6 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
@@ -268,21 +304,18 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
-      "dashboardFilter": "",
-      "dashboardTags": [],
-      "datasource": null,
-      "folderId": null,
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 20,
         "w": 4,
@@ -290,16 +323,15 @@
         "y": 0
       },
       "id": 9,
-      "limit": 10,
-      "links": [],
-      "nameFilter": "$namefilter",
-      "onlyAlertsOnDashboard": false,
-      "options": {},
-      "show": "current",
-      "sortOrder": 1,
-      "stateFilter": [],
-      "timeFrom": null,
-      "timeShift": null,
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Alert list",
       "type": "alertlist"
     },
@@ -309,14 +341,20 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [177],
+              "params": [
+                177
+              ],
               "type": "gt"
             },
             "operator": {
               "type": "and"
             },
             "query": {
-              "params": ["A", "15m", "now"]
+              "params": [
+                "A",
+                "15m",
+                "now"
+              ]
             },
             "reducer": {
               "params": [],
@@ -337,9 +375,18 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -365,9 +412,10 @@
       "links": [],
       "nullPointMode": "connected",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -377,6 +425,10 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
           "refId": "A",
           "scenario": "random_walk",
           "scenarioId": "csv_metric_values",
@@ -393,9 +445,7 @@
           "value": 177
         }
       ],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Always Alerting with For",
       "tooltip": {
         "msResolution": false,
@@ -405,9 +455,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -416,7 +464,6 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
@@ -424,14 +471,11 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -439,11 +483,17 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [60],
+              "params": [
+                60
+              ],
               "type": "gt"
             },
             "query": {
-              "params": ["A", "5m", "now"]
+              "params": [
+                "A",
+                "5m",
+                "now"
+              ]
             },
             "reducer": {
               "params": [],
@@ -463,9 +513,18 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -491,9 +550,10 @@
       "links": [],
       "nullPointMode": "connected",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -503,6 +563,10 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
           "refId": "A",
           "scenario": "random_walk",
           "scenarioId": "csv_metric_values",
@@ -519,9 +583,7 @@
           "value": 60
         }
       ],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Always OK",
       "tooltip": {
         "msResolution": false,
@@ -531,9 +593,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -548,16 +608,12 @@
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -565,14 +621,20 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [1],
+              "params": [
+                1
+              ],
               "type": "gt"
             },
             "operator": {
               "type": "and"
             },
             "query": {
-              "params": ["A", "15m", "now"]
+              "params": [
+                "A",
+                "15m",
+                "now"
+              ]
             },
             "reducer": {
               "params": [],
@@ -593,9 +655,18 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "editable": true,
       "error": false,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -621,9 +692,10 @@
       "links": [],
       "nullPointMode": "connected",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -633,6 +705,10 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
           "refId": "A",
           "scenario": "random_walk",
           "scenarioId": "no_data_points",
@@ -649,9 +725,7 @@
           "value": 1
         }
       ],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "No data",
       "tooltip": {
         "msResolution": false,
@@ -661,9 +735,7 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -672,7 +744,6 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
@@ -680,25 +751,23 @@
           "format": "short",
           "label": "",
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     }
   ],
-  "revision": 2,
-  "schemaVersion": 21,
+  "schemaVersion": 37,
   "style": "dark",
-  "tags": ["gdev", "alerting"],
+  "tags": [
+    "gdev",
+    "alerting"
+  ],
   "templating": {
     "list": [
       {
-        "allValue": null,
         "current": {
           "text": "TestData",
           "value": "TestData"
@@ -736,11 +805,33 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "browser",
   "title": "Alerting with TestData",
   "uid": "7MeksYbmk",
-  "version": 3
+  "version": 1,
+  "weekStart": ""
 }

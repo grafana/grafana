@@ -2,17 +2,10 @@ import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { AGGREGATE_FNS } from 'app/features/plugins/sql/constants';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import {
-  DB,
-  LanguageCompletionProvider,
-  ResponseParser,
-  SQLQuery,
-  SQLSelectableValue,
-} from 'app/features/plugins/sql/types';
+import { DB, LanguageCompletionProvider, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
 
 import { getSchema, showDatabases, getSchemaAndName } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
-import { MSSqlResponseParser } from './response_parser';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
 import { MssqlOptions } from './types';
@@ -25,10 +18,6 @@ export class MssqlDatasource extends SqlDatasource {
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MSSqlQueryModel {
     return new MSSqlQueryModel(target, templateSrv, scopedVars);
-  }
-
-  getResponseParser(): ResponseParser {
-    return new MSSqlResponseParser();
   }
 
   async fetchDatasets(): Promise<string[]> {
@@ -72,6 +61,9 @@ export class MssqlDatasource extends SqlDatasource {
   }
 
   getDB(): DB {
+    if (this.db !== undefined) {
+      return this.db;
+    }
     return {
       init: () => Promise.resolve(true),
       datasets: () => this.fetchDatasets(),

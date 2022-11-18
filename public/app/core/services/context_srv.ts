@@ -83,7 +83,7 @@ export class ContextSrv {
   async fetchUserPermissions() {
     try {
       if (this.accessControlEnabled()) {
-        this.user.permissions = await getBackendSrv().get('/api/access-control/user/permissions', {
+        this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
           reloadcache: true,
         });
       }

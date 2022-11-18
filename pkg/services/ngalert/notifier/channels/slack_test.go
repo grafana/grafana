@@ -64,7 +64,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -75,7 +74,7 @@ func TestSlackNotifier(t *testing.T) {
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 						Color:      "#D63232",
 						Ts:         0,
 					},
@@ -100,7 +99,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -111,7 +109,7 @@ func TestSlackNotifier(t *testing.T) {
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 						Color:      "#D63232",
 						Ts:         0,
 					},
@@ -136,7 +134,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -147,7 +144,7 @@ func TestSlackNotifier(t *testing.T) {
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 						Color:      "#D63232",
 						Ts:         0,
 						ImageURL:   "https://www.example.com/image.jpg",
@@ -180,7 +177,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "2 firing, 0 resolved",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -191,7 +187,7 @@ func TestSlackNotifier(t *testing.T) {
 						Fallback:   "2 firing, 0 resolved",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 						Color:      "#D63232",
 						Ts:         0,
 					},
@@ -229,7 +225,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -240,7 +235,7 @@ func TestSlackNotifier(t *testing.T) {
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
-						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 						Color:      "#D63232",
 						Ts:         0,
 					},
