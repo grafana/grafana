@@ -146,7 +146,6 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 			matches = append(matches, EvalMatch{
 				Metric: "NoData",
 			})
-			noDataFound = true
 		}
 
 		firingCount = 0

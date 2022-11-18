@@ -504,7 +504,6 @@ func TestConditionsCmd(t *testing.T) {
 			return newResults(v)
 		},
 	}, {
-		// TODO: NoData behavior is different if the last condition is no data
 		name: "two queries with two conditions using and operator and last is No Data",
 		vars: mathexp.Vars{
 			"A": mathexp.Results{
@@ -531,7 +530,7 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
+			v := newNumber(ptr.Float64(0))
 			v.SetMeta([]EvalMatch{{Value: ptr.Float64(5)}, {Metric: "NoData"}})
 			return newResults(v)
 		},
