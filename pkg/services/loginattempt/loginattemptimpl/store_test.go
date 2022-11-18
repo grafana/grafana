@@ -15,7 +15,6 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var loginAttemptService loginattempt.Service
 	user := "user"
 
 	beginningOfTime := time.Date(2017, 10, 22, 8, 0, 0, 0, time.Local)
@@ -24,56 +23,58 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 
 	for _, test := range []struct {
 		Name   string
-		Query  loginattempt.GetUserLoginAttemptCountQuery
+		Query  GetUserLoginAttemptCountQuery
 		Err    error
 		Result int64
 	}{
 		{
 			"Should return a total count of zero login attempts when comparing since beginning of time + 2min and 1s",
-			loginattempt.GetUserLoginAttemptCountQuery{Username: user, Since: timePlusTwoMinutes.Add(time.Second * 1)}, nil, 0,
+			GetUserLoginAttemptCountQuery{Username: user, Since: timePlusTwoMinutes.Add(time.Second * 1)}, nil, 0,
 		},
 		{
 			"Should return a total count of zero login attempts when comparing since beginning of time + 2min and 1s",
-			loginattempt.GetUserLoginAttemptCountQuery{Username: user, Since: timePlusTwoMinutes.Add(time.Second * 1)}, nil, 0,
+			GetUserLoginAttemptCountQuery{Username: user, Since: timePlusTwoMinutes.Add(time.Second * 1)}, nil, 0,
 		},
 		{
 			"Should return the total count of login attempts since beginning of time",
-			loginattempt.GetUserLoginAttemptCountQuery{Username: user, Since: beginningOfTime}, nil, 3,
+			GetUserLoginAttemptCountQuery{Username: user, Since: beginningOfTime}, nil, 3,
 		},
 		{
 			"Should return the total count of login attempts since beginning of time + 1min",
-			loginattempt.GetUserLoginAttemptCountQuery{Username: user, Since: timePlusOneMinute}, nil, 2,
+			GetUserLoginAttemptCountQuery{Username: user, Since: timePlusOneMinute}, nil, 2,
 		},
 		{
 			"Should return the total count of login attempts since beginning of time + 2min",
-			loginattempt.GetUserLoginAttemptCountQuery{Username: user, Since: timePlusTwoMinutes}, nil, 1,
+			GetUserLoginAttemptCountQuery{Username: user, Since: timePlusTwoMinutes}, nil, 1,
 		},
 	} {
 		mockTime := beginningOfTime
-		loginAttemptService = &Service{
-			store: &xormStore{
-				db:  db.InitTestDB(t),
-				now: func() time.Time { return mockTime },
-			},
+		s := &xormStore{
+			db:  db.InitTestDB(t),
+			now: func() time.Time { return mockTime },
 		}
-		err := loginAttemptService.CreateLoginAttempt(context.Background(), &loginattempt.CreateLoginAttemptCommand{
+
+		err := s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
+
 		mockTime = timePlusOneMinute
-		err = loginAttemptService.CreateLoginAttempt(context.Background(), &loginattempt.CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
+
 		mockTime = timePlusTwoMinutes
-		err = loginAttemptService.CreateLoginAttempt(context.Background(), &loginattempt.CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
-		err = loginAttemptService.GetUserLoginAttemptCount(context.Background(), &test.Query)
+
+		err = s.GetUserLoginAttemptCount(context.Background(), &test.Query)
 		require.Equal(t, test.Err, err, test.Name)
 		require.Equal(t, test.Result, test.Query.Result, test.Name)
 	}
@@ -83,7 +84,6 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var loginAttemptService loginattempt.Service
 	user := "user"
 
 	beginningOfTime := time.Date(2017, 10, 22, 8, 0, 0, 0, time.Local)
@@ -114,30 +114,32 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 		},
 	} {
 		mockTime := beginningOfTime
-		loginAttemptService = &Service{
-			store: &xormStore{
-				db:  db.InitTestDB(t),
-				now: func() time.Time { return mockTime },
-			},
+		s := &xormStore{
+			db:  db.InitTestDB(t),
+			now: func() time.Time { return mockTime },
 		}
-		err := loginAttemptService.CreateLoginAttempt(context.Background(), &loginattempt.CreateLoginAttemptCommand{
+
+		err := s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
+
 		mockTime = timePlusOneMinute
-		err = loginAttemptService.CreateLoginAttempt(context.Background(), &loginattempt.CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
+
 		mockTime = timePlusTwoMinutes
-		err = loginAttemptService.CreateLoginAttempt(context.Background(), &loginattempt.CreateLoginAttemptCommand{
+		err = s.CreateLoginAttempt(context.Background(), &CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
-		err = loginAttemptService.DeleteOldLoginAttempts(context.Background(), &test.Cmd)
+
+		err = s.DeleteOldLoginAttempts(context.Background(), &test.Cmd)
 		require.Equal(t, test.Err, err, test.Name)
 		require.Equal(t, test.DeletedRows, test.Cmd.DeletedRows, test.Name)
 	}

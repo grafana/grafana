@@ -15,12 +15,12 @@ type xormStore struct {
 }
 
 type store interface {
-	CreateLoginAttempt(context.Context, *loginattempt.CreateLoginAttemptCommand) error
+	CreateLoginAttempt(context.Context, *CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(context.Context, *loginattempt.DeleteOldLoginAttemptsCommand) error
-	GetUserLoginAttemptCount(context.Context, *loginattempt.GetUserLoginAttemptCountQuery) error
+	GetUserLoginAttemptCount(context.Context, *GetUserLoginAttemptCountQuery) error
 }
 
-func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *loginattempt.CreateLoginAttemptCommand) error {
+func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *CreateLoginAttemptCommand) error {
 	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
@@ -69,7 +69,7 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattem
 	})
 }
 
-func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *loginattempt.GetUserLoginAttemptCountQuery) error {
+func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) error {
 	return xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		loginAttempt := new(loginattempt.LoginAttempt)
 		total, err := dbSession.

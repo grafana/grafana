@@ -31,12 +31,10 @@ func (s *Service) RecordAttempt(ctx context.Context, username, IPAddress string)
 		return nil
 	}
 
-	loginAttemptCommand := loginattempt.CreateLoginAttemptCommand{
+	return s.store.CreateLoginAttempt(ctx, &CreateLoginAttemptCommand{
 		Username:  username,
 		IpAddress: IPAddress,
-	}
-
-	return s.store.CreateLoginAttempt(ctx, &loginAttemptCommand)
+	})
 }
 
 func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, error) {
@@ -44,7 +42,7 @@ func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, 
 		return true, nil
 	}
 
-	loginAttemptCountQuery := loginattempt.GetUserLoginAttemptCountQuery{
+	loginAttemptCountQuery := GetUserLoginAttemptCountQuery{
 		Username: username,
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
