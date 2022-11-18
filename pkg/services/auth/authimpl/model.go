@@ -1,10 +1,9 @@
-package auth
+package authimpl
 
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/auth"
 )
 
 type userAuthToken struct {
@@ -23,13 +22,13 @@ type userAuthToken struct {
 	UnhashedToken string `xorm:"-"`
 }
 
-func userAuthTokenFromUserToken(ut *models.UserToken) (*userAuthToken, error) {
+func userAuthTokenFromUserToken(ut *auth.UserToken) (*userAuthToken, error) {
 	var uat userAuthToken
 	err := uat.fromUserToken(ut)
 	return &uat, err
 }
 
-func (uat *userAuthToken) fromUserToken(ut *models.UserToken) error {
+func (uat *userAuthToken) fromUserToken(ut *auth.UserToken) error {
 	if uat == nil {
 		return fmt.Errorf("needs pointer to userAuthToken struct")
 	}
@@ -51,7 +50,7 @@ func (uat *userAuthToken) fromUserToken(ut *models.UserToken) error {
 	return nil
 }
 
-func (uat *userAuthToken) toUserToken(ut *models.UserToken) error {
+func (uat *userAuthToken) toUserToken(ut *auth.UserToken) error {
 	if uat == nil {
 		return fmt.Errorf("needs pointer to userAuthToken struct")
 	}
@@ -72,8 +71,3 @@ func (uat *userAuthToken) toUserToken(ut *models.UserToken) error {
 
 	return nil
 }
-
-const (
-	QuotaTargetSrv quota.TargetSrv = "auth"
-	QuotaTarget    quota.Target    = "session"
-)
