@@ -1,12 +1,12 @@
 import {
   render,
-  act,
   waitFor,
   screen,
   fireEvent,
   waitForElementToBeRemoved,
   within,
   Matcher,
+  act,
 } from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
@@ -260,7 +260,6 @@ beforeAll(() => {
 
 afterAll(() => {
   jest.restoreAllMocks();
-  // TODO: destroy QueryRunner? Unsubscribe?
 });
 
 describe('CorrelationsPage', () => {
@@ -314,7 +313,7 @@ describe('CorrelationsPage', () => {
       expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
     });
 
-    it('correctly adds correlations', async () => {
+    it('validates query and correctly adds first correlation', async () => {
       const CTAButton = screen.getByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -339,13 +338,13 @@ describe('CorrelationsPage', () => {
       await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       // check query validation button and messages
-      // fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-      // expect(screen.getByText('This query is valid.')).toBeInTheDocument();
-
-      // emit.subscriber({state: 'Done'})
-      expect(screen.getByRole('button', { name: /Validate query$/i }));
       fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-      // expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
+
+      act(() => {
+        emit!.subscriber!.destination.next({ state: 'Error' });
+      });
+      expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
+
       act(() => {
         emit!.subscriber!.destination.next({ state: 'Done' });
       });
@@ -457,7 +456,7 @@ describe('CorrelationsPage', () => {
       });
     });
 
-    it('correctly adds correlations', async () => {
+    it('correctly adds new correlation', async () => {
       const addNewButton = screen.getByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       fireEvent.click(addNewButton);
