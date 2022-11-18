@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
+const cookieHeaderName = "Cookie"
+
 // NewCookiesMiddleware creates a new plugins.ClientMiddleware that will
 // forward incoming HTTP request Cookies to outgoing plugins.Client and
 // HTTP requests if the datasource has enabled forwarding of cookies (keepCookies).
@@ -52,14 +54,14 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 
 	proxyutil.ClearCookieHeader(reqCtx.Req, ds.AllowedCookies(), m.skipCookiesNames)
 
-	if cookieStr := reqCtx.Req.Header.Get("Cookie"); cookieStr != "" {
+	if cookieStr := reqCtx.Req.Header.Get(cookieHeaderName); cookieStr != "" {
 		switch t := req.(type) {
 		case *backend.QueryDataRequest:
-			t.Headers["Cookie"] = cookieStr
+			t.Headers[cookieHeaderName] = cookieStr
 		case *backend.CheckHealthRequest:
-			t.Headers["Cookie"] = cookieStr
+			t.Headers[cookieHeaderName] = cookieStr
 		case *backend.CallResourceRequest:
-			t.Headers["Cookie"] = []string{cookieStr}
+			t.Headers[cookieHeaderName] = []string{cookieStr}
 		}
 	}
 

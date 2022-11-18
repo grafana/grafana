@@ -156,7 +156,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.QueryDataReq)
 			require.Len(t, cdt.QueryDataReq.Headers, 2)
 			require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
-			require.EqualValues(t, "cookie2=", cdt.QueryDataReq.Headers["Cookie"])
+			require.EqualValues(t, "cookie2=", cdt.QueryDataReq.Headers[cookieHeaderName])
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 			require.Len(t, middlewares, 1)
@@ -168,7 +168,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Len(t, reqClone.Header, 2)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
-			require.Equal(t, "cookie2=", reqClone.Header.Get("Cookie"))
+			require.Equal(t, "cookie2=", reqClone.Header.Get(cookieHeaderName))
 		})
 
 		t.Run("Should forward cookies when calling CallResource", func(t *testing.T) {
@@ -180,8 +180,8 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.CallResourceReq)
 			require.Len(t, cdt.CallResourceReq.Headers, 2)
 			require.Equal(t, "test", cdt.CallResourceReq.Headers[otherHeader][0])
-			require.Len(t, cdt.CallResourceReq.Headers["Cookie"], 1)
-			require.EqualValues(t, "cookie2=", cdt.CallResourceReq.Headers["Cookie"][0])
+			require.Len(t, cdt.CallResourceReq.Headers[cookieHeaderName], 1)
+			require.EqualValues(t, "cookie2=", cdt.CallResourceReq.Headers[cookieHeaderName][0])
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 			require.Len(t, middlewares, 1)
@@ -193,7 +193,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Len(t, reqClone.Header, 2)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
-			require.Equal(t, "cookie2=", reqClone.Header.Get("Cookie"))
+			require.Equal(t, "cookie2=", reqClone.Header.Get(cookieHeaderName))
 		})
 
 		t.Run("Should forward cookies when calling CheckHealth", func(t *testing.T) {
@@ -205,7 +205,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.CheckHealthReq)
 			require.Len(t, cdt.CheckHealthReq.Headers, 2)
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
-			require.EqualValues(t, "cookie2=", cdt.CheckHealthReq.Headers["Cookie"])
+			require.EqualValues(t, "cookie2=", cdt.CheckHealthReq.Headers[cookieHeaderName])
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 			require.Len(t, middlewares, 1)
@@ -217,7 +217,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Len(t, reqClone.Header, 2)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
-			require.Equal(t, "cookie2=", reqClone.Header.Get("Cookie"))
+			require.Equal(t, "cookie2=", reqClone.Header.Get(cookieHeaderName))
 		})
 	})
 }

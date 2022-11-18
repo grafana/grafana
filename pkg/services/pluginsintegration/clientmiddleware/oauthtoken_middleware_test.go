@@ -123,8 +123,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.QueryDataReq)
 			require.Len(t, cdt.QueryDataReq.Headers, 3)
 			require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
-			require.Equal(t, "Bearer access-token", cdt.QueryDataReq.Headers["Authorization"])
-			require.Equal(t, "id-token", cdt.QueryDataReq.Headers["X-ID-Token"])
+			require.Equal(t, "Bearer access-token", cdt.QueryDataReq.Headers[tokenHeaderName])
+			require.Equal(t, "id-token", cdt.QueryDataReq.Headers[idTokenHeaderName])
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 			require.Len(t, middlewares, 1)
@@ -136,8 +136,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Len(t, reqClone.Header, 3)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
-			require.Equal(t, "Bearer access-token", reqClone.Header.Get("Authorization"))
-			require.Equal(t, "id-token", reqClone.Header.Get("X-ID-Token"))
+			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
+			require.Equal(t, "id-token", reqClone.Header.Get(idTokenHeaderName))
 		})
 
 		t.Run("Should forward OAuth Identity when calling CallResource", func(t *testing.T) {
@@ -149,10 +149,10 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.CallResourceReq)
 			require.Len(t, cdt.CallResourceReq.Headers, 3)
 			require.Equal(t, "test", cdt.CallResourceReq.Headers[otherHeader][0])
-			require.Len(t, cdt.CallResourceReq.Headers["Authorization"], 1)
-			require.Equal(t, "Bearer access-token", cdt.CallResourceReq.Headers["Authorization"][0])
-			require.Len(t, cdt.CallResourceReq.Headers["X-ID-Token"], 1)
-			require.Equal(t, "id-token", cdt.CallResourceReq.Headers["X-ID-Token"][0])
+			require.Len(t, cdt.CallResourceReq.Headers[tokenHeaderName], 1)
+			require.Equal(t, "Bearer access-token", cdt.CallResourceReq.Headers[tokenHeaderName][0])
+			require.Len(t, cdt.CallResourceReq.Headers[idTokenHeaderName], 1)
+			require.Equal(t, "id-token", cdt.CallResourceReq.Headers[idTokenHeaderName][0])
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 			require.Len(t, middlewares, 1)
@@ -164,8 +164,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Len(t, reqClone.Header, 3)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
-			require.Equal(t, "Bearer access-token", reqClone.Header.Get("Authorization"))
-			require.Equal(t, "id-token", reqClone.Header.Get("X-ID-Token"))
+			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
+			require.Equal(t, "id-token", reqClone.Header.Get(idTokenHeaderName))
 		})
 
 		t.Run("Should forward OAuth Identity when calling CheckHealth", func(t *testing.T) {
@@ -177,8 +177,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.CheckHealthReq)
 			require.Len(t, cdt.CheckHealthReq.Headers, 3)
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
-			require.Equal(t, "Bearer access-token", cdt.CheckHealthReq.Headers["Authorization"])
-			require.Equal(t, "id-token", cdt.CheckHealthReq.Headers["X-ID-Token"])
+			require.Equal(t, "Bearer access-token", cdt.CheckHealthReq.Headers[tokenHeaderName])
+			require.Equal(t, "id-token", cdt.CheckHealthReq.Headers[idTokenHeaderName])
 
 			middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 			require.Len(t, middlewares, 1)
@@ -190,8 +190,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 			require.Len(t, reqClone.Header, 3)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
-			require.Equal(t, "Bearer access-token", reqClone.Header.Get("Authorization"))
-			require.Equal(t, "id-token", reqClone.Header.Get("X-ID-Token"))
+			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
+			require.Equal(t, "id-token", reqClone.Header.Get(idTokenHeaderName))
 		})
 	})
 }

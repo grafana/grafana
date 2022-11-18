@@ -27,6 +27,11 @@ func NewOAuthTokenMiddleware(oAuthTokenService oauthtoken.OAuthTokenService) plu
 	})
 }
 
+const (
+	tokenHeaderName   = "Authorization"
+	idTokenHeaderName = "X-ID-Token"
+)
+
 type OAuthTokenMiddleware struct {
 	oAuthTokenService oauthtoken.OAuthTokenService
 	next              plugins.Client
@@ -64,27 +69,27 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 			switch t := req.(type) {
 			case *backend.QueryDataRequest:
-				t.Headers["Authorization"] = authorizationHeader
+				t.Headers[tokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
-					t.Headers["X-ID-Token"] = idTokenHeader
+					t.Headers[idTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CheckHealthRequest:
-				t.Headers["Authorization"] = authorizationHeader
+				t.Headers[tokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
-					t.Headers["X-ID-Token"] = idTokenHeader
+					t.Headers[idTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CallResourceRequest:
-				t.Headers["Authorization"] = []string{authorizationHeader}
+				t.Headers[tokenHeaderName] = []string{authorizationHeader}
 				if idTokenHeader != "" {
-					t.Headers["X-ID-Token"] = []string{idTokenHeader}
+					t.Headers[idTokenHeaderName] = []string{idTokenHeader}
 				}
 			}
 
 			httpHeaders := http.Header{}
-			httpHeaders.Set("Authorization", authorizationHeader)
+			httpHeaders.Set(tokenHeaderName, authorizationHeader)
 
 			if idTokenHeader != "" {
-				httpHeaders.Set("X-ID-Token", idTokenHeader)
+				httpHeaders.Set(idTokenHeaderName, idTokenHeader)
 			}
 
 			ctx = httpclient.WithContextualMiddleware(ctx, httpclientprovider.SetHeadersMiddleware(httpHeaders))
