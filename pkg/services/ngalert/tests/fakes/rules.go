@@ -254,7 +254,7 @@ func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID i
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser, _ bool) (*folder.Folder, error) {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
 		Params: []interface{}{orgID, uid},

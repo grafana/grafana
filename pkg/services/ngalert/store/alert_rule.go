@@ -388,12 +388,22 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &uid})
+func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser, withCanSave bool) (*folder.Folder, error) {
+	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid})
 	if err != nil {
 		return nil, err
 	}
 
+	// if access control is disabled, check that the user is allowed to save in the folder.
+	if withCanSave && st.AccessControl.IsDisabled() {
+		g := guardian.New(ctx, folder.ID, orgID, user)
+		if canSave, err := g.CanSave(); err != nil || !canSave {
+			if err != nil {
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserID, "username", user.Login, "namespaceUID", uid, "orgId", orgID, "error", err)
+			}
+			return nil, ngmodels.ErrCannotEditNamespace
+		}
+	}
 	return folder, nil
 }
 

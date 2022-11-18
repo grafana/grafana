@@ -12,6 +12,7 @@ import (
 type RuleStore interface {
 	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*folder.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser, bool) (*folder.Folder, error)
+	GetNamespaceByUID(context.Context, string, int64, *user.SignedInUser, bool) (*folder.Folder, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 
