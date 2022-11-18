@@ -92,6 +92,16 @@ const legacyRoutes: RouteDescriptor[] = [
 const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
+    path: '/alerting/home',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead],
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin]
+    ),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+    ),
+  },
+  {
     path: '/alerting/list',
     roles: evaluateAccess(
       [AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead],
