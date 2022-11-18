@@ -304,6 +304,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 			}
 		default:
 			v := fmt.Sprintf("%v", iter.Read())
+			pairs = pairs[:0]
 			pairs = append(pairs, [2]string{l1Field, v})
 		}
 	}
