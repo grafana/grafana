@@ -2,6 +2,8 @@
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -56,6 +58,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -117,6 +121,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -253,6 +259,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -313,6 +321,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -627,6 +637,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -760,6 +772,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -830,6 +844,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -873,6 +889,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -944,6 +962,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1002,6 +1022,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1128,6 +1150,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1188,6 +1212,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1600,6 +1626,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1731,6 +1759,8 @@ depends_on:
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1828,6 +1858,8 @@ clone:
 depends_on:
 - main-build-e2e-publish
 - main-integration-tests
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2210,6 +2242,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2879,6 +2913,8 @@ volumes:
 clone:
   disable: true
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3324,6 +3360,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3412,6 +3450,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3483,6 +3523,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3554,6 +3596,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3596,6 +3640,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3638,6 +3684,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3699,6 +3747,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3794,6 +3844,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3886,6 +3938,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4204,6 +4258,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4851,6 +4907,8 @@ volumes:
 clone:
   disable: true
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -5512,6 +5570,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: bdde811590573d22162d8305ced15080e8b20f2180b7491891c461427810a4b3
+hmac: 49c89d01105450cc0ae03afc0dc5aec89d61a758cb1e3a4da9fec1434a49da5c
 
 ...
