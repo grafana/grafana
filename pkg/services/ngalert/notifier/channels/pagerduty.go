@@ -84,14 +84,14 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 		images: fc.ImageStore,
 		settings: pagerdutySettings{
 			Key:      key,
-			Severity: fc.Config.Settings.Get("severity").MustString("critical"),
+			Severity: fc.Config.Settings.Get("severity").MustString(defaultSeverity),
 			customDetails: map[string]string{
 				"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 				"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
 				"num_firing":   `{{ .Alerts.Firing | len }}`,
 				"num_resolved": `{{ .Alerts.Resolved | len }}`,
 			},
-			Class:     fc.Config.Settings.Get("class").MustString(defaultSeverity),
+			Class:     fc.Config.Settings.Get("class").MustString("default"),
 			Component: fc.Config.Settings.Get("component").MustString("Grafana"),
 			Group:     fc.Config.Settings.Get("group").MustString("default"),
 			Summary:   fc.Config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
