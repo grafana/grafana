@@ -6,6 +6,8 @@ import (
 )
 
 type Service interface {
+	ValidateAttempts(ctx context.Context, username string) (bool, error)
+	RecordAttempts(ctx context.Context, username, IPAddress string) error
 	CreateLoginAttempt(ctx context.Context, cmd *CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *DeleteOldLoginAttemptsCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) error
