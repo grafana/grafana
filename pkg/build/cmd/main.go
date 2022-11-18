@@ -97,6 +97,14 @@ func main() {
 			},
 		},
 		{
+			Name:   "upload-cdn",
+			Usage:  "Upload public/* to a cdn bucket",
+			Action: UploadCDN,
+			Flags: []cli.Flag{
+				&editionFlag,
+			},
+		},
+		{
 			Name:   "shellcheck",
 			Usage:  "Run shellcheck on shell scripts",
 			Action: Shellcheck,

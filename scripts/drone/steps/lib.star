@@ -354,7 +354,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {}'.format(edition),
+            './bin/build upload-cdn --edition {}'.format(edition),
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
