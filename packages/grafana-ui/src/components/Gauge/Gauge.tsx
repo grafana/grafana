@@ -22,7 +22,6 @@ export interface Props {
   field: FieldConfig;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
-  neutral?: number;
   width: number;
   value: DisplayValue;
   text?: VizTextDisplayOptions;
@@ -53,7 +52,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value, neutral } = this.props;
+    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
@@ -99,7 +98,7 @@ export class Gauge extends PureComponent<Props> {
           gauge: {
             min,
             max,
-            neutralValue: neutral,
+            neutralValue: field.custom?.neutral,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },

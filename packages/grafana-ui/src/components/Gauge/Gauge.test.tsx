@@ -19,13 +19,15 @@ const field: FieldConfig = {
     mode: ThresholdsMode.Absolute,
     steps: [{ value: -Infinity, color: '#7EB26D' }],
   },
+  custom: {
+    neeutral: 0,
+  },
 };
 
 const props: Props = {
   showThresholdMarkers: true,
   showThresholdLabels: false,
   field,
-  neutral: 0,
   width: 300,
   height: 300,
   value: {
