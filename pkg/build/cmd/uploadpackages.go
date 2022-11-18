@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"github.com/grafana/grafana/pkg/build/gcloud"
 	"log"
 	"os"
 	"os/exec"
@@ -103,25 +103,11 @@ func UploadPackages(c *cli.Context) error {
 }
 
 func uploadPackages(cfg uploadConfig) error {
-	log.Println("Uploading Grafana packages, version %s, %s edition, %s mode...", cfg.Version, cfg.edition,
+	log.Printf("Uploading Grafana packages, version %s, %s edition, %s mode...\n", cfg.Version, cfg.edition,
 		cfg.versionMode)
 
-	f, err := ioutil.TempFile("", "*.json")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(f.Name())
-	defer f.Close()
-	if _, err := f.Write([]byte(cfg.gcpKey)); err != nil {
-		return fmt.Errorf("failed to write GCP key file: %w", err)
-	}
-	if err := f.Close(); err != nil {
-		return fmt.Errorf("failed to write GCP key file: %w", err)
-	}
-	keyArg := fmt.Sprintf("--key-file=%s", f.Name())
-	cmd := exec.Command("gcloud", "auth", "activate-service-account", keyArg)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to sign into GCP: %s", output)
+	if err := gcloud.ActivateServiceAccount(); err != nil {
+		return fmt.Errorf("couldn't activate service account, err: %w", err)
 	}
 
 	edition := strings.ToLower(string(cfg.edition))
@@ -177,7 +163,7 @@ func uploadPackages(cfg uploadConfig) error {
 	args := []string{"-m", "cp"}
 	args = append(args, fpaths...)
 	args = append(args, gcsPath)
-	cmd = exec.Command("gsutil", args...)
+	cmd := exec.Command("gsutil", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to upload files to GCS: %s", output)
 	}
