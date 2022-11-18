@@ -26,6 +26,19 @@ type Service struct {
 	cfg   *setting.Cfg
 }
 
+func (s *Service) RecordAttempt(ctx context.Context, username, IPAddress string) error {
+	if s.cfg.DisableBruteForceLoginProtection {
+		return nil
+	}
+
+	loginAttemptCommand := loginattempt.CreateLoginAttemptCommand{
+		Username:  username,
+		IpAddress: IPAddress,
+	}
+
+	return s.store.CreateLoginAttempt(ctx, &loginAttemptCommand)
+}
+
 func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, error) {
 	if s.cfg.DisableBruteForceLoginProtection {
 		return true, nil
@@ -47,37 +60,8 @@ func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, 
 	return true, nil
 }
 
-func (s *Service) RecordAttempts(ctx context.Context, username, IPAddress string) error {
-	if s.cfg.DisableBruteForceLoginProtection {
-		return nil
-	}
-
-	loginAttemptCommand := loginattempt.CreateLoginAttemptCommand{
-		Username:  username,
-		IpAddress: IPAddress,
-	}
-
-	return s.store.CreateLoginAttempt(ctx, &loginAttemptCommand)
-}
-
-func (s *Service) CreateLoginAttempt(ctx context.Context, cmd *loginattempt.CreateLoginAttemptCommand) error {
-	err := s.store.CreateLoginAttempt(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (s *Service) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattempt.DeleteOldLoginAttemptsCommand) error {
 	err := s.store.DeleteOldLoginAttempts(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Service) GetUserLoginAttemptCount(ctx context.Context, cmd *loginattempt.GetUserLoginAttemptCountQuery) error {
-	err := s.store.GetUserLoginAttemptCount(ctx, cmd)
 	if err != nil {
 		return err
 	}

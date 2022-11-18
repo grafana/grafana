@@ -23,5 +23,5 @@ var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQue
 }
 
 var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery, loginAttemptService loginattempt.Service) error {
-	return loginAttemptService.RecordAttempts(ctx, query.Username, query.IpAddress)
+	return loginAttemptService.RecordAttempt(ctx, query.Username, query.IpAddress)
 }
