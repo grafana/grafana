@@ -1,4 +1,13 @@
-import { render, waitFor, screen, fireEvent, waitForElementToBeRemoved, within, Matcher } from '@testing-library/react';
+import {
+  render,
+  act,
+  waitFor,
+  screen,
+  fireEvent,
+  waitForElementToBeRemoved,
+  within,
+  Matcher,
+} from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
@@ -337,6 +346,10 @@ describe('CorrelationsPage', () => {
       expect(screen.getByRole('button', { name: /Validate query$/i }));
       fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
       // expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
+      act(() => {
+        emit!.subscriber!.destination.next({ state: 'Done' });
+      });
+      expect(screen.getByText('This query is valid.')).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
