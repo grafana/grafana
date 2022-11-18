@@ -341,6 +341,8 @@ func TestQueryDataMultipleSources(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Error(t, res.Responses["B"].Error)
+		// Responses aren't mocked, so a "healthy" query will just return an empty response
+		require.NotContains(t, res.Responses, "A")
 	})
 }
 
