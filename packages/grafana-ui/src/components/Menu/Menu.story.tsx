@@ -49,6 +49,31 @@ export function Examples() {
           <Menu.Item label="With destructive prop set" icon="trash-alt" destructive />
         </Menu>
       </StoryExample>
+      <StoryExample name="With disabled items">
+        <Menu>
+          <Menu.Item label="Google" icon="search-plus" />
+          <Menu.Item label="Disabled action" icon="history" disabled />
+          <Menu.Item label="Disabled link" icon="external-link-alt" disabled />
+          <Menu.Item
+            label="Submenu"
+            icon="apps"
+            childItems={[
+              <Menu.Item key="subitem1" label="subitem1" icon="history" disabled />,
+              <Menu.Item key="subitem2" label="subitem2" icon="apps" />,
+            ]}
+          />
+          <Menu.Item
+            label="Disabled submenu"
+            icon="apps"
+            disabled
+            childItems={[
+              <Menu.Item key="subitem1" label="subitem1" icon="history" />,
+              <Menu.Item key="subitem2" label="subitem2" icon="apps" />,
+            ]}
+          />
+          <Menu.Item label="Disabled destructive action" icon="trash-alt" destructive disabled />
+        </Menu>
+      </StoryExample>
       <StoryExample name="With header & groups">
         <Menu
           header={
@@ -79,6 +104,7 @@ export function Examples() {
           <Menu.Item
             label="item2"
             icon="apps"
+            disabled
             childItems={[
               <Menu.Item key="subitem1" label="subitem1" icon="history" />,
               <Menu.Item key="subitem2" label="subitem2" icon="apps" />,

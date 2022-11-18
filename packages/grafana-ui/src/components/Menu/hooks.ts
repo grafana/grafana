@@ -41,7 +41,7 @@ export const useMenuFocus = ({
 
   useEffect(() => {
     const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      `[data-role="menuitem"]`
+      '[data-role="menuitem"]:not([data-disabled])'
     );
     menuItems?.[focusedItem]?.focus();
     menuItems?.forEach((menuItem, i) => {
@@ -51,7 +51,7 @@ export const useMenuFocus = ({
 
   useEffectOnce(() => {
     const firstMenuItem = localRef?.current?.querySelector<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      `[data-role="menuitem"]`
+      '[data-role="menuitem"]:not([data-disabled])'
     );
     if (firstMenuItem) {
       firstMenuItem.tabIndex = 0;
@@ -61,7 +61,7 @@ export const useMenuFocus = ({
 
   const handleKeys = (event: React.KeyboardEvent) => {
     const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      `[data-role="menuitem"]`
+      '[data-role="menuitem"]:not([data-disabled])'
     );
     const menuItemsCount = menuItems?.length ?? 0;
 
