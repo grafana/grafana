@@ -85,14 +85,14 @@ type fakeStore struct {
 	ExpectedDeletedRows int64
 }
 
-func (f fakeStore) GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error) {
+func (f fakeStore) GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error) {
 	return f.ExpectedCount, f.ExpectedErr
 }
 
-func (f fakeStore) CreateLoginAttempt(ctx context.Context, command *CreateLoginAttemptCommand) error {
+func (f fakeStore) CreateLoginAttempt(ctx context.Context, command CreateLoginAttemptCommand) error {
 	return f.ExpectedErr
 }
 
-func (f fakeStore) DeleteOldLoginAttempts(ctx context.Context, command *DeleteOldLoginAttemptsCommand) (int64, error) {
+func (f fakeStore) DeleteOldLoginAttempts(ctx context.Context, command DeleteOldLoginAttemptsCommand) (int64, error) {
 	return f.ExpectedDeletedRows, f.ExpectedErr
 }
