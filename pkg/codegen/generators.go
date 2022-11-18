@@ -59,13 +59,31 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 		case ".json", ".yml", ".yaml":
 			return f, nil
 		default:
-			b := new(bytes.Buffer)
-			fmt.Fprintf(b, headerTmpl, filepath.ToSlash(maingen), f.FromString())
-			fmt.Fprint(b, string(f.Data))
-			f.Data = b.Bytes()
+			buf := new(bytes.Buffer)
+			if err := tmpls.Lookup("gen_header.tmpl").Execute(buf, tvars_gen_header{
+				MainGenerator: maingen,
+				Using:         f.From,
+			}); err != nil {
+				return codejen.File{}, fmt.Errorf("failed executing gen header template: %w", err)
+			}
+			// fmt.Fprintf(buf, headerTmpl, filepath.ToSlash(maingen), f.FromString())
+			fmt.Fprint(buf, string(f.Data))
+			f.Data = buf.Bytes()
 		}
 		return f, nil
 	}
+}
+
+// SchemaForGen is an intermediate values type for jennies that holds both a thema.Schema,
+// and values relevant to generating the schema that should properly, eventually, be in
+// thema itself.
+type SchemaForGen struct {
+	// The PascalCase name of for the schematized type.
+	Name string
+	// The schema to be rendered for the type itself.
+	Schema thema.Schema
+	// Whether the schema is grouped.
+	IsGroup bool
 }
 
 var headerTmpl = `// THIS FILE IS GENERATED. EDITING IS FUTILE.
