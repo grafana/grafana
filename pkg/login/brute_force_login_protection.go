@@ -2,7 +2,6 @@ package login
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
@@ -10,39 +9,19 @@ import (
 
 var (
 	maxInvalidLoginAttempts int64 = 5
-	loginAttemptsWindow           = time.Minute * 5
 )
 
 var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQuery, loginAttemptService loginattempt.Service) error {
-	if query.Cfg.DisableBruteForceLoginProtection {
-		return nil
-	}
-
-	loginAttemptCountQuery := loginattempt.GetUserLoginAttemptCountQuery{
-		Username: query.Username,
-		Since:    time.Now().Add(-loginAttemptsWindow),
-	}
-
-	if err := loginAttemptService.GetUserLoginAttemptCount(ctx, &loginAttemptCountQuery); err != nil {
+	ok, err := loginAttemptService.ValidateAttempts(ctx, query.Username)
+	if err != nil {
 		return err
 	}
-
-	if loginAttemptCountQuery.Result >= maxInvalidLoginAttempts {
+	if !ok {
 		return ErrTooManyLoginAttempts
 	}
-
 	return nil
 }
 
 var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery, loginAttemptService loginattempt.Service) error {
-	if query.Cfg.DisableBruteForceLoginProtection {
-		return nil
-	}
-
-	loginAttemptCommand := loginattempt.CreateLoginAttemptCommand{
-		Username:  query.Username,
-		IpAddress: query.IpAddress,
-	}
-
-	return loginAttemptService.CreateLoginAttempt(ctx, &loginAttemptCommand)
+	return loginAttemptService.RecordAttempts(ctx, query.Username, query.IpAddress)
 }
