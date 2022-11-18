@@ -16,7 +16,7 @@ type xormStore struct {
 
 type store interface {
 	CreateLoginAttempt(context.Context, *CreateLoginAttemptCommand) error
-	DeleteOldLoginAttempts(context.Context, *loginattempt.DeleteOldLoginAttemptsCommand) error
+	DeleteOldLoginAttempts(context.Context, *DeleteOldLoginAttemptsCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error)
 }
 
@@ -38,7 +38,7 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *CreateLoginAtt
 	})
 }
 
-func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattempt.DeleteOldLoginAttemptsCommand) error {
+func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *DeleteOldLoginAttemptsCommand) error {
 	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var maxId int64
 		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"

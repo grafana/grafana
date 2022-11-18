@@ -26,8 +26,3 @@ func (f *MockLoginAttemptService) ValidateAttempts(ctx context.Context, username
 	f.ValidateAttemptsCalled = true
 	return f.ExpectedValid, f.ExpectedErr
 }
-
-func (f *MockLoginAttemptService) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattempt.DeleteOldLoginAttemptsCommand) error {
-	f.DeleteOldLoginAttemptsCalled = true
-	return f.ExpectedErr
-}

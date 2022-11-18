@@ -17,3 +17,8 @@ type GetUserLoginAttemptCountQuery struct {
 	Username string
 	Since    time.Time
 }
+
+type DeleteOldLoginAttemptsCommand struct {
+	OlderThan   time.Time
+	DeletedRows int64
+}

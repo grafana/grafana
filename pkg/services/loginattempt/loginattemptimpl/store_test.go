@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/loginattempt"
 )
 
 func TestIntegrationLoginAttemptsQuery(t *testing.T) {
@@ -92,25 +91,25 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 
 	for _, test := range []struct {
 		Name        string
-		Cmd         loginattempt.DeleteOldLoginAttemptsCommand
+		Cmd         DeleteOldLoginAttemptsCommand
 		Err         error
 		DeletedRows int64
 	}{
 		{
 			"Should return deleted rows older than beginning of time",
-			loginattempt.DeleteOldLoginAttemptsCommand{OlderThan: beginningOfTime}, nil, 0,
+			DeleteOldLoginAttemptsCommand{OlderThan: beginningOfTime}, nil, 0,
 		},
 		{
 			"Should return deleted rows older than beginning of time + 1min",
-			loginattempt.DeleteOldLoginAttemptsCommand{OlderThan: timePlusOneMinute}, nil, 1,
+			DeleteOldLoginAttemptsCommand{OlderThan: timePlusOneMinute}, nil, 1,
 		},
 		{
 			"Should return deleted rows older than beginning of time + 2min",
-			loginattempt.DeleteOldLoginAttemptsCommand{OlderThan: timePlusTwoMinutes}, nil, 2,
+			DeleteOldLoginAttemptsCommand{OlderThan: timePlusTwoMinutes}, nil, 2,
 		},
 		{
 			"Should return deleted rows older than beginning of time + 2min and 1s",
-			loginattempt.DeleteOldLoginAttemptsCommand{OlderThan: timePlusTwoMinutes.Add(time.Second * 1)}, nil, 3,
+			DeleteOldLoginAttemptsCommand{OlderThan: timePlusTwoMinutes.Add(time.Second * 1)}, nil, 3,
 		},
 	} {
 		mockTime := beginningOfTime

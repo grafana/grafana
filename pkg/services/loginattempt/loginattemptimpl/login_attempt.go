@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,16 +15,37 @@ const (
 	loginAttemptsWindow           = time.Minute * 5
 )
 
-func ProvideService(db db.DB, cfg *setting.Cfg) loginattempt.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, lock *serverlock.ServerLockService) *Service {
 	return &Service{
 		&xormStore{db: db, now: time.Now},
 		cfg,
+		lock,
+		log.New("login_attempt"),
 	}
 }
 
 type Service struct {
-	store store
-	cfg   *setting.Cfg
+	store  store
+	cfg    *setting.Cfg
+	lock   *serverlock.ServerLockService
+	logger log.Logger
+}
+
+func (s *Service) Run(ctx context.Context) error {
+	// no need to run clean up job if it is disabled
+	if s.cfg.DisableBruteForceLoginProtection {
+		return nil
+	}
+
+	ticker := time.NewTicker(time.Minute * 10)
+	for {
+		select {
+		case <-ticker.C:
+			s.cleanup(ctx)
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 func (s *Service) RecordAttempt(ctx context.Context, username, IPAddress string) error {
@@ -59,10 +81,19 @@ func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, 
 	return true, nil
 }
 
-func (s *Service) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattempt.DeleteOldLoginAttemptsCommand) error {
-	err := s.store.DeleteOldLoginAttempts(ctx, cmd)
+func (s *Service) cleanup(ctx context.Context) {
+	err := s.lock.LockAndExecute(ctx, "delete old login attempts", time.Minute*10, func(context.Context) {
+		cmd := &DeleteOldLoginAttemptsCommand{
+			OlderThan: time.Now().Add(time.Minute * -10),
+		}
+		if err := s.store.DeleteOldLoginAttempts(ctx, cmd); err != nil {
+			s.logger.Error("Problem deleting expired login attempts", "error", err.Error())
+		} else {
+			s.logger.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
+		}
+	})
+
 	if err != nil {
-		return err
+		s.logger.Error("failed to lock and execute cleanup of old login attempts", "error", err)
 	}
-	return nil
 }
