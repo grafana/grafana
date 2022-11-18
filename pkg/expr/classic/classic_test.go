@@ -226,7 +226,6 @@ func TestConditionsCmd(t *testing.T) {
 		},
 		expected: func() mathexp.Results {
 			v := newNumber(ptr.Float64(1))
-			// This too seems incorrect, looks like we don't call the evaluator
 			v.SetMeta([]EvalMatch{{Value: nil}})
 			return newResults(v)
 		},
@@ -251,7 +250,6 @@ func TestConditionsCmd(t *testing.T) {
 		},
 		expected: func() mathexp.Results {
 			v := newNumber(ptr.Float64(1))
-			// This seems incorrect
 			v.SetMeta([]EvalMatch{{Value: nil}})
 			return newResults(v)
 		},
