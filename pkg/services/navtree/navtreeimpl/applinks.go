@@ -169,6 +169,12 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 	}
 	appLink.Children = childrenWithoutDefault
 
+	s.addPluginToSection(c, treeRoot, plugin, appLink)
+
+	return nil
+}
+
+func (s *ServiceImpl) addPluginToSection(c *models.ReqContext, treeRoot *navtree.NavTreeRoot, plugin plugins.PluginDTO, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
 	sectionID := navtree.NavIDApps
@@ -182,7 +188,9 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		}
 	}
 
-	if navNode := treeRoot.FindById(sectionID); navNode != nil {
+	if sectionID == navtree.NavIDRoot {
+		treeRoot.AddSection(appLink)
+	} else if navNode := treeRoot.FindById(sectionID); navNode != nil {
 		navNode.Children = append(navNode.Children, appLink)
 	} else {
 		switch sectionID {
@@ -226,8 +234,6 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
 	}
-
-	return nil
 }
 
 func (s *ServiceImpl) readNavigationSettings() {
@@ -238,6 +244,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
+		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
