@@ -15,13 +15,12 @@ import { appEvents } from 'app/core/core';
 import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
 import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { getPanelOptionsWithDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { sceneGraph } from '../core/sceneGraph';
-import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-
-import { SceneDragHandle } from './SceneDragHandle';
+import { getPanelOptionsWithDefaults } from '../../../dashboard/state/getPanelOptionsWithDefaults';
+import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { sceneGraph } from '../../core/sceneGraph';
+import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';
+import { SceneQueryRunner } from '../../querying/SceneQueryRunner';
+import { SceneDragHandle } from '../SceneDragHandle';
 
 export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLayoutChildState {
   title: string;

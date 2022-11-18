@@ -4,9 +4,7 @@ import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoa
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
+import { VizPanel, SceneTimePicker, SceneGridLayout, SceneGridRow } from '../components';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneObject } from '../core/types';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
