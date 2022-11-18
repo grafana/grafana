@@ -121,6 +121,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
         default:
           return next();
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -137,11 +138,15 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     }, []);
 
     const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
-      const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';
+      const [precedingChar, followingChar]: string[] = getCharactersAroundCaret();
+      const precedingDollar: boolean = precedingChar === '$';
+      const middleOfString: boolean = followingChar !== ' ';
+      const dollarInMiddle: boolean = middleOfString && precedingDollar;
+
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
-        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
+        editor.insertText(`${dollarInMiddle ? '' : '$'}\{${item.value}}`);
       } else {
-        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}:queryparam}`);
+        editor.insertText(`${dollarInMiddle ? '' : '$'}\{${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);
@@ -151,10 +156,37 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
       stateRef.current.onChange(Plain.serialize(editor.value));
     };
 
+    const getCharactersAroundCaret = () => {
+      const input: HTMLSpanElement | null = document.getElementById('data-link-input')!;
+      let precedingChar = '',
+        preSel: Selection | null,
+        preRange: Range;
+      let followingChar = '',
+        postSel: Selection | null,
+        postRange: Range;
+      if (window.getSelection) {
+        preSel = window.getSelection();
+        postSel = window.getSelection();
+        if (preSel && preSel.rangeCount > 0) {
+          preRange = preSel.getRangeAt(0).cloneRange();
+          preRange.collapse(true);
+          preRange.setStart(input, 0);
+          precedingChar = preRange.toString().slice(-1);
+        }
+        if (postSel && postSel.rangeCount > 0) {
+          postRange = postSel.getRangeAt(0).cloneRange();
+          postRange.collapse(false);
+          postRange.setEnd(input, input.childNodes.length);
+          followingChar = postRange.toString().charAt(0);
+        }
+      }
+      return [precedingChar, followingChar];
+    };
+
     return (
       <div className={styles.wrapperOverrides}>
         <div className="slate-query-field__wrapper">
-          <div className="slate-query-field">
+          <div id="data-link-input" className="slate-query-field">
             {showingSuggestions && (
               <Portal>
                 <ReactPopper
