@@ -88,8 +88,6 @@ To browse for available plugins:
 1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
-![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-9.2.png)
-
 ### Install a plugin
 
 To install a plugin:
@@ -101,8 +99,6 @@ To install a plugin:
 
 When the update is complete, you see a confirmation message that the installation was successful.
 
-![Plugin catalog install](/static/img/docs/plugins/plugins-catalog-install-8-1.png)
-
 ### Update a plugin
 
 To update a plugin:
@@ -113,8 +109,6 @@ To update a plugin:
 
 When the update is complete, you see a confirmation message that the update was successful.
 
-![Plugin catalog update](/static/img/docs/plugins/plugins-catalog-update-8-1.png)
-
 ### Uninstall a plugin
 
 To uninstall a plugin:
@@ -124,8 +118,6 @@ To uninstall a plugin:
 1. Click **Uninstall**.
 
 When the update is complete, you see a confirmation message that the uninstall was successful.
-
-![Plugin catalog uninstall](/static/img/docs/plugins/plugins-catalog-uninstall-8-1.png)
 
 ## Install Grafana plugins
 
