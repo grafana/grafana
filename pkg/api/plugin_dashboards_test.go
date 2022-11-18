@@ -41,7 +41,7 @@ func TestGetPluginDashboards(t *testing.T) {
 
 	s := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.pluginDashboardService = pluginDashboardService
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Not signed in should return 404 Not Found", func(t *testing.T) {

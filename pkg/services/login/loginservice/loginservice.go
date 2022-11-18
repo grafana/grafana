@@ -71,13 +71,17 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			return login.ErrSignupNotAllowed
 		}
 
-		limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
-		if errLimit != nil {
-			cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
-			return login.ErrGettingUserQuota
-		}
-		if limitReached {
-			return login.ErrUsersQuotaReached
+		// we may insert in both user and org_user tables
+		// therefore we need to query check quota for both user and org services
+		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
+			limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, quota.TargetSrv(srv))
+			if errLimit != nil {
+				cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
+				return login.ErrGettingUserQuota
+			}
+			if limitReached {
+				return login.ErrUsersQuotaReached
+			}
 		}
 
 		result, errCreateUser := ls.createUser(extUser)
