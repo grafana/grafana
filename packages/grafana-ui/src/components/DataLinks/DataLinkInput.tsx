@@ -138,15 +138,12 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     }, []);
 
     const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
-      const [precedingChar, followingChar]: string[] = getCharactersAroundCaret();
-      const precedingDollar: boolean = precedingChar === '$';
-      const middleOfString: boolean = followingChar !== ' ';
-      const dollarInMiddle: boolean = middleOfString && precedingDollar;
-
+      const precedingChar: string = getCharactersAroundCaret();
+      const precedingDollar = precedingChar === '$';
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
-        editor.insertText(`${dollarInMiddle ? '' : '$'}\{${item.value}}`);
+        editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}}`);
       } else {
-        editor.insertText(`${dollarInMiddle ? '' : '$'}\{${item.value}:queryparam}`);
+        editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);
@@ -159,28 +156,18 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     const getCharactersAroundCaret = () => {
       const input: HTMLSpanElement | null = document.getElementById('data-link-input')!;
       let precedingChar = '',
-        preSel: Selection | null,
-        preRange: Range;
-      let followingChar = '',
-        postSel: Selection | null,
-        postRange: Range;
+        sel: Selection | null,
+        range: Range;
       if (window.getSelection) {
-        preSel = window.getSelection();
-        postSel = window.getSelection();
-        if (preSel && preSel.rangeCount > 0) {
-          preRange = preSel.getRangeAt(0).cloneRange();
-          preRange.collapse(true);
-          preRange.setStart(input, 0);
-          precedingChar = preRange.toString().slice(-1);
-        }
-        if (postSel && postSel.rangeCount > 0) {
-          postRange = postSel.getRangeAt(0).cloneRange();
-          postRange.collapse(false);
-          postRange.setEnd(input, input.childNodes.length);
-          followingChar = postRange.toString().charAt(0);
+        sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          range = sel.getRangeAt(0).cloneRange();
+          range.collapse(true);
+          range.setStart(input, 0);
+          precedingChar = range.toString().slice(-1);
         }
       }
-      return [precedingChar, followingChar];
+      return precedingChar;
     };
 
     return (
