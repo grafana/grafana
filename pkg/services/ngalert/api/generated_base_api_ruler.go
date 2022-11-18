@@ -22,6 +22,7 @@ type RulerApi interface {
 	RouteDeleteGrafanaRuleGroupConfig(*models.ReqContext) response.Response
 	RouteDeleteNamespaceGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteDeleteNamespaceRulesConfig(*models.ReqContext) response.Response
+	RouteDeleteRuleConfig(*models.ReqContext) response.Response
 	RouteDeleteRuleGroupConfig(*models.ReqContext) response.Response
 	RouteGetGrafanaRuleGroupConfig(*models.ReqContext) response.Response
 	RouteGetGrafanaRulesConfig(*models.ReqContext) response.Response
@@ -49,6 +50,11 @@ func (f *RulerApiHandler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	return f.handleRouteDeleteNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
+}
+func (f *RulerApiHandler) RouteDeleteRuleConfig(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
+	ruleUIDParam := web.Params(ctx.Req)[":RuleUID"]
+	return f.handleRouteDeleteRuleConfig(ctx, ruleUIDParam)
 }
 func (f *RulerApiHandler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -140,6 +146,16 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodDelete,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				srv.RouteDeleteNamespaceRulesConfig,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/v1/ngalert/rules/uid/{RuleUID}"),
+			api.authorize(http.MethodDelete, "/api/v1/ngalert/rules/uid/{RuleUID}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/v1/ngalert/rules/uid/{RuleUID}",
+				srv.RouteDeleteRuleConfig,
 				m,
 			),
 		)
