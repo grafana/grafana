@@ -81,26 +81,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
                 size: {
                   y: panel.gridPos.y,
                 },
-                children: panel.panels
-                  ? panel.panels.map(
-                      (p) =>
-                        new VizPanel({
-                          title: p.title,
-                          pluginId: p.type,
-                          size: {
-                            x: p.gridPos.x,
-                            y: p.gridPos.y,
-                            width: p.gridPos.w,
-                            height: p.gridPos.h,
-                          },
-                          options: p.options,
-                          fieldConfig: p.fieldConfig,
-                          $data: new SceneQueryRunner({
-                            queries: p.targets,
-                          }),
-                        })
-                    )
-                  : [],
+                children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
               })
             );
           } else {
@@ -126,21 +107,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
           }
         }
       } else {
-        const panelObject = new VizPanel({
-          title: panel.title,
-          pluginId: panel.type,
-          size: {
-            x: panel.gridPos.x,
-            y: panel.gridPos.y,
-            width: panel.gridPos.w,
-            height: panel.gridPos.h,
-          },
-          options: panel.options,
-          fieldConfig: panel.fieldConfig,
-          $data: new SceneQueryRunner({
-            queries: panel.targets,
-          }),
-        });
+        const panelObject = createVizPanelFromPanelModel(panel);
 
         // when processing an expanded row, collect its panels
         if (currentRow) {
@@ -166,6 +133,25 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
     return panels;
   }
+}
+
+function createVizPanelFromPanelModel(panel: PanelModel) {
+  return new VizPanel({
+    title: panel.title,
+    pluginId: panel.type,
+    size: {
+      x: panel.gridPos.x,
+      y: panel.gridPos.y,
+      width: panel.gridPos.w,
+      height: panel.gridPos.h,
+    },
+    options: panel.options,
+    fieldConfig: panel.fieldConfig,
+    pluginVersion: panel.pluginVersion,
+    $data: new SceneQueryRunner({
+      queries: panel.targets,
+    }),
+  });
 }
 
 let loader: DashboardLoader | null = null;
