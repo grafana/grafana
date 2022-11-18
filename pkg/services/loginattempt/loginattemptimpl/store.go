@@ -17,7 +17,7 @@ type xormStore struct {
 type store interface {
 	CreateLoginAttempt(context.Context, *CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(context.Context, *loginattempt.DeleteOldLoginAttemptsCommand) error
-	GetUserLoginAttemptCount(context.Context, *GetUserLoginAttemptCountQuery) error
+	GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error)
 }
 
 func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *CreateLoginAttemptCommand) error {
@@ -69,21 +69,24 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *loginattem
 	})
 }
 
-func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) error {
-	return xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error) {
+	var total int64
+	err := xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var queryErr error
 		loginAttempt := new(loginattempt.LoginAttempt)
-		total, err := dbSession.
+		total, queryErr = dbSession.
 			Where("username = ?", query.Username).
 			And("created >= ?", query.Since.Unix()).
 			Count(loginAttempt)
 
-		if err != nil {
-			return err
+		if queryErr != nil {
+			return queryErr
 		}
 
-		query.Result = total
 		return nil
 	})
+
+	return total, err
 }
 
 func toInt64(i interface{}) int64 {

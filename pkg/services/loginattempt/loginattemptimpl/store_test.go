@@ -74,9 +74,9 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = s.GetUserLoginAttemptCount(context.Background(), &test.Query)
+		count, err := s.GetUserLoginAttemptCount(context.Background(), &test.Query)
 		require.Equal(t, test.Err, err, test.Name)
-		require.Equal(t, test.Result, test.Query.Result, test.Name)
+		require.Equal(t, test.Result, count, test.Name)
 	}
 }
 

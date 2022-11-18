@@ -47,11 +47,12 @@ func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, 
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
-	if err := s.store.GetUserLoginAttemptCount(ctx, &loginAttemptCountQuery); err != nil {
+	count, err := s.store.GetUserLoginAttemptCount(ctx, &loginAttemptCountQuery)
+	if err != nil {
 		return false, err
 	}
 
-	if loginAttemptCountQuery.Result >= maxInvalidLoginAttempts {
+	if count >= maxInvalidLoginAttempts {
 		return false, nil
 	}
 

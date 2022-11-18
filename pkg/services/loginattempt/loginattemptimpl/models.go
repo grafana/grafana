@@ -16,5 +16,4 @@ type CreateLoginAttemptCommand struct {
 type GetUserLoginAttemptCountQuery struct {
 	Username string
 	Since    time.Time
-	Result   int64
 }
