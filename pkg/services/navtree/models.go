@@ -40,6 +40,9 @@ const (
 	NavIDDashboardsBrowse   = "dashboards/browse"
 	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAdmin              = "admin"
+	NavIDAdminGeneral       = "admin/general"
+	NavIDAdminPlugins       = "admin/plugins"
+	NavIDAdminAccess        = "admin/access"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
 	NavIDMonitoring         = "monitoring"
@@ -109,73 +112,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 	}
 
 	if topNavEnabled {
-		orgAdminNode := root.FindById(NavIDCfg)
-
-		if orgAdminNode != nil {
-			orgAdminNode.Url = "/admin"
-			orgAdminNode.Text = "Administration"
-
-			adminAccessNodeLinks := []*NavLink{}
-			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("users"))
-			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("global-users"))
-			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("teams"))
-			// adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, rolesNode := root.FindById("roles")) // enterprise only?
-			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("serviceaccounts"))
-			adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("apikeys"))
-			// adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("cloudAccessPolicies") ) // cloud app?
-
-			adminConfigNodeLinks := []*NavLink{}
-			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("org-settings"))
-			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("server-settings"))
-			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("datasources"))
-			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("plugins"))
-			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("global-orgs"))
-			// adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("recordedQueries")) // enterprise only
-			// adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("customBranding")) // enterprise only
-			adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("upgrading")) // but for enterprise?
-
-			adminAccessNode := &NavLink{
-				Text:       "Access",
-				Id:         "admin/access",
-				Url:        "/admin/access",
-				Icon:       "shield",
-				SortWeight: WeightAdmin,
-				Section:    NavSectionConfig,
-				Children:   adminAccessNodeLinks,
-			}
-
-			adminConfigNode := &NavLink{
-				Text:       "Configuration",
-				Id:         "admin/config",
-				Url:        "/admin/config",
-				Icon:       "shield",
-				SortWeight: WeightAdmin,
-				Section:    NavSectionConfig,
-				Children:   adminConfigNodeLinks,
-			}
-
-			adminNodeLinks := []*NavLink{}
-
-			if len(adminAccessNode.Children) > 0 {
-				adminNodeLinks = append(adminNodeLinks, adminAccessNode)
-				adminAccessNode.Url = adminAccessNode.Children[0].Url
-			}
-
-			if len(adminConfigNode.Children) > 0 {
-				adminNodeLinks = append(adminNodeLinks, adminConfigNode)
-				adminConfigNode.Url = adminConfigNode.Children[0].Url
-			}
-
-			if len(adminNodeLinks) > 0 {
-				orgAdminNode.Children = adminNodeLinks
-			} else {
-				root.RemoveSection(orgAdminNode)
-			}
-		}
-
-		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
-			root.RemoveSection(serverAdminNode)
-		}
+		ApplyAdminIA(root)
 
 		// Move reports into dashboards
 		if reports := root.FindById(NavIDReporting); reports != nil {
@@ -227,6 +164,98 @@ func Sort(nodes []*NavLink) {
 
 	for _, child := range nodes {
 		child.Sort()
+	}
+}
+
+func ApplyAdminIA(root *NavTreeRoot) {
+	orgAdminNode := root.FindById(NavIDCfg)
+
+	if orgAdminNode != nil {
+		orgAdminNode.Url = "/admin"
+		orgAdminNode.Text = "Administration"
+
+		generalNodeLinks := []*NavLink{}
+		pluginsNodeLinks := []*NavLink{}
+		accessNodeLinks := []*NavLink{}
+
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("upgrading"))
+		if orgSettings := root.FindById("org-settings"); orgSettings != nil {
+			orgSettings.Text = "Default preferences"
+			generalNodeLinks = append(generalNodeLinks, orgSettings)
+		}
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("server-settings"))
+
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugins"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("datasources"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("grafana-cloud-link-app"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("recordedQueries")) // enterprise only
+
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("users"))
+		if globalUsers := root.FindById("global-users"); globalUsers != nil {
+			globalUsers.Text = "Users (All orgs)"
+			accessNodeLinks = append(accessNodeLinks, globalUsers)
+		}
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("serviceaccounts"))
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("apikeys"))
+		// accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("cloudAccessPolicies") ) // cloud app?
+
+		generalNode := &NavLink{
+			Text:     "General",
+			Id:       NavIDAdminGeneral,
+			Url:      "/admin/general",
+			Icon:     "shield",
+			Children: generalNodeLinks,
+		}
+
+		pluginsNode := &NavLink{
+			Text:     "Plugins and data",
+			Id:       NavIDAdminPlugins,
+			Url:      "/admin/plugins",
+			Icon:     "shield",
+			Children: pluginsNodeLinks,
+		}
+
+		accessNode := &NavLink{
+			Text:     "Users and access",
+			Id:       NavIDAdminAccess,
+			Url:      "/admin/access",
+			Icon:     "shield",
+			Children: accessNodeLinks,
+		}
+
+		adminNodeLinks := []*NavLink{}
+
+		if len(generalNode.Children) > 0 {
+			adminNodeLinks = append(adminNodeLinks, generalNode)
+		}
+
+		if len(pluginsNode.Children) > 0 {
+			adminNodeLinks = append(adminNodeLinks, pluginsNode)
+		}
+
+		if len(accessNode.Children) > 0 {
+			adminNodeLinks = append(adminNodeLinks, accessNode)
+		}
+
+		if len(adminNodeLinks) > 0 {
+			orgAdminNode.Children = adminNodeLinks
+		} else {
+			root.RemoveSection(orgAdminNode)
+		}
+
+		// adminAccessNodeLinks := []*NavLink{}
+		// // adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, rolesNode := root.FindById("roles")) // enterprise only?
+		// // adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, root.FindById("cloudAccessPolicies") ) // cloud app?
+
+		// adminConfigNodeLinks := []*NavLink{}
+		// // adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("recordedQueries")) // enterprise only
+		// // adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("customBranding")) // enterprise only
+	}
+
+	if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
+		root.RemoveSection(serverAdminNode)
 	}
 }
 

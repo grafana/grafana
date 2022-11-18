@@ -38,6 +38,18 @@ export function getAppRoutes(): RouteDescriptor[] {
           component: () => <NavLandingPage navId="monitoring" />,
         },
         {
+          path: '/admin/general',
+          component: () => <NavLandingPage navId="admin/general" />,
+        },
+        {
+          path: '/admin/plugins',
+          component: () => <NavLandingPage navId="admin/plugins" />,
+        },
+        {
+          path: '/admin/access',
+          component: () => <NavLandingPage navId="admin/access" />,
+        },
+        {
           path: '/a/:pluginId',
           exact: true,
           component: SafeDynamicImport(
