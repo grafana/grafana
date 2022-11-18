@@ -320,17 +320,21 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		RuleGroup:    ruleGroupConfig.Name,
 	}
 
-	return srv.updateAlertRulesInGroup(c, groupKey, rules)
+	return srv.updateAlertRulesInGroup(c, groupKey, func(transactionCtx context.Context) (*store.GroupDelta, error) {
+		return store.CalculateChanges(transactionCtx, srv.store, groupKey, rules)
+	})
 }
+
+type calculateChangesFunc func(ctx context.Context) (*store.GroupDelta, error)
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
-func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRule) response.Response {
+func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmodels.AlertRuleGroupKey, calculateChanges calculateChangesFunc) response.Response {
 	var finalChanges *store.GroupDelta
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group", groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", c.UserID)
-		groupChanges, err := store.CalculateChanges(tranCtx, srv.store, groupKey, rules)
+		groupChanges, err := calculateChanges(tranCtx)
 		if err != nil {
 			return err
 		}
