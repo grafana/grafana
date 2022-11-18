@@ -11,16 +11,15 @@ class LogReporter extends Mocha.reporters.Base {
     this.failures = [];
     this.passes = [];
 
-    runner.on(EVENT_TEST_END, function (test) {
+    runner.on(EVENT_TEST_END, (test) => {
       this.tests.push(testToJSON(test));
     });
 
-    runner.on(EVENT_TEST_PASS, function (test) {
+    runner.on(EVENT_TEST_PASS, (test) => {
       this.passes.push(testToJSON(test));
     });
 
-    runner.on(EVENT_TEST_FAIL, function (test) {
-      console.log(this);
+    runner.on(EVENT_TEST_FAIL, (test) => {
       this.failures.push(testToJSON(test));
     });
 
@@ -63,16 +62,12 @@ function testToJSON(test) {
   let err = test.err || {};
 
   if (err instanceof Error) {
-    err = {
-      name: err.name,
-      stack: err.stack,
-      message: err.message,
-    };
+    err = err.toString();
   }
 
   return {
     title: test.title,
-    suite: String(test.fullTitle).replace(test.title, '').trim(),
+    suite: String(test.fullTitle()).replace(test.title, '').trim(),
     file: test.file,
     duration: test.duration,
     currentRetry: test.currentRetry(),
