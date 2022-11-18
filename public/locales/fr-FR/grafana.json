@@ -99,6 +99,15 @@
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
     },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alertes"
@@ -184,7 +193,8 @@
     },
     "global-users": {
       "subtitle": "Gérer et créer des utilisateurs sur l'ensemble du serveur Grafana",
-      "title": "Utilisateurs"
+      "title": "",
+      "titleBeforeTopnav": "Utilisateurs"
     },
     "help": {
       "title": "Aide"
@@ -227,7 +237,8 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "Préférences"
+      "title": "",
+      "titleBeforeTopnav": "Préférences"
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
