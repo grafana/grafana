@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-func TestNeedsLogging(t *testing.T) {
+func TestShouldAnnotate(t *testing.T) {
 	allStates := []eval.State{
 		eval.Normal,
 		eval.Alerting,
@@ -94,7 +94,7 @@ func TestNeedsLogging(t *testing.T) {
 		}
 
 		t.Run(fmt.Sprintf("%s -> %s should be %v", trans.PreviousFormatted(), trans.Formatted(), !ok), func(t *testing.T) {
-			require.Equal(t, !ok, needsLogging(trans))
+			require.Equal(t, !ok, shouldAnnotate(trans))
 		})
 	}
 }

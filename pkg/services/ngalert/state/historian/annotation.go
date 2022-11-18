@@ -46,7 +46,7 @@ func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *
 func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
-		if !needsLogging(state) {
+		if !shouldAnnotate(state) {
 			continue
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
@@ -159,7 +159,7 @@ func removePrivateLabels(labels data.Labels) data.Labels {
 	return result
 }
 
-func needsLogging(transition state.StateTransition) bool {
+func shouldAnnotate(transition state.StateTransition) bool {
 	// Do not log not transitioned states normal states if it was marked as stale
 	if !transition.Changed() || transition.StateReason == ngmodels.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
 		return false
