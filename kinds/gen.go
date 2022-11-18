@@ -35,7 +35,7 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.GoTypesJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
 		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
