@@ -247,12 +247,6 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		} else {
 			root.RemoveSection(orgAdminNode)
 		}
-
-		// adminAccessNodeLinks := []*NavLink{}
-		// // adminAccessNodeLinks = AppendIfNotNil(adminAccessNodeLinks, rolesNode := root.FindById("roles")) // enterprise only?
-
-		// adminConfigNodeLinks := []*NavLink{}
-		// // adminConfigNodeLinks = AppendIfNotNil(adminConfigNodeLinks, root.FindById("customBranding")) // enterprise only
 	}
 
 	if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {

@@ -69,6 +69,12 @@ export function getNavTitle(navId: string | undefined) {
       return config.featureToggles.topnav
         ? t('nav.config.title', 'Administration')
         : t('nav.config.titleBeforeTopnav', 'Configuration');
+    case 'admin/general':
+      return t('nav.admin-general.title', 'General');
+    case 'admin/plugins':
+      return t('nav.admin-plugins.title', 'Plugins and data');
+    case 'admin/access':
+      return t('nav.admin-access.title', 'Users and access');
     case 'datasources':
       return t('nav.datasources.title', 'Data sources');
     case 'correlations':
