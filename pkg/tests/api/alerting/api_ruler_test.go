@@ -857,6 +857,57 @@ func TestRuleUpdate(t *testing.T) {
 	})
 }
 
+func TestRuleDelete(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	permissionsStore := resourcepermissions.NewStore(store)
+
+	// Create a user to make authenticated requests
+	userID := createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	folder1Title := "folder1"
+	client.CreateFolder(t, "folder1", folder1Title)
+
+	group1 := generateAlertRuleGroup(5, alertRuleGen())
+
+	status, _ := client.PostRulesGroup(t, folder1Title, &group1)
+	require.Equal(t, http.StatusAccepted, status)
+
+	group1Response := client.GetRulesGroup(t, folder1Title, group1.Name)
+
+	rule := group1Response.Rules[rand.Intn(len(group1Response.Rules)-1)]
+	status = client.DeleteRule(t, rule.GrafanaManagedAlert.UID)
+	require.Equal(t, http.StatusAccepted, status)
+
+	groupV2 := client.GetRulesGroup(t, folder1Title, group1.Name)
+	require.Len(t, groupV2.Rules, len(group1Response.Rules)-1)
+
+	for _, node := range groupV2.Rules {
+		require.NotEqual(t, rule.GrafanaManagedAlert.UID, node.GrafanaManagedAlert.UID)
+	}
+
+	t.Run("should fail if user does not have permissions", func(t *testing.T) {
+		// Remove permissions from folder
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+		client.ReloadCachedPermissions(t)
+
+		rule := groupV2.Rules[rand.Intn(len(groupV2.Rules)-1)]
+		status = client.DeleteRule(t, rule.GrafanaManagedAlert.UID)
+		assert.Equal(t, http.StatusNotFound, status)
+	})
+}
+
 func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)

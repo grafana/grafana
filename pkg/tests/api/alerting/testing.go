@@ -276,6 +276,23 @@ func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.
 	return resp.StatusCode, string(b)
 }
 
+func (a apiClient) DeleteRule(t *testing.T, ruleUID string) int {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/v1/ngalert/rules/uid/%s", a.url, ruleUID)
+	// nolint:gosec
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	if err != nil {
+		require.NoError(t, err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		require.NoError(t, err)
+	}
+	return resp.StatusCode
+}
+
 func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
 	t.Helper()
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s/%s", a.url, folder, group)
