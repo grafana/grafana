@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -155,12 +156,10 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		details[k] = detail
 	}
 
-	severity := tmpl(pn.settings.Severity)
-	if severity == "" {
-		severity = defaultSeverity
-	}
+	severity := strings.ToLower(tmpl(pn.settings.Severity))
 	if _, ok := knownSeverity[severity]; !ok {
-		pn.log.Warn("Severity is not in the list of known values. It can cause API to reject the request", "severity", severity)
+		pn.log.Warn("Severity is not in the list of known values. Fallback to the default severity because otherwise API will reject the request", "actualSeverity", severity, "fallbackSeverity", defaultSeverity)
+		severity = defaultSeverity
 	}
 
 	msg := &pagerDutyMessage{
