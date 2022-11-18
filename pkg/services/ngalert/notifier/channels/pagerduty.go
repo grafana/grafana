@@ -21,9 +21,12 @@ import (
 const (
 	pagerDutyEventTrigger = "trigger"
 	pagerDutyEventResolve = "resolve"
+
+	defaultSeverity = "critical"
 )
 
 var (
+	knownSeverity        = map[string]struct{}{defaultSeverity: {}, "error": {}, "warning": {}, "info": {}}
 	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
@@ -87,7 +90,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 				"num_firing":   `{{ .Alerts.Firing | len }}`,
 				"num_resolved": `{{ .Alerts.Resolved | len }}`,
 			},
-			Class:     fc.Config.Settings.Get("class").MustString("default"),
+			Class:     fc.Config.Settings.Get("class").MustString(defaultSeverity),
 			Component: fc.Config.Settings.Get("component").MustString("Grafana"),
 			Group:     fc.Config.Settings.Get("group").MustString("default"),
 			Summary:   fc.Config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
@@ -152,6 +155,14 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		details[k] = detail
 	}
 
+	severity := tmpl(pn.settings.Severity)
+	if severity == "" {
+		severity = defaultSeverity
+	}
+	if _, ok := knownSeverity[severity]; !ok {
+		pn.log.Warn("Severity is not in the list of known values. It can cause API to reject the request", "severity", severity)
+	}
+
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
 		ClientURL:   pn.tmpl.ExternalURL.String(),
@@ -165,7 +176,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.settings.Component),
 			Summary:       tmpl(pn.settings.Summary),
-			Severity:      tmpl(pn.settings.Severity),
+			Severity:      severity,
 			CustomDetails: details,
 			Class:         tmpl(pn.settings.Class),
 			Group:         tmpl(pn.settings.Group),
