@@ -116,7 +116,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
                     <Icon name="check" /> This query is valid.
                   </div>
                 ) : isValidQuery === false ? (
-                  <FieldValidationMessage>This query is not valid.</FieldValidationMessage>
+                  <FieldValidationMessage role="alert">This query is not valid.</FieldValidationMessage>
                 ) : (
                   <div />
                 )}

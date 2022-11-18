@@ -356,7 +356,7 @@ describe('CorrelationsPage', () => {
       act(() => {
         emit!.subscriber!.destination.next({ state: 'Error' });
       });
-      expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
 
       act(() => {
         emit!.subscriber!.destination.next({ state: 'Done' });
