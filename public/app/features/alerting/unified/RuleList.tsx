@@ -222,10 +222,10 @@ const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
     );
   `,
   ctaContainer: css`
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display: flex;
     gap: ${theme.spacing(2)};
     justify-content: space-between;
+    flex-wrap: wrap;
   `,
   docsLink: css`
     display: block;
@@ -245,25 +245,52 @@ interface WelcomeCTABoxProps {
 }
 
 function WelcomeCTABox({ title, description, icon, href, hrefText }: WelcomeCTABoxProps) {
-  // const styles = useStyles2(getWelcomeCTAButtonStyles);
+  const styles = useStyles2(getWelcomeCTAButtonStyles);
 
   return (
-    <Stack direction="row" gap={1} wrap={false} alignItems="center">
-      <Icon name={icon} size="xxl" />
-      <Stack gap={1} direction="column">
-        <h3>{title}</h3>
-        <div>{description}</div>
-        <LinkButton href={href}>{hrefText}</LinkButton>
-      </Stack>
-    </Stack>
+    <div className={styles.container}>
+      <div className={styles.icon}>
+        <Icon name={icon} size="xxl" />
+      </div>
+      <h3 className={styles.title}>{title}</h3>
+      <div className={styles.desc}>{description}</div>
+      <LinkButton href={href} className={styles.actionButton}>
+        {hrefText}
+      </LinkButton>
+    </div>
   );
 }
 
 const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
-  // cont: css`
-  //   grid-template-columns: 50px auto;
-  //   grid-template-rows: ;
-  // `,
+  container: css`
+    flex: 1;
+    min-width: 240px;
+    display: grid;
+    gap: ${theme.spacing(1)};
+    grid-template-columns: min-content 1fr 1fr 1fr;
+    grid-template-rows: min-content auto min-content;
+  `,
+
+  title: css`
+    grid-column: 2 / span 3;
+    grid-row: 1;
+  `,
+
+  desc: css`
+    grid-column: 2 / span 3;
+    grid-row: 2;
+  `,
+
+  actionButton: css`
+    grid-column: 2 / span 3;
+    grid-row: 3;
+  `,
+
+  icon: css`
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    margin: auto;
+  `,
 });
 
 export default WelcomePage;
