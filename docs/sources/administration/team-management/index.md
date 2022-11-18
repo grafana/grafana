@@ -62,8 +62,6 @@ To add a team member:
 1. Choose if you want to add the user as a team Member or an Admin.
 1. Click **Add to team**.
 
-![Add team member](/static/img/docs/manage-users/add-team-member-7-3.png)
-
 ## Grant team member permissions
 
 Complete this task when you want to add or modify team member permissions.
@@ -75,8 +73,6 @@ To grant team member permissions:
 1. Click the name of the team for which you want to add or modify team member permissions.
 1. In the team member list, find and click the user that you want to change. You can use the search field to filter the list if necessary.
 1. Click the **Permission** list, and then click the new user permission level.
-
-![Change team member permissions](/static/img/docs/manage-users/change-team-permissions-7-3.png)
 
 ## Remove a team member
 
