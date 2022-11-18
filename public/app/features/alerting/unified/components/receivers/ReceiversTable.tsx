@@ -3,7 +3,8 @@ import pluralize from 'pluralize';
 import React, { FC, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
-import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
@@ -79,17 +80,12 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
 interface ReceiverErrorProps {
   errorCount: number;
   errorDetail?: string;
+  showErrorCount: boolean;
 }
 
-function ReceiverError({ errorCount, errorDetail }: ReceiverErrorProps) {
-  return (
-    <Badge
-      color="orange"
-      icon="exclamation-triangle"
-      text={`${errorCount} ${pluralize('error', errorCount)}`}
-      tooltip={errorDetail ?? 'Error'}
-    />
-  );
+function ReceiverError({ errorCount, errorDetail, showErrorCount }: ReceiverErrorProps) {
+  const text = showErrorCount ? `${errorCount} ${pluralize('error', errorCount)}` : 'Error';
+  return <Badge color="orange" icon="exclamation-triangle" text={text} tooltip={errorDetail ?? 'Error'} />;
 }
 interface NotifierHealthProps {
   errorsByNotifier: number;
@@ -101,7 +97,7 @@ function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierH
   const noErrorsColor = isLastNotifyNullDate(lastNotify) ? 'orange' : 'green';
   const noErrorsText = isLastNotifyNullDate(lastNotify) ? 'No attempts' : 'OK';
   return errorsByNotifier > 0 ? (
-    <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} />
+    <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} showErrorCount={false} />
   ) : (
     <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
   );
@@ -116,18 +112,18 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthP
   const noErrorsColor = someWithNoAttempt ? 'orange' : 'green';
   const noErrorsText = someWithNoAttempt ? 'No attempts' : 'OK';
   return errorsByReceiver > 0 ? (
-    <ReceiverError errorCount={errorsByReceiver} />
+    <ReceiverError errorCount={errorsByReceiver} showErrorCount={true} />
   ) : (
     <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
   );
 }
+
 const useContactPointsState = (alertManagerName: string) => {
-  const contactPointsState = useGetContactPointsState(alertManagerName ?? '');
+  const contactPointsState = useGetContactPointsState(alertManagerName);
   const receivers: ReceiversState = contactPointsState?.receivers ?? {};
-  const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
+  const errorStateAvailable = Object.keys(receivers).length > 0;
   return { contactPointsState, errorStateAvailable };
 };
-
 interface ReceiverItem {
   name: string;
   types: string[];

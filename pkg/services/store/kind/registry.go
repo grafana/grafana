@@ -8,10 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
-	"github.com/grafana/grafana/pkg/services/store/kind/dummy"
+	"github.com/grafana/grafana/pkg/services/store/kind/dataframe"
+	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/geojson"
+	"github.com/grafana/grafana/pkg/services/store/kind/jsonobj"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
+	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -20,6 +23,7 @@ type KindRegistry interface {
 	Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error
 	GetSummaryBuilder(kind string) models.ObjectSummaryBuilder
 	GetInfo(kind string) (models.ObjectKindInfo, error)
+	GetFromExtension(suffix string) (models.ObjectKindInfo, error)
 	GetKinds() []models.ObjectKindInfo
 }
 
@@ -33,6 +37,14 @@ func NewKindRegistry() KindRegistry {
 		info:    dashboard.GetObjectKindInfo(),
 		builder: dashboard.GetObjectSummaryBuilder(),
 	}
+	kinds[models.StandardKindSnapshot] = &kindValues{
+		info:    snapshot.GetObjectKindInfo(),
+		builder: snapshot.GetObjectSummaryBuilder(),
+	}
+	kinds[models.StandardKindFolder] = &kindValues{
+		info:    folder.GetObjectKindInfo(),
+		builder: folder.GetObjectSummaryBuilder(),
+	}
 	kinds[models.StandardKindPNG] = &kindValues{
 		info:    png.GetObjectKindInfo(),
 		builder: png.GetObjectSummaryBuilder(),
@@ -41,13 +53,13 @@ func NewKindRegistry() KindRegistry {
 		info:    geojson.GetObjectKindInfo(),
 		builder: geojson.GetObjectSummaryBuilder(),
 	}
-
-	// FIXME -- these are registered because existing tests use them
-	for _, k := range []string{"dummy", "kind1", "kind2", "kind3"} {
-		kinds[k] = &kindValues{
-			info:    dummy.GetObjectKindInfo(k),
-			builder: dummy.GetObjectSummaryBuilder(k),
-		}
+	kinds[models.StandardKindDataFrame] = &kindValues{
+		info:    dataframe.GetObjectKindInfo(),
+		builder: dataframe.GetObjectSummaryBuilder(),
+	}
+	kinds[models.StandardKindJSONObj] = &kindValues{
+		info:    jsonobj.GetObjectKindInfo(),
+		builder: jsonobj.GetObjectSummaryBuilder(),
 	}
 
 	// create a registry
@@ -79,20 +91,26 @@ type kindValues struct {
 }
 
 type registry struct {
-	mutex sync.RWMutex
-	kinds map[string]*kindValues
-	info  []models.ObjectKindInfo
+	mutex  sync.RWMutex
+	kinds  map[string]*kindValues
+	info   []models.ObjectKindInfo
+	suffix map[string]models.ObjectKindInfo
 }
 
 func (r *registry) updateInfoArray() {
+	suffix := make(map[string]models.ObjectKindInfo)
 	info := make([]models.ObjectKindInfo, 0, len(r.kinds))
 	for _, v := range r.kinds {
 		info = append(info, v.info)
+		if v.info.FileExtension != "" {
+			suffix[v.info.FileExtension] = v.info
+		}
 	}
 	sort.Slice(info, func(i, j int) bool {
 		return info[i].ID < info[j].ID
 	})
 	r.info = info
+	r.suffix = suffix
 }
 
 func (r *registry) Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error {
@@ -135,6 +153,18 @@ func (r *registry) GetInfo(kind string) (models.ObjectKindInfo, error) {
 	v, ok := r.kinds[kind]
 	if ok {
 		return v.info, nil
+	}
+	return models.ObjectKindInfo{}, fmt.Errorf("not found")
+}
+
+// GetInfo returns the registered info
+func (r *registry) GetFromExtension(suffix string) (models.ObjectKindInfo, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	v, ok := r.suffix[suffix]
+	if ok {
+		return v, nil
 	}
 	return models.ObjectKindInfo{}, fmt.Errorf("not found")
 }

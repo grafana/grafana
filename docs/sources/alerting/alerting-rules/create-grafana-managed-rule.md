@@ -9,13 +9,13 @@ keywords:
   - guide
   - rules
   - create
-title: Create Grafana managed alert rule
+title: Create Grafana managed alert rules
 weight: 400
 ---
 
 # Create a Grafana managed alerting rule
 
-Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana Alerting, see [About Grafana Alerting]({{< relref "../" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
+Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fixed thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana Alerting, see [About Grafana Alerting]({{< relref "../" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
 
 Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
@@ -44,7 +44,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - Add Runbook URL, panel, dashboard, and alert IDs.
    - Add custom labels.
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-1. Next, create a [notification]({{< relref "../notifications/" >}}) for the rule.
+1. Next, create a for the rule.
 
 ### Single and multi dimensional rule
 

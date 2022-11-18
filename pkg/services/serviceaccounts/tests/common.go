@@ -4,15 +4,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 type TestUser struct {
@@ -68,12 +71,14 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 		addKeyCmd.Key = "secret"
 	}
 
-	apiKeyService := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg)
-	err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	require.NoError(t, err)
+	err = apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
 
 	if testKey.IsExpired {
-		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
 			key := apikey.APIKey{Expires: &expires}

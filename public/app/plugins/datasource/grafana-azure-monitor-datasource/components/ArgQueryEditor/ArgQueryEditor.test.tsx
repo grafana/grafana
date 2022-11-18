@@ -3,6 +3,7 @@ import React from 'react';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
+import { selectors } from '../../e2e/selectors';
 
 import ArgQueryEditor from './ArgQueryEditor';
 
@@ -31,7 +32,9 @@ const defaultProps = {
 describe('ArgQueryEditor', () => {
   it('should render', async () => {
     render(<ArgQueryEditor {...defaultProps} />);
-    expect(await screen.findByTestId('azure-monitor-arg-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)
+    ).toBeInTheDocument();
   });
 
   it('should select a subscription from the fetched array', async () => {
@@ -40,7 +43,9 @@ describe('ArgQueryEditor', () => {
     });
     const onChange = jest.fn();
     render(<ArgQueryEditor {...defaultProps} datasource={datasource} onChange={onChange} />);
-    expect(await screen.findByTestId('azure-monitor-arg-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)
+    ).toBeInTheDocument();
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo'] }));
   });
 
@@ -50,7 +55,9 @@ describe('ArgQueryEditor', () => {
       subscriptions: ['bar'],
     });
     render(<ArgQueryEditor {...defaultProps} onChange={onChange} query={query} />);
-    expect(await screen.findByTestId('azure-monitor-arg-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)
+    ).toBeInTheDocument();
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['bar'] }));
   });
 
@@ -63,7 +70,9 @@ describe('ArgQueryEditor', () => {
       subscriptions: ['bar'],
     });
     render(<ArgQueryEditor {...defaultProps} datasource={datasource} onChange={onChange} query={query} />);
-    expect(await screen.findByTestId('azure-monitor-arg-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)
+    ).toBeInTheDocument();
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo'] }));
     expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['bar'] }));
   });
@@ -77,7 +86,9 @@ describe('ArgQueryEditor', () => {
       subscriptions: ['foo', 'bar', 'foobar'],
     });
     render(<ArgQueryEditor {...defaultProps} datasource={datasource} onChange={onChange} query={query} />);
-    expect(await screen.findByTestId('azure-monitor-arg-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)
+    ).toBeInTheDocument();
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo', 'bar'] }));
     expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo', 'bar', 'foobar'] }));
   });

@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationLoginAttemptsQuery(t *testing.T) {
@@ -52,7 +53,7 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 		mockTime := beginningOfTime
 		loginAttemptService = &Service{
 			store: &xormStore{
-				db:  sqlstore.InitTestDB(t),
+				db:  db.InitTestDB(t),
 				now: func() time.Time { return mockTime },
 			},
 		}
@@ -116,7 +117,7 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 		mockTime := beginningOfTime
 		loginAttemptService = &Service{
 			store: &xormStore{
-				db:  sqlstore.InitTestDB(t),
+				db:  db.InitTestDB(t),
 				now: func() time.Time { return mockTime },
 			},
 		}

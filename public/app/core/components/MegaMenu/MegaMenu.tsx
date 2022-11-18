@@ -25,17 +25,14 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
   const navTree = cloneDeep(navBarTree);
 
   const coreItems = navTree
-    .filter((item) => item.section === NavSection.Core)
-    .map((item) => enrichWithInteractionTracking(item, true));
-  const pluginItems = navTree
-    .filter((item) => item.section === NavSection.Plugin)
+    .filter((item) => item.section === NavSection.Core || item.section === NavSection.Plugin)
     .map((item) => enrichWithInteractionTracking(item, true));
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config && item && item.id !== 'help' && item.id !== 'profile'),
     location
   ).map((item) => enrichWithInteractionTracking(item, true));
 
-  const navItems = [...coreItems, ...pluginItems, ...configItems];
+  const navItems = [...coreItems, ...configItems];
 
   const activeItem = getActiveItem(navItems, location.pathname);
 

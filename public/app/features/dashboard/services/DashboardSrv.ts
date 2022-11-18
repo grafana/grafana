@@ -69,7 +69,7 @@ export class DashboardSrv {
     const parsedJson = JSON.parse(json);
     return saveDashboard({
       dashboard: parsedJson,
-      folderId: this.dashboard?.meta.folderId || parsedJson.folderId,
+      folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
     });
   }
 
@@ -90,7 +90,7 @@ export class DashboardSrv {
     );
   }
 
-  starDashboard(dashboardId: string, isStarred: any) {
+  starDashboard(dashboardId: string, isStarred: boolean) {
     const backendSrv = getBackendSrv();
     let promise;
 

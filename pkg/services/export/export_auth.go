@@ -3,15 +3,17 @@ package export
 import (
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	isMySQL := isMySQLEngine(job.sql)
+
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		commit := commitOptions{
 			comment: "auth tables dump",
 		}
@@ -26,11 +28,11 @@ func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
 		dump := []statsTables{
 			{
 				table: "user",
-				sql: `
-					SELECT user.*, org_user.role 
-					  FROM user 
-					  JOIN org_user ON user.id = org_user.user_id
-					 WHERE org_user.org_id =` + strconv.FormatInt(helper.orgID, 10),
+				sql: removeQuotesFromQuery(`
+					SELECT "user".*, org_user.role 
+					  FROM "user" 
+					  JOIN org_user ON "user".id = org_user.user_id
+					 WHERE org_user.org_id =`+strconv.FormatInt(helper.orgID, 10), isMySQL),
 				converters: []sqlutil.Converter{{Dynamic: true}},
 				drop: []string{
 					"id", "version",
@@ -73,7 +75,6 @@ func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
 					 WHERE org_user.org_id =` + strconv.FormatInt(helper.orgID, 10),
 			},
 			{table: "team"},
-			{table: "team_group"},
 			{table: "team_role"},
 			{table: "team_member"},
 			{table: "temp_user"},
@@ -98,7 +99,7 @@ func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
 
 			rows, err := sess.DB().QueryContext(helper.ctx, auth.sql)
 			if err != nil {
-				if strings.HasPrefix(err.Error(), "no such table") {
+				if isTableNotExistsError(err) {
 					continue
 				}
 				return err

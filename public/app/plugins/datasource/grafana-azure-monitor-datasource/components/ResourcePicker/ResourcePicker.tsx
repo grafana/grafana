@@ -4,6 +4,7 @@ import { useEffectOnce } from 'react-use';
 
 import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
+import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMetricResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
@@ -232,7 +233,11 @@ const ResourcePicker = ({
         <Advanced resource={internalSelected} onChange={(r) => setInternalSelected(r)} />
         <Space v={2} />
 
-        <Button disabled={!!errorMessage} onClick={handleApply}>
+        <Button
+          disabled={!!errorMessage}
+          onClick={handleApply}
+          data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
+        >
           Apply
         </Button>
 

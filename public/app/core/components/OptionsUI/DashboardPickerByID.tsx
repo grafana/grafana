@@ -85,7 +85,7 @@ async function getDashboards(
   });
 
   if (excludedDashboards) {
-    return dashboards.filter(({ value }) => !excludedDashboards.includes(value.uid as string));
+    return dashboards.filter(({ value }) => !excludedDashboards.includes(value.uid));
   }
 
   return dashboards;

@@ -2,15 +2,19 @@ package elasticsearch
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var update = flag.Bool("update", true, "update golden files")
 
 func TestResponseParser(t *testing.T) {
 	t.Run("Elasticsearch response parser test", func(t *testing.T) {
@@ -774,6 +778,55 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Name, "value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "Count")
+		})
+
+		t.Run("Larger trimEdges value", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"timeField": "@timestamp",
+					"metrics": [{ "type": "count" }],
+          "bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": { "trimEdges": "3" }
+						}
+					]
+				}`,
+			}
+			response := `{
+        "responses": [
+          {
+            "aggregations": {
+              "2": {
+                "buckets": [
+                  { "key": 1000, "doc_count": 10},
+                  { "key": 2000, "doc_count": 20},
+                  { "key": 3000, "doc_count": 30},
+                  { "key": 4000, "doc_count": 40},
+                  { "key": 5000, "doc_count": 50},
+                  { "key": 6000, "doc_count": 60},
+                  { "key": 7000, "doc_count": 70},
+                  { "key": 8000, "doc_count": 80},
+                  { "key": 9000, "doc_count": 90}
+                ]
+              }
+            }
+          }
+        ]
+			}`
+			rp, err := newResponseParserForTest(targets, response)
+
+			require.NoError(t, err)
+			result, err := rp.getTimeSeries()
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+
+			experimental.CheckGoldenJSONResponse(t, "testdata", "trimedges_string.golden", &queryRes, *update)
 		})
 
 		t.Run("No group by time", func(t *testing.T) {

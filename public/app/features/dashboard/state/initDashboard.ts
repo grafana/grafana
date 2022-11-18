@@ -12,7 +12,15 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DashboardDTO,
+  DashboardInitPhase,
+  DashboardMeta,
+  DashboardRoutes,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -27,7 +35,7 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId?: string;
+  urlFolderUid?: string;
   panelType?: string;
   accessToken?: string;
   routeName?: string;
@@ -89,7 +97,7 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
-        return getNewDashboardModelData(args.urlFolderId, args.panelType);
+        return getNewDashboardModelData(args.urlFolderUid, args.panelType);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -255,14 +263,17 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-export function getNewDashboardModelData(urlFolderId?: string, panelType?: string): any {
+export function getNewDashboardModelData(
+  urlFolderUid?: string,
+  panelType?: string
+): { dashboard: any; meta: DashboardMeta } {
   const data = {
     meta: {
       canStar: false,
       canShare: false,
       canDelete: false,
       isNew: true,
-      folderId: 0,
+      folderUid: '',
     },
     dashboard: {
       title: 'New dashboard',
@@ -276,8 +287,8 @@ export function getNewDashboardModelData(urlFolderId?: string, panelType?: strin
     },
   };
 
-  if (urlFolderId) {
-    data.meta.folderId = parseInt(urlFolderId, 10);
+  if (urlFolderUid) {
+    data.meta.folderUid = urlFolderUid;
   }
 
   return data;
