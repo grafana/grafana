@@ -123,6 +123,50 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 	}, nil
 }
 
+// CalculateRuleDeletionFromGroup calculates group change when rule is deleted from a group. Returns delta where rule is deleted and remaining rules are re-indexed
+func CalculateRuleDeletionFromGroup(ctx context.Context, ruleReader RuleReader, ruleToDelete *models.AlertRule) (*GroupDelta, error) {
+	// Rule can be from other group or namespace
+	q := &models.GetAlertRulesGroupByRuleUIDQuery{OrgID: ruleToDelete.OrgID, UID: ruleToDelete.UID}
+	if err := ruleReader.GetAlertRulesGroupByRuleUID(ctx, q); err != nil {
+		return nil, fmt.Errorf("failed to query database for a group of alert rules: %w", err)
+	}
+	rules := models.RulesGroup(q.Result)
+	rules.SortByGroupIndex()
+	updates := make([]RuleDelta, 0, len(rules)-1)
+
+	groupIdx := 1
+	for _, rule := range rules {
+		if rule.UID == ruleToDelete.UID {
+			continue
+		}
+		if rule.RuleGroupIndex != groupIdx {
+			newRule := models.CopyRule(rule)
+			newRule.RuleGroupIndex = groupIdx
+			diff := rule.Diff(newRule, AlertRuleFieldsToIgnoreInDiff[:]...)
+			updates = append(updates, RuleDelta{
+				Existing: rule,
+				New:      newRule,
+				Diff:     diff,
+			})
+		}
+		groupIdx++
+	}
+
+	groupKey := ruleToDelete.GetGroupKey()
+
+	return &GroupDelta{
+		GroupKey: groupKey,
+		AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+			groupKey: rules,
+		},
+		New:    nil,
+		Update: updates,
+		Delete: []*models.AlertRule{
+			ruleToDelete,
+		},
+	}, nil
+}
+
 // UpdateCalculatedRuleFields refreshes the calculated fields in a set of alert rule changes.
 // This may generate new changes to keep a group consistent, such as versions or rule indexes.
 func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {

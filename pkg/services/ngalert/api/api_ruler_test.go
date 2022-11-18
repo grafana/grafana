@@ -17,10 +17,12 @@ import (
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -260,6 +262,188 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				deleteCommands := getRecordedCommand(ruleStore)
 				require.Empty(t, deleteCommands)
 			})
+		})
+	})
+}
+
+func TestRouteDeleteAlertRule(t *testing.T) {
+	orgID := rand.Int63()
+	folder := randFolder()
+
+	groupKey := models.AlertRuleGroupKey{
+		OrgID:        orgID,
+		NamespaceUID: folder.UID,
+		RuleGroup:    util.GenerateShortUID(),
+	}
+
+	getRecordedCommand := func(ruleStore *fakes.RuleStore, command string) []fakes.GenericRecordedQuery {
+		results := ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
+			c, ok := cmd.(fakes.GenericRecordedQuery)
+			if !ok || c.Name != command {
+				return nil, false
+			}
+			return c, ok
+		})
+		var result []fakes.GenericRecordedQuery
+		for _, cmd := range results {
+			result = append(result, cmd.(fakes.GenericRecordedQuery))
+		}
+		return result
+	}
+
+	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		// add random data
+		ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID)))...)
+		return ruleStore
+	}
+	t.Run("should return 404 when rule does not exist", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		rulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withGroupKey(groupKey)))
+		ruleStore.PutRule(context.Background(), rulesInFolder...)
+
+		scheduler := &schedule.FakeScheduleService{}
+		scheduler.On("DeleteAlertRule", mock.Anything)
+
+		request := createRequestContext(orgID, "", nil)
+		ac := &fakeAccessControl{
+			ExpectedDisabled: false,
+			ExpectedEvaluate: true,
+		}
+		toDelete := util.GenerateShortUID()
+		for {
+			q := &models.GetAlertRuleByUIDQuery{UID: toDelete}
+			_ = ruleStore.GetAlertRuleByUID(request.Req.Context(), q)
+			if q.Result == nil {
+				break
+			}
+			toDelete = util.GenerateShortUID()
+		}
+
+		response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRule(request, toDelete)
+		require.Equalf(t, 404, response.Status(), "Expected 404 but got %d: %v", response.Status(), string(response.Body()))
+
+		scheduler.AssertNotCalled(t, "DeleteAlertRule")
+		require.Empty(t, getRecordedCommand(ruleStore, "DeleteAlertRulesByUID"))
+		require.Emptyf(t, ac.RecordedOps, "access control service was not expected to be called")
+	})
+	t.Run("should return 404 if user has no access to folder", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		rulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withGroupKey(groupKey)))
+		ruleStore.PutRule(context.Background(), rulesInFolder...)
+
+		ruleToDelete := rulesInFolder[rand.Intn(len(rulesInFolder))]
+
+		scheduler := &schedule.FakeScheduleService{}
+		scheduler.On("DeleteAlertRule", mock.Anything)
+
+		request := createRequestContext(orgID, org.RoleViewer, nil)
+		ac := &fakeAccessControl{
+			ExpectedDisabled: false,
+			ExpectedEvaluate: false,
+		}
+
+		response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRule(request, ruleToDelete.UID)
+		require.Equalf(t, 404, response.Status(), "Expected 404 but got %d: %v", response.Status(), string(response.Body()))
+
+		scheduler.AssertNotCalled(t, "DeleteAlertRule")
+		require.Empty(t, getRecordedCommand(ruleStore, "DeleteAlertRulesByUID"))
+		require.NotEmptyf(t, ac.RecordedOps, "access control service was expected to be called")
+		require.Equal(t,
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete,
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(ruleToDelete.NamespaceUID),
+			),
+			ac.RecordedOps[0])
+	})
+
+	t.Run("should return 401 if user has no access to the group's data sources", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		rulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withGroupKey(groupKey)))
+		ruleStore.PutRule(context.Background(), rulesInFolder...)
+
+		ruleToDelete := rulesInFolder[rand.Intn(len(rulesInFolder))]
+
+		scheduler := &schedule.FakeScheduleService{}
+		scheduler.On("DeleteAlertRule", mock.Anything)
+
+		request := createRequestContext(orgID, org.RoleViewer, nil)
+
+		ac := &fakeAccessControl{
+			ExpectedDisabled: false,
+			Hook: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+				return evaluator.Evaluate(
+					map[string][]string{
+						accesscontrol.ActionAlertingRuleDelete: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(ruleToDelete.NamespaceUID)},
+					},
+				), nil
+			},
+		}
+
+		response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRule(request, ruleToDelete.UID)
+		require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
+
+		scheduler.AssertNotCalled(t, "DeleteAlertRule")
+		require.Empty(t, getRecordedCommand(ruleStore, "DeleteAlertRulesByUID"))
+		require.NotEmptyf(t, ac.RecordedOps, "access control service was expected to be called")
+	})
+
+	t.Run("should delete rule from the group", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+
+		rulesInFolder := models.GenerateAlertRules(5, models.AlertRuleGen(withGroupKey(groupKey), models.WithSequentialGroupIndex()))
+		ruleStore.PutRule(context.Background(), rulesInFolder...)
+
+		deletedIndex := 2
+		ruleToDelete := rulesInFolder[deletedIndex] // take any rule except the last
+		expectedIndices := make(map[string]int, len(rulesInFolder)-1)
+		increment := 0
+		for _, rule := range rulesInFolder {
+			if rule == ruleToDelete {
+				increment++
+				continue
+			}
+			expectedIndices[rule.UID] = rule.RuleGroupIndex - increment
+		}
+
+		scheduler := &schedule.FakeScheduleService{}
+		scheduler.On("DeleteAlertRule", mock.Anything)
+		scheduler.On("UpdateAlertRule", mock.Anything, mock.Anything)
+
+		request := createRequestContext(orgID, org.RoleViewer, nil)
+
+		ac := &fakeAccessControl{
+			ExpectedDisabled: false,
+			ExpectedEvaluate: true,
+		}
+
+		response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRule(request, ruleToDelete.UID)
+		require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+
+		scheduler.AssertCalled(t, "DeleteAlertRule", []models.AlertRuleKey{ruleToDelete.GetKey()})
+		require.NotEmptyf(t, ac.RecordedOps, "access control service was expected to be called")
+
+		cmds := getRecordedCommand(ruleStore, "DeleteAlertRulesByUID")
+		require.NotEmptyf(t, cmds, "Expected to be a delete by UID operation")
+		require.Equal(t, orgID, cmds[0].Params[0])
+		require.Equal(t, []string{ruleToDelete.UID}, cmds[0].Params[1])
+		t.Logf("Deleting index %d", deletedIndex)
+		t.Run("and re-index remaining rules", func(t *testing.T) {
+			var updateRules []ngmodels.UpdateRule
+			for _, operation := range ruleStore.RecordedOps {
+				var ok bool
+				updateRules, ok = operation.([]ngmodels.UpdateRule)
+				if ok {
+					break
+				}
+			}
+			require.NotEmptyf(t, updateRules, "Expected update command but got none")
+			require.Len(t, updateRules, len(rulesInFolder)-1)
+			for _, delta := range updateRules {
+				idx, ok := expectedIndices[delta.New.UID]
+				require.Truef(t, ok, "unknown rule in delta")
+				require.Equal(t, idx, delta.New.RuleGroupIndex)
+			}
 		})
 	})
 }
@@ -644,7 +828,7 @@ func createServiceWithProvenanceStore(ac *acMock.Mock, store *fakes.RuleStore, s
 	return svc
 }
 
-func createService(ac *acMock.Mock, store *fakes.RuleStore, scheduler schedule.ScheduleService) *RulerSrv {
+func createService(ac accesscontrol.AccessControl, store *fakes.RuleStore, scheduler schedule.ScheduleService) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,
 		store:           store,
@@ -712,4 +896,29 @@ func withGroupKey(groupKey models.AlertRuleGroupKey) func(rule *models.AlertRule
 		rule.OrgID = groupKey.OrgID
 		rule.NamespaceUID = groupKey.NamespaceUID
 	}
+}
+
+var _ accesscontrol.AccessControl = new(fakeAccessControl)
+
+type fakeAccessControl struct {
+	ExpectedErr      error
+	ExpectedDisabled bool
+	ExpectedEvaluate bool
+	RecordedOps      []accesscontrol.Evaluator
+	Hook             func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error)
+}
+
+func (f *fakeAccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+	f.RecordedOps = append(f.RecordedOps, evaluator)
+	if f.Hook != nil {
+		return f.Hook(user, evaluator)
+	}
+	return f.ExpectedEvaluate, f.ExpectedErr
+}
+
+func (f *fakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
+}
+
+func (f fakeAccessControl) IsDisabled() bool {
+	return f.ExpectedDisabled
 }

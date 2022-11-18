@@ -15,7 +15,7 @@ type RuleStore interface {
 	GetNamespaceByUID(context.Context, string, int64, *user.SignedInUser, bool) (*folder.Folder, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
-
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 	// InsertAlertRules will insert all alert rules passed into the function
 	// and return the map of uuid to id.
 	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) (map[string]int64, error)

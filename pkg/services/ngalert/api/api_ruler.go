@@ -449,7 +449,58 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 }
 
 func (srv RulerSrv) RouteDeleteAlertRule(ctx *models.ReqContext, uid string) response.Response {
-	return ErrResp(http.StatusNotFound, nil, "")
+	q := &ngmodels.GetAlertRuleByUIDQuery{
+		UID:   uid,
+		OrgID: ctx.OrgID,
+	}
+	err := srv.store.GetAlertRuleByUID(ctx.Req.Context(), q)
+	if err != nil {
+		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+			return response.Empty(http.StatusNotFound)
+		}
+		return ErrResp(http.StatusInternalServerError, err, "failed to fetch rules from database")
+	}
+	ruleToDelete := q.Result
+	if ruleToDelete == nil {
+		return response.Empty(http.StatusNotFound)
+	}
+
+	canDeleteFromFolder, err := srv.canDeleteRuleFromFolder(ctx, ruleToDelete)
+	if err != nil {
+		srv.log.Error("Failed to get folder permissions for rule", append(ruleToDelete.GetKey().LogContext(), "error", err)...)
+		return ErrResp(http.StatusInternalServerError, err, "failed to fetch rule information from database")
+	}
+	if !canDeleteFromFolder { // Return not-found if user does not have access to a folder where rule is placed
+		srv.log.Warn("User attempted to delete a rule that it does not have access", ruleToDelete.GetKey().LogContext()...)
+		return response.Empty(http.StatusNotFound)
+	}
+
+	groupKey := ruleToDelete.GetGroupKey()
+	srv.log.Info("Deleting rule", ruleToDelete.GetKey().LogContext()...)
+	return srv.updateAlertRulesInGroup(ctx, groupKey, func(transactionCtx context.Context) (*store.GroupDelta, error) {
+		return store.CalculateRuleDeletionFromGroup(transactionCtx, srv.store, ruleToDelete)
+	})
+}
+
+func (srv RulerSrv) canDeleteRuleFromFolder(ctx *models.ReqContext, rule *ngmodels.AlertRule) (bool, error) {
+	// Get Folder and check user access to the folder
+	_, err := srv.store.GetNamespaceByUID(ctx.Req.Context(), rule.NamespaceUID, ctx.OrgID, ctx.SignedInUser, true)
+	if err != nil {
+		if errors.Is(err, ngmodels.ErrCannotEditNamespace) || errors.Is(err, dashboards.ErrFolderAccessDenied) { // if namespace is not available return not found to not expose that UID exists
+			return false, nil
+		}
+		return false, err
+	}
+	if srv.ac.IsDisabled() {
+		return true, nil
+	}
+	// check that user has delete access to the folder where alert is placed
+	return accesscontrol.HasAccess(srv.ac, ctx)(
+		accesscontrol.ReqOrgAdminOrEditor,
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete,
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID),
+		),
+	), nil
 }
 
 func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {

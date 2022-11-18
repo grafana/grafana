@@ -7,13 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/rand"
+
 	grafana_models "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 )
 
 func TestCalculateChanges(t *testing.T) {
@@ -399,6 +400,42 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 			} else {
 				require.Empty(t, diff)
 			}
+		}
+	})
+}
+
+func TestCalculateRuleDeletionFromGroup(t *testing.T) {
+	orgID := rand.Int63()
+
+	t.Run("should re-index rules in affected group", func(t *testing.T) {
+		fakeStore := fakes.NewRuleStore(t)
+
+		groupKey := models.GenerateGroupKey(orgID)
+		rules := models.GenerateAlertRules(10, models.AlertRuleGen(withGroupKey(groupKey), models.WithSequentialGroupIndex()))
+		fakeStore.PutRule(context.Background(), rules...)
+
+		ruleToDeleteIdx := rand.Intn(len(rules))
+		ruleToDelete := rules[ruleToDeleteIdx]
+		expectedIndices := make(map[string]int, len(rules)-1)
+		increment := 0
+		for _, rule := range rules {
+			if rule == ruleToDelete {
+				increment++
+				continue
+			}
+			expectedIndices[rule.UID] = rule.RuleGroupIndex - increment
+		}
+
+		result, err := CalculateRuleDeletionFromGroup(context.Background(), fakeStore, ruleToDelete)
+		require.NoError(t, err)
+
+		require.Equal(t, []*models.AlertRule{ruleToDelete}, result.Delete)
+		require.Len(t, result.Update, len(rules)-ruleToDeleteIdx-1)
+		for _, delta := range result.Update {
+			idx, ok := expectedIndices[delta.New.UID]
+			require.Truef(t, ok, "unknown rule in delta")
+			require.Equal(t, idx, delta.New.RuleGroupIndex)
+			require.Len(t, delta.Diff, 1)
 		}
 	})
 }
