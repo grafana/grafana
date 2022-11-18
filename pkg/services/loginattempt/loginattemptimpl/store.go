@@ -15,12 +15,12 @@ type xormStore struct {
 }
 
 type store interface {
-	CreateLoginAttempt(context.Context, *CreateLoginAttemptCommand) error
-	DeleteOldLoginAttempts(context.Context, *DeleteOldLoginAttemptsCommand) (int64, error)
-	GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error)
+	CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error
+	DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error)
+	GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error)
 }
 
-func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *CreateLoginAttemptCommand) error {
+func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error {
 	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
@@ -38,7 +38,7 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *CreateLoginAtt
 	})
 }
 
-func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *DeleteOldLoginAttemptsCommand) (int64, error) {
+func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error) {
 	var deletedRows int64
 	err := xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var maxId int64
@@ -74,7 +74,7 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *DeleteOldL
 	return deletedRows, err
 }
 
-func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error) {
+func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error) {
 	var total int64
 	err := xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var queryErr error

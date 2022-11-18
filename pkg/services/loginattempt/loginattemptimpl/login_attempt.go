@@ -53,7 +53,7 @@ func (s *Service) RecordAttempt(ctx context.Context, username, IPAddress string)
 		return nil
 	}
 
-	return s.store.CreateLoginAttempt(ctx, &CreateLoginAttemptCommand{
+	return s.store.CreateLoginAttempt(ctx, CreateLoginAttemptCommand{
 		Username:  username,
 		IpAddress: IPAddress,
 	})
@@ -69,7 +69,7 @@ func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, 
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
-	count, err := s.store.GetUserLoginAttemptCount(ctx, &loginAttemptCountQuery)
+	count, err := s.store.GetUserLoginAttemptCount(ctx, loginAttemptCountQuery)
 	if err != nil {
 		return false, err
 	}
@@ -83,7 +83,7 @@ func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, 
 
 func (s *Service) cleanup(ctx context.Context) {
 	err := s.lock.LockAndExecute(ctx, "delete old login attempts", time.Minute*10, func(context.Context) {
-		cmd := &DeleteOldLoginAttemptsCommand{
+		cmd := DeleteOldLoginAttemptsCommand{
 			OlderThan: time.Now().Add(time.Minute * -10),
 		}
 		if deletedLogs, err := s.store.DeleteOldLoginAttempts(ctx, cmd); err != nil {
