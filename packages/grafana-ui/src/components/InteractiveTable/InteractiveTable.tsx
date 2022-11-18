@@ -34,7 +34,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 0%;
   `,
   header: css`
-    position: relative;
     &,
     & > button {
       position: relative;
