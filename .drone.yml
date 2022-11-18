@@ -1569,7 +1569,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss
+  - ./bin/build upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -2135,7 +2135,7 @@ steps:
     event:
     - tag
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss
+  - ./bin/build upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -2785,7 +2785,7 @@ steps:
     - success
     - failure
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise
+  - ./bin/build upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -2826,7 +2826,7 @@ steps:
   image: grafana/build-container:1.6.4
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2
+  - ./bin/build upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -4156,7 +4156,7 @@ steps:
       include:
       - packages/grafana-ui/**
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss
+  - ./bin/build upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -4764,7 +4764,7 @@ steps:
     - success
     - failure
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise
+  - ./bin/build upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -4812,7 +4812,7 @@ steps:
   image: grafana/build-container:1.6.4
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2
+  - ./bin/build upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -5512,6 +5512,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 77ae647c9addfcd9966d462ca9967b85a87e18adfe0e9e0a2c6b1cf5d7f42493
+hmac: bdde811590573d22162d8305ced15080e8b20f2180b7491891c461427810a4b3
 
 ...
