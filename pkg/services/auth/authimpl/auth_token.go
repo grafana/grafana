@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -166,7 +165,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	if model.RevokedAt > 0 {
 		ctxLogger.Debug("user token has been revoked", "user ID", model.UserId, "token ID", model.Id)
-		return nil, &models.TokenRevokedError{
+		return nil, &auth.TokenRevokedError{
 			UserID:  model.UserId,
 			TokenID: model.Id,
 		}
