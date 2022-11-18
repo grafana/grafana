@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/grafana/grafana/pkg/build/gcloud"
 	"log"
 	"os"
 	"os/exec"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/urfave/cli/v2"
 )
