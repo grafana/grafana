@@ -99,6 +99,15 @@
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
     },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
       "title": "Alertas"
@@ -184,7 +193,8 @@
     },
     "global-users": {
       "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "Usuarios"
+      "title": "",
+      "titleBeforeTopnav": "Usuarios"
     },
     "help": {
       "title": "Ayuda"
@@ -227,7 +237,8 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "Preferencias"
+      "title": "",
+      "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
