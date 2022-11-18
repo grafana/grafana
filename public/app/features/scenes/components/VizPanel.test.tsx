@@ -11,44 +11,6 @@ jest.mock('app/features/plugins/importPanelPlugin', () => ({
   syncGetPanelPlugin: jest.fn(() => pluginToLoad),
 }));
 
-describe('VizPanel', () => {
-  describe('when activated', () => {
-    const panel = new VizPanel<OptionsPlugin1, FieldConfigPlugin1>({
-      pluginId: 'custom-plugin-id',
-      fieldConfig: {
-        defaults: { custom: { junkProp: true } },
-        overrides: [],
-      },
-    });
-
-    pluginToLoad = getTestPlugin1();
-
-    panel.activate();
-
-    it('load plugin', () => {
-      expect(panel.getPlugin()).toBe(pluginToLoad);
-    });
-
-    it('should call panel migration handler', () => {
-      expect(panel.state.options.option2).toEqual('hello');
-      expect(panel.state.fieldConfig.defaults.custom?.customProp2).toEqual(true);
-    });
-
-    it('should apply option defaults', () => {
-      expect(panel.state.options.showThresholds).toEqual(true);
-    });
-
-    it('should apply fieldConfig defaults', () => {
-      expect(panel.state.fieldConfig.defaults.unit).toBe('flop');
-      expect(panel.state.fieldConfig.defaults.custom!.customProp).toBe(false);
-    });
-
-    it('should should remove props that are not defined for plugin', () => {
-      expect(panel.state.fieldConfig.defaults.custom?.junkProp).toEqual(undefined);
-    });
-  });
-});
-
 interface OptionsPlugin1 {
   showThresholds: boolean;
   option2?: string;
@@ -115,3 +77,60 @@ function getTestPlugin1() {
 
   return pluginToLoad;
 }
+
+describe('VizPanel', () => {
+  describe('when activated', () => {
+    let panel: VizPanel<OptionsPlugin1, FieldConfigPlugin1>;
+
+    beforeAll(async () => {
+      panel = new VizPanel<OptionsPlugin1, FieldConfigPlugin1>({
+        pluginId: 'custom-plugin-id',
+        fieldConfig: {
+          defaults: { custom: { junkProp: true } },
+          overrides: [],
+        },
+      });
+
+      pluginToLoad = getTestPlugin1();
+      panel.activate();
+    });
+
+    it('load plugin', () => {
+      expect(panel.getPlugin()).toBe(pluginToLoad);
+    });
+
+    it('should call panel migration handler', () => {
+      expect(panel.state.options.option2).toEqual('hello');
+      expect(panel.state.fieldConfig.defaults.custom?.customProp2).toEqual(true);
+    });
+
+    it('should apply option defaults', () => {
+      expect(panel.state.options.showThresholds).toEqual(true);
+    });
+
+    it('should apply fieldConfig defaults', () => {
+      expect(panel.state.fieldConfig.defaults.unit).toBe('flop');
+      expect(panel.state.fieldConfig.defaults.custom!.customProp).toBe(false);
+    });
+
+    it('should should remove props that are not defined for plugin', () => {
+      expect(panel.state.fieldConfig.defaults.custom?.junkProp).toEqual(undefined);
+    });
+  });
+
+  describe('When calling on onPanelMigration', () => {
+    const onPanelMigration = jest.fn();
+    let panel: VizPanel<OptionsPlugin1, FieldConfigPlugin1>;
+
+    beforeAll(async () => {
+      panel = new VizPanel<OptionsPlugin1, FieldConfigPlugin1>({ pluginId: 'custom-plugin-id' });
+      pluginToLoad = getTestPlugin1();
+      pluginToLoad.onPanelMigration = onPanelMigration;
+      panel.activate();
+    });
+
+    it('should call onPanelMigration with pluginVersion set to initial state (undefined)', () => {
+      expect(onPanelMigration.mock.calls[0][0].pluginVersion).toBe(undefined);
+    });
+  });
+});

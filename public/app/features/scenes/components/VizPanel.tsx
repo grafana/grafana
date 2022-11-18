@@ -73,13 +73,13 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
   }
 
   private pluginLoaded(plugin: PanelPlugin) {
-    const { options, fieldConfig, title, pluginId } = this.state;
+    const { options, fieldConfig, title, pluginId, pluginVersion } = this.state;
 
-    const version = this.getPluginVersion(plugin);
-    const panel: PanelModel = { title, options, fieldConfig, id: 1, type: pluginId, pluginVersion: version };
+    const panel: PanelModel = { title, options, fieldConfig, id: 1, type: pluginId, pluginVersion: pluginVersion };
+    const currentVersion = this.getPluginVersion(plugin);
 
     if (plugin.onPanelMigration) {
-      if (version !== this.state.pluginVersion) {
+      if (currentVersion !== this.state.pluginVersion) {
         // These migration handlers also mutate panel.fieldConfig to migrate fieldConfig
         panel.options = plugin.onPanelMigration(panel);
       }
@@ -93,7 +93,11 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
     });
 
     this._plugin = plugin;
-    this.setState({ options: withDefaults.options, fieldConfig: withDefaults.fieldConfig, pluginVersion: version });
+    this.setState({
+      options: withDefaults.options,
+      fieldConfig: withDefaults.fieldConfig,
+      pluginVersion: currentVersion,
+    });
   }
 
   private getPluginVersion(plugin: PanelPlugin): string {
