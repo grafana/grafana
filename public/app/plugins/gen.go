@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 //go:generate go run gen.go
 
 package main
@@ -18,6 +15,7 @@ import (
 	"github.com/grafana/codejen"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
@@ -56,14 +54,59 @@ func main() {
 	})
 
 	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
-	pluginKindGen.Append(codegen.PluginTreeListJenny(outputFile))
+	pluginTreeListJenny := codegen.PluginTreeListJenny(outputFile)
+	pluginKindGen.AppendManyToOne(pluginTreeListJenny)
+
+	composableKindsGen := codejen.JennyListWithNamer(func(decl *corecodegen.DeclForGen) string {
+		return decl.Meta.Common().MachineName
+	})
+
+	// All the jennies that comprise the composable kinds generator pipeline
+	composableKindsGen.Append(
+		corecodegen.GoTypesJenny("pkg/tsdb", nil),
+		corecodegen.TSTypesJenny("public/app/plugins", &corecodegen.TSTypesGeneratorConfig{
+			GenDirName: func(decl *corecodegen.DeclForGen) string {
+				// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
+				return filepath.Join(decl.Meta.Common().MachineName, "x")
+			},
+		}),
+	)
+
+	composableKindsAdapter := AdaptTest[*corecodegen.DeclForGen](composableKindsGen, func(ptDecl *codegen.PluginTreeDeclForGen) []*corecodegen.DeclForGen {
+		log.Printf("adapting plugin: %s", ptDecl.Tree.RootPlugin().Meta().Id)
+		slots := ptDecl.Tree.RootPlugin().SlotImplementations()
+		decls := []*corecodegen.DeclForGen{}
+
+		for k, slot := range slots {
+			log.Printf("  slot: %s, path: %s", slot.Name(), slot.Underlying().Path().String())
+			someDecl := &kindsys.SomeDecl{
+				V: slot.Underlying(),
+				Meta: kindsys.ComposableMeta{
+					CommonMeta: kindsys.CommonMeta{
+						Name:              k,
+						MachineName:       k,
+						PluralName:        k + "s",
+						PluralMachineName: k + "s",
+					},
+					CurrentVersion: slot.Latest().Version(),
+				},
+			}
+
+			decl := corecodegen.DeclForGenFromLineage(someDecl, slot)
+			decls = append(decls, decl)
+		}
+
+		return decls
+	})
+
+	pluginKindGen.AppendManyToMany(composableKindsAdapter)
 
 	var decls []*codegen.PluginTreeDeclForGen
 	for _, typ := range []string{"datasource", "panel"} {
 		dir := filepath.Join(cwd, typ)
 		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
 		if err != nil {
-			log.Fatal(fmt.Errorf("extracting plugin trees failed for %s: %s\n", dir, err))
+			log.Fatalln(fmt.Errorf("extracting plugin trees failed for %s: %s", dir, err))
 		}
 
 		for name, option := range treeor {
@@ -77,7 +120,7 @@ func main() {
 					Tree: (pfs.Tree)(*option.Tree),
 				})
 			} else if !errors.Is(option.Err, pfs.ErrNoRootFile) {
-				log.Fatal(fmt.Errorf("error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err))
+				log.Fatalln(fmt.Errorf("error parsing plugin directory %s: %s", filepath.Join(dir, name), option.Err))
 			}
 		}
 	}
@@ -91,7 +134,7 @@ func main() {
 
 	jfs, err := pluginKindGen.GenerateFS(decls...)
 	if err != nil {
-		log.Fatal(fmt.Errorf("error writing files to disk: %s\n", err))
+		log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
 	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
@@ -208,4 +251,43 @@ func main2() {
 
 func isDatasource(pt *codegen.PluginTree) bool {
 	return string((*pfs.Tree)(pt).RootPlugin().Meta().Type) == "datasource"
+}
+
+type o2oAdapt[InI, OutI codejen.Input] struct {
+	fn func(OutI) []InI
+	j  codejen.ManyToMany[InI]
+}
+
+func (oa *o2oAdapt[InI, OutI]) JennyName() string {
+	return oa.j.JennyName()
+}
+
+func (oa *o2oAdapt[InI, OutI]) Generate(t ...OutI) (codejen.Files, error) {
+	files := codejen.Files{}
+
+	for _, tVal := range t {
+		for _, v := range oa.fn(tVal) {
+			f, err := oa.j.Generate(v)
+			if err != nil {
+				return nil, err
+			}
+
+			files = append(files, f...)
+		}
+	}
+
+	return files, nil
+}
+
+// AdaptTest takes a [codejen.ManyToMany] jenny that accepts a particular type as input
+// (InI), and transforms it into a jenny that accepts a different type
+// as input (OutI), given a function that can transform an InI
+// to an OutI.
+//
+// Use this to make jennies reusable in other Input type contexts.
+func AdaptTest[InI, OutI codejen.Input](j codejen.ManyToMany[InI], fn func(OutI) []InI) codejen.ManyToMany[OutI] {
+	return &o2oAdapt[InI, OutI]{
+		fn: fn,
+		j:  j,
+	}
 }

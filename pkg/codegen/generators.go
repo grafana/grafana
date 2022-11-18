@@ -29,6 +29,14 @@ func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
 	}, nil
 }
 
+func DeclForGenFromLineage(someDecl *kindsys.SomeDecl, lin thema.Lineage) *DeclForGen {
+	return &DeclForGen{
+		SomeDecl: someDecl,
+		lin:      lin,
+		sch:      lin,
+	}
+}
+
 // DeclForGen wraps [kindsys.SomeDecl] to provide trivial caching of
 // the lineage declared by the kind (nil for raw kinds).
 type DeclForGen struct {
