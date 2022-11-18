@@ -80,8 +80,9 @@ func TestService_ValidateAttempts(t *testing.T) {
 var _ store = new(fakeStore)
 
 type fakeStore struct {
-	ExpectedErr   error
-	ExpectedCount int64
+	ExpectedErr         error
+	ExpectedCount       int64
+	ExpectedDeletedRows int64
 }
 
 func (f fakeStore) GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error) {
@@ -92,6 +93,6 @@ func (f fakeStore) CreateLoginAttempt(ctx context.Context, command *CreateLoginA
 	return f.ExpectedErr
 }
 
-func (f fakeStore) DeleteOldLoginAttempts(ctx context.Context, command *DeleteOldLoginAttemptsCommand) error {
-	return f.ExpectedErr
+func (f fakeStore) DeleteOldLoginAttempts(ctx context.Context, command *DeleteOldLoginAttemptsCommand) (int64, error) {
+	return f.ExpectedDeletedRows, f.ExpectedErr
 }

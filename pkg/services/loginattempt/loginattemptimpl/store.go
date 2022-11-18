@@ -16,7 +16,7 @@ type xormStore struct {
 
 type store interface {
 	CreateLoginAttempt(context.Context, *CreateLoginAttemptCommand) error
-	DeleteOldLoginAttempts(context.Context, *DeleteOldLoginAttemptsCommand) error
+	DeleteOldLoginAttempts(context.Context, *DeleteOldLoginAttemptsCommand) (int64, error)
 	GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error)
 }
 
@@ -38,8 +38,9 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *CreateLoginAtt
 	})
 }
 
-func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *DeleteOldLoginAttemptsCommand) error {
-	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *DeleteOldLoginAttemptsCommand) (int64, error) {
+	var deletedRows int64
+	err := xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var maxId int64
 		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
 		result, err := sess.Query(sql, cmd.OlderThan.Unix())
@@ -59,14 +60,18 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *DeleteOldL
 
 		sql = "DELETE FROM login_attempt WHERE id <= ?"
 
-		if result, err := sess.Exec(sql, maxId); err != nil {
-			return err
-		} else if cmd.DeletedRows, err = result.RowsAffected(); err != nil {
+		deleteResult, err := sess.Exec(sql, maxId)
+		if err != nil {
 			return err
 		}
 
+		deletedRows, err = deleteResult.RowsAffected()
+		if err != nil {
+			return err
+		}
 		return nil
 	})
+	return deletedRows, err
 }
 
 func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *GetUserLoginAttemptCountQuery) (int64, error) {

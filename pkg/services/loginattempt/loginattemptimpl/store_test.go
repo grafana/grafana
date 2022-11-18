@@ -138,8 +138,8 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = s.DeleteOldLoginAttempts(context.Background(), &test.Cmd)
+		deletedRows, err := s.DeleteOldLoginAttempts(context.Background(), &test.Cmd)
 		require.Equal(t, test.Err, err, test.Name)
-		require.Equal(t, test.DeletedRows, test.Cmd.DeletedRows, test.Name)
+		require.Equal(t, test.DeletedRows, deletedRows, test.Name)
 	}
 }
