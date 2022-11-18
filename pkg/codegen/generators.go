@@ -34,10 +34,18 @@ func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
 type DeclForGen struct {
 	*kindsys.SomeDecl
 	lin thema.Lineage
+	sch thema.Lineage
 }
 
+// Lineage returns the [thema.Lineage] for the underlying [kindsys.SomeDecl].
 func (decl *DeclForGen) Lineage() thema.Lineage {
 	return decl.lin
+}
+
+// Schema returns the [thema.Schema] that a jenny should operate against, for those
+// jennies that target a single schema.
+func (decl *DeclForGen) Schema() thema.Lineage {
+	return decl.sch
 }
 
 // SlashHeaderMapper produces a FileMapper that injects a comment header onto

@@ -148,6 +148,30 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	// This can be done by using `[navigation.app_sections]` in the INI config
+	t.Run("Should move apps that have root nav id configured to the root", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDRoot},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		// Check if the plugin gets moved to the root
+		require.Len(t, treeRoot.Children, 2)
+		require.Equal(t, "plugin-page-test-app1", treeRoot.Children[0].Id)
+
+		// Check if it is not under the "Apps" section anymore
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.NotNil(t, appsNode)
+		require.Len(t, appsNode.Children, 2)
+		require.Equal(t, "plugin-page-test-app2", appsNode.Children[0].Id)
+		require.Equal(t, "plugin-page-test-app3", appsNode.Children[1].Id)
+	})
+
+	// This can be done by using `[navigation.app_sections]` in the INI config
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{

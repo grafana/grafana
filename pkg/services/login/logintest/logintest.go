@@ -57,6 +57,10 @@ func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, qu
 	return a.ExpectedError
 }
 
+func (a *AuthInfoServiceFake) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	return a.ExpectedError
+}
+
 type AuthenticatorFake struct {
 	ExpectedUser  *user.User
 	ExpectedError error
