@@ -10,6 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// swagger:route DELETE /api/v1/ngalert/rules/uid/{RuleUID} ruler RouteDeleteRuleConfig
+//
+// Delete a single rule
+//
+//     Responses:
+//       202: Ack
+//       404: NotFound
+//
+
 // swagger:route Get /api/ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
@@ -127,6 +136,12 @@ import (
 //     Responses:
 //       202: Ack
 //       404: NotFound
+
+// swagger:parameters RouteDeleteRuleConfig
+type UidParamsConfig struct {
+	// in:path
+	RuleUID string
+}
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
 type NamespaceConfig struct {
