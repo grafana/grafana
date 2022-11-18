@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/codejen"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
@@ -54,52 +53,52 @@ func main() {
 	})
 
 	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
-	pluginTreeListJenny := codegen.PluginTreeListJenny(outputFile)
-	pluginKindGen.AppendManyToOne(pluginTreeListJenny)
+	pluginKindGen.Append(codegen.PluginTreeListJenny(outputFile),
+		codejen.AdaptOneToMany(codegen.FlattenJenny(corecodegen.GoTypesJenny("pkg/tsdb", nil)), mapToDecls))
 
-	composableKindsGen := codejen.JennyListWithNamer(func(decl *corecodegen.DeclForGen) string {
-		return decl.Meta.Common().MachineName
-	})
+	// composableKindsGen := codejen.JennyListWithNamer(func(decl *corecodegen.DeclForGen) string {
+	// 	return decl.Meta.Common().MachineName
+	// })
 
 	// All the jennies that comprise the composable kinds generator pipeline
-	composableKindsGen.Append(
-		corecodegen.GoTypesJenny("pkg/tsdb", nil),
-		corecodegen.TSTypesJenny("public/app/plugins", &corecodegen.TSTypesGeneratorConfig{
-			GenDirName: func(decl *corecodegen.DeclForGen) string {
-				// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
-				return filepath.Join(decl.Meta.Common().MachineName, "x")
-			},
-		}),
-	)
+	// composableKindsGen.Append(
+	// 	corecodegen.GoTypesJenny("pkg/tsdb", nil),
+	// 	corecodegen.TSTypesJenny("public/app/plugins", &corecodegen.TSTypesGeneratorConfig{
+	// 		GenDirName: func(decl *corecodegen.DeclForGen) string {
+	// 			// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
+	// 			return filepath.Join(decl.Meta.Common().MachineName, "x")
+	// 		},
+	// 	}),
+	// )
 
-	composableKindsAdapter := AdaptTest[*corecodegen.DeclForGen](composableKindsGen, func(ptDecl *codegen.PluginTreeDeclForGen) []*corecodegen.DeclForGen {
-		log.Printf("adapting plugin: %s", ptDecl.Tree.RootPlugin().Meta().Id)
-		slots := ptDecl.Tree.RootPlugin().SlotImplementations()
-		decls := []*corecodegen.DeclForGen{}
+	// composableKindsAdapter := AdaptTest[*corecodegen.DeclForGen](composableKindsGen, func(ptDecl *codegen.PluginTreeDeclForGen) []*corecodegen.DeclForGen {
+	// 	log.Printf("adapting plugin: %s", ptDecl.Tree.RootPlugin().Meta().Id)
+	// 	slots := ptDecl.Tree.RootPlugin().SlotImplementations()
+	// 	decls := []*corecodegen.DeclForGen{}
 
-		for k, slot := range slots {
-			log.Printf("  slot: %s, path: %s", slot.Name(), slot.Underlying().Path().String())
-			someDecl := &kindsys.SomeDecl{
-				V: slot.Underlying(),
-				Meta: kindsys.ComposableMeta{
-					CommonMeta: kindsys.CommonMeta{
-						Name:              k,
-						MachineName:       k,
-						PluralName:        k + "s",
-						PluralMachineName: k + "s",
-					},
-					CurrentVersion: slot.Latest().Version(),
-				},
-			}
+	// 	for k, slot := range slots {
+	// 		log.Printf("  slot: %s, path: %s", slot.Name(), slot.Underlying().Path().String())
+	// 		someDecl := &kindsys.SomeDecl{
+	// 			V: slot.Underlying(),
+	// 			Meta: kindsys.ComposableMeta{
+	// 				CommonMeta: kindsys.CommonMeta{
+	// 					Name:              k,
+	// 					MachineName:       k,
+	// 					PluralName:        k + "s",
+	// 					PluralMachineName: k + "s",
+	// 				},
+	// 				CurrentVersion: slot.Latest().Version(),
+	// 			},
+	// 		}
 
-			decl := corecodegen.DeclForGenFromLineage(someDecl, slot)
-			decls = append(decls, decl)
-		}
+	// 		decl := corecodegen.DeclForGenFromLineage(someDecl, slot)
+	// 		decls = append(decls, decl)
+	// 	}
 
-		return decls
-	})
+	// 	return decls
+	// })
 
-	pluginKindGen.AppendManyToMany(composableKindsAdapter)
+	// pluginKindGen.AppendManyToMany(composableKindsAdapter)
 
 	var decls []*codegen.PluginTreeDeclForGen
 	for _, typ := range []string{"datasource", "panel"} {
@@ -290,4 +289,9 @@ func AdaptTest[InI, OutI codejen.Input](j codejen.ManyToMany[InI], fn func(OutI)
 		fn: fn,
 		j:  j,
 	}
+}
+
+func mapToDecls(pd *codegen.PluginTreeDeclForGen) []*corecodegen.DeclForGen {
+	// add logic to map from plugintreedeclforgen to declforgen
+	return []*corecodegen.DeclForGen{}
 }
