@@ -168,7 +168,12 @@ export function ExploreGraph({
         <div className={cx([style.timeSeriesDisclaimer])}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
           Showing only {MAX_NUMBER_OF_TIME_SERIES} time series.
-          <Button variant="primary" fill="text" onClick={() => setShowAllTimeSeries(true)}>
+          <Button
+            variant="primary"
+            fill="text"
+            onClick={() => setShowAllTimeSeries(true)}
+            className={style.showAllButton}
+          >
             Show all {dataWithConfig.length}
           </Button>
         </div>
@@ -200,5 +205,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: disclaimer-icon;
     color: ${theme.colors.warning.main};
     margin-right: ${theme.spacing(0.5)};
+  `,
+  showAllButton: css`
+    margin-left: ${theme.spacing(0.5)};
   `,
 });
