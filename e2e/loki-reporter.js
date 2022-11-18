@@ -30,8 +30,16 @@ class LogReporter extends Mocha.reporters.Base {
   }
 
   reportStats() {
-    console.log(`CypressStats ${logObj(this.stats)}`);
+    const stats = {
+      ...this.stats,
+      start: this.stats.start.getTime(),
+      end: this.stats.end.getTime(),
+    };
 
+    console.log(`CypressStats ${logObj(stats)}`);
+  }
+
+  reportResults() {
     this.tests.map((test) => {
       console.log(`CypressTestResult ${logObj(test)}`);
     });
@@ -50,12 +58,18 @@ class LogReporter extends Mocha.reporters.Base {
 
 function logObj(obj) {
   return Object.entries(obj)
-    .map(([key, value]) => `${key}="${escapeQuotes(value)}"`)
+    .map(([key, value]) => `${key}=${formatValue(value)}`)
     .join(' ');
 }
 
 function escapeQuotes(str) {
   return String(str).replaceAll('"', '\\"');
+}
+
+function formatValue(value) {
+  const hasWhiteSpaces = /\s/g.test(value);
+
+  return hasWhiteSpaces ? `"${escapeQuotes(value)}"` : value;
 }
 
 function testToJSON(test) {
@@ -67,13 +81,35 @@ function testToJSON(test) {
 
   return {
     title: test.title,
-    suite: String(test.fullTitle()).replace(test.title, '').trim(),
-    file: test.file,
+    suite: getTestLocation(test).join(' > '),
+    file: getTestFile(test),
     duration: test.duration,
     currentRetry: test.currentRetry(),
     speed: test.speed,
     err,
   };
+}
+
+function getTestLocation(test) {
+  let path = test.title ? [test.title] : [];
+
+  if (test.parent) {
+    path = getTestLocation(test.parent).concat(path);
+  }
+
+  return path;
+}
+
+function getTestFile(test) {
+  if (test?.file) {
+    return test?.file;
+  }
+
+  if (test?.parent) {
+    return getTestFile(test.parent);
+  }
+
+  return null;
 }
 
 module.exports = LogReporter;
