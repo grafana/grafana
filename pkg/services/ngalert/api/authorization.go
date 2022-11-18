@@ -41,6 +41,9 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Grafana Paths
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
+	case http.MethodDelete + "/api/v1/ngalert/rules/uid/{RuleUID}":
+		// additional authorization is done in the request handler
+		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete)
 	case http.MethodDelete + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(ac.Parameter(":Namespace")))
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}":

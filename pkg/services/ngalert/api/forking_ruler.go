@@ -30,6 +30,10 @@ func (f *RulerApiHandler) handleRouteDeleteNamespaceRulesConfig(ctx *models.ReqC
 	return t.RouteDeleteNamespaceRulesConfig(ctx, namespace)
 }
 
+func (f *RulerApiHandler) handleRouteDeleteRuleConfig(ctx *models.ReqContext, ruleUID string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRule(ctx, ruleUID)
+}
+
 func (f *RulerApiHandler) handleRouteDeleteRuleGroupConfig(ctx *models.ReqContext, dsUID, namespace, group string) response.Response {
 	t, err := f.getService(ctx)
 	if err != nil {
