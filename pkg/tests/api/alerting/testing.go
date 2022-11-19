@@ -290,6 +290,9 @@ func (a apiClient) DeleteRule(t *testing.T, ruleUID string) int {
 	if err != nil {
 		require.NoError(t, err)
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	return resp.StatusCode
 }
 

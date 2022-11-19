@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -429,10 +428,10 @@ func TestRouteDeleteAlertRule(t *testing.T) {
 		require.Equal(t, []string{ruleToDelete.UID}, cmds[0].Params[1])
 		t.Logf("Deleting index %d", deletedIndex)
 		t.Run("and re-index remaining rules", func(t *testing.T) {
-			var updateRules []ngmodels.UpdateRule
+			var updateRules []models.UpdateRule
 			for _, operation := range ruleStore.RecordedOps {
 				var ok bool
-				updateRules, ok = operation.([]ngmodels.UpdateRule)
+				updateRules, ok = operation.([]models.UpdateRule)
 				if ok {
 					break
 				}
