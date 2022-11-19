@@ -12,6 +12,8 @@ var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-reques
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
+var ErrFailedToCreateNestedFolder = errutil.NewBase(errutil.StatusInternal, "folder.nested-folder-creation-failure")
+var ErrNestedFoldersNotEnabled = errutil.NewBase(errutil.StatusBadRequest, "folder.nested-folder-not-enabled")
 
 const (
 	GeneralFolderUID     = "general"
@@ -61,6 +63,7 @@ func NewFolder(title string, description string) *Folder {
 // CreateFolderCommand captures the information required by the folder service
 // to create a folder.
 type CreateFolderCommand struct {
+	ID          int64  `json:"-"`
 	UID         string `json:"uid"`
 	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
@@ -75,6 +78,11 @@ type UpdateFolderCommand struct {
 	NewUID         *string `json:"uid" xorm:"uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
+	NewParentUID   *string `json:"parent_uid"`
+}
+
+func (cmd UpdateFolderCommand) IsMoveCmd() bool {
+	return cmd.NewParentUID != nil && cmd.NewUID == nil && cmd.NewTitle == nil && cmd.NewDescription == nil
 }
 
 // MoveFolderCommand captures the information required by the folder service
@@ -143,6 +151,7 @@ func (f *Folder) ToLegacyModel() *models.Folder {
 func FromDashboard(dash *models.Dashboard) *Folder {
 	return &Folder{
 		ID:        dash.Id,
+		OrgID:     dash.OrgId,
 		UID:       dash.Uid,
 		Title:     dash.Title,
 		HasACL:    dash.HasACL,

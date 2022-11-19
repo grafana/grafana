@@ -30,7 +30,7 @@ func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderComman
 func (s *FakeService) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
+func (s *FakeService) Update(ctx context.Context, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
 	cmd.Result = s.ExpectedFolder.ToLegacyModel()
 	return s.ExpectedFolder, s.ExpectedError
 }

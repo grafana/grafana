@@ -2,8 +2,12 @@ package folderimpl
 
 import (
 	"context"
+	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -49,7 +53,7 @@ func (s storeWrapper) Get(ctx context.Context, cmd folder.GetFolderQuery) (*fold
 		if *cmd.ID == int64(0) {
 			return &folder.Folder{ID: 0, Title: "General"}, nil
 		}
-		return s.dashboardStore.GetFolderByID(ctx, *cmd.ID, cmd.OrgID)
+		return s.dashboardStore.GetFolderByID(ctx, *&cmd.OrgID, *cmd.ID)
 	case cmd.Title != nil:
 		return s.dashboardStore.GetFolderByTitle(ctx, cmd.OrgID, *cmd.Title)
 	default:
@@ -57,16 +61,10 @@ func (s storeWrapper) Get(ctx context.Context, cmd folder.GetFolderQuery) (*fold
 	}
 }
 
-/*
 func (s storeWrapper) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	dash, err := s.legacyCreate(ctx, cmd)
+	dashFolder, err := s.legacyCreate(ctx, cmd)
 	if err != nil {
 		return nil, err
-	}
-
-	var description string
-	if dash.Data != nil {
-		description = dash.Data.Get("description").MustString()
 	}
 
 	parentUID := folder.RootFolderUID
@@ -74,32 +72,86 @@ func (s storeWrapper) Create(ctx context.Context, cmd *folder.CreateFolderComman
 		parentUID = cmd.ParentUID
 	}
 
-	if _, err := s.folderStore.Create(ctx, folder.CreateFolderCommand{
-		// TODO: Today, if a UID isn't specified, the dashboard store
-		// generates a new UID. The new folder store will need to do this as
-		// well, but for now we take the UID from the newly created folder.
-		UID:         dash.Uid,
-		OrgID:       cmd.OrgID,
-		Title:       cmd.Title,
-		Description: description,
-		ParentUID:   parentUID,
-	}); err != nil {
-		logger := s.log.FromContext(ctx)
-		// We'll log the error and also roll back the previously-created
-		// (legacy) folder.
-		logger.Error("error saving folder to nested folder store", err)
-		if err := s.dashboardStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dash.Id, ForceDeleteFolderRules: true}); err != nil {
-			logger.Error("error deleting folder after failed save to nested folder store", err)
-		}
-		return nil, err
-	}
-	// The folder UID is specified (or generated) during creation, so we'll
-	// stop here and return the created model.Folder.
+	if s.nestedFolderEnabled {
+		_, err = s.folderStore.Create(ctx, folder.CreateFolderCommand{
+			// The ID should be the same in both stores so that access control is working as expected
+			// (dashboard_acl.dashboard_id)
+			ID: dashFolder.ID,
+			// TODO: Today, if a UID isn't specified, the dashboard store
+			// generates a new UID. The new folder store will need to do this as
+			// well, but for now we take the UID from the newly created folder.
+			UID:         dashFolder.UID,
+			OrgID:       cmd.OrgID,
+			Title:       cmd.Title,
+			Description: cmd.Description,
+			ParentUID:   parentUID,
+		})
 
-	return s.Get(ctx, folder.GetFolderQuery{OrgID: cmd.OrgID, ID: &dash.Id})
+		if err != nil {
+			logger := s.log.FromContext(ctx)
+			// We'll log the error and also roll back the previously-created
+			// (legacy) folder.
+			logger.Error("error saving folder to nested folder store", err)
+			// since the folder was created by this operation no need to check for permission to delete it
+			deleteCmd := &models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: true}
+			deleteErr := s.dashboardStore.DeleteDashboard(ctx, deleteCmd)
+			if deleteErr != nil {
+				logger.Error("error deleting folder after failed save to nested folder store", err)
+			}
+			return dashFolder, err
+		}
+		// The folder UID is specified (or generated) during creation, so we'll
+		// stop here and return the created model.Folder.
+	}
+
+	return dashFolder, nil
 }
 
-func (s storeWrapper) legacyCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*models.Dashboard, error) {
+func (s storeWrapper) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	logger := s.log.FromContext(ctx)
+	if s.nestedFolderEnabled {
+		if err := s.nestedFolderDelete(ctx, cmd); err != nil {
+			logger.Error("deleting folder on folder table failed", "err", err.Error())
+		}
+	}
+
+	return s.legacyDelete(ctx, cmd)
+}
+
+func (s storeWrapper) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
+	if !s.nestedFolderEnabled {
+		return nil, folder.ErrNestedFoldersNotEnabled
+	}
+	return s.folderStore.GetParents(ctx, cmd)
+}
+
+func (s storeWrapper) GetChildren(ctx context.Context, cmd folder.GetTreeQuery) ([]*folder.Folder, error) {
+	if !s.nestedFolderEnabled {
+		return nil, folder.ErrNestedFoldersNotEnabled
+	}
+	return s.folderStore.GetChildren(ctx, cmd)
+}
+
+func (s storeWrapper) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
+	var foldr *folder.Folder
+	var err error
+	if !cmd.IsMoveCmd() {
+		foldr, err = s.legacyUpdate(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if s.nestedFolderEnabled {
+		foldr, err = s.folderStore.Update(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return foldr, nil
+}
+
+func (s storeWrapper) legacyCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	dashFolder := models.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgId = cmd.OrgID
 
@@ -107,6 +159,7 @@ func (s storeWrapper) legacyCreate(ctx context.Context, cmd *folder.CreateFolder
 	if trimmedUID == accesscontrol.GeneralFolderUID {
 		return nil, dashboards.ErrFolderInvalidUID
 	}
+
 	dashFolder.SetUid(trimmedUID)
 
 	user, err := appcontext.User(ctx)
@@ -131,69 +184,94 @@ func (s storeWrapper) legacyCreate(ctx context.Context, cmd *folder.CreateFolder
 	if err != nil {
 		return nil, toFolderError(err)
 	}
-	dash, err := s.dashboardStore.SaveDashboard(ctx, saveDashboardCmd)
+
+	dash, err := s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
+	if err != nil {
+		return nil, toFolderError(err)
+	}
+
+	createdFolder, err := s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return dash, err
+	return createdFolder, nil
 }
 
-func (s storeWrapper) Delete(ctx context.Context, uid string, orgID int64) error {
-	f, err := s.Get(ctx, folder.GetFolderQuery{OrgID: orgID, UID: &uid})
+func (s storeWrapper) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	dashFolder, err := s.Get(ctx, folder.GetFolderQuery{OrgID: cmd.OrgID, UID: &cmd.UID})
 	if err != nil {
 		return err
 	}
 
-	if err = s.dashboardStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{
-		Id:    f.ID,
-		OrgId: f.OrgID,
-	}); err != nil {
+	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+	return s.dashboardStore.DeleteDashboard(ctx, &deleteCmd)
+}
+
+func (s storeWrapper) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	folders, err := s.folderStore.GetChildren(ctx, folder.GetTreeQuery{UID: cmd.UID, OrgID: cmd.OrgID})
+	if err != nil {
 		return err
 	}
-
-	if err := s.folderStore.Delete(ctx, uid, orgID); err != nil {
+	for _, f := range folders {
+		err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules})
+		if err != nil {
+			return err
+		}
+	}
+	err = s.folderStore.Delete(ctx, cmd.UID, cmd.OrgID)
+	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func (s storeWrapper) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
-
-}
-
-func (s storeWrapper) Get(ctx context.Context, cmd folder.GetFolderQuery) (*folder.Folder, error) {
-	if s.nestedFolderEnabled {
-		return s.folderStore.Get(ctx, cmd)
+func (s storeWrapper) legacyUpdate(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
+	query := models.GetDashboardQuery{OrgId: cmd.Folder.OrgID, Uid: cmd.Folder.UID}
+	dashFolder, err := s.dashboardStore.GetDashboard(ctx, &query)
+	if err != nil {
+		return nil, toFolderError(err)
 	}
 
-	switch {
-	case cmd.UID != nil:
-		return s.dashboardStore.GetFolderByUID(ctx, cmd.OrgID, *cmd.UID)
-	case cmd.ID != nil:
-		if *cmd.ID == int64(0) {
-			return &folder.Folder{ID: 0, Title: "General"}, nil
-		}
-		return s.dashboardStore.GetFolderByID(ctx, *cmd.ID, cmd.OrgID)
-	case cmd.Title != nil:
-		return s.dashboardStore.GetFolderByTitle(ctx, cmd.OrgID, *cmd.Title)
-	default:
-		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
+	if !dashFolder.IsFolder {
+		return nil, dashboards.ErrFolderNotFound
 	}
-}
 
-func (s storeWrapper) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if !s.nestedFolderEnabled {
-		return nil, folder.ErrNestedFoldersNotEnabled
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return s.folderStore.GetParents(ctx, cmd)
-}
 
-func (s storeWrapper) GetChildren(ctx context.Context, cmd folder.GetTreeQuery) ([]*folder.Folder, error) {
-	if !s.nestedFolderEnabled {
-		return nil, folder.ErrNestedFoldersNotEnabled
+	legacyUpdateCmd := &models.UpdateFolderCommand{}
+	if cmd.NewUID != nil {
+		legacyUpdateCmd.Uid = *cmd.NewUID
 	}
-	return s.folderStore.GetChildren(ctx, cmd)
+
+	if cmd.NewDescription != nil {
+		legacyUpdateCmd.Description = *cmd.NewDescription
+	}
+
+	if cmd.NewTitle != nil {
+		legacyUpdateCmd.Title = *cmd.NewTitle
+	}
+
+	legacyUpdateCmd.UpdateDashboardModel(dashFolder, cmd.Folder.OrgID, user.UserID)
+
+	dto := &dashboards.SaveDashboardDTO{
+		Dashboard: dashFolder,
+		OrgId:     cmd.Folder.OrgID,
+		User:      user,
+		Overwrite: legacyUpdateCmd.Overwrite,
+	}
+	saveDashboardCmd, err := s.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
+	if err != nil {
+		return nil, toFolderError(err)
+	}
+
+	dash, err := s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
+	if err != nil {
+		return nil, toFolderError(err)
+	}
+
+	return s.dashboardStore.GetFolderByID(ctx, cmd.Folder.OrgID, dash.Id)
 }
-*/

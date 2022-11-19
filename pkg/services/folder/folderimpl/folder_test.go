@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -37,6 +38,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 		ac := acmock.New()
 		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{}, nil, nil)
 
@@ -65,8 +67,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			cfg:              cfg,
 			log:              log.New("test-folder-service"),
 			dashboardService: dashboardService,
-			dashboardStore:   dashStore,
-			store:            store,
+			storeWrapper:     ProvideStoreWrapper(cfg, dashboardService, dashStore, store),
 			searchService:    nil,
 			features:         features,
 			permissions:      folderPermissions,
@@ -80,26 +81,30 @@ func TestIntegrationFolderService(t *testing.T) {
 			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
-			f := folder.NewFolder("Folder", "")
-			f.ID = folderId
-			f.UID = folderUID
+			dashboardFolder := models.NewDashboardFolder("Folder")
+			dashboardFolder.Id = folderId
+			dashboardFolder.Uid = folderUID
+			f := folder.FromDashboard(dashboardFolder)
 
 			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(f, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
-				_, err := service.getFolderByID(context.Background(), usr, folderId, orgID)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				_, err := service.Get(ctx, &folder.GetFolderQuery{ID: &folderId, OrgID: orgID})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
-				foldr, err := service.getFolderByID(context.Background(), usr, 0, orgID)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				foldr, err := service.Get(ctx, &folder.GetFolderQuery{ID: pointer.Int64(0), OrgID: orgID})
 				require.NoError(t, err)
 				require.Equal(t, foldr, &folder.Folder{ID: 0, Title: "General"})
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.getFolderByUID(context.Background(), usr, orgID, folderUID)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				_, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
@@ -115,12 +120,10 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					folder := args.Get(1).(*models.GetDashboardQuery)
-					folder.Result = models.NewDashboard("dashboard-test")
-					folder.Result.IsFolder = true
-				}).Return(&models.Dashboard{}, nil)
-				_, err := service.Update(context.Background(), usr, orgID, folderUID, &models.UpdateFolderCommand{
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
+				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				_, err := service.Update(ctx, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
 				})
@@ -189,20 +192,24 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
 				dashboardFolder := models.NewDashboardFolder("Folder")
+				dashboardFolder.OrgId = orgID
 				dashboardFolder.Id = rand.Int63()
 				dashboardFolder.Uid = util.GenerateShortUID()
 				f := folder.FromDashboard(dashboardFolder)
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
+				dashStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 				dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
 
 				req := &models.UpdateFolderCommand{
 					Uid:   dashboardFolder.Uid,
 					Title: "TEST-Folder",
 				}
 
-				reqResult, err := service.Update(context.Background(), usr, orgID, dashboardFolder.Uid, req)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				reqResult, err := service.Update(ctx, orgID, dashboardFolder.Uid, req)
 				require.NoError(t, err)
 				require.Equal(t, f, reqResult)
 			})
@@ -248,7 +255,8 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
 
-				actual, err := service.getFolderByID(context.Background(), usr, expected.ID, orgID)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				actual, err := service.Get(ctx, &folder.GetFolderQuery{ID: &expected.ID, OrgID: orgID})
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -259,7 +267,8 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("GetFolderByUID", mock.Anything, orgID, expected.UID).Return(expected, nil)
 
-				actual, err := service.getFolderByUID(context.Background(), usr, orgID, expected.UID)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				actual, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &expected.UID})
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -269,7 +278,8 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
-				actual, err := service.getFolderByTitle(context.Background(), usr, orgID, expected.Title)
+				ctx := appcontext.WithUser(context.Background(), usr)
+				actual, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &expected.Title})
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -323,11 +333,9 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		}
 		return false
 	}
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	folderService := &Service{
 		cfg:              cfg,
-		store:            folderStore,
-		dashboardStore:   &dashStore,
+		storeWrapper:     ProvideStoreWrapper(cfg, &dashboardsvc, &dashStore, folderStore),
 		dashboardService: &dashboardsvc,
 		features:         features,
 	}
@@ -384,8 +392,7 @@ func TestNestedFolderService(t *testing.T) {
 			cfg:              cfg,
 			log:              log.New("test-folder-service"),
 			dashboardService: &dashboardsvc,
-			dashboardStore:   &dashStore,
-			store:            store,
+			storeWrapper:     ProvideStoreWrapper(cfg, &dashboardsvc, &dashStore, store),
 			features:         features,
 		}
 
@@ -443,8 +450,7 @@ func TestNestedFolderService(t *testing.T) {
 			cfg:              cfg,
 			log:              log.New("test-folder-service"),
 			dashboardService: dashboardsvc,
-			dashboardStore:   dashStore,
-			store:            store,
+			storeWrapper:     ProvideStoreWrapper(cfg, dashboardsvc, dashStore, store),
 			features:         features,
 			accessControl: actest.FakeAccessControl{
 				ExpectedEvaluate: true,
@@ -481,6 +487,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Return(nil).Once()
 
 			// return an error from the folder store
 			store.ExpectedError = errors.New("FAILED")
@@ -503,9 +510,16 @@ func TestNestedFolderService(t *testing.T) {
 		})
 
 		t.Run("move, no error", func(t *testing.T) {
+			dashboardFolder := models.NewDashboardFolder("Folder")
+			dashboardFolder.Id = rand.Int63()
+			dashboardFolder.Uid = "myFolder"
+			dashboardFolder.OrgId = orgID
+			f := folder.FromDashboard(dashboardFolder)
+
+			dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
 			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			f, err := foldersvc.Move(ctx, &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID})
+			f, err := foldersvc.Move(ctx, &folder.MoveFolderCommand{UID: dashboardFolder.Uid, NewParentUID: "newFolder", OrgID: orgID})
 			require.NoError(t, err)
 			require.NotNil(t, f)
 		})
