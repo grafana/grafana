@@ -27,16 +27,14 @@ import (
 )
 
 type Service struct {
-	store store
+	storeWrapper storeWrapper
 
-	log              log.Logger
-	cfg              *setting.Cfg
-	dashboardService dashboards.DashboardService
-	dashboardStore   dashboards.Store
-	searchService    *search.SearchService
-	features         *featuremgmt.FeatureManager
-	permissions      accesscontrol.FolderPermissionsService
-	accessControl    accesscontrol.AccessControl
+	log           log.Logger
+	cfg           *setting.Cfg
+	searchService *search.SearchService
+	features      *featuremgmt.FeatureManager
+	permissions   accesscontrol.FolderPermissionsService
+	accessControl accesscontrol.AccessControl
 
 	// bus is currently used to publish events that cause scheduler to update rules.
 	bus bus.Bus
@@ -56,17 +54,16 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
 	store := ProvideStore(db, cfg, features)
+	storeWrapper := ProvideStoreWrapper(cfg, dashboardService, dashboardStore, store)
 	svr := &Service{
-		cfg:              cfg,
-		log:              log.New("folder-service"),
-		dashboardService: dashboardService,
-		dashboardStore:   dashboardStore,
-		store:            store,
-		searchService:    searchService,
-		features:         features,
-		permissions:      folderPermissionsService,
-		accessControl:    ac,
-		bus:              bus,
+		cfg:           cfg,
+		log:           log.New("folder-service"),
+		storeWrapper:  storeWrapper,
+		searchService: searchService,
+		features:      features,
+		permissions:   folderPermissionsService,
+		accessControl: ac,
+		bus:           bus,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		svr.DBMigration(db)
@@ -98,28 +95,20 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, err
 	}
 
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
-		if ok, err := s.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
-			dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.UID),
-		)); !ok {
-			if err != nil {
-				return nil, toFolderError(err)
-			}
-			return nil, dashboards.ErrFolderAccessDenied
-		}
-		return s.store.Get(ctx, *cmd)
+	f, err := s.storeWrapper.Get(ctx, *cmd)
+	if err != nil {
+		return nil, err
 	}
 
-	switch {
-	case cmd.UID != nil:
-		return s.getFolderByUID(ctx, user, cmd.OrgID, *cmd.UID)
-	case cmd.ID != nil:
-		return s.getFolderByID(ctx, user, *cmd.ID, cmd.OrgID)
-	case cmd.Title != nil:
-		return s.getFolderByTitle(ctx, user, cmd.OrgID, *cmd.Title)
-	default:
-		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
+	g := guardian.New(ctx, f.ID, f.OrgID, user)
+	if canView, err := g.CanView(); err != nil || !canView {
+		if err != nil {
+			return nil, toFolderError(err)
+		}
+		return nil, dashboards.ErrFolderAccessDenied
 	}
+
+	return f, nil
 }
 
 func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
@@ -149,61 +138,6 @@ func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID
 	}
 
 	return folders, nil
-}
-
-func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
-	if id == 0 {
-		return &folder.Folder{ID: id, Title: "General"}, nil
-	}
-
-	dashFolder, err := s.dashboardStore.GetFolderByID(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	g := guardian.New(ctx, dashFolder.ID, orgID, user)
-	if canView, err := g.CanView(); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	return dashFolder, nil
-}
-
-func (s *Service) getFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*folder.Folder, error) {
-	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, orgID, uid)
-	if err != nil {
-		return nil, err
-	}
-
-	g := guardian.New(ctx, dashFolder.ID, orgID, user)
-	if canView, err := g.CanView(); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	return dashFolder, nil
-}
-
-func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*folder.Folder, error) {
-	dashFolder, err := s.dashboardStore.GetFolderByTitle(ctx, orgID, title)
-	if err != nil {
-		return nil, err
-	}
-
-	g := guardian.New(ctx, dashFolder.ID, orgID, user)
-	if canView, err := g.CanView(); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	return dashFolder, nil
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
