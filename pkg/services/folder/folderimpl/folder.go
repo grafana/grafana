@@ -52,7 +52,7 @@ func ProvideService(
 ) folder.Service {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
-	store := ProvideStore(db, cfg, features)
+	store := ProvideStore(db, cfg)
 	storeWrapper := ProvideStoreWrapper(cfg, dashboardService, dashboardStore, store)
 	svr := &Service{
 		cfg:              cfg,

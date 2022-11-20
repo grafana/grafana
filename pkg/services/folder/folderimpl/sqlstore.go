@@ -10,7 +10,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -20,14 +19,13 @@ type sqlStore struct {
 	db  db.DB
 	log log.Logger
 	cfg *setting.Cfg
-	fm  featuremgmt.FeatureToggles
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
+func ProvideStore(db db.DB, cfg *setting.Cfg) *sqlStore {
+	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg}
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {

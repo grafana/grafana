@@ -53,7 +53,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
 		db := sqlstore.InitTestDB(t)
-		store := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
+		store := ProvideStore(db, db.Cfg)
 
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
