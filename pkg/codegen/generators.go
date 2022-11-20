@@ -34,7 +34,6 @@ func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
 type DeclForGen struct {
 	*kindsys.SomeDecl
 	lin thema.Lineage
-	sch thema.Lineage
 }
 
 // Lineage returns the [thema.Lineage] for the underlying [kindsys.SomeDecl].
