@@ -67,12 +67,12 @@ func (s storeWrapper) Create(ctx context.Context, cmd *folder.CreateFolderComman
 		return nil, err
 	}
 
-	parentUID := folder.RootFolderUID
-	if cmd.ParentUID != "" {
-		parentUID = cmd.ParentUID
-	}
-
 	if s.nestedFolderEnabled {
+		parentUID := folder.RootFolderUID
+		if cmd.ParentUID != "" {
+			parentUID = cmd.ParentUID
+		}
+
 		_, err = s.folderStore.Create(ctx, folder.CreateFolderCommand{
 			// The ID should be the same in both stores so that access control is working as expected
 			// (dashboard_acl.dashboard_id)
@@ -180,6 +180,7 @@ func (s storeWrapper) legacyCreate(ctx context.Context, cmd *folder.CreateFolder
 		User:      user,
 	}
 
+	// performs several validations/permission checks
 	saveDashboardCmd, err := s.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return nil, toFolderError(err)
