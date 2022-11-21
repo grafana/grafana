@@ -48,10 +48,15 @@ export function getResourceDimension(
     };
   }
 
+  // TODO: write tests for this function
   // mode === ResourceDimensionMode.Field case
   const getIcon = (value: string): string => {
-    const display = field.display!;
-    return getPublicOrAbsoluteUrl(display(value).icon ?? value ?? '');
+    if (field && field.display) {
+      const icon = field.display(value).icon;
+      return getPublicOrAbsoluteUrl(icon ?? '');
+    }
+
+    return '';
   };
 
   return {
