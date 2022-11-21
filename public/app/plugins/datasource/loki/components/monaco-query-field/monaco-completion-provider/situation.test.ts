@@ -43,7 +43,6 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
-      lineFilter: false,
       parser: undefined,
     });
 
@@ -57,7 +56,7 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
-      lineFilter: false,
+
       parser: 'json',
     });
 
@@ -65,7 +64,6 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
       labels: [{ name: 'level', value: 'info', op: '=' }],
-      lineFilter: false,
       parser: 'json',
     });
 
@@ -73,7 +71,6 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
-      lineFilter: false,
       parser: undefined,
     });
 
@@ -85,7 +82,6 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
-      lineFilter: false,
       parser: undefined,
     });
 
@@ -93,7 +89,6 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       labels: [{ name: 'level', value: 'info', op: '=' }],
-      lineFilter: true,
       parser: 'logfmt',
     });
   });
