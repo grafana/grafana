@@ -24,7 +24,7 @@ const rootrel string = "kinds/structured/dashboard"
 // TODO standard generated docs
 type Kind struct {
 	lin    thema.ConvergentLineage[*Dashboard]
-	jendec vmux.Endec
+	jcodec vmux.Codec
 	valmux vmux.ValueMux[*Dashboard]
 	decl   kindsys.Decl[kindsys.CoreStructuredMeta]
 }
@@ -56,9 +56,9 @@ func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
 		return nil, err
 	}
 
-	k.jendec = vmux.NewJSONEndec("dashboard.json")
+	k.jcodec = vmux.NewJSONCodec("dashboard.json")
 	k.lin = tsch.ConvergentLineage()
-	k.valmux = vmux.NewValueMux(k.lin.TypedSchema(), k.jendec)
+	k.valmux = vmux.NewValueMux(k.lin.TypedSchema(), k.jcodec)
 	return k, nil
 }
 

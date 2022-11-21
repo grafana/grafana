@@ -216,7 +216,8 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (types.DatasourceIn
 }
 
 func checkAzureMonitorMetricsHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
-	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, metrics.AzureMonitorAPIVersion)
+	subscriptionsApiVersion := "2020-01-01"
+	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, subscriptionsApiVersion)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err

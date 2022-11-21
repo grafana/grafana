@@ -45,6 +45,7 @@ load(
 )
 
 def build_e2e(trigger, ver_mode, edition):
+    environment = {'EDITION': edition}
     variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64',]
     init_steps = [
         identify_runner_step(),
@@ -106,5 +107,5 @@ def build_e2e(trigger, ver_mode, edition):
         publish_suffix = '-publish'
 
     return pipeline(
-        name='{}-build-e2e{}'.format(ver_mode, publish_suffix), edition="oss", trigger=trigger, services=[], steps=init_steps + build_steps,
+        name='{}-build-e2e{}'.format(ver_mode, publish_suffix), edition="oss", trigger=trigger, services=[], steps=init_steps + build_steps, environment=environment,
     )
