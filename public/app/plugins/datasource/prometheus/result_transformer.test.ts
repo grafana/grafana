@@ -264,8 +264,8 @@ describe('Prometheus Result Transformer', () => {
               {
                 name: 'Value',
                 type: FieldType.number,
-                values: [20, 10, 30],
-                labels: { le: '2' },
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
               },
             ],
           }),
@@ -276,8 +276,8 @@ describe('Prometheus Result Transformer', () => {
               {
                 name: 'Value',
                 type: FieldType.number,
-                values: [30, 10, 40],
-                labels: { le: '3' },
+                values: [20, 10, 30],
+                labels: { le: '2' },
               },
             ],
           }),
@@ -289,6 +289,9 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
       expect(series.data[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
       expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[1].name).toEqual('1');
+      expect(series.data[0].fields[2].name).toEqual('2');
+      expect(series.data[0].fields[3].name).toEqual('+Inf');
     });
 
     it('results with heatmap format from multiple queries should be correctly transformed', () => {
