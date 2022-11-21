@@ -480,12 +480,17 @@ export interface Account {
   isMonitoringAccount: boolean;
 }
 
+export interface LogGroupResponse {
+  arn: string;
+  name: string;
+}
+
 export interface MetricResponse {
   name: string;
   namespace: string;
 }
 
 export interface ResourceResponse<T> {
-  account?: Account;
+  accountId?: string;
   value: T;
 }

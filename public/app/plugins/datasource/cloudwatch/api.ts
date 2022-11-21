@@ -11,6 +11,7 @@ import {
   GetDimensionKeysRequest,
   GetDimensionValuesRequest,
   GetMetricsRequest,
+  LogGroupResponse,
   MetricResponse,
   MultiFilters,
   Account,
@@ -65,8 +66,21 @@ export class CloudWatchAPI extends CloudWatchRequest {
     return this.memoizedGetRequest<SelectableResourceValue[]>('log-groups', {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
-      accountId: this.templateSrv.replace(params.accountId),
     });
+  }
+
+  async describeCrossAccountLogGroups(params: DescribeLogGroupsRequest): Promise<SelectableResourceValue[]> {
+    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('describe-log-groups', {
+      ...params,
+      region: this.templateSrv.replace(this.getActualRegion(params.region)),
+      accountId: this.templateSrv.replace(params.accountId),
+    }).then((resourceResponse) =>
+      resourceResponse.map((resource) => ({
+        label: resource.value.name,
+        value: resource.value.arn,
+        text: resource.accountId || '',
+      }))
+    );
   }
 
   async describeAllLogGroups(params: DescribeLogGroupsRequest) {

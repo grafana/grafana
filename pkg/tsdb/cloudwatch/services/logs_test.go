@@ -176,4 +176,25 @@ func Test_GetLogGroups_crossAccountQuerying(t *testing.T) {
 			LogGroupNamePrefix: utils.Pointer("prefix"),
 		})
 	})
+
+	t.Run("Should should not override prefix is there is no logGroupNamePattern", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		mockLogsAPI.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{}, nil)
+		service := NewLogGroupsService(mockLogsAPI, true)
+
+		_, err := service.GetLogGroups(resources.LogGroupsRequest{
+			ResourceRequest: resources.ResourceRequest{
+				AccountId: utils.Pointer("accountId"),
+			},
+			LogGroupNamePrefix: utils.Pointer("prefix"),
+		})
+
+		assert.NoError(t, err)
+		mockLogsAPI.AssertCalled(t, "DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			AccountIdentifiers:    []*string{utils.Pointer("accountId")},
+			IncludeLinkedAccounts: utils.Pointer(true),
+			Limit:                 utils.Pointer(int64(0)),
+			LogGroupNamePrefix:    utils.Pointer("prefix"),
+		})
+	})
 }

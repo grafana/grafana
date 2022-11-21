@@ -34,7 +34,7 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 		}
 	}
 	response, err := s.logGroupsAPI.DescribeLogGroups(input)
-	if err != nil {
+	if err != nil || response == nil {
 		return nil, err
 	}
 

@@ -31,7 +31,7 @@ export const LogGroupSelection = ({ datasource, query, onChange, onRunQuery }: P
       {config.featureToggles.cloudWatchCrossAccountQuerying && accountState?.value?.length ? (
         <CrossAccountLogsQueryField
           fetchLogGroups={(params: Partial<DescribeLogGroupsRequest>) =>
-            datasource.api.describeLogGroups({ region: query.region, ...params })
+            datasource.api.describeCrossAccountLogGroups({ region: query.region, ...params })
           }
           onChange={(selectedLogGroups: SelectableResourceValue[]) => {
             onChange({ ...query, logGroups: selectedLogGroups, logGroupNames: [] });

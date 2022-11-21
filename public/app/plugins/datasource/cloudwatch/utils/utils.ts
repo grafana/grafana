@@ -28,18 +28,3 @@ export const filterMetricsQuery = (query: CloudWatchMetricsQuery): boolean => {
 
   return false;
 };
-
-/*
-Currently supported arn formats:
-  arn:partition:service:region:account-id:resource-id
-  arn:partition:service:region:account-id:resource-type/resource-id
-  arn:partition:service:region:account-id:resource-type:resource-id
-*/
-export const getAccountIdArn = (logArn: string) => {
-  const arnPieces = logArn.split(':');
-  if (arnPieces.length < 5) {
-    console.error(`Unexpected Error, unable to parse accountID from arn, ${logArn}`);
-    return 'Unknown account id';
-  }
-  return arnPieces[4];
-};

@@ -7,7 +7,6 @@ import { Button, Checkbox, IconButton, LoadingPlaceholder, Modal, useStyles2 } f
 import Search from '../Search';
 import { SelectableResourceValue } from '../api';
 import { DescribeLogGroupsRequest } from '../types';
-import { getAccountIdArn } from '../utils/utils';
 
 import { Account, ALL_ACCOUNTS_OPTION } from './Account';
 import getStyles from './styles';
@@ -138,8 +137,8 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
                           {row.label}
                         </label>
                       </td>
-                      <td className={styles.cell}>{accountNameById[getAccountIdArn(row.value || '')]}</td>
-                      <td className={styles.cell}>{getAccountIdArn(row.value || '')}</td>
+                      <td className={styles.cell}>{accountNameById[row.text]}</td>
+                      <td className={styles.cell}>{row.text}</td>
                     </tr>
                   ))}
               </tbody>

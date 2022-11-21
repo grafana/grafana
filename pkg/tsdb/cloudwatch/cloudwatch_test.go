@@ -24,7 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -97,16 +99,18 @@ func TestNewInstanceSettings(t *testing.T) {
 func Test_CheckHealth(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewCWLogsClient := NewCWLogsClient
+	origNewLogsAPI := NewLogsAPI
 	t.Cleanup(func() {
 		NewMetricsAPI = origNewMetricsAPI
 		NewCWLogsClient = origNewCWLogsClient
+		NewLogsAPI = origNewLogsAPI
 	})
 
 	var client fakeCheckHealthClient
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 		return client
 	}
-	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return client
 	}
 
@@ -536,6 +540,67 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 	})
 }
 
+func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
+	origNewMetricsAPI := NewMetricsAPI
+	t.Cleanup(func() { NewMetricsAPI = origNewMetricsAPI })
+	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
+	origNewOAMAPI := NewOAMAPI
+	t.Cleanup(func() { NewOAMAPI = origNewOAMAPI })
+	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
+	origNewLogsAPI := NewLogsAPI
+	t.Cleanup(func() { NewLogsAPI = origNewLogsAPI })
+
+	var logsApi mocks.LogsAPI
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
+		return &logsApi
+	}
+
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+	})
+
+	sender := &mockedCallResourceResponseSenderForOauth{}
+
+	t.Run("maps log group api response to resource response of describe-log-groups", func(t *testing.T) {
+		logsApi = mocks.LogsAPI{}
+		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []*cloudwatchlogs.LogGroup{
+				{Arn: aws.String("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: aws.String("group_a")},
+			},
+		}, nil)
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/describe-log-groups?logGroupPattern=some-pattern&accountId=some-account-id`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchCrossAccountQuerying))
+		err := executor.CallResource(context.Background(), req, sender)
+		assert.NoError(t, err)
+
+		assert.JSONEq(t, `[
+		   {
+			  "accountId":"111",
+			  "value":{
+				 "arn":"arn:aws:logs:us-east-1:111:log-group:group_a",
+				 "name":"group_a"
+			  }
+		   }
+		]`, string(sender.Response.Body))
+
+		logsApi.AssertCalled(t, "DescribeLogGroups",
+			&cloudwatchlogs.DescribeLogGroupsInput{
+				AccountIdentifiers:    []*string{utils.Pointer("some-account-id")},
+				IncludeLinkedAccounts: utils.Pointer(true),
+				Limit:                 utils.Pointer(int64(50)),
+				LogGroupNamePrefix:    utils.Pointer("some-pattern"),
+			})
+	})
+}
+
 func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewMetricsAPI
@@ -552,6 +617,14 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		NewOAMAPI = origNewOAMAPI
 	})
 	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
+		return nil
+	}
+
+	origNewLogsAPI := NewLogsAPI
+	t.Cleanup(func() {
+		NewLogsAPI = origNewLogsAPI
+	})
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return nil
 	}
 
