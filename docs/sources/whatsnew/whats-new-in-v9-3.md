@@ -84,9 +84,9 @@ With the Partition by values transformer, you can now issue a single query and s
 
 This feature is generally available in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced.
 
-As part of our efforts to improve security of Grafana, we introduce a long-awaited feature which enhances Grafana's OAuth 2.0 compatibility. When a user logs in using an OAuth provider, Grafana verifies on each request that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+As part of our efforts to improve the security of Grafana, we are introducing a long-awaited feature which enhances Grafana's OAuth 2.0 compatibility. When a user logs in using an OAuth provider, on each request Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the refresh token provided (if any exists) to obtain a new access token.
 
-This feature is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default.
+This feature introduces a breaking change, thus it is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default. Enabling this functionality without configuring refresh tokens for the specific OAuth provider would get users logged out after their access token has expired and they would need to log in again.
 
 Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}), in the instructions for your Oauth identity provider.
 
