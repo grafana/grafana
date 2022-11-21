@@ -135,18 +135,19 @@ func TestApiUrlHandling(t *testing.T) {
 			require.True(t, called)
 		})
 	}
+}
 
-	for _, test := range queryTestData {
-		t.Run("Loki should build the metadata query URL correctly when "+test.name, func(t *testing.T) {
-			called := false
-			api := makeMockedAPIWithUrl(test.dsUrl, 200, "application/json", response, func(req *http.Request) {
-				called = true
-				require.Equal(t, test.metaUrl, req.URL.String())
-			})
-
-			_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
-			require.NoError(t, err)
-			require.True(t, called)
+func TestApiReturnValues(t *testing.T) {
+	t.Run("Loki should return the right encoding", func(t *testing.T) {
+		called := false
+		api := makeCompressedMockedAPIWithUrl("http://localhost:3100", 200, "application/json", []byte("foo"), func(req *http.Request) {
+			called = true
 		})
-	}
+
+		encodedBytes, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, "gzip", encodedBytes.Encoding)
+		require.Equal(t, []byte("foo"), encodedBytes.Body)
+	})
 }
