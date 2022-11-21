@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
-import { SavedQuery, useUpdateSavedQueryMutation } from '../api/SavedQueriesApi';
+import { SavedQuery, useUpdateSavedQueryMutation, Variable } from '../api/SavedQueriesApi';
 
 import { SavedQueryUpdateOpts } from './QueryEditorDrawer';
 
@@ -19,8 +19,8 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
 
   const [updateSavedQuery] = useUpdateSavedQueryMutation();
 
-  const onVariableNameChange = (variable: any, newName: string) => {
-    const newVariables = savedQuery.variables.map((v: any) => {
+  const onVariableNameChange = (variable: Variable, newName: string) => {
+    const newVariables = savedQuery.variables.map((v: Variable) => {
       if (v.name === variable.name) {
         v.name = newName;
       }
@@ -37,8 +37,8 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
     });
   };
 
-  const onVariableValueChange = (variable: any, newValue: string) => {
-    const newVariables = savedQuery.variables.map((v: any) => {
+  const onVariableValueChange = (variable: Variable, newValue: string) => {
+    const newVariables = savedQuery.variables.map((v: Variable) => {
       if (v.name === variable.name) {
         v.current.value = newValue;
       }
@@ -67,8 +67,8 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
     updateSavedQuery({ query: savedQuery, opts: options });
   };
 
-  const onRemoveVariable = (variable: any) => {
-    const varIndex = savedQuery.variables.map((v: any, index: number) => {
+  const onRemoveVariable = (variable: Variable) => {
+    const varIndex = savedQuery.variables.map((v: Variable, index: number) => {
       if (v.name === variable.name) {
         return index;
       }
@@ -100,7 +100,7 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
         <ul>
           {savedQuery &&
             savedQuery.variables &&
-            savedQuery.variables.map((variable: any) => (
+            savedQuery.variables.map((variable: Variable) => (
               <li key={variable && variable.name} className={styles.variableListItem}>
                 <Card>
                   <Card.Heading>

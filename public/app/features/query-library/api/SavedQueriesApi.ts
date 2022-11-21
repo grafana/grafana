@@ -10,7 +10,7 @@ export type SavedQueryRef = {
   uid?: string;
 };
 
-type variable = {
+export type Variable = {
   name: string;
   type?: string;
   current: {
@@ -23,7 +23,7 @@ type SavedQueryMeta = {
   description?: string;
   tags?: string[];
   schemaVersion?: number;
-  variables: variable[];
+  variables: Variable[];
 };
 
 type SavedQueryData<TQuery extends DataQuery = DataQuery> = {

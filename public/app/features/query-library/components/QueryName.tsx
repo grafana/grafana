@@ -56,7 +56,11 @@ export const QueryName = ({ name, onChange, editingEnabled }: QueryNameProps) =>
 
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
-      onEndEditName((event.target as any).value);
+      if (!(event.target instanceof HTMLInputElement)) {
+        return;
+      }
+
+      onEndEditName(event.target.value);
     }
   };
 
