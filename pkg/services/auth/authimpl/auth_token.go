@@ -18,39 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const ServiceName = "UserAuthTokenService"
+const urgentRotateTime = 1 * time.Minute
 
 var getTime = time.Now
 
-const urgentRotateTime = 1 * time.Minute
-
-func ProvideUserAuthTokenService(sqlStore db.DB, serverLockService *serverlock.ServerLockService,
-	cfg *setting.Cfg) *UserAuthTokenService {
+func ProvideUserAuthTokenService(sqlStore db.DB, cfg *setting.Cfg, serverLockService *serverlock.ServerLockService, quotaService quota.Service) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		SQLStore:          sqlStore,
 		ServerLockService: serverLockService,
 		Cfg:               cfg,
 		log:               log.New("auth"),
-	}
-	return s
-}
-
-type UserAuthTokenService struct {
-	SQLStore          db.DB
-	ServerLockService *serverlock.ServerLockService
-	Cfg               *setting.Cfg
-	log               log.Logger
-}
-
-type ActiveAuthTokenService struct {
-	cfg      *setting.Cfg
-	sqlStore db.DB
-}
-
-func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, quotaService quota.Service) (*ActiveAuthTokenService, error) {
-	s := &ActiveAuthTokenService{
-		cfg:      cfg,
-		sqlStore: sqlStore,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -69,27 +46,11 @@ func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore db.DB, quotaServic
 	return s, nil
 }
 
-func (a *ActiveAuthTokenService) ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
-	var count int64
-	var err error
-	err = a.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		var model userAuthToken
-		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
-			getTime().Add(-a.cfg.LoginMaxLifetime).Unix(),
-			getTime().Add(-a.cfg.LoginMaxInactiveLifetime).Unix()).
-			Count(&model)
-
-		return err
-	})
-
-	tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return nil, err
-	}
-	u := &quota.Map{}
-	u.Set(tag, count)
-
-	return u, err
+type UserAuthTokenService struct {
+	SQLStore          db.DB
+	ServerLockService *serverlock.ServerLockService
+	Cfg               *setting.Cfg
+	log               log.Logger
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
@@ -481,6 +442,29 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 	})
 
 	return result, err
+}
+
+func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
+	var count int64
+	var err error
+	err = s.SQLStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var model userAuthToken
+		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
+			getTime().Add(-s.Cfg.LoginMaxLifetime).Unix(),
+			getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()).
+			Count(&model)
+
+		return err
+	})
+
+	tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return nil, err
+	}
+	u := &quota.Map{}
+	u.Set(tag, count)
+
+	return u, err
 }
 
 func (s *UserAuthTokenService) createdAfterParam() int64 {

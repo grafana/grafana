@@ -49,11 +49,6 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	// before 9.3.0 the quota service used to depend on on the ActiveTokenService
-	// since 9.3.0 after the quota refactoring ActiveTokenService depends on the quota
-	// therefore it's added to avoid cycle dependencies
-	// since it's used only by the middleware for enforcing quota limits.
-	activeTokenService auth.ActiveTokenService,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:               cfg,
