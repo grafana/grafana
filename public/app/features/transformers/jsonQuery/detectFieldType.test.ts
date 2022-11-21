@@ -39,6 +39,11 @@ describe('Detect FieldType', () => {
     expect(detectFieldType([0, 0, 1])).toStrictEqual('number');
   });
 
+  it('array of array numbers are detected', () => {
+    expect(detectFieldType([[0, 0, 0]])).toStrictEqual('number');
+    expect(detectFieldType([[0, 0, 1]])).toStrictEqual('number');
+  });
+
   it('all false gets parsed as boolean', () => {
     expect(detectFieldType([false, false, false])).toStrictEqual('boolean');
     expect(detectFieldType([false, false, true])).toStrictEqual('boolean');

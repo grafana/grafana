@@ -30,5 +30,10 @@ export const detectFieldType = (values: unknown[]): FieldType => {
     return FieldType.boolean;
   }
 
+  if (values.every((value) => Array.isArray(value))) {
+    // @ts-ignore: We checked before if value is array
+    return detectFieldType(values[0]);
+  }
+
   return FieldType.string;
 };

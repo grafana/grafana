@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   DataTransformerID,
@@ -9,7 +9,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, InlineSwitch, Button } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
 import { jsonQueryTransformer } from './jsonQuery';
@@ -25,11 +25,18 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
   editor: () => null,
 };
 
-export const jsonQueryTransformerEditor: React.FC<TransformerUIProps<JSONQueryOptions>> = ({
+export const JsonQueryTransformerEditor: React.FC<TransformerUIProps<JSONQueryOptions>> = ({
   input,
   options,
   onChange,
 }) => {
+  const [query, setQuery] = useState<string>(options.query ?? '$');
+  const [queryOnChange, SetQueryOnChange] = useState<boolean>(false);
+
+  const onToggleQueryOnChange = () => {
+    SetQueryOnChange(!queryOnChange);
+  };
+
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,
@@ -38,9 +45,20 @@ export const jsonQueryTransformerEditor: React.FC<TransformerUIProps<JSONQueryOp
   };
 
   const onChangeQuery = (event: React.SyntheticEvent<HTMLInputElement>) => {
+    if (queryOnChange) {
+      onChange({
+        ...options,
+        query: event.currentTarget.value,
+      });
+    } else {
+      setQuery(event.currentTarget.value);
+    }
+  };
+
+  const onClickQuery = () => {
     onChange({
       ...options,
-      query: event.currentTarget.value,
+      query,
     });
   };
 
@@ -60,6 +78,11 @@ export const jsonQueryTransformerEditor: React.FC<TransformerUIProps<JSONQueryOp
 
   return (
     <div>
+      <InlineFieldRow>
+        <InlineField label={'Query on change'} labelWidth={16}>
+          <InlineSwitch value={queryOnChange} onChange={onToggleQueryOnChange} />
+        </InlineField>
+      </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label={'Source'} labelWidth={16}>
           <FieldNamePicker
@@ -81,7 +104,7 @@ export const jsonQueryTransformerEditor: React.FC<TransformerUIProps<JSONQueryOp
           }
           grow
         >
-          <Input onChange={onChangeQuery} value={options.query ?? '$'} />
+          <Input onChange={onChangeQuery} value={queryOnChange ? options.query ?? '$' : query} />
         </InlineField>
         <InlineField label="Type" tooltip="If Auto is set, the JSON property type is used to detect the field type.">
           <Select
@@ -101,13 +124,20 @@ export const jsonQueryTransformerEditor: React.FC<TransformerUIProps<JSONQueryOp
           <Input width={12} value={options.alias ?? ''} onChange={onAliasChange} />
         </InlineField>
       </InlineFieldRow>
+      {!queryOnChange && (
+        <InlineFieldRow>
+          <Button onClick={onClickQuery} size="md" variant={'secondary'}>
+            Query
+          </Button>
+        </InlineFieldRow>
+      )}
     </div>
   );
 };
 
 export const jsonQueryTransformRegistryItem: TransformerRegistryItem<JSONQueryOptions> = {
   id: DataTransformerID.jsonQuery,
-  editor: jsonQueryTransformerEditor,
+  editor: JsonQueryTransformerEditor,
   transformation: jsonQueryTransformer,
   name: 'Query JSON',
   description: 'Query JSON for specific values.',

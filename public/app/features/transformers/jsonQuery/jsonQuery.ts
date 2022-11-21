@@ -63,7 +63,14 @@ function queryJSON(frame: DataFrame, options: JSONQueryOptions): DataFrame {
     });
 
     queryResultArray.forEach((entry: JSONPathPlusReturn, index: number) => {
-      const key = `${options?.alias ?? entry.parentProperty ?? 'Value'}_${i}_${index}`;
+      let prefix = 'Value';
+      if (options?.alias) {
+        prefix = options?.alias;
+      } else if (entry.parentProperty) {
+        prefix = entry.parentProperty;
+      }
+
+      const key = `${prefix}_${i}_${index}`;
       values.set(key, [entry.value]);
     });
   }

@@ -11,14 +11,14 @@ describe('Extract Path from JSON', () => {
 
     const frames = jsonQueryTransformer.transformer(cfg)([jsonTestObject]);
     expect(frames.length).toEqual(1);
-    expect(frames[0].fields.length).toEqual(1);
+    expect(frames[0].fields.length).toEqual(2);
     expect(frames).toMatchInlineSnapshot(`
       Array [
         Object {
           "fields": Array [
             Object {
               "config": Object {},
-              "name": "Value_0",
+              "name": "Value_0_0",
               "type": "string",
               "values": Array [
                 Object {
@@ -69,6 +69,13 @@ describe('Extract Path from JSON', () => {
                   ],
                   "timestamp": "2022-11-08T09:05:50.989654408Z",
                 },
+              ],
+            },
+            Object {
+              "config": Object {},
+              "name": "Value_1_0",
+              "type": "string",
+              "values": Array [
                 Object {
                   "flag": true,
                   "nestedObject": Object {
@@ -126,10 +133,10 @@ describe('Extract Path from JSON', () => {
     `);
   });
 
-  it('Path $.[*].timestamp', async () => {
+  it('Path $.timestamp', async () => {
     const cfg: JSONQueryOptions = {
       source: 'samples',
-      query: '$.[*].timestamp',
+      query: '$.timestamp',
     };
 
     const frames = jsonQueryTransformer.transformer(cfg)([jsonTestObject]);
@@ -141,15 +148,19 @@ describe('Extract Path from JSON', () => {
           "fields": Array [
             Object {
               "config": Object {},
-              "name": "timestamp_0",
+              "name": "timestamp_0_0",
               "type": "time",
-              "values": "2022-11-08T09:05:50.989654408Z",
+              "values": Array [
+                "2022-11-08T09:05:50.989654408Z",
+              ],
             },
             Object {
               "config": Object {},
-              "name": "timestamp_1",
+              "name": "timestamp_1_0",
               "type": "time",
-              "values": "2022-11-08T09:05:51.989654408Z",
+              "values": Array [
+                "2022-11-08T09:05:51.989654408Z",
+              ],
             },
           ],
           "length": 2,
@@ -158,10 +169,10 @@ describe('Extract Path from JSON', () => {
     `);
   });
 
-  it('Path $.[*].numberArray.[*] with Alias', async () => {
+  it('Path $.numberArray.[*] with Alias', async () => {
     const cfg: JSONQueryOptions = {
       source: 'samples',
-      query: '$.[*].numberArray.[*]',
+      query: '$.numberArray.[*]',
       alias: 'P',
     };
 
@@ -174,39 +185,51 @@ describe('Extract Path from JSON', () => {
           "fields": Array [
             Object {
               "config": Object {},
-              "name": "P_0",
+              "name": "P_0_0",
               "type": "number",
-              "values": 1,
+              "values": Array [
+                1,
+              ],
             },
             Object {
               "config": Object {},
-              "name": "P_1",
+              "name": "P_0_1",
               "type": "number",
-              "values": 2,
+              "values": Array [
+                2,
+              ],
             },
             Object {
               "config": Object {},
-              "name": "P_2",
+              "name": "P_0_2",
               "type": "number",
-              "values": 3,
+              "values": Array [
+                3,
+              ],
             },
             Object {
               "config": Object {},
-              "name": "P_3",
+              "name": "P_1_0",
               "type": "number",
-              "values": 4,
+              "values": Array [
+                4,
+              ],
             },
             Object {
               "config": Object {},
-              "name": "P_4",
+              "name": "P_1_1",
               "type": "number",
-              "values": 5,
+              "values": Array [
+                5,
+              ],
             },
             Object {
               "config": Object {},
-              "name": "P_5",
+              "name": "P_1_2",
               "type": "number",
-              "values": 6,
+              "values": Array [
+                6,
+              ],
             },
           ],
           "length": 2,
@@ -215,10 +238,10 @@ describe('Extract Path from JSON', () => {
     `);
   });
 
-  it('Path $.[*].nestedObject.nestedStringArray', async () => {
+  it('Path $.nestedObject.nestedStringArray', async () => {
     const cfg: JSONQueryOptions = {
       source: 'samples',
-      query: '$.[*].nestedObject.nestedStringArray',
+      query: '$.nestedObject.nestedStringArray',
       type: FieldType.string,
     };
 
@@ -231,22 +254,26 @@ describe('Extract Path from JSON', () => {
           "fields": Array [
             Object {
               "config": Object {},
-              "name": "nestedStringArray_0",
+              "name": "nestedStringArray_0_0",
               "type": "string",
               "values": Array [
-                "1",
-                "2",
-                "3",
+                Array [
+                  "1",
+                  "2",
+                  "3",
+                ],
               ],
             },
             Object {
               "config": Object {},
-              "name": "nestedStringArray_1",
+              "name": "nestedStringArray_1_0",
               "type": "string",
               "values": Array [
-                "4",
-                "5",
-                "6",
+                Array [
+                  "4",
+                  "5",
+                  "6",
+                ],
               ],
             },
           ],
