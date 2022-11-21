@@ -34,7 +34,7 @@ func getAttribute(name string, entry *ldap.Entry) string {
 	}
 
 	for _, attr := range entry.Attributes {
-		if attr.Name == name {
+		if strings.EqualFold(attr.Name, name) {
 			if len(attr.Values) > 0 {
 				return attr.Values[0]
 			}
