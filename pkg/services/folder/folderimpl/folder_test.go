@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -51,265 +50,289 @@ func TestIntegrationFolderService(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Folder service tests", func(t *testing.T) {
-		dashStore := &dashboards.FakeDashboardStore{}
-		db := sqlstore.InitTestDB(t)
-		store := ProvideStore(db, db.Cfg)
+		for _, nestedFoldersEnabled := range []bool{false, true} {
+			testIntegrationFolderService(t, nestedFoldersEnabled)
+		}
+	})
+}
 
-		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
-		features := featuremgmt.WithFeatures()
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
-		folderPermissions := acmock.NewMockedPermissionsService()
-		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := dashboardsvc.ProvideDashboardService(cfg, dashStore, nil, features, folderPermissions, dashboardPermissions, acmock.New())
+func testIntegrationFolderService(t *testing.T, nestedFolderEnabled bool) {
+	if nestedFolderEnabled {
+		t.Skip("skipping until folder migration is merged")
+	}
+	dashStore := &dashboards.FakeDashboardStore{}
+	folderStore := NewFakeStore()
 
-		service := &Service{
-			cfg:              cfg,
-			log:              log.New("test-folder-service"),
-			dashboardService: dashboardService,
-			storeWrapper:     ProvideStoreWrapper(cfg, dashboardService, dashStore, store),
-			searchService:    nil,
-			features:         features,
-			permissions:      folderPermissions,
-			bus:              bus.ProvideBus(tracing.InitializeTracerForTest()),
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	features := featuremgmt.WithFeatures()
+	cfg.IsFeatureToggleEnabled = func(key string) bool {
+		if key == featuremgmt.FlagNestedFolders {
+			return nestedFolderEnabled
 		}
 
-		t.Run("Given user has no permissions", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
+		return false
+	}
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
+	dashboardService := dashboardsvc.ProvideDashboardService(cfg, dashStore, nil, features, folderPermissions, dashboardPermissions, acmock.New())
 
-			folderId := rand.Int63()
-			folderUID := util.GenerateShortUID()
+	service := &Service{
+		cfg:              cfg,
+		log:              log.New("test-folder-service"),
+		dashboardService: dashboardService,
+		storeWrapper:     ProvideStoreWrapper(cfg, dashboardService, dashStore, folderStore),
+		searchService:    nil,
+		features:         features,
+		permissions:      folderPermissions,
+		bus:              bus.ProvideBus(tracing.InitializeTracerForTest()),
+	}
 
+	t.Run("Given user has no permissions", func(t *testing.T) {
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
+
+		folderId := rand.Int63()
+		folderUID := util.GenerateShortUID()
+
+		dashboardFolder := models.NewDashboardFolder("Folder")
+		dashboardFolder.Id = folderId
+		dashboardFolder.Uid = folderUID
+		f := folder.FromDashboard(dashboardFolder)
+
+		dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(f, nil)
+		dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
+
+		t.Run("When get folder by id should return access denied error", func(t *testing.T) {
+			folderStore.ExpectedFolder = f
+			ctx := appcontext.WithUser(context.Background(), usr)
+			_, err := service.Get(ctx, &folder.GetFolderQuery{ID: &folderId, OrgID: orgID})
+			require.Equal(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
+			folderStore.ExpectedFolder = &folder.Folder{ID: 0, Title: "General"}
+			ctx := appcontext.WithUser(context.Background(), usr)
+			foldr, err := service.Get(ctx, &folder.GetFolderQuery{ID: pointer.Int64(0), OrgID: orgID})
+			require.NoError(t, err)
+			require.Equal(t, foldr, &folder.Folder{ID: 0, Title: "General"})
+		})
+
+		t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
+			folderStore.ExpectedFolder = f
+			ctx := appcontext.WithUser(context.Background(), usr)
+			_, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID})
+			require.Equal(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Run("When creating folder should return access denied error", func(t *testing.T) {
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
+			ctx := appcontext.WithUser(context.Background(), usr)
+			_, err := service.Create(ctx, &folder.CreateFolderCommand{
+				OrgID: orgID,
+				Title: f.Title,
+				UID:   folderUID,
+			})
+			require.Equal(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Run("When updating folder should return access denied error", func(t *testing.T) {
+			dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
+			ctx := appcontext.WithUser(context.Background(), usr)
+			_, err := service.Update(ctx, orgID, folderUID, &models.UpdateFolderCommand{
+				Uid:   folderUID,
+				Title: "Folder-TEST",
+			})
+			require.Equal(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
+			ctx := context.Background()
+			ctx = appcontext.WithUser(ctx, usr)
+
+			newFolder := models.NewFolder("Folder")
+			newFolder.Uid = folderUID
+
+			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
+
+			err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+				UID:              folderUID,
+				OrgID:            orgID,
+				ForceDeleteRules: false,
+			})
+			require.Error(t, err)
+			require.Equal(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+	})
+
+	t.Run("Given user has permission to save", func(t *testing.T) {
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+
+		t.Run("When creating folder should not return access denied error", func(t *testing.T) {
+			dash := models.NewDashboardFolder("Test-Folder")
+			dash.Id = rand.Int63()
+			dash.Uid = util.GenerateShortUID()
+			f := folder.FromDashboard(dash)
+
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dash, nil).Once()
+			dashStore.On("GetFolderByID", mock.Anything, orgID, dash.Id).Return(f, nil)
+
+			ctx := appcontext.WithUser(context.Background(), usr)
+			actualFolder, err := service.Create(ctx, &folder.CreateFolderCommand{
+				OrgID: orgID,
+				Title: dash.Title,
+				UID:   "someuid",
+			})
+			require.NoError(t, err)
+			require.Equal(t, f, actualFolder)
+		})
+
+		t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
+			dash := models.NewDashboardFolder("Test-Folder")
+			dash.Id = rand.Int63()
+
+			ctx := appcontext.WithUser(context.Background(), usr)
+			_, err := service.Create(ctx, &folder.CreateFolderCommand{
+				OrgID: orgID,
+				Title: dash.Title,
+				UID:   "general",
+			})
+			require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
+		})
+
+		t.Run("When updating folder should not return access denied error", func(t *testing.T) {
 			dashboardFolder := models.NewDashboardFolder("Folder")
-			dashboardFolder.Id = folderId
-			dashboardFolder.Uid = folderUID
+			dashboardFolder.OrgId = orgID
+			dashboardFolder.Id = rand.Int63()
+			dashboardFolder.Uid = util.GenerateShortUID()
 			f := folder.FromDashboard(dashboardFolder)
 
-			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(f, nil)
-			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
+			dashStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
+			dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
+			dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
+			folderStore.ExpectedFolder = f
 
-			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
-				ctx := appcontext.WithUser(context.Background(), usr)
-				_, err := service.Get(ctx, &folder.GetFolderQuery{ID: &folderId, OrgID: orgID})
-				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
-			})
-
-			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
-				ctx := appcontext.WithUser(context.Background(), usr)
-				foldr, err := service.Get(ctx, &folder.GetFolderQuery{ID: pointer.Int64(0), OrgID: orgID})
-				require.NoError(t, err)
-				require.Equal(t, foldr, &folder.Folder{ID: 0, Title: "General"})
-			})
-
-			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
-				ctx := appcontext.WithUser(context.Background(), usr)
-				_, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID})
-				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
-			})
-
-			t.Run("When creating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
-				ctx := appcontext.WithUser(context.Background(), usr)
-				_, err := service.Create(ctx, &folder.CreateFolderCommand{
-					OrgID: orgID,
-					Title: f.Title,
-					UID:   folderUID,
-				})
-				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
-			})
-
-			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
-				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
-				ctx := appcontext.WithUser(context.Background(), usr)
-				_, err := service.Update(ctx, orgID, folderUID, &models.UpdateFolderCommand{
-					Uid:   folderUID,
-					Title: "Folder-TEST",
-				})
-				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
-			})
-
-			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				ctx := context.Background()
-				ctx = appcontext.WithUser(ctx, usr)
-
-				newFolder := models.NewFolder("Folder")
-				newFolder.Uid = folderUID
-
-				dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
-				dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
-
-				err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
-					UID:              folderUID,
-					OrgID:            orgID,
-					ForceDeleteRules: false,
-				})
-				require.Error(t, err)
-				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
-			})
-
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-		})
-
-		t.Run("Given user has permission to save", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
-
-			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
-				dash := models.NewDashboardFolder("Test-Folder")
-				dash.Id = rand.Int63()
-				f := folder.FromDashboard(dash)
-
-				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dash, nil).Once()
-				dashStore.On("GetFolderByID", mock.Anything, orgID, dash.Id).Return(f, nil)
-
-				ctx := appcontext.WithUser(context.Background(), usr)
-				actualFolder, err := service.Create(ctx, &folder.CreateFolderCommand{
-					OrgID: orgID,
-					Title: dash.Title,
-					UID:   "someuid",
-				})
-				require.NoError(t, err)
-				require.Equal(t, f, actualFolder)
-			})
-
-			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
-				dash := models.NewDashboardFolder("Test-Folder")
-				dash.Id = rand.Int63()
-
-				ctx := appcontext.WithUser(context.Background(), usr)
-				_, err := service.Create(ctx, &folder.CreateFolderCommand{
-					OrgID: orgID,
-					Title: dash.Title,
-					UID:   "general",
-				})
-				require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
-			})
-
-			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
-				dashboardFolder := models.NewDashboardFolder("Folder")
-				dashboardFolder.OrgId = orgID
-				dashboardFolder.Id = rand.Int63()
-				dashboardFolder.Uid = util.GenerateShortUID()
-				f := folder.FromDashboard(dashboardFolder)
-
-				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
-				dashStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
-				dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
-
-				req := &models.UpdateFolderCommand{
-					Uid:   dashboardFolder.Uid,
-					Title: "TEST-Folder",
-				}
-
-				ctx := appcontext.WithUser(context.Background(), usr)
-				reqResult, err := service.Update(ctx, orgID, dashboardFolder.Uid, req)
-				require.NoError(t, err)
-				require.Equal(t, f, reqResult)
-			})
-
-			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
-				f := folder.NewFolder(util.GenerateShortUID(), "")
-				f.ID = rand.Int63()
-				f.UID = util.GenerateShortUID()
-				dashStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
-
-				var actualCmd *models.DeleteDashboardCommand
-				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
-				}).Return(nil).Once()
-
-				expectedForceDeleteRules := rand.Int63()%2 == 0
-				ctx := context.Background()
-				ctx = appcontext.WithUser(ctx, usr)
-				err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
-					UID:              f.UID,
-					OrgID:            orgID,
-					ForceDeleteRules: expectedForceDeleteRules,
-				})
-				require.NoError(t, err)
-				require.NotNil(t, actualCmd)
-				require.Equal(t, f.ID, actualCmd.Id)
-				require.Equal(t, orgID, actualCmd.OrgId)
-				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
-			})
-
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-		})
-
-		t.Run("Given user has permission to view", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
-
-			t.Run("When get folder by id should return folder", func(t *testing.T) {
-				expected := folder.NewFolder(util.GenerateShortUID(), "")
-				expected.ID = rand.Int63()
-
-				dashStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
-
-				ctx := appcontext.WithUser(context.Background(), usr)
-				actual, err := service.Get(ctx, &folder.GetFolderQuery{ID: &expected.ID, OrgID: orgID})
-				require.Equal(t, expected, actual)
-				require.NoError(t, err)
-			})
-
-			t.Run("When get folder by uid should return folder", func(t *testing.T) {
-				expected := folder.NewFolder(util.GenerateShortUID(), "")
-				expected.UID = util.GenerateShortUID()
-
-				dashStore.On("GetFolderByUID", mock.Anything, orgID, expected.UID).Return(expected, nil)
-
-				ctx := appcontext.WithUser(context.Background(), usr)
-				actual, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &expected.UID})
-				require.Equal(t, expected, actual)
-				require.NoError(t, err)
-			})
-
-			t.Run("When get folder by title should return folder", func(t *testing.T) {
-				expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
-
-				dashStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
-
-				ctx := appcontext.WithUser(context.Background(), usr)
-				actual, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &expected.Title})
-				require.Equal(t, expected, actual)
-				require.NoError(t, err)
-			})
-
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-		})
-
-		t.Run("Should map errors correct", func(t *testing.T) {
-			testCases := []struct {
-				ActualError   error
-				ExpectedError error
-			}{
-				{ActualError: dashboards.ErrDashboardTitleEmpty, ExpectedError: dashboards.ErrFolderTitleEmpty},
-				{ActualError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedError: dashboards.ErrFolderAccessDenied},
-				{ActualError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedError: dashboards.ErrFolderSameNameExists},
-				{ActualError: dashboards.ErrDashboardWithSameUIDExists, ExpectedError: dashboards.ErrFolderWithSameUIDExists},
-				{ActualError: dashboards.ErrDashboardVersionMismatch, ExpectedError: dashboards.ErrFolderVersionMismatch},
-				{ActualError: dashboards.ErrDashboardNotFound, ExpectedError: dashboards.ErrFolderNotFound},
-				{ActualError: dashboards.ErrDashboardFailedGenerateUniqueUid, ExpectedError: dashboards.ErrFolderFailedGenerateUniqueUid},
-				{ActualError: dashboards.ErrDashboardInvalidUid, ExpectedError: dashboards.ErrDashboardInvalidUid},
+			req := &models.UpdateFolderCommand{
+				Uid:   dashboardFolder.Uid,
+				Title: "TEST-Folder",
 			}
 
-			for _, tc := range testCases {
-				actualError := toFolderError(tc.ActualError)
-				assert.EqualErrorf(t, actualError, tc.ExpectedError.Error(),
-					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
-			}
+			ctx := appcontext.WithUser(context.Background(), usr)
+			reqResult, err := service.Update(ctx, orgID, dashboardFolder.Uid, req)
+			require.NoError(t, err)
+			require.Equal(t, f, reqResult)
 		})
+
+		t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
+			f := folder.NewFolder(util.GenerateShortUID(), "")
+			f.OrgID = orgID
+			f.ID = rand.Int63()
+			f.UID = util.GenerateShortUID()
+			dashStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
+			folderStore.ExpectedFolder = f
+
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
+
+			expectedForceDeleteRules := rand.Int63()%2 == 0
+			ctx := context.Background()
+			ctx = appcontext.WithUser(ctx, usr)
+			err := service.DeleteFolder(ctx, &folder.DeleteFolderCommand{
+				UID:              f.UID,
+				OrgID:            orgID,
+				ForceDeleteRules: expectedForceDeleteRules,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, actualCmd)
+			require.Equal(t, f.ID, actualCmd.Id)
+			require.Equal(t, orgID, actualCmd.OrgId)
+			require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
+		})
+
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+	})
+
+	t.Run("Given user has permission to view", func(t *testing.T) {
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
+
+		t.Run("When get folder by id should return folder", func(t *testing.T) {
+			expected := folder.NewFolder(util.GenerateShortUID(), "")
+			expected.ID = rand.Int63()
+
+			dashStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
+			folderStore.ExpectedFolder = expected
+
+			ctx := appcontext.WithUser(context.Background(), usr)
+			actual, err := service.Get(ctx, &folder.GetFolderQuery{ID: &expected.ID, OrgID: orgID})
+			require.Equal(t, expected, actual)
+			require.NoError(t, err)
+		})
+
+		t.Run("When get folder by uid should return folder", func(t *testing.T) {
+			expected := folder.NewFolder(util.GenerateShortUID(), "")
+			expected.UID = util.GenerateShortUID()
+
+			dashStore.On("GetFolderByUID", mock.Anything, orgID, expected.UID).Return(expected, nil)
+			folderStore.ExpectedFolder = expected
+
+			ctx := appcontext.WithUser(context.Background(), usr)
+			actual, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &expected.UID})
+			require.Equal(t, expected, actual)
+			require.NoError(t, err)
+		})
+
+		t.Run("When get folder by title should return folder", func(t *testing.T) {
+			expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
+
+			dashStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
+			folderStore.ExpectedFolder = expected
+
+			ctx := appcontext.WithUser(context.Background(), usr)
+			actual, err := service.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &expected.Title})
+			require.Equal(t, expected, actual)
+			require.NoError(t, err)
+		})
+
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+	})
+
+	t.Run("Should map errors correct", func(t *testing.T) {
+		testCases := []struct {
+			ActualError   error
+			ExpectedError error
+		}{
+			{ActualError: dashboards.ErrDashboardTitleEmpty, ExpectedError: dashboards.ErrFolderTitleEmpty},
+			{ActualError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedError: dashboards.ErrFolderAccessDenied},
+			{ActualError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedError: dashboards.ErrFolderSameNameExists},
+			{ActualError: dashboards.ErrDashboardWithSameUIDExists, ExpectedError: dashboards.ErrFolderWithSameUIDExists},
+			{ActualError: dashboards.ErrDashboardVersionMismatch, ExpectedError: dashboards.ErrFolderVersionMismatch},
+			{ActualError: dashboards.ErrDashboardNotFound, ExpectedError: dashboards.ErrFolderNotFound},
+			{ActualError: dashboards.ErrDashboardFailedGenerateUniqueUid, ExpectedError: dashboards.ErrFolderFailedGenerateUniqueUid},
+			{ActualError: dashboards.ErrDashboardInvalidUid, ExpectedError: dashboards.ErrDashboardInvalidUid},
+		}
+
+		for _, tc := range testCases {
+			actualError := toFolderError(tc.ActualError)
+			assert.EqualErrorf(t, actualError, tc.ExpectedError.Error(),
+				"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
+		}
 	})
 }
 
