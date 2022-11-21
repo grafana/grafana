@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Stack } from '@grafana/experimental';
 import { Icon, LinkButton, useStyles2, useTheme2 } from '@grafana/ui/src';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -12,16 +11,16 @@ export default function Home() {
   const styles = useStyles2(getWelcomePageStyles);
 
   return (
-    <AlertingPageWrapper pageId="alert-list">
+    <AlertingPageWrapper pageId="alert-home">
       <div className={styles.grid}>
         <WelcomeHeader className={styles.ctaContainer} />
-        <ContextBox className={styles.flowBlock}>
+        <ContentBox className={styles.flowBlock}>
           <img
             src={`public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}
             alt="Alerting flow chart"
           />
-        </ContextBox>
-        <ContextBox className={styles.videoBlock}>
+        </ContentBox>
+        <ContentBox className={styles.videoBlock}>
           <iframe
             title="Alerting - Introductory video"
             src="https://player.vimeo.com/video/720001629"
@@ -30,8 +29,8 @@ export default function Home() {
             allow="autoplay; fullscreen"
             allowFullScreen
           ></iframe>
-        </ContextBox>
-        <ContextBox title="Getting started" className={styles.gettingStartedBlock}>
+        </ContentBox>
+        <ContentBox title="Getting started" className={styles.gettingStartedBlock}>
           <ul>
             <li>Create alert rules for your data sources</li>
             <li>Assign label to your alerts to give them context and meaning</li>
@@ -39,14 +38,14 @@ export default function Home() {
             <li>Send notifications to tools you use like Slack, MS Teams, PagerDuty, OpsGenie and more</li>
           </ul>
           <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Alerting Docs" />
-        </ContextBox>
-        <ContextBox title="Deep dive into alerting" className={styles.universityBlock}>
+        </ContentBox>
+        <ContentBox title="Deep dive into alerting" className={styles.universityBlock}>
           To find out more you can enroll to our Alerting Grafana University course
           <ArrowLink
             href="https://university.grafana.com//lms/index.php?r=coursepath/deeplink&id_path=42&hash=caa235c6321f80e03df017ae9ec6eed5c79da9ec"
             title="Learn more in Grafana University course"
           />
-        </ContextBox>
+        </ContentBox>
       </div>
     </AlertingPageWrapper>
   );
@@ -99,21 +98,21 @@ function WelcomeHeader({ className }: { className?: string }) {
 
       <div className={styles.ctaContainer}>
         <WelcomeCTABox
-          title="Manage alert rules"
+          title="Alert rules"
           description="Manage your alert rules. Combine data from multiple data sources"
           icon="list-ul"
           href="/alerting/new"
           hrefText="Create a rule"
         />
         <WelcomeCTABox
-          title="Manage notification policies"
-          description="Configure where your alerts are delivered"
+          title="Notification policies"
+          description="Configure the flow of your alerts and route them to contact points"
           icon="sitemap"
           href="/alerting/routes"
           hrefText="Check configuration"
         />
         <WelcomeCTABox
-          title="Manage contact points"
+          title="Contact points"
           description="Configure who and how receives notifications"
           icon="comment-alt-share"
           href="/alerting/notifications"
@@ -129,15 +128,29 @@ const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     padding: ${theme.spacing(4)};
-    background-image: linear-gradient(
-      325deg,
-      hsl(36deg 96% 66%) 0%,
-      hsl(29deg 96% 66%) 52%,
-      hsl(21deg 96% 66%) 77%,
-      hsl(10deg 90% 67%) 91%,
-      hsl(356deg 76% 68%) 99%,
-      hsl(341deg 61% 69%) 100%
-    );
+    background-image: url(public/img/alerting/welcome_cta_bg_${theme.name.toLowerCase()}.svg);
+    background-size: cover;
+    background-clip: padding-box;
+
+    outline: 1px solid hsla(6deg, 60%, 80%, 0.14);
+    outline-offset: -1px;
+    border-radius: 3px;
+    //background-image: linear-gradient(
+    //  325deg,
+    //  hsl(36deg 96% 66%) 0%,
+    //  hsl(29deg 96% 66%) 52%,
+    //  hsl(21deg 96% 66%) 77%,
+    //  hsl(10deg 90% 67%) 91%,
+    //  hsl(356deg 76% 68%) 99%,
+    //  hsl(341deg 61% 69%) 100%
+    //);
+    //background: rgb(228, 211, 184);
+    //background: linear-gradient(
+    //  170deg,
+    //  rgba(228, 211, 184, 1) 0%,
+    //  rgba(196, 184, 186, 1) 45%,
+    //  rgba(157, 151, 188, 1) 100%
+    //);
   `,
   ctaContainer: css`
     padding: ${theme.spacing(4)};
@@ -203,10 +216,11 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
     grid-column: 1;
     grid-row: 1 / span 2;
     margin: auto;
+    color: #ff8833;
   `,
 });
 
-function ContextBox({ children, title, className }: React.PropsWithChildren<{ title?: string; className?: string }>) {
+function ContentBox({ children, title, className }: React.PropsWithChildren<{ title?: string; className?: string }>) {
   const styles = useStyles2(getContentBoxStyles);
 
   return (
@@ -221,6 +235,7 @@ const getContentBoxStyles = (theme: GrafanaTheme2) => ({
   box: css`
     padding: ${theme.spacing(2)};
     background-color: ${theme.colors.background.secondary};
+    border-radius: 3px;
   `,
 });
 
