@@ -100,7 +100,7 @@ export const MenuItem = React.memo(
     );
     const disabledProps = {
       [ItemElement === 'button' ? 'disabled' : 'aria-disabled']: disabled,
-      ...(ItemElement === 'a' && { href: undefined, onClick: undefined }),
+      ...(ItemElement === 'a' && disabled && { href: undefined, onClick: undefined }),
       ...(disabled && {
         tabIndex: -1,
         ['data-disabled']: disabled, // used to identify disabled items in Menu.tsx
