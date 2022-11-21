@@ -537,7 +537,6 @@ func TestNestedFolderService(t *testing.T) {
 			dashboardFolder.Id = rand.Int63()
 			dashboardFolder.Uid = "myFolder"
 			dashboardFolder.OrgId = orgID
-			f := folder.FromDashboard(dashboardFolder)
 
 			dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboardFolder, nil)
 			store.ExpectedError = nil

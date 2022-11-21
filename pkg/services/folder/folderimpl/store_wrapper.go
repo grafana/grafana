@@ -53,7 +53,7 @@ func (s storeWrapper) Get(ctx context.Context, cmd folder.GetFolderQuery) (*fold
 		if *cmd.ID == int64(0) {
 			return &folder.Folder{ID: 0, Title: "General"}, nil
 		}
-		return s.dashboardStore.GetFolderByID(ctx, *&cmd.OrgID, *cmd.ID)
+		return s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, *cmd.ID)
 	case cmd.Title != nil:
 		return s.dashboardStore.GetFolderByTitle(ctx, cmd.OrgID, *cmd.Title)
 	default:
