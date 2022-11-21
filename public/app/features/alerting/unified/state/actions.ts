@@ -27,7 +27,6 @@ import {
 import {
   PostableRulerRuleGroupDTO,
   PromApplication,
-  RulerGrafanaRuleDTO,
   RulerRuleDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -436,8 +435,6 @@ export function deleteRuleAction(
     );
   };
 }
-
-export const isRulerGrafanaRuleDTO = (rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO => 'grafana_alert' in rule;
 
 export const saveRuleFormAction = createAsyncThunk(
   'unifiedalerting/saveRuleForm',
