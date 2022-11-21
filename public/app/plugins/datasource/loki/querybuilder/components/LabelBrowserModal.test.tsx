@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { LokiDatasource } from '../../datasource';
 import { createLokiDatasource } from '../../mocks';
 import { LokiQuery } from '../../types';
 
@@ -11,20 +12,26 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-const lokiDatasource = createLokiDatasource();
-
-const defaultProps: Props = {
-  isOpen: true,
-  languageProvider: lokiDatasource.languageProvider,
-  query: {} as LokiQuery,
-  onClose: jest.fn(),
-  onChange: jest.fn(),
-  onRunQuery: jest.fn(),
-};
-
 describe('LabelBrowserModal', () => {
+  let datasource: LokiDatasource, props: Props;
+
+  beforeEach(() => {
+    datasource = createLokiDatasource();
+
+    props = {
+      isOpen: true,
+      languageProvider: datasource.languageProvider,
+      query: {} as LokiQuery,
+      onClose: jest.fn(),
+      onChange: jest.fn(),
+      onRunQuery: jest.fn(),
+    };
+
+    jest.spyOn(datasource, 'metadataRequest').mockResolvedValue({});
+  });
+
   it('passes...', () => {
-    render(<LabelBrowserModal {...defaultProps} />);
+    render(<LabelBrowserModal {...props} />);
     expect(screen.getByRole('heading', { name: /label browser/i })).toBeInTheDocument();
   });
 });
