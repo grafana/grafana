@@ -7,6 +7,7 @@ import {
   BusEventType,
   PanelData,
   TimeRange,
+  TimeZone,
   UrlQueryMap,
   UrlQueryValue,
 } from '@grafana/data';
