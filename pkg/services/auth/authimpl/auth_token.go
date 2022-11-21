@@ -38,7 +38,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB, cfg *setting.Cfg, serverLockSer
 	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
 		TargetSrv:     auth.QuotaTargetSrv,
 		DefaultLimits: defaultLimits,
-		Reporter:      s.activeTokenCount,
+		Reporter:      s.reportActiveTokenCount,
 	}); err != nil {
 		return s, err
 	}
@@ -444,7 +444,7 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 	return result, err
 }
 
-func (s *UserAuthTokenService) activeTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
+func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
 	var count int64
 	var err error
 	err = s.SQLStore.WithDbSession(ctx, func(dbSession *db.Session) error {
