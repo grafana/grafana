@@ -160,16 +160,17 @@ async function getInGroupingCompletions(
 
 const PARSERS = ['json', 'logfmt', 'pattern', 'regexp', 'unpack'];
 
-async function getAfterSelectorCompletions(
-  labels: Label[],
+async function getParserCompletions(
   afterPipe: boolean,
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
+  hasJSON: boolean,
+  hasLogfmt: boolean,
+  extractedLabelKeys: string[]
+) {
   const allParsers = new Set(PARSERS);
   const completions: Completion[] = [];
   const prefix = afterPipe ? ' ' : '| ';
   const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
+
   if (hasJSON) {
     allParsers.delete('json');
     const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
@@ -206,6 +207,24 @@ async function getAfterSelectorCompletions(
     });
   });
 
+  return completions;
+}
+
+async function getAfterSelectorCompletions(
+  labels: Label[],
+  afterPipe: boolean,
+  parser: string | undefined,
+  lineFilter: boolean,
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
+  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
+
+  const completions: Completion[] = parser
+    ? []
+    : await getParserCompletions(afterPipe, hasJSON, hasLogfmt, extractedLabelKeys);
+
+  const prefix = afterPipe ? ' ' : '| ';
+
   extractedLabelKeys.forEach((key) => {
     completions.push({
       type: 'LINE_FILTER',
@@ -237,7 +256,9 @@ async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.LabelFormat),
   });
 
-  return [...getLineFilterCompletions(afterPipe), ...completions];
+  const lineFilters = lineFilter ? [] : getLineFilterCompletions(afterPipe);
+
+  return [...lineFilters, ...completions];
 }
 
 async function getLabelValuesForMetricCompletions(
@@ -290,7 +311,13 @@ export async function getCompletions(
         dataProvider
       );
     case 'AFTER_SELECTOR':
-      return getAfterSelectorCompletions(situation.labels, situation.afterPipe, dataProvider);
+      return getAfterSelectorCompletions(
+        situation.labels,
+        situation.afterPipe,
+        situation.parser,
+        situation.lineFilter,
+        dataProvider
+      );
     case 'AFTER_UNWRAP':
       return getAfterUnwrapCompletions(situation.otherLabels, dataProvider);
     case 'IN_AGGREGATION':

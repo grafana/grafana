@@ -318,7 +318,7 @@ describe('getCompletions', () => {
         hasJSON: true,
         hasLogfmt: false,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe };
+      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe, lineFilter: false };
       const completions = await getCompletions(situation, completionProvider);
 
       const expected = buildAfterSelectorCompletions('json', 'PARSER', 'logfmt', afterPipe);
@@ -334,7 +334,7 @@ describe('getCompletions', () => {
         hasJSON: false,
         hasLogfmt: true,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe };
+      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe, lineFilter: false };
       const completions = await getCompletions(situation, completionProvider);
 
       const expected = buildAfterSelectorCompletions('logfmt', 'DURATION', 'json', afterPipe);
