@@ -19,6 +19,11 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 		return config.Metadata{}, err
 	}
 
+	tag, ok := os.LookupEnv("DRONE_TAG")
+	if !ok {
+		fmt.Println("DRONE_TAG envvar not present, %w", err)
+	}
+
 	var releaseMode config.ReleaseMode
 	switch event {
 	case string(config.PullRequestMode):
@@ -32,6 +37,9 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 	case config.Custom:
 		if edition, _ := os.LookupEnv("EDITION"); edition == string(config.EditionEnterprise2) {
 			releaseMode = config.ReleaseMode{Mode: config.TagMode}
+			if tag != "" {
+				version = strings.TrimPrefix(tag, "v")
+			}
 			break
 		}
 		mode, err := config.CheckDroneTargetBranch()
@@ -45,9 +53,8 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 			releaseMode = config.ReleaseMode{Mode: mode}
 		}
 	case config.Tag, config.Promote:
-		tag, ok := os.LookupEnv("DRONE_TAG")
-		if !ok || tag == "" {
-			return config.Metadata{}, fmt.Errorf("DRONE_TAG envvar not present, %w", err)
+		if tag == "" {
+			return config.Metadata{}, fmt.Errorf("DRONE_TAG envvar not present for a tag/promotion event, %w", err)
 		}
 		version = strings.TrimPrefix(tag, "v")
 		mode, err := config.CheckSemverSuffix()
