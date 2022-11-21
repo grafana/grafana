@@ -140,7 +140,7 @@ function FolderGroupAndEvaluationInterval({
 
               <br />
               {!isNewGroup && (
-                <div className={styles.evaluateLabelEnd}>
+                <div>
                   {`Evaluation group interval applies to every rule within a group. It overwrites intervals defined for existing alert rules.`}
                 </div>
               )}
@@ -310,9 +310,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     justify-content: right;
     margin-top: -${theme.spacing(4)};
-  `,
-  evaluateLabelEnd: css`
-    margin-top: -${theme.spacing(2)};
   `,
   bold: css`
     font-weight: bold;
