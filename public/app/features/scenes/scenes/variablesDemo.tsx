@@ -1,10 +1,8 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
 import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
@@ -31,6 +29,7 @@ export function getVariablesDemo(): Scene {
           query: 'A.$server.*',
           value: 'pod',
           delayMs: 1000,
+          isMulti: true,
           text: '',
           options: [],
         }),
@@ -59,7 +58,7 @@ export function getVariablesDemo(): Scene {
             }),
             new SceneCanvasText({
               size: { width: '40%' },
-              text: 'server - pod: ${server} - ${pod}',
+              text: 'server: ${server} pod:${pod}',
               fontSize: 20,
               align: 'center',
             }),
@@ -67,7 +66,7 @@ export function getVariablesDemo(): Scene {
         }),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({})],

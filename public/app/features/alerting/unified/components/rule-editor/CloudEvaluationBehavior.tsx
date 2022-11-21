@@ -28,7 +28,7 @@ export const CloudEvaluationBehavior = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={2} title="Alert evaluation behavior">
+    <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
       <Field label="For" description="Expression has to be true for this long for the alert to be fired.">
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>

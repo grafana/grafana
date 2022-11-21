@@ -84,8 +84,7 @@ const dummyProps: Props = {
   showFlameGraph: true,
   splitOpen: (() => {}) as any,
   splitted: false,
-  changeGraphStyle: () => {},
-  graphStyle: 'lines',
+  isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
 };
 

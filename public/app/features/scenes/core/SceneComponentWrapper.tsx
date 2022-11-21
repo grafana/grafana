@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { SceneComponentEditingWrapper } from '../editor/SceneComponentEditWrapper';
-
-import { SceneComponentProps, SceneObject } from './types';
+import { SceneComponentProps, SceneEditor, SceneObject } from './types';
 
 export function SceneComponentWrapper<T extends SceneObject>({
   model,
@@ -32,9 +30,29 @@ export function SceneComponentWrapper<T extends SceneObject>({
     return inner;
   }
 
-  return <SceneComponentEditingWrapper model={model}>{inner}</SceneComponentEditingWrapper>;
+  const editor = getSceneEditor(model);
+  const EditWrapper = getSceneEditor(model).getEditComponentWrapper();
+
+  return (
+    <EditWrapper model={model} editor={editor}>
+      {inner}
+    </EditWrapper>
+  );
 }
 
 function EmptyRenderer<T>(_: SceneComponentProps<T>): React.ReactElement | null {
   return null;
+}
+
+function getSceneEditor(sceneObject: SceneObject): SceneEditor {
+  const { $editor } = sceneObject.state;
+  if ($editor) {
+    return $editor;
+  }
+
+  if (sceneObject.parent) {
+    return getSceneEditor(sceneObject.parent);
+  }
+
+  throw new Error('No editor found in scene tree');
 }

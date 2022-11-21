@@ -33,8 +33,6 @@ You can see a list of users with accounts in your Grafana organization. If neces
 1. Sign in to Grafana as an organization administrator.
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
 
-![Org Admin user list](/static/img/docs/manage-users/org-user-list-7-3.png)
-
 > **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [view a global list of users]({{< relref "../server-user-management#view-a-list-of-users" >}}) in the Server Admin section of Grafana.
 
 ## Change a user's organization permissions
@@ -96,8 +94,6 @@ When you invite users to join an organization, you assign the **Admin**, **Edito
 
 If the invitee is not already a user, the system adds them.
 
-![Invite User](/static/img/docs/manage-users/org-invite-user-7-3.png).
-
 ## Manage a pending invitation
 
 Periodically review invitations you have sent so that you can see a list of users that have not yet accepted the invitation or cancel a pending invitation.
@@ -116,13 +112,9 @@ Periodically review invitations you have sent so that you can see a list of user
 
    The **Pending Invites** button appears only when there are unaccepted invitations.
 
-   ![Pending Invites button](/static/img/docs/manage-users/pending-invites-button-7-3.png)
-
 To cancel an invitation, click the red **X** next to the invitation.
 
 To copy an invitation link and send it directly to a user, click Copy Invite. You can then paste the invite link into a message.
-
-![Pending Invites list](/static/img/docs/manage-users/pending-invites-list-7-3.png)
 
 ## Remove a user from an organization
 

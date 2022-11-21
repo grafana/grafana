@@ -259,6 +259,14 @@ func (pr parsedRequest) validateRequest() error {
 		return nil
 	}
 
+	if pr.hasExpression {
+		hasExpr := pr.httpRequest.URL.Query().Get("expression")
+		if hasExpr == "" || hasExpr == "true" {
+			return nil
+		}
+		return ErrQueryParamMismatch
+	}
+
 	vals := splitHeaders(pr.httpRequest.Header.Values(HeaderDatasourceUID))
 	count := len(vals)
 	if count > 0 { // header exists
@@ -364,7 +372,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		req.httpRequest = reqDTO.HTTPRequest
 	}
 
-	return req, req.validateRequest()
+	_ = req.validateRequest()
+	return req, nil // TODO req.validateRequest()
 }
 
 func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
