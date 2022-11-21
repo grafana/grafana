@@ -8,7 +8,7 @@ export interface LayerNameProps {
   name: string;
   onChange: (v: string) => void;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
-  overrideStyles?: any;
+  overrideStyles?: boolean;
 }
 
 export const LayerName = ({ name, onChange, verifyLayerNameUniqueness, overrideStyles }: LayerNameProps) => {
@@ -76,7 +76,7 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness, overrideS
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >
-            <span className={overrideStyles ? overrideStyles : styles.layerName}>{name}</span>
+            <span className={overrideStyles ? '' : styles.layerName}>{name}</span>
             <Icon name="pen" className={styles.layerEditIcon} size="sm" />
           </button>
         )}

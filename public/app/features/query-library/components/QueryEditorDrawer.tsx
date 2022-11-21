@@ -28,7 +28,13 @@ type Props = {
   options: SavedQueryUpdateOpts;
 };
 
-const initialTabs = [
+type tab = {
+  label: string;
+  active: boolean;
+  icon: IconName;
+};
+
+const initialTabs: tab[] = [
   {
     label: 'Usages',
     active: true,
@@ -70,7 +76,7 @@ export const QueryEditorDrawer = (props: Props) => {
               key={index}
               label={tab.label}
               active={tab.active}
-              icon={tab.icon as IconName}
+              icon={tab.icon}
               onChangeTab={() => setTabs(tabs.map((tab, idx) => ({ ...tab, active: idx === index })))}
             />
           ))}

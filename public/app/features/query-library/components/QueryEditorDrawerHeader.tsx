@@ -33,7 +33,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!dropdownRef.current?.contains(event.target)) {
+      if (dropdownRef.current !== event.target) {
         setShowUseQueryOptions(false);
       }
     };
@@ -45,7 +45,14 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
     onDismiss();
   };
 
-  const useQueryOptions = [
+  type queryOption = {
+    label: string;
+    value: string;
+    icon: IconName;
+    src?: string;
+  };
+
+  const useQueryOptions: queryOption[] = [
     { label: 'Add to dashboard', value: 'dashboard-panel', icon: 'apps' },
     { label: 'Create alert rule', value: 'alert-rule', icon: 'bell' },
     { label: 'View in explore', value: 'explore', icon: 'compass' },
@@ -139,12 +146,13 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
                 {useQueryOptions.map((option, key) => {
                   return (
                     <li key={key}>
+                      {/*eslint-disable-next-line jsx-a11y/anchor-is-valid*/}
                       <a onClick={implementationComingSoonAlert}>
                         <div>
                           {option.src ? (
                             <InlineSVG src={option.src} className={styles.optionSvg} />
                           ) : (
-                            <Icon name={option.icon as IconName} className={styles.menuIconClassName} />
+                            <Icon name={option.icon} className={styles.menuIconClassName} />
                           )}
                         </div>
                         <span className="dropdown-item-text">{option.label}</span>

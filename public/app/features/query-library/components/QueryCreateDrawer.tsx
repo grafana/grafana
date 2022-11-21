@@ -48,22 +48,24 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
                     icon="plus"
                     size="md"
                     onClick={() => {
+                      const savedQuery: SavedQuery = {
+                        title: 'New Query',
+                        variables: [],
+                        queries: [
+                          {
+                            refId: 'A',
+                            datasource: {
+                              type: 'datasource',
+                              uid: 'grafana',
+                            },
+                            queryType: 'randomWalk',
+                          },
+                        ],
+                      };
                       showModal(QueryEditorDrawer, {
                         onDismiss: closeDrawer,
                         options: { type },
-                        savedQuery: {
-                          title: 'New Query',
-                          queries: [
-                            {
-                              refId: 'A',
-                              datasource: {
-                                type: 'datasource',
-                                uid: 'grafana',
-                              },
-                              queryType: 'randomWalk',
-                            },
-                          ],
-                        } as SavedQuery,
+                        savedQuery,
                       });
                     }}
                   >

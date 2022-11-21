@@ -2381,9 +2381,6 @@ exports[`better eslint`] = {
     "public/app/core/components/DynamicImports/SafeDynamicImport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/core/components/Layers/LayerName.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/core/components/Login/LoginCtrl.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -4425,18 +4422,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/profile/state/reducers.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/query-library/api/SavedQueriesApi.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/query-library/components/QueryCreateDrawer.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/query-library/components/QueryEditorDrawer.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/query-library/components/QueryEditorDrawerHeader.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/query-library/components/QueryName.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

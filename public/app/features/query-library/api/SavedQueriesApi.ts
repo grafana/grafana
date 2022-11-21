@@ -7,15 +7,23 @@ import { SavedQueryUpdateOpts } from '../components/QueryEditorDrawer';
 import { getSavedQuerySrv } from './SavedQueriesSrv';
 
 export type SavedQueryRef = {
-  uid: string;
+  uid?: string;
+};
+
+type variable = {
+  name: string;
+  type?: string;
+  current: {
+    value: string | number;
+  };
 };
 
 type SavedQueryMeta = {
   title: string;
-  description: string;
-  tags: string[];
-  schemaVersion: number;
-  variables: any;
+  description?: string;
+  tags?: string[];
+  schemaVersion?: number;
+  variables: variable[];
 };
 
 type SavedQueryData<TQuery extends DataQuery = DataQuery> = {

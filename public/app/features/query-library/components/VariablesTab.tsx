@@ -68,14 +68,14 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
   };
 
   const onRemoveVariable = (variable: any) => {
-    const varIndex: number | undefined = savedQuery.variables.map((v: any, index: number) => {
+    const varIndex = savedQuery.variables.map((v: any, index: number) => {
       if (v.name === variable.name) {
         return index;
       }
       return;
     });
 
-    if (varIndex) {
+    if (typeof varIndex === 'number') {
       // NOTE: doing mutation vs filter to force re-render
       savedQuery.variables.splice(varIndex, 1);
       updateSavedQuery({ query: savedQuery, opts: options });
