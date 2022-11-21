@@ -83,6 +83,20 @@ func TestGetAttribute(t *testing.T) {
 		assert.Equal(t, value, result)
 	})
 
+	t.Run("mixed case attribute", func(t *testing.T) {
+		value := "roelgerrits"
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "sAMAccountName", Values: []string{value},
+				},
+			},
+		}
+
+		result := getAttribute("samaccountname", entry)
+		assert.Equal(t, value, result)
+	})
+
 	t.Run("no result", func(t *testing.T) {
 		value := []string{"roelgerrits"}
 		entry := &ldap.Entry{
