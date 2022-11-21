@@ -122,7 +122,8 @@ export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SpatialTr
       props.onChange({ ...opts, ...props.options });
       console.log('geometry useEffect', opts);
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const styles = getStyles(useTheme2());
 
