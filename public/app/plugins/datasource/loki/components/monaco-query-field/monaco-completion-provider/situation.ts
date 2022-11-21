@@ -20,9 +20,7 @@ import {
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
-  LineFilter,
   LabelParser,
-  LineFilters,
 } from '@grafana/lezer-logql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -121,7 +119,6 @@ export type Situation =
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
       labels: Label[];
-      lineFilter: boolean;
       parser?: string;
     }
   | {
@@ -260,29 +257,6 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   labels.reverse();
 
   return labels;
-}
-
-function hasLineFilter(node: SyntaxNode, afterPipe: boolean) {
-  const path: Path = afterPipe
-    ? [
-        ['lastChild', PipelineExpr],
-        ['firstChild', PipelineExpr],
-        ['firstChild', PipelineExpr],
-        ['firstChild', PipelineStage],
-        ['firstChild', LineFilters],
-        ['firstChild', LineFilter],
-      ]
-    : [
-        ['lastChild', PipelineExpr],
-        ['firstChild', PipelineExpr],
-        ['firstChild', PipelineStage],
-        ['firstChild', LineFilters],
-        ['firstChild', LineFilter],
-      ];
-
-  const lineFilterNode = walk(node, path);
-
-  return lineFilterNode ? true : false;
 }
 
 function getParser(node: SyntaxNode, text: string, afterPipe: boolean) {
@@ -507,14 +481,12 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
   }
 
   const labels = getLabels(selectorNode, text);
-  const lineFilter = hasLineFilter(node, afterPipe);
   const parser = getParser(node, text, afterPipe);
 
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
     labels,
-    lineFilter,
     parser,
   };
 }

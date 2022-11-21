@@ -313,7 +313,7 @@ describe('getCompletions', () => {
         hasJSON: true,
         hasLogfmt: false,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe, lineFilter: false };
+      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe };
       const completions = await getCompletions(situation, completionProvider);
 
       const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe);
@@ -329,7 +329,7 @@ describe('getCompletions', () => {
         hasJSON: false,
         hasLogfmt: true,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe, lineFilter: false };
+      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe };
       const completions = await getCompletions(situation, completionProvider);
 
       const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe);
@@ -343,7 +343,7 @@ describe('getCompletions', () => {
       hasJSON: false,
       hasLogfmt: true,
     });
-    const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe: false, lineFilter: false };
+    const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe: false };
     const completions = await getCompletions(situation, completionProvider);
 
     const expected = buildAfterSelectorCompletions('logfmt', 'json', false);
@@ -361,7 +361,6 @@ describe('getCompletions', () => {
       labels: [],
       afterPipe: false,
       parser: 'logfmt',
-      lineFilter: false,
     };
     const completions = await getCompletions(situation, completionProvider);
 
@@ -369,28 +368,6 @@ describe('getCompletions', () => {
     const expected = buildAfterSelectorCompletions('logfmt', 'json', false).filter(
       (completion) => completion.type !== 'PARSER'
     );
-    expect(completions).toEqual(expected);
-  });
-
-  test('Returns completion options when the situation is AFTER_SELECTOR with parser and line filter', async () => {
-    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
-      extractedLabelKeys,
-      hasJSON: false,
-      hasLogfmt: true,
-    });
-    const situation: Situation = {
-      type: 'AFTER_SELECTOR',
-      labels: [],
-      afterPipe: false,
-      parser: 'logfmt',
-      lineFilter: true,
-    };
-    const completions = await getCompletions(situation, completionProvider);
-
-    // Exclude parsers and line filters because we already have them
-    const expected = buildAfterSelectorCompletions('logfmt', 'json', false)
-      .filter((completion) => completion.type !== 'PARSER')
-      .filter((completion) => completion.type !== 'LINE_FILTER');
     expect(completions).toEqual(expected);
   });
 

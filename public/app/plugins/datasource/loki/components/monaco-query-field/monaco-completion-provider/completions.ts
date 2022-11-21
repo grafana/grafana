@@ -214,7 +214,6 @@ async function getAfterSelectorCompletions(
   labels: Label[],
   afterPipe: boolean,
   parser: string | undefined,
-  lineFilter: boolean,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
@@ -256,7 +255,7 @@ async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.LabelFormat),
   });
 
-  const lineFilters = lineFilter ? [] : getLineFilterCompletions(afterPipe);
+  const lineFilters = getLineFilterCompletions(afterPipe);
 
   return [...lineFilters, ...completions];
 }
@@ -292,6 +291,7 @@ export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
+  console.log(situation);
   switch (situation.type) {
     case 'EMPTY':
     case 'AT_ROOT':
@@ -311,13 +311,7 @@ export async function getCompletions(
         dataProvider
       );
     case 'AFTER_SELECTOR':
-      return getAfterSelectorCompletions(
-        situation.labels,
-        situation.afterPipe,
-        situation.parser,
-        situation.lineFilter,
-        dataProvider
-      );
+      return getAfterSelectorCompletions(situation.labels, situation.afterPipe, situation.parser, dataProvider);
     case 'AFTER_UNWRAP':
       return getAfterUnwrapCompletions(situation.otherLabels, dataProvider);
     case 'IN_AGGREGATION':
