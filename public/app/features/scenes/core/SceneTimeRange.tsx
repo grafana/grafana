@@ -4,7 +4,7 @@ import { SceneObjectBase } from './SceneObjectBase';
 import { SceneObjectWithUrlSync, SceneTimeRangeState } from './types';
 
 export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> implements SceneObjectWithUrlSync {
-  public constructor(state: Partial<SceneTimeRangeState>) {
+  public constructor(state: Partial<SceneTimeRangeState> = {}) {
     super({
       ...getDefaultTimeRange(),
       timeZone: getTimeZone(),

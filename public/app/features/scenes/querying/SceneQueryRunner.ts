@@ -87,19 +87,19 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   }
 
   public setContainerWidth(width: number) {
-    if (!width || !this.state.maxDataPointsFromWidth || this.state.maxDataPoints) {
-      return;
-    }
-
     // If we don't have a width we should run queries
     if (!this._containerWidth) {
       this._containerWidth = width;
-      // as this is called from render path we need to wait for next tick before running queries
-      setTimeout(() => {
-        if (this.isActive && !this._querySub) {
-          this.runQueries();
-        }
-      }, 0);
+
+      // If we don't have maxDataPoints specifically set and maxDataPointsFromWidth is true
+      if (this.state.maxDataPointsFromWidth && !this.state.maxDataPoints) {
+        // As this is called from render path we need to wait for next tick before running queries
+        setTimeout(() => {
+          if (this.isActive && !this._querySub) {
+            this.runQueries();
+          }
+        }, 0);
+      }
     } else {
       // let's just remember the width until next query issue
       this._containerWidth = width;

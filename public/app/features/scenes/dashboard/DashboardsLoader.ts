@@ -1,4 +1,3 @@
-import { getDefaultTimeRange } from '@grafana/data';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -52,7 +51,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
       layout: new SceneGridLayout({
         children: this.buildSceneObjectsFromDashboard(oldModel),
       }),
-      $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+      $timeRange: new SceneTimeRange(),
       actions: [new SceneTimePicker({})],
     });
 

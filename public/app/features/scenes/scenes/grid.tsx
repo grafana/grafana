@@ -1,5 +1,3 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
 import { VizPanel } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
@@ -57,7 +55,7 @@ export function getGridLayoutTest(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });

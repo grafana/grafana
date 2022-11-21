@@ -51,7 +51,7 @@ export function getFlexLayoutTest(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange({}),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
@@ -97,7 +97,7 @@ export function getScenePanelRepeaterTest(): Scene {
       }),
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange({}),
+    $timeRange: new SceneTimeRange(),
     $data: queryRunner,
     actions: [
       new SceneToolbarInput({

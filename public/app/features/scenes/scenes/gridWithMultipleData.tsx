@@ -1,5 +1,3 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
 import { VizPanel } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
@@ -15,7 +13,7 @@ export function getGridWithMultipleData(): Scene {
     layout: new SceneGridLayout({
       children: [
         new SceneGridRow({
-          $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+          $timeRange: new SceneTimeRange(),
           $data: getQueryRunnerWithRandomWalkQuery({ scenarioId: 'random_walk_table' }),
           title: 'Row A - has its own query',
           key: 'Row A',
@@ -95,7 +93,7 @@ export function getGridWithMultipleData(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });

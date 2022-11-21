@@ -1,5 +1,3 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
 import { VizPanel } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
@@ -68,7 +66,7 @@ export function getVariablesDemo(): Scene {
         }),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({})],

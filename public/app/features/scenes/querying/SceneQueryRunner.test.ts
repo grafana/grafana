@@ -40,7 +40,7 @@ describe('SceneQueryRunner', () => {
     it('should run queries', async () => {
       const queryRunner = new SceneQueryRunner({
         queries: [{ refId: 'A' }],
-        $timeRange: new SceneTimeRange({}),
+        $timeRange: new SceneTimeRange(),
       });
 
       expect(queryRunner.state.data).toBeUndefined();
@@ -59,7 +59,7 @@ describe('SceneQueryRunner', () => {
     it('should run queries', async () => {
       const queryRunner = new SceneQueryRunner({
         queries: [{ refId: 'A' }],
-        $timeRange: new SceneTimeRange({}),
+        $timeRange: new SceneTimeRange(),
         maxDataPointsFromWidth: true,
       });
 

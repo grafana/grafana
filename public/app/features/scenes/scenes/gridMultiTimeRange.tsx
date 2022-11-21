@@ -1,4 +1,4 @@
-import { dateTime, getDefaultTimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 
 import { VizPanel } from '../components';
 import { Scene } from '../components/Scene';
@@ -10,7 +10,7 @@ import { SceneEditManager } from '../editor/SceneEditManager';
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
 export function getGridWithMultipleTimeRanges(): Scene {
-  const globalTimeRange = new SceneTimeRange(getDefaultTimeRange());
+  const globalTimeRange = new SceneTimeRange();
 
   const now = dateTime();
   const row1TimeRange = new SceneTimeRange({
