@@ -188,7 +188,7 @@ async function getParserCompletions(
     allParsers.delete('logfmt');
     const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
     completions.push({
-      type: 'DURATION',
+      type: 'PARSER',
       label: `logfmt${extra}`,
       insertText: `${prefix}logfmt`,
       documentation: hasLevelInExtractedLabels
@@ -227,7 +227,7 @@ async function getAfterSelectorCompletions(
 
   extractedLabelKeys.forEach((key) => {
     completions.push({
-      type: 'LINE_FILTER',
+      type: 'PIPE_OPERATION',
       label: `unwrap ${key}`,
       insertText: `${prefix}unwrap ${key}`,
     });

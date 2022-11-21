@@ -100,17 +100,17 @@ const afterSelectorCompletions = [
   {
     insertText: '| unwrap extracted',
     label: 'unwrap extracted',
-    type: 'LINE_FILTER',
+    type: 'PIPE_OPERATION',
   },
   {
     insertText: '| unwrap place',
     label: 'unwrap place',
-    type: 'LINE_FILTER',
+    type: 'PIPE_OPERATION',
   },
   {
     insertText: '| unwrap source',
     label: 'unwrap source',
-    type: 'LINE_FILTER',
+    type: 'PIPE_OPERATION',
   },
   {
     insertText: '| unwrap',
@@ -134,18 +134,13 @@ const afterSelectorCompletions = [
   },
 ];
 
-function buildAfterSelectorCompletions(
-  detectedParser: string,
-  detectedParserType: string,
-  otherParser: string,
-  afterPipe: boolean
-) {
+function buildAfterSelectorCompletions(detectedParser: string, otherParser: string, afterPipe: boolean) {
   const explanation = '(detected)';
   const expectedCompletions = afterSelectorCompletions.map((completion) => {
     if (completion.type === 'DETECTED_PARSER_PLACEHOLDER') {
       return {
         ...completion,
-        type: detectedParserType,
+        type: 'PARSER',
         label: `${detectedParser} ${explanation}`,
         insertText: `| ${detectedParser}`,
       };
@@ -311,7 +306,7 @@ describe('getCompletions', () => {
   });
 
   test.each([true, false])(
-    'Returns completion options when the situation is AFTER_SELECTOR, JSON parser, and afterPipe %s',
+    'Returns completion options when the situation is AFTER_SELECTOR, detected JSON parser, and afterPipe %s',
     async (afterPipe: boolean) => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
@@ -321,13 +316,13 @@ describe('getCompletions', () => {
       const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe, lineFilter: false };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('json', 'PARSER', 'logfmt', afterPipe);
+      const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe);
       expect(completions).toEqual(expected);
     }
   );
 
   test.each([true, false])(
-    'Returns completion options when the situation is AFTER_SELECTOR, Logfmt parser, and afterPipe %s',
+    'Returns completion options when the situation is AFTER_SELECTOR, detected Logfmt parser, and afterPipe %s',
     async (afterPipe: boolean) => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
@@ -337,10 +332,67 @@ describe('getCompletions', () => {
       const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe, lineFilter: false };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('logfmt', 'DURATION', 'json', afterPipe);
+      const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe);
       expect(completions).toEqual(expected);
     }
   );
+
+  test('Returns completion options when the situation is AFTER_SELECTOR with no parser and no line filter', async () => {
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys,
+      hasJSON: false,
+      hasLogfmt: true,
+    });
+    const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe: false, lineFilter: false };
+    const completions = await getCompletions(situation, completionProvider);
+
+    const expected = buildAfterSelectorCompletions('logfmt', 'json', false);
+    expect(completions).toEqual(expected);
+  });
+
+  test('Returns completion options when the situation is AFTER_SELECTOR with parser and no line filter', async () => {
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys,
+      hasJSON: false,
+      hasLogfmt: true,
+    });
+    const situation: Situation = {
+      type: 'AFTER_SELECTOR',
+      labels: [],
+      afterPipe: false,
+      parser: 'logfmt',
+      lineFilter: false,
+    };
+    const completions = await getCompletions(situation, completionProvider);
+
+    // Exclude parsers because we already have one
+    const expected = buildAfterSelectorCompletions('logfmt', 'json', false).filter(
+      (completion) => completion.type !== 'PARSER'
+    );
+    expect(completions).toEqual(expected);
+  });
+
+  test('Returns completion options when the situation is AFTER_SELECTOR with parser and line filter', async () => {
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys,
+      hasJSON: false,
+      hasLogfmt: true,
+    });
+    const situation: Situation = {
+      type: 'AFTER_SELECTOR',
+      labels: [],
+      afterPipe: false,
+      parser: 'logfmt',
+      lineFilter: true,
+    };
+    const completions = await getCompletions(situation, completionProvider);
+
+    // Exclude parsers and line filters because we already have them
+    const expected = buildAfterSelectorCompletions('logfmt', 'json', false)
+      .filter((completion) => completion.type !== 'PARSER')
+      .filter((completion) => completion.type !== 'LINE_FILTER');
+    expect(completions).toEqual(expected);
+  });
 
   test('Returns completion options when the situation is IN_AGGREGATION', async () => {
     const situation: Situation = { type: 'IN_AGGREGATION' };
