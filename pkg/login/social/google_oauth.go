@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type SocialGoogle struct {
@@ -37,4 +39,11 @@ func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Email: data.Email,
 		Login: data.Email,
 	}, nil
+}
+
+func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	}
+	return s.SocialBase.AuthCodeURL(state, opts...)
 }

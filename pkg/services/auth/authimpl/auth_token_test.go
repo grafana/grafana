@@ -1,4 +1,4 @@
-package auth
+package authimpl
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,7 +29,7 @@ func TestUserAuthToken(t *testing.T) {
 	defer func() { getTime = time.Now }()
 
 	t.Run("When creating token", func(t *testing.T) {
-		createToken := func() *models.UserToken {
+		createToken := func() *auth.UserToken {
 			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.Nil(t, err)
@@ -43,7 +43,7 @@ func TestUserAuthToken(t *testing.T) {
 		t.Run("Can count active tokens", func(t *testing.T) {
 			m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
 			require.Nil(t, err)
-			tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+			tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 			require.NoError(t, err)
 			count, ok := m.Get(tag)
 			require.True(t, ok)
@@ -65,7 +65,7 @@ func TestUserAuthToken(t *testing.T) {
 
 		t.Run("When lookup hashed token should return user auth token not found error", func(t *testing.T) {
 			userToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.AuthToken)
-			require.Equal(t, models.ErrUserTokenNotFound, err)
+			require.Equal(t, auth.ErrUserTokenNotFound, err)
 			require.Nil(t, userToken)
 		})
 
@@ -90,13 +90,13 @@ func TestUserAuthToken(t *testing.T) {
 
 		t.Run("revoking nil token should return error", func(t *testing.T) {
 			err := ctx.tokenService.RevokeToken(context.Background(), nil, false)
-			require.Equal(t, models.ErrUserTokenNotFound, err)
+			require.Equal(t, auth.ErrUserTokenNotFound, err)
 		})
 
 		t.Run("revoking non-existing token should return error", func(t *testing.T) {
 			userToken.Id = 1000
 			err := ctx.tokenService.RevokeToken(context.Background(), userToken, false)
-			require.Equal(t, models.ErrUserTokenNotFound, err)
+			require.Equal(t, auth.ErrUserTokenNotFound, err)
 		})
 
 		ctx = createTestContext(t)
@@ -209,13 +209,13 @@ func TestUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&models.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
 				m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
 				require.Nil(t, err)
-				tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+				tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 				require.NoError(t, err)
 				count, ok := m.Get(tag)
 				require.True(t, ok)
@@ -247,7 +247,7 @@ func TestUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&models.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
 			require.Nil(t, notGood)
 		})
 	})
@@ -274,7 +274,7 @@ func TestUserAuthToken(t *testing.T) {
 		model, err := ctx.getAuthTokenByID(userToken.Id)
 		require.Nil(t, err)
 
-		var tok models.UserToken
+		var tok auth.UserToken
 		err = model.toUserToken(&tok)
 		require.Nil(t, err)
 
@@ -471,7 +471,7 @@ func TestUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("When populating userAuthToken from UserToken should copy all properties", func(t *testing.T) {
-		ut := models.UserToken{
+		ut := auth.UserToken{
 			Id:            1,
 			UserId:        2,
 			AuthToken:     "a",
@@ -524,7 +524,7 @@ func TestUserAuthToken(t *testing.T) {
 		require.Nil(t, err)
 		uatMap := uatJSON.MustMap()
 
-		var ut models.UserToken
+		var ut auth.UserToken
 		err = uat.toUserToken(&ut)
 		require.Nil(t, err)
 		utBytes, err := json.Marshal(ut)

@@ -2,6 +2,8 @@
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -56,6 +58,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -117,6 +121,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -253,6 +259,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -313,6 +321,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -627,6 +637,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -760,6 +772,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -830,6 +844,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -873,6 +889,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -944,6 +962,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1002,6 +1022,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1128,6 +1150,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1188,6 +1212,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1552,7 +1578,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition oss
+  - ./bin/build upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1569,7 +1595,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss
+  - ./bin/build upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -1600,6 +1626,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1731,6 +1759,8 @@ depends_on:
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1828,6 +1858,8 @@ clone:
 depends_on:
 - main-build-e2e-publish
 - main-integration-tests
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2135,7 +2167,7 @@ steps:
     event:
     - tag
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss
+  - ./bin/build upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -2146,7 +2178,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition oss
+  - ./bin/build upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -2210,6 +2242,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2785,7 +2819,7 @@ steps:
     - success
     - failure
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise
+  - ./bin/build upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -2796,7 +2830,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise
+  - ./bin/build upload-packages --edition enterprise
   depends_on:
   - package
   environment:
@@ -2826,7 +2860,7 @@ steps:
   image: grafana/build-container:1.6.4
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2
+  - ./bin/build upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -2848,7 +2882,7 @@ steps:
   image: grafana/build-container:1.6.4
   name: store-npm-packages
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2
+  - ./bin/build upload-packages --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -2879,6 +2913,8 @@ volumes:
 clone:
   disable: true
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3324,6 +3360,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3412,6 +3450,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3483,6 +3523,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3554,6 +3596,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3596,6 +3640,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3638,6 +3684,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3699,6 +3747,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3794,6 +3844,8 @@ depends_on:
 - publish-artifacts-public
 - publish-docker-oss-public
 - publish-docker-enterprise-public
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3886,6 +3938,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: all
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4156,7 +4210,7 @@ steps:
       include:
       - packages/grafana-ui/**
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss
+  - ./bin/build upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -4170,7 +4224,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition oss
+  - ./bin/build upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -4204,6 +4258,8 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4764,7 +4820,7 @@ steps:
     - success
     - failure
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise
+  - ./bin/build upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -4778,7 +4834,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise
+  - ./bin/build upload-packages --edition enterprise
   depends_on:
   - package
   environment:
@@ -4812,7 +4868,7 @@ steps:
   image: grafana/build-container:1.6.4
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2
+  - ./bin/build upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -4823,7 +4879,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2
+  - ./bin/build upload-packages --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -4851,6 +4907,8 @@ volumes:
 clone:
   disable: true
 depends_on: []
+environment:
+  EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -5512,6 +5570,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 77ae647c9addfcd9966d462ca9967b85a87e18adfe0e9e0a2c6b1cf5d7f42493
+hmac: 2f3c13716c7cd1e42004a0f0d7057d5024d38bceedb22370b3554a79e786a46c
 
 ...
