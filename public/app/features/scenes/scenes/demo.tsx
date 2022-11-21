@@ -1,12 +1,12 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
-import { Scene } from '../components/Scene';
-import { SceneCanvasText } from '../components/SceneCanvasText';
-import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneToolbarInput } from '../components/SceneToolbarButton';
-import { VizPanel } from '../components/VizPanel';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
+import {
+  Scene,
+  SceneCanvasText,
+  ScenePanelRepeater,
+  SceneTimePicker,
+  SceneToolbarInput,
+  SceneFlexLayout,
+  VizPanel,
+} from '../components';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
@@ -22,8 +22,8 @@ export function getFlexLayoutTest(): Scene {
           size: { minWidth: '70%' },
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
+          $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
         }),
-
         new SceneFlexLayout({
           direction: 'column',
           children: [
@@ -51,7 +51,7 @@ export function getFlexLayoutTest(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
@@ -97,7 +97,7 @@ export function getScenePanelRepeaterTest(): Scene {
       }),
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: queryRunner,
     actions: [
       new SceneToolbarInput({

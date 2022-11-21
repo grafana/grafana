@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
-import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
+import { FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { logInfo } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup, Field, Input } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -24,8 +24,46 @@ import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { NotificationsStep } from './NotificationsStep';
+import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
+
+const recordingRuleNameValidationPattern = {
+  message:
+    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
+  value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
+};
+
+const AlertRuleNameInput = () => {
+  const styles = useStyles2(getStyles);
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext<RuleFormValues & { location?: string }>();
+
+  const ruleFormType = watch('type');
+  return (
+    <RuleEditorSection stepNo={1} title="Set an alert rule name">
+      <Field
+        className={styles.formInput}
+        label="Rule name"
+        description="Name for the alert rule."
+        error={errors?.name?.message}
+        invalid={!!errors.name?.message}
+      >
+        <Input
+          id="name"
+          {...register('name', {
+            required: { value: true, message: 'Must enter an alert name' },
+            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
+          })}
+          placeholder="Give your alert rule a name."
+        />
+      </Field>
+    </RuleEditorSection>
+  );
+};
 
 type Props = {
   existing?: RuleWithLocation;
@@ -160,6 +198,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
+              <AlertRuleNameInput />
               <QueryAndExpressionsStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
@@ -221,6 +260,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
+    `,
+    formInput: css`
+      width: 275px;
+
+      & + & {
+        margin-left: ${theme.spacing(3)};
+      }
     `,
   };
 };

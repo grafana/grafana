@@ -197,6 +197,10 @@ func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *
 	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
 }
 
+func (s *Implementation) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	return nil
+}
+
 func (s *Implementation) Run(ctx context.Context) error {
 	s.logger.Debug("Started AuthInfo Metrics collection service")
 	return s.authInfoStore.RunMetricsCollection(ctx)

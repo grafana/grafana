@@ -218,6 +218,14 @@ func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAu
 	})
 }
 
+func (s *AuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var rawSQL = "DELETE FROM user_auth WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
+		return err
+	})
+}
+
 func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
 	query := user.GetUserByIDQuery{ID: id}
 	user, err := s.userService.GetByID(ctx, &query)
