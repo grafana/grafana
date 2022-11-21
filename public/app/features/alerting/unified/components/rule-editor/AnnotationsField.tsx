@@ -1,30 +1,23 @@
 import { css, cx } from '@emotion/css';
 import produce from 'immer';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Field, Input, InputControl, Label, Modal, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, InputControl, Label, TextArea, useStyles2 } from '@grafana/ui';
 
-import { DashboardDTO } from '../../../../../types';
-import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 
 import { AnnotationKeyInput } from './AnnotationKeyInput';
-import { DashboardPicker, PanelDTO } from './DashboardPicker';
+import { DashboardPicker } from './DashboardPicker';
 
 const AnnotationsField = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
-  const [currentDashboard, setCurrentDashboard] = useState<DashboardDTO | undefined>(undefined);
 
-  const [selectedDashboardUid, setSelectedDashboardUid] = useState<string | undefined>(undefined);
-  const [selectedPanelUid, setSelectedPanelUid] = useState<number | undefined>(undefined);
-
-  const { useLazyDashboardQuery } = dashboardApi;
   const {
     control,
     register,
@@ -39,54 +32,31 @@ const AnnotationsField = () => {
     [annotations]
   );
 
-  const dashboardAnnotation = annotations.find((a) => a.key === Annotation.dashboardUID);
-  const panelAnnotation = annotations.find((a) => a.key === Annotation.panelID);
-
-  const dashboardUid = dashboardAnnotation?.value;
-  const panelId = Number(panelAnnotation?.value);
-
-  const [fetchDashboard] = useLazyDashboardQuery();
-  const currentPanel: PanelDTO | undefined = currentDashboard?.dashboard?.panels?.find((p) => p.id === panelId);
-
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
-  const onDashboardPanelChange = () => {
-    if (!selectedDashboardUid || !selectedPanelUid) {
-      return;
-    }
+  const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
+  const selectedPanelId = annotations.find((annotation) => annotation.key === Annotation.panelID)?.value;
 
+  const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: string) => {
     const updatedAnnotations = produce(annotations, (draft) => {
-      const dashboardAnn = draft.find((a) => a.key === Annotation.dashboardUID);
-      const panelAnn = draft.find((a) => a.key === Annotation.panelID);
+      const dashboardAnnotation = draft.find((a) => a.key === Annotation.dashboardUID);
+      const panelAnnotation = draft.find((a) => a.key === Annotation.panelID);
 
-      if (dashboardAnn) {
-        dashboardAnn.value = selectedDashboardUid;
+      if (dashboardAnnotation) {
+        dashboardAnnotation.value = dashboardUid;
       } else {
-        draft.push({ key: Annotation.dashboardUID, value: selectedDashboardUid });
+        draft.push({ key: Annotation.dashboardUID, value: dashboardUid });
       }
 
-      if (panelAnn) {
-        panelAnn.value = selectedPanelUid.toString(10);
+      if (panelAnnotation) {
+        panelAnnotation.value = panelId;
       } else {
-        draft.push({ key: Annotation.panelID, value: selectedPanelUid.toString(10) });
+        draft.push({ key: Annotation.panelID, value: panelId });
       }
     });
 
     setValue('annotations', updatedAnnotations);
     setShowPanelSelector(false);
-    setSelectedDashboardUid(undefined);
-    setSelectedPanelUid(undefined);
-    setCurrentDashboard(undefined);
-  };
-
-  const openDashboardPicker = async () => {
-    setShowPanelSelector(true);
-    if (dashboardUid) {
-      const { data } = await fetchDashboard({ uid: dashboardUid }, true);
-      if (data) {
-        setCurrentDashboard(data);
-      }
-    }
   };
 
   return (
@@ -156,56 +126,19 @@ const AnnotationsField = () => {
           >
             Add new annotation
           </Button>
-          <Button type="button" variant="secondary" icon="dashboard" onClick={openDashboardPicker}>
+          <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
             Set dashboard and panel
           </Button>
         </Stack>
-        <Modal
-          title="Select dashboard and panel"
-          closeOnEscape
-          isOpen={showPanelSelector}
-          onDismiss={setShowPanelSelector}
-          className={styles.modal}
-          contentClassName={styles.modalContent}
-        >
-          {currentDashboard && (
-            <Alert
-              title="Current selection"
-              severity="info"
-              topSpacing={0}
-              bottomSpacing={1}
-              className={styles.modalAlert}
-            >
-              <div>
-                Dashboard: {currentDashboard.dashboard.title} ({currentDashboard.dashboard.uid})
-              </div>
-              {!!currentPanel && (
-                <div>
-                  Panel: {currentPanel.title} ({currentPanel.id})
-                </div>
-              )}
-            </Alert>
-          )}
+        {showPanelSelector && (
           <DashboardPicker
+            isOpen={true}
             dashboardUid={selectedDashboardUid}
-            panelId={selectedPanelUid}
-            onDashboardChange={setSelectedDashboardUid}
-            onPanelChange={setSelectedPanelUid}
+            panelId={selectedPanelId}
+            onChange={setSelectedDashboardAndPanelId}
+            onDismiss={() => setShowPanelSelector(false)}
           />
-          <Modal.ButtonRow>
-            <Button
-              type="button"
-              variant="primary"
-              disabled={!selectedDashboardUid || !selectedPanelUid}
-              onClick={onDashboardPanelChange}
-            >
-              Confirm
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowPanelSelector(false)}>
-              Cancel
-            </Button>
-          </Modal.ButtonRow>
-        </Modal>
+        )}
       </div>
     </>
   );
@@ -237,17 +170,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   flexRowItemMargin: css`
     margin-left: ${theme.spacing(0.5)};
-  `,
-  modal: css`
-    height: 100%;
-  `,
-  modalContent: css`
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  `,
-  modalAlert: css`
-    flex-grow: 0;
   `,
 });
 
