@@ -1,7 +1,6 @@
 package ldap
 
 import (
-	"fmt"
 	"strings"
 
 	"gopkg.in/ldap.v3"
