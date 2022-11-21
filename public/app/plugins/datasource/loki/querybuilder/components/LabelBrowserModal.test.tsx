@@ -30,7 +30,7 @@ describe('LabelBrowserModal', () => {
     jest.spyOn(datasource, 'metadataRequest').mockResolvedValue({});
   });
 
-  it('passes...', () => {
+  it('renders the label browser modal', () => {
     render(<LabelBrowserModal {...props} />);
     expect(screen.getByRole('heading', { name: /label browser/i })).toBeInTheDocument();
   });
