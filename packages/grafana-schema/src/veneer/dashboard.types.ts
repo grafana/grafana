@@ -1,4 +1,4 @@
-import * as raw from '../raw/dashboard/x/dashboard.gen';
+import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 
 export interface Dashboard extends raw.Dashboard {
   panels?: Array<

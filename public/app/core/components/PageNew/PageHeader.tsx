@@ -72,13 +72,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
+      marginBottom: theme.spacing(2),
     }),
     pageTitle: css({
       display: 'flex',
       marginBottom: 0,
     }),
     subTitle: css({
-      marginBottom: theme.spacing(2),
       position: 'relative',
       color: theme.colors.text.secondary,
     }),

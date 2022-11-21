@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -58,6 +59,11 @@ type CreateFolderCmd struct {
 	Path string `json:"path"`
 }
 
+const (
+	QuotaTargetSrv quota.TargetSrv = "store"
+	QuotaTarget    quota.Target    = "file"
+)
+
 type StorageService interface {
 	registry.BackgroundService
 
@@ -97,7 +103,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
-) StorageService {
+) (StorageService, error) {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
@@ -259,7 +265,37 @@ func ProvideService(
 	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
 	s.quotaService = quotaService
 	s.cfg = settings
-	return s
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      s.Usage,
+	}); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.File)
+	return limits, nil
 }
 
 func createSystemBrandingPathFilter() filestorage.PathFilter {
@@ -329,6 +365,32 @@ func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUs
 	return s.tree.GetFile(ctx, getOrgId(user), path)
 }
 
+func (s *standardStorageService) Usage(ctx context.Context, ScopeParameters *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+
+	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		type result struct {
+			Count int64
+		}
+		r := result{}
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM file WHERE path NOT LIKE '%s'", "%/")
+
+		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+			return err
+		}
+
+		tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return err
+		}
+		u.Set(tag, r.Count)
+
+		return nil
+	})
+
+	return u, err
+}
+
 type UploadRequest struct {
 	Contents           []byte
 	Path               string
@@ -395,7 +457,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *user.SignedIn
 
 func (s *standardStorageService) checkFileQuota(ctx context.Context, path string) error {
 	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
-	quotaReached, err := s.quotaService.CheckQuotaReached(ctx, "file", nil)
+	quotaReached, err := s.quotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
 	if err != nil {
 		grafanaStorageLogger.Error("failed while checking upload quota", "path", path, "error", err)
 		return ErrUploadInternalError

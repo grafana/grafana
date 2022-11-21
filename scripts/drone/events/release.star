@@ -102,7 +102,7 @@ def retrieve_npm_packages_step():
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl artifacts npm retrieve --tag v${TAG}'
+            './bin/grabpl artifacts npm retrieve --tag ${DRONE_TAG}'
         ],
     }
 
@@ -118,7 +118,7 @@ def release_npm_packages_step():
             'NPM_TOKEN': from_secret('npm_token'),
         },
         'commands': [
-            './bin/grabpl artifacts npm release --tag v${TAG}'
+            './bin/grabpl artifacts npm release --tag ${DRONE_TAG}'
         ],
     }
 
@@ -361,7 +361,7 @@ def publish_artifacts_step(mode):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': ['./bin/grabpl artifacts publish {}--tag ${{TAG}} --src-bucket $${{PRERELEASE_BUCKET}}'.format(security)],
+        'commands': ['./bin/grabpl artifacts publish {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}'.format(security)],
         'depends_on': ['grabpl'],
     }
 
@@ -376,7 +376,7 @@ def publish_artifacts_pipelines(mode):
     ]
 
     return [pipeline(
-        name='publish-artifacts-{}'.format(mode), trigger=trigger, steps=steps, edition="all"
+        name='publish-artifacts-{}'.format(mode), trigger=trigger, steps=steps, edition="all", environment = {'EDITION': 'all'}
     )]
 
 def publish_packages_pipeline():
@@ -406,9 +406,9 @@ def publish_packages_pipeline():
     ]
 
     return [pipeline(
-        name='publish-packages-oss', trigger=trigger, steps=oss_steps, edition="all", depends_on=deps
+        name='publish-packages-oss', trigger=trigger, steps=oss_steps, edition="all", depends_on=deps, environment = {'EDITION': 'oss'},
     ), pipeline(
-        name='publish-packages-enterprise', trigger=trigger, steps=enterprise_steps, edition="all", depends_on=deps
+        name='publish-packages-enterprise', trigger=trigger, steps=enterprise_steps, edition="all", depends_on=deps, environment = {'EDITION': 'enterprise'}
     )]
 
 def publish_npm_pipelines(mode):
@@ -424,7 +424,7 @@ def publish_npm_pipelines(mode):
     ]
 
     return [pipeline(
-        name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = steps, edition="all"
+        name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = steps, edition="all", environment = {'EDITION': 'all'},
     )]
 
 def artifacts_page_pipeline():
@@ -432,7 +432,8 @@ def artifacts_page_pipeline():
         'event': ['promote'],
         'target': 'security',
     }
-    return [pipeline(name='publish-artifacts-page', trigger=trigger, steps = [download_grabpl_step(), artifacts_page_step()], edition="all")]
+    return [pipeline(name='publish-artifacts-page', trigger=trigger, steps = [download_grabpl_step(), artifacts_page_step()], edition="all", environment = {'EDITION': 'all'}
+    )]
 
 def release_pipelines(ver_mode='release', trigger=None):
     # 'enterprise' edition services contain both OSS and enterprise services
