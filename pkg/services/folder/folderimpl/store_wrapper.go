@@ -62,7 +62,7 @@ func (s storeWrapper) Get(ctx context.Context, cmd folder.GetFolderQuery) (*fold
 }
 
 func (s storeWrapper) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	dashFolder, err := s.legacyCreate(ctx, cmd)
+	f, err := s.legacyCreate(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -73,14 +73,14 @@ func (s storeWrapper) Create(ctx context.Context, cmd *folder.CreateFolderComman
 			parentUID = cmd.ParentUID
 		}
 
-		_, err = s.folderStore.Create(ctx, folder.CreateFolderCommand{
+		f, err = s.folderStore.Create(ctx, folder.CreateFolderCommand{
 			// The ID should be the same in both stores so that access control is working as expected
 			// (dashboard_acl.dashboard_id)
-			ID: dashFolder.ID,
+			ID: f.ID,
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
 			// well, but for now we take the UID from the newly created folder.
-			UID:         dashFolder.UID,
+			UID:         f.UID,
 			OrgID:       cmd.OrgID,
 			Title:       cmd.Title,
 			Description: cmd.Description,
@@ -93,18 +93,18 @@ func (s storeWrapper) Create(ctx context.Context, cmd *folder.CreateFolderComman
 			// (legacy) folder.
 			logger.Error("error saving folder to nested folder store", err)
 			// since the folder was created by this operation no need to check for permission to delete it
-			deleteCmd := &models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: true}
+			deleteCmd := &models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: f.ID, ForceDeleteFolderRules: true}
 			deleteErr := s.dashboardStore.DeleteDashboard(ctx, deleteCmd)
 			if deleteErr != nil {
 				logger.Error("error deleting folder after failed save to nested folder store", err)
 			}
-			return dashFolder, err
+			return f, err
 		}
 		// The folder UID is specified (or generated) during creation, so we'll
 		// stop here and return the created model.Folder.
 	}
 
-	return dashFolder, nil
+	return f, nil
 }
 
 func (s storeWrapper) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
@@ -200,12 +200,12 @@ func (s storeWrapper) legacyCreate(ctx context.Context, cmd *folder.CreateFolder
 }
 
 func (s storeWrapper) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	dashFolder, err := s.Get(ctx, folder.GetFolderQuery{OrgID: cmd.OrgID, UID: &cmd.UID})
+	dashFolder, err := s.dashboardStore.GetDashboard(ctx, &models.GetDashboardQuery{OrgId: cmd.OrgID, Uid: cmd.UID})
 	if err != nil {
 		return err
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.Id, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 	return s.dashboardStore.DeleteDashboard(ctx, &deleteCmd)
 }
 
