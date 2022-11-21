@@ -17,7 +17,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.border.weak};
       background-clip: padding-box;
       outline: none;
-      width: 750px;
+      width: 1000px;
       max-width: 100%;
       left: 0;
       right: 0;
