@@ -32,7 +32,7 @@ export type Accessors = {
   getViewHeight: () => number;
   getBottomRowIndexVisible: () => number;
   getTopRowIndexVisible: () => number;
-  getRowPosition: (rowIndex: number | TNil) => { height: number; y: number };
+  getRowPosition: (rowIndex: number) => { height: number; y: number };
   mapRowIndexToSpanIndex: (rowIndex: number) => number;
   mapSpanIndexToRowIndex: (spanIndex: number) => number;
 };
@@ -96,7 +96,7 @@ export default class ScrollManager {
     this._accessors = undefined;
   }
 
-  _scrollPast(rowIndex: number | TNil, direction: 1 | -1) {
+  _scrollPast(rowIndex: number, direction: 1 | -1) {
     const xrs = this._accessors;
     /* istanbul ignore next */
     if (!xrs) {
