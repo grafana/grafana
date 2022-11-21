@@ -11,6 +11,10 @@ const geohash = ['9q94r', 'dr5rs'];
 const names = ['A', 'B'];
 
 describe('handle location parsing', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation();
+  });
+
   it('auto should find geohash field', async () => {
     const frame = toDataFrame({
       name: 'simple',
