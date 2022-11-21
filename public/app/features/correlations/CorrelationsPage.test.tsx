@@ -16,7 +16,7 @@ import { Observable, Subscriber } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourcePluginMeta, PanelData } from '@grafana/data';
+import { DataSourcePluginMeta, getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 import {
   BackendSrv,
   FetchError,
@@ -230,7 +230,7 @@ const renderWithContext = async (
 };
 
 const mockQueryRunner = () => {
-  let emitter: { subscriber: Subscriber<PanelData> | undefined } = {};
+  let emitter: { subscriber: Subscriber<PanelData> | undefined } = { subscriber: undefined };
   const observable: Observable<PanelData> = new Observable((subscriber) => {
     emitter.subscriber = subscriber;
   });
@@ -246,7 +246,7 @@ const mockQueryRunner = () => {
   return emitter;
 };
 
-let emit: ((value?: PanelData | undefined) => void) | undefined;
+let emit: { subscriber: Subscriber<PanelData> | undefined } = { subscriber: undefined };
 
 jest.mock('app/core/services/context_srv');
 
@@ -354,12 +354,12 @@ describe('CorrelationsPage', () => {
       fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
 
       act(() => {
-        emit!.subscriber!.destination.next({ state: 'Error' });
+        emit!.subscriber!.next({ series: [], timeRange: getDefaultTimeRange(), state: LoadingState.Error });
       });
       expect(screen.getByRole('alert')).toBeInTheDocument();
 
       act(() => {
-        emit!.subscriber!.destination.next({ state: 'Done' });
+        emit!.subscriber!.next({ series: [], timeRange: getDefaultTimeRange(), state: LoadingState.Done });
       });
       expect(screen.getByText('This query is valid.')).toBeInTheDocument();
 

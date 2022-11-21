@@ -61,10 +61,10 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
       });
 
       await runner.get().subscribe((panelData) => {
-        if (panelData.state === 'Done') {
-          setIsValidQuery(true);
-        } else if (panelData.state === 'Error') {
+        if (!panelData || panelData.state === 'Error') {
           setIsValidQuery(false);
+        } else if (panelData.state === 'Done') {
+          setIsValidQuery(true);
         } else {
           setIsValidQuery(undefined);
         }
@@ -116,7 +116,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
                     <Icon name="check" /> This query is valid.
                   </div>
                 ) : isValidQuery === false ? (
-                  <FieldValidationMessage role="alert">This query is not valid.</FieldValidationMessage>
+                  <FieldValidationMessage>This query is not valid.</FieldValidationMessage>
                 ) : (
                   <div />
                 )}
