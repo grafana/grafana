@@ -102,6 +102,17 @@ export function transformV2(
     (df) => isHeatmapResult(df, request)
   );
 
+  // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
+  heatmapResults.forEach((df) => {
+    if (df.name == null) {
+      let le = df.fields.find((f) => f.name === 'Value')?.labels?.le;
+
+      if (le != null) {
+        df.name = le;
+      }
+    }
+  });
+
   // Group heatmaps by query
   const heatmapResultsGroupedByQuery = groupBy<DataFrame>(heatmapResults, (h) => h.refId);
 
