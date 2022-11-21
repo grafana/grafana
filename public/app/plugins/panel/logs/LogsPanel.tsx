@@ -37,6 +37,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     sortOrder,
     dedupStrategy,
     enableLogDetails,
+    onScroll,
   },
   title,
   id,
@@ -102,7 +103,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   );
 
   return (
-    <CustomScrollbar autoHide scrollTop={scrollTop}>
+    <CustomScrollbar autoHide onScroll={onScroll} scrollTop={scrollTop}>
       <div className={style.container} ref={logsContainerRef}>
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <LogRows

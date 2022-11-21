@@ -1,3 +1,5 @@
+import { UIEventHandler } from 'react';
+
 import { LogsSortOrder, LogsDedupStrategy } from '@grafana/data';
 
 export interface Options {
@@ -9,4 +11,5 @@ export interface Options {
   enableLogDetails: boolean;
   sortOrder: LogsSortOrder;
   dedupStrategy: LogsDedupStrategy;
+  onScroll?: UIEventHandler;
 }
