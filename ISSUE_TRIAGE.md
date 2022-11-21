@@ -8,10 +8,10 @@ The core maintainers of the Grafana project are responsible for categorizing all
 
 Triage helps ensure issues resolve quickly by:
 
-- Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
-- Giving a contributor the information they need before they commit to resolving an issue.
+- Making sure the issues include a detailed description, error logs (if applicable), and the necessary steps to reproduce them before committing to a resolution.
 - Lowering the issue count by preventing duplicate issues.
 - Streamlining the development process by preventing duplicate discussions.
+
 
 If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
