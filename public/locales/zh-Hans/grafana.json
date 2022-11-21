@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -412,6 +417,9 @@
       "dark": "深色",
       "field-name": "主题",
       "light": "浅色"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {

@@ -140,6 +140,10 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 			node.Url = node.Children[0].Url
 		}
 	}
+
+	if len(root.Children) < 1 {
+		root.Children = make([]*NavLink, 0)
+	}
 }
 
 func (root *NavTreeRoot) Sort() {
