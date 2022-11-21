@@ -25,8 +25,8 @@ export default function Home() {
           <iframe
             title="Alerting - Introductory video"
             src="https://player.vimeo.com/video/720001629"
-            width="640"
-            height="360"
+            width="560"
+            height="349"
             allow="autoplay; fullscreen"
             allowFullScreen
           ></iframe>
@@ -67,6 +67,18 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   `,
   videoBlock: css`
     grid-column: 2 / span 4;
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+
+    iframe {
+      position: absolute;
+      top: ${theme.spacing(2)};
+      left: ${theme.spacing(2)};
+      width: calc(100% - ${theme.spacing(4)});
+      height: calc(100% - ${theme.spacing(4)});
+      border: none;
+    }
   `,
   gettingStartedBlock: css`
     grid-column: span 2;
@@ -128,8 +140,9 @@ const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
     );
   `,
   ctaContainer: css`
+    padding: ${theme.spacing(4)};
     display: flex;
-    gap: ${theme.spacing(2)};
+    gap: ${theme.spacing(4)};
     justify-content: space-between;
     flex-wrap: wrap;
   `,
@@ -183,6 +196,7 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
   actionButton: css`
     grid-column: 2 / span 3;
     grid-row: 3;
+    max-width: 240px;
   `,
 
   icon: css`
