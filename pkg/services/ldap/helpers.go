@@ -1,6 +1,7 @@
 package ldap
 
 import (
+	"fmt"
 	"strings"
 
 	"gopkg.in/ldap.v3"
@@ -49,7 +50,7 @@ func getArrayAttribute(name string, entry *ldap.Entry) []string {
 	}
 
 	for _, attr := range entry.Attributes {
-		if attr.Name == name && len(attr.Values) > 0 {
+		if strings.EqualFold(attr.Name, name) && len(attr.Values) > 0 {
 			return attr.Values
 		}
 	}
