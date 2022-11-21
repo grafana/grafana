@@ -12,10 +12,10 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
@@ -28,11 +28,6 @@ export const DEFAULT_RANGE = {
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
-};
-
-const loadGraphStyle = (): ExploreGraphStyle => {
-  const data = store.get(GRAPH_STYLE_KEY);
-  return toGraphStyle(data);
 };
 
 const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
@@ -84,7 +79,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   logsVolumeEnabled: loadLogsVolumeEnabled(),
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
-  graphStyle: loadGraphStyle(),
   panelsState: {},
 });
 
@@ -96,6 +90,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  flameGraphFrames: [],
   tableFrames: [],
   graphResult: null,
   logsResult: null,

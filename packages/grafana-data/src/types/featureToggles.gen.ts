@@ -16,6 +16,8 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
+  alertingBigTransactions?: boolean;
+  promQueryBuilder?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
@@ -33,6 +35,7 @@ export interface FeatureToggles {
   publicDashboards?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
+  lokiMonacoEditor?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
@@ -42,7 +45,6 @@ export interface FeatureToggles {
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
-  explore2Dashboard?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
@@ -50,8 +52,8 @@ export interface FeatureToggles {
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
-  prometheusStreamingJSONParser?: boolean;
-  prometheusStreamingJSONParserTest?: boolean;
+  prometheusBufferedClient?: boolean;
+  newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
@@ -64,8 +66,20 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
+  objectStore?: boolean;
   traceqlEditor?: boolean;
+  flameGraph?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
+  interFont?: boolean;
+  newPanelChromeUI?: boolean;
+  queryLibrary?: boolean;
+  showDashboardValidationWarnings?: boolean;
+  mysqlAnsiQuotes?: boolean;
+  datasourceLogger?: boolean;
+  accessControlOnCall?: boolean;
+  nestedFolders?: boolean;
+  accessTokenExpirationCheck?: boolean;
+  elasticsearchBackendMigration?: boolean;
 }

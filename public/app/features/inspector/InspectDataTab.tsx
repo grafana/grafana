@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { t, Trans } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -19,6 +18,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { t, Trans } from 'app/core/internationalization';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
@@ -246,7 +246,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               margin-bottom: 10px;
             `}
           >
-            <Trans id="dashboard.inspect-data.download-csv">Download CSV</Trans>
+            <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
           </Button>
           {hasLogs && (
             <Button
@@ -257,7 +257,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 margin-left: 10px;
               `}
             >
-              <Trans id="dashboard.inspect-data.download-logs">Download logs</Trans>
+              <Trans i18nKey="dashboard.inspect-data.download-logs">Download logs</Trans>
             </Button>
           )}
           {hasTraces && (
@@ -269,7 +269,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 margin-left: 10px;
               `}
             >
-              <Trans id="dashboard.inspect-data.download-traces">Download traces</Trans>
+              <Trans i18nKey="dashboard.inspect-data.download-traces">Download traces</Trans>
             </Button>
           )}
           {hasServiceGraph && (
@@ -281,7 +281,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 margin-left: 10px;
               `}
             >
-              <Trans id="dashboard.inspect-data.download-service">Download service graph</Trans>
+              <Trans i18nKey="dashboard.inspect-data.download-service">Download service graph</Trans>
             </Button>
           )}
         </div>
@@ -309,10 +309,7 @@ function buildTransformationOptions() {
   const transformations: Array<SelectableValue<DataTransformerID>> = [
     {
       value: DataTransformerID.joinByField,
-      label: t({
-        id: 'dashboard.inspect-data.transformation',
-        message: 'Series joined by time',
-      }),
+      label: t('dashboard.inspect-data.transformation', 'Series joined by time'),
       transformer: {
         id: DataTransformerID.joinByField,
         options: { byField: undefined }, // defaults to time field

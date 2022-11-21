@@ -102,7 +102,7 @@ func packageGrafana(
 	if !exists {
 		log.Printf("directory %s doesn't exist - creating...", distDir)
 		//nolint
-		if err := os.MkdirAll(distDir, 0750); err != nil {
+		if err := os.MkdirAll(distDir, 0o755); err != nil {
 			return fmt.Errorf("couldn't create dist: %w", err)
 		}
 	}
@@ -305,7 +305,7 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 	} {
 		dpath := filepath.Join(packageRoot, dname)
 		//nolint
-		if err := os.MkdirAll(dpath, 0750); err != nil {
+		if err := os.MkdirAll(dpath, 0o755); err != nil {
 			return fmt.Errorf("failed to make directory %q: %w", dpath, err)
 		}
 	}
@@ -334,7 +334,7 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 		return fmt.Errorf("failed to remove %q: %w", homeBinDir, err)
 	}
 	//nolint
-	if err := os.MkdirAll(homeBinDir, 0750); err != nil {
+	if err := os.MkdirAll(homeBinDir, 0o755); err != nil {
 		return fmt.Errorf("failed to make directory %q: %w", homeBinDir, err)
 	}
 	// The grafana-cli binary is exposed through a wrapper to ensure a proper
@@ -384,7 +384,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"-a", string(options.packageArch),
 	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
-		args = append(args, "--replaces", "grafana")
+		args = append(args, "--conflicts", "grafana")
 	}
 	if options.edition == config.EditionOSS {
 		args = append(args, "--license", "\"AGPLv3\"")
@@ -448,7 +448,7 @@ func copyPubDir(grafanaDir, tmpDir string) error {
 func copyBinaries(grafanaDir, tmpDir string, args grafana.BuildArgs, edition config.Edition) error {
 	tgtDir := filepath.Join(tmpDir, "bin")
 	//nolint
-	if err := os.MkdirAll(tgtDir, 0750); err != nil {
+	if err := os.MkdirAll(tgtDir, 0o755); err != nil {
 		return fmt.Errorf("failed to make directory %q: %w", tgtDir, err)
 	}
 
@@ -478,7 +478,7 @@ func copyBinaries(grafanaDir, tmpDir string, args grafana.BuildArgs, edition con
 // copyScripts copies scripts from grafanaDir into tmpDir.
 func copyScripts(grafanaDir, tmpDir string) error {
 	//nolint
-	if err := os.MkdirAll(filepath.Join(tmpDir, "scripts"), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Join(tmpDir, "scripts"), 0o755); err != nil {
 		return fmt.Errorf("failed to create dir %q: %w", filepath.Join(tmpDir, "scripts"), err)
 	}
 	scriptsDir := filepath.Join(grafanaDir, "scripts")
@@ -515,7 +515,7 @@ func copyScripts(grafanaDir, tmpDir string) error {
 // copyConfFiles copies configuration files from grafanaDir into tmpDir.
 func copyConfFiles(grafanaDir, tmpDir string) error {
 	//nolint:gosec
-	if err := os.MkdirAll(filepath.Join(tmpDir, "conf"), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Join(tmpDir, "conf"), 0o755); err != nil {
 		return fmt.Errorf("failed to create dir %q: %w", filepath.Join(tmpDir, "conf"), err)
 	}
 
@@ -551,7 +551,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 	}
 	if !exists {
 		//nolint:gosec
-		if err := os.MkdirAll(tgtDir, 0750); err != nil {
+		if err := os.MkdirAll(tgtDir, 0o755); err != nil {
 			return err
 		}
 	}
@@ -650,7 +650,8 @@ func copyInternalPlugins(pluginsDir, tmpDir string) error {
 		return err
 	}
 	if !exists {
-		if err := os.MkdirAll(tgtDir, 0750); err != nil {
+		//nolint:gosec
+		if err := os.MkdirAll(tgtDir, 0o755); err != nil {
 			return err
 		}
 	}
@@ -728,7 +729,8 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 
 	if v == config.VariantWindowsAmd64 {
 		toolsDir := filepath.Join(tmpDir, "tools")
-		if err := os.MkdirAll(toolsDir, 0750); err != nil {
+		//nolint:gosec
+		if err := os.MkdirAll(toolsDir, 0o755); err != nil {
 			return fmt.Errorf("failed to create tools dir %q: %w", toolsDir, err)
 		}
 
@@ -901,7 +903,8 @@ func createArchive(srcDir string, edition config.Edition, v config.Variant, vers
 	}
 	if !exists {
 		log.Printf("directory %s doesn't exist - creating...", distDir)
-		if err := os.MkdirAll(distDir, 0750); err != nil {
+		//nolint:gosec
+		if err := os.MkdirAll(distDir, 0o755); err != nil {
 			return fmt.Errorf("couldn't create dist: %w", err)
 		}
 	}

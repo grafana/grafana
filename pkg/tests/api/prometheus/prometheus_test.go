@@ -21,6 +21,9 @@ import (
 )
 
 func TestIntegrationPrometheusBuffered(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -76,8 +79,8 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 		})
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dtos.MetricRequest{
-			From:    "now-1h",
-			To:      "now",
+			From:    "1668078080000",
+			To:      "1668081680000",
 			Queries: []*simplejson.Json{query},
 		})
 		require.NoError(t, err)
@@ -85,7 +88,7 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)
@@ -94,7 +97,8 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, outgoingRequest)
-		require.Equal(t, "/api/v1/query_range?q1=1&q2=2", outgoingRequest.URL.String())
+		require.Equal(t, "/api/v1/query_range?end=1668081660&q1=1&q2=2&query=up&start=1668078060&step=30",
+			outgoingRequest.URL.String())
 		require.Equal(t, "custom-header-value", outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
 		username, pwd, ok := outgoingRequest.BasicAuth()
 		require.True(t, ok)
@@ -104,9 +108,10 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 }
 
 func TestIntegrationPrometheusClient(t *testing.T) {
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"prometheusStreamingJSONParser"},
-	})
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()

@@ -6,7 +6,7 @@ aliases:
   - /docs/grafana/latest/linking/dashboard-links/
   - /docs/grafana/latest/dashboards/manage-dashboard-links/
   - /docs/grafana/latest/panels/working-with-panels/add-link-to-panel/
-  - /docs/grafana/next/dashboards/build-dashboards/manage-dashboard-links/
+  - /docs/grafana/latest/dashboards/build-dashboards/manage-dashboard-links/
 description: How to link Grafana dashboards.
 keywords:
   - link
@@ -36,11 +36,11 @@ The next step is to figure out which link type is right for your workflow. Even 
 - If the link relates to most if not all of the panels in the dashboard, use [dashboard links]({{< relref "#dashboard-links" >}}).
 - If you want to drill down into specific panels, use [panel links]({{< relref "#panel-links" >}}).
 - If you want to link to an external site, you can use either a dashboard link or a panel link.
-- If you want to drill down into a specific series, or even a single measurement, use [data links]({{< relref "../../../panels/configure-data-links/#data-links" >}}).
+- If you want to drill down into a specific series, or even a single measurement, use [data links]({{< relref "../../../panels-visualizations/configure-data-links/#data-links" >}}).
 
 ## Controlling time range using the URL
 
-You can control the time range of a panel or dashboard by providing following query parameters in dashboard URL:
+To control the time range of a panel or dashboard, you can provide query parameters in the dashboard URL:
 
 - `from` - defines lower limit of the time range, specified in ms epoch
 - `to` - defines upper limit of the time range, specified in ms epoch
@@ -48,7 +48,7 @@ You can control the time range of a panel or dashboard by providing following qu
 
 ## Dashboard links
 
-When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables]({{< relref "../../../panels/configure-data-links/#data-link-variables/" >}}).
+When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables]({{< relref "../../../panels-visualizations/configure-data-links/#data-link-variables/" >}}).
 
 Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 
@@ -70,7 +70,7 @@ Add links to other dashboards at the top of your current dashboard.
    - **With tags** – Enter tags to limit the linked dashboards to only the ones with the tags you enter. Otherwise, Grafana includes links to all other dashboards.
    - **As dropdown** – If you are linking to lots of dashboards, then you probably want to select this option and add an optional title to the dropdown. Otherwise, Grafana displays the dashboard links side by side across the top of your dashboard.
    - **Time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
-   - **Variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. Here is the variable format: `https://${you-domain}/path/to/your/dashboard?var-${template-variable1}=value1&var-${template-variable2}=value2` **Example:** https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h
+   - **Variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables]({{< relref "../create-dashboard-url-variables/" >}}).
    - **Open in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
 1. Click **Add**.
 

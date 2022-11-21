@@ -4,6 +4,7 @@ import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { contextSrv } from 'app/core/core';
 import * as api from 'app/features/manage-dashboards/state/actions';
 
 import { DashboardSearchHit } from '../../../features/search/types';
@@ -15,8 +16,8 @@ describe('FolderPicker', () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
-        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
-        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+        { title: 'Dash 1', uid: 'xMsQdBfWz' } as DashboardSearchHit,
+        { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
     render(<FolderPicker onChange={jest.fn()} />);
@@ -27,12 +28,12 @@ describe('FolderPicker', () => {
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
-        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
-        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
-        { title: 'Dash 3', id: 3 } as DashboardSearchHit,
+        { title: 'Dash 1', uid: 'xMsQdBfWz' } as DashboardSearchHit,
+        { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
+        { title: 'Dash 3', uid: '7MeksYbmk' } as DashboardSearchHit,
       ]);
 
-    render(<FolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.id !== 2)} />);
+    render(<FolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.uid !== 'wfTJJL5Wz')} />);
 
     const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
@@ -45,13 +46,13 @@ describe('FolderPicker', () => {
   });
 
   it('should allow creating a new option', async () => {
-    const newFolder = { title: 'New Folder', id: 3 } as DashboardSearchHit;
+    const newFolder = { title: 'New Folder', uid: '7MeksYbmk' } as DashboardSearchHit;
 
     jest
       .spyOn(api, 'searchFolders')
       .mockResolvedValue([
-        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
-        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+        { title: 'Dash 1', uid: 'xMsQdBfWz' } as DashboardSearchHit,
+        { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
     const onChangeFn = jest.fn();
@@ -69,36 +70,99 @@ describe('FolderPicker', () => {
       expect(create).toHaveBeenCalledWith({ title: newFolder.title });
     });
 
-    expect(onChangeFn).toHaveBeenCalledWith({ title: newFolder.title, id: newFolder.id });
+    expect(onChangeFn).toHaveBeenCalledWith({ title: newFolder.title, uid: newFolder.uid });
     await waitFor(() => {
       expect(screen.getByText(newFolder.title)).toBeInTheDocument();
     });
   });
+
+  it('should show the General folder by default for editors', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', uid: 'xMsQdBfWz' } as DashboardSearchHit,
+        { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
+      ]);
+
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+
+    const onChangeFn = jest.fn();
+    render(<FolderPicker onChange={onChangeFn} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions[0]).toHaveTextContent('General');
+  });
+
+  it('should not show the General folder by default if showRoot is false', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', uid: 'xMsQdBfWz' } as DashboardSearchHit,
+        { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
+      ]);
+
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+
+    const onChangeFn = jest.fn();
+    render(<FolderPicker onChange={onChangeFn} showRoot={false} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions[0]).not.toHaveTextContent('General');
+  });
+
+  it('should not show the General folder by default for not editors', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', uid: 'xMsQdBfWz' } as DashboardSearchHit,
+        { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
+      ]);
+
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+
+    const onChangeFn = jest.fn();
+    render(<FolderPicker onChange={onChangeFn} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions[0]).not.toHaveTextContent('General');
+  });
 });
 
 describe('getInitialValues', () => {
-  describe('when called with folderId and title', () => {
-    it('then it should return folderId and title', async () => {
+  describe('when called with folderUid and title', () => {
+    it('then it should return folderUid and title', async () => {
       const getFolder = jest.fn().mockResolvedValue({});
-      const folder = await getInitialValues({ folderId: 0, folderName: 'Some title', getFolder });
+      const folder = await getInitialValues({ folderUid: '', folderName: 'Some title', getFolder });
 
-      expect(folder).toEqual({ label: 'Some title', value: 0 });
+      expect(folder).toEqual({ label: 'Some title', value: '' });
       expect(getFolder).not.toHaveBeenCalled();
     });
   });
 
-  describe('when called with just a folderId', () => {
+  describe('when called with just a folderUid', () => {
     it('then it should call api to retrieve title', async () => {
-      const getFolder = jest.fn().mockResolvedValue({ id: 0, title: 'Title from api' });
-      const folder = await getInitialValues({ folderId: 0, getFolder });
+      const getFolder = jest.fn().mockResolvedValue({ uid: '', title: 'Title from api' });
+      const folder = await getInitialValues({ folderUid: '', getFolder });
 
-      expect(folder).toEqual({ label: 'Title from api', value: 0 });
+      expect(folder).toEqual({ label: 'Title from api', value: '' });
       expect(getFolder).toHaveBeenCalledTimes(1);
-      expect(getFolder).toHaveBeenCalledWith(0);
+      expect(getFolder).toHaveBeenCalledWith('');
     });
   });
 
-  describe('when called without folderId', () => {
+  describe('when called without folderUid', () => {
     it('then it should throw an error', async () => {
       const getFolder = jest.fn().mockResolvedValue({});
       await expect(getInitialValues({ getFolder })).rejects.toThrow();

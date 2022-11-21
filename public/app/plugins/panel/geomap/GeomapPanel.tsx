@@ -11,9 +11,9 @@ import { fromLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subscription } from 'rxjs';
 
-import { DataHoverEvent, GrafanaTheme, PanelData, PanelProps } from '@grafana/data';
+import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
+import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { PanelEditExitedEvent } from 'app/types/events';
 
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
@@ -45,6 +45,7 @@ interface State extends OverlayProps {
 }
 
 export class GeomapPanel extends Component<Props, State> {
+  declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
   panelContext: PanelContext | undefined = undefined;
   private subs = new Subscription();
@@ -52,7 +53,6 @@ export class GeomapPanel extends Component<Props, State> {
   globalCSS = getGlobalStyles(config.theme2);
 
   mouseWheelZoom?: MouseWheelZoom;
-  style = getStyles(config.theme);
   hoverPayload: GeomapHoverPayload = { point: {}, pageX: -1, pageY: -1 };
   readonly hoverEvent = new DataHoverEvent(this.hoverPayload);
 
@@ -382,8 +382,8 @@ export class GeomapPanel extends Component<Props, State> {
     return (
       <>
         <Global styles={this.globalCSS} />
-        <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
-          <div className={this.style.map} ref={this.initMapRef}></div>
+        <div className={styles.wrap} onMouseLeave={this.clearTooltip}>
+          <div className={styles.map} ref={this.initMapRef}></div>
           <GeomapOverlay
             bottomLeft={legends}
             topRight1={topRight1}
@@ -397,7 +397,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const styles = {
   wrap: css`
     position: relative;
     width: 100%;
@@ -409,4 +409,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 100%;
     height: 100%;
   `,
-}));
+};

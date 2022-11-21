@@ -11,7 +11,7 @@ on:
 
 jobs:
   workflow-call:
-    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.11
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.12
     with:
       frontend-path-regexp: public\/app\/features\/(explore|correlations)
       backend-path-regexp: pkg\/services\/(queryhistory)

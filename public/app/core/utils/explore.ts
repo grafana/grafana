@@ -30,7 +30,7 @@ import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
 
 import { config } from '../config';
 
@@ -205,21 +205,6 @@ export const safeStringifyValue = (value: any, space?: number) => {
   return '';
 };
 
-const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
-// we use this function to take any kind of data we loaded
-// from an external source (URL, localStorage, whatever),
-// and extract the graph-style from it, or return the default
-// graph-style if we are not able to do that.
-// it is important that this function is able to take any form of data,
-// (be it objects, or arrays, or booleans or whatever),
-// and produce a best-effort graphStyle.
-// note that typescript makes sure we make no mistake in this function.
-// we do not rely on ` as ` or ` any `.
-export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
-  const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
-  return found ?? DEFAULT_GRAPH_STYLE;
-};
-
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
   const errorResult: any = {
@@ -268,13 +253,13 @@ export async function generateEmptyQuery(
   let defaultQuery: Partial<DataQuery> | undefined;
 
   // datasource override is if we have switched datasources with no carry-over - we want to create a new query with a datasource we define
+  // it's also used if there's a root datasource and there were no previous queries
   if (dataSourceOverride) {
     datasourceRef = dataSourceOverride;
   } else if (queries.length > 0 && queries[queries.length - 1].datasource) {
     // otherwise use last queries' datasource
     datasourceRef = queries[queries.length - 1].datasource;
   } else {
-    // if neither exists, use the default datasource
     datasourceInstance = await getDataSourceSrv().get();
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
     datasourceRef = datasourceInstance.getRef();

@@ -2,8 +2,9 @@ import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Stack } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
@@ -53,6 +54,7 @@ export function VariableEditorList({
             <table
               className="filter-table filter-table--hover"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
+              role="grid"
             >
               <thead>
                 <tr>

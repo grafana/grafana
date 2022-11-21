@@ -3,14 +3,14 @@ package export
 import (
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportUsage(helper *commitHelper, job *gitExportJob) error {
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		commit := commitOptions{
 			comment: "usage stats",
 		}
@@ -63,7 +63,7 @@ func exportUsage(helper *commitHelper, job *gitExportJob) error {
 		for _, usage := range dump {
 			rows, err := sess.DB().QueryContext(helper.ctx, usage.sql)
 			if err != nil {
-				if strings.HasPrefix(err.Error(), "no such table") {
+				if isTableNotExistsError(err) {
 					continue
 				}
 				return err

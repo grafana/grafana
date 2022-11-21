@@ -32,7 +32,6 @@ var skipPlugins = map[string]bool{
 
 const sep = string(filepath.Separator)
 
-// Generate TypeScript for all plugin models.cue
 func main() {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
@@ -48,7 +47,7 @@ func main() {
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 
 	wd := codegen.NewWriteDiffer()
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 
 	type ptreepath struct {
 		Path string

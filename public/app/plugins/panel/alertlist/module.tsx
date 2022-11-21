@@ -246,7 +246,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addCustomEditor({
       path: 'folder',
       name: 'Folder',
-      description: 'Filter for alerts in the selected folder',
+      description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
       id: 'folder',
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
@@ -256,7 +256,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             showRoot={false}
             allowEmpty={true}
             initialTitle={props.value?.title}
-            initialFolderId={props.value?.id}
+            initialFolderUid={props.value?.uid}
             permissionLevel={PermissionLevelString.View}
             onClear={() => props.onChange('')}
             {...props}
@@ -279,7 +279,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             noDefault
             current={props.value}
             onChange={(ds) => props.onChange(ds.name)}
-            onClear={() => props.onChange('')}
+            onClear={() => props.onChange(null)}
           />
         );
       },

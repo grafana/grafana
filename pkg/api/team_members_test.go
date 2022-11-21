@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -60,7 +61,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := setupSimpleHTTPServer(nil)
 	settings := hs.Cfg
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	sqlStore.Cfg = settings
 
 	hs.SQLStore = sqlStore
@@ -122,8 +123,8 @@ func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
 	return user.ID
 }
 
-func setupTeamTestScenario(userCount int, db sqlstore.Store, t *testing.T) int64 {
-	teamService := teamimpl.ProvideService(db.(*sqlstore.SQLStore), setting.NewCfg()) // FIXME
+func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) int64 {
+	teamService := teamimpl.ProvideService(db, setting.NewCfg()) // FIXME
 	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
 	testOrg, err := db.CreateOrgWithMember("TestOrg", user.ID)
