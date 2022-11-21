@@ -105,10 +105,17 @@ export function transformV2(
   // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
   heatmapResults.forEach((df) => {
     if (df.name == null) {
-      let le = df.fields.find((f) => f.name === 'Value')?.labels?.le;
+      let f = df.fields.find((f) => f.name === 'Value');
 
-      if (le != null) {
-        df.name = le;
+      if (f) {
+        let le = f.labels?.le;
+
+        if (le) {
+          // this is used for sorting the frames by numeric ascending le labels for de-accum
+          df.name = le;
+          // this is used for renaming the Value fields to le label
+          f.config.displayNameFromDS = le;
+        }
       }
     }
   });
