@@ -8,7 +8,7 @@ import LanguageProvider from '../../LanguageProvider';
 import { LokiLabelBrowser } from '../../components/LokiLabelBrowser';
 import { LokiQuery } from '../../types';
 
-type Props = {
+export interface Props {
   isOpen: boolean;
   languageProvider: LanguageProvider;
   query: LokiQuery;
@@ -16,7 +16,7 @@ type Props = {
   onClose: () => void;
   onChange: (query: LokiQuery) => void;
   onRunQuery: () => void;
-};
+}
 
 export const LabelBrowserModal = (props: Props) => {
   const { isOpen, onClose, languageProvider, app } = props;
