@@ -149,8 +149,8 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               enableReset={true}
               filter={folderFilter}
               dissalowSlashes={true}
-              onChange={({ title, id }) => {
-                field.onChange({ title, id });
+              onChange={({ title, uid }) => {
+                field.onChange({ title, uid });
                 if (!groupIsInGroupOptions(selectedGroup)) {
                   setIsAddingGroup(false);
                   resetGroup();

@@ -151,7 +151,7 @@ function FolderGroupAndEvaluationInterval({
             <div className={styles.editGroup}>
               {isNewGroup && (
                 <div className={styles.warningMessage}>
-                  {`Save the ${group} evaluation group in order to edit the evaluation group interval.`}
+                  {`To edit the evaluation group interval, save the alert rule.`}
                 </div>
               )}
               <Button
