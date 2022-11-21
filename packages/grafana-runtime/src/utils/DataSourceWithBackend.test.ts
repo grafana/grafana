@@ -32,7 +32,10 @@ jest.mock('../services', () => ({
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: (ref?: DataSourceRef) => ({ type: ref?.type ?? '?', uid: ref?.uid ?? '?' }),
+      getInstanceSettings: (ref?: DataSourceRef) => ({
+        type: ref?.type ?? '<mocktype>',
+        uid: ref?.uid ?? '<mockuid>',
+      }),
     };
   },
 }));
@@ -44,6 +47,8 @@ describe('DataSourceWithBackend', () => {
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      dashboardUID: 'dashA',
+      panelId: 123,
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -66,7 +71,7 @@ describe('DataSourceWithBackend', () => {
             Object {
               "datasource": Object {
                 "type": "sample",
-                "uid": "?",
+                "uid": "<mockuid>",
               },
               "datasourceId": undefined,
               "intervalMs": 5000,
@@ -74,6 +79,12 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+        },
+        "headers": Object {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc, <mockuid>",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy, sample",
         },
         "hideFromInspector": false,
         "method": "POST",
@@ -103,6 +114,8 @@ describe('DataSourceWithBackend', () => {
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       hideFromInspector: true,
+      dashboardUID: 'dashA',
+      panelId: 123,
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -125,7 +138,7 @@ describe('DataSourceWithBackend', () => {
             Object {
               "datasource": Object {
                 "type": "sample",
-                "uid": "?",
+                "uid": "<mockuid>",
               },
               "datasourceId": undefined,
               "intervalMs": 5000,
@@ -133,6 +146,12 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+        },
+        "headers": Object {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc, <mockuid>",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy, sample",
         },
         "hideFromInspector": true,
         "method": "POST",

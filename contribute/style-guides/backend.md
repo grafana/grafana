@@ -40,6 +40,23 @@ The majority of our tests uses [GoConvey](http://goconvey.co/) but that's someth
 
 In the `sqlstore` package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value.
 
+### Integration Tests
+
+We run unit and integration tests separately, to help keep our CI pipeline running smoothly and provide a better developer experience.
+
+To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for `testing.Short()`:
+
+```
+func TestIntegrationFoo(t *testing.T) {
+    if testing.Short() {
+        t.Skip("skipping integration test")
+    }
+    // function body
+}
+```
+
+If you do not follow this convention, your integration test may be run twice or not run at all.
+
 ### Assertions
 
 Use respectively [`assert.*`](https://github.com/stretchr/testify#assert-package) functions to make assertions that

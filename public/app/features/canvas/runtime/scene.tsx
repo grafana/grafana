@@ -26,8 +26,9 @@ import {
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
-import { LayerActionID } from 'app/plugins/panel/canvas/types';
+import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
 
+import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
@@ -62,10 +63,12 @@ export class Scene {
   shouldShowAdvancedTypes?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
+  panel: CanvasPanel;
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
   inlineEditingCallback?: () => void;
+  setBackgroundCallback?: (anchorPoint: AnchorPoint) => void;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
@@ -74,7 +77,8 @@ export class Scene {
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
     showAdvancedTypes: boolean,
-    public onSave: (cfg: CanvasFrameOptions) => void
+    public onSave: (cfg: CanvasFrameOptions) => void,
+    panel: CanvasPanel
   ) {
     this.root = this.load(cfg, enableEditing, showAdvancedTypes);
 
@@ -84,6 +88,8 @@ export class Scene {
       }
       this.moveable.draggable = !open;
     });
+
+    this.panel = panel;
   }
 
   getNextElementName = (isFrame = false) => {
@@ -472,7 +478,7 @@ export class Scene {
         this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
       }
 
-      if (isTargetMoveableElement || isTargetAlreadySelected) {
+      if (isTargetMoveableElement || isTargetAlreadySelected || !this.isEditingEnabled) {
         // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }
@@ -566,7 +572,7 @@ export class Scene {
         {this.root.render()}
         {canShowContextMenu && (
           <Portal>
-            <CanvasContextMenu scene={this} />
+            <CanvasContextMenu scene={this} panel={this.panel} />
           </Portal>
         )}
       </div>

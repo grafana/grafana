@@ -157,7 +157,7 @@ export class PrometheusDatasource
       this._isDatasourceVersionGreaterOrEqualTo('1.11.0', PromApplication.Cortex) ||
       // https://github.com/thanos-io/thanos/pull/3566
       //https://github.com/thanos-io/thanos/releases/tag/v0.18.0
-      this._isDatasourceVersionGreaterOrEqualTo('0.18', PromApplication.Thanos)
+      this._isDatasourceVersionGreaterOrEqualTo('0.18.0', PromApplication.Thanos)
     );
   }
 
@@ -773,6 +773,7 @@ export class PrometheusDatasource
         .fetch<BackendDataSourceResponse>({
           url: '/api/ds/query',
           method: 'POST',
+          headers: this.getRequestHeaders(),
           data: {
             from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
             to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),

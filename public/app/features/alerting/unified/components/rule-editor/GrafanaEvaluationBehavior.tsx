@@ -14,7 +14,7 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
 
-const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
 export const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
@@ -91,7 +91,7 @@ export const GrafanaEvaluationBehavior = () => {
 
   return (
     // TODO remove "and alert condition" for recording rules
-    <RuleEditorSection stepNo={2} title="Alert evaluation behavior">
+    <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
       <Field
         label="Evaluate"
         description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."

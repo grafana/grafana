@@ -1,9 +1,9 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2, EventBus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -36,12 +36,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
+      overflow: scroll;
+      min-width: 600px;
       & + & {
         border-left: 1px dotted ${theme.colors.border.medium};
       }
-    `,
-    exploreSplit: css`
-      width: 50%;
     `,
   };
 };
@@ -49,7 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 interface OwnProps extends Themeable2 {
   exploreId: ExploreId;
   urlQuery: string;
-  split: boolean;
+  eventBus: EventBus;
 }
 
 interface Props extends OwnProps, ConnectedProps<typeof connector> {}
@@ -143,12 +142,11 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, split, exploreId, initialized } = this.props;
+    const { theme, exploreId, initialized, eventBus } = this.props;
     const styles = getStyles(theme);
-    const exploreClass = cx(styles.explore, split && styles.exploreSplit);
     return (
-      <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
-        {initialized && <Explore exploreId={exploreId} />}
+      <div className={styles.explore} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
+        {initialized && <Explore exploreId={exploreId} eventBus={eventBus} />}
       </div>
     );
   }

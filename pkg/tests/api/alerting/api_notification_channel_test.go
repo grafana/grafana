@@ -2312,7 +2312,6 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
-          "text": "Integration Test [FIRING:1] SlackAlert1 (default)",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2323,18 +2322,11 @@ var expNonEmailNotifications = map[string][]string{
 			  "text": "Integration Test ",
 			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>"
 			}
 		  ]
 		}`,
@@ -2342,7 +2334,6 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recvX/slack_testX": {
 		`{
 		  "channel": "#test-channel",
-          "text": "[FIRING:1] SlackAlert2 (default)",
 		  "username": "Integration Test",
 		  "attachments": [
 			{
@@ -2351,18 +2342,11 @@ var expNonEmailNotifications = map[string][]string{
 			  "text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = SlackAlert2\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SlackAlert2/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DSlackAlert2&matcher=grafana_folder%%3Ddefault\n",
 			  "fallback": "[FIRING:1] SlackAlert2 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<@user1><@user2>"
 			}
 		  ]
 		}`,
@@ -2496,7 +2480,7 @@ var expNonEmailNotifications = map[string][]string{
 			{
 			  "color": 14037554,
 			  "footer": {
-				"icon_url": "https://grafana.com/assets/img/fav32.png",
+				"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 				"text": "Grafana v"
 			  },
 			  "title": "[FIRING:1] DiscordAlert (default)",
@@ -2635,6 +2619,7 @@ var expNonEmailNotifications = map[string][]string{
 			  "grafana_folder": "default"
 			},
 			"annotations": {
+			  "__orgId__":"1",
               "__values__": "{\"A\":1}",
               "__value_string__": "[ var='A' labels={} value=1 ]"
             },

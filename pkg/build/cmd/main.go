@@ -56,6 +56,11 @@ func main() {
 					Value: "grafana-server",
 					Usage: "Specify the server host",
 				},
+				&cli.StringFlag{
+					Name:  "video",
+					Value: "true",
+					Usage: "Specify if videos should be recorded",
+				},
 			},
 		},
 		{
@@ -89,6 +94,14 @@ func main() {
 					Value: strings.Join(docker.AllArchs, ","),
 					Usage: "Comma separated architectures to build",
 				},
+			},
+		},
+		{
+			Name:   "upload-cdn",
+			Usage:  "Upload public/* to a cdn bucket",
+			Action: UploadCDN,
+			Flags: []cli.Flag{
+				&editionFlag,
 			},
 		},
 		{
@@ -146,6 +159,15 @@ func main() {
 					Name:  "deployment",
 					Usage: "Kind of deployment (e.g. canary/latest)",
 				},
+			},
+		},
+		{
+			Name:   "upload-packages",
+			Usage:  "Upload Grafana packages",
+			Action: UploadPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
 			},
 		},
 		{

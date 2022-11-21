@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -64,3 +65,8 @@ type GetByIDQuery struct {
 	ApiKeyId int64
 	Result   *APIKey
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "api_key"
+	QuotaTarget    quota.Target    = "api_key"
+)

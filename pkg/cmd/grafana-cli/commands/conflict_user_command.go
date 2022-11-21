@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
@@ -54,7 +55,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
-	resolver := ConflictResolver{Users: conflicts}
+	resolver := ConflictResolver{Users: conflicts, Store: s}
 	resolver.BuildConflictBlocks(conflicts, f)
 	return &resolver, nil
 }
@@ -127,17 +128,20 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		// read in the file to ingest
 		arg := cmd.Args().First()
 		if arg == "" {
-			return errors.New("please specify a absolute path to file to read from")
+			return fmt.Errorf("please specify a absolute path to file to read from")
 		}
 		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
-			return fmt.Errorf("could not read file with error %e", err)
+			logger.Error(color.RedString("validation failed with an error"))
+			return fmt.Errorf("could not read file with error %s", err)
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", err)
+			logger.Error(color.RedString("validation failed with an error"))
+			return fmt.Errorf("could not validate file with error:\n%s", validErr)
 		}
-		logger.Info("File validation complete without errors.\n\n File can be used with ingesting command `ingest-file`.\n\n")
+		logger.Info(color.GreenString("File validation complete.\n"))
+		logger.Info("File can be used with the `ingest-file` command.\n\n")
 		return nil
 	}
 }
@@ -161,7 +165,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", validErr)
+			return fmt.Errorf("could not validate file with error:\n%s", validErr)
 		}
 		// should we rebuild blocks here?
 		// kind of a weird thing maybe?
@@ -169,7 +173,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 			return fmt.Errorf("no users")
 		}
 		r.showChanges()
-		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation?") {
+		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation") {
 			return fmt.Errorf("user cancelled")
 		}
 		err = r.MergeConflictingUsers(context.Context)
@@ -199,6 +203,12 @@ func getDocumentationForFile() string {
 #
 # If you feel like you want to wait with a specific block,
 # delete all lines regarding that conflict block.
+# email - the user’s email
+# login - the user’s login/username
+# last_seen_at - the user’s last login
+# auth_module - if the user was created/signed in using an authentication provider
+# conflict_email - a boolean if we consider the email to be a conflict
+# conflict_login - a boolean if we consider the login to be a conflict
 #
 `
 }
@@ -230,7 +240,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			previouslySeenLogins[strings.ToLower(u.Login)] = true
 		}
 	}
-
 	// tested in https://regex101.com/r/una3zC/1
 	diffPattern := `^[+-]`
 	// compiling since in a loop
@@ -238,23 +247,50 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	if err != nil {
 		return fmt.Errorf("unable to compile regex %s: %w", diffPattern, err)
 	}
-	for _, row := range strings.Split(string(b), "\n") {
+	counterKeepUsersForBlock := map[string]int{}
+	counterDeleteUsersForBlock := map[string]int{}
+	currentBlock := ""
+	for rowNumber, row := range strings.Split(string(b), "\n") {
+		// end of file
 		if row == "" {
-			// end of file
 			break
 		}
 		// if the row starts with a #, it is a comment
 		if row[0] == '#' {
-			// comment
-			continue
-		}
-		entryRow := matchingExpression.Match([]byte(row))
-		if !entryRow {
-			// block row
-			// conflict: hej
 			continue
 		}
 
+		entryRow := matchingExpression.Match([]byte(row))
+		// not an entry row -> is a conflict block row
+		if !entryRow {
+			// check for malformed row
+			// rows should be of the form
+			// conflict: <conflict>
+			// or
+			// + id: <id>
+			// - id: <id>
+			if (row[0] != '-') && (row[0] != '+') && (row[0] != 'c') {
+				return fmt.Errorf("invalid start character (expected '+,-') found %c for row number %d", row[0], rowNumber+1)
+			}
+
+			// is a conflict block row
+			// conflict: hej
+			currentBlock = row
+			continue
+		}
+		// need to track how many keep users we have for a block
+		if _, ok := counterKeepUsersForBlock[currentBlock]; !ok {
+			counterKeepUsersForBlock[currentBlock] = 0
+		}
+		if _, ok := counterDeleteUsersForBlock[currentBlock]; !ok {
+			counterDeleteUsersForBlock[currentBlock] = 0
+		}
+		if row[0] == '+' {
+			counterKeepUsersForBlock[currentBlock] += 1
+		}
+		if row[0] == '-' {
+			counterDeleteUsersForBlock[currentBlock] += 1
+		}
 		newUser := &ConflictingUser{}
 		err := newUser.Marshal(row)
 		if err != nil {
@@ -268,6 +304,18 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		}
 		// valid entry
 		newConflicts = append(newConflicts, *newUser)
+	}
+	for block, count := range counterKeepUsersForBlock {
+		// check if we only have one addition for each block
+		if count != 1 {
+			return fmt.Errorf("invalid number of users to keep, expected 1, got %d for block: %s", count, block)
+		}
+	}
+	for block, count := range counterDeleteUsersForBlock {
+		// check if we have at least one deletion for each block
+		if count < 1 {
+			return fmt.Errorf("invalid number of users to delete, should be at least 1, got %d for block %s", count, block)
+		}
 	}
 	r.ValidUsers = newConflicts
 	r.BuildConflictBlocks(newConflicts, fmt.Sprintf)
@@ -378,7 +426,14 @@ func (r *ConflictResolver) showChanges() {
 		}
 		b.WriteString("Keep the following user.\n")
 		b.WriteString(fmt.Sprintf("%s\n", block))
-		b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login))
+		b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login)))
+		for _, r := range fmt.Sprintf("%s%s", mainUser.Email, mainUser.Login) {
+			if unicode.IsUpper(r) {
+				b.WriteString("Will be change to:\n")
+				b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, strings.ToLower(mainUser.Email), strings.ToLower(mainUser.Login))))
+				break
+			}
+		}
 		b.WriteString("\n\n")
 		b.WriteString("The following user(s) will be deleted.\n")
 		for _, user := range users {
@@ -386,7 +441,7 @@ func (r *ConflictResolver) showChanges() {
 				continue
 			}
 			// mergeable users
-			b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login))
+			b.WriteString(color.RedString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login)))
 		}
 		b.WriteString("\n\n")
 	}

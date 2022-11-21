@@ -8,7 +8,9 @@ import {
   LoadingState,
   LogRowModel,
   RawTimeRange,
+  EventBus,
   SplitOpen,
+  DataFrame,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -35,6 +37,7 @@ interface LogsContainerProps extends PropsFromRedux {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
+  eventBus: EventBus;
   splitOpenFn: SplitOpen;
 }
 
@@ -69,9 +72,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     return false;
   };
 
-  getFieldLinks = (field: Field, rowIndex: number) => {
+  getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
     const { splitOpenFn, range } = this.props;
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range });
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame });
   };
 
   render() {
@@ -156,6 +159,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
             scrollElement={scrollElement}
+            eventBus={this.props.eventBus}
           />
         </LogsCrossFadeTransition>
       </>
