@@ -77,6 +77,11 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		settings["isPublicDashboardView"] = true
 	}
 
+	weekStart := ""
+	if prefs.WeekStart != nil {
+		weekStart = *prefs.WeekStart
+	}
+
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserID,
@@ -93,32 +98,33 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
-			WeekStart:                  prefs.WeekStart,
+			WeekStart:                  weekStart,
 			Locale:                     locale,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 		},
-		Settings:                settings,
-		Theme:                   prefs.Theme,
-		AppUrl:                  appURL,
-		AppSubUrl:               appSubURL,
-		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:      setting.GoogleAnalytics4Id,
-		GoogleTagManagerId:      setting.GoogleTagManagerId,
-		BuildVersion:            setting.BuildVersion,
-		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       hs.grafanaUpdateChecker.LatestVersion(),
-		NewGrafanaVersionExists: hs.grafanaUpdateChecker.UpdateAvailable(),
-		AppName:                 setting.ApplicationName,
-		AppNameBodyClass:        "app-grafana",
-		FavIcon:                 "public/img/fav32.png",
-		AppleTouchIcon:          "public/img/apple-touch-icon.png",
-		AppTitle:                "Grafana",
-		NavTree:                 navTree,
-		Sentry:                  &hs.Cfg.Sentry,
-		Nonce:                   c.RequestNonce,
-		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
-		LoadingLogo:             "public/img/grafana_icon.svg",
+		Settings:                            settings,
+		Theme:                               prefs.Theme,
+		AppUrl:                              appURL,
+		AppSubUrl:                           appSubURL,
+		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
+		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
+		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
+		GoogleTagManagerId:                  setting.GoogleTagManagerId,
+		BuildVersion:                        setting.BuildVersion,
+		BuildCommit:                         setting.BuildCommit,
+		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),
+		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
+		AppName:                             setting.ApplicationName,
+		AppNameBodyClass:                    "app-grafana",
+		FavIcon:                             "public/img/fav32.png",
+		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
+		AppTitle:                            "Grafana",
+		NavTree:                             navTree,
+		Sentry:                              &hs.Cfg.Sentry,
+		Nonce:                               c.RequestNonce,
+		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
+		LoadingLogo:                         "public/img/grafana_icon.svg",
 	}
 
 	if !hs.AccessControl.IsDisabled() {

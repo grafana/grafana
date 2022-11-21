@@ -44,6 +44,7 @@ type ServiceImpl struct {
 type NavigationAppConfig struct {
 	SectionID  string
 	SortWeight int64
+	Text       string
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, queryLibraryService querylibrary.HTTPService) navtree.Service {
@@ -407,13 +408,17 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
+	}
 
+	if hasEditPerm {
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true,
+				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true, IsCreateAction: true,
 			})
 		}
+	}
 
+	if hasEditPerm && !s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
@@ -497,13 +502,15 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 	fallbackHasEditPerm := func(*models.ReqContext) bool { return hasEditPerm }
 
 	if hasAccess(fallbackHasEditPerm, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
-		})
+		if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
+			})
+		}
 
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "New alert rule", SubTitle: "Create an alert rule", Id: "alert",
-			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true,
+			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
 		})
 	}
 
@@ -534,29 +541,37 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	var children []*navtree.NavLink
 	var navLink *navtree.NavLink
 
-	baseId := "connections"
-	baseUrl := s.cfg.AppSubURL + "/" + baseId
+	baseUrl := s.cfg.AppSubURL + "/connections"
 
+	// Your connections
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-datasources",
-		Text:     "Data sources",
-		Icon:     "database",
-		SubTitle: "Add and configure data sources",
-		Url:      baseUrl + "/datasources",
+		Id:       "connections-your-connections",
+		Text:     "Your connections",
+		SubTitle: "Manage your existing connections",
+		Url:      baseUrl + "/your-connections",
+		// Datasources
+		Children: []*navtree.NavLink{{
+			Id:       "connections-your-connections-datasources",
+			Text:     "Datasources",
+			SubTitle: "Manage your existing datasource connections",
+			Url:      baseUrl + "/your-connections/datasources",
+		}},
 	})
 
+	// Connect data
 	children = append(children, &navtree.NavLink{
-		Id:       baseId + "-connect-data",
-		Text:     "Connect Data",
-		Icon:     "plug",
-		SubTitle: "Manage data sources",
-		Url:      baseUrl + "/connect-data",
+		Id:       "connections-connect-data",
+		Text:     "Connect data",
+		SubTitle: "Browse and create new connections",
+		Url:      s.cfg.AppSubURL + "/connections/connect-data",
+		Children: []*navtree.NavLink{},
 	})
 
+	// Connections (main)
 	navLink = &navtree.NavLink{
 		Text:       "Connections",
 		Icon:       "link",
-		Id:         baseId,
+		Id:         "connections",
 		Url:        baseUrl,
 		Children:   children,
 		Section:    navtree.NavSectionCore,

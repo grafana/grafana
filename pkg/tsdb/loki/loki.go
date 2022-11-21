@@ -130,6 +130,10 @@ func getAuthHeadersForCallResource(headers map[string][]string) map[string]strin
 		data["Cookie"] = cookie
 	}
 
+	if idToken := arrayHeaderFirstValue(headers["X-ID-Token"]); idToken != "" {
+		data["X-ID-Token"] = idToken
+	}
+
 	return data
 }
 
@@ -184,17 +188,17 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	}
 
 	for _, query := range queries {
-		_, span := tracer.Start(ctx, "alerting.loki")
+		_, span := tracer.Start(ctx, "datasource.loki")
 		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
 		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
-		defer span.End()
 
 		logger := logger.FromContext(ctx) // get logger with trace-id and other contextual info
 		logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
 		frames, err := runQuery(ctx, api, query)
 
+		span.End()
 		queryRes := backend.DataResponse{}
 
 		if err != nil {

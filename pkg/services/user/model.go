@@ -203,6 +203,7 @@ type SignedInUser struct {
 	Name               string
 	Email              string
 	ApiKeyID           int64 `xorm:"api_key_id"`
+	IsServiceAccount   bool  `xorm:"is_service_account"`
 	OrgCount           int
 	IsGrafanaAdmin     bool
 	IsAnonymous        bool
@@ -276,16 +277,26 @@ func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
 	return u.OrgRole.Includes(role)
 }
 
+// IsRealUser returns true if the user is a real user and not a service account
 func (u *SignedInUser) IsRealUser() bool {
-	return u.UserID > 0
+	// backwards compatibility
+	// checking if userId the user is a real user
+	// previously we used to check if the UserId was 0 or -1
+	// and not a service account
+	return u.UserID > 0 && !u.IsServiceAccountUser()
 }
 
 func (u *SignedInUser) IsApiKeyUser() bool {
 	return u.ApiKeyID > 0
 }
 
+// IsServiceAccountUser returns true if the user is a service account
+func (u *SignedInUser) IsServiceAccountUser() bool {
+	return u.IsServiceAccount
+}
+
 func (u *SignedInUser) HasUniqueId() bool {
-	return u.IsRealUser() || u.IsApiKeyUser()
+	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
 func (u *SignedInUser) GetCacheKey() (string, error) {
@@ -294,6 +305,9 @@ func (u *SignedInUser) GetCacheKey() (string, error) {
 	}
 	if u.IsApiKeyUser() {
 		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
+	}
+	if u.IsServiceAccountUser() { // not considered a real user
+		return fmt.Sprintf("%d-service-%d", u.OrgID, u.UserID), nil
 	}
 	return "", ErrNoUniqueID
 }
@@ -343,3 +357,8 @@ type SearchUserFilter interface {
 }
 
 type FilterHandler func(params []string) (Filter, error)
+
+const (
+	QuotaTargetSrv string = "user"
+	QuotaTarget    string = "user"
+)

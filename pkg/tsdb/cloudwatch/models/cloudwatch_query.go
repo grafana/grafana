@@ -14,7 +14,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type (
@@ -61,7 +62,7 @@ type CloudWatchQuery struct {
 	MetricEditorMode  MetricEditorMode
 }
 
-func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
+func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {
 		if q.IsInferredSearchExpression() {
 			return GMDApiModeInferredSearchExpression
@@ -73,7 +74,7 @@ func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	cwlog.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 
@@ -289,7 +290,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		suffix := refId
 		if !validMetricDataID.MatchString(suffix) {
 			newUUID := uuid.NewString()
-			suffix = strings.Replace(newUUID, "-", "", -1)
+			suffix = strings.ReplaceAll(newUUID, "-", "")
 		}
 		q.Id = fmt.Sprintf("query%s", suffix)
 	}
@@ -435,8 +436,8 @@ func parseDimensions(dimensions map[string]interface{}) (map[string][]string, er
 }
 
 func sortDimensions(dimensions map[string][]string) map[string][]string {
-	sortedDimensions := make(map[string][]string)
-	var keys []string
+	sortedDimensions := make(map[string][]string, len(dimensions))
+	keys := make([]string, 0, len(dimensions))
 	for k := range dimensions {
 		keys = append(keys, k)
 	}

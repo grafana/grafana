@@ -2,30 +2,25 @@ package prometheus
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/patrickmn/go-cache"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/yudai/gojsondiff"
-	"github.com/yudai/gojsondiff/formatter"
-
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
+	"github.com/patrickmn/go-cache"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 var plog = log.New("tsdb.prometheus")
@@ -53,7 +48,7 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
-		opts, err := buffered.CreateTransportOptions(settings, cfg, plog)
+		opts, err := client.CreateTransportOptions(settings, cfg, plog)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
@@ -98,41 +93,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParser) || s.features.IsEnabled(featuremgmt.FlagPrometheusWideSeries) {
-		return i.queryData.Execute(ctx, req)
+	if s.features.IsEnabled(featuremgmt.FlagPrometheusBufferedClient) {
+		return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
 	}
 
-	// To test the new client implementation this can be run and we do 2 requests and compare.
-	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParserTest) {
-		var wg sync.WaitGroup
-		var streamData *backend.QueryDataResponse
-		var streamError error
-
-		var data *backend.QueryDataResponse
-		var err error
-
-		plog.FromContext(ctx).Debug("PrometheusStreamingJSONParserTest", "req", req)
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			streamData, streamError = i.queryData.Execute(ctx, req)
-		}()
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			data, err = i.buffered.ExecuteTimeSeriesQuery(ctx, req)
-		}()
-
-		wg.Wait()
-
-		// Report can take a while and we don't really need to wait for it.
-		go reportDiff(data, err, streamData, streamError)
-		return data, err
-	}
-
-	return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
+	return i.queryData.Execute(ctx, req)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -185,49 +150,4 @@ func ConvertAPIError(err error) error {
 		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
 	}
 	return err
-}
-
-func reportDiff(data *backend.QueryDataResponse, err error, streamData *backend.QueryDataResponse, streamError error) {
-	if err == nil && streamError != nil {
-		plog.Debug("PrometheusStreamingJSONParserTest error in streaming client", "err", streamError)
-	}
-
-	if err != nil && streamError == nil {
-		plog.Debug("PrometheusStreamingJSONParserTest error in buffer but not streaming", "err", err)
-	}
-
-	if !reflect.DeepEqual(data, streamData) {
-		plog.Debug("PrometheusStreamingJSONParserTest buffer and streaming data are different")
-		dataJson, jsonErr := json.MarshalIndent(data, "", "\t")
-		if jsonErr != nil {
-			plog.Debug("PrometheusStreamingJSONParserTest error marshaling data", "jsonErr", jsonErr)
-		}
-		streamingJson, jsonErr := json.MarshalIndent(streamData, "", "\t")
-		if jsonErr != nil {
-			plog.Debug("PrometheusStreamingJSONParserTest error marshaling streaming data", "jsonErr", jsonErr)
-		}
-		differ := gojsondiff.New()
-		d, diffErr := differ.Compare(dataJson, streamingJson)
-		if diffErr != nil {
-			plog.Debug("PrometheusStreamingJSONParserTest diff error", "err", diffErr)
-		}
-		config := formatter.AsciiFormatterConfig{
-			ShowArrayIndex: true,
-			Coloring:       true,
-		}
-
-		var aJson map[string]interface{}
-		unmarshallErr := json.Unmarshal(dataJson, &aJson)
-		if unmarshallErr != nil {
-			plog.Debug("PrometheusStreamingJSONParserTest unmarshall error", "err", unmarshallErr)
-		}
-		formatter := formatter.NewAsciiFormatter(aJson, config)
-		diffString, diffErr := formatter.Format(d)
-		if diffErr != nil {
-			plog.Debug("PrometheusStreamingJSONParserTest diff format error", "err", diffErr)
-		}
-		fmt.Println(diffString)
-	} else {
-		plog.Debug("PrometheusStreamingJSONParserTest responses are the same")
-	}
 }

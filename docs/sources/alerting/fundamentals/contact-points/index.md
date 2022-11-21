@@ -38,13 +38,13 @@ The following table lists the contact point types supported by Grafana.
 | [Pagerduty](https://www.pagerduty.com/)          | `pagerduty`               | Supported            | Supported                                                                                                |
 | [Prometheus Alertmanager](https://prometheus.io) | `prometheus-alertmanager` | Supported            | N/A                                                                                                      |
 | [Pushover](https://pushover.net/)                | `pushover`                | Supported            | Supported                                                                                                |
-| [Sensu](https://sensu.io/)                       | `sensu`                   | Supported            | N/A                                                                                                      |
 | [Sensu Go](https://docs.sensu.io/sensu-go/)      | `sensugo`                 | Supported            | N/A                                                                                                      |
 | [Slack](https://slack.com/)                      | `slack`                   | Supported            | Supported                                                                                                |
 | [Telegram](https://telegram.org/)                | `telegram`                | Supported            | N/A                                                                                                      |
 | [Threema](https://threema.ch/)                   | `threema`                 | Supported            | N/A                                                                                                      |
 | [VictorOps](https://help.victorops.com/)         | `victorops`               | Supported            | Supported                                                                                                |
 | [Webhook](#webhook)                              | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| [Cisco Webex Teams](#webex)                      | `webex`                   | Supported            | Supported                                                                                                |
 | [WeCom](#wecom)                                  | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
 

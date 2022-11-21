@@ -2,20 +2,22 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
-import { Space } from '@grafana/experimental';
+import { EditorMode, Space } from '@grafana/experimental';
 
 import { SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
-import { SQLQuery, QueryRowFilter, SQLOptions, EditorMode } from '../types';
+import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
-import { QueryHeader } from './QueryHeader';
+import { QueryHeader, QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-type Props = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
+interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
+  queryHeaderProps?: Pick<QueryHeaderProps, 'isDatasetSelectorHidden'>;
+}
 
-export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
+export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
   const { loading, error } = useAsync(async () => {
@@ -84,6 +86,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
+        {...queryHeaderProps}
       />
 
       <Space v={0.5} />

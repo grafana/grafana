@@ -1,15 +1,16 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
-import { Scene } from '../components/Scene';
-import { SceneCanvasText } from '../components/SceneCanvasText';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
-import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneToolbarInput } from '../components/SceneToolbarButton';
-import { VizPanel } from '../components/VizPanel';
+import {
+  Scene,
+  SceneCanvasText,
+  ScenePanelRepeater,
+  SceneTimePicker,
+  SceneToolbarInput,
+  SceneFlexLayout,
+  VizPanel,
+} from '../components';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
 export function getFlexLayoutTest(): Scene {
   const scene = new Scene({
@@ -18,12 +19,12 @@ export function getFlexLayoutTest(): Scene {
       direction: 'row',
       children: [
         new VizPanel({
+          size: { minWidth: '70%' },
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
-          size: { minWidth: '70%' },
+          $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
         }),
         new SceneFlexLayout({
-          // size: { width: 450 },
           direction: 'column',
           children: [
             new VizPanel({
@@ -35,34 +36,23 @@ export function getFlexLayoutTest(): Scene {
               title: 'Fill height',
             }),
             new SceneCanvasText({
+              size: { ySizing: 'content' },
               text: 'Size to content',
               fontSize: 20,
-              size: { ySizing: 'content' },
               align: 'center',
             }),
             new VizPanel({
+              size: { height: 300 },
               pluginId: 'timeseries',
               title: 'Fixed height',
-              size: { height: 300 },
             }),
           ],
         }),
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $timeRange: new SceneTimeRange(),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 
@@ -70,19 +60,10 @@ export function getFlexLayoutTest(): Scene {
 }
 
 export function getScenePanelRepeaterTest(): Scene {
-  const queryRunner = new SceneQueryRunner({
-    queries: [
-      {
-        refId: 'A',
-        datasource: {
-          uid: 'gdev-testdata',
-          type: 'testdata',
-        },
-        seriesCount: 2,
-        alias: '__server_names',
-        scenarioId: 'random_walk',
-      },
-    ],
+  const queryRunner = getQueryRunnerWithRandomWalkQuery({
+    seriesCount: 2,
+    alias: '__server_names',
+    scenarioId: 'random_walk',
   });
 
   const scene = new Scene({
@@ -92,6 +73,7 @@ export function getScenePanelRepeaterTest(): Scene {
         direction: 'column',
         children: [
           new SceneFlexLayout({
+            direction: 'row',
             size: { minHeight: 200 },
             children: [
               new VizPanel({
@@ -115,7 +97,7 @@ export function getScenePanelRepeaterTest(): Scene {
       }),
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: queryRunner,
     actions: [
       new SceneToolbarInput({

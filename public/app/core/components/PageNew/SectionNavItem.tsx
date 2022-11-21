@@ -24,7 +24,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: Boolean(children?.length),
+    [styles.isSection]: Boolean(children?.length) || item.isSection,
     [styles.hasActiveChild]: hasActiveChild,
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
@@ -66,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover,
       &:focus {
         text-decoration: underline;
+        z-index: 1;
       }
     `,
     activeStyle: css`

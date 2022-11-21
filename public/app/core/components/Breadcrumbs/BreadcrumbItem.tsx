@@ -44,8 +44,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       padding: theme.spacing(0, 0.5),
       whiteSpace: 'nowrap',
+      color: theme.colors.text.secondary,
     }),
     breadcrumbLink: css({
+      color: theme.colors.text.primary,
       '&:hover': {
         textDecoration: 'underline',
       },
@@ -55,7 +57,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       display: 'flex',
       flex: 1,
-      fontWeight: theme.typography.fontWeightMedium,
       minWidth: 0,
       maxWidth: 'max-content',
 
