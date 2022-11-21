@@ -67,4 +67,8 @@ func GetServerAdminNode(children []*NavLink) *NavLink {
 		Section:      NavSectionConfig,
 		Children:     children,
 	}
+
+	if len(root.Children) < 1 {
+		root.Children = make([]*NavLink, 0)
+	}
 }
