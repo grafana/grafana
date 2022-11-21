@@ -59,9 +59,7 @@ export interface Props {
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
-  /**
-   * @alpha
-   * */
+  /** @alpha */
   subData?: DataFrame[];
 }
 
