@@ -28,6 +28,8 @@ import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style, Circle } from 'ol/style';
 import Feature from 'ol/Feature';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { LineString, SimpleGeometry } from 'ol/geom';
+import FlowLine from 'ol-ext/style/FlowLine';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -87,10 +89,39 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       vectorLayer.setStyle(routeStyle(style.base));
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
+        // TODO better understand how we want to apply color logic functions
         const idx = feature.get('rowIndex') as number;
         const dims = style.dims;
         if (!dims || !isNumber(idx)) {
           return routeStyle(style.base);
+        }
+
+        const styles = [];
+        const geom = feature.getGeometry();
+
+        let opacityString: string;
+        const opacityInt = Math.floor((style.config.opacity ?? 1) * 255);
+        opacityString = opacityInt.toString(16).toLocaleUpperCase();
+        if (opacityInt < 16) {
+          opacityString = '0' + opacityString;
+        }
+
+        if (geom instanceof SimpleGeometry) {
+          const coordinates = geom.getCoordinates();
+          for (let i = 0; i < coordinates!.length - 1; i++) {
+            const flowStyle = new FlowLine({
+              visible: true,
+              lineCap: 'round', // TODO make this an option
+              color: dims!.color!.get(i) + opacityString,
+              color2: dims!.color!.get(i + 1) + opacityString,
+              width: style.config.lineWidth,
+            });
+            const LS = new LineString([coordinates![i], coordinates![i + 1]]);
+            flowStyle.setGeometry(LS);
+            styles.push(flowStyle);
+          }
+
+          return styles;
         }
 
         const values = { ...style.base };
@@ -110,10 +141,10 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         radius: crosshairRadius,
         stroke: new Stroke({
           color: alpha(style.base.color, 0.4),
-          width: crosshairRadius + 2
+          width: crosshairRadius + 2,
         }),
-        fill: new Fill({color: style.base.color}),
-      })
+        fill: new Fill({ color: style.base.color }),
+      }),
     });
 
     const crosshairLayer = new VectorLayer({
@@ -124,7 +155,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     });
 
     const layer = new LayerGroup({
-      layers: [vectorLayer, crosshairLayer]
+      layers: [vectorLayer, crosshairLayer],
     });
 
     // Crosshair sharing subscriptions
@@ -194,7 +225,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             name: 'Style',
             editor: StyleEditor,
             settings: {
-              simpleFixedValues: true,
+              simpleFixedValues: false,
             },
             defaultValue: defaultOptions.style,
           })
@@ -229,7 +260,7 @@ function findNearestTimeIndex(timestamps: number[], time: number): number | null
     return lastIdx;
   }
 
-  const probableIdx = Math.abs(Math.round(lastIdx * (time - timestamps[0]) / (timestamps[lastIdx] - timestamps[0])));
+  const probableIdx = Math.abs(Math.round((lastIdx * (time - timestamps[0])) / (timestamps[lastIdx] - timestamps[0])));
   if (time < timestamps[probableIdx]) {
     for (let i = probableIdx; i > 0; i--) {
       if (time > timestamps[i]) {
