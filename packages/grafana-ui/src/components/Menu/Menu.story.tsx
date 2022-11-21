@@ -53,7 +53,7 @@ export function Examples() {
         <Menu>
           <Menu.Item label="Google" icon="search-plus" />
           <Menu.Item label="Disabled action" icon="history" disabled />
-          <Menu.Item label="Disabled link" icon="external-link-alt" disabled />
+          <Menu.Item label="Disabled link" icon="external-link-alt" url="http://google.com" target="_blank" disabled />
           <Menu.Item
             label="Submenu"
             icon="apps"
@@ -104,7 +104,6 @@ export function Examples() {
           <Menu.Item
             label="item2"
             icon="apps"
-            disabled
             childItems={[
               <Menu.Item key="subitem1" label="subitem1" icon="history" />,
               <Menu.Item key="subitem2" label="subitem2" icon="apps" />,
