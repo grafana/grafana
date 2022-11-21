@@ -30,7 +30,7 @@ func mockGithubRepositoryClient(context.Context, string) githubRepositoryService
 	return mockGitHubRepositoryService
 }
 
-func TestPublishGitHub(t *testing.T) {
+func TestPublishGithub(t *testing.T) {
 	t.Setenv("DRONE_BUILD_EVENT", "promote")
 	testApp, testPath := setupPublishGithubTests(t)
 	mockErrUnauthorized := errors.New("401")
@@ -154,7 +154,7 @@ func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
 	newGithubClient = mockGithubRepositoryClient
 
 	testApp := cli.NewApp()
-	testApp.Action = PublishGitHub
+	testApp.Action = PublishGithub
 	testApp.Flags = []cli.Flag{
 		&dryRunFlag,
 		&cli.StringFlag{

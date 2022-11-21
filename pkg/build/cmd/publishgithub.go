@@ -39,9 +39,9 @@ var (
 	errReleaseNotFound = errors.New(`release not found, use "--create" to create the release`)
 )
 
-func PublishGitHub(ctx *cli.Context) error {
+func PublishGithub(ctx *cli.Context) error {
 	token := os.Getenv("GH_TOKEN")
-	f, err := getFlags(ctx)
+	f, err := getPublishGithubFlags(ctx)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func PublishGitHub(ctx *cli.Context) error {
 	}
 
 	if f.dryRun {
-		return runDryRun(f, token, ctx)
+		return runPublishGithubDryRun(f, token, ctx)
 	}
 
 	client := newGithubClient(ctx.Context, token)
@@ -99,7 +99,7 @@ func githubRepositoryClient(ctx context.Context, token string) githubRepositoryS
 	return client.Repositories
 }
 
-func getFlags(ctx *cli.Context) (*publishGithubFlags, error) {
+func getPublishGithubFlags(ctx *cli.Context) (*publishGithubFlags, error) {
 	metadata, err := GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
@@ -126,12 +126,12 @@ func getFlags(ctx *cli.Context) (*publishGithubFlags, error) {
 	}, nil
 }
 
-func runDryRun(f *publishGithubFlags, token string, ctx *cli.Context) error {
+func runPublishGithubDryRun(f *publishGithubFlags, token string, ctx *cli.Context) error {
 	client := newGithubClient(ctx.Context, token)
 	fmt.Println("Dry-Run: Retrieving release on repository by tag")
 	release, res, err := client.GetReleaseByTag(ctx.Context, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {
-		fmt.Println("Dry-Run: GitHub communication error:\n", err)
+		fmt.Println("Dry-Run: Github communication error:\n", err)
 		return nil
 	}
 

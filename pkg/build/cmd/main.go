@@ -213,7 +213,7 @@ func main() {
 				{
 					Name:   "github",
 					Usage:  "Publish packages to GitHub releases",
-					Action: PublishGitHub,
+					Action: PublishGithub,
 					Flags: []cli.Flag{
 						&dryRunFlag,
 						&cli.StringFlag{
