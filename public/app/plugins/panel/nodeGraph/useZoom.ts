@@ -44,14 +44,13 @@ export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
   }, [scale, stepDown, min]);
 
   const onWheel = useCallback(
-    function (event: Event) {
+    function (wheelEvent: WheelEvent) {
       // Seems like typing for the addEventListener is lacking a bit
-      const wheelEvent = event as WheelEvent;
 
       // Only do this with special key pressed similar to how google maps work.
       // TODO: I would guess this won't work very well with touch right now
       if (wheelEvent.ctrlKey || wheelEvent.metaKey) {
-        event.preventDefault();
+        wheelEvent.preventDefault();
 
         setScale(Math.min(Math.max(min ?? -Infinity, scale + Math.min(wheelEvent.deltaY, 2) * -0.01), max ?? Infinity));
 

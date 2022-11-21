@@ -135,7 +135,7 @@ export function processNodes(
         target,
         mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
         secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
-      } as EdgeDatum;
+      };
     });
   }
 

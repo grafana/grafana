@@ -36,7 +36,10 @@ function countEslintErrors() {
         };
 
         const isTestFile =
-          filePath.endsWith('.test.tsx') || filePath.endsWith('.test.ts') || filePath.includes('__mocks__');
+          filePath.endsWith('.test.tsx') ||
+          filePath.endsWith('.test.ts') ||
+          filePath.includes('__mocks__') ||
+          filePath.includes('public/test/');
 
         if (!isTestFile) {
           rules['@typescript-eslint/consistent-type-assertions'] = [

@@ -5,7 +5,7 @@ import { statPanelChangedHandler } from './StatMigrations';
 
 describe('Stat Panel Migrations', () => {
   it('change from angular singlestat sparkline disabled', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -21,7 +21,7 @@ describe('Stat Panel Migrations', () => {
   });
 
   it('change from angular singlestat sparkline enabled', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -37,7 +37,7 @@ describe('Stat Panel Migrations', () => {
   });
 
   it('change from angular singlestat color background', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -51,7 +51,7 @@ describe('Stat Panel Migrations', () => {
   });
 
   it('change from angular singlestat with name stat', () => {
-    const old: any = {
+    const old = {
       angular: {
         valueName: 'name',
       },
