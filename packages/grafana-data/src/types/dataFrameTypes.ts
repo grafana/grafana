@@ -7,6 +7,10 @@
 export enum DataFrameType {
   TimeSeriesWide = 'timeseries-wide',
   TimeSeriesLong = 'timeseries-long',
+
+  /** @deprecated to be removed in v10 */
+  TimeSeriesMany = 'timeseries-many',
+
   TimeSeriesMulti = 'timeseries-multi',
 
   /** Directory listing */
