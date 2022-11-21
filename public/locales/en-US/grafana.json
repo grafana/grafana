@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -408,6 +413,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {
