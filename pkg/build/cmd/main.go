@@ -187,6 +187,30 @@ func main() {
 								&editionFlag,
 							},
 						},
+						{
+							Name:      "publish-enterprise2",
+							Usage:     "Handle Grafana Enterprise2 Docker images",
+							ArgsUsage: "[version]",
+							Action:    Enterprise2,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "version-tag",
+									Usage: "Grafana version docker tag",
+								},
+								&cli.StringSliceFlag{
+									Name:  "base",
+									Usage: "Base OS used to build Docker image",
+								},
+								&cli.StringSliceFlag{
+									Name:  "arch",
+									Usage: "Architectures to use Docker image",
+								},
+								&cli.StringFlag{
+									Name:  "dockerhub-repo",
+									Usage: "DockerHub repo to push images",
+								},
+							},
+						},
 					},
 				},
 			},
