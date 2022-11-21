@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen } from '@grafana/data';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
@@ -35,13 +35,13 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  getMainFrame() {
-    const { tableResult } = this.props;
-    return tableResult?.find((df) => !df.meta?.custom?.parentRowIndex) || tableResult?.[0];
+  getMainFrame(frames: DataFrame[] | null) {
+    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
   }
 
   getTableHeight() {
-    const mainFrame = this.getMainFrame();
+    const { tableResult } = this.props;
+    const mainFrame = this.getMainFrame(tableResult);
 
     if (!mainFrame || mainFrame.length === 0) {
       return 200;
@@ -87,8 +87,8 @@ export class TableContainer extends PureComponent<Props> {
       }
     }
 
-    const mainFrame = this.getMainFrame();
-    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex);
+    const mainFrame = this.getMainFrame(dataFrames);
+    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
 
     return (
       <Collapse label="Table" loading={loading} isOpen>

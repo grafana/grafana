@@ -314,7 +314,7 @@ export const Table = memo((props: Props) => {
           const subTableStyle: CSSProperties = {
             height: tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)), // account for the header with + 1
             background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
-            paddingLeft: 50,
+            paddingLeft: EXPANDER_WIDTH,
             position: 'absolute',
             bottom: 0,
           };
