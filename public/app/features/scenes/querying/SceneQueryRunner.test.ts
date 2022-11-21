@@ -73,6 +73,8 @@ describe('SceneQueryRunner', () => {
 
       queryRunner.setContainerWidth(1000);
 
+      expect(queryRunner.state.data?.state).toBeUndefined();
+
       await new Promise((r) => setTimeout(r, 1));
 
       expect(queryRunner.state.data?.state).toBe(LoadingState.Done);
