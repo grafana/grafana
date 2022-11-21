@@ -1,7 +1,15 @@
 import React from 'react';
 import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
-import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, TimeZone, UrlQueryMap } from '@grafana/data';
+import {
+  BusEvent,
+  BusEventHandler,
+  BusEventType,
+  PanelData,
+  TimeRange,
+  UrlQueryMap,
+  UrlQueryValue,
+} from '@grafana/data';
 
 import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/types';
 
@@ -150,4 +158,10 @@ export function isSceneObject(obj: any): obj is SceneObject {
 export interface SceneObjectWithUrlSync extends SceneObject {
   getUrlState(): UrlQueryMap;
   updateFromUrl(values: UrlQueryMap): void;
+}
+
+export interface SceneObjectUrlSyncHandler<TState> {
+  getKeys(): Set<string>;
+  toUrlValues(): Map<string, UrlQueryValue>;
+  fromUrlValues(values: Map<string, UrlQueryValue>);
 }
