@@ -16,7 +16,6 @@ load('scripts/drone/vault.star', 'secrets')
 def main(ctx):
     edition = 'oss'
     return pr_pipelines(edition=edition) + main_pipelines(edition=edition) + oss_pipelines() + enterprise_pipelines() + enterprise2_pipelines() + \
-        enterprise2_pipelines(prefix='promote-', trigger = {'event': ['promote'], 'target': ['enterprise2'],}) + \
         enterprise2_pipelines(prefix='custom-', trigger = {'event': ['custom']},) + \
         publish_image_pipelines_public() + publish_image_pipelines_security() + \
         publish_artifacts_pipelines('security') + publish_artifacts_pipelines('public') + \
