@@ -127,7 +127,7 @@ func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Re
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
-	cmd := models.CreateOrgCommand{}
+	cmd := org.CreateOrgCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -136,8 +136,9 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusForbidden, "Access denied", nil)
 	}
 
-	cmd.UserId = c.UserID
-	if err := hs.SQLStore.CreateOrg(c.Req.Context(), &cmd); err != nil {
+	cmd.UserID = c.UserID
+	result, err := hs.orgService.CreateWithMember(c.Req.Context(), &cmd)
+	if err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(http.StatusConflict, "Organization name taken", err)
 		}
@@ -147,7 +148,7 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 	metrics.MApiOrgCreate.Inc()
 
 	return response.JSON(http.StatusOK, &util.DynMap{
-		"orgId":   cmd.Result.Id,
+		"orgId":   result.ID,
 		"message": "Organization created",
 	})
 }

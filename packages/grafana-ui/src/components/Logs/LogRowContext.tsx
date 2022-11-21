@@ -135,7 +135,7 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
 }) => {
   const { commonStyles, logs } = useStyles2(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
-  const listContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
+  const listContainerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     // We want to scroll to bottom only when we receive first 10 log lines

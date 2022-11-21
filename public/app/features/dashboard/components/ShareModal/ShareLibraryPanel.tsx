@@ -1,16 +1,16 @@
-import { Trans } from '@lingui/macro';
 import React, { useEffect } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
+import { Trans } from 'app/core/internationalization';
 import { AddLibraryPanelContents } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 
 import { ShareModalTabProps } from './types';
 
 interface Props extends ShareModalTabProps {
-  initialFolderId?: number;
+  initialFolderUid?: string;
 }
 
-export const ShareLibraryPanel = ({ panel, initialFolderId, onDismiss }: Props) => {
+export const ShareLibraryPanel = ({ panel, initialFolderUid, onDismiss }: Props) => {
   useEffect(() => {
     reportInteraction('grafana_dashboards_library_panel_share_viewed');
   }, []);
@@ -22,9 +22,9 @@ export const ShareLibraryPanel = ({ panel, initialFolderId, onDismiss }: Props) 
   return (
     <>
       <p className="share-modal-info-text">
-        <Trans id="share-modal.library.info">Create library panel.</Trans>
+        <Trans i18nKey="share-modal.library.info">Create library panel.</Trans>
       </p>
-      <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={onDismiss!} />
+      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={onDismiss!} />
     </>
   );
 };

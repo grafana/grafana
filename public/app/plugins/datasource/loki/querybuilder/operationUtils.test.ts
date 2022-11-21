@@ -1,4 +1,6 @@
-import { createRangeOperation, createRangeOperationWithGrouping } from './operationUtils';
+import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+
+import { createRangeOperation, createRangeOperationWithGrouping, getLineFilterRenderer } from './operationUtils';
 import { LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
@@ -120,5 +122,37 @@ describe('createRangeOperationWithGrouping', () => {
       '{job="grafana"}'
     );
     expect(query).toBe('avg_over_time({job="grafana"} [[$__interval]]) without (source)');
+  });
+});
+
+describe('getLineFilterRenderer', () => {
+  const MOCK_MODEL = {
+    id: '__line_contains',
+    params: ['error'],
+  };
+  const MOCK_MODEL_INSENSITIVE = {
+    id: '__line_contains_case_insensitive',
+    params: ['ERrOR'],
+  };
+
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+
+  const MOCK_INNER_EXPR = '{job="grafana"}';
+
+  it('getLineFilterRenderer returns a function', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~');
+    expect(typeof lineFilterRenderer).toBe('function');
+  });
+
+  it('lineFilterRenderer returns the correct query for line contains', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~');
+    expect(lineFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ `error`');
+  });
+
+  it('lineFilterRenderer returns the correct query for line contains case insensitive', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~', true);
+    expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
+      '{job="grafana"} !~ `(?i)ERrOR`'
+    );
   });
 });

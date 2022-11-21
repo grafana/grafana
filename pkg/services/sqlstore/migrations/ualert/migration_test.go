@@ -119,14 +119,10 @@ func TestAddDashAlertMigration(t *testing.T) {
 	}
 }
 
-// TestDashAlertMigration tests the execution of the main DashAlertMigration.
-func TestDashAlertMigration(t *testing.T) {
+// TestAMConfigMigration tests the execution of the main DashAlertMigration specifically for migrations of channels and routes.
+func TestAMConfigMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
-
-	emailSettings := `{"addresses": "test"}`
-	slackSettings := `{"recipient": "test", "token": "test"}`
-	opsgenieSettings := `{"apiKey": "test"}`
 
 	tc := []struct {
 		name           string
@@ -161,12 +157,9 @@ func TestDashAlertMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")}, // These Matchers are temporary and will be replaced below with generated rule_uid.
-								{Matchers: createAlertNameMatchers("alert2"), Routes: []*ualert.Route{
-									{Receiver: "notifier2", Matchers: createAlertNameMatchers("alert2"), Continue: true},
-									{Receiver: "notifier3", Matchers: createAlertNameMatchers("alert2"), Continue: true},
-								}},
-								{Receiver: "notifier3", Matchers: createAlertNameMatchers("alert3")},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier3", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -183,15 +176,9 @@ func TestDashAlertMigration(t *testing.T) {
 							Receiver:   "notifier6",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Matchers: createAlertNameMatchers("alert4"), Routes: []*ualert.Route{
-									{Receiver: "notifier4", Matchers: createAlertNameMatchers("alert4"), Continue: true},
-									{Receiver: "notifier6", Matchers: createAlertNameMatchers("alert4"), Continue: true},
-								}},
-								{Matchers: createAlertNameMatchers("alert5"), Routes: []*ualert.Route{
-									{Receiver: "notifier4", Matchers: createAlertNameMatchers("alert5"), Continue: true},
-									{Receiver: "notifier5", Matchers: createAlertNameMatchers("alert5"), Continue: true},
-									{Receiver: "notifier6", Matchers: createAlertNameMatchers("alert5"), Continue: true},
-								}},
+								{Receiver: "notifier4", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier4".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier5", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier5".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier6", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier6".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -215,6 +202,9 @@ func TestDashAlertMigration(t *testing.T) {
 						Route: &ualert.Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes: []*ualert.Route{
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -236,6 +226,9 @@ func TestDashAlertMigration(t *testing.T) {
 						Route: &ualert.Route{
 							Receiver:   "notifier1",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes: []*ualert.Route{
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -257,6 +250,10 @@ func TestDashAlertMigration(t *testing.T) {
 						Route: &ualert.Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes: []*ualert.Route{
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -281,6 +278,11 @@ func TestDashAlertMigration(t *testing.T) {
 						Route: &ualert.Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes: []*ualert.Route{
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier3", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true},
+							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -307,6 +309,10 @@ func TestDashAlertMigration(t *testing.T) {
 						Route: &ualert.Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes: []*ualert.Route{
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
+							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -334,11 +340,8 @@ func TestDashAlertMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")},
-								{Matchers: createAlertNameMatchers("alert2"), Routes: []*ualert.Route{
-									{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert2"), Continue: true},
-									{Receiver: "notifier2", Matchers: createAlertNameMatchers("alert2"), Continue: true},
-								}},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+								{Receiver: "notifier2", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -362,6 +365,9 @@ func TestDashAlertMigration(t *testing.T) {
 						Route: &ualert.Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes: []*ualert.Route{
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -385,6 +391,9 @@ func TestDashAlertMigration(t *testing.T) {
 						Route: &ualert.Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes: []*ualert.Route{
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
+							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
 							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
@@ -410,7 +419,7 @@ func TestDashAlertMigration(t *testing.T) {
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 							Routes: []*ualert.Route{
-								{Receiver: "notifier1", Matchers: createAlertNameMatchers("alert1")},
+								{Receiver: "notifier1", ObjectMatchers: ualert.ObjectMatchers{{Type: 2, Name: ualert.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -427,16 +436,7 @@ func TestDashAlertMigration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer teardown(t, x)
 			setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts)
-
-			_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
-			require.NoError(t, errDeleteMig)
-
-			alertMigrator := migrator.NewMigrator(x, &setting.Cfg{})
-			alertMigrator.AddMigration(ualert.RmMigTitle, &ualert.RmMigration{})
-			ualert.AddDashAlertMigration(alertMigrator)
-
-			errRunningMig := alertMigrator.Start(false, 0)
-			require.NoError(t, errRunningMig)
+			runDashAlertMigrationTestRun(t, x)
 
 			for orgId := range tt.expected {
 				amConfig := getAlertmanagerConfig(t, x, orgId)
@@ -451,17 +451,13 @@ func TestDashAlertMigration(t *testing.T) {
 					t.Errorf("Unexpected Receivers: %v", cmp.Diff(tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...))
 				}
 
-				// Since routes and alerts are connecting solely by the Matchers on rule_uid, which is created at runtime we need to do some prep-work to populate the expected Matchers.
-				alertUids := getAlertNameToUidMap(t, x, orgId)
-				replaceAlertNameMatcherWithRuleUid(t, tt.expected[orgId].AlertmanagerConfig.Route.Routes, alertUids)
-
-				// Order of nested routes is not guaranteed.
+				// Order of routes is not guaranteed.
 				cOpt = []cmp.Option{
 					cmpopts.SortSlices(func(a, b *ualert.Route) bool {
 						if a.Receiver != b.Receiver {
 							return a.Receiver < b.Receiver
 						}
-						return a.Matchers[0].Value < b.Matchers[0].Value
+						return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
 					}),
 					cmpopts.IgnoreUnexported(ualert.Route{}, labels.Matcher{}),
 				}
@@ -472,6 +468,87 @@ func TestDashAlertMigration(t *testing.T) {
 		})
 	}
 }
+
+// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of alerts.
+func TestDashAlertMigration(t *testing.T) {
+	// Run initial migration to have a working DB.
+	x := setupTestDB(t)
+
+	t.Run("when DashAlertMigration create ContactLabel on migrated AlertRules", func(t *testing.T) {
+		defer teardown(t, x)
+		legacyChannels := []*models.AlertNotification{
+			createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
+			createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
+			createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false),
+			createAlertNotification(t, int64(2), "notifier4", "email", emailSettings, false),
+			createAlertNotification(t, int64(2), "notifier5", "slack", slackSettings, false),
+			createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, true), // default
+		}
+		alerts := []*models.Alert{
+			createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
+			createAlert(t, int64(1), int64(1), int64(2), "alert2", []string{"notifier2", "notifier3"}),
+			createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{"notifier3"}),
+			createAlert(t, int64(2), int64(3), int64(1), "alert4", []string{"notifier4"}),
+			createAlert(t, int64(2), int64(3), int64(2), "alert5", []string{"notifier4", "notifier5", "notifier6"}),
+			createAlert(t, int64(2), int64(4), int64(3), "alert6", []string{}),
+		}
+		expected := map[int64]map[string]*ngModels.AlertRule{
+			int64(1): {
+				"alert1": {Labels: map[string]string{ualert.ContactLabel: `"notifier1"`}},
+				"alert2": {Labels: map[string]string{ualert.ContactLabel: `"notifier2","notifier3"`}},
+				"alert3": {Labels: map[string]string{ualert.ContactLabel: `"notifier3"`}},
+			},
+			int64(2): {
+				"alert4": {Labels: map[string]string{ualert.ContactLabel: `"notifier4","notifier6"`}},
+				"alert5": {Labels: map[string]string{ualert.ContactLabel: `"notifier4","notifier5","notifier6"`}},
+				"alert6": {Labels: map[string]string{}},
+			},
+		}
+		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
+		runDashAlertMigrationTestRun(t, x)
+
+		for orgId := range expected {
+			rules := getAlertRules(t, x, orgId)
+			expectedRulesMap := expected[orgId]
+			require.Len(t, rules, len(expectedRulesMap))
+			for _, r := range rules {
+				require.Equal(t, expectedRulesMap[r.Title].Labels[ualert.ContactLabel], r.Labels[ualert.ContactLabel])
+			}
+		}
+	})
+
+	t.Run("when DashAlertMigration create ContactLabel with sanitized name if name contains double quote", func(t *testing.T) {
+		defer teardown(t, x)
+		legacyChannels := []*models.AlertNotification{
+			createAlertNotification(t, int64(1), "notif\"ier1", "email", emailSettings, false),
+		}
+		alerts := []*models.Alert{
+			createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notif\"ier1"}),
+		}
+		expected := map[int64]map[string]*ngModels.AlertRule{
+			int64(1): {
+				"alert1": {Labels: map[string]string{ualert.ContactLabel: `"notif_ier1"`}},
+			},
+		}
+		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
+		runDashAlertMigrationTestRun(t, x)
+
+		for orgId := range expected {
+			rules := getAlertRules(t, x, orgId)
+			expectedRulesMap := expected[orgId]
+			require.Len(t, rules, len(expectedRulesMap))
+			for _, r := range rules {
+				require.Equal(t, expectedRulesMap[r.Title].Labels[ualert.ContactLabel], r.Labels[ualert.ContactLabel])
+			}
+		}
+	})
+}
+
+const (
+	emailSettings    = `{"addresses": "test"}`
+	slackSettings    = `{"recipient": "test", "token": "test"}`
+	opsgenieSettings = `{"apiKey": "test"}`
+)
 
 // setupTestDB prepares the sqlite database and runs OSS migrations to initialize the schemas.
 func setupTestDB(t *testing.T) *xorm.Engine {
@@ -607,6 +684,19 @@ func teardown(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, err)
 }
 
+// setupDashAlertMigrationTestRun runs DashAlertMigration for a new test run.
+func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
+	_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
+	require.NoError(t, errDeleteMig)
+
+	alertMigrator := migrator.NewMigrator(x, &setting.Cfg{})
+	alertMigrator.AddMigration(ualert.RmMigTitle, &ualert.RmMigration{})
+	ualert.AddDashAlertMigration(alertMigrator)
+
+	errRunningMig := alertMigrator.Start(false, 0)
+	require.NoError(t, errRunningMig)
+}
+
 // setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
@@ -663,47 +753,15 @@ func getAlertmanagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *ualert.Po
 	return &config
 }
 
-// getAlertNameToUidMap fetches alert_rules from database to create map of alert.Name -> alert.Uid. This is needed as alert Uid is created during migration and is used to match routes to alerts.
-func getAlertNameToUidMap(t *testing.T, x *xorm.Engine, orgId int64) map[string]string {
-	t.Helper()
-	alerts := []struct {
-		Title string
-		Uid   string
-	}{}
-	err := x.Table("alert_rule").Where("org_id = ?", orgId).Find(&alerts)
+// getAlertmanagerConfig retreives the Alertmanager Config from the database for a given orgId.
+func getAlertRules(t *testing.T, x *xorm.Engine, orgId int64) []*ngModels.AlertRule {
+	rules := make([]*ngModels.AlertRule, 0)
+	err := x.Table("alert_rule").Where("org_id = ?", orgId).Find(&rules)
 	require.NoError(t, err)
 
-	res := make(map[string]string)
-	for _, alert := range alerts {
-		res[alert.Title] = alert.Uid
-	}
-	return res
-}
-
-// replaceAlertNameMatcherWithRuleUid replaces the stub matchers based on alert_name with the rule_uid's generated during migration.
-func replaceAlertNameMatcherWithRuleUid(t *testing.T, rts []*ualert.Route, alertUids map[string]string) {
-	for _, rt := range rts {
-		if len(rt.Matchers) > 0 {
-			// Replace alert name matcher with generated rule_uid matcher
-			for _, m := range rt.Matchers {
-				if m.Name == "alert_name" {
-					m.Name = "rule_uid"
-					m.Value = alertUids[m.Value]
-				}
-			}
-		}
-
-		// Recurse for nested routes.
-		replaceAlertNameMatcherWithRuleUid(t, rt.Routes, alertUids)
-	}
+	return rules
 }
 
 func boolPointer(b bool) *bool {
 	return &b
-}
-
-// createAlertNameMatchers creates a temporary alert_name Matchers that will be replaced during runtime with the generated rule_uid.
-func createAlertNameMatchers(alertName string) ualert.Matchers {
-	matcher, _ := labels.NewMatcher(labels.MatchEqual, "alert_name", alertName)
-	return ualert.Matchers(labels.Matchers{matcher})
 }

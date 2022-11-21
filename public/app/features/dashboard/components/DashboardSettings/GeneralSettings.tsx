@@ -30,14 +30,16 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (folder: { id: number; title: string }) => {
-    dashboard.meta.folderId = folder.id;
+  const onFolderChange = (folder: { uid: string; title: string }) => {
+    dashboard.meta.folderUid = folder.uid;
     dashboard.meta.folderTitle = folder.title;
     dashboard.meta.hasUnsavedFolderChange = true;
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
+    if (event.currentTarget.name === 'title' || event.currentTarget.name === 'description') {
+      dashboard[event.currentTarget.name] = event.currentTarget.value;
+    }
   };
 
   const onTooltipChange = (graphTooltip: number) => {
@@ -101,13 +103,13 @@ export function GeneralSettingsUnconnected({
             <Input id="description-input" name="description" onBlur={onBlur} defaultValue={dashboard.description} />
           </Field>
           <Field label="Tags">
-            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} />
+            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
           <Field label="Folder">
             <FolderPicker
               inputId="dashboard-folder-input"
               initialTitle={dashboard.meta.folderTitle}
-              initialFolderId={dashboard.meta.folderId}
+              initialFolderUid={dashboard.meta.folderUid}
               onChange={onFolderChange}
               enableCreateNew={true}
               dashboardId={dashboard.id}

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -188,33 +189,13 @@ type GetDataSourceQuery struct {
 	Result *DataSource
 }
 
-// ---------------------
-//  Permissions
-// ---------------------
-
-// Datasource permission
-// Description:
-// * `0` - No Access
-// * `1` - Query
-// Enum: 0,1
-// swagger:model
-type DsPermissionType int
-
-const (
-	DsPermissionNoAccess DsPermissionType = iota
-	DsPermissionQuery
-)
-
-func (p DsPermissionType) String() string {
-	names := map[int]string{
-		int(DsPermissionQuery):    "Query",
-		int(DsPermissionNoAccess): "No Access",
-	}
-	return names[int(p)]
-}
-
 type DatasourcesPermissionFilterQuery struct {
 	User        *user.SignedInUser
 	Datasources []*DataSource
 	Result      []*DataSource
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "data_source"
+	QuotaTarget    quota.Target    = "data_source"
+)

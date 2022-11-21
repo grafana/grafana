@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useTheme } from '@grafana/ui';
+import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 
-export function PluginsErrorsInfo(): React.ReactElement | null {
+export function PluginsErrorsInfo() {
   const errors = useGetErrors();
   const { isLoading } = useFetchStatus();
-  const theme = useTheme();
+  const styles = useStyles2(getStyles);
 
   if (isLoading || errors.length === 0) {
     return null;
@@ -31,22 +31,14 @@ export function PluginsErrorsInfo(): React.ReactElement | null {
         The following plugins are disabled and not shown in the list below:
         <List
           items={errors}
-          className={css`
-            list-style-type: circle;
-          `}
+          className={styles.list}
           renderItem={(error) => (
-            <div
-              className={css`
-                margin-top: ${theme.spacing.sm};
-              `}
-            >
+            <div className={styles.wrapper}>
               <HorizontalGroup spacing="sm" justify="flex-start" align="center">
                 <strong>{error.pluginId}</strong>
                 <PluginSignatureBadge
                   status={mapPluginErrorCodeToSignatureStatus(error.errorCode)}
-                  className={css`
-                    margin-top: 0;
-                  `}
+                  className={styles.badge}
                 />
               </HorizontalGroup>
             </div>
@@ -68,4 +60,18 @@ function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
     default:
       return PluginSignatureStatus.missing;
   }
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    list: css({
+      listStyleType: 'circle',
+    }),
+    wrapper: css({
+      marginTop: theme.spacing(1),
+    }),
+    badge: css({
+      marginTop: 0,
+    }),
+  };
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store is the storage for plugins.
+// Store is the publicly accessible storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
@@ -73,4 +73,9 @@ type ErrorResolver interface {
 type PluginLoaderAuthorizer interface {
 	// CanLoadPlugin confirms if a plugin is authorized to load
 	CanLoadPlugin(plugin *Plugin) bool
+}
+
+// RoleRegistry handles the plugin RBAC roles and their assignments
+type RoleRegistry interface {
+	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
 }

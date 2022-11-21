@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	"golang.org/x/oauth2"
 )
 
@@ -32,10 +30,6 @@ var (
 	ErrMissingTeamMembership         = Error{"user not a member of one of the required teams"}
 	ErrMissingOrganizationMembership = Error{"user not a member of one of the required organizations"}
 )
-
-func (s *SocialGithub) Type() int {
-	return int(models.GITHUB)
-}
 
 func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	if len(s.teamIds) == 0 {
@@ -203,7 +197,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, teams, true)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, ErrInvalidBasicRole
+		return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
 	}
 
 	var isGrafanaAdmin *bool = nil

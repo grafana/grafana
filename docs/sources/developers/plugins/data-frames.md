@@ -74,7 +74,7 @@ A data transformation is any function that accepts a data frame as input, and re
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series]({{< relref "../../basics/timeseries/" >}}).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../fundamentals/timeseries/" >}}).
 
 ### Wide format
 
@@ -165,7 +165,7 @@ Dimensions: 5 fields by 2 rows
 +---------------------+------------------+------------------+------------------+------------------+
 ```
 
-> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. For usage information, refer to the [Prepare time series-transformation]({{< relref "../../panels/transform-data/#prepare-time-series" >}}).
+> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. For usage information, refer to the [Prepare time series-transformation]({{< relref "../../panels-visualizations/query-transform-data/transform-data/#prepare-time-series" >}}).
 
 ## Technical references
 

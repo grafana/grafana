@@ -1,5 +1,5 @@
 import { cx, css, keyframes } from '@emotion/css';
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, styleMixins } from '@grafana/ui';
@@ -11,7 +11,7 @@ import { Footer } from '../Footer/Footer';
 interface InnerBoxProps {
   enterAnimation?: boolean;
 }
-export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true }) => {
+export const InnerBox = ({ children, enterAnimation = true }: React.PropsWithChildren<InnerBoxProps>) => {
   const loginStyles = useStyles2(getLoginStyles);
   return <div className={cx(loginStyles.loginInnerBox, enterAnimation && loginStyles.enterAnimation)}>{children}</div>;
 };
@@ -21,7 +21,7 @@ export interface LoginLayoutProps {
   branding?: BrandingSettings;
 }
 
-export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
+export const LoginLayout = ({ children, branding }: React.PropsWithChildren<LoginLayoutProps>) => {
   const loginStyles = useStyles2(getLoginStyles);
   const [startAnim, setStartAnim] = useState(false);
   const subTitle = branding?.loginSubtitle ?? Branding.GetLoginSubTitle();

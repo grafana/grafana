@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
-	models2 "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -54,25 +54,25 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 		if rand.Int63()%2 == 0 {
 			d := util.GenerateShortUID()
 			dashUID = &d
-			p := rand.Int63()
+			p := rand.Int63n(1500)
 			panelID = &p
 		}
 
 		rule := &AlertRule{
-			ID:              rand.Int63(),
-			OrgID:           rand.Int63(),
+			ID:              rand.Int63n(1500),
+			OrgID:           rand.Int63n(1500),
 			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
 			Condition:       "A",
 			Data:            []AlertQuery{GenerateAlertQuery()},
 			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
 			IntervalSeconds: rand.Int63n(60) + 1,
-			Version:         rand.Int63(),
+			Version:         rand.Int63n(1500), // Don't generate a rule ID too big for postgres
 			UID:             util.GenerateShortUID(),
 			NamespaceUID:    util.GenerateShortUID(),
 			DashboardUID:    dashUID,
 			PanelID:         panelID,
 			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
-			RuleGroupIndex:  rand.Int(),
+			RuleGroupIndex:  rand.Intn(1500),
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
@@ -96,7 +96,7 @@ func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
 		for {
-			id := rand.Int63()
+			id := rand.Int63n(1500)
 			if _, ok := usedID[id]; !ok {
 				usedID[id] = struct{}{}
 				rule.ID = id
@@ -140,9 +140,21 @@ func WithOrgID(orgId int64) AlertRuleMutator {
 	}
 }
 
-func WithNamespace(namespace *models2.Folder) AlertRuleMutator {
+func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NamespaceUID = namespace.Uid
+		rule.NamespaceUID = namespace.UID
+	}
+}
+
+func WithInterval(interval time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = int64(interval.Seconds())
+	}
+}
+
+func WithTitle(title string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Title = title
 	}
 }
 

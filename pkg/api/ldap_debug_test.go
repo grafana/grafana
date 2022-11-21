@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -379,7 +379,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Login:            loginservice.LoginServiceMock{},
 		authInfoService:  sc.authInfoService,
 		userService:      userService,

@@ -199,11 +199,11 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	return newTestReceiversResult(testAlert, append(invalid, results...), now), nil
 }
 
-func (am *Alertmanager) GetReceivers(ctx context.Context) apimodels.Receivers {
+func (am *Alertmanager) GetReceivers(ctx context.Context) []apimodels.Receiver {
 	am.reloadConfigMtx.RLock()
 	defer am.reloadConfigMtx.RUnlock()
 
-	var apiReceivers apimodels.Receivers
+	var apiReceivers []apimodels.Receiver
 	for _, rcv := range am.receivers {
 		// Build integrations slice for each receiver.
 		var integrations []*models.Integration

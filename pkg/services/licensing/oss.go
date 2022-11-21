@@ -55,6 +55,10 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 		HooksService: hooksService,
 	}
 	l.HooksService.AddIndexDataHook(func(indexData *dtos.IndexViewData, req *models.ReqContext) {
+		if !req.IsGrafanaAdmin {
+			return
+		}
+
 		if adminNode := indexData.NavTree.FindById(navtree.NavIDAdmin); adminNode != nil {
 			adminNode.Children = append(adminNode.Children, &navtree.NavLink{
 				Text: "Stats and license",

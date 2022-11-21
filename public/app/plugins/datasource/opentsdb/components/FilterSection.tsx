@@ -2,7 +2,7 @@ import { size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon } from '@grafana/ui';
+import { InlineLabel, Select, InlineFormLabel, InlineSwitch, Icon, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
 import { OpenTsdbFilter, OpenTsdbQuery } from '../types';
 
@@ -23,6 +23,8 @@ export function FilterSection({
   filterTypes,
   suggestTagValues,
 }: FilterSectionProps) {
+  const buttonStyles = useStyles2(clearButtonStyles);
+
   const [tagKeys, updTagKeys] = useState<Array<SelectableValue<string>>>();
   const [keyIsLoading, updKeyIsLoading] = useState<boolean>();
 
@@ -121,21 +123,24 @@ export function FilterSection({
             return (
               <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
                 {fil.tagk} = {fil.type}({fil.filter}), groupBy = {'' + fil.groupBy}
-                <a onClick={() => editFilter(fil, idx)}>
+                <button type="button" className={buttonStyles} onClick={() => editFilter(fil, idx)}>
                   <Icon name={'pen'} />
-                </a>
-                <a onClick={() => removeFilter(idx)} data-testid={testIds.remove}>
+                </button>
+                <button
+                  type="button"
+                  className={buttonStyles}
+                  onClick={() => removeFilter(idx)}
+                  data-testid={testIds.remove}
+                >
                   <Icon name={'times'} />
-                </a>
+                </button>
               </InlineFormLabel>
             );
           })}
         {!addFilterMode && (
-          <label className="gf-form-label query-keyword">
-            <a onClick={changeAddFilterMode} data-testid={testIds.open}>
-              <Icon name={'plus'} />
-            </a>
-          </label>
+          <button className="gf-form-label" type="button" onClick={changeAddFilterMode} aria-label="Add filter">
+            <Icon name={'plus'} />
+          </button>
         )}
       </div>
       {addFilterMode && (
@@ -146,6 +151,8 @@ export function FilterSection({
               className="gf-form-input"
               value={curFilterKey ? toOption(curFilterKey) : undefined}
               placeholder="key"
+              allowCustomValue
+              filterOption={customFilterOption}
               onOpenMenu={async () => {
                 updKeyIsLoading(true);
                 const tKs = await suggestTagKeys(query);
@@ -216,17 +223,18 @@ export function FilterSection({
           />
           <div className="gf-form">
             {errors && (
-              <label className="gf-form-label" title={errors} data-testid={testIds.error}>
+              <div className="gf-form-label" title={errors} data-testid={testIds.error}>
                 <Icon name={'exclamation-triangle'} color={'rgb(229, 189, 28)'} />
-              </label>
+              </div>
             )}
-
-            <label className="gf-form-label">
-              <a onClick={addFilter}>add filter</a>
-              <a onClick={changeAddFilterMode}>
+            <div className="gf-form-label">
+              <button type="button" className={buttonStyles} onClick={addFilter}>
+                add filter
+              </button>
+              <button type="button" className={buttonStyles} onClick={changeAddFilterMode}>
                 <Icon name={'times'} />
-              </a>
-            </label>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -239,7 +247,6 @@ export function FilterSection({
 
 export const testIds = {
   section: 'opentsdb-filter',
-  open: 'opentsdb-filter-editor',
   list: 'opentsdb-filter-list',
   error: 'opentsdb-filter-error',
   remove: 'opentsdb-filter-remove',

@@ -14,6 +14,16 @@ export function getUserIdentifier(user: CurrentUserDTO) {
   return user.email;
 }
 
+export function loadScript(url: string, async = false) {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.onload = resolve;
+    script.src = url;
+    script.async = async;
+    document.head.appendChild(script);
+  });
+}
+
 /** @internal */
 export const echoLogger = createLogger('EchoSrv');
 export const echoLog = echoLogger.logger;

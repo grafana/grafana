@@ -13,8 +13,8 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -39,16 +39,24 @@ export function getAppRoutes(): RouteDescriptor[] {
           component: () => <NavLandingPage navId="monitoring" />,
         },
         {
-          path: '/a/:pluginId',
-          exact: true,
-          component: SafeDynamicImport(
-            () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-          ),
+          path: '/admin/general',
+          component: () => <NavLandingPage navId="admin/general" />,
+        },
+        {
+          path: '/admin/plugins',
+          component: () => <NavLandingPage navId="admin/plugins" />,
+        },
+        {
+          path: '/admin/access',
+          component: () => <NavLandingPage navId="admin/access" />,
         },
       ]
     : [];
 
   return [
+    // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
+    // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
+    ...getAppPluginRoutes(),
     {
       path: '/',
       pageClass: 'page-dashboard',
@@ -75,6 +83,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
+      roles: () => ['Editor', 'Admin'],
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
@@ -111,6 +120,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/import',
+      roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
       ),
@@ -160,6 +170,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/folder/new',
+      roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),
@@ -209,14 +220,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     ...topnavRoutes,
-    {
-      path: '/a/:pluginId',
-      exact: false,
-      // Someday * and will get a ReactRouter under that path!
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/components/AppRootPage')
-      ),
-    },
     {
       path: '/org',
       component: SafeDynamicImport(
@@ -269,7 +272,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      component: ServiceAccountPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+      ),
     },
     {
       path: '/org/teams',
@@ -304,9 +309,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
     },
     {
-      path: '/admin/server',
+      path: '/admin/access',
       component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/access" /> : <Redirect to="/admin/users" />,
+    },
+    {
+      path: '/admin/config',
+      component: () =>
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/config" /> : <Redirect to="/admin/org" />,
     },
     {
       path: '/admin/settings',
@@ -532,6 +542,12 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
+    },
+    {
+      path: '/scenes/dashboard/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/dashboard/DashboardScenePage')
+      ),
     },
     {
       path: '/scenes/:name',
