@@ -17,9 +17,9 @@ type checkOpts struct {
 }
 
 func getCheckOpts(args []string) (*checkOpts, error) {
-	sha, ok := env.Lookup("OSS_COMMIT_SHA", args)
+	sha, ok := env.Lookup("SOURCE_COMMIT", args)
 	if !ok {
-		return nil, cli.Exit(`missing environment variable "OSS_PULL_REQUEST"`, 1)
+		return nil, cli.Exit(`missing environment variable "SOURCE_COMMIT"`, 1)
 	}
 
 	url, ok := env.Lookup("DRONE_BUILD_LINK", args)
