@@ -110,13 +110,16 @@ export const QueryListItem = memo(
 
     return (
       <tr key={query.uid} className={styles.row}>
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions*/}
         <td onClick={implementationComingSoonAlert}>
           <Icon name={'lock'} className={styles.disabled} title={'Implementation coming soon!'} />
         </td>
         <td>
           <Badge color={'green'} text={'1'} icon={'link'} tooltip={'Implementation coming soon!'} />
         </td>
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions*/}
         <td onClick={openDrawer}>{query.title}</td>
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions*/}
         <td onClick={openDrawer}>
           <img
             className={styles.dsIcon}
@@ -131,6 +134,7 @@ export const QueryListItem = memo(
             </Tooltip>
           )}
         </td>
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions*/}
         <td onClick={openDrawer}>
           <img
             className={cx('filter-table__avatar', styles.dsIcon)}
@@ -139,6 +143,7 @@ export const QueryListItem = memo(
           />
           &nbsp;&nbsp;{author}
         </td>
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions*/}
         <td onClick={openDrawer}>{date}</td>
         <td className={styles.tableTr}>
           <IconButton name="share-alt" tooltip={'Share'} onClick={implementationComingSoonAlert} />
