@@ -623,7 +623,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
 export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
-) {
+): DataFrame[] {
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
 
   data?.forEach((trace) => {
@@ -665,57 +665,6 @@ export function createTableFrameFromTraceQlQuery(
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
-
-      {
-        name: 'traceIdHidden',
-        config: {
-          custom: { hidden: true, subcol: true },
-        },
-      },
-      {
-        name: 'spanID',
-        type: FieldType.string,
-        config: {
-          custom: { subcol: true },
-          unit: 'string',
-          displayNameFromDS: 'Span ID',
-          links: [
-            {
-              title: 'Span: ${__value.raw}',
-              url: '',
-              internal: {
-                datasourceUid: instanceSettings.uid,
-                datasourceName: instanceSettings.name,
-                query: {
-                  query: '${__data.fields.traceIdHidden}',
-                  queryType: 'traceId',
-                },
-                panelsState: {
-                  trace: {
-                    spanId: '${__value.raw}',
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-      {
-        name: 'spanName',
-        type: FieldType.string,
-        config: { custom: { subcol: true }, displayNameFromDS: 'Name' },
-      },
-      {
-        name: 'spanStartTime',
-        type: FieldType.string,
-        config: { custom: { subcol: true }, displayNameFromDS: 'Start time' },
-      },
-      ...Object.values(spanDynamicAttrs),
-      {
-        name: 'duration',
-        type: FieldType.number,
-        config: { custom: { subcol: true }, displayNameFromDS: 'Duration', unit: 'ns' },
-      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -723,18 +672,79 @@ export function createTableFrameFromTraceQlQuery(
   });
 
   if (!data?.length) {
-    return frame;
+    return [frame];
   }
 
+  const subDataFrames: DataFrame[] = [];
   const tableRows = data
     // Show the most recent traces
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
-    .reduce((rows: TraceTableData[], trace) => {
+    .reduce((rows: TraceTableData[], trace, currentIndex) => {
       const traceData: TraceTableData = transformToTraceData(trace);
       rows.push(traceData);
-      trace.spanSet?.spans.forEach((span) => {
-        rows.push(transformSpanToTraceData(span, trace.traceID));
+      const subFrame = new MutableDataFrame({
+        fields: [
+          {
+            name: 'traceIdHidden',
+            config: {
+              custom: { hidden: true },
+            },
+          },
+          {
+            name: 'spanID',
+            type: FieldType.string,
+            config: {
+              unit: 'string',
+              displayNameFromDS: 'Span ID',
+              links: [
+                {
+                  title: 'Span: ${__value.raw}',
+                  url: '',
+                  internal: {
+                    datasourceUid: instanceSettings.uid,
+                    datasourceName: instanceSettings.name,
+                    query: {
+                      query: '${__data.fields.traceIdHidden}',
+                      queryType: 'traceId',
+                    },
+                    panelsState: {
+                      trace: {
+                        spanId: '${__value.raw}',
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          {
+            name: 'spanName',
+            type: FieldType.string,
+            config: { displayNameFromDS: 'Name' },
+          },
+          {
+            name: 'spanStartTime',
+            type: FieldType.string,
+            config: { displayNameFromDS: 'Start time' },
+          },
+          ...Object.values(spanDynamicAttrs),
+          {
+            name: 'duration',
+            type: FieldType.number,
+            config: { displayNameFromDS: 'Duration', unit: 'ns' },
+          },
+        ],
+        meta: {
+          preferredVisualisationType: 'table',
+          custom: {
+            parentRowIndex: currentIndex,
+          },
+        },
       });
+      trace.spanSet?.spans.forEach((span) => {
+        subFrame.add(transformSpanToTraceData(span, trace.traceID));
+      });
+      subDataFrames.push(subFrame);
       return rows;
     }, []);
 
@@ -742,7 +752,7 @@ export function createTableFrameFromTraceQlQuery(
     frame.add(row);
   }
 
-  return frame;
+  return [frame, ...subDataFrames];
 }
 
 interface TraceTableData {
