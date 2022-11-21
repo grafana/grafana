@@ -28,7 +28,7 @@
       "schema": {
         "name": "go_goroutines{job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "matrix"
           },

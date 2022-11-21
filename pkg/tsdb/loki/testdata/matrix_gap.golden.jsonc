@@ -28,7 +28,7 @@
       "schema": {
         "name": "{}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

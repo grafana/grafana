@@ -45,7 +45,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "matrix"
           }
@@ -90,7 +90,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "matrix"
           }
