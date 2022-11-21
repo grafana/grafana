@@ -166,7 +166,7 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid || dashboard.uid },
       overwrite: true,
       inputs: inputsToPersist,
-      folderId: importDashboardForm.folder.id,
+      folderUid: importDashboardForm.folder.uid,
     });
 
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
@@ -203,13 +203,16 @@ export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
 async function moveDashboard(uid: string, toFolder: FolderInfo) {
   const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
 
-  if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
+  if (
+    ((fullDash.meta.folderUid === undefined || fullDash.meta.folderUid === null) && toFolder.uid === '') ||
+    fullDash.meta.folderUid === toFolder.uid
+  ) {
     return { alreadyInFolder: true };
   }
 
   const options = {
     dashboard: fullDash.dashboard,
-    folderId: toFolder.id,
+    folderUid: toFolder.uid,
     overwrite: false,
   };
 
@@ -271,7 +274,7 @@ export function saveDashboard(options: SaveDashboardCommand) {
     dashboard: options.dashboard,
     message: options.message ?? '',
     overwrite: options.overwrite ?? false,
-    folderId: options.folderId,
+    folderUid: options.folderUid,
   });
 }
 
@@ -296,6 +299,9 @@ export function searchFolders(
   });
 }
 
+export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
+  return getBackendSrv().get(`/api/folders/${uid}`);
+}
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {
   return getBackendSrv().get(`/api/folders/id/${id}`);
 }
