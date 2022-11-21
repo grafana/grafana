@@ -421,7 +421,6 @@ export class QueryGroup extends PureComponent<Props, State> {
       <HorizontalGroup spacing="md" align="flex-start">
         {showAddButton && (
           <Button
-            disabled={true}
             icon="plus"
             onClick={this.onAddQueryClick}
             variant="secondary"
