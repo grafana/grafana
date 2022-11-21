@@ -10,11 +10,41 @@ import {
   DataFrame,
   getFieldDisplayValuesProxy,
   SplitOpen,
+  DataLink,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
+
+type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
+
+const dataLinkHasRequiredPermissions = (link: DataLink) => {
+  return !link.internal || contextSrv.hasAccessToExplore();
+};
+
+const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
+  let hasAllRequiredVarsAvailable = true;
+
+  if (link.internal) {
+    let stringifiedQuery = '';
+    try {
+      stringifiedQuery = JSON.stringify(link.internal.query || {});
+      getTemplateSrv().replace(stringifiedQuery, scopedVars, (f: string) => {
+        hasAllRequiredVarsAvailable = hasAllRequiredVarsAvailable && !!f;
+        return '';
+      });
+    } catch (err) {}
+  }
+
+  return hasAllRequiredVarsAvailable;
+};
+
+/**
+ * Fixed list of filters used in Explore. DataLinks that do not pass all the filters will no
+ * be passed back to the visualization.
+ */
+const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasAllVariablesDefined, dataLinkHasRequiredPermissions];
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -56,13 +86,9 @@ export const getFieldLinksForExplore = (options: {
   }
 
   if (field.config.links) {
-    const links = [];
-
-    if (!contextSrv.hasAccessToExplore()) {
-      links.push(...field.config.links.filter((l) => !l.internal));
-    } else {
-      links.push(...field.config.links);
-    }
+    const links = field.config.links.filter((link) => {
+      return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
+    });
 
     return links.map((link) => {
       if (!link.internal) {
