@@ -551,7 +551,7 @@ func createTestContext(t *testing.T) *testContext {
 
 	tokenService := &UserAuthTokenService{
 		sqlStore: sqlstore,
-		Cfg:      cfg,
+		cfg:      cfg,
 		log:      log.New("test-logger"),
 	}
 

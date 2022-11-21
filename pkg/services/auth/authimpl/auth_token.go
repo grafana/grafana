@@ -26,7 +26,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB, cfg *setting.Cfg, serverLockSer
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
 		ServerLockService: serverLockService,
-		Cfg:               cfg,
+		cfg:               cfg,
 		log:               log.New("auth"),
 	}
 
@@ -49,7 +49,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB, cfg *setting.Cfg, serverLockSer
 type UserAuthTokenService struct {
 	sqlStore          db.DB
 	ServerLockService *serverlock.ServerLockService
-	Cfg               *setting.Cfg
+	cfg               *setting.Cfg
 	log               log.Logger
 }
 
@@ -221,7 +221,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 	var needsRotation bool
 	rotatedAt := time.Unix(model.RotatedAt, 0)
 	if model.AuthTokenSeen {
-		needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute))
+		needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute))
 	} else {
 		needsRotation = rotatedAt.Before(now.Add(-urgentRotateTime))
 	}
@@ -450,8 +450,8 @@ func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *qu
 	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var model userAuthToken
 		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
-			getTime().Add(-s.Cfg.LoginMaxLifetime).Unix(),
-			getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()).
+			getTime().Add(-s.cfg.LoginMaxLifetime).Unix(),
+			getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()).
 			Count(&model)
 
 		return err
@@ -468,11 +468,11 @@ func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *qu
 }
 
 func (s *UserAuthTokenService) createdAfterParam() int64 {
-	return getTime().Add(-s.Cfg.LoginMaxLifetime).Unix()
+	return getTime().Add(-s.cfg.LoginMaxLifetime).Unix()
 }
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	return getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()
+	return getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()
 }
 
 func hashToken(token string) string {

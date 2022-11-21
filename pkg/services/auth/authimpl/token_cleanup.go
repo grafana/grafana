@@ -9,8 +9,8 @@ import (
 
 func (s *UserAuthTokenService) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Hour)
-	maxInactiveLifetime := s.Cfg.LoginMaxInactiveLifetime
-	maxLifetime := s.Cfg.LoginMaxLifetime
+	maxInactiveLifetime := s.cfg.LoginMaxInactiveLifetime
+	maxLifetime := s.cfg.LoginMaxLifetime
 
 	err := s.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
 		if _, err := s.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
