@@ -246,16 +246,25 @@ func main() {
 					Name:   "begin",
 					Usage:  "Creates the GitHub check in a pull request and begins the tests",
 					Action: EnterpriseCheckBegin,
+					Flags: []cli.Flag{
+						&gitHubTokenFlag,
+					},
 				},
 				{
 					Name:   "success",
 					Usage:  "Updates the GitHub check in a pull request to show a successful build and updates the pull request labels",
-					Action: EnterpriseCheckBegin,
+					Action: EnterpriseCheckSuccess,
+					Flags: []cli.Flag{
+						&gitHubTokenFlag,
+					},
 				},
 				{
 					Name:   "fail",
 					Usage:  "Updates the GitHub check in a pull request to show a failed build and updates the pull request labels",
 					Action: EnterpriseCheckFail,
+					Flags: []cli.Flag{
+						&gitHubTokenFlag,
+					},
 				},
 			},
 		},

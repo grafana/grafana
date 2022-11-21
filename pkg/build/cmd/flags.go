@@ -46,4 +46,10 @@ var (
 		Usage:    "Google Cloud Platform key file",
 		Required: true,
 	}
+	gitHubTokenFlag = cli.StringFlag{
+		Name:    "github-token",
+		Value:   "",
+		EnvVars: []string{"GITHUB_TOKEN"},
+		Usage:   "GitHub token",
+	}
 )
