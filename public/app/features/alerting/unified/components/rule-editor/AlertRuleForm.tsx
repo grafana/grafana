@@ -27,7 +27,6 @@ import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
-import { checkForPathSeparator } from './util';
 
 const recordingRuleNameValidationPattern = {
   message:
@@ -58,16 +57,6 @@ const AlertRuleNameInput = () => {
           {...register('name', {
             required: { value: true, message: 'Must enter an alert name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
-            validate: {
-              pathSeparator: (value: string) => {
-                // we use the alert rule name as the "groupname" for Grafana managed alerts, so we can't allow path separators
-                if (ruleFormType === RuleFormType.grafana) {
-                  return checkForPathSeparator(value);
-                }
-
-                return true;
-              },
-            },
           })}
           placeholder="Give your alert rule a name."
         />
