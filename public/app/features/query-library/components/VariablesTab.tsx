@@ -112,7 +112,7 @@ export const VariablesTab = ({ savedQuery, options }: Props) => {
                   </Card.Heading>
                   <Card.Description>
                     <LayerName
-                      name={variable && variable.current.value}
+                      name={variable && variable.current.value.toString()}
                       onChange={(v) => onVariableValueChange(variable, v)}
                       overrideStyles
                     />

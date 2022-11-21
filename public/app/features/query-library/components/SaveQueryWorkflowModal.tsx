@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Form, Modal, Stack, TextArea } from '@grafana/ui';
+import { Button, Form, Modal, VerticalGroup, TextArea } from '@grafana/ui';
 
 import { WorkflowID } from '../../storage/types';
 import { SavedQuery } from '../api/SavedQueriesApi';
@@ -55,10 +55,10 @@ export const SaveQueryWorkflowModal = ({ options, onSubmit, onCancel, onSuccess 
         }}
       >
         {({ register, errors }) => (
-          <Stack direction="column" gap={2}>
+          <VerticalGroup>
             <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus rows={5} />
 
-            <Stack alignItems="center">
+            <VerticalGroup>
               <Button variant="secondary" onClick={onCancel} fill="outline">
                 Cancel
               </Button>
@@ -70,8 +70,8 @@ export const SaveQueryWorkflowModal = ({ options, onSubmit, onCancel, onSuccess 
               >
                 {options.workflow === WorkflowID.PR ? 'Submit PR' : 'Push'}
               </Button>
-            </Stack>
-          </Stack>
+            </VerticalGroup>
+          </VerticalGroup>
         )}
       </Form>
     </Modal>
