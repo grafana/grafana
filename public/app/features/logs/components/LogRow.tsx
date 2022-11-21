@@ -11,6 +11,7 @@ import {
   dateTimeFormat,
   GrafanaTheme2,
   CoreApp,
+  DataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
@@ -52,7 +53,7 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
-  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
@@ -96,7 +97,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showDetails: false,
   };
 
-  toggleContext = () => {
+  toggleContext = (method: string) => {
+    const { datasourceType, uid: logRowUid } = this.props.row;
+    reportInteraction('grafana_explore_logs_log_context_clicked', {
+      datasourceType,
+      logRowUid,
+      type: method,
+    });
+
     this.props.toggleContextIsOpen?.();
     this.setState((state) => {
       return {
@@ -166,6 +174,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(style.logsRow, {
       [styles.errorLogRow]: hasError,
+      [style.contextBackground]: showContext,
     });
 
     const processedRow =
@@ -249,6 +258,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             wrapLogMessage={wrapLogMessage}
             hasError={hasError}
             showDetectedFields={showDetectedFields}
+            app={app}
           />
         )}
       </>

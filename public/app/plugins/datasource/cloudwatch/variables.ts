@@ -84,7 +84,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
   }
 
   async handleMetricsQuery({ namespace, region }: VariableQuery) {
-    const metrics = await this.api.getMetrics(namespace, region);
+    const metrics = await this.api.getMetrics({ namespace, region });
     return metrics.map((s) => ({
       text: s.label,
       value: s.value,
@@ -93,7 +93,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
   }
 
   async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
-    const keys = await this.api.getDimensionKeys(namespace, region);
+    const keys = await this.api.getDimensionKeys({ namespace, region });
     return keys.map((s) => ({
       text: s.label,
       value: s.value,
@@ -105,7 +105,13 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!dimensionKey || !metricName) {
       return [];
     }
-    const keys = await this.api.getDimensionValues(region, namespace, metricName, dimensionKey, dimensionFilters ?? {});
+    const keys = await this.api.getDimensionValues({
+      region,
+      namespace,
+      metricName,
+      dimensionKey,
+      dimensionFilters,
+    });
     return keys.map((s) => ({
       text: s.label,
       value: s.value,

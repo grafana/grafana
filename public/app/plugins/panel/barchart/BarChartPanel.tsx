@@ -5,6 +5,8 @@ import {
   compareDataFrameStructures,
   DataFrame,
   Field,
+  FieldColorModeId,
+  FieldType,
   getFieldDisplayName,
   PanelProps,
   TimeRange,
@@ -12,6 +14,7 @@ import {
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
+  GraphGradientMode,
   GraphNG,
   GraphNGProps,
   measureText,
@@ -233,6 +236,26 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
     getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values.get(valueIdx)).color!;
+  } else {
+    const hasPerBarColor = frame0Ref.current!.fields.some((f) => {
+      const fromThresholds =
+        f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+        f.config.color?.mode === FieldColorModeId.Thresholds;
+
+      return fromThresholds || f.config.mappings?.some((m) => m.options.result.color != null);
+    });
+
+    if (hasPerBarColor) {
+      // use opacity from first numeric field
+      let opacityField = frame0Ref.current!.fields.find((f) => f.type === FieldType.number)!;
+
+      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
+
+      getColor = (seriesIdx: number, valueIdx: number) => {
+        let field = frame0Ref.current!.fields[seriesIdx];
+        return field.display!(field.values.get(valueIdx)).color!;
+      };
+    }
   }
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
@@ -252,6 +275,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
+      timeZone,
       theme,
       timeZones: [timeZone],
       eventBus,

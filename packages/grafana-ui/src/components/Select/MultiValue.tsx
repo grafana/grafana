@@ -9,7 +9,7 @@ interface MultiValueContainerProps {
   innerProps: JSX.IntrinsicElements['div'];
 }
 
-export const MultiValueContainer: React.FC<MultiValueContainerProps> = ({ innerProps, children }) => {
+export const MultiValueContainer = ({ innerProps, children }: React.PropsWithChildren<MultiValueContainerProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -24,7 +24,7 @@ export type MultiValueRemoveProps = {
   innerProps: IconButtonProps;
 };
 
-export const MultiValueRemove: React.FC<MultiValueRemoveProps> = ({ children, innerProps }) => {
+export const MultiValueRemove = ({ children, innerProps }: React.PropsWithChildren<MultiValueRemoveProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   return <IconButton {...innerProps} name="times" size="sm" className={styles.multiValueRemove} />;

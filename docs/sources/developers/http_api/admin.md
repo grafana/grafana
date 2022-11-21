@@ -471,7 +471,7 @@ Content-Type: application/json
 
 `POST /api/admin/pause-all-alerts`
 
-> **Note:** This API is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only. For default alerting, use [silences]({{< relref "../../alerting/silences/" >}}) to stop alerts from being delivered.
+> **Note:** This API is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only. For default alerting, use silences to stop alerts from being delivered.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 

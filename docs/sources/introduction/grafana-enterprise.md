@@ -17,7 +17,7 @@ To learn more about Grafana Enterprise, refer to [our product page](https://graf
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud]({{< ref "/docs/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable) and [Enterprise features available to Grafana Cloud Pro and Advanced accounts]({{< ref "/docs/grafana-cloud/reference/enterprise-features" >}}).
+Many Grafana Enterprise features are also available in [Grafana Cloud]({{< ref "/docs/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable).
 
 ## Authentication
 
@@ -33,13 +33,13 @@ Supported auth providers:
 - [Azure AD OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/azuread/#team-sync-enterprise-only" >}})
 - [GitHub OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#team-sync-enterprise-only" >}})
 - [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/#team-sync-enterprise-only" >}})
-- [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced_ldap/#ldap-group-synchronization-for-teams" >}})
+- [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap/#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta/#team-sync-enterprise-only" >}})
 - [SAML]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
-With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced_ldap/" >}}), you can set up active LDAP synchronization.
+With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap/" >}}), you can set up active LDAP synchronization.
 
 ### SAML authentication
 
@@ -55,16 +55,16 @@ Grafana Enterprise adds the following features:
 
 - [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "../administration/data-source-management#data-source-permissions" >}}) to restrict query access to specific teams and users.
-- [Data source query caching]({{< relref "../enterprise/query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
+- [Data source query caching]({{< relref "../administration/data-source-management/#query-caching" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "../dashboards/create-reports/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whomever you choose.
 - [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels/#export-dashboard-as-pdf" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../dashboards/assess-dashboard-usage/" >}}) to understand how your Grafana instance is used.
-- [Recorded queries]({{< relref "../enterprise/recorded-queries" >}}) to see trends over time for your data sources.
-- [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/" >}}) to manage your configuration or provisioning secrets with Vault.
+- [Recorded queries]({{< relref "../administration/recorded-queries" >}}) to see trends over time for your data sources.
+- [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/#encrypting-your-database-with-a-key-from-a-key-management-service-kms" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security/" >}}) makes it possible to restrict outgoing requests from the Grafana server.
-- [Settings updates at runtime]({{< relref "../enterprise/settings-updates.md" >}}) allows you to update Grafana settings at runtime without requiring a restart.
+- [Settings updates at runtime]({{< relref "../setup-grafana/configure-grafana/settings-updates-at-runtime" >}}) allows you to update Grafana settings at runtime without requiring a restart.
 
 ## Enterprise data sources
 

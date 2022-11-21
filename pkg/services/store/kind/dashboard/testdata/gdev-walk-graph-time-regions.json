@@ -15,15 +15,18 @@
       "kind": "panel",
       "name": "Business Hours",
       "URL": "/d/graph-time-regions.json/panel-tests-graph-time-regions?viewPanel=2",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
           "kind": "ds",
-          "type": "testdata",
-          "UID": "PD8C576611E62080A"
+          "UID": "gdev-testdata"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -32,15 +35,18 @@
       "kind": "panel",
       "name": "Sunday's 20-23",
       "URL": "/d/graph-time-regions.json/panel-tests-graph-time-regions?viewPanel=4",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
           "kind": "ds",
-          "type": "testdata",
-          "UID": "PD8C576611E62080A"
+          "UID": "gdev-testdata"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -49,15 +55,18 @@
       "kind": "panel",
       "name": "Each day of week",
       "URL": "/d/graph-time-regions.json/panel-tests-graph-time-regions?viewPanel=3",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
           "kind": "ds",
-          "type": "testdata",
-          "UID": "PD8C576611E62080A"
+          "UID": "gdev-testdata"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -66,15 +75,18 @@
       "kind": "panel",
       "name": "05:00",
       "URL": "/d/graph-time-regions.json/panel-tests-graph-time-regions?viewPanel=5",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
           "kind": "ds",
-          "type": "testdata",
-          "UID": "PD8C576611E62080A"
+          "UID": "gdev-testdata"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -83,15 +95,18 @@
       "kind": "panel",
       "name": "From 22:00 to 00:30 (crossing midnight)",
       "URL": "/d/graph-time-regions.json/panel-tests-graph-time-regions?viewPanel=7",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
           "kind": "ds",
-          "type": "testdata",
-          "UID": "PD8C576611E62080A"
+          "UID": "gdev-testdata"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     }
@@ -99,12 +114,12 @@
   "references": [
     {
       "kind": "ds",
-      "type": "testdata",
-      "UID": "PD8C576611E62080A"
+      "UID": "gdev-testdata"
     },
     {
-      "kind": "panel",
-      "type": "graph"
+      "kind": "plugin",
+      "type": "panel",
+      "UID": "graph"
     }
   ]
 }

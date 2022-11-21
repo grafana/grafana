@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, TimeZone, dateTimeFormat } from '@grafana/data';
 
@@ -12,7 +12,7 @@ interface Props {
   className?: string;
 }
 
-export const TimeZoneOffset: React.FC<PropsWithChildren<Props>> = (props) => {
+export const TimeZoneOffset = (props: Props) => {
   const { timestamp, timeZone, className } = props;
   const styles = useStyles2(getStyles);
 

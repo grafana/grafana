@@ -7,11 +7,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
@@ -32,7 +32,10 @@ func UpdateRPMRepo(cfg PublishConfig, workDir string) error {
 		return err
 	}
 
-	repoRoot := path.Join(os.TempDir(), "rpm-repo")
+	repoRoot, err := fsutil.CreateTempDir("rpm-repo")
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := os.RemoveAll(repoRoot); err != nil {
 			log.Printf("Failed to remove %q: %s\n", repoRoot, err.Error())

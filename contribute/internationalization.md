@@ -1,42 +1,66 @@
 # Internationalization
 
-Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for managing translating phrases in the Grafana frontend.
+Grafana uses the [i18next](https://www.i18next.com/) framework for managing translating phrases in the Grafana frontend.
 
 ## tl;dr
 
-- Use `<Trans id="search-results.panel-link">Go to {panel.title}</Trans>` in code to add a translatable phrase
-- Translations are stored in .po files in `public/locales/{locale}/messages.po`
-- If a particular phrase is not available in the a language then it will fall back to English
-- To update phrases in English, edit the `en/messages.po` file, not the source JSX
-- To update phrases in any translated language, edit the phrase in Crowdin
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests for grafana.json files - they will be rejected.
 
-**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests for messages.po files - they will be rejected.
+- Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
+- Translations are stored in JSON files in `public/locales/{locale}/grafana.json`
+- If a particular phrase is not available in the a language then it will fall back to English
+- To update phrases in English, edit the default phrase in the component's source, then run `yarn i18n:extract`. Do not edit the `en-ES/grafana.json` or update the english phrase in Crowdin
+- To update phrases in any translated language, edit the phrase in Crowdin. Do not edit the `{locale}/grafana.json`
 
 ## How to add a new translation phrase
 
-1. Use one of `@lingui/macro`'s React components with the `id`, ensuring it conforms to the guidelines below, with the default english translation. e.g.
+### JSX
+
+1. For JSX children, use the `<Trans />` component from `app/core/internationalization` with the `i18nKey`, ensuring it conforms to the guidelines below, with the default english translation. e.g.
 
 ```jsx
-import { Trans } from @lingui/macro
+import { Trans } from 'app/core/internationalization';
 
-const SearchTitle = ({term}) => (
-  <Trans id="search-page.results-title">
-    Results for {term}
+const SearchTitle = ({ term }) => (
+  <Trans i18nKey="search-page.results-title">
+    Results for <em>{{ term }}</em>
   </Trans>
 );
 ```
 
-Prefer using the JSX components (compared to the plain javascript functions, see below) where possible for phrases. Many props can (and probably should) be changed to accept the `React.ReactNode` instead of `string` for phrases put into the DOM.
+Prefer using `<Trans />` for JSX children, and `t()` for props and other javascript usage.
 
-Note that Lingui must be able to statically analyse the code to extract the phrase, so the `id` can not be dynamic. e.g. the following will not work:
+When translating in grafana-ui, use a relative path to import `<Trans />` and `t()` from `src/utils/i18n`.
+
+Note that our tooling must be able to statically analyse the code to extract the phrase, so the `i18nKey` can not be dynamic. e.g. the following will not work:
 
 ```jsx
-const ErrorMessage = ({ id, message }) => <Trans id={`errors.${id}`}>There was an error: {message}</Trans>;
+const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There was an error: {{ message }}</Trans>;
 ```
 
 2. Upon reload, the default English phrase will appear on the page.
 
-3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `messages.po` file and make them available for translation.
+3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `grafana.json` file and make them available for translation.
+
+### Plain JS usage
+
+Sometimes you may need to translate a string cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
+
+```jsx
+import { t } from "app/core/internationalization"
+
+const placeholder = t('form.username-placeholder','Username');
+
+return <input type="value" placeholder={placeholder}>
+```
+
+Interpolating phrases is a bit more verbose. Make sure the placeholders in the string match the values passed in the object - there's no type safety here!
+
+```jsx
+const placeholder = t('page.greeting', 'Hello {{ username }}', { username });
+```
+
+While the `t` function can technically be used outside of React functions (e.g, in actions/reducers), aim to keep all UI phrases within the React UI functions.
 
 ## How to add a new language
 
@@ -44,20 +68,19 @@ const ErrorMessage = ({ id, message }) => <Trans id={`errors.${id}`}>There was a
    1. Grafana OSS Crowdin project -> "dot dot dot" menu in top right -> Target languages
    2. Grafana OSS Crowdin project -> Integrations -> Github -> Sync Now
    3. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
-2. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `VALID_LOCALES`)
-3. Update `public/app/core/internationalization/index.tsx` to add the message loader for the new locale
-4. Update `public/app/core/components/SharedPreferences/SharedPreferences.tsx` to add the new locale to the options.
-5. Update `public/locales/i18next-parser.config.js` to add the new locale to `locales`
-6. Run `yarn i18n:extract` and commit the result
+2. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `LOCALES`)
+3. Update `public/locales/i18next-parser.config.js` to add the new locale to `locales`
+4. Run `yarn i18n:extract` and commit the result
 
 ## How translations work in Grafana
 
-Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for managing translating phrases in the Grafana frontend. It:
+Grafana uses the [i18next](https://www.i18next.com/) framework for managing translating phrases in the Grafana frontend. It:
 
 - Marks up phrases within our code for extraction
 - Extracts phrases into messages catalogues for translating in external systems
-- "Compiles" the catalogues to a format that can be used in the website
 - Manages the user's locale and putting the translated phrases in the UI
+
+English phrases remain in our Javascript bundle in the source components (as the `<Trans />` or `t()` default phrase). At runtime, we don't need to load any messages for en-US. If the user's language preference is set to another language, Grafana will load that translations's messages JSON before the initial render.
 
 ### Phrase ID naming convention
 
@@ -73,137 +96,83 @@ For components used all over the site, use just two segments:
 - `footer.update`
 - `navigation.home`
 
-### Top-level provider
+### I18next context
 
-In [AppWrapper.tsx](/public/app/AppWrapper.tsx) the app is wrapped with `I18nProvider` from `public/app/core/internationalization/index.tsx` where the Lingui instance is created with the user's preferred locale. This sets the appropriate context and allows any component from `@lingui/macro` to use the translations for the user's preferred locale.
-
-### Message format
-
-Lingui uses the [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) for the phrases in the .po catalogues. ICU has special syntax especially for describing plurals across multiple languages. For more details see the [Lingui docs](https://lingui.js.org/ref/message-format.html).
-
-### Plain JS usage
-
-See [Lingui Docs](https://lingui.js.org/ref/macro.html#t) for more details.
-
-Sometimes you may need to translate a string cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
-
-```jsx
-import { t } from "@lingui/macro"
-
-const placeholder = t({
-   id: 'form.username-placeholder',
-   message: `Username`
-});
-
-return <input type="value" placeholder={placeholder}>
-```
-
-While the `t` macro can technically be used outside of React functions (e.g, in actions/reducers), aim to keep all UI phrases within the React UI functions.
+We rely on a global i18next singleton (that lives inside the i18next) for storing the i18next config/context.
 
 ## Examples
 
-See the [Lingui docs](https://lingui.js.org/ref/macro.html#usage) for more details.
+See [i18next](https://www.i18next.com/) and [react-i18next](https://react.i18next.com/) documentation for more details.
 
 ### Basic usage
 
 For fixed phrases:
 
 ```jsx
-import { Trans } from '@lingui/macro';
+import { Trans } from 'app/core/internationalization';
 
-<Trans id="page.greeting">Hello user!</Trans>;
+<Trans i18nKey="page.greeting">Hello user!</Trans>;
 ```
 
-You can include variables, just like regular JSX. Prefer using "simple" variables to make the extracted phrase easier to read for translators
+To interpolate variables, include it as an object child. It's weird syntax, but Trans will do it's magic to make it work:
 
 ```jsx
-import { Trans } from '@lingui/macro';
+import { Trans } from 'app/core/internationalization';
 
-// Bad - translators will see: Hello {0}
-<Trans id="page.greeting">Hello {user.name}!</Trans>;
+<Trans i18nKey="page.greeting">Hello {{ name: user.name }}!</Trans>;
 
-// Good - translators will see: Hello {userName}
 const userName = user.name;
-<Trans id="page.greeting">Hello {userName}!</Trans>;
+<Trans i18nKey="page.greeting">Hello {{ userName }}!</Trans>;
 ```
 
 Variables must be strings (or, must support calling `.toString()`, which we almost never want).
 
 ```jsx
-import { Trans } from '@lingui/macro';
+import { Trans } from 'app/core/internationalization';
 
 // This will not work
 const userName = <strong>user.name</strong>;
-<Trans id="page.greeting">Hello {userName}!</Trans>;
+<Trans i18nKey="page.greeting">Hello {{ userName }}!</Trans>;
 
 // Instead, put the JSX inside the phrase directly
 const userName = user.name;
-<Trans id="page.greeting">
-  Hello <strong>{userName}</strong>!
+<Trans i18nKey="page.greeting">
+  Hello <strong>{{ userName }}</strong>!
 </Trans>;
 ```
 
 ### React components and HTML tags
 
-Both HTML tags and React components can be included in a phase. The Lingui macro will replace them with placeholder tags for the translators
+Both HTML tags and React components can be included in a phase. The Trans function will handle interpolating it's children properly
 
 ```js
-import { Trans } from "@lingui/macro"
+import { Trans } from "app/core/internationalization"
 
-const randomVariable = "variable"
-
-<Trans id="page.explainer">
+<Trans i18nKey="page.explainer">
   Click <button>here</button> to <a href="https://grafana.com">learn more.</a>
 </Trans>
 
-// ↓ is transformed by macros into ↓
-<Trans
-  id="page.explainer"
-  defaults="Click <0>here</0> to <1>learn more</1>"
-  components={[
-    <button />,
-    <Text />
-  ]}
-/>
-
-// ↓ is in the messages.po file like ↓
-msgid "page.explainer"
-msgstr "Click <0>here</0> to <1>learn more</1>"
+// ↓ is in the grafana.json file like ↓
+{
+  "page": {
+    "explainer": "Click <0>here</0> to <1>learn more</1>"
+  }
+}
 ```
 
 ### Plurals
 
-See the [Lingui docs](https://lingui.js.org/ref/macro.html#id1) for more details.
-
-Plurals require special handling to make sure they can be translating according to the rules of each locale (which may be more complex that you think!). Use the `<Plural />` component and specify the plural forms for the default language (English). The message will be extracted into a form where translators can extend it with rules for other locales.
+Plurals require special handling to make sure they can be translating according to the rules of each locale (which may be more complex that you think!). Use the `<Trans />` component, with the `count` prop.
 
 ```js
-import { Plural } from "@lingui/macro"
+import { Trans } from 'app/core/internationalization';
 
-<Plural
-  id="sharing.shared-with"
-  value={sharedCount}
-  none="Not shared with anyone"
-  one="Shared with one person"
-  other="Shared with # people"
-/>
-
-// ↓ is transformed by macros into ↓
-
-<Trans
-  id="example.plurals"
-  values={{ sharedCount }}
-  defaults="{sharedCount, plural, none {Not shared with anyone}, one {Shared with one person}, other {Shared with # people}"
-/>
-
-// sharedCount = 0 -> Not shared with anyone
-// sharedCount = 1 -> Shared with one person
-// sharedCount = 3 -> Shared with # people
+<Trans i18nKey="newMessages" count={messages.length}>
+  You got {{ count: messages.length }} messages.
+</Trans>;
 ```
 
-### Date and time
-
-[Lingui has functions](https://lingui.js.org/ref/core.html#I18n.date) to format dates and times according to the convention to the user's preferred locale, based on the browser [Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) API. However, as displaying dates and times is fundamental to Grafana, guidelines have not been established for this yet.
+Once extracted with `yarn i18n:extract` you will need to manually fill in the grafana.json message catalogues with the additional plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
 
 ## Documentation
 

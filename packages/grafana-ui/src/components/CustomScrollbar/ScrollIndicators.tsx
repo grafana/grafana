@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import React, { FC, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
-export const ScrollIndicators: FC = ({ children }) => {
+export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
   const [showScrollTopIndicator, setShowTopScrollIndicator] = useState(false);
   const [showScrollBottomIndicator, setShowBottomScrollIndicator] = useState(false);
   const scrollTopMarker = useRef<HTMLDivElement>(null);

@@ -177,7 +177,7 @@ func publishPackages(cfg packaging.PublishConfig) error {
 		Version:     cfg.Version,
 		ReleaseDate: time.Now().UTC(),
 		Builds:      builds,
-		Stable:      cfg.ReleaseMode.Mode == config.TagMode,
+		Stable:      cfg.ReleaseMode.Mode == config.TagMode && !cfg.ReleaseMode.IsBeta && !cfg.ReleaseMode.IsTest,
 		Beta:        cfg.ReleaseMode.IsBeta,
 		Nightly:     cfg.ReleaseMode.Mode == config.CronjobMode,
 	}
@@ -275,10 +275,7 @@ func postRequest(cfg packaging.PublishConfig, pth string, obj interface{}, descr
 		}
 	}()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		var body []byte
-		if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-			return err
-		}
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}

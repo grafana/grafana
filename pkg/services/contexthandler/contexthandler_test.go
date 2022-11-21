@@ -7,14 +7,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
@@ -25,15 +27,15 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	require.NoError(t, err)
 
 	tryRotateCallCount := 0
-	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+	uts := &authtest.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
 			userAgent string) (bool, error) {
 			tryRotateCallCount++
 			return false, nil
 		},
 	}
 
-	token := &models.UserToken{AuthToken: "oldtoken"}
+	token := &auth.UserToken{AuthToken: "oldtoken"}
 
 	fn := ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)
 	cancel()
@@ -48,8 +50,8 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
 	require.NoError(t, err)
 
-	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+	uts := &authtest.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
 			userAgent string) (bool, error) {
 			newToken, err := util.RandomHex(16)
 			require.NoError(t, err)
@@ -58,7 +60,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 		},
 	}
 
-	token := &models.UserToken{AuthToken: "oldtoken"}
+	token := &auth.UserToken{AuthToken: "oldtoken"}
 
 	ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
 
