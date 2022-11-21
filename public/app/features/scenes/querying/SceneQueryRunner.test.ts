@@ -55,7 +55,7 @@ describe('SceneQueryRunner', () => {
     });
   });
 
-  describe('when activated and waitForWidth set to true', () => {
+  describe('when activated and maxDataPointsFromWidth set to true', () => {
     it('should run queries', async () => {
       const queryRunner = new SceneQueryRunner({
         queries: [{ refId: 'A' }],
