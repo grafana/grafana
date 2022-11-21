@@ -99,6 +99,15 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
+    "admin-access": {
+      "title": "Users and access"
+    },
+    "admin-general": {
+      "title": "General"
+    },
+    "admin-plugins": {
+      "title": "Plugins and data"
+    },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
@@ -184,7 +193,8 @@
     },
     "global-users": {
       "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users"
+      "title": "Users (All orgs)",
+      "titleBeforeTopnav": "Users"
     },
     "help": {
       "title": "Help"
@@ -227,7 +237,8 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Preferences"
+      "title": "Default preferences",
+      "titleBeforeTopnav": "Preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -252,6 +263,9 @@
     },
     "search": {
       "placeholder": "Search Grafana"
+    },
+    "search-dashboards": {
+      "title": "Search dashboards"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -301,11 +315,13 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
       "share": "Share",
+      "show-legend": "Show legend",
       "view": "View"
     }
   },
@@ -381,7 +397,8 @@
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
     },
     "tab-title": {
       "embed": "Embed",
@@ -492,5 +509,14 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Enter variable value",
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    }
   }
 }

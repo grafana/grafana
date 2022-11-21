@@ -3,10 +3,10 @@ import { Observable, Subject } from 'rxjs';
 
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 
+import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
 import { VariableDependencyConfig } from '../VariableDependencyConfig';
 import { VariableValueSelect } from '../components/VariableValueSelect';
-import { sceneTemplateInterpolator } from '../sceneTemplateInterpolator';
 import { VariableValueOption } from '../types';
 
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from './MultiValueVariable';
@@ -27,6 +27,17 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['query'],
   });
+
+  public constructor(initialState: Partial<TestVariableState>) {
+    super({
+      name: 'Test',
+      value: 'Value',
+      text: 'Text',
+      query: 'Query',
+      options: [],
+      ...initialState,
+    });
+  }
 
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const { delayMs } = this.state;
@@ -56,7 +67,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   }
 
   private issueQuery() {
-    const interpolatedQuery = sceneTemplateInterpolator(this.state.query, this);
+    const interpolatedQuery = sceneGraph.interpolate(this, this.state.query);
     const options = queryMetricTree(interpolatedQuery).map((x) => ({ label: x.name, value: x.name }));
 
     this.setState({

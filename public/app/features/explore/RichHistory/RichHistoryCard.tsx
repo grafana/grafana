@@ -260,6 +260,7 @@ export function RichHistoryCard(props: Props) {
   const updateComment = (
     <div className={styles.updateCommentContainer} aria-label={comment ? 'Update comment form' : 'Add comment form'}>
       <TextArea
+        onKeyDown={onKeyDown}
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={(e) => setComment(e.currentTarget.value)}
@@ -298,7 +299,7 @@ export function RichHistoryCard(props: Props) {
   );
 
   return (
-    <div className={styles.queryCard} onKeyDown={onKeyDown}>
+    <div className={styles.queryCard}>
       <div className={styles.cardRow}>
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />

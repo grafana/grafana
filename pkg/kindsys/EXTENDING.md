@@ -10,7 +10,7 @@ This document is the guide to extending kindsys. But first, we have to identify 
 
 * **CUE framework** - the collection of .cue files in this directory, `pkg/kindsys`. These are schemas that define how Kinds are declared.
 * **Go framework** - the Go package in this directory containing utilities for loading individual kind declarations, validating them against the CUE framework, and representing them consistently in Go.
-* **Code generators** - `pkg/codegen` contains the codegen framework. Individual generators (which take one or many `pkg/kindsys.Decl`, and produce a single file) each have a `pkg/codegen/generator_*.go` file.
+* **Code generators** - written using the `github.com/grafana/codejen` framework, which applies the [single responsibility principle](https://en.wikipedia.org/wiki/Single-responsibility_principle) to code generation, allowing us to compose modular code generators. Each jenny - a modular generator with a single responsibility - is declared as a `pkg/codegen/jenny_*.go` file.
 * **Registries** - generated lists of all or a well-defined subset of kinds that can be used in code. `pkg/registries/corekind` is a registry of all core `pkg/kindsys.Interface` implementations; `packages/grafana-schema/src/index.gen.ts` is a registry of all the TypeScript types generated from the current versions of each kind's schema.
 * **Kind declarations** - the declarations of individual kinds. By kind category:
   * **Core Structured** - each child directory of `kinds/structured`.

@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.16'
+grabpl_version = 'v3.0.17'
 build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -274,7 +274,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     step = {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(edition),
+        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -354,7 +354,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {}'.format(edition),
+            './bin/build upload-cdn --edition {}'.format(edition),
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
@@ -848,7 +848,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
-        cmd += ' --version-tag ${TAG}'
+        cmd += ' --version-tag ${DRONE_TAG}'
     else:
         deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
@@ -956,7 +956,7 @@ def release_canary_npm_packages_step(edition, trigger=None):
     step = {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': end_to_end_tests_deps(edition),
+        'depends_on': end_to_end_tests_deps(),
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -980,12 +980,12 @@ def upload_packages_step(edition, ver_mode, trigger=None):
         return None
 
     deps = []
-    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
+    if edition in 'enterprise2' or not end_to_end_tests_deps():
         deps.extend([
             'package' + enterprise2_suffix(edition),
         ])
     else:
-        deps.extend(end_to_end_tests_deps(edition))
+        deps.extend(end_to_end_tests_deps())
 
     step = {
         'name': 'upload-packages' + enterprise2_suffix(edition),
@@ -995,7 +995,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': ['./bin/grabpl upload-packages --edition {}'.format(edition),],
+        'commands': ['./bin/build upload-packages --edition {}'.format(edition),],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when=trigger)
@@ -1250,14 +1250,14 @@ def artifacts_page_step():
         ],
     }
 
-def end_to_end_tests_deps(edition):
+def end_to_end_tests_deps():
     if disable_tests:
         return []
     return [
-        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-dashboards-suite',
+        'end-to-end-tests-panels-suite',
+        'end-to-end-tests-smoke-tests-suite',
+        'end-to-end-tests-various-suite',
     ]
 
 def compile_build_cmd(edition='oss'):
