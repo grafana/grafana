@@ -1,5 +1,8 @@
   loki:
     image: grafana/loki:latest
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./docker/blocks/loki/loki-config.yaml:/etc/loki/loki-config.yaml
     ports:
       - "3100:3100"
 
