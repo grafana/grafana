@@ -81,10 +81,10 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 // and values relevant to generating the schema that should properly, eventually, be in
 // thema itself.
 type SchemaForGen struct {
-	// The PascalCase name of for the schematized type.
+	// The PascalCase name of the schematized type.
 	Name string
 	// The schema to be rendered for the type itself.
 	Schema thema.Schema
-	// Whether the schema is grouped.
+	// Whether the schema is grouped. See https://github.com/grafana/thema/issues/62
 	IsGroup bool
 }
