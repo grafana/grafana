@@ -16,7 +16,8 @@ type metricExpression struct {
 }
 
 type metricStatMeta struct {
-	Stat   string `json:"stat"`
-	Period int    `json:"period"`
-	Label  string `json:"label,omitempty"`
+	Stat      string `json:"stat"`
+	Period    int    `json:"period"`
+	Label     string `json:"label,omitempty"`
+	AccountId string `json:"accountId,omitempty"`
 }

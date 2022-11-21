@@ -172,6 +172,9 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time, 
 		if dynamicLabelEnabled {
 			metricStatMeta.Label = q.Label
 		}
+		if q.AccountId != nil {
+			metricStatMeta.AccountId = *q.AccountId
+		}
 		metricStat = append(metricStat, metricStatMeta)
 		link.Metrics = []interface{}{metricStat}
 	}

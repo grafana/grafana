@@ -107,6 +107,53 @@ func TestCloudWatchQuery(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotContains(t, deepLink, "label")
 		})
+
+		t.Run("includes account id in case its a metric stat query and an account id is set", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &CloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Statistic:  "Average",
+				Period:     300,
+				Id:         "id1",
+				MatchExact: true,
+				AccountId:  pointer("123456789"),
+				Label:      "${PROP('Namespace')}",
+				Dimensions: map[string][]string{
+					"InstanceId": {"i-12345678"},
+				},
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeBuilder,
+			}
+
+			deepLink, err := query.BuildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.Contains(t, deepLink, "accountId%22%3A%22123456789")
+		})
+
+		t.Run("does not include account id in case its not a metric stat query", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &CloudWatchQuery{
+				RefId:            "A",
+				Region:           "us-east-1",
+				Statistic:        "Average",
+				Expression:       "SEARCH(someexpression)",
+				AccountId:        pointer("123456789"),
+				Period:           300,
+				Id:               "id1",
+				MatchExact:       true,
+				Label:            "${PROP('Namespace')}",
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeRaw,
+			}
+
+			deepLink, err := query.BuildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.NotContains(t, deepLink, "accountId%22%3A%22123456789")
+		})
 	})
 
 	t.Run("SEARCH(someexpression) was specified in the query editor", func(t *testing.T) {
@@ -1148,3 +1195,5 @@ func Test_ParseMetricDataQueries_account_Id(t *testing.T) {
 		assert.Nil(t, actual[0].AccountId)
 	})
 }
+
+func pointer[T any](arg T) *T { return &arg }
