@@ -99,17 +99,9 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   };
 
   useEffect(() => {
-    let _isMounted = false;
-
-    async function componentDidMount() {
-      _isMounted = true;
-      await datasource.languageProvider.start();
-      if (_isMounted) {
-        setLabelsLoaded(true);
-      }
-    }
-
-    componentDidMount();
+    datasource.languageProvider.start().then(() => {
+      setLabelsLoaded(true);
+    });
   }, [datasource]);
 
   const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
