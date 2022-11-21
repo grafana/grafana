@@ -4,7 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -76,7 +76,7 @@ function renderRuleEditor(identifier?: string) {
 
 const ui = {
   inputs: {
-    name: byLabelText('Rule name'),
+    name: byRole('textbox', { name: /rule name name for the alert rule\./i }),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId('datasource-picker'),
     folder: byTestId('folder-picker'),
