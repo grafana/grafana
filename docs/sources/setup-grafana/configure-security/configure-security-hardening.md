@@ -7,19 +7,19 @@ title: Configure security hardening
 
 # Configure security hardening
 
-Security hardening enables you to apply additional security which might stop certain vulnerabilities from being exploited by a malicious attacker.
+Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
 > **Note:** These settings are available in the [grafana.ini configuration file]({{< relref "../configure-grafana/#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
 
 ## Additional security for cookies
 
-If Grafana uses HTTPS, it is possible to further secure the cookie that is used as authentication to access the Web UI. By securing the cookie further, you might mitigate against certain attacks where an attacker could get hold of the cookie value.
+If Grafana uses HTTPS, you can further secure the cookie that the system uses to authenticate access to the web UI. By applying additional security to the cookie, you might mitigate certain attacks that result from an attacker obtaining the cookie value.
 
-> **Note:** Grafana must use HTTPS in order for the below configurations to work properly.
+> **Note:** Grafana must use HTTPS for the following configurations to work properly.
 
 ### Add a secure attribute to cookies
 
-The secure attribute will add a `Secure` attribute to the cookie that is used to authenticate users and enforces users to only send the cookie over a valid HTTPS secure connection. This configuration provides mitigation against some MITM attacks.
+To provide mitigation against some MITM attacks, add the `Secure` attribute to the cookie that is used to authenticate users. This attribute forces users only to send the cookie over a valid HTTPS secure connection.
 
 Example:
 
@@ -30,7 +30,7 @@ cookie_secure = true
 
 ### Add a SameSite attribute to cookies
 
-Set the _cookie_samesite_ option to `strict`. This will enforce clients to not send the cookie in requests that were made cross-site, but only from the site that sat the cookie. By setting the option to "strict", you will mitigate almost all CSRF-attacks.
+To mitigate almost all CSRF-attacks, set the _cookie_samesite_ option to `strict`. This setting prevents clients from sending the cookie in requests that are made cross-site, but only from the site that sat the cookie.
 
 Example:
 
@@ -39,12 +39,12 @@ Example:
 cookie_samesite = strict
 ```
 
-> **Note:** By setting the SameSite attribute to "strict", clicks to the Grafana instance will not work, just within the instance. The default option "lax" does not have this behavior.
+> **Note:** By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
 
 ### Add a prefix to cookie names
 
-Further secure the cookie authentication by adding a [Cookie Prefix](https://googlechrome.github.io/samples/cookie-prefixes/). Cookies without a special prefix can be overwritten in a man-in-the-middle attack, even if the site is using HTTPS. A cookie prefix will enforce clients to only accept the cookie if certain criteria are met.
-Prefix the current cookie name with either `__Secure-` or `__Host-` where the latter adds additional protection by only alloing the cookie to be sat from the host that sent the Set-Cookie header.
+You can further secure the cookie authentication by adding a [Cookie Prefix](https://googlechrome.github.io/samples/cookie-prefixes/). Cookies without a special prefix can be overwritten in a man-in-the-middle attack, even if the site uses HTTPS. A cookie prefix forces clients only to accept the cookie if certain criteria are met.
+Add a prefix to the current cookie name with either `__Secure-` or `__Host-` where the latter provides additional protection by only allowing the cookie to be sat from the host that sent the Set-Cookie header.
 
 Example:
 
@@ -55,30 +55,30 @@ login_cookie_name = __Host-grafana_session
 
 ## Security headers
 
-Grafana has a few additional headers that can be configured which might help to mitigate against certain attacks such as XSS.
+Grafana includes a few additional headers that you can configure to help mitigate against certain attacks, such as XSS.
 
 ### Add a Content Security Policy
 
-A content security policy (CSP) is a HTTP response header that instructs the web browser how content should be handled, such as allowing inline scripts to execute, or loading images from certain domains. The default CSP template is already configured to provide sufficient protection against some attacks. This will make it more difficult for attackers to execute arbitrary JavaScript if such a vulnerability would be present.
+A content security policy (CSP) is an HTTP response header that controls how the web browser handles content, such as allowing inline scripts to execute or loading images from certain domains. The default CSP template is already configured to provide sufficient protection against some attacks. This makes it more difficult for attackers to execute arbitrary JavaScript if such a vulnerability is present.
 
 Example:
 
 ```toml
 # Enable adding the Content-Security-Policy header to your requests.
-# CSP allows to control resources the user agent is allowed to load and helps prevent XSS attacks.
+# CSP enables you to control the resources the user agent can load and helps prevent XSS attacks.
 content_security_policy = true
 
-# Set Content Security Policy template used when adding the Content-Security-Policy header to your requests.
+# Set the Content Security Policy template that is used when the Content-Security-Policy header is added to your requests.
 # $NONCE in the template includes a random nonce.
 # $ROOT_PATH is server.root_url without the protocol.
 content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' $NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://$ROOT_PATH wss://$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"""
 ```
 
 ## Additional security hardening
-
+The Grafana server has several built-in security features that you can opt-in to enhance security. This section describes additional techniques you can use to harden security.
 ### Hide the version number
 
-If set to `true`, the Grafana server will hide the running version number for unauthenticated users. Version numbers might reveal if you are running an outdated and vulnerable version of Grafana.
+If set to `true`, the Grafana server hides the running version number for unauthenticated users. Version numbers might reveal if you are running an outdated and vulnerable version of Grafana.
 
 Example:
 
@@ -89,7 +89,7 @@ hide_version = true
 
 ### Enforce domain verification
 
-If set to `true`, the Grafana server will redirect requests that have a Host-header value that is mismatched to the actual domain. This might help to mitigate against some DNS rebinding attacks.
+If set to `true`, the Grafana server redirects requests that have a Host-header value that is mismatched to the actual domain. This might help to mitigate some DNS rebinding attacks.
 
 Example:
 
