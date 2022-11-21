@@ -309,7 +309,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     justify-content: right;
-    margin-top: -${theme.spacing(4)};
   `,
   bold: css`
     font-weight: bold;
