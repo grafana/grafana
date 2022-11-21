@@ -12,7 +12,7 @@ func (s *UserAuthTokenService) Run(ctx context.Context) error {
 	maxInactiveLifetime := s.cfg.LoginMaxInactiveLifetime
 	maxLifetime := s.cfg.LoginMaxLifetime
 
-	err := s.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
+	err := s.serverLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
 		if _, err := s.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 			s.log.Error("An error occurred while deleting expired tokens", "err", err)
 		}
@@ -24,7 +24,7 @@ func (s *UserAuthTokenService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			err = s.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
+			err = s.serverLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
 				if _, err := s.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 					s.log.Error("An error occurred while deleting expired tokens", "err", err)
 				}

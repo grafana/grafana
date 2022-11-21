@@ -25,7 +25,7 @@ var getTime = time.Now
 func ProvideUserAuthTokenService(sqlStore db.DB, cfg *setting.Cfg, serverLockService *serverlock.ServerLockService, quotaService quota.Service) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
-		ServerLockService: serverLockService,
+		serverLockService: serverLockService,
 		cfg:               cfg,
 		log:               log.New("auth"),
 	}
@@ -48,7 +48,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB, cfg *setting.Cfg, serverLockSer
 
 type UserAuthTokenService struct {
 	sqlStore          db.DB
-	ServerLockService *serverlock.ServerLockService
+	serverLockService *serverlock.ServerLockService
 	cfg               *setting.Cfg
 	log               log.Logger
 }
