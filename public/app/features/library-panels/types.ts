@@ -32,7 +32,7 @@ export interface LibraryElementsSearchResult {
 export interface LibraryElementDTO {
   id: number;
   orgId: number;
-  folderId: number;
+  folderUid: string;
   uid: string;
   name: string;
   kind: LibraryElementKind;

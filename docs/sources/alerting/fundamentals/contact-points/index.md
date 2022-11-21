@@ -44,6 +44,7 @@ The following table lists the contact point types supported by Grafana.
 | [Threema](https://threema.ch/)                   | `threema`                 | Supported            | N/A                                                                                                      |
 | [VictorOps](https://help.victorops.com/)         | `victorops`               | Supported            | Supported                                                                                                |
 | [Webhook](#webhook)                              | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| [Cisco Webex Teams](#webex)                      | `webex`                   | Supported            | Supported                                                                                                |
 | [WeCom](#wecom)                                  | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
 

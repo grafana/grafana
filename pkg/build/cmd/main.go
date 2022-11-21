@@ -97,6 +97,14 @@ func main() {
 			},
 		},
 		{
+			Name:   "upload-cdn",
+			Usage:  "Upload public/* to a cdn bucket",
+			Action: UploadCDN,
+			Flags: []cli.Flag{
+				&editionFlag,
+			},
+		},
+		{
 			Name:   "shellcheck",
 			Usage:  "Run shellcheck on shell scripts",
 			Action: Shellcheck,
@@ -151,6 +159,15 @@ func main() {
 					Name:  "deployment",
 					Usage: "Kind of deployment (e.g. canary/latest)",
 				},
+			},
+		},
+		{
+			Name:   "upload-packages",
+			Usage:  "Upload Grafana packages",
+			Action: UploadPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
 			},
 		},
 		{

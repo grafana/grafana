@@ -28,9 +28,9 @@ jest.mock('debounce-promise', () => {
   const debounce = (fn: any) => {
     const debounced = () =>
       Promise.resolve([
-        { label: 'General', value: { id: 0, title: 'General' } },
-        { label: 'Folder1', value: { id: 1, title: 'Folder1' } },
-        { label: 'Folder2', value: { id: 2, title: 'Folder2' } },
+        { label: 'General', value: { uid: '', title: 'General' } },
+        { label: 'Folder1', value: { id: 'xMsQdBfWz', title: 'Folder1' } },
+        { label: 'Folder2', value: { id: 'wfTJJL5Wz', title: 'Folder2' } },
       ]);
     return debounced;
   };
@@ -187,7 +187,7 @@ describe('LibraryPanelsSearch', () => {
                 kind: LibraryElementKind.Panel,
                 uid: 'uid',
                 description: 'Library Panel Description',
-                folderId: 0,
+                folderUid: '',
                 model: { type: 'timeseries', title: 'A title' },
                 type: 'timeseries',
                 orgId: 1,
@@ -242,7 +242,7 @@ describe('LibraryPanelsSearch', () => {
               kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
-              folderId: 0,
+              folderUid: '',
               model: { type: 'timeseries', title: 'A title' },
               type: 'timeseries',
               orgId: 1,
@@ -286,7 +286,7 @@ describe('LibraryPanelsSearch', () => {
               kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
-              folderId: 0,
+              folderUid: '',
               model: { type: 'timeseries', title: 'A title' },
               type: 'timeseries',
               orgId: 1,
