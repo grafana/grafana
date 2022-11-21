@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -42,10 +41,6 @@ func (claims *OktaClaims) extractEmail() string {
 	}
 
 	return claims.Email
-}
-
-func (s *SocialOkta) Type() int {
-	return int(models.OKTA)
 }
 
 func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {

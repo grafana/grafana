@@ -2,7 +2,7 @@ package screenshot
 
 import (
 	"context"
-	"fmt"
+	"encoding/base64"
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -46,7 +46,7 @@ func NewInmemCacheService(expiration time.Duration, r prometheus.Registerer) Cac
 }
 
 func (s *InmemCacheService) Get(_ context.Context, opts ScreenshotOptions) (*Screenshot, bool) {
-	k := fmt.Sprintf("%s-%d-%s", opts.DashboardUID, opts.PanelID, opts.Theme)
+	k := base64.StdEncoding.EncodeToString(opts.Hash())
 	if v, ok := s.cache.Get(k); ok {
 		defer s.cacheHits.Inc()
 		return v.(*Screenshot), true
@@ -56,7 +56,7 @@ func (s *InmemCacheService) Get(_ context.Context, opts ScreenshotOptions) (*Scr
 }
 
 func (s *InmemCacheService) Set(_ context.Context, opts ScreenshotOptions, screenshot *Screenshot) error {
-	k := fmt.Sprintf("%s-%d-%s", opts.DashboardUID, opts.PanelID, opts.Theme)
+	k := base64.StdEncoding.EncodeToString(opts.Hash())
 	s.cache.Set(k, screenshot, 0)
 	return nil
 }

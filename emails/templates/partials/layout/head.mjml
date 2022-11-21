@@ -1,0 +1,10 @@
+<mj-attributes>
+  <mj-text align="left" color="#FFF" line-height="1.5" />
+  <mj-button background-color="#3D71D9" rel="noopener" />
+  <mj-body background-color="#111217" />
+</mj-attributes>
+<mj-style inline="inline">
+  a {
+    color: #6E9FFF;
+  }
+</mj-style>

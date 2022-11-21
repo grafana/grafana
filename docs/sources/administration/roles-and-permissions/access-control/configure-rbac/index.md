@@ -14,9 +14,10 @@ weight: 30
 
 The table below describes all RBAC configuration options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../../../../setup-grafana/configure-grafana/#configure-with-environment-variables" >}}).
 
-| Setting            | Required | Description                                                                  | Default |
-| ------------------ | -------- | ---------------------------------------------------------------------------- | ------- |
-| `permission_cache` | No       | Enable to use in memory cache for loading and evaluating users' permissions. | `true`  |
+| Setting                         | Required | Description                                                                                                                                                                                                                                                                                                                     | Default |
+| ------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `permission_cache`              | No       | Enable to use in memory cache for loading and evaluating users' permissions.                                                                                                                                                                                                                                                    | `true`  |
+| `permission_validation_enabled` | No       | Grafana enforces validation for permissions when a user creates or updates a role. The system checks the internal list of scopes and actions for each permission to determine they are valid. By default, if a scope or action is not recognized, Grafana logs a warning message. When set to `true`, Grafana returns an error. | `false` |
 
 ## Example RBAC configuration
 
