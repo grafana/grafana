@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -76,7 +77,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
 			input: &resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer(useLinkedAccountsId)},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -91,7 +92,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
 			input: &resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer("1234567890")},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -153,7 +154,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
 			input: &resources.DimensionValuesRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer(useLinkedAccountsId)},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -168,7 +169,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
 			input: &resources.DimensionValuesRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: pointer("1234567890")},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},

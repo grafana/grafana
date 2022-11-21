@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/oam"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
@@ -16,8 +17,10 @@ type RouteHandlerFunc func(pluginCtx backend.PluginContext, reqContextFactory Re
 
 type RequestContext struct {
 	MetricsClientProvider MetricsClientProvider
+	LogsAPIProvider       CloudWatchLogsAPIProvider
 	OAMClientProvider     OAMClientProvider
 	Settings              *CloudWatchSettings
+	Features              featuremgmt.FeatureToggles
 }
 
 type ListMetricsProvider interface {
@@ -44,7 +47,7 @@ type OAMClientProvider interface {
 }
 
 type LogGroupsProvider interface {
-	GetLogGroups(request resources.LogsRequest) ([]resources.ResourceResponse[resources.LogGroup], error)
+	GetLogGroups(request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error)
 }
 
 type AccountsProvider interface {

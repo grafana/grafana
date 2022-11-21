@@ -25,5 +25,3 @@ func getAccountId(arn string) string {
 
 	return ""
 }
-
-func pointer[T any](arg T) *T { return &arg }

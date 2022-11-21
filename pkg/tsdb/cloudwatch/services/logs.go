@@ -5,23 +5,25 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type LogGroupsService struct {
-	logGroupsAPI models.CloudWatchLogsAPIProvider
+	logGroupsAPI          models.CloudWatchLogsAPIProvider
+	isCrossAccountEnabled bool
 }
 
-func NewLogGroupsService(logsClient models.CloudWatchLogsAPIProvider) models.LogGroupsProvider {
-	return &LogGroupsService{logGroupsAPI: logsClient}
+func NewLogGroupsService(logsClient models.CloudWatchLogsAPIProvider, isCrossAccountEnabled bool) models.LogGroupsProvider {
+	return &LogGroupsService{logGroupsAPI: logsClient, isCrossAccountEnabled: isCrossAccountEnabled}
 }
 
-func (s *LogGroupsService) GetLogGroups(req resources.LogsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
+func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
 	input := &cloudwatchlogs.DescribeLogGroupsInput{
 		Limit:              aws.Int64(req.Limit),
 		LogGroupNamePrefix: req.LogGroupNamePrefix,
 	}
 
-	if req.IsCrossAccountQueryingEnabled && req.AccountId != nil {
+	if s.isCrossAccountEnabled && req.AccountId != nil {
 		input.IncludeLinkedAccounts = aws.Bool(true)
 		if req.LogGroupNamePattern != nil {
 			input.LogGroupNamePrefix = req.LogGroupNamePattern
@@ -43,7 +45,7 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogsRequest) ([]resources.
 				Arn:  *logGroup.Arn,
 				Name: *logGroup.LogGroupName,
 			},
-			AccountId: pointer(getAccountId(*logGroup.Arn)),
+			AccountId: utils.Pointer(getAccountId(*logGroup.Arn)),
 		})
 	}
 
