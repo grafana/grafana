@@ -203,9 +203,8 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
-			// This seems incorrect
-			v.SetMeta([]EvalMatch{{}, {Metric: "NoData"}})
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: nil}})
 			return newResults(v)
 		},
 	}, {
@@ -226,9 +225,9 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
+			v := newNumber(ptr.Float64(1))
 			// This too seems incorrect, looks like we don't call the evaluator
-			v.SetMeta([]EvalMatch{{Metric: "NoData"}})
+			v.SetMeta([]EvalMatch{{Value: nil}})
 			return newResults(v)
 		},
 	}, {
@@ -251,9 +250,9 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
+			v := newNumber(ptr.Float64(1))
 			// This seems incorrect
-			v.SetMeta([]EvalMatch{{}, {Metric: "NoData"}})
+			v.SetMeta([]EvalMatch{{Value: nil}})
 			return newResults(v)
 		},
 	}, {
@@ -471,6 +470,131 @@ func TestConditionsCmd(t *testing.T) {
 				{Value: ptr.Float64(10)},
 				{Value: ptr.Float64(15)},
 			})
+			return newResults(v)
+		},
+	}, {
+		name: "two queries with two conditions using and operator and first is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(0))
+			v.SetMeta([]EvalMatch{{Metric: "NoData"}, {Value: ptr.Float64(5)}})
+			return newResults(v)
+		},
+	}, {
+		// TODO: NoData behavior is different if the last condition is no data
+		name: "two queries with two conditions using and operator and last is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(nil)
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(5)}, {Metric: "NoData"}})
+			return newResults(v)
+		},
+	}, {
+		name: "two queries with two conditions using or operator and first is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(nil)
+			v.SetMeta([]EvalMatch{{Metric: "NoData"}, {Value: ptr.Float64(5)}})
+			return newResults(v)
+		},
+	}, {
+		name: "two queries with two conditions using or operator and last is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(nil)
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(5)}, {Metric: "NoData"}})
 			return newResults(v)
 		},
 	}}

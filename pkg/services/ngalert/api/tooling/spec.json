@@ -1707,6 +1707,11 @@
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -1778,6 +1783,11 @@
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2799,11 +2809,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -5253,6 +5266,10 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Status": {
+      "type": "integer",
+      "format": "int64"
+    },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
     },
@@ -5721,7 +5738,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5883,6 +5899,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -6130,6 +6147,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

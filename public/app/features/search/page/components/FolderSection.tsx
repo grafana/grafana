@@ -82,8 +82,8 @@ export const FolderSection = ({
       id: 666, // do not use me!
       isStarred: false,
       tags: item.tags ?? [],
-      folderUid,
-      folderTitle,
+      folderUid: folderUid || item.location,
+      folderTitle: folderTitle || raw.view.dataFrame.meta?.custom?.locationInfo[item.location].name,
     }));
     return v;
   }, [sectionExpanded, tags]);

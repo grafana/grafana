@@ -151,7 +151,16 @@ func TestSensuGoNotifier(t *testing.T) {
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewSensuGoConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config:              m,
+				ImageStore:          images,
+				NotificationService: webhookSender,
+				Template:            tmpl,
+				DecryptFunc:         decryptFn,
+			}
+
+			sn, err := NewSensuGoNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -161,7 +170,6 @@ func TestSensuGoNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			sn := NewSensuGoNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := sn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
