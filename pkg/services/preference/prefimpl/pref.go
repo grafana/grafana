@@ -54,7 +54,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		if p.Timezone != "" {
 			res.Timezone = p.Timezone
 		}
-		if p.WeekStart != "" {
+		if p.WeekStart != nil && *p.WeekStart != "" {
 			res.WeekStart = p.WeekStart
 		}
 		if p.HomeDashboardID != 0 {
@@ -108,7 +108,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				TeamID:          cmd.TeamID,
 				HomeDashboardID: cmd.HomeDashboardID,
 				Timezone:        cmd.Timezone,
-				WeekStart:       cmd.WeekStart,
+				WeekStart:       &cmd.WeekStart,
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
@@ -125,7 +125,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	}
 
 	preference.Timezone = cmd.Timezone
-	preference.WeekStart = cmd.WeekStart
+	preference.WeekStart = &cmd.WeekStart
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
@@ -200,7 +200,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if cmd.WeekStart != nil {
-		preference.WeekStart = *cmd.WeekStart
+		preference.WeekStart = cmd.WeekStart
 	}
 
 	if cmd.Theme != nil {
@@ -232,7 +232,7 @@ func (s *Service) GetDefaults() *pref.Preference {
 	defaults := &pref.Preference{
 		Theme:           s.cfg.DefaultTheme,
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
-		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
+		WeekStart:       &s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
 		JSONData:        &pref.PreferenceJSONData{},
 	}
