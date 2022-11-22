@@ -83,7 +83,7 @@ func TestQuery_GetLogEvents(t *testing.T) {
 			cli = fakeCWLogsClient{}
 
 			im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-				return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+				return DataSource{Settings: models.CloudWatchSettings{}}, nil
 			})
 
 			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -141,7 +141,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 	const refID = "A"
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -222,7 +222,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -275,7 +275,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -333,7 +333,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("successfully parses information from JSON to StartQueryWithContext", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -369,7 +369,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -425,7 +425,7 @@ func TestQuery_StopQuery(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	timeRange := backend.TimeRange{
@@ -520,7 +520,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())

@@ -50,7 +50,7 @@ type DataQueryJson struct {
 }
 
 type DataSource struct {
-	Settings   *models.CloudWatchSettings
+	Settings   models.CloudWatchSettings
 	HTTPClient *http.Client
 }
 

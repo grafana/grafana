@@ -8,7 +8,7 @@ import (
 
 type RequestContext struct {
 	MetricsClientProvider MetricsClientProvider
-	Settings              *CloudWatchSettings
+	Settings              CloudWatchSettings
 }
 
 type RequestContextFactoryFunc func(pluginCtx backend.PluginContext, region string) (reqCtx RequestContext, err error)
