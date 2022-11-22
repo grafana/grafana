@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"testing"
@@ -130,7 +131,15 @@ func TestDashboardFileStore(t *testing.T) {
 					Data: []byte("dash2"),
 				},
 			}
-			openDashboardFile = mapFs.Open
+			openDashboardFile = func(p plugins.PluginDTO, name string) (io.ReadSeeker, error) {
+				f, err := mapFs.Open(name)
+				require.NoError(t, err)
+
+				data, err := io.ReadAll(f)
+				require.NoError(t, err)
+
+				return bytes.NewReader(data), nil
+			}
 			t.Cleanup(func() {
 				openDashboardFile = origOpenDashboardFile
 			})
@@ -156,7 +165,6 @@ func TestDashboardFileStore(t *testing.T) {
 				b, err := io.ReadAll(res.Content)
 				require.NoError(t, err)
 				require.Equal(t, "dash1", string(b))
-				require.NoError(t, res.Content.Close())
 			})
 
 			t.Run("Should return file content for dashboards/dash2.json", func(t *testing.T) {
@@ -170,7 +178,6 @@ func TestDashboardFileStore(t *testing.T) {
 				b, err := io.ReadAll(res.Content)
 				require.NoError(t, err)
 				require.Equal(t, "dash2", string(b))
-				require.NoError(t, res.Content.Close())
 			})
 
 			t.Run("Should return error when trying to read relative file", func(t *testing.T) {
@@ -189,39 +196,40 @@ func TestDashboardFileStore(t *testing.T) {
 func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	t.Helper()
 
-	return &FileStoreManager{
-		pluginStore: &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
+	p1 := &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "pluginWithoutDashboards",
+			Includes: []*plugins.Includes{
 				{
-					JSONData: plugins.JSONData{
-						ID: "pluginWithoutDashboards",
-						Includes: []*plugins.Includes{
-							{
-								Type: "page",
-							},
-						},
-					},
-				},
-				{
-					PluginDir: "plugins/plugin-id",
-					JSONData: plugins.JSONData{
-						ID: "pluginWithDashboards",
-						Includes: []*plugins.Includes{
-							{
-								Type: "page",
-							},
-							{
-								Type: "dashboard",
-								Path: "dashboards/dash1.json",
-							},
-							{
-								Type: "dashboard",
-								Path: "dashboards/dash2.json",
-							},
-						},
-					},
+					Type: "page",
 				},
 			},
+		},
+	}
+
+	p2 := &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "pluginWithDashboards",
+			Includes: []*plugins.Includes{
+				{
+					Type: "page",
+				},
+				{
+					Type: "dashboard",
+					Path: "dashboards/dash1.json",
+				},
+				{
+					Type: "dashboard",
+					Path: "dashboards/dash2.json",
+				},
+			},
+		},
+		PluginDir: "plugins/plugin-id",
+	}
+
+	return &FileStoreManager{
+		pluginStore: &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO()},
 		},
 	}
 }

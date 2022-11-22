@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"sort"
 	"testing"
 
@@ -191,9 +190,8 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Context, args *dashboards.GetPluginDashboardFileContentsArgs) (*dashboards.GetPluginDashboardFileContentsResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		if content, exists := dashboardFiles[args.FileReference]; exists {
-			r := bytes.NewReader(content)
 			return &dashboards.GetPluginDashboardFileContentsResult{
-				Content: io.NopCloser(r),
+				Content: bytes.NewReader(content),
 			}, nil
 		}
 	} else if !exists {
