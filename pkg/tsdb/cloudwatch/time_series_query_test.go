@@ -600,7 +600,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 		return &api
 	}
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	t.Run("should call GetMetricDataInput with AccountId nil when no AccountId is provided", func(t *testing.T) {

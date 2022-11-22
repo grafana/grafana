@@ -19,7 +19,7 @@ type RequestContext struct {
 	MetricsClientProvider MetricsClientProvider
 	LogsAPIProvider       CloudWatchLogsAPIProvider
 	OAMClientProvider     OAMClientProvider
-	Settings              *CloudWatchSettings
+	Settings              CloudWatchSettings
 	Features              featuremgmt.FeatureToggles
 }
 

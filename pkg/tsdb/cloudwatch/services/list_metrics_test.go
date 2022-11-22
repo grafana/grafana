@@ -52,7 +52,7 @@ var metricResponse = []resources.MetricResponse{
 
 type validateInputTestCase[T resources.DimensionKeysRequest | resources.DimensionValuesRequest] struct {
 	name                          string
-	input                         *T
+	input                         T
 	listMetricsWithPageLimitInput *cloudwatch.ListMetricsInput
 }
 
@@ -76,7 +76,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 	testCases := []validateInputTestCase[resources.DimensionKeysRequest]{
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
-			input: &resources.DimensionKeysRequest{
+			input: resources.DimensionKeysRequest{
 				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
@@ -91,7 +91,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		},
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
-			input: &resources.DimensionKeysRequest{
+			input: resources.DimensionKeysRequest{
 				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
@@ -107,7 +107,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		},
 		{
 			name: "Should not set namespace and metricName on list metric input if empty strings are set for these in the request",
-			input: &resources.DimensionKeysRequest{
+			input: resources.DimensionKeysRequest{
 				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
 				Namespace:       "",
 				MetricName:      "",
@@ -153,7 +153,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 	testCases := []validateInputTestCase[resources.DimensionValuesRequest]{
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
-			input: &resources.DimensionValuesRequest{
+			input: resources.DimensionValuesRequest{
 				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
@@ -168,7 +168,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		},
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
-			input: &resources.DimensionValuesRequest{
+			input: resources.DimensionValuesRequest{
 				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
