@@ -44,6 +44,7 @@ type CurrentUser struct {
 	Timezone                   string             `json:"timezone"`
 	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
+	Language                   string             `json:"language"`
 	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`

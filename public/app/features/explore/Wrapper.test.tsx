@@ -8,7 +8,7 @@ import { locationService, config } from '@grafana/runtime';
 import { changeDatasource } from './spec/helper/interactions';
 import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
 import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
-import { splitOpen } from './state/main';
+import * as mainState from './state/main';
 import * as queryState from './state/query';
 
 jest.mock('app/core/core', () => {
@@ -154,7 +154,7 @@ describe('Wrapper', () => {
     });
   });
 
-  describe('Handles open/close splits in UI and URL', () => {
+  describe('Handles open/close splits and related events in UI and URL', () => {
     it('opens the split pane when split button is clicked', async () => {
       setupExplore();
       // Wait for rendering the editor
@@ -226,8 +226,8 @@ describe('Wrapper', () => {
       await userEvent.click(closeButtons[1]);
 
       await waitFor(() => {
-        const logsPanels = screen.queryAllByLabelText(/Close split pane/i);
-        expect(logsPanels.length).toBe(0);
+        const postCloseButtons = screen.queryAllByLabelText(/Close split pane/i);
+        expect(postCloseButtons.length).toBe(0);
       });
     });
 
@@ -261,11 +261,34 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      store.dispatch(mainState.splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
 
       // Editor renders the new query
       await screen.findByText(`elastic Editor input: error`);
       await screen.findByText(`loki Editor input: { label="value"}`);
+    });
+
+    it('handles split size events and sets relevant variables', async () => {
+      setupExplore();
+      const splitButton = await screen.findByText(/split/i);
+      fireEvent.click(splitButton);
+      await waitForExplore(undefined, true);
+      let widenButton = await screen.findAllByLabelText('Widen pane');
+      let narrowButton = await screen.queryAllByLabelText('Narrow pane');
+      const panes = screen.getAllByRole('main');
+      expect(widenButton.length).toBe(2);
+      expect(narrowButton.length).toBe(0);
+      expect(Number.parseInt(getComputedStyle(panes[0]).width, 10)).toBe(1000);
+      expect(Number.parseInt(getComputedStyle(panes[1]).width, 10)).toBe(1000);
+      const resizer = screen.getByRole('presentation');
+      fireEvent.mouseDown(resizer, { buttons: 1 });
+      fireEvent.mouseMove(resizer, { clientX: -700, buttons: 1 });
+      fireEvent.mouseUp(resizer);
+      widenButton = await screen.findAllByLabelText('Widen pane');
+      narrowButton = await screen.queryAllByLabelText('Narrow pane');
+      expect(widenButton.length).toBe(1);
+      expect(narrowButton.length).toBe(1);
+      // the autosizer is mocked so there is no actual resize here
     });
   });
 
@@ -295,7 +318,7 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      store.dispatch(mainState.splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
       await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
     });
   });

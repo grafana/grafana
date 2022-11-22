@@ -13,6 +13,7 @@ load(
 load('scripts/drone/vault.star', 'from_secret', 'prerelease_bucket', 'github_token')
 
 def windows(trigger, edition, ver_mode):
+    environment = {'EDITION': edition}
     init_cmds = []
     sfx = ''
     if edition in ('enterprise', 'enterprise2'):
@@ -130,5 +131,5 @@ def windows(trigger, edition, ver_mode):
     return pipeline(
         name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
         steps=[identify_runner_step('windows')] + steps,
-        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
+        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows', environment=environment,
     )

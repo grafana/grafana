@@ -23,6 +23,7 @@ func (l *LoginServiceFake) SetTeamSyncFunc(login.TeamSyncFunc) {}
 
 type AuthInfoServiceFake struct {
 	LatestUserID         int64
+	ExpectedUserAuth     *models.UserAuth
 	ExpectedUser         *user.User
 	ExpectedExternalUser *models.ExternalUserInfo
 	ExpectedError        error
@@ -39,6 +40,7 @@ func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models
 
 func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	a.LatestUserID = query.UserId
+	query.Result = a.ExpectedUserAuth
 	return a.ExpectedError
 }
 
@@ -52,6 +54,10 @@ func (a *AuthInfoServiceFake) UpdateAuthInfo(ctx context.Context, cmd *models.Up
 
 func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	query.Result = a.ExpectedExternalUser
+	return a.ExpectedError
+}
+
+func (a *AuthInfoServiceFake) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return a.ExpectedError
 }
 

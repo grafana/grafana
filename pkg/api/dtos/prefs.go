@@ -10,7 +10,7 @@ type Prefs struct {
 	HomeDashboardUID string                      `json:"homeDashboardUID,omitempty"`
 	Timezone         string                      `json:"timezone"`
 	WeekStart        string                      `json:"weekStart"`
-	Locale           string                      `json:"locale"`
+	Language         string                      `json:"language"`
 	Navbar           pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
@@ -28,7 +28,7 @@ type UpdatePrefsCmd struct {
 	WeekStart    string                       `json:"weekStart"`
 	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
-	Locale       string                       `json:"locale"`
+	Language     string                       `json:"language"`
 }
 
 // swagger:model
@@ -41,7 +41,7 @@ type PatchPrefsCmd struct {
 	// Enum: utc,browser
 	Timezone         *string                      `json:"timezone,omitempty"`
 	WeekStart        *string                      `json:"weekStart,omitempty"`
-	Locale           *string                      `json:"locale,omitempty"`
+	Language         *string                      `json:"language,omitempty"`
 	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
