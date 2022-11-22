@@ -5,7 +5,7 @@ import (
 )
 
 type Service interface {
-	RecordAttempt(ctx context.Context, username, IPAddress string) error
+	Add(ctx context.Context, username, IPAddress string) error
 	Validate(ctx context.Context, username string) (bool, error)
 }
 

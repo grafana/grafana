@@ -13,7 +13,7 @@ type FakeLoginAttemptService struct {
 	ExpectedErr   error
 }
 
-func (f FakeLoginAttemptService) RecordAttempt(ctx context.Context, username, IPAddress string) error {
+func (f FakeLoginAttemptService) Add(ctx context.Context, username, IPAddress string) error {
 	return f.ExpectedErr
 }
 

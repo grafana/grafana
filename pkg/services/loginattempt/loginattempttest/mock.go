@@ -17,7 +17,7 @@ type MockLoginAttemptService struct {
 	ExpectedErr   error
 }
 
-func (f *MockLoginAttemptService) RecordAttempt(ctx context.Context, username, IPAddress string) error {
+func (f *MockLoginAttemptService) Add(ctx context.Context, username, IPAddress string) error {
 	f.RecordAttemptCalled = true
 	return f.ExpectedErr
 }

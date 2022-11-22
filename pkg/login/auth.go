@@ -87,7 +87,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
-		if err := a.loginAttemptService.RecordAttempt(ctx, query.Username, query.IpAddress); err != nil {
+		if err := a.loginAttemptService.Add(ctx, query.Username, query.IpAddress); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 

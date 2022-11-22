@@ -48,7 +48,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Service) RecordAttempt(ctx context.Context, username, IPAddress string) error {
+func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
 	if s.cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
