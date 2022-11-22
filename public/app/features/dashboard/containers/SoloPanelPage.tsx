@@ -26,7 +26,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; timezone: string }> &
+export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; timezone?: string }> &
   ConnectedProps<typeof connector>;
 
 export interface State {
@@ -96,7 +96,7 @@ export class SoloPanelPage extends Component<Props, State> {
 export interface SoloPanelProps extends State {
   dashboard: DashboardModel | null;
   panelId: number;
-  timezone: string;
+  timezone?: string;
 }
 
 export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: SoloPanelProps) => {

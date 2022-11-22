@@ -20,7 +20,7 @@ export interface OwnProps {
   width: number;
   height: number;
   lazy?: boolean;
-  timezone: string;
+  timezone?: string;
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => {

@@ -61,7 +61,7 @@ export interface Props {
   width: number;
   height: number;
   onInstanceStateChange: (value: any) => void;
-  timezone: string;
+  timezone?: string;
 }
 
 export interface State {
@@ -522,7 +522,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // Yes this is called ever render for a function that is triggered on every mouse move
     this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
 
-    const timezone = this.props.timezone !== '' ? this.props.timezone : this.props.dashboard.getTimezone();
+    const timezone =
+      this.props.timezone && this.props.timezone !== '' ? this.props.timezone : this.props.dashboard.getTimezone();
 
     return (
       <>
