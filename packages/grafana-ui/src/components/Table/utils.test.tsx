@@ -59,6 +59,14 @@ describe('Table utils', () => {
       expect(columns[1].width).toBe(100);
     });
 
+    it('Should distribute width and use field config width with expander enabled', () => {
+      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, true);
+
+      expect(columns[0].width).toBe(50); // expander column
+      expect(columns[1].width).toBe(425);
+      expect(columns[2].width).toBe(100);
+    });
+
     it('Should set field on columns', () => {
       const columns = getColumns(getData(), 1000, 120, new Set(), () => null, false);
 

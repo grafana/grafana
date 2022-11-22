@@ -398,4 +398,54 @@ describe('Table', () => {
       expect(() => screen.getByTestId('table-footer')).toThrow('Unable to find an element');
     });
   });
+
+  describe('when mounted with data and sub-data', () => {
+    it('then correct rows should be rendered and new table is rendered when expander is clicked', () => {
+      getTestContext({
+        subData: new Array(getDefaultDataFrame().length).fill(0).map((i) =>
+          toDataFrame({
+            name: 'A',
+            fields: [
+              {
+                name: 'number' + i,
+                type: FieldType.number,
+                values: [i, i, i],
+                config: {
+                  custom: {
+                    filterable: true,
+                  },
+                },
+              },
+            ],
+            meta: {
+              custom: {
+                parentRowIndex: i,
+              },
+            },
+          })
+        ),
+      });
+      expect(getTable()).toBeInTheDocument();
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+      expect(getColumnHeader(/time/)).toBeInTheDocument();
+      expect(getColumnHeader(/temperature/)).toBeInTheDocument();
+      expect(getColumnHeader(/img/)).toBeInTheDocument();
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(getRowsData(rows)).toEqual([
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+      ]);
+
+      within(rows[1]).getByLabelText('Open trace').click();
+      const rowsAfterClick = within(getTable()).getAllByRole('row');
+      expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
+      expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();
+
+      expect(within(rowsAfterClick[2]).queryByRole('table')).toBeNull();
+    });
+  });
 });
