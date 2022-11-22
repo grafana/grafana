@@ -17,6 +17,7 @@ type xormStore struct {
 type store interface {
 	CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error)
+	DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error)
 }
 
@@ -72,6 +73,13 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLo
 		return nil
 	})
 	return deletedRows, err
+}
+
+func (xs *xormStore) DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error {
+	return xs.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM login_attempt WHERE username = ?", cmd.Username)
+		return err
+	})
 }
 
 func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error) {
