@@ -542,7 +542,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 func TestService_getTimeout(t *testing.T) {
 	cfg := &setting.Cfg{}
 	originalTimeout := sdkhttpclient.DefaultTimeoutOptions.Timeout
-	sdkhttpclient.DefaultTimeoutOptions.Timeout = 60 * time.Second
+	sdkhttpclient.DefaultTimeoutOptions.Timeout = time.Minute
 	t.Cleanup(func() {
 		sdkhttpclient.DefaultTimeoutOptions.Timeout = originalTimeout
 	})
@@ -551,9 +551,9 @@ func TestService_getTimeout(t *testing.T) {
 		jsonData        *simplejson.Json
 		expectedTimeout time.Duration
 	}{
-		{jsonData: simplejson.New(), expectedTimeout: 60 * time.Second},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": nil}), expectedTimeout: 60 * time.Second},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 0}), expectedTimeout: 60 * time.Second},
+		{jsonData: simplejson.New(), expectedTimeout: time.Minute},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": nil}), expectedTimeout: time.Minute},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 0}), expectedTimeout: time.Minute},
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 1}), expectedTimeout: time.Second},
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}

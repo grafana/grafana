@@ -58,7 +58,7 @@ type Raw interface {
 	Interface
 
 	// TODO docs
-	Meta() RawMeta
+	Decl() *Decl[RawMeta]
 }
 
 type Structured interface {
@@ -68,7 +68,7 @@ type Structured interface {
 	Lineage() thema.Lineage
 
 	// TODO docs
-	Meta() CoreStructuredMeta // TODO figure out how to reconcile this interface with CustomStructuredMeta
+	Decl() *Decl[CoreStructuredMeta] // TODO figure out how to reconcile this interface with CustomStructuredMeta
 }
 
 // type Composable interface {
