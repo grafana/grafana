@@ -1,6 +1,21 @@
 import { SceneTimeRange } from './SceneTimeRange';
 
 describe('SceneTimeRange', () => {
+  it('when created should evaluate time range', () => {
+    const timeRange = new SceneTimeRange({ from: 'now-1h', to: 'now' });
+    expect(timeRange.state.value.raw.from).toBe('now-1h');
+  });
+
+  it('when time range refreshed should evaluate and update value', async () => {
+    const timeRange = new SceneTimeRange({ from: 'now-30s', to: 'now' });
+    const startTime = timeRange.state.value.from.valueOf();
+    await new Promise((r) => setTimeout(r, 2));
+    timeRange.onRefresh();
+    const diff = timeRange.state.value.from.valueOf() - startTime;
+    expect(diff).toBeGreaterThan(1);
+    expect(diff).toBeLessThan(100);
+  });
+
   it('toUrlValues with relative range', () => {
     const timeRange = new SceneTimeRange({ from: 'now-1h', to: 'now' });
     expect(timeRange.urlSync?.getUrlState(timeRange.state)).toEqual(
