@@ -31,12 +31,11 @@ fi
 
 OPTS="--homepath=${GRAFANA_HOME} \
       --config=${CONF_FILE} \
-      --pluginsDir=${PLUGINS_DIR} \
       --configOverrides='cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR \
                         cfg:default.paths.data=${DATA_DIR} \
                         cfg:default.paths.logs=${LOG_DIR} \
                         cfg:default.paths.plugins=${PLUGINS_DIR}'"
 
-CMD=cli
+CMD=server
 
 eval $EXECUTABLE "$CMD" "$OPTS" "$@"
