@@ -9,7 +9,7 @@
 
 ARG BASE_IMAGE=alpine:3.15
 
-FROM ${BASE_IMAGE} as grafana-builder
+FROM ${BASE_IMAGE} as tgz-builder
 
 WORKDIR /tmp/grafana
 
@@ -57,7 +57,7 @@ RUN if grep -i -q alpine /etc/issue; then \
       echo 'ERROR: Unsupported base image' && /bin/false; \
     fi
 
-# Oracle Support for x86_64 only
+# glibc support for alpine x86_64 only
 RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-2.35-r0.apk \
         -O /tmp/glibc-2.35-r0.apk && \
@@ -72,7 +72,7 @@ RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
       rm -f /etc/ld.so.cache; \
     fi
 
-COPY --from=grafana-builder /tmp/grafana/conf ./conf
+COPY --from=tgz-builder /tmp/grafana/conf ./conf
 
 RUN if [ ! $(getent group "$GF_GID") ]; then \
       if grep -i -q alpine /etc/issue; then \
@@ -102,8 +102,8 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=grafana-builder /tmp/grafana/bin/grafana-server /tmp/grafana/bin/grafana-cli ./bin/
-COPY --from=grafana-builder /tmp/grafana/public ./public
+COPY --from=tgz-builder /tmp/grafana/bin/grafana-server /tmp/grafana/bin/grafana-cli ./bin/
+COPY --from=tgz-builder /tmp/grafana/public ./public
 
 EXPOSE 3000
 
