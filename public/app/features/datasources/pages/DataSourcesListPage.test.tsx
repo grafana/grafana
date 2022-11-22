@@ -18,11 +18,12 @@ jest.mock('../api', () => ({
 
 const getDataSourcesMock = getDataSources as jest.Mock;
 
-const setup = () => {
+const setup = (isSortAscending = true) => {
   const store = configureStore({
     dataSources: {
       ...initialState,
       layoutMode: LayoutModes.Grid,
+      isSortAscending,
     },
     navIndex,
   });
@@ -58,5 +59,32 @@ describe('Render', () => {
     expect(await screen.findByRole('heading', { name: 'dataSource-3' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'dataSource-4' })).toBeInTheDocument();
     expect(await screen.findAllByRole('img')).toHaveLength(5);
+  });
+
+  describe('should render elements in sort order', () => {
+    it('ascending', async () => {
+      getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
+      setup(true);
+
+      expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+      const dataSourceItems = await screen.findAllByRole('heading');
+
+      expect(dataSourceItems).toHaveLength(6);
+      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[1]).toHaveTextContent('dataSource-0');
+      expect(dataSourceItems[2]).toHaveTextContent('dataSource-1');
+    });
+    it('descending', async () => {
+      getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
+      setup(false);
+
+      expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+      const dataSourceItems = await screen.findAllByRole('heading');
+
+      expect(dataSourceItems).toHaveLength(6);
+      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[1]).toHaveTextContent('dataSource-4');
+      expect(dataSourceItems[2]).toHaveTextContent('dataSource-3');
+    });
   });
 });
