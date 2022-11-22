@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gobwas/glob"
@@ -53,6 +54,8 @@ N1c5v9v/4h6qeA==
 =DNbR
 -----END PGP PUBLIC KEY BLOCK-----
 `
+
+var runningWindows = runtime.GOOS == "windows"
 
 // pluginManifest holds details for the file manifest
 type pluginManifest struct {
@@ -177,6 +180,9 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	var unsignedFiles []string
 	for _, f := range pluginFiles {
 		if _, exists := manifestFiles[f]; !exists {
+			if runningWindows && plugin.IsRenderer() && f == "chrome-win/debug.log" {
+				continue
+			}
 			unsignedFiles = append(unsignedFiles, f)
 		}
 	}
