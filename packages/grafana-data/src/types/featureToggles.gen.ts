@@ -78,6 +78,7 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
+  jwtTokenGeneration?: boolean;
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;

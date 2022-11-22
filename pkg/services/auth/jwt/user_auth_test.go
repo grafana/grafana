@@ -19,13 +19,14 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type scenarioContext struct {
 	ctx        context.Context
 	cfg        *setting.Cfg
-	authJWTSvc *AuthService
+	authJWTSvc *UserAuthService
 }
 
 type cachingScenarioContext struct {
@@ -369,7 +370,9 @@ func scenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configureFunc) 
 	t.Run(desc, scenarioRunner(fn, cbs...))
 }
 
-func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
+var features = featuremgmt.WithFeatures()
+
+func initAuthService(t *testing.T, cbs ...configureFunc) (*UserAuthService, error) {
 	t.Helper()
 
 	cfg := setting.NewCfg()
@@ -380,7 +383,7 @@ func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
 		cb(t, cfg)
 	}
 
-	service := newService(cfg, remotecache.NewFakeStore(t))
+	service := newUserAuthService(cfg, remotecache.NewFakeStore(t))
 	err := service.init()
 	return service, err
 }
