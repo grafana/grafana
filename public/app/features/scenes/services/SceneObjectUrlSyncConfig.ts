@@ -1,10 +1,10 @@
-import { SceneObjectState, SceneObjectUrlSyncConfigLike, SceneObjectWithUrlSync } from '../core/types';
+import { SceneObjectState, SceneObjectUrlSyncHandler, SceneObjectWithUrlSync } from '../core/types';
 
 interface SceneObjectUrlSyncConfigOptions {
   keys?: string[];
 }
 
-export class SceneObjectUrlSyncConfig<TState extends SceneObjectState> implements SceneObjectUrlSyncConfigLike<TState> {
+export class SceneObjectUrlSyncConfig<TState extends SceneObjectState> implements SceneObjectUrlSyncHandler<TState> {
   private _keys: Set<string>;
 
   public constructor(private _sceneObject: SceneObjectWithUrlSync<TState>, _options: SceneObjectUrlSyncConfigOptions) {
