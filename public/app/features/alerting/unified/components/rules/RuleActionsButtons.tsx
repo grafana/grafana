@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   Button,
@@ -25,6 +25,7 @@ import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { createUrl } from '../../utils/url';
 
 export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
 
@@ -117,12 +118,11 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = urlUtil.renderUrl(
-      `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
-      {
-        returnTo,
-      }
-    );
+    const editURL = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
+      returnTo,
+    });
+
+    const cloneUrl = createUrl('/alerting/new', { copyFrom: ruleId.stringifyIdentifier(identifier) });
 
     if (isViewMode) {
       buttons.push(
@@ -145,6 +145,14 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
       <Tooltip placement="top" content={'Edit'}>
         <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
           <DontShowIfSmallDevice>Edit</DontShowIfSmallDevice>
+        </LinkButton>
+      </Tooltip>
+    );
+
+    buttons.push(
+      <Tooltip placement="top" content={'Clone'}>
+        <LinkButton className={style.button} size="xs" key="clone" variant="secondary" icon="copy" href={cloneUrl}>
+          <DontShowIfSmallDevice>Clone</DontShowIfSmallDevice>
         </LinkButton>
       </Tooltip>
     );
