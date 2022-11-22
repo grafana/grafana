@@ -122,6 +122,15 @@ between your LDAP groups and organization roles and make user roles editable fro
 For more details, see the [`skip_org_role_sync` LDAP authentication configuration option]({{< relref
 "../setup-grafana/configure-security/configure-authentication/ldap/#disable-org-role-synchronization" >}}).
 
+## RBAC - List token's permissions
+
+We added a new endpoint to help users diagnose permissions-related issues with user and token authorization.
+[This endpoint]({{< relref "../developers/http_api/access_control/#list-your-permissions" >}}) allows users to get the
+full list of RBAC permissions associated with their token.
+
+For more details, see the related service accounts [section]({{< relref
+"../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
+
 ## Terraform - Extended support for provisioning permissions
 
 All Grafana users can now use the latest release of [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) (version 1.31.0) to provision [user and team access to service accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/#manage-users-and-teams-permissions-for-a-service-account-in-grafana). This allows full management of service accounts through Terraform - from creating a service account and allowing users to access it to assigning roles to the service account and generating service account tokens.
