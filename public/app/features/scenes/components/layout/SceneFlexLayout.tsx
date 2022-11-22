@@ -3,7 +3,7 @@ import React, { CSSProperties } from 'react';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneComponentProps, SceneLayoutChild, SceneLayoutState, SceneObjectSize } from '../../core/types';
+import { SceneComponentProps, SceneLayoutChild, SceneLayoutState, SceneLayoutChildOptions } from '../../core/types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
@@ -52,7 +52,7 @@ function FlexLayoutChildComponent({
   );
 }
 
-function getItemStyles(direction: FlexLayoutDirection, layout: SceneObjectSize = {}) {
+function getItemStyles(direction: FlexLayoutDirection, layout: SceneLayoutChildOptions = {}) {
   const { xSizing = 'fill', ySizing = 'fill' } = layout;
 
   const style: CSSProperties = {

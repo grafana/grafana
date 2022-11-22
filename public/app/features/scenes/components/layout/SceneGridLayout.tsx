@@ -15,7 +15,7 @@ import {
   SceneLayoutChildState,
   SceneLayoutState,
   SceneObject,
-  SceneObjectSize,
+  SceneLayoutChildOptions,
 } from '../../core/types';
 import { SceneDragHandle } from '../SceneDragHandle';
 
@@ -28,8 +28,11 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   public constructor(state: SceneGridLayoutState) {
     super({
-      isDraggable: true,
       ...state,
+      layout: {
+        isDraggable: true,
+        ...state.layout,
+      },
       children: sortChildrenByPosition(state.children),
     });
   }
@@ -272,8 +275,8 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     const w = Number.isInteger(Number(size.width)) ? Number(size.width) : DEFAULT_PANEL_SPAN;
     const h = Number.isInteger(Number(size.height)) ? Number(size.height) : DEFAULT_PANEL_SPAN;
 
-    let isDraggable = Boolean(child.state.isDraggable);
-    let isResizable = Boolean(child.state.isResizable);
+    let isDraggable = Boolean(child.state.layout?.isDraggable);
+    let isResizable = Boolean(child.state.layout?.isResizable);
 
     if (child instanceof SceneGridRow) {
       isDraggable = child.state.isCollapsed ? true : false;
@@ -381,15 +384,15 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 
   public constructor(state: SceneGridRowState) {
     super({
-      isResizable: false,
-      isDraggable: true,
       isCollapsible: true,
       ...state,
       layout: {
+        isDraggable: true,
         ...state.layout,
         x: 0,
         height: 1,
         width: GRID_COLUMN_COUNT,
+        isResizable: false,
       },
     });
   }
@@ -411,9 +414,9 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
-  const { isCollapsible, isCollapsed, isDraggable, title } = model.useState();
-  const layout = sceneGraph.getLayout(model);
-  const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
+  const { isCollapsible, isCollapsed, title, layout } = model.useState();
+  const parentLayout = sceneGraph.getLayout(model);
+  const dragHandle = <SceneDragHandle layoutKey={parentLayout.state.key!} />;
 
   return (
     <div className={styles.row}>
@@ -422,7 +425,7 @@ function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
           {isCollapsible && <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />}
           <span className={styles.rowTitle}>{title}</span>
         </div>
-        {isDraggable && isCollapsed && <div>{dragHandle}</div>}
+        {layout?.isDraggable && isCollapsed && <div>{dragHandle}</div>}
       </div>
     </div>
   );
@@ -479,7 +482,7 @@ function validateChildrenSize(children: SceneLayoutChild[]) {
   }
 }
 
-function isItemSizeEqual(a: SceneObjectSize, b: SceneObjectSize) {
+function isItemSizeEqual(a: SceneLayoutChildOptions, b: SceneLayoutChildOptions) {
   return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 }
 

@@ -50,9 +50,7 @@ export function getGridWithRowsTest(): Scene {
   });
 
   const cell2 = new VizPanel({
-    isResizable: false,
-    isDraggable: false,
-    layout: { x: 12, y: 20, width: 12, height: 10 },
+    layout: { x: 12, y: 20, width: 12, height: 10, isResizable: false, isDraggable: false },
     pluginId: 'timeseries',
     title: 'No resize/no drag',
   });
