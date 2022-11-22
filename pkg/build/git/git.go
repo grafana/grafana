@@ -13,12 +13,13 @@ import (
 )
 
 const (
-	MainBranch          = "main"
-	HomeDir             = "."
-	RepoOwner           = "grafana"
-	OSSRepo             = "grafana"
-	EnterpriseRepo      = "grafana-enterprise"
-	EnterpriseCheckName = "grafana-enterprise downstream tests"
+	MainBranch                 = "main"
+	HomeDir                    = "."
+	RepoOwner                  = "grafana"
+	OSSRepo                    = "grafana"
+	EnterpriseRepo             = "grafana-enterprise"
+	EnterpriseCheckName        = "Grafana Enterprise"
+	EnterpriseCheckDescription = "Downstream tests to ensure that your changes are compatible with Grafana Enterprise"
 )
 
 var EnterpriseCheckLabels = []string{"enterprise-ok", "enterprise-failed", "enterprise-override"}
@@ -116,7 +117,8 @@ func DeleteEnterpriseBranch(ctx context.Context, client GitService, branchName s
 // CreateEnterpriseStatus sets the status on a commit for the enterprise build check.
 func CreateEnterpriseStatus(ctx context.Context, client StatusesService, sha, link, status string) (*github.RepoStatus, error) {
 	check, _, err := client.CreateStatus(ctx, RepoOwner, OSSRepo, sha, &github.RepoStatus{
-		Description: github.String(EnterpriseCheckName),
+		Context:     github.String(EnterpriseCheckName),
+		Description: github.String(EnterpriseCheckDescription),
 		URL:         github.String(link),
 		State:       github.String(status),
 	})
