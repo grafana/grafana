@@ -245,14 +245,14 @@ func getPublishAwsMarketplaceFlags(ctx *cli.Context) (*publishAwsMarketplaceFlag
 	if err != nil {
 		return nil, err
 	}
-	version := ctx.Value("version").(string)
+	version := ctx.String("version")
 	if version == "" && metadata.GrafanaVersion != "" {
 		version = metadata.GrafanaVersion
 	}
-	image := ctx.Value("image").(string)
-	repo := ctx.Value("repo").(string)
-	product := ctx.Value("product").(string)
-	dryRun := ctx.Value("dry-run").(bool)
+	image := ctx.String("image")
+	repo := ctx.String("repo")
+	product := ctx.String("product")
+	dryRun := ctx.Bool("dry-run")
 	return &publishAwsMarketplaceFlags{
 		dryRun:  dryRun,
 		version: version,
