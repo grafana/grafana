@@ -6,10 +6,16 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
+	grafanaErr := &errutil.Error{}
+	if errors.As(err, grafanaErr) {
+		return response.Error(grafanaErr.Reason.Status().HTTPStatus(), string(grafanaErr.Reason.Status()), grafanaErr)
+	}
+
 	var dashboardErr dashboards.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, err.Error(), err)
