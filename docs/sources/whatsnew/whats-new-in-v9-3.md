@@ -119,3 +119,49 @@ Grafana Enterprise and Cloud Pro and Advanced users can now provision [access to
 We have also added [documentation on provisioning RBAC roles and role assignments](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/) to guide our Grafana Enterprise and Cloud Pro and Advanced users through this process.
 
 Finally, we have fixed several access control related bugs to ensure a smoother provisioning experience.
+
+## Alerting - Email templating
+
+Available in Grafana Open Source.
+
+Improves the design and functionality of email templates to make template creation much easier and customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
+
+## Alerting - Support for Webex Teams
+
+Available in Grafana Open Source.
+
+Adds Cisco Webex Teams as a contact point type to enable users of Webex Temas to notify alerts into a Webex Teams channel.
+
+## Alerting - Edit alert rules created using the provisioning API
+
+Available in Grafana Open Source.
+
+Enables you to edit API-provisioned alert rules from the Grafana UI. Add the x-disable-provenance header to the following requests when creating or editing your alert rules in the API:
+
+POST /api/v1/provisioning/alert-rules
+
+PUT /api/v1/provisioning/alert-rules/{UID}
+
+## Alerting - Support values in notification templates
+
+Available in Grafana Open Source.
+
+Supports values in notification templates, so that you can create a single template that prints the annotations, labels, and values for your alerts in a format of your choice.
+
+## Alerting - Evaluation intervals
+
+Available in Grafana Open Source.
+
+Makes it easier to set up or update evaluation intervals for alert groups by improving the Alert Rule form.
+
+## Alerting - View notification errors
+
+Available in Grafana Open Source.
+
+Allows you to easily see when something is wrong with your contact point(s) and the reason for the error. The Receivers API contains information on the error, including a time stamp, duration of the attempt, and the error. On the UI, you can view the errors for each contact point.
+
+## Alerting - Redesign of the expressions pipeline
+
+Available in Grafana Open Source.
+
+Introduces a new redesigned expressions pipeline editor that combines both the expressions editor and the preview into a single view.
