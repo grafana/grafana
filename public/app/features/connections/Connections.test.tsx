@@ -43,7 +43,7 @@ describe('Connections', () => {
 
     expect(await screen.findByText('Datasources')).toBeVisible();
     expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
-    expect(await screen.findByRole('link', { name: /add data source/i })).toBeVisible();
+    expect(await screen.findByRole('link', { name: /add new data source/i })).toBeVisible();
     expect(await screen.findByText(mockDatasources[0].name)).toBeVisible();
   });
 
