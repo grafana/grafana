@@ -354,7 +354,7 @@ The Night / Day layer displays night and day regions based on the current time r
 
 ## Photos layer (Alpha)
 
-The Photos layer renders photos at each data point.
+The Photos layer renders a photo at each data point.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
 
