@@ -300,11 +300,8 @@ def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
         ])
     if should_publish:
         publish_step = store_storybook_step(edition=edition, ver_mode=ver_mode)
-        store_npm_step = store_npm_packages_step()
         if publish_step:
             publish_steps.append(publish_step)
-        if store_npm_step:
-            publish_steps.append(store_npm_step)
     windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
     if should_upload:
