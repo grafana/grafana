@@ -45,6 +45,7 @@ const (
 const (
 	RedactedPassword = "*********"
 	DefaultHTTPAddr  = "0.0.0.0"
+	DefaultHTTPPort  = "3000"
 	Dev              = "development"
 	Prod             = "production"
 	Test             = "test"
@@ -1686,7 +1687,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
-	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
+	cfg.HTTPPort = valueAsString(server, "http_port", DefaultHTTPPort)
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
 	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)

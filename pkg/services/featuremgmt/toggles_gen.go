@@ -255,6 +255,10 @@ const (
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
 
+	// FlagJwtTokenGeneration
+	// Enable token generation in JWT Auth service.
+	FlagJwtTokenGeneration = "jwtTokenGeneration"
+
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
