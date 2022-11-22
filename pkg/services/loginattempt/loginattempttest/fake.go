@@ -17,6 +17,6 @@ func (f FakeLoginAttemptService) RecordAttempt(ctx context.Context, username, IP
 	return f.ExpectedErr
 }
 
-func (f FakeLoginAttemptService) ValidateAttempts(ctx context.Context, username string) (bool, error) {
+func (f FakeLoginAttemptService) Validate(ctx context.Context, username string) (bool, error) {
 	return f.ExpectedValid, f.ExpectedErr
 }

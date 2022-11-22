@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestService_ValidateAttempts(t *testing.T) {
+func TestService_Validate(t *testing.T) {
 	testCases := []struct {
 		name          string
 		loginAttempts int64
@@ -70,7 +70,7 @@ func TestService_ValidateAttempts(t *testing.T) {
 				cfg: cfg,
 			}
 
-			ok, err := service.ValidateAttempts(context.Background(), "test")
+			ok, err := service.Validate(context.Background(), "test")
 			assert.Equal(t, tt.expected, ok)
 			assert.Equal(t, tt.expectedErr, err)
 		})

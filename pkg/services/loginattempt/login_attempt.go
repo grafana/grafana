@@ -6,7 +6,7 @@ import (
 
 type Service interface {
 	RecordAttempt(ctx context.Context, username, IPAddress string) error
-	ValidateAttempts(ctx context.Context, username string) (bool, error)
+	Validate(ctx context.Context, username string) (bool, error)
 }
 
 type LoginAttempt struct {

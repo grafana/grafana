@@ -50,7 +50,7 @@ func ProvideService(store db.DB, loginService login.Service, loginAttemptService
 
 // AuthenticateUser authenticates the user via username & password
 func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
-	ok, err := a.loginAttemptService.ValidateAttempts(ctx, query.Username)
+	ok, err := a.loginAttemptService.Validate(ctx, query.Username)
 	if err != nil {
 		return err
 	}

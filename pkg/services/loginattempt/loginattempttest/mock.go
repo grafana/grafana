@@ -22,7 +22,7 @@ func (f *MockLoginAttemptService) RecordAttempt(ctx context.Context, username, I
 	return f.ExpectedErr
 }
 
-func (f *MockLoginAttemptService) ValidateAttempts(ctx context.Context, username string) (bool, error) {
+func (f *MockLoginAttemptService) Validate(ctx context.Context, username string) (bool, error) {
 	f.ValidateAttemptsCalled = true
 	return f.ExpectedValid, f.ExpectedErr
 }

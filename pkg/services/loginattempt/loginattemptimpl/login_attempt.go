@@ -59,7 +59,7 @@ func (s *Service) RecordAttempt(ctx context.Context, username, IPAddress string)
 	})
 }
 
-func (s *Service) ValidateAttempts(ctx context.Context, username string) (bool, error) {
+func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 	if s.cfg.DisableBruteForceLoginProtection {
 		return true, nil
 	}
