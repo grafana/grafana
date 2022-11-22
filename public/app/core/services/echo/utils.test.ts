@@ -18,6 +18,7 @@ const baseUser: CurrentUserDTO = {
   timezone: 'browser',
   weekStart: 'browser',
   locale: 'en-AU',
+  language: 'en-US',
   externalUserId: '',
 };
 

@@ -212,7 +212,7 @@ func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaRece
 
 // Create one receiver for every unique notification channel.
 func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, []*PostableApiReceiver, error) {
-	var receivers []*PostableApiReceiver
+	receivers := make([]*PostableApiReceiver, 0, len(allChannels))
 	receiversMap := make(map[uidOrID]*PostableApiReceiver)
 
 	set := make(map[string]struct{}) // Used to deduplicate sanitized names.

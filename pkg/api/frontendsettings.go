@@ -198,9 +198,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"unifiedAlerting": map[string]interface{}{
 			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
 		},
-		"oauth":       hs.getEnabledOAuthProviders(),
-		"samlEnabled": hs.samlEnabled(),
-		"samlName":    hs.samlName(),
+		"oauth":                   hs.getEnabledOAuthProviders(),
+		"samlEnabled":             hs.samlEnabled(),
+		"samlName":                hs.samlName(),
+		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
 	}
 
 	if hs.ThumbService != nil {
