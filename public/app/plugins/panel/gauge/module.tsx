@@ -9,11 +9,22 @@ import { PanelOptions, defaultPanelOptions } from './models.gen';
 import { GaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(GaugePanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    useCustomConfig: (builder) => {
+      builder.addNumberInput({
+        path: 'neutral',
+        name: 'Neutral',
+        description: 'Leave empty to use Min as neutral point',
+        category: ['Gauge'],
+        settings: {
+          placeholder: 'auto',
+        },
+      });
+    },
+  })
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder);
-
     builder
       .addBooleanSwitch({
         path: 'showThresholdLabels',

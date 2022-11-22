@@ -87,7 +87,7 @@ export const DashNav = React.memo<Props>((props) => {
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
-    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState) => {
+    dashboardSrv.starDashboard(dashboard.id, Boolean(dashboard.meta.isStarred)).then((newState) => {
       setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
@@ -338,6 +338,16 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
     buttons.push(tvButton);
+
+    if (config.featureToggles.scenes) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={'View as Scene'}
+          icon="apps"
+          onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
+        />
+      );
+    }
     return buttons;
   };
 
