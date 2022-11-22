@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -126,6 +127,14 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	// Reload permission cache for the user who's created the folder, so that they can access it immediately
+	if !hs.AccessControl.IsDisabled() {
+		_, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: true})
+		if err != nil {
+			return response.Error(500, "Failed to reload permission cache after adding folder", err)
+		}
 	}
 
 	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)

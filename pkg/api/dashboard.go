@@ -450,6 +450,14 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	dashboard, err := hs.DashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
+	// Reload permission cache for the user who's created the dashboard, so that they can access it immediately
+	if newDashboard && !hs.AccessControl.IsDisabled() {
+		_, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: true})
+		if err != nil {
+			return response.Error(500, "Failed to reload permission cache after adding dashboard", err)
+		}
+	}
+
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
 		if dashboard == nil {

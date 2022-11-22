@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -394,6 +395,14 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 		}
 
 		return response.Error(500, "Failed to add datasource", err)
+	}
+
+	// Reload permission cache for the user who's created the data source, so that they can access this data source immediately
+	if !hs.AccessControl.IsDisabled() {
+		_, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: true})
+		if err != nil {
+			return response.Error(500, "Failed to reload permission cache after adding data source", err)
+		}
 	}
 
 	ds := hs.convertModelToDtos(c.Req.Context(), cmd.Result)
