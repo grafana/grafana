@@ -9,7 +9,7 @@ import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+import { CanvasFrameOptions, ConnectionPath, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
   DimensionContext,
@@ -63,6 +63,7 @@ export class Scene {
   arrowAnchorDiv?: HTMLDivElement;
   arrowSVG?: SVGElement;
   arrowLine?: SVGLineElement;
+  connectionSource?: ElementState;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
@@ -481,17 +482,43 @@ export class Scene {
     const arrowListener = (event: MouseEvent) => {
       event.preventDefault();
 
-      if (this.arrowLine && this.div && this.div.parentElement) {
-        const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
-        const x = event.pageX - parentBoundingRect.x;
-        const y = event.pageY - parentBoundingRect.y;
-
-        this.arrowLine.setAttribute('x2', `${x}`);
-        this.arrowLine.setAttribute('y2', `${y}`);
+      if (!(this.arrowLine && this.div && this.div.parentElement)) {
+        return;
       }
 
+      const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
+      const x = event.pageX - parentBoundingRect.x;
+      const y = event.pageY - parentBoundingRect.y;
+
+      this.arrowLine.setAttribute('x2', `${x}`);
+      this.arrowLine.setAttribute('y2', `${y}`);
+
       if (!event.buttons) {
-        // TODO: Handle saving arrow
+        // TODO: Handle saving connection
+        const connection = {
+          source: {
+            x: 0,
+            y: 0,
+          },
+          target: {
+            x: x / parentBoundingRect.width - 0.5,
+            y: y / parentBoundingRect.height - 0.5,
+          },
+          // targetName: string,
+          color: 'white',
+          size: 10,
+          path: ConnectionPath.Straight,
+        };
+
+        if (this.connectionSource) {
+          const { options } = this.connectionSource;
+          if (!options.connections) {
+            options.connections = [];
+          }
+          this.connectionSource.options.connections = [...options.connections, connection];
+
+          this.connectionSource.onChange(this.connectionSource.options);
+        }
 
         if (this.arrowSVG) {
           // this.arrowSVG.style.display = 'none';
@@ -655,6 +682,8 @@ export class Scene {
     this.arrowAnchorDiv!.style.left = `${relativeLeft}px`;
     this.arrowAnchorDiv!.style.height = `${elementBoundingRect.height}px`;
     this.arrowAnchorDiv!.style.width = `${elementBoundingRect.width}px`;
+
+    this.connectionSource = this.findElementByTarget(element);
   };
 
   handleMouseLeave = (event: React.MouseEvent) => {
