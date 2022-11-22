@@ -42,33 +42,33 @@ def scan_docker_image_pipeline(edition, tag):
     else:
         edition = "grafana"
 
-    dockerImage = "grafana/{}:{}".format(edition, tag)
+    docker_image = "grafana/{}:{}".format(edition, tag)
 
     return cron_job_pipeline(
         cronName = "nightly",
-        name = "scan-" + dockerImage + "-image",
+        name = "scan-" + docker_image + "-image",
         steps = [
-            scan_docker_image_unkown_low_medium_vulnerabilities_step(dockerImage),
-            scan_docker_image_high_critical_vulnerabilities_step(dockerImage),
-            slack_job_failed_step("grafana-backend-ops", dockerImage),
+            scan_docker_image_unkown_low_medium_vulnerabilities_step(docker_image),
+            scan_docker_image_high_critical_vulnerabilities_step(docker_image),
+            slack_job_failed_step("grafana-backend-ops", docker_image),
         ],
     )
 
-def scan_docker_image_unkown_low_medium_vulnerabilities_step(dockerImage):
+def scan_docker_image_unkown_low_medium_vulnerabilities_step(docker_image):
     return {
         "name": "scan-unkown-low-medium-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": [
-            "trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + dockerImage,
+            "trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image,
         ],
     }
 
-def scan_docker_image_high_critical_vulnerabilities_step(dockerImage):
+def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
     return {
         "name": "scan-high-critical-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": [
-            "trivy --exit-code 1 --severity HIGH,CRITICAL " + dockerImage,
+            "trivy --exit-code 1 --severity HIGH,CRITICAL " + docker_image,
         ],
     }
 
