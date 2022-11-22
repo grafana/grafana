@@ -55,8 +55,7 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		// adaptToPluginDecl(corecodegen.GoTypesJenny("path to plugin", nil)), // instead of taking the target path in the constructor we should take it from the DeclForGen
-		adaptToPluginDecl(corecodegen.TSTypesJenny("public/app/plugins", nil)), // instead of taking the target path in the constructor we should take it from the DeclForGen
+		outputAsModelsTo("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
 	)
 
 	declParser := kindsys.NewDeclParser(rt, skipPlugins)
@@ -79,8 +78,17 @@ func main() {
 	}
 }
 
-func adaptToPluginDecl(jen codejen.OneToOne[*corecodegen.DeclForGen]) codejen.OneToOne[*kindsys.PluginDecl] {
-	return codejen.AdaptOneToOne(jen, func(pd *kindsys.PluginDecl) *corecodegen.DeclForGen {
-		return pd.DeclForGen
+// Should be replaced by a proper solution. Temprary to keep the same behaviour.
+func outputAsModelsTo(root string, j codejen.OneToOne[*kindsys.PluginDecl]) codejen.OneToOne[*kindsys.PluginDecl] {
+	return codegen.UseSchemaPathJenny(root, "models.gen.ts", j)
+}
+
+func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*kindsys.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *kindsys.PluginDecl) corecodegen.SchemaForGen {
+		return corecodegen.SchemaForGen{
+			Name:    pd.PluginMeta.Name,
+			Schema:  pd.Lineage.Latest(),
+			IsGroup: pd.Slot == "Panel" || pd.Slot == "DSConfig", // should be provided by the pkg/kindsys
+		}
 	})
 }

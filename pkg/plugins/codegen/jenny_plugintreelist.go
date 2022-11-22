@@ -15,14 +15,8 @@ const prefix = "github.com/grafana/grafana/public/app/plugins"
 
 // PluginTreeListJenny creates a [codejen.ManyToOne] that produces Go code
 // for loading a [pfs.TreeList] given [*kindsys.PluginDecl] as inputs.
-//
-// An outputFile must be provided which should be relative to your working directory.
 func PluginTreeListJenny() codejen.ManyToOne[*kindsys.PluginDecl] {
 	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
-
-	if filepath.IsAbs(outputFile) {
-		panic("outputFile must be relative")
-	}
 
 	return &ptlJenny{
 		outputFile: outputFile,
@@ -58,9 +52,9 @@ func (gen *ptlJenny) Generate(decls ...*kindsys.PluginDecl) (*codejen.File, erro
 		meta := decl.PluginMeta
 		vars.Plugins = append(vars.Plugins, tpl{
 			PkgName:    sanitizePluginId(meta.Id),
-			NoAlias:    sanitizePluginId(meta.Id) != filepath.Base(decl.Path),
-			ImportPath: filepath.ToSlash(filepath.Join(prefix, decl.Path)),
-			Path:       path.Join(append(strings.Split(prefix, "/")[3:], decl.Path)...),
+			NoAlias:    sanitizePluginId(meta.Id) != filepath.Base(decl.PluginPath),
+			ImportPath: filepath.ToSlash(filepath.Join(prefix, decl.PluginPath)),
+			Path:       path.Join(append(strings.Split(prefix, "/")[3:], decl.PluginPath)...),
 		})
 	}
 

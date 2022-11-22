@@ -1,13 +1,13 @@
 package kindsys
 
 import (
-	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/thema"
 )
 
 type PluginDecl struct {
-	*corecodegen.DeclForGen
-	Path       string
 	Slot       string
+	Lineage    thema.Lineage
+	PluginPath string
 	PluginMeta plugindef.PluginDef
 }

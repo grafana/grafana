@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"sort"
 
-	corecodegen "github.com/grafana/grafana/pkg/codegen"
-	corekindsys "github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema"
 )
@@ -27,14 +25,14 @@ func NewDeclParser(rt *thema.Runtime, skip map[string]bool) *declParser {
 }
 
 func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
-	matches, err := fs.Glob(root, "**/**/plugin.json")
+	plugins, err := fs.Glob(root, "**/**/plugin.json")
 	if err != nil {
 		return nil, fmt.Errorf("error finding plugin dirs: %w", err)
 	}
 
 	decls := make([]*PluginDecl, 0)
-	for _, match := range matches {
-		path := filepath.Dir(match)
+	for _, plugin := range plugins {
+		path := filepath.Dir(plugin)
 		base := filepath.Base(path)
 		if skip, ok := psr.skip[base]; ok && skip {
 			continue
@@ -49,31 +47,19 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 
 		p := ptree.RootPlugin()
 		slots := p.SlotImplementations()
-		for slot, lin := range slots {
-			kind := &corekindsys.SomeDecl{
-				V: lin.Underlying(),
-				Meta: corekindsys.ComposableMeta{
-					CommonMeta: corekindsys.CommonMeta{
-						Name:              base,
-						MachineName:       path, // hack should be changed soon
-						PluralName:        base + "s",
-						PluralMachineName: base + "s",
-					},
-					CurrentVersion: lin.Latest().Version(),
-				},
-			}
 
+		for slot, lin := range slots {
 			decls = append(decls, &PluginDecl{
-				Path:       path,
 				Slot:       slot,
-				DeclForGen: corecodegen.DeclForGenFromLineage(kind, lin),
+				Lineage:    lin,
 				PluginMeta: p.Meta(),
+				PluginPath: path,
 			})
 		}
 	}
 
 	sort.Slice(decls, func(i, j int) bool {
-		return decls[i].Path < decls[j].Path
+		return decls[i].PluginPath < decls[j].PluginPath
 	})
 
 	return decls, nil
