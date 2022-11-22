@@ -55,7 +55,8 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
-	GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, map[int64][]string, error)
+	GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, error)
+	GetUsersBasicRoles(ctx context.Context, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
@@ -217,7 +218,11 @@ func (s *Service) GetUsersPermissions(ctx context.Context, user *user.SignedInUs
 		}
 	}
 	// Get stored (DB) permissions
-	usersPermissions, usersRoles, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
+	usersPermissions, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
+	if err != nil {
+		return nil, err
+	}
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}

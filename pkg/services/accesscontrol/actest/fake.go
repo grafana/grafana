@@ -75,8 +75,12 @@ func (f FakeStore) GetUserPermissions(ctx context.Context, query accesscontrol.G
 	return f.ExpectedUserPermissions, f.ExpectedErr
 }
 
-func (f FakeStore) GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, map[int64][]string, error) {
-	return f.ExpectedUsersPermissions, f.ExpectedUsersRoles, f.ExpectedErr
+func (f FakeStore) GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, error) {
+	return f.ExpectedUsersPermissions, f.ExpectedErr
+}
+
+func (f FakeStore) GetUsersBasicRoles(ctx context.Context, orgID int64) (map[int64][]string, error) {
+	return f.ExpectedUsersRoles, f.ExpectedErr
 }
 
 func (f FakeStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {

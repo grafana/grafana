@@ -338,12 +338,11 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 		}
 	}
 	tests := []struct {
-		name        string
-		users       []testUser
-		permCmds    []rs.SetResourcePermissionsCommand
-		wantPerm    map[int64][]accesscontrol.Permission
-		wantOrgRole map[int64][]string
-		wantErr     bool
+		name     string
+		users    []testUser
+		permCmds []rs.SetResourcePermissionsCommand
+		wantPerm map[int64][]accesscontrol.Permission
+		wantErr  bool
 	}{
 		{
 			name:  "user assignment",
@@ -351,8 +350,7 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 			permCmds: []rs.SetResourcePermissionsCommand{
 				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
 			},
-			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
-			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin)}},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
 			name: "users assignment",
@@ -368,17 +366,12 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:write", Scope: "teams:id:1"}},
 				2: {{Action: "teams:read", Scope: "teams:id:2"}},
 			},
-			wantOrgRole: map[int64][]string{
-				1: {string(org.RoleAdmin)},
-				2: {string(org.RoleEditor)},
-			},
 		},
 		{
-			name:        "team assignment",
-			users:       []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
-			permCmds:    []rs.SetResourcePermissionsCommand{{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("1")}},
-			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
-			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin)}},
+			name:     "team assignment",
+			users:    []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("1")}},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
 			name:  "basic role assignment",
@@ -386,8 +379,7 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 			permCmds: []rs.SetResourcePermissionsCommand{
 				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readTeamPerm("1")},
 			},
-			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
-			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin)}},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
 			name:  "server admin assignment",
@@ -395,8 +387,7 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 			permCmds: []rs.SetResourcePermissionsCommand{
 				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1")},
 			},
-			wantPerm:    map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
-			wantOrgRole: map[int64][]string{1: {string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin}},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
 			name: "all assignments",
@@ -423,10 +414,6 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 				2: {{Action: "teams:read", Scope: "teams:id:2"}, {Action: "teams:read", Scope: "teams:id:20"},
 					{Action: "teams:read", Scope: "teams:id:200"}},
 			},
-			wantOrgRole: map[int64][]string{
-				1: {string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
-				2: {string(org.RoleEditor)},
-			},
 		},
 		{
 			name:  "filter permissions by action prefix",
@@ -449,9 +436,6 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
 					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
 			},
-			wantOrgRole: map[int64][]string{
-				1: {string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
-			},
 		},
 		{
 			name: "include not org member server admin permissions",
@@ -460,10 +444,6 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 			permCmds: []rs.SetResourcePermissionsCommand{{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1")}},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				2: {{Action: "teams:read", Scope: "teams:id:1"}},
-			},
-			wantOrgRole: map[int64][]string{
-				1: {string(org.RoleAdmin)},
-				2: {string(accesscontrol.RoleGrafanaAdmin)},
 			},
 		},
 	}
@@ -485,25 +465,73 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test
-			dbPermissions, dbRoles, err := acStore.GetUsersPermissions(ctx, 1, actionPrefix)
+			dbPermissions, err := acStore.GetUsersPermissions(ctx, 1, actionPrefix)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return
 			}
 			require.Nil(t, err)
-
 			require.Len(t, dbPermissions, len(tt.wantPerm))
-			require.Len(t, dbRoles, len(tt.wantOrgRole))
 
 			for userID, expectedUserPerms := range tt.wantPerm {
 				dbUserPerms, ok := dbPermissions[dbUsers[userID-1].userID]
 				require.True(t, ok, "expected permissions for user", userID)
 				require.ElementsMatch(t, expectedUserPerms, dbUserPerms)
 			}
+		})
+	}
+}
 
-			for userID, expectedUserRoles := range tt.wantOrgRole {
+func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name      string
+		users     []testUser
+		wantRoles map[int64][]string
+		wantErr   bool
+	}{
+		{
+			name:      "user with basic role",
+			users:     []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			wantRoles: map[int64][]string{1: {string(org.RoleAdmin)}},
+		},
+		{
+			name: "one admin, one editor",
+			users: []testUser{
+				{orgRole: org.RoleAdmin, isAdmin: false},
+				{orgRole: org.RoleEditor, isAdmin: false},
+			},
+			wantRoles: map[int64][]string{
+				1: {string(org.RoleAdmin)},
+				2: {string(org.RoleEditor)},
+			},
+		},
+		{
+			name:  "one org member, one not member but Server Admin, one not member and not server admin",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}, {isAdmin: true}, {}},
+			wantRoles: map[int64][]string{
+				1: {string(org.RoleAdmin)},
+				2: {accesscontrol.RoleGrafanaAdmin},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			acStore, _, userSvc, teamSvc, orgSvc := setupTestEnv(t)
+			dbUsers := createUsersAndTeams(t, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
+
+			// Test
+			dbRoles, err := acStore.GetUsersBasicRoles(ctx, 1)
+			if tt.wantErr {
+				require.NotNil(t, err)
+				return
+			}
+			require.Nil(t, err)
+			require.Len(t, dbRoles, len(tt.wantRoles))
+
+			for userID, expectedUserRoles := range tt.wantRoles {
 				dbUserRoles, ok := dbRoles[dbUsers[userID-1].userID]
-				require.True(t, ok, "expected role for user", userID)
+				require.True(t, ok, "expected organization role for user", userID)
 				require.ElementsMatch(t, expectedUserRoles, dbUserRoles)
 			}
 		})

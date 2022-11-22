@@ -155,7 +155,7 @@ func benchGetUsersPermissions(b *testing.B, usersCount, resourceCount int) {
 // Lots of resources
 func BenchmarkGetUsersPermissions_10_1K(b *testing.B)   { benchGetUsersPermissions(b, 10, 1000) }   // ~0.047s/op
 func BenchmarkGetUsersPermissions_10_10K(b *testing.B)  { benchGetUsersPermissions(b, 10, 10000) }  // ~0.5s/op
-func BenchmarkGetUsersPermissions_10_100K(b *testing.B) { benchGetUsersPermissions(b, 10, 100000) } // ~5.35s/op
+func BenchmarkGetUsersPermissions_10_100K(b *testing.B) { benchGetUsersPermissions(b, 10, 100000) } // ~4.6s/op
 func BenchmarkGetUsersPermissions_10_1M(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
@@ -164,9 +164,9 @@ func BenchmarkGetUsersPermissions_10_1M(b *testing.B) {
 } // ~55.36s/op
 
 // Lots of users (most probable case)
-func BenchmarkGetUsersPermissions_1K_10(b *testing.B)   { benchGetUsersPermissions(b, 1000, 10) }   // ~0.051s/op
-func BenchmarkGetUsersPermissions_10K_10(b *testing.B)  { benchGetUsersPermissions(b, 10000, 10) }  // ~0.53s/op
-func BenchmarkGetUsersPermissions_100K_10(b *testing.B) { benchGetUsersPermissions(b, 100000, 10) } // ~5.47s/op
+func BenchmarkGetUsersPermissions_1K_10(b *testing.B)   { benchGetUsersPermissions(b, 1000, 10) }   // ~0.056s/op
+func BenchmarkGetUsersPermissions_10K_10(b *testing.B)  { benchGetUsersPermissions(b, 10000, 10) }  // ~0.58s/op
+func BenchmarkGetUsersPermissions_100K_10(b *testing.B) { benchGetUsersPermissions(b, 100000, 10) } // ~6.21s/op
 func BenchmarkGetUsersPermissions_1M_10(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
