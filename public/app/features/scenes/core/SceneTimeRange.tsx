@@ -1,4 +1,4 @@
-import { dateMath, getTimeZone, isDateTime, TimeRange, TimeZone, toUtc, UrlQueryValue } from '@grafana/data';
+import { dateMath, getTimeZone, isDateTime, TimeRange, TimeZone, toUtc } from '@grafana/data';
 
 import { SceneObjectUrlSyncConfig } from '../services/SceneObjectUrlSyncConfig';
 
@@ -59,32 +59,30 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
       to = value.raw.to.toISOString();
     }
 
-    return new Map<string, UrlQueryValue>([
+    return new Map<string, string>([
       ['from', from],
       ['to', to],
     ]);
   }
 
-  private updateFromUrl(values: Map<string, UrlQueryValue>) {
+  private updateFromUrl(values: Map<string, string>) {
     const update: Partial<SceneTimeRangeState> = {};
 
-    if (values.has('from')) {
-      const from = parseUrlParam(values.get('from'));
-      if (from) {
-        update.from = from;
-      }
+    const from = parseUrlParam(values.get('from'));
+    if (from) {
+      update.from = from;
     }
 
-    if (values.has('to')) {
-      const from = parseUrlParam(values.get('to'));
-      if (from) {
-        update.from = from;
-      }
+    const to = parseUrlParam(values.get('to'));
+    if (to) {
+      update.to = to;
     }
+
+    this.setState(update);
   }
 }
 
-function parseUrlParam(value: UrlQueryValue): string | null {
+function parseUrlParam(value: string | undefined): string | null {
   if (typeof value !== 'string') {
     return null;
   }

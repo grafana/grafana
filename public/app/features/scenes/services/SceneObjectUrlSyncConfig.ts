@@ -1,11 +1,9 @@
-import { UrlQueryValue } from '@grafana/data';
-
 import { SceneObjectUrlSyncConfigLike } from '../core/types';
 
 interface SceneObjectUrlSyncConfigOptions {
   keys?: string[];
-  getUrlState: () => Map<string, UrlQueryValue>;
-  updateFromUrl: (values: Map<string, UrlQueryValue>) => void;
+  getUrlState: () => Map<string, string>;
+  updateFromUrl: (values: Map<string, string>) => void;
 }
 
 export class SceneObjectUrlSyncConfig implements SceneObjectUrlSyncConfigLike {
@@ -19,11 +17,11 @@ export class SceneObjectUrlSyncConfig implements SceneObjectUrlSyncConfigLike {
     return this._keys;
   }
 
-  public getUrlState(): Map<string, UrlQueryValue> {
+  public getUrlState(): Map<string, string> {
     return this._options.getUrlState();
   }
 
-  public updateFromUrl(values: Map<string, UrlQueryValue>): void {
+  public updateFromUrl(values: Map<string, string>): void {
     this._options.updateFromUrl(values);
   }
 }

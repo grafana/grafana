@@ -1,16 +1,7 @@
 import React from 'react';
 import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
-import {
-  BusEvent,
-  BusEventHandler,
-  BusEventType,
-  PanelData,
-  TimeRange,
-  TimeZone,
-  UrlQueryMap,
-  UrlQueryValue,
-} from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, TimeZone, UrlQueryMap } from '@grafana/data';
 
 import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/types';
 
@@ -170,6 +161,6 @@ export interface SceneObjectWithUrlSync extends SceneObject {
 
 export interface SceneObjectUrlSyncConfigLike {
   getKeys(): Set<string>;
-  getUrlState(): Map<string, UrlQueryValue>;
-  updateFromUrl(values: Map<string, UrlQueryValue>): void;
+  getUrlState(): Map<string, string>;
+  updateFromUrl(values: Map<string, string>): void;
 }
