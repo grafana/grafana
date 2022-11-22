@@ -75,10 +75,10 @@ func AddLabelToPR(ctx context.Context, client LabelsService, prID int, newLabel 
 		return err
 	}
 
-	labelAlreadyExist := false
+	duplicate := false
 	for _, label := range labels {
 		if *label.Name == newLabel {
-			labelAlreadyExist = true
+			duplicate = true
 			continue
 		}
 
@@ -91,8 +91,7 @@ func AddLabelToPR(ctx context.Context, client LabelsService, prID int, newLabel 
 		}
 	}
 
-	// Add new label
-	if labelAlreadyExist {
+	if duplicate {
 		return nil
 	}
 
