@@ -318,6 +318,10 @@
   "news": {
     "title": "Últimas entradas del blog"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
       "hide-legend": "",

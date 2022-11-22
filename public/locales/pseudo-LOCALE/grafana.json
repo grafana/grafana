@@ -318,6 +318,10 @@
   "news": {
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
+  "notifications": {
+    "starred-dashboard": "Đäşĥþőäřđ şŧäřřęđ",
+    "unstarred-dashboard": "Đäşĥþőäřđ ūŉşŧäřřęđ"
+  },
   "panel": {
     "header-menu": {
       "hide-legend": "Ħįđę ľęģęŉđ",
