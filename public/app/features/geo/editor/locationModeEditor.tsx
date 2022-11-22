@@ -116,9 +116,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-top: 5px;
       padding: 2px;
     `,
-    autoSuccess: css`
-      color: ${theme.colors.primary.text};
-    `,
     // TODO apply styling to horizontal group (currently not working)
     hGroup: css`
       & div {
