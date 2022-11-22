@@ -128,6 +128,7 @@ func rootSpan(frame *BetterFrame) Row {
 }
 
 func fieldNames(frame *data.Frame) []string {
+	//nolint:prealloc // for test purposes
 	var names []string
 	for _, f := range frame.Fields {
 		names = append(names, f.Name)

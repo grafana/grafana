@@ -159,7 +159,7 @@ type AzureMonitorDimensionFilter struct {
 }
 
 func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
-	var filterStrings []string
+	filterStrings := make([]string, 0, len(a.Filters))
 	for _, filter := range a.Filters {
 		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
 	}

@@ -156,7 +156,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return dashboardGuardianResponse(err)
 	}
 
-	var items []*models.DashboardACL
+	items := make([]*models.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &models.DashboardACL{
 			OrgID:       c.OrgID,

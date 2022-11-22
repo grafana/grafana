@@ -1705,8 +1705,8 @@ func (cfg *Cfg) readDataSourcesSettings() {
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
-	var originGlobs []glob.Glob
 	allowedOrigins := originPatterns
+	originGlobs := make([]glob.Glob, 0, len(allowedOrigins))
 	for _, originPattern := range allowedOrigins {
 		g, err := glob.Compile(originPattern)
 		if err != nil {
@@ -1731,6 +1731,7 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
 
+	//nolint:prealloc // continue block
 	var originPatterns []string
 	allowedOrigins := section.Key("allowed_origins").MustString("")
 	for _, originPattern := range strings.Split(allowedOrigins, ",") {

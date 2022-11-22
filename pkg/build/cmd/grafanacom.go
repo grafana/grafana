@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-
 	"path"
 	"path/filepath"
 	"strings"
@@ -156,6 +155,7 @@ func publishPackages(cfg packaging.PublishConfig) error {
 	pth = path.Join(pth, product)
 	baseArchiveURL := fmt.Sprintf("https://dl.grafana.com/%s", pth)
 
+	//nolint:prealloc // difficult logic
 	var builds []buildRepr
 	for _, ba := range packaging.ArtifactConfigs {
 		u := ba.GetURL(baseArchiveURL, cfg)

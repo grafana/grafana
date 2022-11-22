@@ -410,7 +410,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
-	var configLoggers []logWithFilters
+	configLoggers := make([]logWithFilters, 0, len(modes))
 	for _, mode := range modes {
 		mode = strings.TrimSpace(mode)
 		sec, err := cfg.GetSection("log." + mode)

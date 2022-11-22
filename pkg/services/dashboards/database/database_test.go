@@ -843,6 +843,7 @@ func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardI
 	items ...models.DashboardACL) error {
 	t.Helper()
 
+	//nolint:prealloc // for test purposes
 	var itemPtrs []*models.DashboardACL
 	for _, it := range items {
 		item := it

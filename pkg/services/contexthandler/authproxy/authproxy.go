@@ -110,7 +110,7 @@ func (auth *AuthProxy) IsAllowedIP(ip string) error {
 	}
 
 	proxies := strings.Split(auth.cfg.AuthProxyWhitelist, ",")
-	var proxyObjs []*net.IPNet
+	proxyObjs := make([]*net.IPNet, 0, len(proxies))
 	for _, proxy := range proxies {
 		result, err := coerceProxyAddress(proxy)
 		if err != nil {

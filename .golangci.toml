@@ -58,6 +58,7 @@ enable = [
   "errorlint",
   "sqlclosecheck",
   "revive",
+  "prealloc"
 ]
 
 # Disabled linters (might want them later)

@@ -83,6 +83,7 @@ type argJSONQuery struct {
 }
 
 func (e *AzureResourceGraphDatasource) buildQueries(logger log.Logger, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
+	//nolint:prealloc // got issue there https://github.com/grafana/grafana/pull/57860#discussion_r1029150440
 	var azureResourceGraphQueries []*AzureResourceGraphQuery
 
 	for _, query := range queries {

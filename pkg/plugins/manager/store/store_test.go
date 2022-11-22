@@ -206,6 +206,7 @@ func (f *fakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plug
 }
 
 func (f *fakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
+	//nolint:prealloc // for test purposes
 	var res []*plugins.Plugin
 	for _, p := range f.store {
 		res = append(res, p)

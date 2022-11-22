@@ -118,7 +118,7 @@ func (out *RemoteWriteFrameOutput) sample(timeSeries []prompb.TimeSeries) []prom
 		sample.Samples = append(sample.Samples, filteredSamples...)
 		samples[name] = sample
 	}
-	var toReturn []prompb.TimeSeries
+	toReturn := make([]prompb.TimeSeries, 0, len(samples))
 	for _, ts := range samples {
 		toReturn = append(toReturn, ts)
 	}

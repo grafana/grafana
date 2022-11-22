@@ -89,7 +89,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		}
 	}
 
-	var results []models.AnnotationEvent
+	results := make([]models.AnnotationEvent, 0, len(uniqueEvents))
 	for _, result := range uniqueEvents {
 		results = append(results, result)
 	}

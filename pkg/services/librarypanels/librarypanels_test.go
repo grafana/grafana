@@ -743,6 +743,7 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 		return
 	}
 
+	//nolint:prealloc // for test purposes
 	var aclItems []*models.DashboardACL
 	for _, item := range items {
 		role := item.roleType

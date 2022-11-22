@@ -46,7 +46,7 @@ func (p *teamPermissionMigrator) setRolePermissions(roleID int64, permissions []
 	}
 
 	// Then insert new permissions
-	var newPermissions []accesscontrol.Permission
+	newPermissions := make([]accesscontrol.Permission, 0, len(permissions))
 	now := time.Now()
 	for _, permission := range permissions {
 		permission.RoleID = roleID

@@ -400,6 +400,7 @@ type pluginsSettingsServiceMock struct {
 func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
 	s.getPluginSettingsArgs = append(s.getPluginSettingsArgs, args.OrgID)
 
+	//nolint:prealloc // for test purposes
 	var res []*pluginsettings.InfoDTO
 	for _, ps := range s.storedPluginSettings {
 		res = append(res, &pluginsettings.InfoDTO{

@@ -49,7 +49,7 @@ type slotandname struct {
 var allslots []slotandname
 
 func init() {
-	var all []string
+	all := make([]string, 0, len(PermittedCUEImports()))
 	for _, im := range PermittedCUEImports() {
 		all = append(all, fmt.Sprintf("\t%s", im))
 	}

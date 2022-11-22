@@ -491,6 +491,7 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 	var res Results
 	var err error
+	//nolint:prealloc // too difficult(dangerous?) to assume size
 	var in []reflect.Value
 	for _, a := range node.Args {
 		var v interface{}

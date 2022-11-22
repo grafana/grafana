@@ -776,13 +776,12 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 		return err
 	}
 
-	var actualPanelIDs []string
-
 	if location != "" {
 		location += "/"
 	}
 	location += dash.uid
 	panelDocs := getDashboardPanelDocs(dash, location)
+	actualPanelIDs := make([]string, 0, len(panelDocs))
 	for _, panelDoc := range panelDocs {
 		actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
 		batch.Update(panelDoc.ID(), panelDoc)

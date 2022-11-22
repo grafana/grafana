@@ -168,6 +168,7 @@ func TestCalculate(t *testing.T) {
 }
 
 func fileList(manifest *pluginManifest) []string {
+	//nolint:prealloc // for test purposes
 	var keys []string
 	for k := range manifest.Files {
 		keys = append(keys, k)

@@ -185,7 +185,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 }
 
 func buildRedactedAMs(l log.Logger, alertmanagers []string, ordId int64) []string {
-	var redactedAMs []string
+	redactedAMs := make([]string, 0, len(alertmanagers))
 	for _, am := range alertmanagers {
 		parsedAM, err := url.Parse(am)
 		if err != nil {
@@ -205,6 +205,7 @@ func asSHA256(strings []string) string {
 }
 
 func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, error) {
+	//nolint:prealloc // continue block
 	var alertmanagers []string
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.

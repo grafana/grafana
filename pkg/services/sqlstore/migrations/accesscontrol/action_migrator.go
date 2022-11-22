@@ -54,7 +54,8 @@ func (m *actionNameMigrator) migrateActionNames() error {
 		"alert.rules:update":       accesscontrol.ActionAlertingRuleUpdate,
 	}
 
-	var oldActionNames, newActionNames []interface{}
+	oldActionNames := make([]interface{}, 0, len(actionNameMapping))
+	newActionNames := make([]interface{}, 0, len(actionNameMapping))
 	for oldName, newName := range actionNameMapping {
 		oldActionNames = append(oldActionNames, oldName)
 		newActionNames = append(newActionNames, newName)

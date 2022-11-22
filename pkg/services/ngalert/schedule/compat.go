@@ -132,6 +132,7 @@ func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr
 
 func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
+	//nolint:prealloc // too many continue blocks for assume final slice size
 	var sentAlerts []*state.State
 	ts := time.Now()
 

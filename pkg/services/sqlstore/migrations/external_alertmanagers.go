@@ -94,6 +94,7 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 }
 
 func removeDuplicates(strs []string) []string {
+	//nolint:prealloc // continue block
 	var res []string
 	found := map[string]bool{}
 

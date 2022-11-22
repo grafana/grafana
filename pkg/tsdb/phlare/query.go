@@ -285,7 +285,7 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 }
 
 func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
-	var frames []*data.Frame
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
 
 	for _, series := range seriesResp.Msg.Series {
 		// We create separate data frames as the series may not have the same length

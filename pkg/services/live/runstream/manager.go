@@ -115,7 +115,9 @@ func (s *Manager) handleDatasourceEvent(orgID int64, dsUID string, resubmit bool
 		s.mu.RUnlock()
 		return nil
 	}
+	//nolint:prealloc // deduplication map
 	var resubmitRequests []streamRequest
+	//nolint:prealloc // deduplication map
 	var waitChannels []chan struct{}
 	for channel := range dsStreams {
 		streamCtx, ok := s.streams[channel]

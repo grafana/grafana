@@ -170,7 +170,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []StateTransition
+	states := make([]StateTransition, 0, len(results))
 
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
@@ -376,10 +376,10 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
-	var resolvedStates []StateTransition
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
+	resolvedStates := make([]StateTransition, 0, len(staleStates))
 
 	for _, s := range staleStates {
 		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)

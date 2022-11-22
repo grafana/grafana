@@ -140,6 +140,7 @@ func TestParseTreeTestdata(t *testing.T) {
 	require.NoError(t, err)
 
 	// Ensure table test and dir list are ==
+	//nolint:prealloc // for test purposes
 	var dirs, tts []string
 	for k := range tab {
 		tts = append(tts, k)
@@ -232,6 +233,7 @@ func TestParseTreeZips(t *testing.T) {
 	require.NoError(t, err)
 
 	// Ensure table test and dir list are ==
+	//nolint:prealloc // for test purposes
 	var dirs, tts []string
 	for k := range tab {
 		tts = append(tts, k)

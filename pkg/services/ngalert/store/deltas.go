@@ -58,7 +58,9 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		existingGroupRulesUIDs[r.UID] = r
 	}
 
-	var toAdd, toDelete []*models.AlertRule
+	//nolint:prealloc // difficult logic
+	var toAdd []*models.AlertRule
+	//nolint:prealloc // difficult logic
 	var toUpdate []RuleDelta
 	loadedRulesByUID := map[string]*models.AlertRule{} // auxiliary cache to avoid unnecessary queries if there are multiple moves from the same group
 	for _, r := range submittedRules {
@@ -110,6 +112,7 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		continue
 	}
 
+	toDelete := make([]*models.AlertRule, 0, len(existingGroupRulesUIDs))
 	for _, rule := range existingGroupRulesUIDs {
 		toDelete = append(toDelete, rule)
 	}

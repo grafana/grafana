@@ -17,7 +17,7 @@ import (
 func TestSlotsAreLoaded(t *testing.T) {
 	slots := []string{"Panel", "Query", "DSOptions"}
 	all := AllSlots(cuecontext.New())
-	var loadedSlots []string
+	loadedSlots := make([]string, 0, len(all))
 	for k := range all {
 		loadedSlots = append(loadedSlots, k)
 	}

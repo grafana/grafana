@@ -608,7 +608,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 	if len(actions) == 0 {
 		return nil
 	}
-	var permissions []accesscontrol.Permission
+	permissions := make([]accesscontrol.Permission, 0, len(actions))
 	for action := range actions {
 		p := managedPermission(action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID

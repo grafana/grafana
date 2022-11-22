@@ -137,6 +137,7 @@ func corePluginPaths(staticRootPath string) []string {
 
 // pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
 func pluginSettingPaths(ps map[string]map[string]string) []string {
+	//nolint:prealloc // continue block
 	var pluginSettingDirs []string
 	for _, s := range ps {
 		path, exists := s["path"]

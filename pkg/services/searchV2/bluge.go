@@ -188,6 +188,7 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 }
 
 func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
+	//nolint:prealloc // continue block
 	var docs []*bluge.Document
 	for _, panel := range dash.summary.Nested {
 		if panel.Kind == "panel-row" {

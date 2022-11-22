@@ -265,6 +265,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *folder.Folder, ru
 // Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
 func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 	var queryErr error
+	//nolint:prealloc // continue/break block
 	var queries []string
 
 	for _, q := range rule.Data {
