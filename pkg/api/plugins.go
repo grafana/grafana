@@ -10,8 +10,6 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -25,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -320,7 +319,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
 			return
 		}
-		c.JsonApiErr(500, "Could not retrieve plugin file", err)
+		c.JsonApiErr(500, "Could not open plugin file", err)
 		return
 	}
 
