@@ -217,7 +217,7 @@ func (s *Service) GetUsersPermissions(ctx context.Context, user *user.SignedInUs
 			}
 		}
 	}
-	// Get stored (DB) permissions
+	// Get managed permissions (DB)
 	usersPermissions, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
 	if err != nil {
 		return nil, err
@@ -227,7 +227,7 @@ func (s *Service) GetUsersPermissions(ctx context.Context, user *user.SignedInUs
 		return nil, err
 	}
 
-	// FIXME replace with checker eventually
+	// helper to filter out permissions the signed in users cannot see
 	canView := func() func(userID int64) bool {
 		siuPermissions, ok := user.Permissions[orgID]
 		if !ok {
