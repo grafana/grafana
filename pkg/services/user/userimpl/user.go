@@ -234,7 +234,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	var signedInUser *user.SignedInUser
 
 	// only check cache if we have a user ID and an org ID in query
-	if query.OrgID != 0 && query.UserID != 0 {
+	if query.OrgID > 0 && query.UserID > 0 {
 		cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
 		if cached, found := s.cacheService.Get(cacheKey); found {
 			cachedUser := cached.(user.SignedInUser)
