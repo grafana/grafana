@@ -26,7 +26,7 @@ import { TraceSpan, TraceSpanReference, Trace } from './types/trace';
  * as-needed basis.
  */
 export type Accessors = {
-  getViewRange: () => [number, number] | number[];
+  getViewRange: () => [number, number];
   getSearchedSpanIDs: () => Set<string> | TNil;
   getCollapsedChildren: () => Set<string> | TNil;
   getViewHeight: () => number;
