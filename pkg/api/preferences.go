@@ -82,12 +82,17 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 		}
 	}
 
+	weekStart := ""
+	if preference.WeekStart != nil {
+		weekStart = *preference.WeekStart
+	}
+
 	dto := dtos.Prefs{
 		Theme:            preference.Theme,
 		HomeDashboardID:  preference.HomeDashboardID,
 		HomeDashboardUID: dashboardUID,
 		Timezone:         preference.Timezone,
-		WeekStart:        preference.WeekStart,
+		WeekStart:        weekStart,
 	}
 
 	if preference.JSONData != nil {

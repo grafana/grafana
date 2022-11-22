@@ -1,13 +1,16 @@
 package object_server_tests
 
 import (
+	"context"
 	"testing"
 
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	saAPI "github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	saTests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -39,11 +42,12 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 	})
 
 	return keyGen.ClientSecret, &user.SignedInUser{
-		UserID: account.ID,
-		Email:  account.Email,
-		Name:   account.Name,
-		Login:  account.Login,
-		OrgID:  account.OrgID,
+		UserID:           account.ID,
+		Email:            account.Email,
+		Name:             account.Name,
+		Login:            account.Login,
+		OrgID:            account.OrgID,
+		IsServiceAccount: account.IsServiceAccount,
 	}
 }
 
@@ -51,15 +55,21 @@ type testContext struct {
 	authToken string
 	client    object.ObjectStoreClient
 	user      *user.SignedInUser
+	ctx       context.Context
 }
 
 func createTestContext(t *testing.T) testContext {
 	t.Helper()
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"grpcServer"},
-		GRPCServerAddress:    "127.0.0.1:0", // :0 for choosing the port automatically
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrpcServer,
+			featuremgmt.FlagObjectStore,
+		},
+		AppModeProduction: false,         // required for migrations to run
+		GRPCServerAddress: "127.0.0.1:0", // :0 for choosing the port automatically
 	})
+
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
@@ -76,5 +86,6 @@ func createTestContext(t *testing.T) testContext {
 		authToken: authToken,
 		client:    client,
 		user:      serviceAccountUser,
+		ctx:       store.ContextWithUser(context.Background(), serviceAccountUser),
 	}
 }

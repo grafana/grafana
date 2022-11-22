@@ -117,13 +117,13 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthP
     <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
   );
 }
+
 const useContactPointsState = (alertManagerName: string) => {
-  const contactPointsState = useGetContactPointsState(alertManagerName ?? '');
+  const contactPointsState = useGetContactPointsState(alertManagerName);
   const receivers: ReceiversState = contactPointsState?.receivers ?? {};
-  const errorStateAvailable = Object.keys(receivers).length > 0; // this logic can change depending on how we implement this in the BE
+  const errorStateAvailable = Object.keys(receivers).length > 0;
   return { contactPointsState, errorStateAvailable };
 };
-
 interface ReceiverItem {
   name: string;
   types: string[];

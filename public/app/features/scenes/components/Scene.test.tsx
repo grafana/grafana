@@ -1,5 +1,5 @@
 import { Scene } from './Scene';
-import { SceneFlexLayout } from './SceneFlexLayout';
+import { SceneFlexLayout } from './layout/SceneFlexLayout';
 
 describe('Scene', () => {
   it('Simple scene', () => {

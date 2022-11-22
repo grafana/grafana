@@ -2,7 +2,14 @@ import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
 import { hasAlphaPanels } from 'app/core/config';
 
 import appEvents from '../../../core/app_events';
-import { advancedElementItems, CanvasElementItem, defaultElementItems } from '../../../features/canvas';
+import {
+  advancedElementItems,
+  CanvasElementItem,
+  CanvasElementOptions,
+  canvasElementRegistry,
+  defaultElementItems,
+} from '../../../features/canvas';
+import { notFoundItem } from '../../../features/canvas/elements/notFound';
 import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
@@ -68,4 +75,22 @@ export function getElementTypesOptions(
   }
 
   return selectables;
+}
+
+export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined) {
+  const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
+  const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
+  newElementOptions.type = newItem.id;
+  if (newItem.defaultSize) {
+    newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
+  }
+
+  if (rootLayer) {
+    const newElement = new ElementState(newItem, newElementOptions, rootLayer);
+    newElement.updateData(rootLayer.scene.context);
+    rootLayer.elements.push(newElement);
+    rootLayer.scene.save();
+
+    rootLayer.reinitializeMoveable();
+  }
 }

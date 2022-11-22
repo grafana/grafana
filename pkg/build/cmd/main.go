@@ -5,9 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
-	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/urfave/cli/v2"
 )
 
@@ -58,6 +56,11 @@ func main() {
 					Value: "grafana-server",
 					Usage: "Specify the server host",
 				},
+				&cli.StringFlag{
+					Name:  "video",
+					Value: "true",
+					Usage: "Specify if videos should be recorded",
+				},
 			},
 		},
 		{
@@ -91,6 +94,14 @@ func main() {
 					Value: strings.Join(docker.AllArchs, ","),
 					Usage: "Comma separated architectures to build",
 				},
+			},
+		},
+		{
+			Name:   "upload-cdn",
+			Usage:  "Upload public/* to a cdn bucket",
+			Action: UploadCDN,
+			Flags: []cli.Flag{
+				&editionFlag,
 			},
 		},
 		{
@@ -151,6 +162,15 @@ func main() {
 			},
 		},
 		{
+			Name:   "upload-packages",
+			Usage:  "Upload Grafana packages",
+			Action: UploadPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+			},
+		},
+		{
 			Name:  "artifacts",
 			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
@@ -167,6 +187,18 @@ func main() {
 								&editionFlag,
 							},
 						},
+						{
+							Name:      "publish-enterprise2",
+							Usage:     "Handle Grafana Enterprise2 Docker images",
+							ArgsUsage: "[version]",
+							Action:    Enterprise2,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "dockerhub-repo",
+									Usage: "DockerHub repo to push images",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -175,48 +207,6 @@ func main() {
 			Name:  "publish",
 			Usage: "Publish packages to Grafana com and repositories",
 			Subcommands: cli.Commands{
-				{
-					Name:      "packages",
-					Usage:     "publish Grafana packages",
-					ArgsUsage: "[version]",
-					Action:    PublishPackages,
-					Flags: []cli.Flag{
-						&jobsFlag,
-						&editionFlag,
-						&buildIDFlag,
-						&dryRunFlag,
-						&gcpKeyFlag,
-						&cli.StringFlag{
-							Name:  "packages-bucket",
-							Value: config.PublicBucket,
-							Usage: "Google Cloud Storage Debian database bucket",
-						},
-						&cli.StringFlag{
-							Name:  "deb-db-bucket",
-							Value: packaging.DefaultDebDBBucket,
-							Usage: "Google Cloud Storage Debian database bucket",
-						},
-						&cli.StringFlag{
-							Name:  "deb-repo-bucket",
-							Value: packaging.DefaultDebRepoBucket,
-							Usage: "Google Cloud Storage Debian repo bucket",
-						},
-						&cli.StringFlag{
-							Name:  "rpm-repo-bucket",
-							Value: packaging.DefaultRPMRepoBucket,
-							Usage: "Google Cloud Storage RPM repo bucket",
-						},
-						&cli.StringFlag{
-							Name:  "ttl",
-							Value: packaging.DefaultTTLSeconds,
-							Usage: "Cache time to live for uploaded packages",
-						},
-						&cli.BoolFlag{
-							Name:  "simulate-release",
-							Usage: "Only simulate creating release at grafana.com",
-						},
-					},
-				},
 				{
 					Name:   "grafana-com",
 					Usage:  "Publish packages to grafana.com",

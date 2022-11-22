@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +57,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+		require.NoError(t, err)
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -162,6 +165,47 @@ func TestIntegrationAnnotations(t *testing.T) {
 		err = repo.Add(context.Background(), badAnnotation)
 		require.Error(t, err)
 		require.ErrorIs(t, err, annotations.ErrBaseTagLimitExceeded)
+
+		t.Run("Can batch-insert annotations", func(t *testing.T) {
+			count := 10
+			items := make([]annotations.Item, count)
+			for i := 0; i < count; i++ {
+				items[i] = annotations.Item{
+					OrgId: 100,
+					Type:  "batch",
+					Epoch: 12,
+				}
+			}
+
+			err := repo.AddMany(context.Background(), items)
+
+			require.NoError(t, err)
+			query := &annotations.ItemQuery{OrgId: 100, SignedInUser: testUser}
+			inserted, err := repo.Get(context.Background(), query)
+			require.NoError(t, err)
+			assert.Len(t, inserted, count)
+		})
+
+		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
+			count := 10
+			items := make([]annotations.Item, count)
+			for i := 0; i < count; i++ {
+				items[i] = annotations.Item{
+					OrgId: 101,
+					Type:  "batch",
+					Epoch: 12,
+				}
+			}
+			items[0].Tags = []string{"type:test"}
+
+			err := repo.AddMany(context.Background(), items)
+
+			require.NoError(t, err)
+			query := &annotations.ItemQuery{OrgId: 101, SignedInUser: testUser}
+			inserted, err := repo.Get(context.Background(), query)
+			require.NoError(t, err)
+			assert.Len(t, inserted, count)
+		})
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
@@ -412,7 +456,9 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 
 	var maximumTagsLength int64 = 60
 	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+	require.NoError(t, err)
 
 	testDashboard1 := models.SaveDashboardCommand{
 		UserId:   1,
@@ -448,6 +494,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		OrgId:       1,
 		DashboardId: 2,
 		Epoch:       10,
+		Tags:        []string{"foo:bar"},
 	}
 	err = repo.Add(context.Background(), dash2Annotation)
 	require.NoError(t, err)

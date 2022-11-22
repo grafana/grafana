@@ -214,7 +214,7 @@ describe('Plugin details page', () => {
       const installedVersion = '1.3.443';
       const { queryByText } = renderPluginDetails({ id, installedVersion });
 
-      expect(await queryByText(`Version: ${installedVersion}`)).toBeInTheDocument();
+      expect(await queryByText(`${installedVersion}`)).toBeInTheDocument();
     });
 
     it('should display the latest compatible version in the header if a plugin is not installed', async () => {
@@ -230,7 +230,7 @@ describe('Plugin details page', () => {
       };
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
-      expect(await findByText('Version: 1.1.1')).toBeInTheDocument();
+      expect(await findByText('1.1.1')).toBeInTheDocument();
       expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
     });
 
@@ -430,9 +430,7 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the dependencies part to be loaded
-      expect(await queryByText(/dependencies:/i)).toBeInTheDocument();
-
-      expect(queryByText('Grafana >=8.0.0')).toBeInTheDocument();
+      expect(await queryByText('Grafana >=8.0.0')).toBeInTheDocument();
     });
 
     it('should show a confirm modal when trying to uninstall a plugin', async () => {

@@ -15,7 +15,6 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -49,9 +48,7 @@ func TestMSSQL(t *testing.T) {
 		return x, nil
 	}
 
-	queryResultTransformer := mssqlQueryResultTransformer{
-		log: logger,
-	}
+	queryResultTransformer := mssqlQueryResultTransformer{}
 	dsInfo := sqleng.DataSourceInfo{}
 	config := sqleng.DataPluginConfiguration{
 		DriverName:        "mssql",
@@ -787,9 +784,7 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
-				queryResultTransformer := mssqlQueryResultTransformer{
-					log: logger,
-				}
+				queryResultTransformer := mssqlQueryResultTransformer{}
 				dsInfo := sqleng.DataSourceInfo{}
 				config := sqleng.DataPluginConfiguration{
 					DriverName:        "mssql",
@@ -938,7 +933,7 @@ func TestMSSQL(t *testing.T) {
 		}
 
 		events := []*event{}
-		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
 				Description: "Someone deployed something",
@@ -1194,9 +1189,7 @@ func TestMSSQL(t *testing.T) {
 		})
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
-			queryResultTransformer := mssqlQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := mssqlQueryResultTransformer{}
 			dsInfo := sqleng.DataSourceInfo{}
 			config := sqleng.DataPluginConfiguration{
 				DriverName:        "mssql",
@@ -1273,9 +1266,7 @@ func TestMSSQL(t *testing.T) {
 }
 
 func TestTransformQueryError(t *testing.T) {
-	transformer := &mssqlQueryResultTransformer{
-		log: log.New("test"),
-	}
+	transformer := &mssqlQueryResultTransformer{}
 
 	randomErr := fmt.Errorf("random error")
 
@@ -1289,7 +1280,7 @@ func TestTransformQueryError(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		resultErr := transformer.TransformQueryError(tc.err)
+		resultErr := transformer.TransformQueryError(logger, tc.err)
 		assert.ErrorIs(t, resultErr, tc.expectedErr)
 	}
 }

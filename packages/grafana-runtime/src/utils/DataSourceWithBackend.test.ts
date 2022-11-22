@@ -32,17 +32,23 @@ jest.mock('../services', () => ({
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: (ref?: DataSourceRef) => ({ type: ref?.type ?? '?', uid: ref?.uid ?? '?' }),
+      getInstanceSettings: (ref?: DataSourceRef) => ({
+        type: ref?.type ?? '<mocktype>',
+        uid: ref?.uid ?? '<mockuid>',
+      }),
     };
   },
 }));
 
 describe('DataSourceWithBackend', () => {
   test('check the executed queries', () => {
-    const mock = runQueryAndReturnFetchMock({
+    const { mock, ds } = createMockDatasource();
+    ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      dashboardUID: 'dashA',
+      panelId: 123,
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -65,7 +71,7 @@ describe('DataSourceWithBackend', () => {
             Object {
               "datasource": Object {
                 "type": "sample",
-                "uid": "?",
+                "uid": "<mockuid>",
               },
               "datasourceId": undefined,
               "intervalMs": 5000,
@@ -73,6 +79,12 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+        },
+        "headers": Object {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc, <mockuid>",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy, sample",
         },
         "hideFromInspector": false,
         "method": "POST",
@@ -82,12 +94,28 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
+  test('should apply template variables only for the current data source', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.applyTemplateVariables = jest.fn();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+    } as DataQueryRequest);
+
+    expect(mock.calls.length).toBe(1);
+    expect(ds.applyTemplateVariables).toHaveBeenCalledTimes(1);
+  });
+
   test('check that the executed queries is hidden from inspector', () => {
-    const mock = runQueryAndReturnFetchMock({
+    const { mock, ds } = createMockDatasource();
+    ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       hideFromInspector: true,
+      dashboardUID: 'dashA',
+      panelId: 123,
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -110,7 +138,7 @@ describe('DataSourceWithBackend', () => {
             Object {
               "datasource": Object {
                 "type": "sample",
-                "uid": "?",
+                "uid": "<mockuid>",
               },
               "datasourceId": undefined,
               "intervalMs": 5000,
@@ -118,6 +146,12 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+        },
+        "headers": Object {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc, <mockuid>",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy, sample",
         },
         "hideFromInspector": true,
         "method": "POST",
@@ -150,9 +184,7 @@ describe('DataSourceWithBackend', () => {
   });
 });
 
-function runQueryAndReturnFetchMock(
-  request: DataQueryRequest
-): jest.MockContext<Promise<FetchResponse>, BackendSrvRequest[]> {
+function createMockDatasource() {
   const settings = {
     name: 'test',
     id: 1234,
@@ -165,7 +197,5 @@ function runQueryAndReturnFetchMock(
   mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
 
   const ds = new MyDataSource(settings);
-  ds.query(request);
-
-  return mockDatasourceRequest.mock;
+  return { ds, mock: mockDatasourceRequest.mock };
 }
