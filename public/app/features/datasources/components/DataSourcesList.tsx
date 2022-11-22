@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
-import { Button, LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
+import { LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
@@ -86,9 +86,9 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
                   ]}
                 </Card.Meta>
                 <Card.Tags>
-                  <Button icon="apps" fill="outline" variant="secondary">
+                  <LinkButton icon="apps" fill="outline" variant="secondary" href="/dashboard/new">
                     Build a Dashboard
-                  </Button>
+                  </LinkButton>
                   <LinkButton
                     icon="compass"
                     fill="outline"
