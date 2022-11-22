@@ -24,6 +24,11 @@ type LokiAPI struct {
 	headers map[string]string
 }
 
+type RawLokiResponse struct {
+	Body     []byte
+	Encoding string
+}
+
 func newLokiAPI(client *http.Client, url string, log log.Logger, headers map[string]string) *LokiAPI {
 	return &LokiAPI{client: client, url: url, log: log, headers: headers}
 }
@@ -204,15 +209,15 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, 
 	return req, nil
 }
 
-func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) ([]byte, error) {
+func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiResponse, error) {
 	req, err := makeRawRequest(ctx, api.url, resourcePath, api.headers)
 	if err != nil {
-		return nil, err
+		return RawLokiResponse{}, err
 	}
 
 	resp, err := api.client.Do(req)
 	if err != nil {
-		return nil, err
+		return RawLokiResponse{}, err
 	}
 
 	defer func() {
@@ -222,8 +227,18 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) ([]byte, 
 	}()
 
 	if resp.StatusCode/100 != 2 {
-		return nil, makeLokiError(resp.Body)
+		return RawLokiResponse{}, makeLokiError(resp.Body)
 	}
 
-	return io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return RawLokiResponse{}, err
+	}
+
+	encodedBytes := RawLokiResponse{
+		Body:     body,
+		Encoding: resp.Header.Get("Content-Encoding"),
+	}
+
+	return encodedBytes, nil
 }

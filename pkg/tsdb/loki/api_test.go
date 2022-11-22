@@ -150,3 +150,18 @@ func TestApiUrlHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestApiReturnValues(t *testing.T) {
+	t.Run("Loki should return the right encoding", func(t *testing.T) {
+		called := false
+		api := makeCompressedMockedAPIWithUrl("http://localhost:3100", 200, "application/json", []byte("foo"), func(req *http.Request) {
+			called = true
+		})
+
+		encodedBytes, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, "gzip", encodedBytes.Encoding)
+		require.Equal(t, []byte("foo"), encodedBytes.Body)
+	})
+}
