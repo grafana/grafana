@@ -21,16 +21,16 @@ type githubPublishTestCases struct {
 	expectedError  error
 	errorContains  string
 	expectedOutput string
-	mockedService  *mockGitHubRepositoryServiceImpl
+	mockedService  *mockGithubRepositoryServiceImpl
 }
 
-var mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{}
+var mockGithubRepositoryService = &mockGithubRepositoryServiceImpl{}
 
 func mockGithubRepositoryClient(context.Context, string) githubRepositoryService {
-	return mockGitHubRepositoryService
+	return mockGithubRepositoryService
 }
 
-func TestPublishGitHub(t *testing.T) {
+func TestPublishGithub(t *testing.T) {
 	t.Setenv("DRONE_BUILD_EVENT", "promote")
 	testApp, testPath := setupPublishGithubTests(t)
 	mockErrUnauthorized := errors.New("401")
@@ -49,21 +49,21 @@ func TestPublishGitHub(t *testing.T) {
 			name:          "try to publish with invalid token",
 			token:         "invalid",
 			args:          []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
-			mockedService: &mockGitHubRepositoryServiceImpl{tagErr: mockErrUnauthorized},
+			mockedService: &mockGithubRepositoryServiceImpl{tagErr: mockErrUnauthorized},
 			expectedError: mockErrUnauthorized,
 		},
 		{
 			name:          "try to publish with valid token and nonexisting tag with create disabled",
 			token:         "valid",
 			args:          []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
-			mockedService: &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+			mockedService: &mockGithubRepositoryServiceImpl{tagErr: errReleaseNotFound},
 			expectedError: errReleaseNotFound,
 		},
 		{
 			name:          "try to publish with valid token and nonexisting tag with create enabled",
 			token:         "valid",
 			args:          []string{"--path", testPath, "--repo", "test/test", "--tag", "v1.0.0", "--create"},
-			mockedService: &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+			mockedService: &mockGithubRepositoryServiceImpl{tagErr: errReleaseNotFound},
 		},
 		{
 			name:  "try to publish with valid token and existing tag",
@@ -74,21 +74,21 @@ func TestPublishGitHub(t *testing.T) {
 			name:           "dry run with invalid token",
 			token:          "invalid",
 			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
-			mockedService:  &mockGitHubRepositoryServiceImpl{tagErr: mockErrUnauthorized},
-			expectedOutput: "GitHub communication error",
+			mockedService:  &mockGithubRepositoryServiceImpl{tagErr: mockErrUnauthorized},
+			expectedOutput: "Github communication error",
 		},
 		{
 			name:           "dry run with valid token and nonexisting tag with create disabled",
 			token:          "valid",
 			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
-			mockedService:  &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+			mockedService:  &mockGithubRepositoryServiceImpl{tagErr: errReleaseNotFound},
 			expectedOutput: "Release doesn't exist",
 		},
 		{
 			name:           "dry run with valid token and nonexisting tag with create enabled",
 			token:          "valid",
 			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0", "--create"},
-			mockedService:  &mockGitHubRepositoryServiceImpl{tagErr: errReleaseNotFound},
+			mockedService:  &mockGithubRepositoryServiceImpl{tagErr: errReleaseNotFound},
 			expectedOutput: "Would upload asset",
 		},
 		{
@@ -116,9 +116,9 @@ func TestPublishGitHub(t *testing.T) {
 				t.Setenv("GH_TOKEN", test.token)
 			}
 			if test.mockedService != nil {
-				mockGitHubRepositoryService = test.mockedService
+				mockGithubRepositoryService = test.mockedService
 			} else {
-				mockGitHubRepositoryService = &mockGitHubRepositoryServiceImpl{}
+				mockGithubRepositoryService = &mockGithubRepositoryServiceImpl{}
 			}
 			args := []string{"run"}
 			args = append(args, test.args...)
@@ -154,7 +154,7 @@ func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
 	newGithubClient = mockGithubRepositoryClient
 
 	testApp := cli.NewApp()
-	testApp.Action = PublishGitHub
+	testApp.Action = PublishGithub
 	testApp.Flags = []cli.Flag{
 		&dryRunFlag,
 		&cli.StringFlag{
@@ -165,7 +165,7 @@ func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
 		&cli.StringFlag{
 			Name:     "repo",
 			Required: true,
-			Usage:    "GitHub repository",
+			Usage:    "Github repository",
 		},
 		&cli.StringFlag{
 			Name:  "tag",
@@ -194,13 +194,13 @@ func captureStdout(t *testing.T, fn func() error) (string, error) {
 	return string(out), err
 }
 
-type mockGitHubRepositoryServiceImpl struct {
+type mockGithubRepositoryServiceImpl struct {
 	tagErr    error
 	createErr error
 	uploadErr error
 }
 
-func (m *mockGitHubRepositoryServiceImpl) GetReleaseByTag(ctx context.Context, owner string, repo string, tag string) (*github.RepositoryRelease, *github.Response, error) {
+func (m *mockGithubRepositoryServiceImpl) GetReleaseByTag(ctx context.Context, owner string, repo string, tag string) (*github.RepositoryRelease, *github.Response, error) {
 	var release *github.RepositoryRelease
 	res := &github.Response{Response: &http.Response{}}
 	if m.tagErr == nil {
@@ -212,12 +212,12 @@ func (m *mockGitHubRepositoryServiceImpl) GetReleaseByTag(ctx context.Context, o
 	return release, res, m.tagErr
 }
 
-func (m *mockGitHubRepositoryServiceImpl) CreateRelease(ctx context.Context, owner string, repo string, release *github.RepositoryRelease) (*github.RepositoryRelease, *github.Response, error) {
+func (m *mockGithubRepositoryServiceImpl) CreateRelease(ctx context.Context, owner string, repo string, release *github.RepositoryRelease) (*github.RepositoryRelease, *github.Response, error) {
 	releaseID := int64(1)
 	return &github.RepositoryRelease{ID: &releaseID}, &github.Response{}, m.createErr
 }
 
-func (m *mockGitHubRepositoryServiceImpl) UploadReleaseAsset(ctx context.Context, owner string, repo string, id int64, opt *github.UploadOptions, file *os.File) (*github.ReleaseAsset, *github.Response, error) {
+func (m *mockGithubRepositoryServiceImpl) UploadReleaseAsset(ctx context.Context, owner string, repo string, id int64, opt *github.UploadOptions, file *os.File) (*github.ReleaseAsset, *github.Response, error) {
 	assetName := "test"
 	assetUrl := "testurl.com.br"
 	return &github.ReleaseAsset{Name: &assetName, BrowserDownloadURL: &assetUrl}, &github.Response{}, m.uploadErr
