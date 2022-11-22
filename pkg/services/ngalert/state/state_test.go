@@ -202,7 +202,7 @@ func TestSetEndsAt(t *testing.T) {
 			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
 			expected: evaluationTime.Add(time.Second * 300 * 3),
 			testRule: &ngmodels.AlertRule{
-				For:             60 * time.Second,
+				For:             time.Minute,
 				IntervalSeconds: 300,
 			},
 		},

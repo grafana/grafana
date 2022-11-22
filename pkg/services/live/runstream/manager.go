@@ -75,7 +75,7 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 
 const (
 	defaultCheckInterval           = 5 * time.Second
-	defaultDatasourceCheckInterval = 60 * time.Second
+	defaultDatasourceCheckInterval = time.Minute
 	defaultMaxChecks               = 3
 )
 

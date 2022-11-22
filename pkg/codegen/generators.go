@@ -29,6 +29,29 @@ func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
 	}, nil
 }
 
+// RawForGen produces a [DeclForGen] from a [kindsys.Raw] kind.
+//
+// Useful for grafana-external code generators, which depend on the Kind
+// representation in registries produced by grafana core (such as
+// ["github.com/grafana/grafana/pkg/registry/corekind".NewBase]).
+func RawForGen(k kindsys.Raw) *DeclForGen {
+	return &DeclForGen{
+		SomeDecl: k.Decl().Some(),
+	}
+}
+
+// StructuredForGen produces a [DeclForGen] from a [kindsys.Structured] kind.
+//
+// Useful for grafana-external code generators, which depend on the Kind
+// representation in registries produced by grafana core (such as
+// ["github.com/grafana/grafana/pkg/registry/corekind".NewBase]).
+func StructuredForGen(k kindsys.Structured) *DeclForGen {
+	return &DeclForGen{
+		SomeDecl: k.Decl().Some(),
+		lin:      k.Lineage(),
+	}
+}
+
 // DeclForGen wraps [kindsys.SomeDecl] to provide trivial caching of
 // the lineage declared by the kind (nil for raw kinds).
 type DeclForGen struct {
