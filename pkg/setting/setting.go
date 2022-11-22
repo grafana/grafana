@@ -286,8 +286,7 @@ type Cfg struct {
 	PluginsCDNBasePath string
 
 	// Panels
-	DisableSanitizeHtml   bool
-	EnterpriseLicensePath string
+	DisableSanitizeHtml bool
 
 	// Metrics
 	MetricsEndpointEnabled           bool
