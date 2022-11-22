@@ -74,8 +74,9 @@ export const LocationModeEditor = ({
         return (
           <Alert
             title={info.warning}
-            severity="info"
+            severity="warning"
             buttonContent={<Icon name="question-circle" size="xl" />}
+            className={styles.alert}
             onRemove={() => {
               const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
               if (newWindow) {
@@ -85,7 +86,7 @@ export const LocationModeEditor = ({
           />
         );
       } else if (value === FrameGeometrySourceMode.Auto && info.description) {
-        return <span className={styles.autoSuccess}>{info.description}</span>;
+        return <span>{info.description}</span>;
       }
     }
     return null;
@@ -107,8 +108,16 @@ export const LocationModeEditor = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    alert: css`
+      & div {
+        padding: 4px;
+      }
+      margin-bottom: 0px;
+      margin-top: 5px;
+      padding: 2px;
+    `,
     autoSuccess: css`
-      color: ${theme.colors.success.text};
+      color: ${theme.colors.primary.text};
     `,
     // TODO apply styling to horizontal group (currently not working)
     hGroup: css`
