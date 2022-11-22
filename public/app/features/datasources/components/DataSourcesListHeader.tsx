@@ -10,6 +10,9 @@ const ascendingSortValue = 'alpha-asc';
 const descendingSortValue = 'alpha-desc';
 
 const sortOptions = [
+  // We use this unicode 'en dash' character (U+2013), because it looks nicer
+  // than simple dash in this context. This is also used in the response of
+  // the `sorting` endpoint, which is used in the search dashboard page.
   { label: 'Sort by A–Z', value: ascendingSortValue },
   { label: 'Sort by Z–A', value: descendingSortValue },
 ];
