@@ -137,8 +137,7 @@ func getHeadersForCallResource(headers map[string][]string) map[string]string {
 			data["X-ID-Token"] = firstValue
 		case "Cookie":
 			data["Cookie"] = firstValue
-		}
-    case "Accept-Encoding":
+		case "Accept-Encoding":
 			data["Accept-Encoding"] = firstValue
 		}
 	}
