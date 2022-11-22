@@ -135,7 +135,7 @@ func TestApiUrlHandling(t *testing.T) {
 			require.True(t, called)
 		})
 	}
-	
+
 	for _, test := range queryTestData {
 		t.Run("Loki should build the metadata query URL correctly when "+test.name, func(t *testing.T) {
 			called := false
