@@ -133,9 +133,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 
 		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
 		// Required for cases when caller wants to immediately interact with the newly created object
-		if err := api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser); err != nil {
-			return response.Error(500, "Failed to clear permission cache after service account creation", err)
-		}
+		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	return response.JSON(http.StatusCreated, serviceAccount)

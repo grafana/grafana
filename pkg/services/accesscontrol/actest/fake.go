@@ -24,8 +24,8 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedIn
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
-func (f FakeService) ClearUserPermissionCache(user *user.SignedInUser) error {
-	return f.ExpectedErr
+func (f FakeService) ClearUserPermissionCache(user *user.SignedInUser) {
+	return
 }
 
 func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {

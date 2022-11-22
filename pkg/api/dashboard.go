@@ -478,13 +478,10 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
 	}
 
-	// Reload permission cache for the user who's created the dashboard, so that they can access it immediately
+	// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
 	if newDashboard && !hs.accesscontrolService.IsDisabled() {
-		// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
-		// Required for cases when caller wants to immediately interact with the newly created object
-		if err := hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser); err != nil {
-			return response.Error(500, "Failed to clear permission cache after dashboard creation", err)
-		}
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID

@@ -147,13 +147,12 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.Signe
 	return permissions, nil
 }
 
-func (s *Service) ClearUserPermissionCache(user *user.SignedInUser) error {
+func (s *Service) ClearUserPermissionCache(user *user.SignedInUser) {
 	key, err := permissionCacheKey(user)
 	if err != nil {
-		return err
+		return
 	}
 	s.cache.Delete(key)
-	return nil
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
