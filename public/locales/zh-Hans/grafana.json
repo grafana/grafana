@@ -312,11 +312,13 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "检查",
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
       "share": "分享",
+      "show-legend": "",
       "view": "查看"
     }
   },

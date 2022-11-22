@@ -312,11 +312,13 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "Ħįđę ľęģęŉđ",
       "inspect": "Ĩŉşpęčŧ",
       "inspect-data": "Đäŧä",
       "inspect-json": "Päŉęľ ĴŜØŃ",
       "more": "Mőřę...",
       "share": "Ŝĥäřę",
+      "show-legend": "Ŝĥőŵ ľęģęŉđ",
       "view": "Vįęŵ"
     }
   },
