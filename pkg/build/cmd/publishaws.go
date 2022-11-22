@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -91,45 +90,45 @@ func PublishAwsMarketplace(ctx *cli.Context) error {
 		svc = ctx.Context.Value(publishAwsMarketplaceTestKey).(*AwsMarketplacePublishingService)
 	}
 
-	log.Println("Logging in to AWS Marketplace registry")
+	fmt.Println("Logging in to AWS Marketplace registry")
 	err = svc.Login(ctx.Context)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Retrieving image '%s:%s' from Docker Hub\n", f.image, f.version)
+	fmt.Printf("Retrieving image '%s:%s' from Docker Hub\n", f.image, f.version)
 	err = svc.PullImage(ctx.Context, f.image, f.version)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Renaming image '%s:%s' to '%s/%s:%s'\n", f.image, f.version, marketplaceRegistryUrl, f.repo, f.version)
+	fmt.Printf("Renaming image '%s:%s' to '%s/%s:%s'\n", f.image, f.version, marketplaceRegistryUrl, f.repo, f.version)
 	err = svc.TagImage(ctx.Context, f.image, f.repo, f.version)
 	if err != nil {
 		return err
 	}
 
 	if !f.dryRun {
-		log.Printf("Pushing image '%s/%s:%s' to the AWS Marketplace ECR\n", marketplaceRegistryUrl, f.repo, f.version)
+		fmt.Printf("Pushing image '%s/%s:%s' to the AWS Marketplace ECR\n", marketplaceRegistryUrl, f.repo, f.version)
 		err = svc.PushToMarketplace(ctx.Context, f.repo, f.version)
 		if err != nil {
 			return err
 		}
 	} else {
-		log.Printf("Dry-Run: Pushing image '%s/%s:%s' to the AWS Marketplace ECR\n", marketplaceRegistryUrl, f.repo, f.version)
+		fmt.Printf("Dry-Run: Pushing image '%s/%s:%s' to the AWS Marketplace ECR\n", marketplaceRegistryUrl, f.repo, f.version)
 	}
 
-	log.Printf("Retrieving product identifier for product '%s'\n", f.product)
+	fmt.Printf("Retrieving product identifier for product '%s'\n", f.product)
 	pid, err := svc.GetProductIdentifier(ctx.Context, f.product)
 	if err != nil {
 		return err
 	}
 
 	if !f.dryRun {
-		log.Printf("Releasing to product, you can view the progress of the release on %s\n", marketplaceRequestsUrl)
+		fmt.Printf("Releasing to product, you can view the progress of the release on %s\n", marketplaceRequestsUrl)
 		return svc.ReleaseToProduct(ctx.Context, pid, f.repo, f.version)
 	} else {
-		log.Printf("Dry-Run: Releasing to product, you can view the progress of the release on %s\n", marketplaceRequestsUrl)
+		fmt.Printf("Dry-Run: Releasing to product, you can view the progress of the release on %s\n", marketplaceRequestsUrl)
 	}
 
 	return nil
