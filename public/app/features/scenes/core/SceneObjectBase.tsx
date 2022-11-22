@@ -26,7 +26,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   protected _subs = new Subscription();
 
   protected _variableDependency: SceneVariableDependencyConfigLike | undefined;
-  protected _urlSync: SceneObjectUrlSyncConfigLike | undefined;
+  protected _urlSync: SceneObjectUrlSyncConfigLike<TState> | undefined;
 
   public constructor(state: TState) {
     if (!state.key) {
@@ -59,7 +59,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   }
 
   /** Returns variable dependency config */
-  public get urlSync(): SceneObjectUrlSyncConfigLike | undefined {
+  public get urlSync(): SceneObjectUrlSyncConfigLike<TState> | undefined {
     return this._urlSync;
   }
 

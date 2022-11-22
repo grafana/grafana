@@ -1,4 +1,4 @@
-import { dateMath, getTimeZone, isDateTime, TimeRange, TimeZone, toUtc } from '@grafana/data';
+import { dateMath, getTimeZone, TimeRange, TimeZone, toUtc } from '@grafana/data';
 
 import { SceneObjectUrlSyncConfig } from '../services/SceneObjectUrlSyncConfig';
 
@@ -6,11 +6,7 @@ import { SceneObjectBase } from './SceneObjectBase';
 import { SceneTimeRangeLike, SceneTimeRangeState } from './types';
 
 export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> implements SceneTimeRangeLike {
-  protected _urlSync = new SceneObjectUrlSyncConfig({
-    keys: ['from', 'to'],
-    getUrlState: () => this.getUrlState(),
-    updateFromUrl: (values) => this.updateFromUrl(values),
-  });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['from', 'to'] });
 
   public constructor(state: Partial<SceneTimeRangeState> = {}) {
     const from = state.from ?? 'now-6h';
@@ -36,7 +32,6 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
     }
 
     update.value = evaluateTimeRange(update.from, update.to, this.state.timeZone);
-
     this.setState(update);
   };
 
@@ -46,26 +41,14 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
 
   public onIntervalChanged = (_: string) => {};
 
-  private getUrlState() {
-    const value = this.state.value;
-    let from = this.state.from;
-    let to = this.state.from;
-
-    if (isDateTime(value.raw.from)) {
-      from = value.from.toISOString();
-    }
-
-    if (isDateTime(value.raw.to)) {
-      to = value.raw.to.toISOString();
-    }
-
+  public getUrlState(state: SceneTimeRangeState) {
     return new Map<string, string>([
-      ['from', from],
-      ['to', to],
+      ['from', state.from],
+      ['to', state.to],
     ]);
   }
 
-  private updateFromUrl(values: Map<string, string>) {
+  public updateFromUrl(values: Map<string, string>) {
     const update: Partial<SceneTimeRangeState> = {};
 
     const from = parseUrlParam(values.get('from'));
@@ -78,6 +61,7 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
       update.to = to;
     }
 
+    update.value = evaluateTimeRange(update.from ?? this.state.from, update.to ?? this.state.to, this.state.timeZone);
     this.setState(update);
   }
 }
@@ -101,6 +85,9 @@ function parseUrlParam(value: string | undefined): string | null {
     if (utcValue.isValid()) {
       return utcValue.toISOString();
     }
+  } else if (value.length === 24) {
+    const utcValue = toUtc(value);
+    return utcValue.toISOString();
   }
 
   const epoch = parseInt(value, 10);

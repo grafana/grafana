@@ -15,13 +15,17 @@ interface TestObjectState extends SceneLayoutChildState {
 }
 
 class TestObj extends SceneObjectBase<TestObjectState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig({
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, {
     keys: ['name'],
-    getUrlState: () => new Map([['name', this.state.name]]),
-    updateFromUrl: (values) => {
-      this.setState({ name: values.get('name') ?? 'NA' });
-    },
   });
+
+  public getUrlState(state: TestObjectState) {
+    return new Map([['name', state.name]]);
+  }
+
+  public updateFromUrl(values: Map<string, string>) {
+    this.setState({ name: values.get('name') ?? 'NA' });
+  }
 }
 
 describe('UrlSyncManager', () => {
@@ -55,14 +59,20 @@ describe('UrlSyncManager', () => {
       obj.setState({ name: 'test2' });
 
       // Should update url
-      const location = locationService.getSearchObject();
-      expect(location.name).toBe('test2');
+      const searchObj = locationService.getSearchObject();
+      expect(searchObj.name).toBe('test2');
 
       // When making unrelated state change
       obj.setState({ other: 'not synced' });
 
       // Should not update url
       expect(locationUpdates.length).toBe(1);
+
+      // When clearing url (via go back)
+      locationService.getHistory().goBack();
+
+      // Should restore to initial state
+      expect(obj.state.name).toBe('test');
     });
   });
 

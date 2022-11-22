@@ -26,24 +26,33 @@ export class UrlSyncManager {
     const changedObject = payload.changedObject;
 
     if (changedObject.urlSync) {
-      const urlUpdate = changedObject.urlSync.getUrlState();
+      const newUrlState = changedObject.urlSync.getUrlState(payload.newState);
+      const prevUrlState = changedObject.urlSync.getUrlState(payload.prevState);
+
       const searchParams = locationService.getSearch();
       const mappedUpdated: Record<string, string> = {};
 
-      urlUpdate.forEach((value, key) => {
-        const currentValue = searchParams.get(key);
-        if (currentValue !== value) {
-          mappedUpdated[this.getMappedKey(key, changedObject)] = value;
+      for (const [key, newUrlValue] of newUrlState) {
+        const currentUrlValue = searchParams.get(key);
+        const uniqueKey = this.getUniqueKey(key, changedObject);
+
+        if (currentUrlValue !== newUrlValue) {
+          mappedUpdated[uniqueKey] = newUrlValue;
+
+          // Remember the initial state so we can go back to it
+          if (!this.initialStates.has(uniqueKey) && prevUrlState.has(key)) {
+            this.initialStates.set(uniqueKey, prevUrlState.get(key)!);
+          }
         }
-      });
+      }
 
       if (Object.keys(mappedUpdated).length > 0) {
-        locationService.partial(mappedUpdated, true);
+        locationService.partial(mappedUpdated, false);
       }
     }
   };
 
-  private getMappedKey(key: string, changedObject: SceneObject) {
+  private getUniqueKey(key: string, changedObject: SceneObject) {
     return key;
   }
 
@@ -55,11 +64,11 @@ export class UrlSyncManager {
   private syncSceneStateFromUrl(sceneObject: SceneObject, urlParams: URLSearchParams) {
     if (sceneObject.urlSync) {
       const urlState = new Map<string, string>();
-      const currentState = sceneObject.urlSync.getUrlState();
+      const currentState = sceneObject.urlSync.getUrlState(sceneObject.state);
 
       for (const key of sceneObject.urlSync.getKeys()) {
-        const mappedKey = this.getMappedKey(key, sceneObject);
-        const newValue = urlParams.get(mappedKey);
+        const uniqueKey = this.getUniqueKey(key, sceneObject);
+        const newValue = urlParams.get(uniqueKey);
         const currentValue = currentState.get(key);
 
         if (currentValue === newValue) {
@@ -69,13 +78,11 @@ export class UrlSyncManager {
         if (newValue !== null) {
           urlState.set(key, newValue);
           // Remember the initial state so we can go back to it
-          if (!this.initialStates.has(mappedKey)) {
-            if (currentValue !== undefined) {
-              this.initialStates.set(mappedKey, currentValue);
-            }
+          if (!this.initialStates.has(uniqueKey) && currentValue !== undefined) {
+            this.initialStates.set(uniqueKey, currentValue);
           }
         } else {
-          const initialValue = this.initialStates.get(mappedKey);
+          const initialValue = this.initialStates.get(uniqueKey);
           if (initialValue !== undefined) {
             urlState.set(key, initialValue);
           }

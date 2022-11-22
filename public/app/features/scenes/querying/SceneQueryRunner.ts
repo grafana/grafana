@@ -88,7 +88,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   public setContainerWidth(width: number) {
     // If we don't have a width we should run queries
-    if (!this._containerWidth) {
+    if (!this._containerWidth && width > 0) {
       this._containerWidth = width;
 
       // If we don't have maxDataPoints specifically set and maxDataPointsFromWidth is true

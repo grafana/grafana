@@ -66,7 +66,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   readonly variableDependency?: SceneVariableDependencyConfigLike;
 
   /** This abtractions declares what variables the scene object depends on and how to handle when they change value. **/
-  readonly urlSync?: SceneObjectUrlSyncConfigLike;
+  readonly urlSync?: SceneObjectUrlSyncConfigLike<TState>;
 
   /** Subscribe to state changes */
   subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
@@ -154,13 +154,13 @@ export function isSceneObject(obj: any): obj is SceneObject {
 }
 
 /** These functions are still just temporary until this get's refined */
-export interface SceneObjectWithUrlSync extends SceneObject {
-  getUrlState(): UrlQueryMap;
-  updateFromUrl(values: UrlQueryMap): void;
+export interface SceneObjectWithUrlSync<TState> extends SceneObject {
+  getUrlState(state: TState): Map<string, string>;
+  updateFromUrl(values: Map<string, string>): void;
 }
 
-export interface SceneObjectUrlSyncConfigLike {
+export interface SceneObjectUrlSyncConfigLike<TState> {
   getKeys(): Set<string>;
-  getUrlState(): Map<string, string>;
+  getUrlState(state: TState): Map<string, string>;
   updateFromUrl(values: Map<string, string>): void;
 }
