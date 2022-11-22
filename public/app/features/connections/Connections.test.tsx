@@ -1,4 +1,4 @@
-import { render, RenderResult, screen } from '@testing-library/react';
+import { render, RenderResult, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -43,6 +43,7 @@ describe('Connections', () => {
 
     expect(await screen.findByText('Datasources')).toBeVisible();
     expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
+    expect(await screen.findByText('Sort by A–Z')).toBeVisible();
     expect(await screen.findByRole('link', { name: /add new data source/i })).toBeVisible();
     expect(await screen.findByText(mockDatasources[0].name)).toBeVisible();
   });
@@ -57,7 +58,15 @@ describe('Connections', () => {
     expect(screen.queryByText('Manage your existing datasource connections')).not.toBeInTheDocument();
   });
 
-  test('renders the "Connect data" page using a plugin in case it is a standalone plugin page', async () => {
+  test('renders the core "Connect data" page in case there is no standalone plugin page override for it', async () => {
+    renderPage(ROUTES.ConnectData);
+
+    // We expect to see no results and "Data sources" as a header (we only have data sources in OSS Grafana at this point)
+    expect(await screen.findByText('Data sources')).toBeVisible();
+    expect(await screen.findByText('No results matching your query were found.')).toBeVisible();
+  });
+
+  test('does not render anything for the "Connect data" page in case it is displayed by a standalone plugin page', async () => {
     // We are overriding the navIndex to have the "Connect data" page registered by a plugin
     const standalonePluginPage = {
       id: 'standalone-plugin-page-/connections/connect-data',
@@ -83,7 +92,10 @@ describe('Connections', () => {
 
     renderPage(ROUTES.ConnectData, store);
 
-    // We expect not to see the same text as if it was rendered by core.
+    // We expect not to see the text that would be rendered by the core "Connect data" page
+    // (Instead we expect to see the default route "Datasources")
+    expect(await screen.findByText('Datasources')).toBeVisible();
+    expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
     expect(screen.queryByText('No results matching your query were found.')).not.toBeInTheDocument();
   });
 });
