@@ -386,7 +386,7 @@ type Cfg struct {
 	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
 
 	// Service Accounts
-	TokenExpirationDayLimit int
+	SATokenExpirationDayLimit int
 
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
@@ -1489,7 +1489,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 func readServiceAccountSettings(iniFile *ini.File, cfg *Cfg) error {
 	serviceAccount := iniFile.Section("service_accounts")
-	cfg.TokenExpirationDayLimit = serviceAccount.Key("token_expiration_day_limit").MustInt(-1)
+	cfg.SATokenExpirationDayLimit = serviceAccount.Key("token_expiration_day_limit").MustInt(-1)
 	return nil
 }
 

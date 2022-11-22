@@ -201,7 +201,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"oauth":                   hs.getEnabledOAuthProviders(),
 		"samlEnabled":             hs.samlEnabled(),
 		"samlName":                hs.samlName(),
-		"tokenExpirationDayLimit": hs.Cfg.TokenExpirationDayLimit,
+		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
 	}
 
 	if hs.ThumbService != nil {
