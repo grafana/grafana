@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
