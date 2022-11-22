@@ -43,46 +43,46 @@ function FlexLayoutChildComponent({
   direction: FlexLayoutDirection;
   isEditing?: boolean;
 }) {
-  const { size } = item.useState();
+  const { layout } = item.useState();
 
   return (
-    <div style={getItemStyles(direction, size)}>
+    <div style={getItemStyles(direction, layout)}>
       <item.Component model={item} isEditing={isEditing} />
     </div>
   );
 }
 
-function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize = {}) {
-  const { xSizing = 'fill', ySizing = 'fill' } = sizing;
+function getItemStyles(direction: FlexLayoutDirection, layout: SceneObjectSize = {}) {
+  const { xSizing = 'fill', ySizing = 'fill' } = layout;
 
   const style: CSSProperties = {
     display: 'flex',
     flexDirection: direction,
-    minWidth: sizing.minWidth,
-    minHeight: sizing.minHeight,
+    minWidth: layout.minWidth,
+    minHeight: layout.minHeight,
   };
 
   if (direction === 'column') {
-    if (sizing.height) {
-      style.height = sizing.height;
+    if (layout.height) {
+      style.height = layout.height;
     } else {
       style.flexGrow = ySizing === 'fill' ? 1 : 0;
     }
 
-    if (sizing.width) {
-      style.width = sizing.width;
+    if (layout.width) {
+      style.width = layout.width;
     } else {
       style.alignSelf = xSizing === 'fill' ? 'stretch' : 'flex-start';
     }
   } else {
-    if (sizing.height) {
-      style.height = sizing.height;
+    if (layout.height) {
+      style.height = layout.height;
     } else {
       style.alignSelf = ySizing === 'fill' ? 'stretch' : 'flex-start';
     }
 
-    if (sizing.width) {
-      style.width = sizing.width;
+    if (layout.width) {
+      style.width = layout.width;
     } else {
       style.flexGrow = xSizing === 'fill' ? 1 : 0;
     }

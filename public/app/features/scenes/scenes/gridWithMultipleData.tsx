@@ -10,7 +10,7 @@ import { getQueryRunnerWithRandomWalkQuery } from './queries';
 export function getGridWithMultipleData(): Scene {
   const scene = new Scene({
     title: 'Grid with rows and different queries',
-    layout: new SceneGridLayout({
+    body: new SceneGridLayout({
       children: [
         new SceneGridRow({
           $timeRange: new SceneTimeRange(),
@@ -18,7 +18,7 @@ export function getGridWithMultipleData(): Scene {
           title: 'Row A - has its own query',
           key: 'Row A',
           isCollapsed: true,
-          size: { y: 0 },
+          layout: { y: 0 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
@@ -26,7 +26,7 @@ export function getGridWithMultipleData(): Scene {
               key: 'Row A Child1',
               isResizable: true,
               isDraggable: true,
-              size: { x: 0, y: 1, width: 12, height: 5 },
+              layout: { x: 0, y: 1, width: 12, height: 5 },
             }),
             new VizPanel({
               pluginId: 'timeseries',
@@ -34,7 +34,7 @@ export function getGridWithMultipleData(): Scene {
               key: 'Row A Child2',
               isResizable: true,
               isDraggable: true,
-              size: { x: 0, y: 5, width: 6, height: 5 },
+              layout: { x: 0, y: 5, width: 6, height: 5 },
             }),
           ],
         }),
@@ -42,7 +42,7 @@ export function getGridWithMultipleData(): Scene {
           title: 'Row B - uses global query',
           key: 'Row B',
           isCollapsed: true,
-          size: { y: 1 },
+          layout: { y: 1 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
@@ -50,7 +50,7 @@ export function getGridWithMultipleData(): Scene {
               key: 'Row B Child1',
               isResizable: false,
               isDraggable: true,
-              size: { x: 0, y: 2, width: 12, height: 5 },
+              layout: { x: 0, y: 2, width: 12, height: 5 },
             }),
             new VizPanel({
               $data: getQueryRunnerWithRandomWalkQuery({ seriesCount: 10 }),
@@ -59,7 +59,7 @@ export function getGridWithMultipleData(): Scene {
               key: 'Row B Child2',
               isResizable: false,
               isDraggable: true,
-              size: { x: 0, y: 7, width: 6, height: 5 },
+              layout: { x: 0, y: 7, width: 6, height: 5 },
             }),
           ],
         }),
@@ -70,7 +70,7 @@ export function getGridWithMultipleData(): Scene {
           pluginId: 'timeseries',
           title: 'Outsider, has its own query',
           key: 'Outsider-own-query',
-          size: {
+          layout: {
             x: 0,
             y: 12,
             width: 6,
@@ -83,7 +83,7 @@ export function getGridWithMultipleData(): Scene {
           pluginId: 'timeseries',
           title: 'Outsider, uses global query',
           key: 'Outsider-global-query',
-          size: {
+          layout: {
             x: 6,
             y: 12,
             width: 12,

@@ -21,7 +21,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
 
   const scene = new Scene({
     title: 'Grid with rows and different queries and time ranges',
-    layout: new SceneGridLayout({
+    body: new SceneGridLayout({
       children: [
         new SceneGridRow({
           $timeRange: row1TimeRange,
@@ -29,7 +29,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
           title: 'Row A - has its own query, last year time range',
           key: 'Row A',
           isCollapsed: true,
-          size: { y: 0 },
+          layout: { y: 0 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
@@ -37,7 +37,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
               key: 'Row A Child1',
               isResizable: true,
               isDraggable: true,
-              size: { x: 0, y: 1, width: 12, height: 5 },
+              layout: { x: 0, y: 1, width: 12, height: 5 },
             }),
             new VizPanel({
               pluginId: 'timeseries',
@@ -45,7 +45,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
               key: 'Row A Child2',
               isResizable: true,
               isDraggable: true,
-              size: { x: 0, y: 5, width: 6, height: 5 },
+              layout: { x: 0, y: 5, width: 6, height: 5 },
             }),
           ],
         }),
@@ -57,7 +57,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
           pluginId: 'timeseries',
           title: 'Outsider, has its own query',
           key: 'Outsider-own-query',
-          size: {
+          layout: {
             x: 0,
             y: 12,
             width: 6,

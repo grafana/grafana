@@ -16,7 +16,7 @@ export function getGridWithRowsTest(): Scene {
 
   const row1 = new SceneGridRow({
     title: 'Collapsible/draggable row with flex layout',
-    size: { x: 0, y: 0, height: 10 },
+    layout: { x: 0, y: 0, height: 10 },
     children: [
       new SceneFlexLayout({
         direction: 'row',
@@ -39,7 +39,7 @@ export function getGridWithRowsTest(): Scene {
   });
 
   const cell1 = new VizPanel({
-    size: {
+    layout: {
       x: 0,
       y: 10,
       width: 12,
@@ -52,13 +52,13 @@ export function getGridWithRowsTest(): Scene {
   const cell2 = new VizPanel({
     isResizable: false,
     isDraggable: false,
-    size: { x: 12, y: 20, width: 12, height: 10 },
+    layout: { x: 12, y: 20, width: 12, height: 10 },
     pluginId: 'timeseries',
     title: 'No resize/no drag',
   });
 
   const row2 = new SceneGridRow({
-    size: { x: 12, y: 10, height: 10, width: 12 },
+    layout: { x: 12, y: 10, height: 10, width: 12 },
     title: 'Row with a nested flex layout',
     children: [
       new SceneFlexLayout({
@@ -77,7 +77,7 @@ export function getGridWithRowsTest(): Scene {
   });
   const scene = new Scene({
     title: 'Grid rows test',
-    layout: new SceneGridLayout({
+    body: new SceneGridLayout({
       children: [cell1, cell2, row1, row2],
     }),
     $editor: new SceneEditManager({}),

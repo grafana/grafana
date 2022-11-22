@@ -9,13 +9,13 @@ import { SceneFlexLayout } from './layout/SceneFlexLayout';
 function setup() {
   const scene = new Scene({
     title: 'Hello',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       children: [
         new NestedScene({
           title: 'Nested title',
           canRemove: true,
           canCollapse: true,
-          layout: new SceneFlexLayout({
+          body: new SceneFlexLayout({
             children: [new SceneCanvasText({ text: 'SceneCanvasText' })],
           }),
         }),

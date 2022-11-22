@@ -14,13 +14,11 @@ export interface SceneObjectStatePlain {
 }
 
 export interface SceneLayoutChildSize {
-  size?: SceneObjectSize;
+  layout?: SceneObjectSize;
 }
 export interface SceneLayoutChildInteractions {
   isDraggable?: boolean;
   isResizable?: boolean;
-  isCollapsible?: boolean;
-  isCollapsed?: boolean;
 }
 
 export interface SceneLayoutChildState
