@@ -83,7 +83,7 @@ type argJSONQuery struct {
 }
 
 func (e *AzureResourceGraphDatasource) buildQueries(logger log.Logger, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
-	azureResourceGraphQueries := make([]*AzureResourceGraphQuery, 0, len(queries))
+	var azureResourceGraphQueries []*AzureResourceGraphQuery
 
 	for _, query := range queries {
 		queryJSONModel := argJSONQuery{}
