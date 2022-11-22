@@ -118,16 +118,16 @@ func TestDashboardFileStore(t *testing.T) {
 		t.Run("With filesystem", func(t *testing.T) {
 			origOpenDashboardFile := openDashboardFile
 			mapFs := fstest.MapFS{
-				"plugins/plugin-id/dashboards/dash1.json": {
+				"dashboards/dash1.json": {
 					Data: []byte("dash1"),
 				},
-				"plugins/plugin-id/dashboards/dash2.json": {
+				"dashboards/dash2.json": {
 					Data: []byte("dash2"),
 				},
-				"plugins/plugin-id/dashboards/dash3.json": {
+				"dashboards/dash3.json": {
 					Data: []byte("dash3"),
 				},
-				"plugins/plugin-id/dash2.json": {
+				"dash2.json": {
 					Data: []byte("dash2"),
 				},
 			}
@@ -224,7 +224,6 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 				},
 			},
 		},
-		PluginDir: "plugins/plugin-id",
 	}
 
 	return &FileStoreManager{
