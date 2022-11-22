@@ -7,12 +7,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
 func MetricsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
-	metricsRequest, err := request.GetMetricsRequest(parameters)
+	metricsRequest, err := resources.GetMetricsRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusBadRequest, err)
 	}
@@ -22,13 +22,13 @@ func MetricsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Reques
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}
 
-	var metrics []models.Metric
+	var metrics []resources.Metric
 	switch metricsRequest.Type() {
-	case request.AllMetricsRequestType:
+	case resources.AllMetricsRequestType:
 		metrics = services.GetAllHardCodedMetrics()
-	case request.MetricsByNamespaceRequestType:
+	case resources.MetricsByNamespaceRequestType:
 		metrics, err = services.GetHardCodedMetricsByNamespace(metricsRequest.Namespace)
-	case request.CustomNamespaceRequestType:
+	case resources.CustomNamespaceRequestType:
 		metrics, err = service.GetMetricsByNamespace(metricsRequest.Namespace)
 	}
 	if err != nil {
