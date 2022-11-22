@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -314,9 +316,18 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 
 	f, mod, err := plugin.File(rel)
 	if err != nil {
-		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to get the relative path", err)
+		if errors.Is(err, plugins.ErrFileNotExist) {
+			c.JsonApiErr(404, "Plugin file not found", nil)
+			return
+		}
+		c.JsonApiErr(500, "Could not retrieve plugin file", err)
 		return
+	}
+
+	if hs.Cfg.Env == setting.Dev {
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	http.ServeContent(c.Resp, c.Req, rel, mod, f)

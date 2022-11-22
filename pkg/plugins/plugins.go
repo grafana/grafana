@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -21,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/org"
 )
+
+var ErrFileNotExist = fmt.Errorf("file does not exist")
 
 type Plugin struct {
 	JSONData
@@ -55,6 +56,7 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
+	logger    log.Logger
 	pluginDir string
 
 	Class Class
@@ -156,7 +158,8 @@ func (nopReadSeeker) Seek(_ int64, _ int) (int64, error) {
 
 func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	if !p.IncludedInSignature(name) {
-		return nopReadSeeker{}, time.Time{}, nil
+		p.logger.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
+			"is not included in the plugin signature", "file", name)
 	}
 
 	// prepend slash for cleaning relative paths
@@ -176,6 +179,9 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	// nolint:gosec
 	f, err := os.Open(filepath.Join(absPluginDir, rel))
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nopReadSeeker{}, time.Time{}, ErrFileNotExist
+		}
 		return nopReadSeeker{}, time.Time{}, nil
 	}
 
@@ -185,12 +191,13 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	}
 	modTime := fi.ModTime()
 
-	d, err := ioutil.ReadAll(f)
+	d, err := io.ReadAll(f)
 	if err != nil {
 		return nopReadSeeker{}, time.Time{}, nil
 	}
 
 	if err = f.Close(); err != nil {
+		p.logger.Warn("Could not close plugin file", "file", name)
 		return nopReadSeeker{}, time.Time{}, err
 	}
 
@@ -444,6 +451,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 	c, _ := p.Client()
 
 	return PluginDTO{
+		logger:          p.Logger(),
 		pluginDir:       p.PluginDir,
 		JSONData:        p.JSONData,
 		Class:           p.Class,
