@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sort"
 	"strconv"
 
@@ -85,19 +85,18 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 	dashboardTagOrder := make(map[string]int)
 
 	for i, item := range playlistItems {
-		if item.Type == "dashboard_by_id" {
+		switch item.Type {
+		case "dashboard_by_id":
 			dashboardID, _ := strconv.ParseInt(item.Value, 10, 64)
 			dashboardByIDs = append(dashboardByIDs, dashboardID)
 			dashboardIDOrder[dashboardID] = i
-		}
 
-		if item.Type == "dashboard_by_tag" {
+		case "dashboard_by_tag":
 			dashboardByTag = append(dashboardByTag, item.Value)
 			dashboardTagOrder[item.Value] = i
-		}
 
-		if item.Type == "dashboard_by_uid" {
-			return nil, fmt.Errorf("dashboard_by_uid not supported by this deprecated API")
+		case "dashboard_by_uid":
+			return nil, errors.New("dashboard_by_uid not supported by this deprecated API")
 		}
 	}
 

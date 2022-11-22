@@ -486,11 +486,11 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 func (hs *HTTPServer) configureHttps() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
+		return errors.New("cert_file cannot be empty when using HTTPS")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
+		return errors.New("cert_key cannot be empty when using HTTPS")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
@@ -526,11 +526,11 @@ func (hs *HTTPServer) configureHttps() error {
 
 func (hs *HTTPServer) configureHttp2() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+		return errors.New("cert_file cannot be empty when using HTTP2")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+		return errors.New("cert_key cannot be empty when using HTTP2")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
