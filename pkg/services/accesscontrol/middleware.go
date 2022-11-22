@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,7 +41,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 				}
 			}
 
-			var revokedErr *models.TokenRevokedError
+			var revokedErr *usertoken.TokenRevokedError
 			if errors.As(c.LookupTokenErr, &revokedErr) {
 				unauthorized(c, revokedErr)
 				return
@@ -111,7 +111,7 @@ func unauthorized(c *models.ReqContext, err error) {
 			"message": "Unauthorized",
 		}
 
-		var revokedErr *models.TokenRevokedError
+		var revokedErr *usertoken.TokenRevokedError
 		if errors.As(err, &revokedErr) {
 			response["message"] = "Token revoked"
 			response["error"] = map[string]interface{}{

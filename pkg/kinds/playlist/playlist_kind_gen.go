@@ -24,7 +24,7 @@ const rootrel string = "kinds/structured/playlist"
 // TODO standard generated docs
 type Kind struct {
 	lin    thema.ConvergentLineage[*Playlist]
-	jendec vmux.Endec
+	jcodec vmux.Codec
 	valmux vmux.ValueMux[*Playlist]
 	decl   kindsys.Decl[kindsys.CoreStructuredMeta]
 }
@@ -56,9 +56,9 @@ func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
 		return nil, err
 	}
 
-	k.jendec = vmux.NewJSONEndec("playlist.json")
+	k.jcodec = vmux.NewJSONCodec("playlist.json")
 	k.lin = tsch.ConvergentLineage()
-	k.valmux = vmux.NewValueMux(k.lin.TypedSchema(), k.jendec)
+	k.valmux = vmux.NewValueMux(k.lin.TypedSchema(), k.jcodec)
 	return k, nil
 }
 
@@ -99,6 +99,7 @@ func (k *Kind) Maturity() kindsys.Maturity {
 }
 
 // TODO standard generated docs
-func (k *Kind) Meta() kindsys.CoreStructuredMeta {
-	return k.decl.Meta
+func (k *Kind) Decl() *kindsys.Decl[kindsys.CoreStructuredMeta] {
+	d := k.decl
+	return &d
 }

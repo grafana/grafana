@@ -8,10 +8,11 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
-	"github.com/grafana/grafana"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	tload "github.com/grafana/thema/load"
+
+	"github.com/grafana/grafana"
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // CoreStructuredDeclParentPath is the path, relative to the repository root, where
@@ -54,15 +55,7 @@ func doLoadFrameworkCUE(ctx *cue.Context) (cue.Value, error) {
 	var v cue.Value
 	var err error
 
-	absolutePath := prefix
-	if !filepath.IsAbs(absolutePath) {
-		absolutePath, err = filepath.Abs(absolutePath)
-		if err != nil {
-			return v, err
-		}
-	}
-
-	bi, err := tload.InstancesWithThema(grafana.CueSchemaFS, absolutePath)
+	bi, err := tload.InstancesWithThema(grafana.CueSchemaFS, prefix)
 	if err != nil {
 		return v, err
 	}
@@ -227,7 +220,7 @@ func (decl *Decl[T]) Some() *SomeDecl {
 // For representations of core kinds that are useful in Go programs at runtime,
 // see ["github.com/grafana/grafana/pkg/registry/corekind"].
 func LoadCoreKind[T RawMeta | CoreStructuredMeta](declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[T], error) {
-	vk, err := cuectx.BuildGrafanaInstance(declpath, "kind", ctx, overlay)
+	vk, err := cuectx.BuildGrafanaInstance(ctx, declpath, "kind", overlay)
 	if err != nil {
 		return nil, err
 	}

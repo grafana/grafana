@@ -632,6 +632,15 @@ The following sections detail the supported settings and secure settings for eac
 | ---- |
 | url  |
 
+#### Alert notification `Cisco Webex Teams`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| message   |                |
+| room_id   |                |
+| api_url   |                |
+| bot_token | yes            |
+
 ## Grafana Enterprise
 
 Grafana Enterprise supports provisioning for the following resources:
