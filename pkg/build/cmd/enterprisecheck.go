@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 
@@ -69,12 +68,10 @@ func EnterpriseCheckBegin(c *cli.Context) error {
 		return err
 	}
 
-	check, err := git.CreateEnterpriseStatus(ctx, client.Repositories, opts.SHA, opts.URL, "pending")
-	if err != nil {
+	if _, err = git.CreateEnterpriseStatus(ctx, client.Repositories, opts.SHA, opts.URL, "pending"); err != nil {
 		return err
 	}
 
-	fmt.Fprintf(c.App.Writer, "%d", *check.ID)
 	return nil
 }
 
