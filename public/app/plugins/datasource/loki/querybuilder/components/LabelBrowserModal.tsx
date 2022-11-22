@@ -26,13 +26,11 @@ export const LabelBrowserModal = (props: Props) => {
   const changeQuery = (value: string, override?: boolean) => {
     const { query, onChange, onRunQuery } = props;
 
-    if (onChange) {
-      const nextQuery = { ...query, expr: value };
-      onChange(nextQuery);
+    const nextQuery = { ...query, expr: value };
+    onChange(nextQuery);
 
-      if (override && onRunQuery) {
-        onRunQuery();
-      }
+    if (override && onRunQuery) {
+      onRunQuery();
     }
   };
 
