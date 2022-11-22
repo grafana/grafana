@@ -416,7 +416,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 			"is not included in the plugin signature", "file", requestedFile)
 	}
 
-	useCDN := hs.Cfg.PluginSettings[pluginID]["use_cdn"] != ""
+	useCDN := hs.Cfg.PluginSettings[pluginID]["cdn"] != ""
 	if useCDN && hs.Cfg.PluginsCDNMode == setting.PluginsCDNModeRedirect {
 		// Send a redirect to the client
 		hs.redirectCDNPluginAsset(c, plugin, rel)
@@ -424,8 +424,10 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	// Make sure the plugins cdn mode is valid (either redirect or reverse proxy)
-	if hs.Cfg.PluginsCDNMode != setting.PluginsCDNModeReverveProxy {
-		c.JsonApiErr(500, "invalid plugins cdn mode specified in settings", nil)
+	hs.log.Debug("using cdn value", "value", useCDN)
+	if useCDN && hs.Cfg.PluginsCDNMode != setting.PluginsCDNModeReverveProxy {
+		err = errors.New("invalid plugins cdn mode specified in settings")
+		c.JsonApiErr(500, err.Error(), err)
 		return
 	}
 
