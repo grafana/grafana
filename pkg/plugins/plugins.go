@@ -146,16 +146,6 @@ func (p PluginDTO) Markdown(name string) []byte {
 	return data
 }
 
-type nopReadSeeker struct{}
-
-func (nopReadSeeker) Read(_ []byte) (int, error) {
-	return 0, nil
-}
-
-func (nopReadSeeker) Seek(_ int64, _ int) (int64, error) {
-	return 0, nil
-}
-
 func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	if !p.IncludedInSignature(name) {
 		p.logger.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
@@ -166,12 +156,12 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	requestedFile := filepath.Clean(filepath.Join("/", name))
 	rel, err := filepath.Rel("/", requestedFile)
 	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
 
 	absPluginDir, err := filepath.Abs(p.pluginDir)
 	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
 
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
@@ -180,25 +170,25 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	f, err := os.Open(filepath.Join(absPluginDir, rel))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nopReadSeeker{}, time.Time{}, ErrFileNotExist
+			return nil, time.Time{}, ErrFileNotExist
 		}
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
 
 	fi, err := f.Stat()
 	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
 	modTime := fi.ModTime()
 
 	d, err := io.ReadAll(f)
 	if err != nil {
-		return nopReadSeeker{}, time.Time{}, nil
+		return nil, time.Time{}, err
 	}
 
 	if err = f.Close(); err != nil {
 		p.logger.Warn("Could not close plugin file", "file", name)
-		return nopReadSeeker{}, time.Time{}, err
+		return nil, time.Time{}, err
 	}
 
 	return bytes.NewReader(d), modTime, nil
@@ -510,12 +500,10 @@ func (p *Plugin) IsExternalPlugin() bool {
 }
 
 func (p *Plugin) Manifest() []byte {
-	manifestPath := filepath.Join(p.PluginDir, "MANIFEST.txt")
-
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
 	// on plugin the folder structure on disk and not user input.
-	d, err := os.ReadFile(manifestPath)
+	d, err := os.ReadFile(filepath.Join(p.PluginDir, "MANIFEST.txt"))
 	if err != nil {
 		return []byte{}
 	}
