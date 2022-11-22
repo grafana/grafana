@@ -110,7 +110,7 @@ $ grafana-cli user-manager conflicts validate-file <filepath>
 $ grafana-cli user-manager conflicts ingest-file <filepath>
 ```
 
-## LDAP role mapping improvements
+## LDAP - Role mapping improvements
 
 If you use an LDAP directory to authenticate to Grafana but prefer to assign organizations and roles in the Grafana UI
 or via API, you can now enable a configuration option to skip user organization roles synchronization with your LDAP
