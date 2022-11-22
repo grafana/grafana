@@ -1,57 +1,70 @@
 package store
 
 import (
-	"context"
-	"fmt"
+	"encoding/json"
+	"strconv"
+	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type testUserKey struct{}
-
-func ContextWithUser(ctx context.Context, data *user.SignedInUser) context.Context {
-	return context.WithValue(ctx, testUserKey{}, data)
+type UserInfo struct {
+	UserID   int64
+	OrgID    int64
+	Login    string
+	UserType string
 }
 
-// UserFromContext ** Experimental **
-// TODO: move to global infra package / new auth service
-func UserFromContext(ctx context.Context) *user.SignedInUser {
-	grpcCtx := grpccontext.FromContext(ctx)
-	if grpcCtx != nil {
-		return grpcCtx.SignedInUser
-	}
+func UserInfoFromString(raw string) *UserInfo {
+	var orgID, userID int64
+	login := ""
 
-	// Explicitly set in context
-	u, ok := ctx.Value(testUserKey{}).(*user.SignedInUser)
-	if ok && u != nil {
-		return u
-	}
-
-	// From the HTTP request
-	c, ok := ctxkey.Get(ctx).(*models.ReqContext)
-	if !ok || c == nil || c.SignedInUser == nil {
+	split := strings.Split(raw, ":")
+	if len(split) < 3 {
 		return nil
 	}
 
-	return c.SignedInUser
+	if i, err := strconv.ParseInt(split[1], 10, 64); err == nil {
+		orgID = i
+	}
+
+	if i, err := strconv.ParseInt(split[2], 10, 64); err == nil {
+		userID = i
+	}
+
+	if len(split) > 3 {
+		login = split[3]
+	}
+
+	return &UserInfo{
+		UserID:   userID,
+		OrgID:    orgID,
+		Login:    login,
+		UserType: split[0],
+	}
 }
 
-// Really just spitballing here :) this should hook into a system that can give better display info
+func (u *UserInfo) String() string {
+	raw, err := json.Marshal(u)
+	if err != nil {
+		return ""
+	}
+	return string(raw)
+}
+
 func GetUserIDString(user *user.SignedInUser) string {
 	if user == nil {
 		return ""
 	}
-	if user.IsAnonymous {
-		return "anon"
+	userType := "user"
+	if !user.IsRealUser() {
+		userType = "sys"
 	}
-	if user.ApiKeyID > 0 {
-		return fmt.Sprintf("key:%d", user.UserID)
+	userInfo := UserInfo{
+		UserID:   user.UserID,
+		OrgID:    user.OrgID,
+		Login:    user.Login,
+		UserType: userType,
 	}
-	if user.IsRealUser() {
-		return fmt.Sprintf("user:%d:%s", user.UserID, user.Login)
-	}
-	return fmt.Sprintf("sys:%d:%s", user.UserID, user.Login)
+	return userInfo.String()
 }

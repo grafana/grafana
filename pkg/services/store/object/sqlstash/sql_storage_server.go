@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -128,7 +129,11 @@ func (s *sqlObjectServer) getObjectKey(ctx context.Context, grn *object.GRN) (ro
 	if grn == nil {
 		return router.ResourceRouteInfo{}, fmt.Errorf("missing grn")
 	}
-	user := store.UserFromContext(ctx)
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return router.ResourceRouteInfo{}, err
+	}
+
 	if user == nil {
 		return router.ResourceRouteInfo{}, fmt.Errorf("can not find user in context")
 	}
@@ -297,7 +302,10 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 	updatedAt := r.UpdatedAt
 	updatedBy := r.UpdatedBy
 	if updatedBy == "" {
-		modifier := store.UserFromContext(ctx)
+		modifier, err := appcontext.User(ctx)
+		if err != nil {
+			return nil, err
+		}
 		if modifier == nil {
 			return nil, fmt.Errorf("can not find user in context")
 		}
@@ -622,7 +630,10 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 }
 
 func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
-	user := store.UserFromContext(ctx)
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if user == nil {
 		return nil, fmt.Errorf("missing user in context")
 	}

@@ -25,7 +25,7 @@ const (
 	JWT_PLUGIN_KV_STORE_TYPE      = "private-jwk"
 )
 
-func ProvidePluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore) (*PluginAuthService, error) {
+func ProvidePluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore) (PluginAuthService, error) {
 	s := newPluginAuthService(cfg, features, secretsKvStore)
 	if err := s.init(); err != nil {
 		return nil, err
@@ -34,8 +34,8 @@ func ProvidePluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureMan
 	return s, nil
 }
 
-func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore) *PluginAuthService {
-	return &PluginAuthService{
+func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, secretsKvStore kvstore.SecretsKVStore) *pluginAuthService {
+	return &pluginAuthService{
 		Cfg:      cfg,
 		Features: features,
 		log:      log.New("auth.jwt.plugin"),
@@ -47,7 +47,13 @@ func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager
 	}
 }
 
-type PluginAuthService struct {
+type PluginAuthService interface {
+	Verify(context.Context, string) (models.JWTClaims, error)
+	Generate(string, string) (string, error)
+	IsEnabled() bool
+}
+
+type pluginAuthService struct {
 	Cfg      *setting.Cfg
 	Features *featuremgmt.FeatureManager
 
@@ -60,8 +66,12 @@ type PluginAuthService struct {
 	secretsKVStore *kvstore.FixedKVStore
 }
 
-func (s *PluginAuthService) Verify(ctx context.Context, token string) (models.JWTClaims, error) {
-	if !s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration) {
+func (s *pluginAuthService) IsEnabled() bool {
+	return s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration)
+}
+
+func (s *pluginAuthService) Verify(ctx context.Context, token string) (models.JWTClaims, error) {
+	if !s.IsEnabled() {
 		return make(models.JWTClaims), errors.New("JWT token generation is disabled")
 	}
 
@@ -75,8 +85,8 @@ func (s *PluginAuthService) Verify(ctx context.Context, token string) (models.JW
 	return Verify(ctx, s.keySet, expectedClaims, additionalClaims, token)
 }
 
-func (s *PluginAuthService) Generate(subject, audience string) (string, error) {
-	if !s.Features.IsEnabled(featuremgmt.FlagJwtTokenGeneration) {
+func (s *pluginAuthService) Generate(subject, audience string) (string, error) {
+	if !s.IsEnabled() {
 		return "", errors.New("JWT token generation is disabled")
 	}
 
@@ -92,7 +102,7 @@ func (s *PluginAuthService) Generate(subject, audience string) (string, error) {
 	return jwt.Signed(s.signer).Claims(claims).CompactSerialize()
 }
 
-func (s *PluginAuthService) init() error {
+func (s *pluginAuthService) init() error {
 	set := jose.JSONWebKeySet{}
 	privKey, err := s.getPrivateKey(context.Background())
 	if err != nil {
@@ -112,7 +122,7 @@ func (s *PluginAuthService) init() error {
 	return nil
 }
 
-func (s *PluginAuthService) getPrivateKey(ctx context.Context) (privKey *jose.JSONWebKey, err error) {
+func (s *pluginAuthService) getPrivateKey(ctx context.Context) (privKey *jose.JSONWebKey, err error) {
 	raw, ok, err := s.secretsKVStore.Get(ctx)
 	if err != nil {
 		return nil, err

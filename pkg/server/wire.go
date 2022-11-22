@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/auth/jwt/grpc"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -357,6 +358,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
+	jwtgrpc.ProvidePluginAuthServer,
 	interceptors.ProvideAuthenticator,
 	kind.ProvideService, // The registry of known kinds
 	sqlstash.ProvideSQLObjectServer,
