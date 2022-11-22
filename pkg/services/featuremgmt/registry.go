@@ -358,6 +358,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "jwtTokenGeneration",
+			Description:     "Enable token generation in JWT Auth service.",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "nestedFolders",
 			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,

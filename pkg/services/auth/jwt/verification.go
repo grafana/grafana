@@ -1,9 +1,12 @@
 package jwt
 
 import (
-	"encoding/json"
+	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -11,50 +14,43 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (s *AuthService) initClaimExpectations() error {
-	if err := json.Unmarshal([]byte(s.Cfg.JWTAuthExpectClaims), &s.expect); err != nil {
-		return err
+func Verify(ctx context.Context, keySet keySet, expectedClaims jwt.Expected, additionalClaims map[string]interface{}, strToken string) (models.JWTClaims, error) {
+	strToken = sanitizeJWT(strToken)
+	token, err := jwt.ParseSigned(strToken)
+	if err != nil {
+		return nil, err
 	}
 
-	for key, value := range s.expect {
-		switch key {
-		case "iss":
-			if stringValue, ok := value.(string); ok {
-				s.expectRegistered.Issuer = stringValue
-			} else {
-				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
-			}
-			delete(s.expect, key)
-		case "sub":
-			if stringValue, ok := value.(string); ok {
-				s.expectRegistered.Subject = stringValue
-			} else {
-				return fmt.Errorf("%q expectation has invalid type %T, string expected", key, value)
-			}
-			delete(s.expect, key)
-		case "aud":
-			switch value := value.(type) {
-			case []interface{}:
-				for _, val := range value {
-					if v, ok := val.(string); ok {
-						s.expectRegistered.Audience = append(s.expectRegistered.Audience, v)
-					} else {
-						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
-					}
-				}
-			case string:
-				s.expectRegistered.Audience = []string{value}
-			default:
-				return fmt.Errorf("%q expectation has invalid type %T, array or string expected", key, value)
-			}
-			delete(s.expect, key)
+	keys, err := keySet.Key(ctx, token.Headers[0].KeyID)
+	if err != nil {
+		return nil, err
+	}
+	if len(keys) == 0 {
+		return nil, errors.New("key ID not found in configured key sets")
+	}
+
+	var claims models.JWTClaims
+	for _, key := range keys {
+		if err = token.Claims(key, &claims); err == nil {
+			break
 		}
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	if err = validateExpectedClaims(expectedClaims, claims); err != nil {
+		return nil, err
+	}
+
+	if err = validateAdditionalClaims(additionalClaims, claims); err != nil {
+		return nil, err
+	}
+
+	return claims, nil
 }
 
-func (s *AuthService) validateClaims(claims models.JWTClaims) error {
+func validateExpectedClaims(expectRegistered jwt.Expected, claims models.JWTClaims) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {
@@ -118,13 +114,16 @@ func (s *AuthService) validateClaims(claims models.JWTClaims) error {
 		}
 	}
 
-	expectRegistered := s.expectRegistered
 	expectRegistered.Time = time.Now()
 	if err := registeredClaims.Validate(expectRegistered); err != nil {
 		return err
 	}
 
-	for key, expected := range s.expect {
+	return nil
+}
+
+func validateAdditionalClaims(expected map[string]interface{}, claims models.JWTClaims) error {
+	for key, expected := range expected {
 		value, ok := claims[key]
 		if !ok {
 			return fmt.Errorf("%q claim is missing", key)
@@ -135,4 +134,11 @@ func (s *AuthService) validateClaims(claims models.JWTClaims) error {
 	}
 
 	return nil
+}
+
+func sanitizeJWT(jwtToken string) string {
+	// JWT can be compact, JSON flatened or JSON general
+	// In every cases, parts are base64 strings without padding
+	// The padding char (=) should never interfer with data
+	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
 }
