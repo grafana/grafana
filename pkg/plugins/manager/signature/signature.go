@@ -18,7 +18,7 @@ func NewValidator(authorizer plugins.PluginLoaderAuthorizer) Validator {
 }
 
 func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
-	if plugin.Signature == plugins.SignatureValid {
+	if plugin.Signature == plugins.SignatureValid || plugin.Signature.IsCDN() {
 		s.log.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
 	}
@@ -44,10 +44,10 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 		return nil
 	}
-	if plugin.CDN {
+	/* if plugin.CDN {
 		s.log.Debug("Plugin is using CDN, skipping signature check", "pluginID", plugin.ID)
 		return nil
-	}
+	} */
 
 	switch plugin.Signature {
 	case plugins.SignatureUnsigned:

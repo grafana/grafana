@@ -103,6 +103,12 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, nil
 	}
 
+	if plugin.CDN {
+		return plugins.Signature{
+			Status: plugins.SignatureCDN,
+		}, nil
+	}
+
 	pluginFiles, err := pluginFilesRequiringVerification(plugin)
 	if err != nil {
 		mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)

@@ -53,7 +53,7 @@ func (e SignatureError) Error() string {
 		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
 	case SignatureUnsigned:
 		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
-	case SignatureInternal, SignatureValid:
+	case SignatureInternal, SignatureValid, SignatureCDN:
 		return ""
 	}
 
@@ -68,7 +68,7 @@ func (e SignatureError) AsErrorCode() ErrorCode {
 		return signatureModified
 	case SignatureUnsigned:
 		return signatureMissing
-	case SignatureInternal, SignatureValid:
+	case SignatureInternal, SignatureValid, SignatureCDN:
 		return ""
 	}
 
@@ -163,8 +163,13 @@ func (ss SignatureStatus) IsInternal() bool {
 	return ss == SignatureInternal
 }
 
+func (ss SignatureStatus) IsCDN() bool {
+	return ss == SignatureCDN
+}
+
 const (
 	SignatureInternal SignatureStatus = "internal" // core plugin, no signature
+	SignatureCDN      SignatureStatus = "cdn"      // cdn plugin, inherently trusted
 	SignatureValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
 	SignatureInvalid  SignatureStatus = "invalid"  // invalid signature
 	SignatureModified SignatureStatus = "modified" // valid signature, but content mismatch
