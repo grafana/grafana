@@ -1,4 +1,4 @@
-import { render, RenderResult, screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, RenderResult, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
