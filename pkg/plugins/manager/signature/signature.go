@@ -44,10 +44,6 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 		return nil
 	}
-	/* if plugin.CDN {
-		s.log.Debug("Plugin is using CDN, skipping signature check", "pluginID", plugin.ID)
-		return nil
-	} */
 
 	switch plugin.Signature {
 	case plugins.SignatureUnsigned:
