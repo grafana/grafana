@@ -33,10 +33,10 @@ export const GazetteerPathEditor = ({
   onChange,
   context,
   item,
-}: StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>) => {
+}: StandardEditorProps<string, GazetteerPathEditorConfigSettings>) => {
   const styles = getStyles(useTheme2());
   const [gaz, setGaz] = useState<Gazetteer>();
-  const settings = item.settings as any;
+  const settings = item.settings;
 
   useEffect(() => {
     async function fetchData() {
