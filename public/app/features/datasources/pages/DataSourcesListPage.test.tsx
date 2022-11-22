@@ -2,28 +2,27 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { DataSourceSettings, LayoutModes } from '@grafana/data';
+import { LayoutModes } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { DataSourcesState } from 'app/types';
 
 import { navIndex, getMockDataSources } from '../__mocks__';
+import { getDataSources } from '../api';
 import { initialState } from '../state';
 
 import { DataSourcesListPage } from './DataSourcesListPage';
 
-jest.mock('app/core/services/backend_srv', () => ({
-  ...jest.requireActual('app/core/services/backend_srv'),
-  getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]) }),
+jest.mock('../api', () => ({
+  ...jest.requireActual('../api'),
+  getDataSources: jest.fn().mockResolvedValue([]),
 }));
 
-const setup = (stateOverride?: Partial<DataSourcesState>) => {
+const getDataSourcesMock = getDataSources as jest.Mock;
+
+const setup = () => {
   const store = configureStore({
     dataSources: {
       ...initialState,
-      dataSources: [] as DataSourceSettings[],
       layoutMode: LayoutModes.Grid,
-      hasFetched: false,
-      ...stateOverride,
     },
     navIndex,
   });
@@ -36,28 +35,28 @@ const setup = (stateOverride?: Partial<DataSourcesState>) => {
 };
 
 describe('Render', () => {
-  it('should render component', () => {
+  it('should render component', async () => {
     setup();
 
-    expect(screen.getByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Documentation' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Support' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Community' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Add new data source' })).toBeInTheDocument();
   });
 
-  it('should render action bar and datasources', () => {
-    setup({
-      dataSources: getMockDataSources(5),
-      dataSourcesCount: 5,
-      hasFetched: true,
-    });
+  it('should render action bar and datasources', async () => {
+    getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
 
-    expect(screen.getByRole('link', { name: 'Add data source' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-1' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-3' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-4' })).toBeInTheDocument();
-    expect(screen.getAllByRole('img')).toHaveLength(5);
+    setup();
+
+    expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Sort' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-1' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-3' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-4' })).toBeInTheDocument();
+    expect(await screen.findAllByRole('img')).toHaveLength(5);
   });
 });
