@@ -217,12 +217,14 @@ func (s *Service) GetUsersPermissions(ctx context.Context, user *user.SignedInUs
 			}
 		}
 	}
-	// Get managed permissions (DB)
-	usersPermissions, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
+
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, orgID)
+
+	// Get managed permissions (DB)
+	usersPermissions, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
 	if err != nil {
 		return nil, err
 	}
