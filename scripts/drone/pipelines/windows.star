@@ -13,10 +13,7 @@ load("scripts/drone/vault.star", "from_secret", "github_token", "prerelease_buck
 def windows(trigger, edition, ver_mode):
     environment = {"EDITION": edition}
     init_cmds = []
-    sfx = ""
-    if edition in ("enterprise", "enterprise2"):
-        sfx = "-{}".format(edition)
-    else:
+    if edition not in ("enterprise", "enterprise2"):
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
             "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(

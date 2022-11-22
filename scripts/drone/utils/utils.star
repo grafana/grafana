@@ -1,9 +1,8 @@
 load(
     "scripts/drone/steps/lib.star",
-    "download_grabpl_step",
     "slack_step",
 )
-load("scripts/drone/vault.star", "drone_token", "from_secret", "github_token", "pull_secret")
+load("scripts/drone/vault.star", "pull_secret")
 
 failure_template = "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
 drone_change_template = "`.drone.yml` and `starlark` files have been changed on the OSS repo, by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>"

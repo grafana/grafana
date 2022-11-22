@@ -1,7 +1,6 @@
 load(
     "scripts/drone/steps/lib.star",
     "artifacts_page_step",
-    "benchmark_ldap_step",
     "build_backend_step",
     "build_docker_images_step",
     "build_frontend_package_step",
@@ -21,9 +20,6 @@ load(
     "grafana_server_step",
     "identify_runner_step",
     "init_enterprise_step",
-    "lint_backend_step",
-    "lint_drone_step",
-    "lint_frontend_step",
     "memcached_integration_tests_step",
     "mysql_integration_tests_step",
     "package_step",
@@ -34,9 +30,6 @@ load(
     "publish_linux_packages_step",
     "redis_integration_tests_step",
     "store_storybook_step",
-    "test_backend_integration_step",
-    "test_backend_step",
-    "test_frontend_step",
     "trigger_oss",
     "upload_cdn_step",
     "upload_packages_step",
@@ -49,13 +42,9 @@ load(
     "scripts/drone/services/services.star",
     "integration_test_services",
     "integration_test_services_volumes",
-    "ldap_service",
 )
 load(
     "scripts/drone/utils/utils.star",
-    "drone_change_template",
-    "failure_template",
-    "notify_pipeline",
     "pipeline",
 )
 load(
@@ -66,7 +55,7 @@ load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
-load("scripts/drone/vault.star", "drone_token", "from_secret", "github_token", "prerelease_bucket", "pull_secret")
+load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
 
 ver_mode = "release"
 release_trigger = {
@@ -153,16 +142,16 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     ]
 
     integration_test_steps = [
-        postgres_integration_tests_step(edition = edition, ver_mode = ver_mode),
-        mysql_integration_tests_step(edition = edition, ver_mode = ver_mode),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
     ]
 
     # Insert remaining steps
     build_steps.extend([
         package_step(edition = edition, ver_mode = ver_mode),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition = edition, ver_mode = ver_mode, publish = True),
-        build_docker_images_step(edition = edition, ver_mode = ver_mode, ubuntu = True, publish = True),
+        build_docker_images_step(edition = edition, publish = True),
+        build_docker_images_step(edition = edition, ubuntu = True, publish = True),
         grafana_server_step(edition = edition),
     ])
 
@@ -267,8 +256,8 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     ]
 
     integration_test_steps = [
-        postgres_integration_tests_step(edition = edition, ver_mode = ver_mode),
-        mysql_integration_tests_step(edition = edition, ver_mode = ver_mode),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
     ]
 
     if include_enterprise:
@@ -278,10 +267,10 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     # Insert remaining steps
     build_steps.extend([
-        package_step(edition = edition, ver_mode = ver_mode, include_enterprise2 = include_enterprise),
+        package_step(edition = edition, ver_mode = ver_mode),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition = edition, ver_mode = ver_mode, publish = True),
-        build_docker_images_step(edition = edition, ver_mode = ver_mode, ubuntu = True, publish = True),
+        build_docker_images_step(edition = edition, publish = True),
+        build_docker_images_step(edition = edition, ubuntu = True, publish = True),
         grafana_server_step(edition = edition),
     ])
 
@@ -302,7 +291,7 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         publish_steps.extend([
             upload_cdn_step(edition = edition, ver_mode = ver_mode, trigger = trigger_oss),
             upload_packages_step(edition = edition, ver_mode = ver_mode, trigger = trigger_oss),
-            package_step(edition = edition2, ver_mode = ver_mode, include_enterprise2 = include_enterprise, variants = ["linux-amd64"]),
+            package_step(edition = edition2, ver_mode = ver_mode, variants = ["linux-amd64"]),
             upload_cdn_step(edition = edition2, ver_mode = ver_mode),
         ])
     if should_publish:
@@ -384,7 +373,6 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
         "EDITION": "enterprise2",
     }
     edition = "enterprise"
-    services = integration_test_services(edition = edition)
     volumes = integration_test_services_volumes()
     package_steps = []
     publish_steps = []
@@ -417,11 +405,11 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
     upload_cdn["environment"].update({"ENTERPRISE2_CDN_PATH": from_secret("enterprise2-cdn-path")})
 
     build_steps.extend([
-        package_step(edition = edition2, ver_mode = ver_mode, include_enterprise2 = include_enterprise, variants = ["linux-amd64"]),
+        package_step(edition = edition2, ver_mode = ver_mode, variants = ["linux-amd64"]),
         upload_cdn,
         copy_packages_for_docker_step(edition = edition2),
-        build_docker_images_step(edition = edition2, ver_mode = ver_mode, publish = True),
-        build_docker_images_step(edition = edition2, ver_mode = ver_mode, ubuntu = True, publish = True),
+        build_docker_images_step(edition = edition2, publish = True),
+        build_docker_images_step(edition = edition2, ubuntu = True, publish = True),
         fetch_images,
         publish_images_step(edition2, "release", mode = edition2, docker_repo = "${{DOCKER_ENTERPRISE2_REPO}}"),
     ])

@@ -1,12 +1,9 @@
 load(
     "scripts/drone/steps/lib.star",
-    "benchmark_ldap_step",
-    "betterer_frontend_step",
     "build_backend_step",
     "build_docker_images_step",
     "build_frontend_package_step",
     "build_frontend_step",
-    "build_image",
     "build_plugins_step",
     "build_storybook_step",
     "cloud_plugins_e2e_tests_step",
@@ -17,15 +14,10 @@ load(
     "e2e_tests_step",
     "enterprise_downstream_step",
     "frontend_metrics_step",
-    "get_windows_steps",
     "grafana_server_step",
     "identify_runner_step",
-    "memcached_integration_tests_step",
-    "mysql_integration_tests_step",
     "package_step",
-    "postgres_integration_tests_step",
     "publish_images_step",
-    "redis_integration_tests_step",
     "release_canary_npm_packages_step",
     "store_storybook_step",
     "test_a11y_frontend_step",
@@ -43,6 +35,7 @@ load(
     "pipeline",
 )
 
+# @unused
 def build_e2e(trigger, ver_mode, edition):
     environment = {"EDITION": edition}
     variants = ["linux-amd64", "linux-amd64-musl", "darwin-amd64", "windows-amd64"]
@@ -90,8 +83,8 @@ def build_e2e(trigger, ver_mode, edition):
 
     if ver_mode == "main":
         build_steps.extend([
-            build_docker_images_step(edition = edition, publish = False, ver_mode = ver_mode),
-            build_docker_images_step(edition = edition, publish = False, ubuntu = True, ver_mode = ver_mode),
+            build_docker_images_step(edition = edition, publish = False),
+            build_docker_images_step(edition = edition, publish = False, ubuntu = True),
             publish_images_step(docker_repo = "grafana", edition = edition, mode = "", trigger = trigger_oss, ver_mode = ver_mode),
             publish_images_step(docker_repo = "grafana-oss", edition = edition, mode = "", trigger = trigger_oss, ver_mode = ver_mode),
             release_canary_npm_packages_step(edition, trigger = trigger_oss),
@@ -99,7 +92,7 @@ def build_e2e(trigger, ver_mode, edition):
             upload_cdn_step(edition = edition, trigger = trigger_oss, ver_mode = ver_mode),
         ])
     elif ver_mode == "pr":
-        build_steps.extend([build_docker_images_step(archs = ["amd64"], edition = edition, ver_mode = ver_mode)])
+        build_steps.extend([build_docker_images_step(archs = ["amd64"], edition = edition)])
 
     publish_suffix = ""
     if ver_mode == "main":

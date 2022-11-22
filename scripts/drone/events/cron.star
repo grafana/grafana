@@ -1,4 +1,4 @@
-load("scripts/drone/vault.star", "from_secret", "pull_secret")
+load("scripts/drone/vault.star", "from_secret")
 load("scripts/drone/steps/lib.star", "compile_build_cmd", "publish_image")
 
 aquasec_trivy_image = "aquasec/trivy:0.21.0"

@@ -13,7 +13,6 @@ load(
     "scripts/drone/services/services.star",
     "integration_test_services",
     "integration_test_services_volumes",
-    "ldap_service",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -33,8 +32,8 @@ def integration_tests(trigger, ver_mode, edition):
         wire_install_step(),
     ]
     test_steps = [
-        postgres_integration_tests_step(edition = edition, ver_mode = ver_mode),
-        mysql_integration_tests_step(edition = edition, ver_mode = ver_mode),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
     ]
 
     return pipeline(

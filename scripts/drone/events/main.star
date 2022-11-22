@@ -3,7 +3,6 @@ load(
     "drone_change_template",
     "failure_template",
     "notify_pipeline",
-    "pipeline",
 )
 load(
     "scripts/drone/pipelines/docs.star",
@@ -42,7 +41,6 @@ load(
     "scripts/drone/pipelines/lint_frontend.star",
     "lint_frontend_pipeline",
 )
-load("scripts/drone/vault.star", "from_secret")
 
 ver_mode = "main"
 trigger = {

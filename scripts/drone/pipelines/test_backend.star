@@ -29,8 +29,8 @@ def test_backend(trigger, ver_mode, edition = "oss"):
         wire_install_step(),
     ])
     test_steps = [
-        test_backend_step(edition),
-        test_backend_integration_step(edition),
+        test_backend_step(),
+        test_backend_integration_step(),
     ]
 
     pipeline_name = "{}-test-backend".format(ver_mode)

@@ -6,14 +6,13 @@
 
 load("scripts/drone/events/pr.star", "pr_pipelines")
 load("scripts/drone/events/main.star", "main_pipelines")
-load("scripts/drone/pipelines/docs.star", "docs_pipelines")
 load("scripts/drone/events/release.star", "artifacts_page_pipeline", "enterprise2_pipelines", "enterprise_pipelines", "oss_pipelines", "publish_artifacts_pipelines", "publish_npm_pipelines", "publish_packages_pipeline")
 load("scripts/drone/pipelines/publish_images.star", "publish_image_pipelines_public", "publish_image_pipelines_security")
 load("scripts/drone/version.star", "version_branch_pipelines")
 load("scripts/drone/events/cron.star", "cronjobs")
 load("scripts/drone/vault.star", "secrets")
 
-def main(ctx):
+def main(_ctx):
     edition = "oss"
     return pr_pipelines(edition = edition) + main_pipelines(edition = edition) + oss_pipelines() + enterprise_pipelines() + enterprise2_pipelines() + \
            enterprise2_pipelines(prefix = "custom-", trigger = {"event": ["custom"]}) + \

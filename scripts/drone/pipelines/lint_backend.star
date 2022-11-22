@@ -21,7 +21,7 @@ def lint_backend_pipeline(trigger, ver_mode):
         wire_step,
     ]
     test_steps = [
-        lint_backend_step(edition = "oss"),
+        lint_backend_step(),
     ]
     if ver_mode == "main":
         test_steps.extend([lint_drone_step()])

@@ -1,8 +1,4 @@
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
-)
-load(
     "scripts/drone/pipelines/test_frontend.star",
     "test_frontend",
 )

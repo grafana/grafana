@@ -1,4 +1,4 @@
-load("scripts/drone/vault.star", "drone_token", "from_secret", "github_token", "prerelease_bucket", "pull_secret")
+load("scripts/drone/vault.star", "drone_token", "from_secret", "github_token", "prerelease_bucket")
 
 grabpl_version = "v3.0.17"
 build_image = "grafana/build-container:1.6.4"
@@ -215,7 +215,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
     return step
 
-def lint_backend_step(edition):
+def lint_backend_step():
     return {
         "name": "lint-backend",
         "image": go_image,
@@ -480,7 +480,7 @@ def build_plugins_step(edition, ver_mode):
         ],
     }
 
-def test_backend_step(edition):
+def test_backend_step():
     return {
         "name": "test-backend",
         "image": build_image,
@@ -492,7 +492,7 @@ def test_backend_step(edition):
         ],
     }
 
-def test_backend_integration_step(edition):
+def test_backend_integration_step():
     return {
         "name": "test-backend-integration",
         "image": build_image,
@@ -617,7 +617,7 @@ def codespell_step():
         ],
     }
 
-def package_step(edition, ver_mode, include_enterprise2 = False, variants = None):
+def package_step(edition, ver_mode, variants = None):
     deps = [
         "build-plugins",
         "build-backend" + enterprise2_suffix(edition),
@@ -715,7 +715,7 @@ def e2e_tests_step(suite, edition, port = 3001, tries = None):
         ],
     }
 
-def cloud_plugins_e2e_tests_step(suite, edition, cloud, port = 3001, video = "false", trigger = None):
+def cloud_plugins_e2e_tests_step(suite, edition, cloud, trigger = None):
     environment = {}
     when = {}
     if trigger:
@@ -776,7 +776,7 @@ def copy_packages_for_docker_step(edition = None):
         ],
     }
 
-def build_docker_images_step(edition, ver_mode, archs = None, ubuntu = False, publish = False):
+def build_docker_images_step(edition, archs = None, ubuntu = False, publish = False):
     cmd = "./bin/build build-docker --edition {}".format(edition)
     if publish:
         cmd += " --shouldSave"
@@ -875,7 +875,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
 
     return step
 
-def postgres_integration_tests_step(edition, ver_mode):
+def postgres_integration_tests_step():
     cmds = [
         "apt-get update",
         "apt-get install -yq postgresql-client",
@@ -898,7 +898,7 @@ def postgres_integration_tests_step(edition, ver_mode):
         "commands": cmds,
     }
 
-def mysql_integration_tests_step(edition, ver_mode):
+def mysql_integration_tests_step():
     cmds = [
         "apt-get update",
         "apt-get install -yq default-mysql-client",
@@ -1051,10 +1051,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
 
 def get_windows_steps(edition, ver_mode):
     init_cmds = []
-    sfx = ""
-    if edition in ("enterprise", "enterprise2"):
-        sfx = "-{}".format(edition)
-    else:
+    if edition not in ("enterprise", "enterprise2"):
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
             "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(

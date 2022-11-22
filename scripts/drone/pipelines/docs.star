@@ -2,18 +2,10 @@ load(
     "scripts/drone/steps/lib.star",
     "build_docs_website_step",
     "build_image",
-    "build_storybook_step",
     "codespell_step",
     "download_grabpl_step",
     "identify_runner_step",
-    "lint_frontend_step",
-    "test_frontend_step",
     "yarn_install_step",
-)
-load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "ldap_service",
 )
 load(
     "scripts/drone/utils/utils.star",
