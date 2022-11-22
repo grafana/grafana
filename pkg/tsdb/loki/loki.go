@@ -120,7 +120,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return callResource(ctx, req, sender, dsInfo, logger.FromContext(ctx))
 }
 
-func getAuthHeadersForCallResource(headers map[string][]string) map[string]string {
+func getHeadersForCallResource(headers map[string][]string) map[string]string {
 	data := make(map[string]string)
 
 	for k, values := range headers {
@@ -137,6 +137,9 @@ func getAuthHeadersForCallResource(headers map[string][]string) map[string]strin
 			data["X-ID-Token"] = firstValue
 		case "Cookie":
 			data["Cookie"] = firstValue
+		}
+    case "Accept-Encoding":
+			data["Accept-Encoding"] = firstValue
 		}
 	}
 	return data
@@ -156,19 +159,23 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getAuthHeadersForCallResource(req.Headers))
-	bytes, err := api.RawQuery(ctx, lokiURL)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getHeadersForCallResource(req.Headers))
+	encodedBytes, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
 		return err
 	}
 
+	respHeaders := map[string][]string{
+		"content-type": {"application/json"},
+	}
+	if encodedBytes.Encoding != "" {
+		respHeaders["content-encoding"] = []string{encodedBytes.Encoding}
+	}
 	return sender.Send(&backend.CallResourceResponse{
-		Status: http.StatusOK,
-		Headers: map[string][]string{
-			"content-type": {"application/json"},
-		},
-		Body: bytes,
+		Status:  http.StatusOK,
+		Headers: respHeaders,
+		Body:    encodedBytes.Body,
 	})
 }
 

@@ -63,7 +63,7 @@ const (
 	logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
 	alertMaxAttempts = 8
-	alertPollPeriod  = 1000 * time.Millisecond
+	alertPollPeriod  = time.Second
 	logsQueryMode    = "Logs"
 
 	// QueryTypes

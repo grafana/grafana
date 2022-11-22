@@ -24,6 +24,7 @@ export class User implements CurrentUserInternal {
   timezone: string;
   weekStart: string;
   locale: string;
+  language: string;
   helpFlags1: number;
   hasEditPermissionInFolders: boolean;
   permissions?: UserPermission;
@@ -47,6 +48,7 @@ export class User implements CurrentUserInternal {
     this.email = '';
     this.name = '';
     this.locale = '';
+    this.language = '';
     this.weekStart = '';
     this.gravatarUrl = '';
 

@@ -90,21 +90,29 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           </div>
         ) : (
           <>
-            <div className={styles.dismiss}>
-              <div onClick={this.dismiss}>Remove this panel</div>
-            </div>
+            <Button variant="secondary" fill="text" className={styles.dismiss} onClick={this.dismiss}>
+              Remove this panel
+            </Button>
             {currentStep === steps.length - 1 && (
-              <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
-                <Button aria-label="To advanced tutorials" icon="angle-left" variant="secondary" />
-              </div>
+              <Button
+                className={cx(styles.backForwardButtons, styles.previous)}
+                onClick={this.onPreviousClick}
+                aria-label="To advanced tutorials"
+                icon="angle-left"
+                variant="secondary"
+              />
             )}
             <div className={styles.content}>
               <Step step={step} />
             </div>
             {currentStep < steps.length - 1 && (
-              <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
-                <Button aria-label="To basic tutorials" icon="angle-right" variant="secondary" />
-              </div>
+              <Button
+                className={cx(styles.backForwardButtons, styles.forward)}
+                onClick={this.onForwardClick}
+                aria-label="To basic tutorials"
+                icon="angle-right"
+                variant="secondary"
+              />
             )}
           </>
         )}
@@ -166,9 +174,8 @@ const getStyles = stylesFactory(() => {
     `,
     backForwardButtons: css`
       position: absolute;
-      bottom: 50%;
       top: 50%;
-      height: 50px;
+      transform: translateY(-50%);
     `,
     previous: css`
       left: 10px;
@@ -185,11 +192,8 @@ const getStyles = stylesFactory(() => {
       }
     `,
     dismiss: css`
-      display: flex;
-      justify-content: flex-end;
-      cursor: pointer;
+      align-self: flex-end;
       text-decoration: underline;
-      margin-right: ${theme.spacing(2)};
       margin-bottom: ${theme.spacing(1)};
     `,
     loading: css`

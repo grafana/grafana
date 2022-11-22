@@ -83,7 +83,7 @@ const mockPreferences: UserPreferencesDTO = {
   queryHistory: {
     homeTab: '',
   },
-  locale: '',
+  language: '',
 };
 
 const mockPrefsPatch = jest.fn();
@@ -152,7 +152,7 @@ describe('SharedPreferences', () => {
     expect(weekSelect).toHaveTextContent('Monday');
   });
 
-  it('renders the locale preference', async () => {
+  it('renders the language preference', async () => {
     const weekSelect = getSelectParent(screen.getByLabelText(/language/i));
     expect(weekSelect).toHaveTextContent('Default');
   });
@@ -174,7 +174,7 @@ describe('SharedPreferences', () => {
       queryHistory: {
         homeTab: '',
       },
-      locale: 'fr-FR',
+      language: 'fr-FR',
     });
   });
 
@@ -196,7 +196,7 @@ describe('SharedPreferences', () => {
       queryHistory: {
         homeTab: '',
       },
-      locale: '',
+      language: '',
     });
   });
 

@@ -31,7 +31,7 @@ export interface FolderInfo {
   /**
    * @deprecated use uid instead.
    */
-  id?: number;
+  id?: number; // can't be totally removed as search and alerts api aren't supporting folderUids yet. It will break DashList and AlertList panel
   uid?: string;
   title?: string;
   url?: string;

@@ -105,7 +105,7 @@ export class GrafanaApp {
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');
 
-      const loadLocalePromise = initializeI18n(config.bootData.user.locale);
+      const initI18nPromise = initializeI18n(config.bootData.user.language);
 
       setBackendSrv(backendSrv);
       initEchoSrv();
@@ -160,7 +160,7 @@ export class GrafanaApp {
       modalManager.init();
 
       await Promise.all([
-        loadLocalePromise,
+        initI18nPromise,
 
         // Preload selected app plugins
         await preloadPlugins(config.pluginsToPreload),

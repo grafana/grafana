@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Par défaut"
@@ -99,6 +104,15 @@
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
     },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alertes"
@@ -184,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "Gérer et créer des utilisateurs sur l'ensemble du serveur Grafana",
-      "title": "Utilisateurs"
+      "title": "Utilisateurs",
+      "titleBeforeTopnav": ""
     },
     "help": {
       "title": "Aide"
@@ -227,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "Préférences"
+      "title": "Préférences",
+      "titleBeforeTopnav": ""
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -252,6 +268,9 @@
     },
     "search": {
       "placeholder": "Rechercher dans Grafana"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
@@ -301,11 +320,13 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
       "share": "Partager",
+      "show-legend": "",
       "view": "Afficher"
     }
   },
@@ -381,7 +402,8 @@
       "mistake-message": "Avez-vous commis une erreur\u00a0? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
-      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps."
+      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Intégrer",
@@ -395,6 +417,9 @@
       "dark": "Sombre",
       "field-name": "Thème",
       "light": "Clair"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
