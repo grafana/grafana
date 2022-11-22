@@ -4,9 +4,9 @@ import { merge } from 'lodash';
 import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { PanelChrome, useTheme2, PanelChromeProps } from '@grafana/ui';
+import { PanelChrome, PanelChromeProps } from '@grafana/ui';
 
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
@@ -25,17 +25,16 @@ const meta: ComponentMeta<typeof PanelChrome> = {
   },
 };
 
-function getContentStyle(theme: GrafanaTheme2): CSSProperties {
+function getContentStyle(): CSSProperties {
   return {
-    background: theme.colors.background.secondary,
-    color: theme.colors.text.primary,
+    background: 'rgba(230,0,0,0.05)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   };
 }
 
-function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme2) {
+function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
   const props: PanelChromeProps = {
     width: 400,
     height: 130,
@@ -45,7 +44,7 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
 
   merge(props, overrides);
 
-  const contentStyle = getContentStyle(theme);
+  const contentStyle = getContentStyle();
 
   return (
     <PanelChrome {...props}>
@@ -57,96 +56,75 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
 }
 
 export const Examples = () => {
-  const theme = useTheme2();
   const [loading, setLoading] = useState(true);
 
   useInterval(() => setLoading(true), 5000);
 
   return (
-    <div style={{ background: theme.colors.background.canvas, padding: 100 }}>
-      <HorizontalGroup spacing="md">
+    <DashboardStoryCanvas>
+      <HorizontalGroup spacing="md" align="flex-start">
         <VerticalGroup spacing="md">
-          {renderPanel(
-            'Default panel with error state indicator',
-            {
-              title: 'Default title',
-              leftItems: [
-                <PanelChrome.ErrorIndicator
-                  key="errorIndicator"
-                  error="Error text"
-                  onClick={action('ErrorIndicator: onClick fired')}
-                />,
-              ],
-            },
-            theme
-          )}
-          {renderPanel(
-            'No padding with error state indicator',
-            {
-              padding: 'none',
-              title: 'Default title',
-              leftItems: [
-                <PanelChrome.ErrorIndicator
-                  key="errorIndicator"
-                  error="Error text"
-                  onClick={action('ErrorIndicator: onClick fired')}
-                />,
-              ],
-            },
-            theme
-          )}
+          {renderPanel('Default panel with error state indicator', {
+            title: 'Default title',
+            leftItems: [
+              <PanelChrome.ErrorIndicator
+                key="errorIndicator"
+                error="Error text"
+                onClick={action('ErrorIndicator: onClick fired')}
+              />,
+            ],
+          })}
+          {renderPanel('No padding with error state indicator', {
+            padding: 'none',
+            title: 'Default title',
+            leftItems: [
+              <PanelChrome.ErrorIndicator
+                key="errorIndicator"
+                error="Error text"
+                onClick={action('ErrorIndicator: onClick fired')}
+              />,
+            ],
+          })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
-          {renderPanel('No title', { title: '' }, theme)}
-          {renderPanel(
-            'Very long title',
-            { title: 'Very long title that should get ellipsis when there is no more space' },
-            theme
-          )}
+          {renderPanel('No title', { title: '' })}
+          {renderPanel('Very long title', {
+            title: 'Very long title that should get ellipsis when there is no more space',
+          })}
         </VerticalGroup>
       </HorizontalGroup>
-      <div style={{ marginTop: theme.spacing(2) }} />
       <HorizontalGroup spacing="md">
         <VerticalGroup spacing="md">
-          {renderPanel(
-            'No title and loading indicator',
-            {
-              title: '',
-              leftItems: [
-                <PanelChrome.LoadingIndicator
-                  loading={loading}
-                  onCancel={() => setLoading(false)}
-                  key="loading-indicator"
-                />,
-              ],
-            },
-            theme
-          )}
+          {renderPanel('No title and loading indicator', {
+            title: '',
+            leftItems: [
+              <PanelChrome.LoadingIndicator
+                loading={loading}
+                onCancel={() => setLoading(false)}
+                key="loading-indicator"
+              />,
+            ],
+          })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
-          {renderPanel(
-            'Very long title',
-            {
-              title: 'Very long title that should get ellipsis when there is no more space',
-              leftItems: [
-                <PanelChrome.LoadingIndicator
-                  loading={loading}
-                  onCancel={() => setLoading(false)}
-                  key="loading-indicator"
-                />,
-              ],
-            },
-            theme
-          )}
+          {renderPanel('Very long title', {
+            title: 'Very long title that should get ellipsis when there is no more space',
+            leftItems: [
+              <PanelChrome.LoadingIndicator
+                loading={loading}
+                onCancel={() => setLoading(false)}
+                key="loading-indicator"
+              />,
+            ],
+          })}
         </VerticalGroup>
       </HorizontalGroup>
-    </div>
+    </DashboardStoryCanvas>
   );
 };
 
 export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
-  const theme = useTheme2();
-  const contentStyle = getContentStyle(theme);
+  const contentStyle = getContentStyle();
 
   return (
     <PanelChrome {...args}>
