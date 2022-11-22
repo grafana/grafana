@@ -450,14 +450,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	dashboard, err := hs.DashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
-	// Reload permission cache for the user who's created the dashboard, so that they can access it immediately
-	if newDashboard && !hs.AccessControl.IsDisabled() {
-		_, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: true})
-		if err != nil {
-			return response.Error(500, "Failed to reload permission cache after adding dashboard", err)
-		}
-	}
-
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
 		if dashboard == nil {
@@ -478,12 +470,21 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 
 		if liveerr != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", liveerr)
 		}
 	}
 
 	if err != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
+	}
+
+	// Reload permission cache for the user who's created the dashboard, so that they can access it immediately
+	if newDashboard && !hs.accesscontrolService.IsDisabled() {
+		// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		if err := hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser); err != nil {
+			return response.Error(500, "Failed to clear permission cache after dashboard creation", err)
+		}
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID

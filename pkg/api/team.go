@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -44,9 +43,10 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 
 	// Reload permission cache for the user who's created the team, so that they can access this data source immediately
 	if !hs.AccessControl.IsDisabled() {
-		_, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: true})
-		if err != nil {
-			return response.Error(500, "Failed to reload permission cache after adding team", err)
+		// Clear permission cache for the user who's created the team, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		if err := hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser); err != nil {
+			return response.Error(500, "Failed to clear permission cache after team creation", err)
 		}
 	}
 

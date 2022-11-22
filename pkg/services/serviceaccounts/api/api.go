@@ -21,31 +21,34 @@ import (
 )
 
 type ServiceAccountsAPI struct {
-	cfg               *setting.Cfg
-	service           serviceaccounts.Service
-	accesscontrol     accesscontrol.AccessControl
-	RouterRegister    routing.RouteRegister
-	store             serviceaccounts.Store
-	log               log.Logger
-	permissionService accesscontrol.ServiceAccountPermissionsService
+	cfg                  *setting.Cfg
+	service              serviceaccounts.Service
+	accesscontrol        accesscontrol.AccessControl
+	accesscontrolService accesscontrol.Service
+	RouterRegister       routing.RouteRegister
+	store                serviceaccounts.Store
+	log                  log.Logger
+	permissionService    accesscontrol.ServiceAccountPermissionsService
 }
 
 func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
 	service serviceaccounts.Service,
 	accesscontrol accesscontrol.AccessControl,
+	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	store serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
-		cfg:               cfg,
-		service:           service,
-		accesscontrol:     accesscontrol,
-		RouterRegister:    routerRegister,
-		store:             store,
-		log:               log.New("serviceaccounts.api"),
-		permissionService: permissionService,
+		cfg:                  cfg,
+		service:              service,
+		accesscontrol:        accesscontrol,
+		accesscontrolService: accesscontrolService,
+		RouterRegister:       routerRegister,
+		store:                store,
+		log:                  log.New("serviceaccounts.api"),
+		permissionService:    permissionService,
 	}
 }
 
@@ -126,6 +129,12 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 			}
+		}
+
+		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		if err := api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser); err != nil {
+			return response.Error(500, "Failed to clear permission cache after service account creation", err)
 		}
 	}
 
