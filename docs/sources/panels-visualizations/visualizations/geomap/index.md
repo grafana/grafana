@@ -87,7 +87,7 @@ There are also five alpha layer types.
 - **Icon at last point (alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
 - **Route (alpha)** render data points as a route.
-- [Photos layer (Alpha)]({{< relref "#photos-layer-alpha" >}}) renders photos at each data point.
+- [Photos layer (Alpha)]({{< relref "#photos-layer-alpha" >}}) renders a photo at each data point.
 
 > **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
 
