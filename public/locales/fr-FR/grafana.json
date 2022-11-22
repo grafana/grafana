@@ -269,6 +269,9 @@
     "search": {
       "placeholder": "Rechercher dans Grafana"
     },
+    "search-dashboards": {
+      "title": ""
+    },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
       "title": "Paramètres"

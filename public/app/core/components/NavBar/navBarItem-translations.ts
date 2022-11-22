@@ -131,6 +131,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.profile/password.title', 'Change password');
     case 'sign-out':
       return t('nav.sign-out.title', 'Sign out');
+    case 'search':
+      return t('nav.search-dashboards.title', 'Search dashboards');
     default:
       return undefined;
   }
