@@ -212,7 +212,7 @@ describe('getCompletions', () => {
   });
 
   test('Returns completion options when the situation is IN_GROUPING', async () => {
-    const situation: Situation = { type: 'IN_GROUPING', otherLabels };
+    const situation: Situation = { type: 'IN_GROUPING', logQuery: '' };
     const completions = await getCompletions(situation, completionProvider);
 
     expect(completions).toEqual([
@@ -313,7 +313,7 @@ describe('getCompletions', () => {
         hasJSON: true,
         hasLogfmt: false,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe };
+      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe };
       const completions = await getCompletions(situation, completionProvider);
 
       const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe);
@@ -329,7 +329,7 @@ describe('getCompletions', () => {
         hasJSON: false,
         hasLogfmt: true,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe };
+      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe };
       const completions = await getCompletions(situation, completionProvider);
 
       const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe);
@@ -343,7 +343,7 @@ describe('getCompletions', () => {
       hasJSON: false,
       hasLogfmt: true,
     });
-    const situation: Situation = { type: 'AFTER_SELECTOR', labels: [], afterPipe: false };
+    const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe: false };
     const completions = await getCompletions(situation, completionProvider);
 
     const expected = buildAfterSelectorCompletions('logfmt', 'json', false);
@@ -358,7 +358,7 @@ describe('getCompletions', () => {
     });
     const situation: Situation = {
       type: 'AFTER_SELECTOR',
-      labels: [],
+      logQuery: '',
       afterPipe: false,
       parser: 'logfmt',
     };
@@ -379,7 +379,7 @@ describe('getCompletions', () => {
   });
 
   test('Returns completion options when the situation is AFTER_UNWRAP', async () => {
-    const situation: Situation = { type: 'AFTER_UNWRAP', otherLabels: [] };
+    const situation: Situation = { type: 'AFTER_UNWRAP', logQuery: '' };
     const completions = await getCompletions(situation, completionProvider);
 
     const extractedCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
