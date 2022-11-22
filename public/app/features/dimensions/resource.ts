@@ -48,7 +48,6 @@ export function getResourceDimension(
     };
   }
 
-  // TODO: write tests for this function
   // mode === ResourceDimensionMode.Field case
   const getIcon = (value: string): string => {
     if (field && field.display) {
