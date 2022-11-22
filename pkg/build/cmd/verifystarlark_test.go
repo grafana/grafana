@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,7 +18,7 @@ func TestVerifyStarlark(t *testing.T) {
 		invalidContent := []byte(`load("scripts/drone/other.star", "function")
 
 function()`)
-		err := ioutil.WriteFile(filepath.Join(workspace, "has-lint.star"), invalidContent, os.ModePerm)
+		err := os.WriteFile(filepath.Join(workspace, "has-lint.star"), invalidContent, os.ModePerm)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
@@ -46,7 +45,7 @@ This module does nothing.
 load("scripts/drone/other.star", "function")
 
 function()`)
-		require.NoError(t, ioutil.WriteFile(filepath.Join(workspace, "no-lint.star"), invalidContent, os.ModePerm))
+		require.NoError(t, os.WriteFile(filepath.Join(workspace, "no-lint.star"), invalidContent, os.ModePerm))
 
 		errs := verifyStarlark(ctx, workspace)
 		if len(errs) != 0 {
@@ -61,8 +60,8 @@ function()`)
 		invalidContent := []byte(`load("scripts/drone/other.star", "function")
 
 function()`)
-		require.NoError(t, ioutil.WriteFile(filepath.Join(workspace, "has-lint.star"), invalidContent, os.ModePerm))
-		require.NoError(t, ioutil.WriteFile(filepath.Join(workspace, "has-lint2.star"), invalidContent, os.ModePerm))
+		require.NoError(t, os.WriteFile(filepath.Join(workspace, "has-lint.star"), invalidContent, os.ModePerm))
+		require.NoError(t, os.WriteFile(filepath.Join(workspace, "has-lint2.star"), invalidContent, os.ModePerm))
 
 		errs := verifyStarlark(ctx, workspace)
 		if len(errs) == 0 {
