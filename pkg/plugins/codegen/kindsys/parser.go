@@ -15,12 +15,14 @@ import (
 )
 
 type declParser struct {
-	rt *thema.Runtime
+	rt   *thema.Runtime
+	skip map[string]bool
 }
 
-func NewDeclParser(rt *thema.Runtime) *declParser {
+func NewDeclParser(rt *thema.Runtime, skip map[string]bool) *declParser {
 	return &declParser{
-		rt: rt,
+		rt:   rt,
+		skip: skip,
 	}
 }
 
@@ -33,6 +35,11 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 	decls := make([]*PluginDecl, 0)
 	for _, match := range matches {
 		path := filepath.Dir(match)
+		base := filepath.Base(path)
+		if skip, ok := psr.skip[base]; ok && skip {
+			continue
+		}
+
 		dir := os.DirFS(path)
 		ptree, err := pfs.ParsePluginFS(dir, psr.rt)
 		if err != nil {
@@ -42,7 +49,6 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 
 		p := ptree.RootPlugin()
 		slots := p.SlotImplementations()
-
 		for slot, lin := range slots {
 			kind := &corekindsys.SomeDecl{
 				V: lin.Underlying(),
@@ -69,6 +75,5 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		return decls[i].Path < decls[j].Path
 	})
 
-	fmt.Printf("decls: %v \n", len(decls))
 	return decls, nil
 }

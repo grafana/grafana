@@ -44,15 +44,12 @@ func coreTreeList(rt *thema.Runtime) pfs.TreeList {
 		makeTreeOrPanic("public/app/plugins/panel/annolist", "annolist", rt),
 		makeTreeOrPanic("public/app/plugins/panel/barchart", "barchart", rt),
 		makeTreeOrPanic("public/app/plugins/panel/bargauge", "bargauge", rt),
-		makeTreeOrPanic("public/app/plugins/panel/canvas", "canvas", rt),
 		makeTreeOrPanic("public/app/plugins/panel/dashlist", "dashlist", rt),
 		makeTreeOrPanic("public/app/plugins/panel/gauge", "gauge", rt),
-		makeTreeOrPanic("public/app/plugins/panel/heatmap", "heatmap", rt),
 		makeTreeOrPanic("public/app/plugins/panel/histogram", "histogram", rt),
 		makeTreeOrPanic("public/app/plugins/panel/news", "news", rt),
 		makeTreeOrPanic("public/app/plugins/panel/piechart", "piechart", rt),
 		makeTreeOrPanic("public/app/plugins/panel/stat", "stat", rt),
 		makeTreeOrPanic("public/app/plugins/panel/text", "text", rt),
-		makeTreeOrPanic("public/app/plugins/panel/timeseries", "timeseries", rt),
 	}
 }

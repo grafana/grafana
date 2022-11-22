@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/codegen/kindsys"
-	"github.com/grafana/thema"
 )
 
 var skipPlugins = map[string]bool{
@@ -56,10 +55,11 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		//adaptToPluginDecl(rt, corecodegen.GoTypesJenny("pkg/tsdb", nil)),
+		// adaptToPluginDecl(corecodegen.GoTypesJenny("path to plugin", nil)), <-- instead of taking the target path in the constructor we should take it from the DeclForGen
+		// adaptToPluginDecl(corecodegen.TSTypesJenny("path to plugin", nil)), <-- instead of taking the target path in the constructor we should take it from the DeclForGen
 	)
 
-	declParser := kindsys.NewDeclParser(rt)
+	declParser := kindsys.NewDeclParser(rt, skipPlugins)
 	decls, err := declParser.Parse(os.DirFS(cwd))
 	if err != nil {
 		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
@@ -79,7 +79,7 @@ func main() {
 	}
 }
 
-func adaptToPluginDecl(rt *thema.Runtime, jen codejen.OneToOne[*corecodegen.DeclForGen]) codejen.OneToOne[*kindsys.PluginDecl] {
+func adaptToPluginDecl(jen codejen.OneToOne[*corecodegen.DeclForGen]) codejen.OneToOne[*kindsys.PluginDecl] {
 	return codejen.AdaptOneToOne(jen, func(pd *kindsys.PluginDecl) *corecodegen.DeclForGen {
 		return pd.DeclForGen
 	})
