@@ -8,7 +8,7 @@ import { contextSrv } from '../core';
 import { PreferencesService } from './PreferencesService';
 
 export async function toggleTheme(runtimeOnly: boolean) {
-  const currentTheme = config.theme;
+  const currentTheme = config.theme2;
   const newTheme = createTheme({
     colors: {
       mode: currentTheme.isDark ? 'light' : 'dark',
@@ -16,6 +16,7 @@ export async function toggleTheme(runtimeOnly: boolean) {
   });
 
   appEvents.publish(new ThemeChangedEvent(newTheme));
+  config.theme2.isDark = newTheme.isDark;
 
   if (runtimeOnly) {
     return;
@@ -25,20 +26,21 @@ export async function toggleTheme(runtimeOnly: boolean) {
   const newCssLink = document.createElement('link');
   newCssLink.rel = 'stylesheet';
   newCssLink.href = config.bootData.themePaths[newTheme.colors.mode];
-  document.body.appendChild(newCssLink);
+  newCssLink.onload = () => {
+    // Remove old css file
+    const bodyLinks = document.getElementsByTagName('link');
+    for (let i = 0; i < bodyLinks.length; i++) {
+      const link = bodyLinks[i];
 
-  // Remove old css file
-  const bodyLinks = document.getElementsByTagName('link');
-  for (let i = 0; i < bodyLinks.length; i++) {
-    const link = bodyLinks[i];
-
-    if (link.href && link.href.indexOf(`build/grafana.${currentTheme.type}`) > 0) {
-      // Remove existing link after a 500ms to allow new css to load to avoid flickering
-      // If we add new css at the same time we remove current one the page will be rendered without css
-      // As the new css file is loading
-      setTimeout(() => link.remove(), 500);
+      if (link.href && link.href.includes(`build/grafana.${!newTheme.isDark ? 'dark' : 'light'}`)) {
+        // Remove existing link once the new css has loaded to avoid flickering
+        // If we add new css at the same time we remove current one the page will be rendered without css
+        // As the new css file is loading
+        link.remove();
+      }
     }
-  }
+  };
+  document.body.appendChild(newCssLink);
 
   if (!contextSrv.isSignedIn) {
     return;
