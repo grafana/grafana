@@ -34,9 +34,9 @@ def publish_image_pipelines_public():
         'target': [mode],
     }
     return [pipeline(
-        name='publish-docker-oss-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='oss',  mode=mode, docker_repo='grafana/grafana'), edition="", environment = {'EDITION': 'oss'}
+        name='publish-docker-oss-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='oss',  mode=mode, docker_repo='grafana'), edition="", environment = {'EDITION': 'oss'}
     ), pipeline(
-        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana/grafana-enterprise'), edition="", environment = {'EDITION': 'enterprise'}
+        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana-enterprise'), edition="", environment = {'EDITION': 'enterprise'}
     ),]
 
 def publish_image_pipelines_security():
@@ -46,5 +46,5 @@ def publish_image_pipelines_security():
         'target': [mode],
     }
     return [pipeline(
-        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana/grafana-enterprise'), edition="", environment = {'EDITION': 'enterprise'}
+        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(edition='enterprise',  mode=mode, docker_repo='grafana-enterprise'), edition="", environment = {'EDITION': 'enterprise'}
     ),]

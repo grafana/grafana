@@ -73,6 +73,16 @@ load(
 
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
+ver_mode='release'
+release_trigger = {
+    'event': {
+        'exclude': [
+            'promote'
+        ]
+    },
+    'ref': ['refs/tags/v*',],
+}
+
 def store_npm_packages_step():
     return {
         'name': 'store-npm-packages',
@@ -122,7 +132,7 @@ def release_npm_packages_step():
         ],
     }
 
-def get_oss_pipelines(trigger, ver_mode):
+def oss_pipelines(ver_mode=ver_mode, trigger=release_trigger):
     environment = {'EDITION': 'oss'}
     edition = 'oss'
     services = integration_test_services(edition=edition)
@@ -223,7 +233,7 @@ def get_oss_pipelines(trigger, ver_mode):
     pipelines.extend([windows_pipeline])
     return pipelines
 
-def get_enterprise_pipelines(trigger, ver_mode):
+def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
     environment = {'EDITION': 'enterprise'}
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
@@ -350,6 +360,78 @@ def get_enterprise_pipelines(trigger, ver_mode):
 
     return pipelines
 
+def enterprise2_pipelines(prefix='', ver_mode=ver_mode, trigger=release_trigger):
+    environment = {
+        'EDITION': 'enterprise2',
+    }
+    edition = 'enterprise'
+    services = integration_test_services(edition=edition)
+    volumes = integration_test_services_volumes()
+    package_steps = []
+    publish_steps = []
+    should_publish = ver_mode == 'release'
+    should_upload = should_publish or ver_mode in ('release-branch',)
+    include_enterprise = edition == 'enterprise'
+    edition2 = 'enterprise2'
+    init_steps = [
+        download_grabpl_step(),
+        identify_runner_step(),
+        clone_enterprise_step(ver_mode),
+        init_enterprise_step(ver_mode),
+        compile_build_cmd(edition),
+    ]
+
+    build_steps = [
+        build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
+        build_plugins_step(edition=edition, ver_mode=ver_mode),
+    ]
+
+    if include_enterprise:
+        build_steps.extend([
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
+        ])
+
+    fetch_images = fetch_images_step(edition2)
+    fetch_images.update({'depends_on': ['build-docker-images', 'build-docker-images-ubuntu']})
+    upload_cdn = upload_cdn_step(edition=edition2, ver_mode=ver_mode)
+    upload_cdn['environment'].update({'ENTERPRISE2_CDN_PATH': from_secret('enterprise2-cdn-path')})
+
+    build_steps.extend([
+        package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise, variants=['linux-amd64']),
+        upload_cdn,
+        copy_packages_for_docker_step(edition=edition2),
+        build_docker_images_step(edition=edition2, ver_mode=ver_mode, publish=True),
+        build_docker_images_step(edition=edition2, ver_mode=ver_mode, ubuntu=True, publish=True),
+        fetch_images,
+        publish_images_step(edition2, 'release', mode=edition2, docker_repo='${{DOCKER_ENTERPRISE2_REPO}}'),
+    ])
+
+    if should_upload:
+        step = upload_packages_step(edition=edition2, ver_mode=ver_mode)
+        if step:
+            publish_steps.append(step)
+
+    deps_on_clone_enterprise_step = {
+        'depends_on': [
+            'init-enterprise',
+        ]
+    }
+
+    for step in [wire_install_step(), yarn_install_step(), verify_gen_cue_step(edition)]:
+        step.update(deps_on_clone_enterprise_step)
+        init_steps.extend([step])
+
+    pipelines = [
+        pipeline(
+            name='{}{}-enterprise2-build{}-publish'.format(prefix, ver_mode, get_e2e_suffix()), edition=edition, trigger=trigger, services=[],
+            steps=init_steps + build_steps + package_steps + publish_steps,
+            volumes=volumes, environment=environment,
+        ),
+    ]
+
+    return pipelines
+
 def publish_artifacts_step(mode):
     security = ''
     if mode == 'security':
@@ -434,28 +516,6 @@ def artifacts_page_pipeline():
     }
     return [pipeline(name='publish-artifacts-page', trigger=trigger, steps = [download_grabpl_step(), artifacts_page_step()], edition="all", environment = {'EDITION': 'all'}
     )]
-
-def release_pipelines(ver_mode='release', trigger=None):
-    # 'enterprise' edition services contain both OSS and enterprise services
-    if not trigger:
-        trigger = {
-            'event': {
-                'exclude': [
-                    'promote'
-                ]
-            },
-            'ref': ['refs/tags/v*',],
-        }
-
-    # The release pipelines include also enterprise ones, so both editions are built for a release.
-    # We could also solve this by triggering a downstream build for the enterprise repo, but by including enterprise
-    # in OSS release builds, we simplify the UX for the release engineer.
-    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
-    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
-
-    pipelines = oss_pipelines + enterprise_pipelines
-
-    return pipelines
 
 def get_e2e_suffix():
     if not disable_tests:

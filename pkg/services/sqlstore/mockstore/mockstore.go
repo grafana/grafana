@@ -17,8 +17,7 @@ type OrgListResponse []struct {
 	Response error
 }
 type SQLStoreMock struct {
-	LastGetAlertsQuery      *models.GetAlertsQuery
-	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
+	LastGetAlertsQuery *models.GetAlertsQuery
 
 	ExpectedUser                   *user.User
 	ExpectedTeamsByUser            []*models.TeamDTO
@@ -28,7 +27,6 @@ type SQLStoreMock struct {
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedSignedInUser           *user.SignedInUser
-	ExpectedLoginAttempts          int64
 
 	ExpectedError error
 }
@@ -130,11 +128,6 @@ func (m *SQLStoreMock) GetSqlxSession() *session.SessionDB {
 	return nil
 }
 
-func (m *SQLStoreMock) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
-	m.LastLoginAttemptCommand = cmd
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
 	query.Result = m.ExpectedAlert
 	return m.ExpectedError
@@ -144,16 +137,7 @@ func (m *SQLStoreMock) GetAlertNotificationUidWithId(ctx context.Context, query 
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
-	query.Result = m.ExpectedLoginAttempts
 	return m.ExpectedError
 }
 

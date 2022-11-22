@@ -203,6 +203,8 @@ export interface ExploreItemState {
   logsVolumeData?: DataQueryResponse;
 
   panelsState: ExplorePanelsState;
+
+  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {

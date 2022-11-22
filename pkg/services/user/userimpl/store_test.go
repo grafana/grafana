@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -25,6 +27,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	ss := db.InitTestDB(t)
+	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
+	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -265,9 +270,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		err := ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err := orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -402,9 +407,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -441,9 +446,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 

@@ -40,8 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -73,6 +71,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -200,6 +199,7 @@ var wireSet = wire.NewSet(
 	loginpkg.ProvideService,
 	wire.Bind(new(loginpkg.Authenticator), new(*loginpkg.AuthenticatorService)),
 	loginattemptimpl.ProvideService,
+	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
@@ -223,8 +223,6 @@ var wireSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	oauthtoken.ProvideService,
-	authimpl.ProvideActiveAuthTokenService,
-	wire.Bind(new(auth.ActiveTokenService), new(*authimpl.ActiveAuthTokenService)),
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,

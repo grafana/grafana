@@ -37,8 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -75,6 +73,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -241,8 +240,6 @@ var wireBasicSet = wire.NewSet(
 	social.ProvideService,
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
-	authimpl.ProvideActiveAuthTokenService,
-	wire.Bind(new(auth.ActiveTokenService), new(*authimpl.ActiveAuthTokenService)),
 	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
@@ -336,6 +333,7 @@ var wireBasicSet = wire.NewSet(
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
+	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
 	secretsMigrations.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideMigrateFromPluginService,
