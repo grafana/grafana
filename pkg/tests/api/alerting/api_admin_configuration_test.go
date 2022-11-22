@@ -211,7 +211,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		require.Eventually(t, func() bool {
 			return fakeAM1.AlertsCount() == 1 && fakeAM2.AlertsCount() == 1
-		}, 60*time.Second, 5*time.Second)
+		}, time.Minute, 5*time.Second)
 	}
 
 	// Now, lets re-set external Alertmanagers for the other organisation.
