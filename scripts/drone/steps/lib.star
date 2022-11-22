@@ -167,6 +167,18 @@ def lint_drone_step():
         ],
     }
 
+def lint_starlark_step():
+    return {
+        'name': 'lint-starlark',
+        'image': build_image,
+        'commands': [
+            './bin/build verify-starlark .',
+        ],
+        'depends_on': [
+            'compile-build-cmd',
+        ],
+    }
+
 def enterprise_downstream_step(edition, ver_mode):
     if edition in ('enterprise', 'enterprise2'):
         return None

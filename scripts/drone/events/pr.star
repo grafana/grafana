@@ -29,6 +29,11 @@ load(
 )
 
 load(
+    'scripts/drone/pipelines/verify_starlark.star',
+    'verify_starlark',
+)
+
+load(
     'scripts/drone/pipelines/docs.star',
     'docs_pipelines',
     'trigger_docs_pr',
@@ -67,6 +72,7 @@ trigger = {
 def pr_pipelines(edition):
     return [
         verify_drone(get_pr_trigger(include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']), ver_mode),
+        verify_starlark(get_pr_trigger(include_paths=['scripts/drone/**', '.drone.star']), ver_mode),
         test_frontend(get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), ver_mode),
         lint_frontend_pipeline(get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), ver_mode),
         test_backend(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json', 'devenv/**']), ver_mode),

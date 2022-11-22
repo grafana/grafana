@@ -63,6 +63,61 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: pr-verify-starlark
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.17/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.3
+  name: compile-build-cmd
+- commands:
+  - ./bin/build verify-starlark .
+  depends_on:
+  - compile-build-cmd
+  image: grafana/build-container:1.6.4
+  name: lint-starlark
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - scripts/drone/**
+    - .drone.star
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: pr-test-frontend
 node:
   type: no-parallel
@@ -6317,6 +6372,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 1eca02a75c7e67666e8be67a9f121b9a70f5c280ee4d231a647be9d696e267dc
+hmac: d9ea2057706b302174fbbda58f3d5c7cf08bd5758e178009c647b43beb9b728b
 
 ...
