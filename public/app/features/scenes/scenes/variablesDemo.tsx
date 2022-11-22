@@ -7,7 +7,9 @@ import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
+import { ConstantVariable } from '../variables/variants/ConstantVariable';
 import { CustomVariable } from '../variables/variants/CustomVariable';
+import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { TestVariable } from '../variables/variants/TestVariable';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
@@ -43,16 +45,32 @@ export function getVariablesDemo(): Scene {
           text: '',
           options: [],
         }),
+        new ConstantVariable({
+          name: 'constant',
+          value: 'slow',
+        }),
         new CustomVariable({
           name: 'Single Custom',
           query: 'A : 10,B : 20',
-          options: [],
         }),
         new CustomVariable({
           name: 'Multi Custom',
           query: 'A : 10,B : 20',
           isMulti: true,
-          options: [],
+        }),
+        new DataSourceVariable({
+          name: 'DataSource',
+          query: 'prometheus',
+        }),
+        new DataSourceVariable({
+          name: 'DataSource multi',
+          query: 'prometheus',
+          isMulti: true,
+        }),
+        new DataSourceVariable({
+          name: 'Datasource w/ regex and using $constant',
+          query: 'prometheus',
+          regex: '.*$constant.*',
         }),
       ],
     }),
