@@ -8,11 +8,9 @@ export const getDataSources = (state: DataSourcesState) => {
     return regex.test(dataSource.name) || regex.test(dataSource.database) || regex.test(dataSource.type);
   });
 
-  if (state.isSortAscending) {
-    return filteredDataSources.sort((a, b) => a.name.localeCompare(b.name));
-  } else {
-    return filteredDataSources.sort((a, b) => b.name.localeCompare(a.name));
-  }
+  return filteredDataSources.sort((a, b) =>
+    state.isSortAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+  );
 };
 
 export const getFilteredDataSourcePlugins = (state: DataSourcesState) => {
