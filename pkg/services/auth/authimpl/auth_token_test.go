@@ -41,7 +41,7 @@ func TestUserAuthToken(t *testing.T) {
 		userToken := createToken()
 
 		t.Run("Can count active tokens", func(t *testing.T) {
-			m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
+			m, err := ctx.tokenService.reportActiveTokenCount(context.Background(), &quota.ScopeParameters{})
 			require.Nil(t, err)
 			tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 			require.NoError(t, err)
@@ -213,7 +213,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
-				m, err := ctx.activeTokenService.ActiveTokenCount(context.Background(), &quota.ScopeParameters{})
+				m, err := ctx.tokenService.reportActiveTokenCount(context.Background(), &quota.ScopeParameters{})
 				require.Nil(t, err)
 				tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 				require.NoError(t, err)
@@ -550,27 +550,20 @@ func createTestContext(t *testing.T) *testContext {
 	}
 
 	tokenService := &UserAuthTokenService{
-		SQLStore: sqlstore,
-		Cfg:      cfg,
+		sqlStore: sqlstore,
+		cfg:      cfg,
 		log:      log.New("test-logger"),
 	}
 
-	activeTokenService := &ActiveAuthTokenService{
-		cfg:      cfg,
-		sqlStore: sqlstore,
-	}
-
 	return &testContext{
-		sqlstore:           sqlstore,
-		tokenService:       tokenService,
-		activeTokenService: activeTokenService,
+		sqlstore:     sqlstore,
+		tokenService: tokenService,
 	}
 }
 
 type testContext struct {
-	sqlstore           db.DB
-	tokenService       *UserAuthTokenService
-	activeTokenService *ActiveAuthTokenService
+	sqlstore     db.DB
+	tokenService *UserAuthTokenService
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
