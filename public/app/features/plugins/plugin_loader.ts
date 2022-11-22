@@ -63,6 +63,9 @@ grafanaRuntime.SystemJS.config({
       authorization: true,
       loader: 'plugin-loader',
     },
+    '/public/*': {
+      authorization: false,
+    },
   },
 });
 
