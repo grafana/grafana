@@ -170,10 +170,19 @@ def lint_drone_step():
 def lint_starlark_step():
     return {
         'name': 'lint-starlark',
-        'image': build_image,
+        'image': curl_image,
         'commands': [
+            'curl -fLO https://github.com/bazelbuild/buildtools/releases/download/$${BUILDIFIER_VERSION}/buildifier-linux-amd64',
+            'echo "$${BUILDIFIER_CHKSUM}  buildifier-linux-amd64" | sha256sum -c -s',
+            'mv buildifier-linux-amd64 /bin/buildifier',
+            'chmod +x /bin/buildifier',
             './bin/build verify-starlark .',
         ],
+        'environment': {
+            'BUILDIFIER_VERSION': '5.1.0',
+            'BUILDIFIER_CHKSUM': '52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3',
+            'PATH': '/usr/bin:/bin',
+        },
         'depends_on': [
             'compile-build-cmd',
         ],

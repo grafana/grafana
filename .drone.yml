@@ -89,10 +89,18 @@ steps:
   image: golang:1.19.3
   name: compile-build-cmd
 - commands:
+  - curl -fLO https://github.com/bazelbuild/buildtools/releases/download/$${BUILDIFIER_VERSION}/buildifier-linux-amd64
+  - echo "$${BUILDIFIER_CHKSUM}  buildifier-linux-amd64" | sha256sum -c -s
+  - mv buildifier-linux-amd64 /bin/buildifier
+  - chmod +x /bin/buildifier
   - ./bin/build verify-starlark .
   depends_on:
   - compile-build-cmd
-  image: grafana/build-container:1.6.4
+  environment:
+    BUILDIFIER_CHKSUM: 52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3
+    BUILDIFIER_VERSION: 5.1.0
+    PATH: /usr/bin:/bin
+  image: byrnedo/alpine-curl:0.1.8
   name: lint-starlark
 trigger:
   event:
@@ -6372,6 +6380,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: d9ea2057706b302174fbbda58f3d5c7cf08bd5758e178009c647b43beb9b728b
+hmac: dabe1b96f06385b350f13d93c3840b6f83c30933140552fab6a8738357acf287
 
 ...
