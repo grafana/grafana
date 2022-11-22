@@ -81,7 +81,7 @@ In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
-For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor/#deprecating-application-insights-and-insights-analytics" >}}).
+For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azure-monitor#application-insights-and-insights-analytics--removed-" >}}).
 
 ### Cloudwatch data source enhancements
 
@@ -90,7 +90,7 @@ For more information, refer to [Deprecating Application Insights and Insights An
 - You can now enable or disable authentication providers and assume a role other than default by changing the [allowed_auth_providers]({{< relref "../setup-grafana/configure-grafana/#allowed-auth-providers" >}}) and [assume_role_enabled]({{< relref "../setup-grafana/configure-grafana/#assume-role-enabled" >}}) options in the Grafana configuration file. By default, the allowed authentication providers are _AWS SDK Default_, _Access and secret key_, and _Credentials File_, and role is _Assume role (ARN)_.
 - You can now specify a custom endpoint in the CloudWatch data source configuration page. This field is optional, and if it is left empty, then the default endpoint for CloudWatch is used. By specifying a regional endpoint, you can reduce request latency.
 
-  [AWS Cloudwatch data source]({{< relref "../datasources/aws-cloudwatch/" >}}) was updated as a result of this change.
+  [AWS Cloudwatch data source]({{< relref "../datasources/aws-cloudwatch" >}}) was updated as a result of this change.
 
 ### Increased API limit for CloudMonitoring Services
 
@@ -105,7 +105,7 @@ server:
   http_listen_port: 3101
 ```
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor/" >}}) was updated as a result of this change.
+[Azure Monitor data source]({{< relref "../datasources/azure-monitor/" >}}) was updated as a result of this change.
 
 ## Enterprise features
 

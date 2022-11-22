@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import React, { useCallback } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, Field, Input, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Field, Input, InputControl, Label, TextArea, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 
 import { AnnotationKeyInput } from './AnnotationKeyInput';
 
 const AnnotationsField = () => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const {
     control,
     register,
@@ -97,9 +97,9 @@ const AnnotationsField = () => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   annotationValueInput: css`
-    width: 426px;
+    width: 394px;
   `,
   textarea: css`
     height: 76px;
@@ -114,7 +114,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-direction: column;
   `,
   field: css`
-    margin-bottom: ${theme.spacing.xs};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
   flexRow: css`
     display: flex;
@@ -122,7 +122,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     justify-content: flex-start;
   `,
   flexRowItemMargin: css`
-    margin-left: ${theme.spacing.xs};
+    margin-left: ${theme.spacing(0.5)};
   `,
 });
 

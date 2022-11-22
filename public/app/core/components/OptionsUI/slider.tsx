@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import SliderComponent from 'rc-slider';
+import Slider from 'rc-slider';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { FieldConfigEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
@@ -30,7 +30,6 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   const inputWidthDefault = 75;
   const isHorizontal = true;
   const theme = useTheme2();
-  const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
   const [inputWidth, setInputWidth] = useState<number>(inputWidthDefault);
 
@@ -60,11 +59,12 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   }, [max, step]);
 
   const onSliderChange = useCallback(
-    (v: number) => {
-      setSliderValue(v);
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
+      setSliderValue(value);
 
       if (onChange) {
-        onChange(v);
+        onChange(value);
       }
     },
     [setSliderValue, onChange]
@@ -96,8 +96,8 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.slider} />
-      <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
-        <SliderWithTooltip
+      <div className={cx(styles.sliderInput, ...sliderInputClassNames)}>
+        <Slider
           min={min}
           max={max}
           step={step}
@@ -113,7 +113,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
           <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
         </span>
-      </label>
+      </div>
     </div>
   );
 };

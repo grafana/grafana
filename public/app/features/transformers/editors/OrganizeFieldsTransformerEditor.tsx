@@ -4,14 +4,14 @@ import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautif
 
 import {
   DataTransformerID,
-  GrafanaTheme,
+  GrafanaTheme2,
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
-import { stylesFactory, useTheme, Input, IconButton, Icon, FieldValidationMessage } from '@grafana/ui';
+import { Input, IconButton, Icon, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -117,16 +117,15 @@ interface DraggableFieldProps {
   onRenameField: (from: string, to: string) => void;
 }
 
-const DraggableFieldName: React.FC<DraggableFieldProps> = ({
+const DraggableFieldName = ({
   fieldName,
   renamedFieldName,
   index,
   visible,
   onToggleVisibility,
   onRenameField,
-}) => {
-  const theme = useTheme();
-  const styles = getFieldNameStyles(theme);
+}: DraggableFieldProps) => {
+  const styles = useStyles2(getFieldNameStyles);
 
   return (
     <Draggable draggableId={fieldName} index={index}>
@@ -166,25 +165,25 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
 
 DraggableFieldName.displayName = 'DraggableFieldName';
 
-const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getFieldNameStyles = (theme: GrafanaTheme2) => ({
   toggle: css`
     margin: 0 8px;
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
   `,
   draggable: css`
     opacity: 0.4;
     &:hover {
-      color: ${theme.colors.textStrong};
+      color: ${theme.colors.text.maxContrast};
     }
   `,
   name: css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: ${theme.typography.size.sm};
-    font-weight: ${theme.typography.weight.semibold};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
   `,
-}));
+});
 
 const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: number) => {
   const result = Array.from(fieldNames);

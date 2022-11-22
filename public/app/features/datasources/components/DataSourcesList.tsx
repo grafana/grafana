@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
-import { Card, Tag, useStyles } from '@grafana/ui';
+import { Card, Tag, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
@@ -38,7 +38,7 @@ export type ViewProps = {
 };
 
 export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, hasCreateRights }: ViewProps) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const dataSourcesRoutes = useDataSourcesRoutes();
 
   if (isLoading) {

@@ -1061,7 +1061,7 @@ describe('auto stacking groups', () => {
         },
         {
           name: 'd',
-          values: [-0, -10, -20],
+          values: [null, -0, null],
           config: { custom: { stacking: { mode: StackingMode.Normal } } },
         },
       ],

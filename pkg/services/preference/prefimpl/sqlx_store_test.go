@@ -7,6 +7,9 @@ import (
 )
 
 func TestIntegrationSQLxPreferencesDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testIntegrationPreferencesDataAccess(t, func(ss db.DB) store {
 		return &sqlxStore{sess: ss.GetSqlxSession()}
 	})

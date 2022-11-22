@@ -91,8 +91,23 @@ function escapeDollars(value: string): string {
   return value.replace(/\$/g, '_DOLLAR_');
 }
 
-function unesacapeDollars(value: string): string {
+function unescapeDollars(value: string): string {
   return value.replace(/\_DOLLAR\_/g, '$');
+}
+
+/**
+ * deal with Unix-style path separators "/" (replaced with \x1f – unit separator)
+ * and Windows-style path separators "\" (replaced with \x1e – record separator)
+ * we need this to side-step proxies that automatically decode %2F to prevent path traversal attacks
+ * we'll use some non-printable characters from the ASCII table that will get encoded properly but very unlikely
+ * to ever be used in a rule name or namespace
+ */
+function escapePathSeparators(value: string): string {
+  return value.replace(/\//g, '\x1f').replace(/\\/g, '\x1e');
+}
+
+function unescapePathSeparators(value: string): string {
+  return value.replace(/\x1f/g, '/').replace(/\x1e/g, '\\');
 }
 
 export function parse(value: string, decodeFromUri = false): RuleIdentifier {
@@ -104,7 +119,7 @@ export function parse(value: string, decodeFromUri = false): RuleIdentifier {
   }
 
   if (parts.length === 5) {
-    const [prefix, ruleSourceName, namespace, groupName, hash] = parts.map(unesacapeDollars);
+    const [prefix, ruleSourceName, namespace, groupName, hash] = parts.map(unescapeDollars).map(unescapePathSeparators);
 
     if (prefix === cloudRuleIdentifierPrefix) {
       return { ruleSourceName, namespace, groupName, rulerRuleHash: hash };
@@ -145,6 +160,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     ]
       .map(String)
       .map(escapeDollars)
+      .map(escapePathSeparators)
       .join('$');
   }
 
@@ -157,6 +173,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
   ]
     .map(String)
     .map(escapeDollars)
+    .map(escapePathSeparators)
     .join('$');
 }
 

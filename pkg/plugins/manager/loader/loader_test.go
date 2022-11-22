@@ -597,6 +597,110 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 	})
 }
 
+func TestLoader_Load_RBACReady(t *testing.T) {
+	pluginDir, err := filepath.Abs("../testdata/test-app-with-roles")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return
+	}
+
+	tests := []struct {
+		name            string
+		cfg             *config.Cfg
+		pluginPaths     []string
+		appURL          string
+		existingPlugins map[string]struct{}
+		want            []*plugins.Plugin
+	}{
+		{
+			name:        "Load plugin defining one RBAC role",
+			cfg:         &config.Cfg{},
+			appURL:      "http://localhost:3000",
+			pluginPaths: []string{"../testdata/test-app-with-roles"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test-app",
+						Type: "app",
+						Name: "Test App",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Test Inc.",
+								URL:  "http://test.com",
+							},
+							Description: "Test App",
+							Version:     "1.0.0",
+							Links:       []plugins.InfoLink{},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-app.svg",
+								Large: "public/img/icn-app.svg",
+							},
+							Updated: "2015-02-10",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion:    "*",
+							GrafanaDependency: ">=8.0.0",
+							Plugins:           []plugins.Dependency{},
+						},
+						Includes: []*plugins.Includes{},
+						Roles: []plugins.RoleRegistration{
+							{
+								Role: plugins.Role{
+									Name:        "Reader",
+									Description: "View everything in the test-app plugin",
+									Permissions: []plugins.Permission{
+										{Action: "plugins.app:access", Scope: "plugins.app:id:test-app"},
+										{Action: "test-app.resource:read", Scope: "resources:*"},
+										{Action: "test-app.otherresource:toggle"},
+									},
+								},
+								Grants: []string{"Admin"},
+							},
+						},
+						Backend: false,
+					},
+					PluginDir:     pluginDir,
+					Class:         plugins.External,
+					Signature:     plugins.SignatureValid,
+					SignatureType: plugins.PrivateSignature,
+					SignatureOrg:  "gabrielmabille",
+					Module:        "plugins/test-app/module",
+					BaseURL:       "public/plugins/test-app",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = "http://localhost:3000"
+		reg := fakes.NewFakePluginRegistry()
+		storage := fakes.NewFakePluginStorage()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(tt.cfg, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.pluginStorage = storage
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
+		})
+
+		got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
+		require.NoError(t, err)
+
+		if !cmp.Equal(got, tt.want, compareOpts) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+		}
+		pluginErrs := l.PluginErrors()
+		require.Len(t, pluginErrs, 0)
+
+		verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
+	}
+}
+
 func TestLoader_Load_Signature_RootURL(t *testing.T) {
 	const defaultAppURL = "http://localhost:3000/grafana"
 
@@ -1217,7 +1321,8 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
-		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage())
+		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
+		fakes.NewFakeRoleRegistry())
 
 	for _, cb := range cbs {
 		cb(l)

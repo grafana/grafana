@@ -32,8 +32,12 @@ type RawObjectWithHistory struct {
 
 var (
 	// increment when RawObject changes
-	rawObjectVersion = 7
+	rawObjectVersion = 9
 )
+
+// Make sure we implement both store + admin
+var _ object.ObjectStoreServer = &dummyObjectServer{}
+var _ object.ObjectStoreAdminServer = &dummyObjectServer{}
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
 	objectServer := &dummyObjectServer{
@@ -82,9 +86,9 @@ func (i *dummyObjectServer) findObject(ctx context.Context, grn *object.GRN, ver
 		if objVersion.Version == version {
 			copy := &object.RawObject{
 				GRN:       obj.Object.GRN,
-				Created:   obj.Object.Created,
+				CreatedAt: obj.Object.CreatedAt,
 				CreatedBy: obj.Object.CreatedBy,
-				Updated:   objVersion.Updated,
+				UpdatedAt: objVersion.UpdatedAt,
 				UpdatedBy: objVersion.UpdatedBy,
 				ETag:      objVersion.ETag,
 				Version:   objVersion.Version,
@@ -101,7 +105,8 @@ func (i *dummyObjectServer) findObject(ctx context.Context, grn *object.GRN, ver
 }
 
 func (i *dummyObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	_, objVersion, err := i.findObject(ctx, r.GRN, r.Version)
+	grn := getFullGRN(ctx, r.GRN)
+	_, objVersion, err := i.findObject(ctx, grn, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +153,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) update(ctx context.Context, r *object.AdminWriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	builder := i.kinds.GetSummaryBuilder(r.GRN.Kind)
 	if builder == nil {
 		return nil, fmt.Errorf("unsupported kind: " + r.GRN.Kind)
@@ -173,9 +178,9 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 
 		updated := &object.RawObject{
 			GRN:       r.GRN,
-			Created:   i.Object.Created,
+			CreatedAt: i.Object.CreatedAt,
 			CreatedBy: i.Object.CreatedBy,
-			Updated:   time.Now().Unix(),
+			UpdatedAt: time.Now().UnixMilli(),
 			UpdatedBy: store.GetUserIDString(modifier),
 			Size:      int64(len(r.Body)),
 			ETag:      createContentsHash(r.Body),
@@ -187,7 +192,7 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 			Body: r.Body,
 			ObjectVersionInfo: &object.ObjectVersionInfo{
 				Version:   updated.Version,
-				Updated:   updated.Updated,
+				UpdatedAt: updated.UpdatedAt,
 				UpdatedBy: updated.UpdatedBy,
 				Size:      updated.Size,
 				ETag:      updated.ETag,
@@ -221,12 +226,12 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 	return rsp, nil
 }
 
-func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) insert(ctx context.Context, r *object.AdminWriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
 		GRN:       r.GRN,
-		Updated:   time.Now().Unix(),
-		Created:   time.Now().Unix(),
+		UpdatedAt: time.Now().UnixMilli(),
+		CreatedAt: time.Now().UnixMilli(),
 		CreatedBy: modifier,
 		UpdatedBy: modifier,
 		Size:      int64(len(r.Body)),
@@ -237,7 +242,7 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 
 	info := &object.ObjectVersionInfo{
 		Version:   rawObj.Version,
-		Updated:   rawObj.Updated,
+		UpdatedAt: rawObj.UpdatedAt,
 		UpdatedBy: rawObj.UpdatedBy,
 		Size:      rawObj.Size,
 		ETag:      rawObj.ETag,
@@ -265,12 +270,22 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 }
 
 func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	namespace := namespaceFromUID(r.GRN)
+	return i.doWrite(ctx, object.ToAdminWriteObjectRequest(r))
+}
+
+func (i *dummyObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
+	// Check permissions?
+	return i.doWrite(ctx, r)
+}
+
+func (i *dummyObjectServer) doWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
+	grn := getFullGRN(ctx, r.GRN)
+	namespace := namespaceFromUID(grn)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
 		if i == nil || r == nil {
 			return false, nil
 		}
-		return r.GRN.Equals(i.Object.GRN), nil
+		return grn.Equals(i.Object.GRN), nil
 	})
 	if err != nil {
 		return nil, err
@@ -284,8 +299,9 @@ func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequ
 }
 
 func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	_, err := i.collection.Delete(ctx, namespaceFromUID(r.GRN), func(i *RawObjectWithHistory) (bool, error) {
-		if r.GRN.Equals(i.Object.GRN) {
+	grn := getFullGRN(ctx, r.GRN)
+	_, err := i.collection.Delete(ctx, namespaceFromUID(grn), func(i *RawObjectWithHistory) (bool, error) {
+		if grn.Equals(i.Object.GRN) {
 			if r.PreviousVersion != "" && i.Object.Version != r.PreviousVersion {
 				return false, fmt.Errorf("expected the previous version to be %s, but was %s", r.PreviousVersion, i.Object.Version)
 			}
@@ -306,7 +322,8 @@ func (i *dummyObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRe
 }
 
 func (i *dummyObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	obj, _, err := i.findObject(ctx, r.GRN, "")
+	grn := getFullGRN(ctx, r.GRN)
+	obj, _, err := i.findObject(ctx, grn, "")
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +375,7 @@ func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRe
 		searchResults = append(searchResults, &object.ObjectSearchResult{
 			GRN:         o.Object.GRN,
 			Version:     o.Object.Version,
-			Updated:     o.Object.Updated,
+			UpdatedAt:   o.Object.UpdatedAt,
 			UpdatedBy:   o.Object.UpdatedBy,
 			Name:        summary.Name,
 			Description: summary.Description,
@@ -369,4 +386,13 @@ func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRe
 	return &object.ObjectSearchResponse{
 		Results: searchResults,
 	}, nil
+}
+
+// This sets the TenantId on the request GRN
+func getFullGRN(ctx context.Context, grn *object.GRN) *object.GRN {
+	if grn.TenantId == 0 {
+		modifier := store.UserFromContext(ctx)
+		grn.TenantId = modifier.OrgID
+	}
+	return grn
 }

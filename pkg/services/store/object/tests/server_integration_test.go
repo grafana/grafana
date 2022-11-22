@@ -1,22 +1,19 @@
 package object_server_tests
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
-
-func createContentsHash(contents []byte) string {
-	hash := md5.Sum(contents)
-	return hex.EncodeToString(hash[:])
-}
 
 type rawObjectMatcher struct {
 	grn          *object.GRN
@@ -37,7 +34,9 @@ type objectVersionMatcher struct {
 }
 
 func timestampInRange(ts int64, tsRange []time.Time) bool {
-	return ts >= tsRange[0].Unix() && ts <= tsRange[1].Unix()
+	low := tsRange[0].UnixMilli() - 1
+	high := tsRange[1].UnixMilli() + 1
+	return ts >= low && ts <= high
 }
 
 func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher) {
@@ -45,16 +44,27 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 	require.NotNil(t, obj)
 
 	mismatches := ""
-	if m.grn != nil && !obj.GRN.Equals(m.grn) {
-		mismatches += fmt.Sprintf("expected: %v, actual: %v\n", m.grn, obj.GRN)
+	if m.grn != nil {
+		if m.grn.TenantId > 0 && m.grn.TenantId != obj.GRN.TenantId {
+			mismatches += fmt.Sprintf("expected tenant: %d, actual: %d\n", m.grn.TenantId, obj.GRN.TenantId)
+		}
+		if m.grn.Scope != "" && m.grn.Scope != obj.GRN.Scope {
+			mismatches += fmt.Sprintf("expected Scope: %s, actual: %s\n", m.grn.Scope, obj.GRN.Scope)
+		}
+		if m.grn.Kind != "" && m.grn.Kind != obj.GRN.Kind {
+			mismatches += fmt.Sprintf("expected Kind: %s, actual: %s\n", m.grn.Kind, obj.GRN.Kind)
+		}
+		if m.grn.UID != "" && m.grn.UID != obj.GRN.UID {
+			mismatches += fmt.Sprintf("expected UID: %s, actual: %s\n", m.grn.UID, obj.GRN.UID)
+		}
 	}
 
-	if len(m.createdRange) == 2 && !timestampInRange(obj.Created, m.createdRange) {
-		mismatches += fmt.Sprintf("expected createdBy range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.Unix(obj.Created, 0))
+	if len(m.createdRange) == 2 && !timestampInRange(obj.CreatedAt, m.createdRange) {
+		mismatches += fmt.Sprintf("expected Created range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.UnixMilli(obj.CreatedAt))
 	}
 
-	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
-		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.UpdatedAt, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected Updated range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.UnixMilli(obj.UpdatedAt))
 	}
 
 	if m.createdBy != "" && m.createdBy != obj.CreatedBy {
@@ -65,14 +75,12 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
-	if !reflect.DeepEqual(m.body, obj.Body) {
-		mismatches += fmt.Sprintf("expected body len: %d, actual body len: %d\n", len(m.body), len(obj.Body))
-	}
-
-	expectedHash := createContentsHash(m.body)
-	actualHash := createContentsHash(obj.Body)
-	if expectedHash != actualHash {
-		mismatches += fmt.Sprintf("expected body hash: %s, actual body hash: %s\n", expectedHash, actualHash)
+	if len(m.body) > 0 {
+		if json.Valid(m.body) {
+			require.JSONEq(t, string(m.body), string(obj.Body), "expecting same body")
+		} else if !reflect.DeepEqual(m.body, obj.Body) {
+			mismatches += fmt.Sprintf("expected body len: %d, actual body len: %d\n", len(m.body), len(obj.Body))
+		}
 	}
 
 	if m.version != nil && *m.version != obj.Version {
@@ -90,8 +98,8 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 		mismatches += fmt.Sprintf("expected etag: %s, actual etag: %s\n", *m.etag, obj.ETag)
 	}
 
-	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
-		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.Unix(obj.Updated, 0))
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.UpdatedAt, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.UnixMilli(obj.UpdatedAt))
 	}
 
 	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
@@ -105,7 +113,7 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 	require.True(t, len(mismatches) == 0, mismatches)
 }
 
-func TestObjectServer(t *testing.T) {
+func TestIntegrationObjectServer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -113,13 +121,13 @@ func TestObjectServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
-	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
+	fakeUser := store.GetUserIDString(testCtx.user)
 	firstVersion := "1"
-	kind := "dummy"
+	kind := models.StandardKindJSONObj
 	grn := &object.GRN{
 		Kind:  kind,
 		UID:   "my-test-entity",
-		Scope: "entity",
+		Scope: models.ObjectStoreScopeEntity,
 	}
 	body := []byte("{\"name\":\"John\"}")
 
@@ -158,10 +166,11 @@ func TestObjectServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, readResp.SummaryJson)
+		require.NotNil(t, readResp.Object)
 
 		foundGRN := readResp.Object.GRN
 		require.NotNil(t, foundGRN)
-		require.NotEqual(t, testCtx.user.OrgID, foundGRN.TenantId) // orgId becomes the tenant id when not set
+		require.Equal(t, testCtx.user.OrgID, foundGRN.TenantId) // orgId becomes the tenant id when not set
 		require.Equal(t, grn.Scope, foundGRN.Scope)
 		require.Equal(t, grn.Kind, foundGRN.Kind)
 		require.Equal(t, grn.UID, foundGRN.UID)
@@ -195,6 +204,12 @@ func TestObjectServer(t *testing.T) {
 
 	t.Run("should be able to update an object", func(t *testing.T) {
 		before := time.Now()
+		grn := &object.GRN{
+			Kind:  kind,
+			UID:   util.GenerateShortUID(),
+			Scope: models.ObjectStoreScopeEntity,
+		}
+
 		writeReq1 := &object.WriteObjectRequest{
 			GRN:     grn,
 			Body:    body,
@@ -292,7 +307,7 @@ func TestObjectServer(t *testing.T) {
 		uid2 := "uid2"
 		uid3 := "uid3"
 		uid4 := "uid4"
-		kind2 := "kind2"
+		kind2 := models.StandardKindPlaylist
 		w1, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN:  grn,
 			Body: body,
@@ -301,8 +316,9 @@ func TestObjectServer(t *testing.T) {
 
 		w2, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  uid2,
-				Kind: kind,
+				UID:   uid2,
+				Kind:  kind,
+				Scope: grn.Scope,
 			},
 			Body: body,
 		})
@@ -310,8 +326,9 @@ func TestObjectServer(t *testing.T) {
 
 		w3, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  uid3,
-				Kind: kind2,
+				UID:   uid3,
+				Kind:  kind2,
+				Scope: grn.Scope,
 			},
 			Body: body,
 		})
@@ -319,8 +336,9 @@ func TestObjectServer(t *testing.T) {
 
 		w4, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:  uid4,
-				Kind: kind2,
+				UID:   uid4,
+				Kind:  kind2,
+				Scope: grn.Scope,
 			},
 			Body: body,
 		})
@@ -342,7 +360,7 @@ func TestObjectServer(t *testing.T) {
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
-		require.Equal(t, []string{"dummy", "dummy", "kind2", "kind2"}, kinds)
+		require.Equal(t, []string{"jsonobj", "jsonobj", "playlist", "playlist"}, kinds)
 		require.Equal(t, []string{
 			w1.Object.Version,
 			w2.Object.Version,
@@ -364,7 +382,7 @@ func TestObjectServer(t *testing.T) {
 			version = append(version, res.Version)
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
-		require.Equal(t, []string{"dummy", "dummy"}, kinds)
+		require.Equal(t, []string{"jsonobj", "jsonobj"}, kinds)
 		require.Equal(t, []string{
 			w1.Object.Version,
 			w2.Object.Version,

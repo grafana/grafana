@@ -1,17 +1,20 @@
 package state
 
 import (
+	"context"
+	"errors"
 	"math"
 	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestNeedsSending(t *testing.T) {
@@ -199,7 +202,7 @@ func TestSetEndsAt(t *testing.T) {
 			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
 			expected: evaluationTime.Add(time.Second * 300 * 3),
 			testRule: &ngmodels.AlertRule{
-				For:             60 * time.Second,
+				For:             time.Minute,
 				IntervalSeconds: 300,
 			},
 		},
@@ -291,5 +294,131 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 		require.Len(t, result, 1)
 		require.Contains(t, result, "A")
 		require.Truef(t, math.IsNaN(result["A"]), "expected NaN but got %v", result["A"])
+	})
+}
+
+func TestResolve(t *testing.T) {
+	s := State{State: eval.Alerting, EndsAt: time.Now().Add(time.Minute)}
+	expected := State{State: eval.Normal, StateReason: "This is a reason", EndsAt: time.Now(), Resolved: true}
+	s.Resolve("This is a reason", expected.EndsAt)
+	assert.Equal(t, expected, s)
+}
+
+func TestShouldTakeImage(t *testing.T) {
+	tests := []struct {
+		name          string
+		state         eval.State
+		previousState eval.State
+		previousImage *ngmodels.Image
+		resolved      bool
+		expected      bool
+	}{{
+		name:          "should take image for state that just transitioned to alerting",
+		state:         eval.Alerting,
+		previousState: eval.Pending,
+		expected:      true,
+	}, {
+		name:          "should take image for alerting state without image",
+		state:         eval.Alerting,
+		previousState: eval.Alerting,
+		expected:      true,
+	}, {
+		name:          "should take image for resolved state",
+		state:         eval.Normal,
+		previousState: eval.Alerting,
+		resolved:      true,
+		expected:      true,
+	}, {
+		name:          "should not take image for normal state",
+		state:         eval.Normal,
+		previousState: eval.Normal,
+	}, {
+		name:          "should not take image for pending state",
+		state:         eval.Pending,
+		previousState: eval.Normal,
+	}, {
+		name:          "should not take image for alerting state with image",
+		state:         eval.Alerting,
+		previousState: eval.Alerting,
+		previousImage: &ngmodels.Image{Path: "foo.png", URL: "https://example.com/foo.png"},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, test.previousImage, test.resolved))
+		})
+	}
+}
+
+func TestTakeImage(t *testing.T) {
+	t.Run("ErrNoDashboard should return nil", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		ctx := context.Background()
+		r := ngmodels.AlertRule{}
+		s := NewMockImageCapturer(ctrl)
+
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoDashboard)
+		image, err := takeImage(ctx, s, &r)
+		assert.NoError(t, err)
+		assert.Nil(t, image)
+	})
+
+	t.Run("ErrNoPanel should return nil", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		ctx := context.Background()
+		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo")}
+		s := NewMockImageCapturer(ctrl)
+
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
+		image, err := takeImage(ctx, s, &r)
+		assert.NoError(t, err)
+		assert.Nil(t, image)
+	})
+
+	t.Run("ErrScreenshotsUnavailable should return nil", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		ctx := context.Background()
+		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
+		s := NewMockImageCapturer(ctrl)
+
+		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
+		image, err := takeImage(ctx, s, &r)
+		assert.NoError(t, err)
+		assert.Nil(t, image)
+	})
+
+	t.Run("other errors should be returned", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		ctx := context.Background()
+		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
+		s := NewMockImageCapturer(ctrl)
+
+		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
+		image, err := takeImage(ctx, s, &r)
+		assert.EqualError(t, err, "unknown error")
+		assert.Nil(t, image)
+	})
+
+	t.Run("image should be returned", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		ctx := context.Background()
+		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
+		s := NewMockImageCapturer(ctrl)
+
+		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)
+		image, err := takeImage(ctx, s, &r)
+		assert.NoError(t, err)
+		require.NotNil(t, image)
+		assert.Equal(t, ngmodels.Image{Path: "foo.png"}, *image)
 	})
 }
