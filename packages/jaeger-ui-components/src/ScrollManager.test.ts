@@ -18,7 +18,7 @@ import traceGenerator from '../src/demo/trace-generators';
 
 import ScrollManager, { Accessors } from './ScrollManager';
 import { scrollBy, scrollTo } from './scroll-page';
-import { Trace, TraceSpanData } from './types/trace';
+import { Trace, TraceSpanData, TraceSpanReference } from './types/trace';
 
 const SPAN_HEIGHT = 2;
 
@@ -37,7 +37,7 @@ function getTrace(): Trace {
 
 function getAccessors() {
   return {
-    getViewRange: jest.fn(() => [0, 1]),
+    getViewRange: jest.fn(() => [0, 1] as [number, number]),
     getSearchedSpanIDs: jest.fn(),
     getCollapsedChildren: jest.fn(),
     getViewHeight: jest.fn(() => SPAN_HEIGHT * 2),
@@ -64,6 +64,7 @@ describe('ScrollManager', () => {
   });
 
   it('saves the accessors', () => {
+    accessors = getAccessors();
     manager.setAccessors(accessors);
     expect(manager._accessors).toBe(accessors);
   });
@@ -106,8 +107,8 @@ describe('ScrollManager', () => {
   });
 
   describe('_scrollToVisibleSpan()', () => {
-    function getRefs(spanID: string) {
-      return [{ refType: 'CHILD_OF', spanID }];
+    function getRefs(spanID: string, traceID: string): TraceSpanReference[] {
+      return [{ refType: 'CHILD_OF', spanID, traceID }];
     }
     let scrollPastMock: jest.Mock;
 
@@ -184,7 +185,8 @@ describe('ScrollManager', () => {
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[0].spanID]);
       console.log(trace.spans[trace.spans.length - 1].references);
       trace.spans[trace.spans.length - 1].references = getRefs(
-        trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID
+        trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID,
+        trace.spans[parentOfLastRowWithHiddenChildrenIndex].traceID
       );
 
       manager._scrollToVisibleSpan(1);
@@ -204,7 +206,7 @@ describe('ScrollManager', () => {
               break;
             default:
               parentID = spans[i].spanID;
-              spans[i].references = getRefs(parentID);
+              spans[i].references = getRefs(parentID, spans[i].traceID);
           }
         }
         // set which spans are "in-view" and which have collapsed children
@@ -223,7 +225,7 @@ describe('ScrollManager', () => {
       it('handles more than one level of ancestry', () => {
         // modify spans[2] so that it has an unknown refType
         const spans = trace.spans;
-        spans[2].references = getRefs(spans[1].spanID);
+        spans[2].references = getRefs(spans[1].spanID, spans[1].traceID);
         manager.scrollToNextVisibleSpan();
         expect(scrollPastMock).lastCalledWith(4, 1);
         manager.scrollToPrevVisibleSpan();
