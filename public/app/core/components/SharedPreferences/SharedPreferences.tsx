@@ -26,6 +26,7 @@ import { UserPreferencesDTO } from 'app/types';
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
+  onConfirm?: () => Promise<boolean>;
 }
 
 export type State = UserPreferencesDTO;
@@ -85,9 +86,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
-    await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
-    window.location.reload();
+    const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
+
+    if (confirmationResult) {
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
+      window.location.reload();
+    }
   };
 
   onThemeChanged = (value: string) => {
