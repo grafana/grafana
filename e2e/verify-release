@@ -2,4 +2,5 @@
 
 . scripts/grafana-server/variables
 
-./e2e/run-suite verify/specs
+# The run-suite script requires a second argument to determine if videos should be recorded
+./e2e/run-suite verify/specs true

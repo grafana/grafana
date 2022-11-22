@@ -21,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/kindsys"
 )
 
-const sep = string(filepath.Separator)
-
 func main() {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
@@ -37,16 +35,11 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.GoTypesJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
 		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.TSTypesJenny(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
-			GenDirName: func(decl *codegen.DeclForGen) string {
-				// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
-				return filepath.Join(decl.Meta.Common().MachineName, "x")
-			},
-		}),
+		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
 
@@ -104,7 +97,7 @@ func main() {
 		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
 	})
 
-	jfs, err := coreKindsGen.GenerateFS(all)
+	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}

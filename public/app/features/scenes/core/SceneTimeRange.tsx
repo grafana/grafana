@@ -1,9 +1,17 @@
-import { TimeRange, UrlQueryMap } from '@grafana/data';
+import { getDefaultTimeRange, getTimeZone, TimeRange, UrlQueryMap } from '@grafana/data';
 
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneObjectWithUrlSync, SceneTimeRangeState } from './types';
 
 export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> implements SceneObjectWithUrlSync {
+  public constructor(state: Partial<SceneTimeRangeState> = {}) {
+    super({
+      ...getDefaultTimeRange(),
+      timeZone: getTimeZone(),
+      ...state,
+    });
+  }
+
   public onTimeRangeChange = (timeRange: TimeRange) => {
     this.setState(timeRange);
   };

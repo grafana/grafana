@@ -2,13 +2,13 @@ import i18n, { BackendModule } from 'i18next';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LOCALE, LOCALES, VALID_LOCALES } from './constants';
+import { DEFAULT_LANGUAGE, LANGUAGES, VALID_LANGUAGES } from './constants';
 
 const loadTranslations: BackendModule = {
   type: 'backend',
   init() {},
   async read(language, namespace, callback) {
-    const localeDef = LOCALES.find((v) => v.code === language);
+    const localeDef = LANGUAGES.find((v) => v.code === language);
 
     if (!localeDef) {
       return callback(new Error('No message loader available for ' + language), null);
@@ -19,8 +19,8 @@ const loadTranslations: BackendModule = {
   },
 };
 
-export function initializeI18n(locale: string) {
-  const validLocale = VALID_LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
+export function initializeI18n(language: string) {
+  const validLocale = VALID_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
 
   i18n
     .use(loadTranslations)
@@ -47,7 +47,7 @@ export function initializeI18n(locale: string) {
 }
 
 export function changeLanguage(locale: string) {
-  const validLocale = VALID_LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
+  const validLocale = VALID_LANGUAGES.includes(locale) ? locale : DEFAULT_LANGUAGE;
   return i18n.changeLanguage(validLocale);
 }
 
@@ -63,7 +63,7 @@ export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFor
   if (typeof value === 'string') {
     return i18nDate(new Date(value), format);
   }
-  const locale = i18n.options.lng ?? DEFAULT_LOCALE;
+  const locale = i18n.options.lng ?? DEFAULT_LANGUAGE;
 
   const dateFormatter = new Intl.DateTimeFormat(locale, format);
   return dateFormatter.format(value);

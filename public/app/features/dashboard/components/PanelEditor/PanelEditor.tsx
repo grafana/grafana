@@ -498,7 +498,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {this.state.showSaveLibraryPanelModal && (
             <SaveLibraryPanelModal
               panel={this.props.panel as PanelModelWithLibraryPanel}
-              folderId={this.props.dashboard.meta.folderId as number}
+              folderUid={this.props.dashboard.meta.folderUid ?? ''}
               onConfirm={this.onConfirmAndDismissLibarayPanelModel}
               onDiscard={this.onDiscard}
               onDismiss={this.onConfirmAndDismissLibarayPanelModel}
