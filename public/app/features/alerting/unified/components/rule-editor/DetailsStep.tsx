@@ -142,6 +142,9 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
               id="group"
               {...register('group', {
                 required: { value: true, message: 'Must enter a group name' },
+                validate: {
+                  pathSeparator: (group_: string) => checkForPathSeparator(group_),
+                },
               })}
             />
           </Field>
