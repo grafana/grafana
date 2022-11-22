@@ -15,7 +15,7 @@ import (
 
 const useLinkedAccountsId = "all"
 
-var metricResponse = []*resources.MetricResponse{
+var metricResponse = []resources.MetricResponse{
 	{
 		Metric: &cloudwatch.Metric{
 			MetricName: aws.String("CPUUtilization"),

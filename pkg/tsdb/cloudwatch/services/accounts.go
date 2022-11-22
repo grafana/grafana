@@ -20,7 +20,7 @@ func NewAccountsService(oamClient models.OAMClientProvider) models.AccountsProvi
 	return &AccountsService{oamClient}
 }
 
-func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[*resources.Account], error) {
+func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[resources.Account], error) {
 	var nextToken *string
 	sinks := []*oam.ListSinksItem{}
 	for {
@@ -52,7 +52,7 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]resources.Resourc
 	}
 
 	sinkIdentifier := sinks[0].Arn
-	response := []*resources.Account{{
+	response := []resources.Account{{
 		Id:                  getAccountId(*sinkIdentifier),
 		Label:               *sinks[0].Name,
 		Arn:                 *sinkIdentifier,
@@ -71,7 +71,7 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole() ([]resources.Resourc
 
 		for _, link := range links.Items {
 			arn := *link.LinkArn
-			response = append(response, &resources.Account{
+			response = append(response, resources.Account{
 				Id:                  getAccountId(arn),
 				Label:               *link.Label,
 				Arn:                 arn,

@@ -10,7 +10,7 @@ type FakeMetricsClient struct {
 	mock.Mock
 }
 
-func (m *FakeMetricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]*resources.MetricResponse, error) {
+func (m *FakeMetricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
 	args := m.Called(params)
-	return args.Get(0).([]*resources.MetricResponse), args.Error(1)
+	return args.Get(0).([]resources.MetricResponse), args.Error(1)
 }

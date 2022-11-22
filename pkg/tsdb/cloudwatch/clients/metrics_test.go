@@ -58,7 +58,7 @@ func TestMetricsClient(t *testing.T) {
 
 		response, err := client.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{IncludeLinkedAccounts: aws.Bool(true)})
 		require.NoError(t, err)
-		expected := []*resources.MetricResponse{
+		expected := []resources.MetricResponse{
 			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName1")}, AccountId: stringPtr("1234567890")},
 			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName2")}, AccountId: stringPtr("1234567890")},
 			{Metric: &cloudwatch.Metric{MetricName: aws.String("Test_MetricName3")}, AccountId: stringPtr("1234567895")},

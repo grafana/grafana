@@ -541,14 +541,17 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 }
 
 func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
+	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewMetricsAPI
-	t.Cleanup(func() { NewMetricsAPI = origNewMetricsAPI })
-	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
 	origNewOAMAPI := NewOAMAPI
-	t.Cleanup(func() { NewOAMAPI = origNewOAMAPI })
-	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
 	origNewLogsAPI := NewLogsAPI
-	t.Cleanup(func() { NewLogsAPI = origNewLogsAPI })
+	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
+	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
+	t.Cleanup(func() {
+		NewOAMAPI = origNewOAMAPI
+		NewMetricsAPI = origNewMetricsAPI
+		NewLogsAPI = origNewLogsAPI
+	})
 
 	var logsApi mocks.LogsAPI
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
@@ -558,8 +561,6 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
 	})
-
-	sender := &mockedCallResourceResponseSenderForOauth{}
 
 	t.Run("maps log group api response to resource response of describe-log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}
@@ -604,28 +605,19 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewMetricsAPI
+	origNewOAMAPI := NewOAMAPI
+	origNewLogsAPI := NewLogsAPI
+	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider { return nil }
 	t.Cleanup(func() {
+		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
+		NewLogsAPI = origNewLogsAPI
 	})
+
 	var api mocks.FakeMetricsAPI
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 		return &api
-	}
-
-	origNewOAMAPI := NewOAMAPI
-	t.Cleanup(func() {
-		NewOAMAPI = origNewOAMAPI
-	})
-	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
-		return nil
-	}
-
-	origNewLogsAPI := NewLogsAPI
-	t.Cleanup(func() {
-		NewLogsAPI = origNewLogsAPI
-	})
-	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
-		return nil
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {

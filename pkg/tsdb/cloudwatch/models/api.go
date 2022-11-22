@@ -51,5 +51,5 @@ type LogGroupsProvider interface {
 }
 
 type AccountsProvider interface {
-	GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[*resources.Account], error)
+	GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[resources.Account], error)
 }

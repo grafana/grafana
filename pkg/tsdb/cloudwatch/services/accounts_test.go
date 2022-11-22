@@ -115,11 +115,11 @@ func TestHandleGetAccounts(t *testing.T) {
 		assert.NoError(t, err)
 		fakeOAMClient.AssertNumberOfCalls(t, "ListSinks", 2)
 		fakeOAMClient.AssertNumberOfCalls(t, "ListAttachedLinks", 2)
-		expectedAccounts := []resources.ResourceResponse[*resources.Account]{
-			{Value: &resources.Account{Id: "123456789012", Label: "Account 1", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group1", IsMonitoringAccount: true}},
-			{Value: &resources.Account{Id: "123456789013", Label: "Account 10", Arn: "arn:aws:logs:us-east-1:123456789013:log-group:my-log-group10", IsMonitoringAccount: false}},
-			{Value: &resources.Account{Id: "123456789014", Label: "Account 11", Arn: "arn:aws:logs:us-east-1:123456789014:log-group:my-log-group11", IsMonitoringAccount: false}},
-			{Value: &resources.Account{Id: "123456789012", Label: "Account 12", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group12", IsMonitoringAccount: false}},
+		expectedAccounts := []resources.ResourceResponse[resources.Account]{
+			{Value: resources.Account{Id: "123456789012", Label: "Account 1", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group1", IsMonitoringAccount: true}},
+			{Value: resources.Account{Id: "123456789013", Label: "Account 10", Arn: "arn:aws:logs:us-east-1:123456789013:log-group:my-log-group10", IsMonitoringAccount: false}},
+			{Value: resources.Account{Id: "123456789014", Label: "Account 11", Arn: "arn:aws:logs:us-east-1:123456789014:log-group:my-log-group11", IsMonitoringAccount: false}},
+			{Value: resources.Account{Id: "123456789012", Label: "Account 12", Arn: "arn:aws:logs:us-east-1:123456789012:log-group:my-log-group12", IsMonitoringAccount: false}},
 		}
 		assert.Equal(t, expectedAccounts, resp)
 	})

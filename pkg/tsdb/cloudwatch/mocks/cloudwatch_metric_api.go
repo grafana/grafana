@@ -9,8 +9,6 @@ import (
 )
 
 type FakeMetricsAPI struct {
-	cloudwatchiface.CloudWatchAPI
-
 	Metrics        []*cloudwatch.Metric
 	OwningAccounts []*string
 	MetricsPerPage int
