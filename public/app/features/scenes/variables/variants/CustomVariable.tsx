@@ -1,5 +1,5 @@
 import React from 'react';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { SceneComponentProps } from '../../core/types';
 import { VariableDependencyConfig } from '../VariableDependencyConfig';
@@ -29,27 +29,25 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
   }
 
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
-    return new Observable<VariableValueOption[]>((observer) => {
-      const match = this.state.query.match(/(?:\\,|[^,])+/g) ?? [];
+    const match = this.state.query.match(/(?:\\,|[^,])+/g) ?? [];
 
-      const options = match.map((text) => {
-        text = text.replace(/\\,/g, ',');
-        const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
-        if (textMatch.length === 3) {
-          const [, key, value] = textMatch;
-          return { label: key.trim(), value: value.trim() };
-        } else {
-          return { label: text.trim(), value: text.trim() };
-        }
-      });
-
-      observer.next(options);
-
-      // TODO: Support 'All'
-      //if (this.state.includeAll) {
-      //  options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
-      //}
+    const options = match.map((text) => {
+      text = text.replace(/\\,/g, ',');
+      const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
+      if (textMatch.length === 3) {
+        const [, key, value] = textMatch;
+        return { label: key.trim(), value: value.trim() };
+      } else {
+        return { label: text.trim(), value: text.trim() };
+      }
     });
+
+    return of(options);
+
+    // TODO: Support 'All'
+    //if (this.state.includeAll) {
+    //  options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
+    //}
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {
