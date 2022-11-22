@@ -4,6 +4,7 @@
 //     kinds/gen.go
 // Using jennies:
 //     TSTypesJenny
+//     LatestMajorsOrXJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
