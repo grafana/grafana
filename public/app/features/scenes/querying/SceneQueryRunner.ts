@@ -52,7 +52,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     this._subs.add(
       timeRange.subscribeToState({
         next: (timeRange) => {
-          this.runWithTimeRange(timeRange);
+          this.runWithTimeRange(timeRange.value);
         },
       })
     );
@@ -108,7 +108,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   public runQueries() {
     const timeRange = sceneGraph.getTimeRange(this);
-    this.runWithTimeRange(timeRange.state);
+    this.runWithTimeRange(timeRange.state.value);
   }
 
   private getMaxDataPoints() {

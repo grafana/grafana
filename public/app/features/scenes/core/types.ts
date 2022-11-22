@@ -16,7 +16,7 @@ import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/
 
 export interface SceneObjectStatePlain {
   key?: string;
-  $timeRange?: SceneTimeRange;
+  $timeRange?: SceneTimeRangeLike;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
   $variables?: SceneVariables;
@@ -140,11 +140,15 @@ interface SceneComponentEditWrapperProps {
   children: React.ReactNode;
 }
 
-export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {
+export interface SceneTimeRangeState extends SceneObjectStatePlain {
+  from: string;
+  to: string;
   timeZone: TimeZone;
+  fiscalYearStartMonth?: number;
+  value: TimeRange;
 }
 
-export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
+export interface SceneTimeRangeLike extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;
   onRefresh(): void;
@@ -166,6 +170,6 @@ export interface SceneObjectWithUrlSync extends SceneObject {
 
 export interface SceneObjectUrlSyncConfigLike {
   getKeys(): Set<string>;
-  toUrlValues(): Map<string, UrlQueryValue>;
-  fromUrlValues(values: Map<string, UrlQueryValue>): void;
+  getUrlState(): Map<string, UrlQueryValue>;
+  updateFromUrl(values: Map<string, UrlQueryValue>): void;
 }

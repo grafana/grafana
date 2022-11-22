@@ -95,7 +95,7 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
 
   public onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = sceneGraph.getTimeRange(this);
-    sceneTimeRange.setState({
+    sceneTimeRange.onTimeRangeChange({
       raw: {
         from: toUtc(timeRange.from),
         to: toUtc(timeRange.to),

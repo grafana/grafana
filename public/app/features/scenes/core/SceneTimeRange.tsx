@@ -1,63 +1,90 @@
-import { getDefaultTimeRange, getTimeZone, isDateTime, TimeRange, toUtc, UrlQueryValue } from '@grafana/data';
+import { dateMath, getTimeZone, isDateTime, TimeRange, TimeZone, toUtc, UrlQueryValue } from '@grafana/data';
 
 import { SceneObjectUrlSyncConfig } from '../services/SceneObjectUrlSyncConfig';
 
 import { SceneObjectBase } from './SceneObjectBase';
-import { SceneTimeRangeState } from './types';
+import { SceneTimeRangeLike, SceneTimeRangeState } from './types';
 
-export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> {
+export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> implements SceneTimeRangeLike {
   protected _urlSync = new SceneObjectUrlSyncConfig({
     keys: ['from', 'to'],
-    toUrlValues: () => this.toUrlValues(),
-    fromUrlValues: (values) => this.fromUrlValues(values),
+    getUrlState: () => this.getUrlState(),
+    updateFromUrl: (values) => this.updateFromUrl(values),
   });
 
   public constructor(state: Partial<SceneTimeRangeState> = {}) {
-    super({
-      ...getDefaultTimeRange(),
-      timeZone: getTimeZone(),
-      ...state,
-    });
+    const from = state.from ?? 'now-6h';
+    const to = state.to ?? 'now';
+    const timeZone = state.timeZone ?? getTimeZone();
+    const value = evaluateTimeRange(state.from ?? 'now-6h', state.to ?? 'now', state.timeZone ?? getTimeZone());
+    super({ from, to, timeZone, value, ...state });
   }
 
   public onTimeRangeChange = (timeRange: TimeRange) => {
-    this.setState(timeRange);
+    const update: Partial<SceneTimeRangeState> = {};
+
+    if (typeof timeRange.raw.from === 'string') {
+      update.from = timeRange.raw.from;
+    } else {
+      update.from = timeRange.raw.from.toISOString();
+    }
+
+    if (typeof timeRange.raw.to === 'string') {
+      update.to = timeRange.raw.to;
+    } else {
+      update.to = timeRange.raw.to.toISOString();
+    }
+
+    update.value = evaluateTimeRange(update.from, update.to, this.state.timeZone);
+
+    this.setState(update);
   };
 
   public onRefresh = () => {
-    // TODO re-eval time range
-    this.setState({ ...this.state });
+    this.setState({ value: evaluateTimeRange(this.state.from, this.state.to, this.state.timeZone) });
   };
 
   public onIntervalChanged = (_: string) => {};
 
-  private toUrlValues() {
-    const range = { ...this.state.raw };
+  private getUrlState() {
+    const value = this.state.value;
+    let from = this.state.from;
+    let to = this.state.from;
 
-    if (isDateTime(range.from)) {
-      range.from = range.from.valueOf().toString();
+    if (isDateTime(value.raw.from)) {
+      from = value.from.toISOString();
     }
-    if (isDateTime(range.to)) {
-      range.to = range.to.valueOf().toString();
+
+    if (isDateTime(value.raw.to)) {
+      to = value.raw.to.toISOString();
     }
 
     return new Map<string, UrlQueryValue>([
-      ['from', range.from],
-      ['to', range.to],
+      ['from', from],
+      ['to', to],
     ]);
   }
 
-  private fromUrlValues(values: Map<string, UrlQueryValue>) {
+  private updateFromUrl(values: Map<string, UrlQueryValue>) {
     const update: Partial<SceneTimeRangeState> = {};
 
     if (values.has('from')) {
       const from = parseUrlParam(values.get('from'));
-      update.raw = { ...this.state.raw, from: toUtc(from) };
+      if (from) {
+        update.from = from;
+      }
+    }
+
+    if (values.has('to')) {
+      const from = parseUrlParam(values.get('to'));
+      if (from) {
+        update.from = from;
+      }
     }
   }
 }
 
-function parseUrlParam(value: UrlQueryValue) {
+function parseUrlParam(value: UrlQueryValue): string | null {
   if (typeof value !== 'string') {
     return null;
   }
@@ -69,19 +96,30 @@ function parseUrlParam(value: UrlQueryValue) {
   if (value.length === 8) {
     const utcValue = toUtc(value, 'YYYYMMDD');
     if (utcValue.isValid()) {
-      return utcValue;
+      return utcValue.toISOString();
     }
   } else if (value.length === 15) {
     const utcValue = toUtc(value, 'YYYYMMDDTHHmmss');
     if (utcValue.isValid()) {
-      return utcValue;
+      return utcValue.toISOString();
     }
   }
 
   const epoch = parseInt(value, 10);
   if (!isNaN(epoch)) {
-    return toUtc(epoch);
+    return toUtc(epoch).toISOString();
   }
 
   return null;
+}
+
+function evaluateTimeRange(from: string, to: string, timeZone: TimeZone, fiscalYearStartMonth?: number): TimeRange {
+  return {
+    from: dateMath.parse(from, false, timeZone, fiscalYearStartMonth)!,
+    to: dateMath.parse(to, true, timeZone, fiscalYearStartMonth)!,
+    raw: {
+      from: from,
+      to: to,
+    },
+  };
 }

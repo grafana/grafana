@@ -4,8 +4,8 @@ import { SceneObjectUrlSyncConfigLike } from '../core/types';
 
 interface SceneObjectUrlSyncConfigOptions {
   keys?: string[];
-  toUrlValues: () => Map<string, UrlQueryValue>;
-  fromUrlValues: (values: Map<string, UrlQueryValue>) => void;
+  getUrlState: () => Map<string, UrlQueryValue>;
+  updateFromUrl: (values: Map<string, UrlQueryValue>) => void;
 }
 
 export class SceneObjectUrlSyncConfig implements SceneObjectUrlSyncConfigLike {
@@ -19,11 +19,11 @@ export class SceneObjectUrlSyncConfig implements SceneObjectUrlSyncConfigLike {
     return this._keys;
   }
 
-  public toUrlValues(): Map<string, UrlQueryValue> {
-    return this._options.toUrlValues();
+  public getUrlState(): Map<string, UrlQueryValue> {
+    return this._options.getUrlState();
   }
 
-  public fromUrlValues(values: Map<string, UrlQueryValue>): void {
-    this._options.fromUrlValues(values);
+  public updateFromUrl(values: Map<string, UrlQueryValue>): void {
+    this._options.updateFromUrl(values);
   }
 }

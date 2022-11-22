@@ -22,8 +22,8 @@ export class UrlSyncManager {
   private onStateChanged = ({ payload }: SceneObjectStateChangedEvent) => {
     const changedObject = payload.changedObject;
 
-    if ('getUrlState' in changedObject) {
-      const urlUpdate = changedObject.getUrlState();
+    if (changedObject.urlSync) {
+      const urlUpdate = changedObject.urlSync.getUrlState();
       locationService.partial(urlUpdate, true);
     }
   };
