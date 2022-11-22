@@ -88,7 +88,7 @@ func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
 		}
 	}
 
-	res := make([]string, 0)
+	res := make([]string, 0, len(dsTypes))
 	for dsType := range dsTypes {
 		res = append(res, dsType)
 	}
