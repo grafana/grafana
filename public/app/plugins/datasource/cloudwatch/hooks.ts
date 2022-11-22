@@ -134,10 +134,10 @@ export const useAccountOptions = (
     }
     const accounts = await api.getAccounts({ region });
     if (accounts.length === 0) {
-      return accounts;
+      return [];
     }
 
-    const options = accounts.map((a) => ({
+    const options: Array<SelectableValue<string>> = accounts.map((a) => ({
       label: a.label,
       value: a.id,
       description: a.id,

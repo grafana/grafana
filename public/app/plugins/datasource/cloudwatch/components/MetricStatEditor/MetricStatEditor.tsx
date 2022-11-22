@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
@@ -34,6 +34,18 @@ export function MetricStatEditor({
   const metrics = useMetrics(datasource, metricStat);
   const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
   const accountState = useAccountOptions(datasource.api, metricStat.region);
+
+  useEffect(() => {
+    datasource.api.isMonitoringAccount(metricStat.region).then((isMonitoringAccount) => {
+      if (isMonitoringAccount && !accountState.loading && accountState.value?.length && !metricStat.accountId) {
+        onChange({ ...metricStat, accountId: 'all' });
+      }
+
+      if (!accountState.loading && accountState.value && !accountState.value.length && metricStat.accountId) {
+        onChange({ ...metricStat, accountId: undefined });
+      }
+    });
+  }, [accountState, metricStat, onChange, datasource.api]);
 
   const onMetricStatChange = (metricStat: MetricStat) => {
     onChange(metricStat);
