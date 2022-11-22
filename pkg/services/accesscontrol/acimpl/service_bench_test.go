@@ -47,13 +47,23 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
 	}
 
-	// Prepare users and permissions
-	action := "resources:action"
-	permissions := make([]accesscontrol.Permission, 0, resourceCount*usersCount)
-	roles := make([]accesscontrol.Role, 0, usersCount)
-	orgUsers := make([]org.OrgUser, 0, usersCount)
+	// Prepare default permissions
+	action1 := "resources:action1"
+	err := acService.DeclareFixedRoles(accesscontrol.RoleRegistration{
+		Role:   accesscontrol.RoleDTO{Name: "fixed:test:role", Permissions: []accesscontrol.Permission{{Action: action1}}},
+		Grants: []string{string(org.RoleViewer)},
+	})
+	require.NoError(b, err)
+	err = acService.RegisterFixedRoles(context.Background())
+	require.NoError(b, err)
+
+	// Prepare managed permissions
+	action2 := "resources:action2"
 	users := make([]user.User, 0, usersCount)
+	orgUsers := make([]org.OrgUser, 0, usersCount)
+	roles := make([]accesscontrol.Role, 0, usersCount)
 	userRoles := make([]accesscontrol.UserRole, 0, usersCount)
+	permissions := make([]accesscontrol.Permission, 0, resourceCount*usersCount)
 	for u := 1; u < usersCount+1; u++ {
 		users = append(users, user.User{
 			ID:      int64(u),
@@ -90,7 +100,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		for r := 1; r < resourceCount+1; r++ {
 			permissions = append(permissions, accesscontrol.Permission{
 				RoleID:  int64(u),
-				Action:  action,
+				Action:  action2,
 				Scope:   fmt.Sprintf("resources:id:%v", r),
 				Created: now,
 				Updated: now,
@@ -147,15 +157,21 @@ func benchGetUsersPermissions(b *testing.B, usersCount, resourceCount int) {
 		require.NoError(b, err)
 		require.Len(b, usersPermissions, usersCount)
 		for _, permissions := range usersPermissions {
-			require.Len(b, permissions, resourceCount)
+			// action1 on all resource + action2
+			require.Len(b, permissions, resourceCount+1)
 		}
 	}
 }
 
 // Lots of resources
-func BenchmarkGetUsersPermissions_10_1K(b *testing.B)   { benchGetUsersPermissions(b, 10, 1000) }   // ~0.047s/op
-func BenchmarkGetUsersPermissions_10_10K(b *testing.B)  { benchGetUsersPermissions(b, 10, 10000) }  // ~0.5s/op
-func BenchmarkGetUsersPermissions_10_100K(b *testing.B) { benchGetUsersPermissions(b, 10, 100000) } // ~4.6s/op
+func BenchmarkGetUsersPermissions_10_1K(b *testing.B)  { benchGetUsersPermissions(b, 10, 1000) }  // ~0.047s/op
+func BenchmarkGetUsersPermissions_10_10K(b *testing.B) { benchGetUsersPermissions(b, 10, 10000) } // ~0.5s/op
+func BenchmarkGetUsersPermissions_10_100K(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchGetUsersPermissions(b, 10, 100000)
+} // ~4.6s/op
 func BenchmarkGetUsersPermissions_10_1M(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
@@ -164,12 +180,30 @@ func BenchmarkGetUsersPermissions_10_1M(b *testing.B) {
 } // ~55.36s/op
 
 // Lots of users (most probable case)
-func BenchmarkGetUsersPermissions_1K_10(b *testing.B)   { benchGetUsersPermissions(b, 1000, 10) }   // ~0.056s/op
-func BenchmarkGetUsersPermissions_10K_10(b *testing.B)  { benchGetUsersPermissions(b, 10000, 10) }  // ~0.58s/op
-func BenchmarkGetUsersPermissions_100K_10(b *testing.B) { benchGetUsersPermissions(b, 100000, 10) } // ~6.21s/op
+func BenchmarkGetUsersPermissions_1K_10(b *testing.B)  { benchGetUsersPermissions(b, 1000, 10) }  // ~0.056s/op
+func BenchmarkGetUsersPermissions_10K_10(b *testing.B) { benchGetUsersPermissions(b, 10000, 10) } // ~0.58s/op
+func BenchmarkGetUsersPermissions_100K_10(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchGetUsersPermissions(b, 100000, 10)
+} // ~6.21s/op
 func BenchmarkGetUsersPermissions_1M_10(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
 	benchGetUsersPermissions(b, 1000000, 10)
 } // ~57s/op
+
+func BenchmarkGetUsersPermissions_10K_100(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchGetUsersPermissions(b, 10000, 100)
+} // ~1.45s/op
+func BenchmarkGetUsersPermissions_10K_1K(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchGetUsersPermissions(b, 10000, 1000)
+} // ~70s/op
