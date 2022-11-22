@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for publishing Docker images and its steps.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
@@ -11,6 +15,16 @@ load(
 )
 
 def publish_image_steps(edition, mode, docker_repo):
+    """Generates the steps used for publising Docker images.
+
+    Args:
+      edition: TODO
+      mode: TODO
+      docker_repo: TODO
+
+    Returns:
+      List of Drone steps.
+    """
     additional_docker_repo = ""
     if edition == "oss":
         additional_docker_repo = "grafana/grafana-oss"
@@ -26,6 +40,11 @@ def publish_image_steps(edition, mode, docker_repo):
     return steps
 
 def publish_image_pipelines_public():
+    """Generates the pipeline used for publising public Docker images.
+
+    Returns:
+      Drone pipeline
+    """
     mode = "public"
     trigger = {
         "event": ["promote"],

@@ -3,6 +3,9 @@
 # 2. Login to drone and export the env variables (token and server) shown here: https://drone.grafana.net/account
 # 3. Run `make drone`
 # More information about this process here: https://github.com/grafana/deployment_tools/blob/master/docs/infrastructure/drone/signing.md
+"""
+This module returns a Drone configuration including pipelines and secrets.
+"""
 
 load("scripts/drone/events/pr.star", "pr_pipelines")
 load("scripts/drone/events/main.star", "main_pipelines")

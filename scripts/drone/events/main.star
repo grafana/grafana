@@ -1,3 +1,7 @@
+"""
+This module returns all the pipelines used in the event of pushes to the main branch.
+"""
+
 load(
     "scripts/drone/utils/utils.star",
     "drone_change_template",

@@ -1,3 +1,7 @@
+"""
+This module returns a Drone step and pipeline for linting with shellcheck.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "build_image",

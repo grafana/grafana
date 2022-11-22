@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for version branches.
+"""
+
 load(
     "scripts/drone/events/release.star",
     "enterprise2_pipelines",

@@ -1,3 +1,7 @@
+"""
+This module provides functions for cronjob pipelines and steps used within.
+"""
+
 load("scripts/drone/vault.star", "from_secret")
 load("scripts/drone/steps/lib.star", "compile_build_cmd", "publish_image")
 
@@ -37,6 +41,16 @@ def cron_job_pipeline(cronName, name, steps):
     }
 
 def scan_docker_image_pipeline(edition, tag):
+    """Generates a cronjob pipeline for nightly scans of grafana Docker images.
+
+    Args:
+      edition: distinguishes between OSS and enterprise images. Use 'oss' for OSS builds.
+      tag: determines which image tag is scanned.
+
+    Returns:
+      Drone cronjob pipeline.
+    """
+
     if edition != "oss":
         edition = "grafana-enterprise"
     else:

@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for verifying Drone configuration.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",

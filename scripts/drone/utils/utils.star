@@ -1,3 +1,7 @@
+"""
+This module contains utility functions for generating Drone pipelines.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "slack_step",
@@ -17,6 +21,26 @@ def pipeline(
         depends_on = [],
         environment = None,
         volumes = []):
+    """TODO
+
+    Args:
+      name: TODO
+      edition: TODO
+      trigger: TODO
+      steps: TODO
+      services: TODO
+        Defaults to [].
+      platform: TODO
+        Defaults to 'linux'.
+      depends_on: TODO
+        Defaults to [].
+      environment: TODO
+        Defaults to None.
+      volumes: TODO
+        Defaults to [].
+    Returns:
+      Drone pipeline
+    """
     if platform != "windows":
         platform_conf = {
             "platform": {

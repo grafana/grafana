@@ -1,3 +1,7 @@
+"""
+This module returns all the pipelines used in the event of documentation changes along with supporting functions.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "build_docs_website_step",

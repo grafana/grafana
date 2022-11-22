@@ -37,6 +37,16 @@ load(
 
 # @unused
 def build_e2e(trigger, ver_mode, edition):
+    """TODO
+
+    Args:
+      trigger: TODO
+      ver_mode: TODO
+      edition: TODO
+
+    Returns:
+      TODO
+    """
     environment = {"EDITION": edition}
     variants = ["linux-amd64", "linux-amd64-musl", "darwin-amd64", "windows-amd64"]
     init_steps = [

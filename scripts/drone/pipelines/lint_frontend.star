@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for linting frontend code.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "identify_runner_step",
@@ -10,6 +14,15 @@ load(
 )
 
 def lint_frontend_pipeline(trigger, ver_mode):
+    """Generates the pipelines used linting frontend code.
+
+    Args:
+      trigger: controls which events can trigger the pipeline execution.
+      ver_mode: used in the naming of the pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
     environment = {"EDITION": "oss"}
     yarn_step = yarn_install_step()
     yarn_step.update({"depends_on": []})

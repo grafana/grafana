@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for building Grafana on Windows.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "grabpl_version",
@@ -11,6 +15,16 @@ load(
 load("scripts/drone/vault.star", "from_secret", "github_token", "prerelease_bucket")
 
 def windows(trigger, edition, ver_mode):
+    """Generates the pipeline used for building Grafana on Windows.
+
+    Args:
+      trigger: TODO
+      edition: TODO
+      ver_mode: TODO
+
+    Returns:
+      Drone pipeline.
+    """
     environment = {"EDITION": edition}
     init_cmds = []
     if edition not in ("enterprise", "enterprise2"):

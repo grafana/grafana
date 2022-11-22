@@ -1,3 +1,7 @@
+"""
+This module is a library of Drone steps and other pipeline components.
+"""
+
 load("scripts/drone/vault.star", "drone_token", "from_secret", "github_token", "prerelease_bucket")
 
 grabpl_version = "v3.0.17"
@@ -72,6 +76,13 @@ def identify_runner_step(platform = "linux"):
         }
 
 def clone_enterprise_step(ver_mode):
+    """TODO
+
+    Args:
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     if ver_mode == "release":
         committish = "${DRONE_TAG}"
     elif ver_mode == "release-branch":
@@ -92,6 +103,13 @@ def clone_enterprise_step(ver_mode):
     }
 
 def init_enterprise_step(ver_mode):
+    """TODO
+
+    Args:
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     source_commit = ""
     if ver_mode == "release":
         source_commit = " ${DRONE_TAG}"
@@ -184,6 +202,14 @@ def lint_starlark_step():
     }
 
 def enterprise_downstream_step(edition, ver_mode):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     if edition in ("enterprise", "enterprise2"):
         return None
 
@@ -269,6 +295,16 @@ def build_storybook_step(edition, ver_mode):
     }
 
 def store_storybook_step(edition, ver_mode, trigger = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+      trigger: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     if edition in ("enterprise", "enterprise2"):
         return None
 
@@ -345,6 +381,16 @@ def e2e_tests_artifacts(edition):
     }
 
 def upload_cdn_step(edition, ver_mode, trigger = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+      trigger: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     deps = []
     if edition in "enterprise2":
         deps.extend([
@@ -372,6 +418,16 @@ def upload_cdn_step(edition, ver_mode, trigger = None):
     return step
 
 def build_backend_step(edition, ver_mode, variants = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+      variants: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     variants_str = ""
     if variants:
         variants_str = " --variants {}".format(",".join(variants))
@@ -404,6 +460,14 @@ def build_backend_step(edition, ver_mode, variants = None):
     }
 
 def build_frontend_step(edition, ver_mode):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     build_no = "${DRONE_BUILD_NUMBER}"
 
     # TODO: Use percentage for num jobs
@@ -432,6 +496,14 @@ def build_frontend_step(edition, ver_mode):
     }
 
 def build_frontend_package_step(edition, ver_mode):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     build_no = "${DRONE_BUILD_NUMBER}"
 
     # TODO: Use percentage for num jobs
@@ -505,6 +577,14 @@ def test_backend_integration_step():
     }
 
 def betterer_frontend_step(edition = "oss"):
+    """TODO
+
+    Args:
+      edition: TODO
+        Defaults to 'oss'.
+    Returns:
+      Drone step.
+    """
     deps = []
     if edition == "enterprise":
         deps.extend(["init-enterprise"])
@@ -519,6 +599,14 @@ def betterer_frontend_step(edition = "oss"):
     }
 
 def test_frontend_step(edition = "oss"):
+    """TODO
+
+    Args:
+      edition: TODO
+        Defaults to 'oss'.
+    Returns:
+      Drone step.
+    """
     deps = []
     if edition == "enterprise":
         deps.extend(["init-enterprise"])
@@ -554,6 +642,16 @@ def lint_frontend_step():
     }
 
 def test_a11y_frontend_step(ver_mode, edition, port = 3001):
+    """TODO
+
+    Args:
+      ver_mode: TODO
+      edition: TODO
+      port: TODO
+        Defaults to 3001.
+    Returns:
+      Drone step.
+    """
     commands = [
         "yarn wait-on http://$HOST:$PORT",
     ]
@@ -584,6 +682,15 @@ def test_a11y_frontend_step(ver_mode, edition, port = 3001):
     }
 
 def frontend_metrics_step(edition, trigger = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      trigger: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     if edition in ("enterprise", "enterprise2"):
         return None
 
@@ -618,6 +725,16 @@ def codespell_step():
     }
 
 def package_step(edition, ver_mode, variants = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+      variants: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     deps = [
         "build-plugins",
         "build-backend" + enterprise2_suffix(edition),
@@ -667,6 +784,15 @@ def package_step(edition, ver_mode, variants = None):
     }
 
 def grafana_server_step(edition, port = 3001):
+    """TODO
+
+    Args:
+      edition: TODO
+      port: TODO
+        Defaults to 3001.
+    Returns:
+      Drone step.
+    """
     package_file_pfx = ""
     if edition == "enterprise2":
         package_file_pfx = "grafana" + enterprise2_suffix(edition)
@@ -716,6 +842,17 @@ def e2e_tests_step(suite, edition, port = 3001, tries = None):
     }
 
 def cloud_plugins_e2e_tests_step(suite, edition, cloud, trigger = None):
+    """TODO
+
+    Args:
+      suite: TODO
+      edition: TODO
+      cloud: TODO
+      trigger: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     environment = {}
     when = {}
     if trigger:
@@ -777,6 +914,19 @@ def copy_packages_for_docker_step(edition = None):
     }
 
 def build_docker_images_step(edition, archs = None, ubuntu = False, publish = False):
+    """TODO
+
+    Args:
+      edition: TODO
+      archs: TODO
+        Defaults to None.
+      ubuntu: TODO
+        Defaults to False.
+      publish: TODO
+        Defaults to False.
+    Returns:
+      Drone step.
+    """
     cmd = "./bin/build build-docker --edition {}".format(edition)
     if publish:
         cmd += " --shouldSave"
@@ -832,6 +982,18 @@ def fetch_images_step(edition):
     }
 
 def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+      mode: TODO
+      docker_repo: TODO
+      trigger: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     name = docker_repo
     docker_repo = "grafana/{}".format(docker_repo)
     if mode == "security":
@@ -948,6 +1110,15 @@ def memcached_integration_tests_step():
     }
 
 def release_canary_npm_packages_step(edition, trigger = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      trigger: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     if edition in ("enterprise", "enterprise2"):
         return None
 
@@ -972,6 +1143,16 @@ def enterprise2_suffix(edition):
     return ""
 
 def upload_packages_step(edition, ver_mode, trigger = None):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+      trigger: TODO
+        Defaults to None.
+    Returns:
+      Drone step.
+    """
     if ver_mode == "main" and edition in ("enterprise", "enterprise2"):
         return None
 
@@ -998,6 +1179,14 @@ def upload_packages_step(edition, ver_mode, trigger = None):
     return step
 
 def publish_grafanacom_step(edition, ver_mode):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     if ver_mode == "release":
         cmd = "./bin/build publish grafana-com --edition {} ${{DRONE_TAG}}".format(
             edition,
@@ -1050,6 +1239,14 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
     }
 
 def get_windows_steps(edition, ver_mode):
+    """TODO
+
+    Args:
+      edition: TODO
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     init_cmds = []
     if edition not in ("enterprise", "enterprise2"):
         init_cmds.extend([
@@ -1273,6 +1470,13 @@ def compile_build_cmd(edition = "oss"):
     }
 
 def get_trigger_storybook(ver_mode):
+    """TODO
+
+    Args:
+      ver_mode: TODO
+    Returns:
+      Drone step.
+    """
     trigger_storybook = ""
     if ver_mode == "release":
         trigger_storybook = {

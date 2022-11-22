@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for integration tests.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
@@ -20,6 +24,16 @@ load(
 )
 
 def integration_tests(trigger, ver_mode, edition):
+    """Generate a pipeline for integration tests.
+
+    Args:
+      trigger: controls which events can trigger the pipeline execution.
+      ver_mode: used in the naming of the pipeline.
+      edition: passed as the EDITION environment variable to pipeline steps.
+
+    Returns:
+      Drone pipeline.
+    """
     environment = {"EDITION": edition}
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()

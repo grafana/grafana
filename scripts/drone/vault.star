@@ -1,3 +1,6 @@
+"""
+This module returns functions for generating Drone secrets fetched from Vault.
+"""
 pull_secret = "dockerconfigjson"
 github_token = "github_token"
 drone_token = "drone_token"

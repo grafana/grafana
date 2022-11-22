@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for triggering a downstream pipeline for Grafana Enterprise.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "enterprise_downstream_step",

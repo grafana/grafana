@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for testing backend code.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "betterer_frontend_step",
@@ -14,6 +18,17 @@ load(
 )
 
 def test_frontend(trigger, ver_mode, edition = "oss"):
+    """Generates the pipeline used for testing frontend code.
+
+    Args:
+      trigger: TODO
+      edition: TODO
+        Defaults to 'oss'.
+      ver_mode: TODO
+
+    Returns:
+      Drone pipeline.
+    """
     environment = {"EDITION": edition}
     init_steps = []
     if edition != "oss":

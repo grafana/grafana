@@ -1,3 +1,7 @@
+"""
+This module returns all the pipelines used in the event of a release along with supporting functions.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "artifacts_page_step",
@@ -117,6 +121,17 @@ def release_npm_packages_step():
     }
 
 def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
+    """Generates all pipelines used in an OSS release.
+
+    Args:
+      ver_mode: controls which steps are included in the pipeline.
+        Defaults to 'release'.
+      trigger: controls which events can trigger the pipeline execution.
+        Defaults to tag events for tags with a 'v' prefix.
+
+    Returns:
+      List of Drone pipelines.
+    """
     environment = {"EDITION": "oss"}
     edition = "oss"
     services = integration_test_services(edition = edition)
@@ -230,6 +245,17 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     return pipelines
 
 def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
+    """Generates all pipelines used in an an enterprise release.
+
+    Args:
+      ver_mode: controls which steps are included in the pipeline.
+        Defaults to 'release'.
+      trigger: controls which events can trigger the pipeline execution.
+        Defaults to tag events for tags with a 'v' prefix.
+
+    Returns:
+      List of Drone pipelines.
+    """
     environment = {"EDITION": "enterprise"}
     edition = "enterprise"
     services = integration_test_services(edition = edition)
@@ -369,6 +395,19 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     return pipelines
 
 def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_trigger):
+    """TODO
+
+    Args:
+      prefix: TODO
+        Defaults to ''.
+      ver_mode: controls which steps are included in the pipeline.
+        Defaults to 'release'.
+      trigger: controls which events can trigger the pipeline execution.
+        Defaults to tag events for tags with a 'v' prefix.
+
+    Returns:
+      List of Drone pipelines.
+    """
     environment = {
         "EDITION": "enterprise2",
     }
@@ -477,6 +516,12 @@ def publish_artifacts_pipelines(mode):
     )]
 
 def publish_packages_pipeline():
+    """Generates pipelines used for publishing packages for both OSS and enterprise.
+
+    Returns:
+      List of Drone pipelines. One for each of OSS and enterprise packages.
+    """
+
     trigger = {
         "event": ["promote"],
         "target": ["public"],

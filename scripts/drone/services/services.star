@@ -1,3 +1,7 @@
+"""
+This module has functions for Drone services to be used in pipelines.
+"""
+
 def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},

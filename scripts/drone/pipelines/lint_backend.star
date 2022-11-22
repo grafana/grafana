@@ -1,3 +1,7 @@
+"""
+This module returns the pipeline used for linting backend code.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
@@ -12,6 +16,15 @@ load(
 )
 
 def lint_backend_pipeline(trigger, ver_mode):
+    """Generates the pipelines used linting backend code.
+
+    Args:
+      trigger: controls which events can trigger the pipeline execution.
+      ver_mode: used in the naming of the pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
     environment = {"EDITION": "oss"}
     wire_step = wire_install_step()
     wire_step.update({"depends_on": []})

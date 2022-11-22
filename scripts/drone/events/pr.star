@@ -1,3 +1,8 @@
+"""
+This module returns all pipelines used in the event of a pull request.
+It also includes a function generating a PR trigger from a list of included and excluded paths.
+"""
+
 load(
     "scripts/drone/pipelines/test_frontend.star",
     "test_frontend",
@@ -69,6 +74,20 @@ def pr_pipelines(edition):
     ]
 
 def get_pr_trigger(include_paths = None, exclude_paths = None):
+    """Generates a trigger filter from the lists of included and excluded path patterns.
+
+    This function is primarily intended to generate a trigger for code changes
+    as the patterns 'docs/**' and '*.md' are always excluded.
+
+    Args:
+      include_paths: a list of path patterns using the same syntax as gitignore.
+        Changes affecting files matching these path patterns trigger the pipeline.
+      exclude_paths: a list of path patterns using the same syntax as gitignore.
+        Changes affecting files matching these path patterns do not trigger the pipeline.
+
+    Returns:
+      Drone trigger.
+    """
     paths_ex = ["docs/**", "*.md"]
     paths_in = []
     if include_paths:
