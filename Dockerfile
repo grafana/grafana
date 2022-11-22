@@ -82,7 +82,7 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
   chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=go-builder /grafana/bin/*/grafana-server /grafana/bin/*/grafana-cli ./bin/
+COPY --from=go-builder /grafana/bin/*/grafana-server /grafana/bin/*/grafana-cli /grafana/bin/*/grafana ./bin/
 COPY --from=js-builder /grafana/public ./public
 COPY --from=js-builder /grafana/tools ./tools
 
