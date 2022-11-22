@@ -282,8 +282,12 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 
+	PluginsCDNMode     PluginsCDNMode
+	PluginsCDNBasePath string
+
 	// Panels
-	DisableSanitizeHtml bool
+	DisableSanitizeHtml   bool
+	EnterpriseLicensePath string
 
 	// Metrics
 	MetricsEndpointEnabled           bool

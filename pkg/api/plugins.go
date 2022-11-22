@@ -301,6 +301,8 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
+	// TODO: plugins cdn: add back error codes
+
 	absPluginDir, err := filepath.Abs(plugin.PluginDir)
 	if err != nil {
 		// c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
@@ -341,10 +343,23 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 	}, nil
 }
 
-const cdnBasePath = "https://storage.googleapis.com/plugin-cdn"
+// getCDNPluginAssetRemoteURL takes a plugin and an asset file path and returns the URL for the asset on the CDN
+// configured in hs.Cfg.PluginsCDNBasePath.
+func (hs *HTTPServer) getCDNPluginAssetRemoteURL(plugin plugins.PluginDTO, assetPath string) string {
+	// E.g: https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/MANIFEST.txt
+	return fmt.Sprintf("%s/%s/%s/%s", hs.Cfg.PluginsCDNBasePath, plugin.ID, plugin.Info.Version, assetPath)
+}
 
-func (hs *HTTPServer) getCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
-	remoteURL := fmt.Sprintf("%s/%s/%s/%s", cdnBasePath, plugin.ID, plugin.Info.Version, path)
+// redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
+func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+	remoteURL := hs.getCDNPluginAssetRemoteURL(plugin, assetPath)
+	hs.log.Debug("redirected asset", "url", remoteURL)
+	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
+}
+
+// proxyCDNPluginAsset downloads the specified asset file in-memory from the plugins CDN and returns it as a pluginAsset.
+func (hs *HTTPServer) proxyCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
+	remoteURL := hs.getCDNPluginAssetRemoteURL(plugin, path)
 	req, err := http.NewRequestWithContext(c.Req.Context(), http.MethodGet, remoteURL, nil)
 	if err != nil {
 		return pluginAsset{}, fmt.Errorf("get %s: %w", remoteURL, err)
@@ -353,12 +368,16 @@ func (hs *HTTPServer) getCDNPluginAsset(c *models.ReqContext, plugin plugins.Plu
 	if err != nil {
 		return pluginAsset{}, fmt.Errorf("do requets %s: %w", remoteURL, err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			hs.log.Warn("failed to close response body", "err", err)
+		}
+	}()
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return pluginAsset{}, fmt.Errorf("readall: %w", err)
 	}
-	hs.log.Info("remote downloaded", "url", remoteURL)
+	hs.log.Debug("remote downloaded", "url", remoteURL)
 	return pluginAsset{
 		readSeeker: bytes.NewReader(b),
 		modTime:    time.Now(),
@@ -382,10 +401,6 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
-	cdnPlugins := map[string]struct{}{}
-	for _, k := range strings.Split(os.Getenv("POC_CDN_PROXY_PLUGINS"), ",") {
-		cdnPlugins[k] = struct{}{}
-	}
 
 	// prepend slash for cleaning relative paths
 	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
@@ -401,20 +416,26 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 			"is not included in the plugin signature", "file", requestedFile)
 	}
 
-	// TODO: Plugins CDN: unhardcode
-	_, useCDN := cdnPlugins[pluginID]
-	useRedirect := os.Getenv("POC_CDN_PROXY_USE_REDIRECT") == "true"
+	useCDN := hs.Cfg.PluginSettings[pluginID]["use_cdn"] != ""
+	if useCDN && hs.Cfg.PluginsCDNMode == setting.PluginsCDNModeRedirect {
+		// Send a redirect to the client
+		hs.redirectCDNPluginAsset(c, plugin, rel)
+		return
+	}
+
+	// Make sure the plugins cdn mode is valid (either redirect or reverse proxy)
+	if hs.Cfg.PluginsCDNMode != setting.PluginsCDNModeReverveProxy {
+		c.JsonApiErr(500, "invalid plugins cdn mode specified in settings", nil)
+		return
+	}
+
+	// Send the actual file to the client
 	var asset pluginAsset
 	if useCDN {
-		if useRedirect {
-			remoteURL := fmt.Sprintf("%s/%s/%s/%s", cdnBasePath, plugin.ID, plugin.Info.Version, rel)
-			hs.log.Info("redirected asset", "url", remoteURL)
-			http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
-			return
-		}
-		hs.log.Info("loaded from cdn", "plugin", plugin.ID, "rel", rel)
-		asset, err = hs.getCDNPluginAsset(c, plugin, rel)
+		// In-memory proxy from CDN
+		asset, err = hs.proxyCDNPluginAsset(c, plugin, rel)
 	} else {
+		// Local filesystem
 		asset, err = hs.getLocalPluginAssets(c, plugin, rel)
 	}
 	if err != nil {
