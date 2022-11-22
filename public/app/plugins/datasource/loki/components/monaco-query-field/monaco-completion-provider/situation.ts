@@ -20,11 +20,9 @@ import {
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
-  LabelParser,
-  JsonExpressionParser,
 } from '@grafana/lezer-logql';
 
-import { getLogQueryFromMetricsQuery, getParser } from '../../../queryUtils';
+import { getLogQueryFromMetricsQuery, getParserFromQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -456,7 +454,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
     return null;
   }
 
-  const parser = getParser(text);
+  const parser = getParserFromQuery(text);
 
   return {
     type: 'AFTER_SELECTOR',

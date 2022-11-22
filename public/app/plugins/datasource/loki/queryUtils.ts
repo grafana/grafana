@@ -158,13 +158,14 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
-export function getParser(query: string) {
+export function getParserFromQuery(query: string) {
   const tree = parser.parse(query);
   let logParser;
   tree.iterate({
-    enter: (node: SyntaxNode) => {
+    enter: (node: SyntaxNode): false | void => {
       if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
-        logParser = query.substring(node.from, node.to);
+        logParser = query.substring(node.from, node.to).trim();
+        return false;
       }
     },
   });
