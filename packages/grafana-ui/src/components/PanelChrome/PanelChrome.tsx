@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2, LoadingState, isIconName } from '@grafana/data';
+import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
-import { IconButton } from '../IconButton/IconButton';
+import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
 /**
@@ -15,7 +15,9 @@ import { PopoverContent, Tooltip } from '../Tooltip';
  */
 export interface PanelChromeInfoState {
   icon: IconName;
+  label?: string | ReactNode;
   tooltip?: PopoverContent;
+  variant?: IconButtonVariant;
   onClick?: () => void;
 }
 
@@ -30,10 +32,11 @@ export interface PanelChromeProps {
   title?: string;
   titleItems?: PanelChromeInfoState[];
   menu?: React.ReactElement;
-  dragClass?: string;
+  /** dragClass, hoverHeader, loadingState, and states not yet implemented */
+  // dragClass?: string;
   hoverHeader?: boolean;
-  loadingState?: LoadingState;
-  states?: ReactNode[];
+  // loadingState?: LoadingState;
+  // states?: ReactNode[];
   /** @deprecated in favor of prop states
    * which will serve the same purpose
    * of showing the panel state in the top right corner
@@ -58,10 +61,10 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   title = '',
   titleItems = [],
   menu,
-  dragClass,
+  // dragClass,
   hoverHeader = false,
-  loadingState,
-  states = [],
+  // loadingState,
+  // states = [],
   leftItems = [],
 }) => {
   const theme = useTheme2();
@@ -205,7 +208,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       padding: `0 ${theme.spacing(padding)}`,
-      // todo see if we can just have headerHeight calc here
     }),
     title: css({
       textOverflow: 'ellipsis',
@@ -215,8 +217,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     items: css({
       display: 'flex',
-      // todo arrange when items take up more space than section is allowed to
-      // overflow: 'overlay',
     }),
     item: css({
       display: 'flex',

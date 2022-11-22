@@ -100,8 +100,8 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
   expect(screen.getByTestId('menu-icon')).not.toBeVisible();
 });
 
-it('renders states in the panel header if any given', () => {});
+it.skip('renders states in the panel header if any given', () => {});
 
-it('renders leftItems in the panel header if any given when no states prop is given', () => {});
+it.skip('renders leftItems in the panel header if any given when no states prop is given', () => {});
 
-it('renders states in the panel header if both leftItems and states are given', () => {});
+it.skip('renders states in the panel header if both leftItems and states are given', () => {});
