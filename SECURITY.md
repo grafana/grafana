@@ -16,4 +16,4 @@ Grafana Labs will send you a response indicating the next steps in handling your
 
 We will post a summary, remediation, and mitigation details for any patch containing security fixes on the Grafana blog. The security announcement blog posts will be tagged with the [security tag](https://grafana.com/tags/security/).
 
-You can also track announcements via the [RSS feed](https://grafana.com/tags/security/index.xml).
+You can also track security announcements via the [RSS feed](https://grafana.com/tags/security/index.xml).
