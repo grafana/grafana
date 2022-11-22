@@ -55,8 +55,8 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		// adaptToPluginDecl(corecodegen.GoTypesJenny("path to plugin", nil)), <-- instead of taking the target path in the constructor we should take it from the DeclForGen
-		// adaptToPluginDecl(corecodegen.TSTypesJenny("path to plugin", nil)), <-- instead of taking the target path in the constructor we should take it from the DeclForGen
+		// adaptToPluginDecl(corecodegen.GoTypesJenny("path to plugin", nil)), // instead of taking the target path in the constructor we should take it from the DeclForGen
+		adaptToPluginDecl(corecodegen.TSTypesJenny("public/app/plugins", nil)), // instead of taking the target path in the constructor we should take it from the DeclForGen
 	)
 
 	declParser := kindsys.NewDeclParser(rt, skipPlugins)

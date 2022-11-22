@@ -54,10 +54,10 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 				V: lin.Underlying(),
 				Meta: corekindsys.ComposableMeta{
 					CommonMeta: corekindsys.CommonMeta{
-						Name:              slot,
-						MachineName:       slot,
-						PluralName:        slot + "s",
-						PluralMachineName: slot + "s",
+						Name:              base,
+						MachineName:       path, // hack should be changed soon
+						PluralName:        base + "s",
+						PluralMachineName: base + "s",
 					},
 					CurrentVersion: lin.Latest().Version(),
 				},
@@ -65,6 +65,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 
 			decls = append(decls, &PluginDecl{
 				Path:       path,
+				Slot:       slot,
 				DeclForGen: corecodegen.DeclForGenFromLineage(kind, lin),
 				PluginMeta: p.Meta(),
 			})

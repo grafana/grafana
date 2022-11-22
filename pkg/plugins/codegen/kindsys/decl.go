@@ -8,5 +8,6 @@ import (
 type PluginDecl struct {
 	*corecodegen.DeclForGen
 	Path       string
+	Slot       string
 	PluginMeta plugindef.PluginDef
 }
