@@ -158,6 +158,20 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
+export function getParser(query: string) {
+  const tree = parser.parse(query);
+  let logParser;
+  tree.iterate({
+    enter: (node: SyntaxNode) => {
+      if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
+        logParser = query.substring(node.from, node.to);
+      }
+    },
+  });
+
+  return logParser;
+}
+
 export function isQueryPipelineErrorFiltering(query: string): boolean {
   let isQueryPipelineErrorFiltering = false;
   const tree = parser.parse(query);

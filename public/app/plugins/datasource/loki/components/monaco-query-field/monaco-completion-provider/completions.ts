@@ -144,11 +144,8 @@ async function getLabelNamesForSelectorCompletions(
   }));
 }
 
-async function getInGroupingCompletions(
-  otherLabels: Label[],
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
+async function getInGroupingCompletions(logQuery: string, dataProvider: CompletionDataProvider): Promise<Completion[]> {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
 
   return extractedLabelKeys.map((label) => ({
     type: 'LABEL_NAME',
@@ -211,12 +208,12 @@ async function getParserCompletions(
 }
 
 async function getAfterSelectorCompletions(
-  labels: Label[],
+  logQuery: string,
   afterPipe: boolean,
   parser: string | undefined,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
+  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(logQuery);
 
   const completions: Completion[] = parser
     ? []
@@ -274,8 +271,11 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-async function getAfterUnwrapCompletions(labels: Label[], dataProvider: CompletionDataProvider): Promise<Completion[]> {
-  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(labels);
+async function getAfterUnwrapCompletions(
+  logQuery: string,
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
 
   const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
     type: 'LABEL_NAME',
@@ -299,7 +299,7 @@ export async function getCompletions(
     case 'IN_RANGE':
       return DURATION_COMPLETIONS;
     case 'IN_GROUPING':
-      return getInGroupingCompletions(situation.otherLabels, dataProvider);
+      return getInGroupingCompletions(situation.logQuery, dataProvider);
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
       return getLabelNamesForSelectorCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':
@@ -310,9 +310,9 @@ export async function getCompletions(
         dataProvider
       );
     case 'AFTER_SELECTOR':
-      return getAfterSelectorCompletions(situation.labels, situation.afterPipe, situation.parser, dataProvider);
+      return getAfterSelectorCompletions(situation.logQuery, situation.afterPipe, situation.parser, dataProvider);
     case 'AFTER_UNWRAP':
-      return getAfterUnwrapCompletions(situation.otherLabels, dataProvider);
+      return getAfterUnwrapCompletions(situation.logQuery, dataProvider);
     case 'IN_AGGREGATION':
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     default:

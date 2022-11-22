@@ -42,7 +42,7 @@ describe('situation', () => {
     assertSituation('{level="info"} ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
-      labels: [{ name: 'level', value: 'info', op: '=' }],
+      logQuery: '{level="info"}',
       parser: undefined,
     });
 
@@ -55,22 +55,21 @@ describe('situation', () => {
     assertSituation('{level="info"} | json ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
-      labels: [{ name: 'level', value: 'info', op: '=' }],
-
+      logQuery: '{level="info"} | json',
       parser: 'json',
     });
 
     assertSituation('{level="info"} | json | ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
-      labels: [{ name: 'level', value: 'info', op: '=' }],
+      logQuery: '{level="info"} | json |',
       parser: 'json',
     });
 
     assertSituation('count_over_time({level="info"}^[10s])', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
-      labels: [{ name: 'level', value: 'info', op: '=' }],
+      logQuery: '{level="info"}',
       parser: undefined,
     });
 
@@ -81,14 +80,21 @@ describe('situation', () => {
     assertSituation('count_over_time({level="info"}^)', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
-      labels: [{ name: 'level', value: 'info', op: '=' }],
+      logQuery: '{level="info"}',
       parser: undefined,
     });
 
     assertSituation('{level="info"} |= "a" | logfmt ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
-      labels: [{ name: 'level', value: 'info', op: '=' }],
+      logQuery: '{level="info"} |= "a" | logfmt',
+      parser: 'logfmt',
+    });
+
+    assertSituation('sum(count_over_time({place="luna"} | logfmt |^)) by (place)', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: true,
+      logQuery: '{place="luna"}| logfmt |',
       parser: 'logfmt',
     });
   });
@@ -114,12 +120,12 @@ describe('situation', () => {
   it('identifies labels from queries', () => {
     assertSituation('sum(count_over_time({level="info"})) by (^)', {
       type: 'IN_GROUPING',
-      otherLabels: [{ name: 'level', value: 'info', op: '=' }],
+      logQuery: '{level="info"}',
     });
 
     assertSituation('sum by (^) (count_over_time({level="info"}))', {
       type: 'IN_GROUPING',
-      otherLabels: [{ name: 'level', value: 'info', op: '=' }],
+      logQuery: '{level="info"}',
     });
 
     assertSituation('{one="val1",two!="val2",three=~"val3",four!~"val4",^}', {
@@ -153,17 +159,14 @@ describe('situation', () => {
   it('identifies AFTER_UNWRAP autocomplete situations', () => {
     assertSituation('sum(count_over_time({one="val1"} | unwrap^', {
       type: 'AFTER_UNWRAP',
-      otherLabels: [{ name: 'one', value: 'val1', op: '=' }],
+      logQuery: '{one="val1"}',
     });
 
     assertSituation(
       'quantile_over_time(0.99, {cluster="ops-tools1",container="ingress-nginx"} | json | __error__ = "" | unwrap ^',
       {
         type: 'AFTER_UNWRAP',
-        otherLabels: [
-          { name: 'cluster', value: 'ops-tools1', op: '=' },
-          { name: 'container', value: 'ingress-nginx', op: '=' },
-        ],
+        logQuery: '{cluster="ops-tools1",container="ingress-nginx"}| json | __error__ = ""',
       }
     );
   });

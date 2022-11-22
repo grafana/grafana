@@ -21,7 +21,10 @@ import {
   MetricExpr,
   UnwrapExpr,
   LabelParser,
+  JsonExpressionParser,
 } from '@grafana/lezer-logql';
+
+import { getLogQueryFromMetricsQuery, getParser } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -103,7 +106,7 @@ export type Situation =
     }
   | {
       type: 'IN_GROUPING';
-      otherLabels: Label[];
+      logQuery: string;
     }
   | {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME';
@@ -118,12 +121,12 @@ export type Situation =
   | {
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
-      labels: Label[];
       parser?: string;
+      logQuery: string;
     }
   | {
       type: 'AFTER_UNWRAP';
-      otherLabels: Label[];
+      logQuery: string;
     };
 
 type Resolver = {
@@ -259,29 +262,6 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   return labels;
 }
 
-function getParser(node: SyntaxNode, text: string, afterPipe: boolean) {
-  const path: Path = afterPipe
-    ? [
-        ['lastChild', PipelineExpr],
-        ['firstChild', PipelineExpr],
-        ['lastChild', PipelineStage],
-        ['lastChild', LabelParser],
-      ]
-    : [
-        ['lastChild', PipelineExpr],
-        ['lastChild', PipelineStage],
-        ['lastChild', LabelParser],
-      ];
-
-  const parserNode = walk(node, path);
-
-  if (!parserNode) {
-    return undefined;
-  }
-
-  return text.substring(parserNode.from, parserNode.to);
-}
-
 function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
   const selectorNode = walk(node, [
     ['parent', UnwrapExpr],
@@ -293,11 +273,9 @@ function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situat
     return null;
   }
 
-  const otherLabels = getLabels(selectorNode, text);
-
   return {
     type: 'AFTER_UNWRAP',
-    otherLabels,
+    logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
 
@@ -345,11 +323,9 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  const otherLabels = getLabels(selectorNode, text);
-
   return {
     type: 'IN_GROUPING',
-    otherLabels,
+    logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
 
@@ -480,14 +456,13 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
     return null;
   }
 
-  const labels = getLabels(selectorNode, text);
-  const parser = getParser(node, text, afterPipe);
+  const parser = getParser(text);
 
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
-    labels,
     parser,
+    logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
 
