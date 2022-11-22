@@ -71,11 +71,6 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 	return orga, nil
 }
 
-// CreateOrgWithMember creates an organization with a certain name and a certain user as member.
-func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return ss.createOrg(context.Background(), name, userID, ss.engine)
-}
-
 func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
 	org, err := ss.createOrg(ctx, cmd.Name, cmd.UserId, ss.engine)
 	if err != nil {
