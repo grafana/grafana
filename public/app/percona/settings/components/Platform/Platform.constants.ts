@@ -1,2 +1,3 @@
 export const CONNECT_DELAY = 3000;
 export const CONNECT_AFTER_SETTINGS_DELAY = 1500;
+export const API_INVALID_TOKEN_ERROR_CODE = 16;

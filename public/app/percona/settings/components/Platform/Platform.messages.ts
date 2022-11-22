@@ -5,4 +5,5 @@ export const Messages = {
   pmmServerId: 'PMM Server Id',
   accessToken: 'Percona Platform Access Token',
   connect: 'Connect',
+  invalidToken: 'The token is expired, please update it',
 };
