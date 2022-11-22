@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Por defecto"
@@ -99,6 +104,15 @@
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
     },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
       "title": "Alertas"
@@ -184,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "Usuarios"
+      "title": "Usuarios",
+      "titleBeforeTopnav": ""
     },
     "help": {
       "title": "Ayuda"
@@ -227,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "Preferencias"
+      "title": "Preferencias",
+      "titleBeforeTopnav": ""
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -401,6 +417,9 @@
       "dark": "Oscuro",
       "field-name": "Tema",
       "light": "Claro"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {

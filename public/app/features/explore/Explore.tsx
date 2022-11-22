@@ -18,9 +18,10 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
+import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer, Alert } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
+import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
@@ -270,6 +271,17 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <NoData />;
   }
 
+  renderCompactUrlWarning() {
+    return (
+      <FadeIn in={true} duration={100}>
+        <Alert severity="warning" title="Compact URL Deprecation Notice" topSpacing={2}>
+          The URL that brought you here was a compact URL - this format will soon be deprecated. Please replace the URL
+          previously saved with the URL available now.
+        </Alert>
+      </FadeIn>
+    );
+  }
+
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, queryResponse, loading, showFlameGraph } = this.props;
 
@@ -382,6 +394,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       splitted,
       timeZone,
+      isFromCompactUrl,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -407,6 +420,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
+        {isFromCompactUrl ? this.renderCompactUrlWarning() : null}
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
           <div
@@ -503,6 +517,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showNodeGraph,
     showFlameGraph,
     loading,
+    isFromCompactUrl,
   } = item;
 
   return {
@@ -525,6 +540,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showFlameGraph,
     splitted: isSplit(state),
     loading,
+    isFromCompactUrl: isFromCompactUrl || false,
   };
 }
 

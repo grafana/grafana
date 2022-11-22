@@ -32,7 +32,7 @@ type Data struct {
 func postTestData() {
 	i := 0
 	for {
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(time.Second)
 		num1 := rand.Intn(10)
 		num2 := rand.Intn(10)
 		d := Data{

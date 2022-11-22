@@ -39,7 +39,7 @@ func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexJenny"
 }
 
-func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*codejen.File, error) {
+func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, error) {
 	tsf := new(ast.File)
 	for _, decl := range decls {
 		if decl.IsRaw() {

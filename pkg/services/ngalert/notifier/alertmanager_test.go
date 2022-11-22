@@ -38,7 +38,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval:                  10 * time.Second,
-			DefaultRuleEvaluationInterval: 60 * time.Second,
+			DefaultRuleEvaluationInterval: time.Minute,
 		},
 		SQLStore:         sqlStore,
 		Logger:           log.New("alertmanager-test"),
