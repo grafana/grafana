@@ -12,8 +12,10 @@ import (
 
 // checkOpts are options used to create a new GitHub check for the enterprise downstream test.
 type checkOpts struct {
-	SHA string
-	URL string
+	SHA    string
+	URL    string
+	Branch string
+	PR     int
 }
 
 func getCheckOpts(args []string) (*checkOpts, error) {
@@ -27,39 +29,6 @@ func getCheckOpts(args []string) (*checkOpts, error) {
 		return nil, cli.Exit(`missing environment variable "DRONE_BUILD_LINK"`, 1)
 	}
 
-	return &checkOpts{
-		URL: url,
-		SHA: sha,
-	}, nil
-}
-
-// EnterpriseCheckBegin creates the GitHub check and signals the beginning of the downstream build / test process
-func EnterpriseCheckBegin(c *cli.Context) error {
-	var (
-		ctx    = c.Context
-		client = git.NewGitHubClient(ctx, c.String("github-token"))
-	)
-
-	opts, err := getCheckOpts(os.Environ())
-	if err != nil {
-		return err
-	}
-
-	check, err := git.CreateEnterpriseBuildCheck(ctx, client.Checks, opts.SHA, opts.URL)
-	if err != nil {
-		return err
-	}
-
-	fmt.Fprintf(c.App.Writer, "%d", *check.ID)
-	return nil
-}
-
-type completeCheckOpts struct {
-	branch string
-	prID   int
-}
-
-func getCompleteCheckOpts(args []string) (*completeCheckOpts, error) {
 	branch, ok := env.Lookup("DRONE_SOURCE_BRANCH", args)
 	if !ok {
 		return nil, cli.Exit("Unable to retrieve build source branch", 1)
@@ -80,10 +49,33 @@ func getCompleteCheckOpts(args []string) (*completeCheckOpts, error) {
 		return nil, err
 	}
 
-	return &completeCheckOpts{
-		branch: branch,
-		prID:   pr,
+	return &checkOpts{
+		Branch: branch,
+		PR:     pr,
+		SHA:    sha,
+		URL:    url,
 	}, nil
+}
+
+// EnterpriseCheckBegin creates the GitHub check and signals the beginning of the downstream build / test process
+func EnterpriseCheckBegin(c *cli.Context) error {
+	var (
+		ctx    = c.Context
+		client = git.NewGitHubClient(ctx, c.String("github-token"))
+	)
+
+	opts, err := getCheckOpts(os.Environ())
+	if err != nil {
+		return err
+	}
+
+	check, err := git.CreateEnterpriseStatus(ctx, client.Repositories, opts.SHA, opts.URL, "in_progress")
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(c.App.Writer, "%d", *check.ID)
+	return nil
 }
 
 func EnterpriseCheckSuccess(c *cli.Context) error {
@@ -91,18 +83,17 @@ func EnterpriseCheckSuccess(c *cli.Context) error {
 }
 
 func EnterpriseCheckFail(c *cli.Context) error {
-	return completeEnterpriseCheck(c, true)
+	return completeEnterpriseCheck(c, false)
 }
 
 func completeEnterpriseCheck(c *cli.Context, success bool) error {
 	var (
-		ctx     = c.Context
-		client  = git.NewGitHubClient(ctx, c.String("github-token"))
-		checkID = c.Int64("check-id")
+		ctx    = c.Context
+		client = git.NewGitHubClient(ctx, c.String("github-token"))
 	)
 
 	// Update the pull request labels
-	opts, err := getCompleteCheckOpts(os.Environ())
+	opts, err := getCheckOpts(os.Environ())
 	if err != nil {
 		return err
 	}
@@ -113,13 +104,13 @@ func completeEnterpriseCheck(c *cli.Context, success bool) error {
 	}
 
 	// Update the GitHub check...
-	if err := git.UpdateEnterpriseBuildCheck(ctx, client.Checks, checkID, status); err != nil {
+	if _, err := git.CreateEnterpriseStatus(ctx, client.Repositories, opts.SHA, opts.URL, status); err != nil {
 		return err
 	}
 
 	// Delete branch if needed
-	if git.PRCheckRegexp().MatchString(opts.branch) {
-		if err := git.DeleteEnterpriseBranch(ctx, client.Git, opts.branch); err != nil {
+	if git.PRCheckRegexp().MatchString(opts.Branch) {
+		if err := git.DeleteEnterpriseBranch(ctx, client.Git, opts.Branch); err != nil {
 			return nil
 		}
 	}
@@ -129,5 +120,5 @@ func completeEnterpriseCheck(c *cli.Context, success bool) error {
 		label = "enterprise-ok"
 	}
 
-	return git.AddLabelToPR(ctx, client.Issues, opts.prID, label)
+	return git.AddLabelToPR(ctx, client.Issues, opts.PR, label)
 }

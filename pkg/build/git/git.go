@@ -41,10 +41,8 @@ type CommentService interface {
 	CreateComment(ctx context.Context, owner string, repo string, number int, comment *github.IssueComment) (*github.IssueComment, *github.Response, error)
 }
 
-type ChecksService interface {
-	CreateCheckRun(ctx context.Context, owner, repo string, opts github.CreateCheckRunOptions) (*github.CheckRun, *github.Response, error)
-	GetCheckRun(ctx context.Context, owner, repo string, checkRunID int64) (*github.CheckRun, *github.Response, error)
-	UpdateCheckRun(ctx context.Context, owner, repo string, checkRunID int64, opts github.UpdateCheckRunOptions) (*github.CheckRun, *github.Response, error)
+type StatusesService interface {
+	CreateStatus(ctx context.Context, owner, repo, ref string, status *github.RepoStatus) (*github.RepoStatus, *github.Response, error)
 }
 
 // NewGitHubClient creates a new Client using the provided GitHub token if not empty.
@@ -115,12 +113,12 @@ func DeleteEnterpriseBranch(ctx context.Context, client GitService, branchName s
 	return nil
 }
 
-func CreateEnterpriseBuildCheck(ctx context.Context, client ChecksService, sha string, link string) (*github.CheckRun, error) {
-	check, _, err := client.CreateCheckRun(ctx, RepoOwner, OSSRepo, github.CreateCheckRunOptions{
-		Name:       EnterpriseCheckName,
-		HeadSHA:    sha,
-		DetailsURL: github.String(link),
-		Status:     github.String("in_progress"),
+// CreateEnterpriseStatus sets the status on a commit for the enterprise build check.
+func CreateEnterpriseStatus(ctx context.Context, client StatusesService, sha, link, status string) (*github.RepoStatus, error) {
+	check, _, err := client.CreateStatus(ctx, RepoOwner, OSSRepo, sha, &github.RepoStatus{
+		Description: github.String(EnterpriseCheckName),
+		URL:         github.String(link),
+		State:       github.String(status),
 	})
 
 	if err != nil {
@@ -128,24 +126,6 @@ func CreateEnterpriseBuildCheck(ctx context.Context, client ChecksService, sha s
 	}
 
 	return check, nil
-}
-
-func UpdateEnterpriseBuildCheck(ctx context.Context, client ChecksService, checkID int64, status string) error {
-	check, _, err := client.GetCheckRun(ctx, RepoOwner, OSSRepo, checkID)
-	if err != nil {
-		return err
-	}
-
-	if _, _, err := client.UpdateCheckRun(ctx, RepoOwner, OSSRepo, checkID, github.UpdateCheckRunOptions{
-		Name:       *check.Name,
-		DetailsURL: check.DetailsURL,
-		Status:     github.String("completed"),
-		Conclusion: github.String(status),
-	}); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func CreateEnterpriseBuildFailedComment(ctx context.Context, client CommentService, link string, prID int) error {

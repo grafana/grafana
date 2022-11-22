@@ -14,44 +14,19 @@ type TestChecksService struct {
 	CreateCheckRunError error
 }
 
-func (s *TestChecksService) CreateCheckRun(ctx context.Context, owner, repo string, opts github.CreateCheckRunOptions) (*github.CheckRun, *github.Response, error) {
+func (s *TestChecksService) CreateStatus(ctx context.Context, owner, repo, ref string, status *github.RepoStatus) (*github.RepoStatus, *github.Response, error) {
 	if s.CreateCheckRunError != nil {
 		return nil, nil, s.CreateCheckRunError
 	}
 
-	return &github.CheckRun{
-		ID:         github.Int64(1),
-		Name:       github.String(opts.Name),
-		ExternalID: opts.ExternalID,
-		DetailsURL: opts.DetailsURL,
+	return &github.RepoStatus{
+		ID:  github.Int64(1),
+		URL: status.URL,
 	}, nil, nil
 }
 
-func (s *TestChecksService) GetCheckRun(ctx context.Context, owner, repo string, id int64) (*github.CheckRun, *github.Response, error) {
-	if s.CreateCheckRunError != nil {
-		return nil, nil, s.CreateCheckRunError
-	}
-
-	return &github.CheckRun{
-		ID: github.Int64(id),
-	}, nil, nil
-}
-
-func (s *TestChecksService) UpdateCheckRun(ctx context.Context, owner, repo string, id int64, opts github.UpdateCheckRunOptions) (*github.CheckRun, *github.Response, error) {
-	if s.CreateCheckRunError != nil {
-		return nil, nil, s.CreateCheckRunError
-	}
-
-	return &github.CheckRun{
-		ID:         github.Int64(1),
-		Name:       github.String(opts.Name),
-		ExternalID: opts.ExternalID,
-		DetailsURL: opts.DetailsURL,
-	}, nil, nil
-}
-
-func TestCreateEnterpriseBuildCheck(t *testing.T) {
-	t.Run("It should create a build check", func(t *testing.T) {
+func TestCreateEnterpriseRepoStatus(t *testing.T) {
+	t.Run("It should create a repo status", func(t *testing.T) {
 		var (
 			ctx    = context.Background()
 			client = &TestChecksService{}
@@ -59,12 +34,11 @@ func TestCreateEnterpriseBuildCheck(t *testing.T) {
 			sha    = "1234"
 		)
 
-		run, err := git.CreateEnterpriseBuildCheck(ctx, client, link, sha)
+		_, err := git.CreateEnterpriseStatus(ctx, client, link, sha, "success")
 
-		require.NotNil(t, run)
 		require.NoError(t, err)
 	})
-	t.Run("It should return an error if GitHub fails to create the CheckRun", func(t *testing.T) {
+	t.Run("It should return an error if GitHub fails to create the status", func(t *testing.T) {
 		var (
 			ctx              = context.Background()
 			createCheckError = errors.New("create check run error")
@@ -75,9 +49,7 @@ func TestCreateEnterpriseBuildCheck(t *testing.T) {
 			sha  = "1234"
 		)
 
-		run, err := git.CreateEnterpriseBuildCheck(ctx, client, link, sha)
-
-		require.Nil(t, run)
+		_, err := git.CreateEnterpriseStatus(ctx, client, link, sha, "success")
 		require.ErrorIs(t, err, createCheckError)
 	})
 }
