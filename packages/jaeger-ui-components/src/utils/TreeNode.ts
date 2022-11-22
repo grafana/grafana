@@ -88,7 +88,7 @@ export default class TreeNode {
     return findPath(this, []);
   }
 
-  walk(fn: (value: string | number | undefined, node: TreeNode, depth?: number) => number | void, depth = 0) {
+  walk(fn: (value: string | number | undefined, node: TreeNode, depth?: number) => number, depth = 0) {
     const nodeStack: Array<{ node: TreeNode; depth?: number }> = [];
     let actualDepth = depth;
     nodeStack.push({ node: this, depth: actualDepth });
