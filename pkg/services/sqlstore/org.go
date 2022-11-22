@@ -86,33 +86,6 @@ func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand)
 	return nil
 }
 
-func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		org := models.Org{
-			Address1: cmd.Address1,
-			Address2: cmd.Address2,
-			City:     cmd.City,
-			ZipCode:  cmd.ZipCode,
-			State:    cmd.State,
-			Country:  cmd.Country,
-
-			Updated: time.Now(),
-		}
-
-		if _, err := sess.ID(cmd.OrgId).Update(&org); err != nil {
-			return err
-		}
-
-		sess.publishAfterCommit(&events.OrgUpdated{
-			Timestamp: org.Updated,
-			Id:        org.Id,
-			Name:      org.Name,
-		})
-
-		return nil
-	})
-}
-
 func (ss *SQLStore) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
