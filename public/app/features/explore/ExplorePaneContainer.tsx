@@ -5,6 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2, EventBus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import store from 'app/core/store';
@@ -70,7 +71,16 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 
   async componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState, orgId } = this.props;
+    const {
+      initialized,
+      exploreId,
+      initialDatasource,
+      initialQueries,
+      initialRange,
+      panelsState,
+      orgId,
+      isFromCompactUrl,
+    } = this.props;
     const width = this.el?.offsetWidth ?? 0;
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
@@ -108,6 +118,10 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         }
       }
 
+      if (isFromCompactUrl) {
+        reportInteraction('grafana_explore_compact_notice');
+      }
+
       this.props.initializeExplore(
         exploreId,
         rootDatasourceOverride || queries[0]?.datasource || initialDatasource,
@@ -115,7 +129,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         initialRange,
         width,
         this.exploreEvents,
-        panelsState
+        panelsState,
+        isFromCompactUrl
       );
     }
   }
@@ -172,6 +187,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     initialRange,
     panelsState,
     orgId: state.user.orgId,
+    isFromCompactUrl: urlState.isFromCompactUrl || false,
   };
 }
 

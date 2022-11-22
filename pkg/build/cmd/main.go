@@ -187,6 +187,18 @@ func main() {
 								&editionFlag,
 							},
 						},
+						{
+							Name:      "publish-enterprise2",
+							Usage:     "Handle Grafana Enterprise2 Docker images",
+							ArgsUsage: "[version]",
+							Action:    Enterprise2,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "dockerhub-repo",
+									Usage: "DockerHub repo to push images",
+								},
+							},
+						},
 					},
 				},
 			},

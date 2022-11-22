@@ -219,7 +219,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   }
 
   if (!Array.isArray(parsed)) {
-    return parsed;
+    const urlState = { ...parsed, isFromCompactUrl: false };
+    return urlState;
   }
 
   if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
@@ -236,7 +237,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
 
   const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, panelsState };
+  return { datasource, queries, range, panelsState, isFromCompactUrl: true };
 }
 
 export function generateKey(index = 0): string {

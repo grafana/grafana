@@ -18,3 +18,8 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
     };
   });
 };
+
+export const isCompactUrl = (url: string) => {
+  const compactExploreUrlRegex = /\/explore\?.*&(left|right)=\[(.*\,){2,}(.*){1}\]/;
+  return compactExploreUrlRegex.test(url);
+};

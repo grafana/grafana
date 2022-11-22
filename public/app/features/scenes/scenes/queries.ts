@@ -1,8 +1,11 @@
 import { TestDataQuery } from 'app/plugins/datasource/testdata/types';
 
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+import { QueryRunnerState, SceneQueryRunner } from '../querying/SceneQueryRunner';
 
-export function getQueryRunnerWithRandomWalkQuery(overrides?: Partial<TestDataQuery>) {
+export function getQueryRunnerWithRandomWalkQuery(
+  overrides?: Partial<TestDataQuery>,
+  queryRunnerOverrides?: Partial<QueryRunnerState>
+) {
   return new SceneQueryRunner({
     queries: [
       {
@@ -15,5 +18,6 @@ export function getQueryRunnerWithRandomWalkQuery(overrides?: Partial<TestDataQu
         ...overrides,
       },
     ],
+    ...queryRunnerOverrides,
   });
 }
