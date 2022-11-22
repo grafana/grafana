@@ -18,6 +18,7 @@ type Plugin struct {
 
 	PluginDir string
 	Class     Class
+	CDN       bool
 
 	// App fields
 	IncludedInAppID string
@@ -48,6 +49,7 @@ type PluginDTO struct {
 
 	PluginDir string
 	Class     Class
+	CDN       bool
 
 	// App fields
 	IncludedInAppID string
@@ -333,6 +335,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		JSONData:        p.JSONData,
 		PluginDir:       p.PluginDir,
 		Class:           p.Class,
+		CDN:             p.CDN,
 		IncludedInAppID: p.IncludedInAppID,
 		DefaultNavURL:   p.DefaultNavURL,
 		Pinned:          p.Pinned,

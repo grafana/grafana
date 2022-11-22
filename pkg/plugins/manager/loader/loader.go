@@ -47,6 +47,7 @@ type Loader struct {
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
 	log                log.Logger
+	cfg                *config.Cfg
 
 	errs map[string]*plugins.SignatureError
 }
@@ -71,6 +72,7 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
 		roleRegistry:       roleRegistry,
+		cfg:                cfg,
 	}
 }
 
@@ -118,7 +120,8 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := createPluginBase(pluginJSON, class, pluginDir)
+		useCDN := l.cfg.PluginSettings[pluginJSON.ID]["cdn"] != ""
+		plugin := createPluginBase(pluginJSON, class, pluginDir, useCDN)
 
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
@@ -315,13 +318,14 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, cdn bool) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		PluginDir: pluginDir,
 		BaseURL:   baseURL(pluginJSON, class, pluginDir),
 		Module:    module(pluginJSON, class, pluginDir),
 		Class:     class,
+		CDN:       cdn,
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
