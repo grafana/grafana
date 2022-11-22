@@ -27,7 +27,7 @@ There are three options to choose from:
 
    **Note:**
 
-   If you migrate your alert rules to Grafana Alerting using the Alerting Provisioning HTTP API, you can edit alert rules in Grafana by adding the x-disable-provenance header to the following requests:
+   If you want to be able to edit provisioned alert rules directly in the Grafana UI, create or edit your alert rules in the Alerting Provisioning HTTP API and add the x-disable-provenance header to the following requests:
 
    POST /api/v1/provisioning/alert-rules
 
