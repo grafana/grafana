@@ -224,70 +224,71 @@ func (i AdaptiveCardOpenURLActionItem) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type TeamsConfig struct {
-	*NotificationChannelConfig
-	URL          string
-	Message      string
-	Title        string
-	SectionTitle string
+type teamsSettings struct {
+	URL          string `json:"url,omitempty" yaml:"url,omitempty"`
+	Message      string `json:"message,omitempty" yaml:"message,omitempty"`
+	Title        string `json:"title,omitempty" yaml:"title,omitempty"`
+	SectionTitle string `json:"sectiontitle,omitempty" yaml:"sectiontitle,omitempty"`
 }
 
-func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
-	URL := config.Settings.Get("url").MustString()
-	if URL == "" {
-		return nil, errors.New("could not find url property in settings")
+func buildTeamsSettings(fc FactoryConfig) (teamsSettings, error) {
+	settings := teamsSettings{}
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
-	return &TeamsConfig{
-		NotificationChannelConfig: config,
-		URL:                       URL,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
-		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-		SectionTitle:              config.Settings.Get("sectiontitle").MustString(""),
-	}, nil
+	if settings.URL == "" {
+		return settings, errors.New("could not find url property in settings")
+	}
+	if settings.Message == "" {
+		settings.Message = `{{ template "teams.default.message" .}}`
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+	return settings, nil
 }
 
 type TeamsNotifier struct {
 	*Base
-	URL          string
-	Message      string
-	Title        string
-	SectionTitle string
-	tmpl         *template.Template
-	log          log.Logger
-	ns           notifications.WebhookSender
-	images       ImageStore
+	tmpl     *template.Template
+	log      log.Logger
+	ns       notifications.WebhookSender
+	images   ImageStore
+	settings teamsSettings
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *TeamsNotifier {
+func NewTeamsNotifier(fc FactoryConfig) (*TeamsNotifier, error) {
+	settings, err := buildTeamsSettings(fc)
+	if err != nil {
+		return nil, err
+	}
 	return &TeamsNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
 		}),
-		URL:          config.URL,
-		Message:      config.Message,
-		Title:        config.Title,
-		SectionTitle: config.SectionTitle,
-		log:          log.New("alerting.notifier.teams"),
-		ns:           ns,
-		images:       images,
-		tmpl:         t,
-	}
+		log:      log.New("alerting.notifier.teams"),
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
+		settings: settings,
+	}, nil
 }
 
 func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewTeamsConfig(fc.Config)
+	notifier, err := NewTeamsNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewTeamsNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return notifier, nil
 }
 
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
@@ -297,13 +298,13 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	card := NewAdaptiveCard()
 	card.AppendItem(AdaptiveCardTextBlockItem{
 		Color:  getTeamsTextColor(types.Alerts(as...)),
-		Text:   tmpl(tn.Title),
+		Text:   tmpl(tn.settings.Title),
 		Size:   TextSizeLarge,
 		Weight: TextWeightBolder,
 		Wrap:   true,
 	})
 	card.AppendItem(AdaptiveCardTextBlockItem{
-		Text: tmpl(tn.Message),
+		Text: tmpl(tn.settings.Message),
 		Wrap: true,
 	})
 
@@ -335,7 +336,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	})
 
 	msg := NewAdaptiveCardsMessage(card)
-	msg.Summary = tmpl(tn.Title)
+	msg.Summary = tmpl(tn.settings.Title)
 
 	// This check for tmplErr must happen before templating the URL
 	if tmplErr != nil {
@@ -343,10 +344,10 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		tmplErr = nil
 	}
 
-	u := tmpl(tn.URL)
+	u := tmpl(tn.settings.URL)
 	if tmplErr != nil {
-		tn.log.Warn("failed to template Teams URL", "error", tmplErr.Error(), "fallback", tn.URL)
-		u = tn.URL
+		tn.log.Warn("failed to template Teams URL", "error", tmplErr.Error(), "fallback", tn.settings.URL)
+		u = tn.settings.URL
 	}
 
 	b, err := json.Marshal(msg)
