@@ -69,7 +69,7 @@ func EnterpriseCheckBegin(c *cli.Context) error {
 		return err
 	}
 
-	check, err := git.CreateEnterpriseStatus(ctx, client.Repositories, opts.SHA, opts.URL, "in_progress")
+	check, err := git.CreateEnterpriseStatus(ctx, client.Repositories, opts.SHA, opts.URL, "pending")
 	if err != nil {
 		return err
 	}
