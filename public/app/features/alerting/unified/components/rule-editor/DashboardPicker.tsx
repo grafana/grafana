@@ -166,19 +166,21 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
             <LoadingPlaceholder text="Loading dashboards..." className={styles.loadingPlaceholder} />
           )}
 
-          <AutoSizer>
-            {({ height, width }) => (
-              <FixedSizeList
-                ref={scrollToItem}
-                itemSize={50}
-                height={height}
-                width={width}
-                itemCount={filteredDashboards.length}
-              >
-                {DashboardRow}
-              </FixedSizeList>
-            )}
-          </AutoSizer>
+          {!isDashSearchFetching && (
+            <AutoSizer>
+              {({ height, width }) => (
+                <FixedSizeList
+                  ref={scrollToItem}
+                  itemSize={50}
+                  height={height}
+                  width={width}
+                  itemCount={filteredDashboards.length}
+                >
+                  {DashboardRow}
+                </FixedSizeList>
+              )}
+            </AutoSizer>
+          )}
         </div>
 
         <div className={styles.column}>
@@ -187,13 +189,15 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
             <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
           )}
 
-          <AutoSizer>
-            {({ width, height }) => (
-              <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
-                {PanelRow}
-              </FixedSizeList>
-            )}
-          </AutoSizer>
+          {!isDashboardFetching && (
+            <AutoSizer>
+              {({ width, height }) => (
+                <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
+                  {PanelRow}
+                </FixedSizeList>
+              )}
+            </AutoSizer>
+          )}
         </div>
       </div>
       <Modal.ButtonRow>
