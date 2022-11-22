@@ -377,4 +377,15 @@ describe('getCompletions', () => {
 
     expect(completions).toHaveLength(22);
   });
+
+  test('Returns completion options when the situation is AFTER_UNWRAP', async () => {
+    const situation: Situation = { type: 'AFTER_UNWRAP', otherLabels: [] };
+    const completions = await getCompletions(situation, completionProvider);
+
+    const extractedCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
+    const functionCompletions = completions.filter((completion) => completion.type === 'FUNCTION');
+
+    expect(extractedCompletions).toHaveLength(3);
+    expect(functionCompletions).toHaveLength(3);
+  });
 });

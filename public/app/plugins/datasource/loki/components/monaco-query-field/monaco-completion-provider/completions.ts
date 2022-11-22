@@ -81,7 +81,7 @@ const UNWRAP_FUNCTION_COMPLETIONS: Completion[] = [
   },
   {
     type: 'FUNCTION',
-    label: 'duration',
+    label: 'bytes',
     documentation: 'Will convert the label value to raw bytes applying the bytes unit (e.g. 5 MiB, 3k, 1G).',
     insertText: 'bytes()',
   },
@@ -291,7 +291,6 @@ export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  console.log(situation);
   switch (situation.type) {
     case 'EMPTY':
     case 'AT_ROOT':
