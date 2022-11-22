@@ -262,7 +262,6 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
-		"grafana-auth-app":                 {SectionID: navtree.NavIDCfg},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections"},
 	}
 
