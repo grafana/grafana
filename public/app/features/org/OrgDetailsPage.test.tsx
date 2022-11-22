@@ -1,9 +1,11 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { NavModel } from '@grafana/data';
+import { ModalManager } from 'app/core/services/ModalManager';
 
 import { backendSrv } from '../../core/services/backend_srv';
 import { configureStore } from '../../store/configureStore';
@@ -14,6 +16,7 @@ import { setOrganizationName } from './state/reducers';
 
 jest.mock('app/core/core', () => {
   return {
+    ...jest.requireActual('app/core/core'),
     contextSrv: {
       hasPermission: () => true,
     },
@@ -90,5 +93,25 @@ describe('Render', () => {
         },
       })
     ).not.toThrow();
+  });
+
+  it('should show a modal when submitting', async () => {
+    new ModalManager().init();
+    setup({
+      organization: {
+        name: 'Cool org',
+        id: 1,
+      },
+      preferences: {
+        homeDashboardUID: 'home-dashboard',
+        theme: 'Default',
+        timezone: 'Default',
+        locale: '',
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(screen.getByText('Confirm preferences update')).toBeInTheDocument();
   });
 });
