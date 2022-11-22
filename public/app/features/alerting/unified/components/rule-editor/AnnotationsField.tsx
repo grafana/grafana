@@ -124,7 +124,7 @@ const AnnotationsField = () => {
               append({ key: '', value: '' });
             }}
           >
-            Add new annotation
+            Add annotation
           </Button>
           <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
             Set dashboard and panel

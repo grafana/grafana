@@ -48,7 +48,7 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 2 : 3}
       title={
-        type === RuleFormType.cloudRecording ? 'Add details for your recording rule' : 'Add details for your alert'
+        type === RuleFormType.cloudRecording ? 'Add details for your recording rule' : 'Add details for your alert rule'
       }
       description={
         type === RuleFormType.cloudRecording
