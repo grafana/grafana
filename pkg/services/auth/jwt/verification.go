@@ -136,6 +136,7 @@ func validateAdditionalClaims(expected map[string]interface{}, claims models.JWT
 	return nil
 }
 
+// Sanitize JWT base64 strings to remove paddings everywhere
 func sanitizeJWT(jwtToken string) string {
 	// JWT can be compact, JSON flatened or JSON general
 	// In every cases, parts are base64 strings without padding

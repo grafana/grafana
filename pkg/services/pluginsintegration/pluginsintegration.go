@@ -63,7 +63,7 @@ func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
-	c := client.ProvideService(pluginRegistry, pCfg)
+	c := client.ProvideService(pluginRegistry, pCfg, nil)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService)
 
 	return client.NewDecorator(c, middlewares...)
