@@ -8,23 +8,18 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/codegen/kindsys"
 )
 
 const prefix = "github.com/grafana/grafana/public/app/plugins"
 
-// PluginTreeDeclForGen is the data structure used as input for
-// [PluginTreeListJenny].
-type PluginTreeDeclForGen struct {
-	Path string
-	Tree pfs.Tree
-}
-
 // PluginTreeListJenny creates a [codejen.ManyToOne] that produces Go code
-// for loading a [pfs.TreeList] given [*PluginTreeDeclForGen] as inputs.
+// for loading a [pfs.TreeList] given [*kindsys.PluginDecl] as inputs.
 //
 // An outputFile must be provided which should be relative to your working directory.
-func PluginTreeListJenny(outputFile string) codejen.ManyToOne[*PluginTreeDeclForGen] {
+func PluginTreeListJenny() codejen.ManyToOne[*kindsys.PluginDecl] {
+	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
+
 	if filepath.IsAbs(outputFile) {
 		panic("outputFile must be relative")
 	}
@@ -42,7 +37,7 @@ func (gen *ptlJenny) JennyName() string {
 	return "PluginTreeListJenny"
 }
 
-func (gen *ptlJenny) Generate(decls ...*PluginTreeDeclForGen) (*codejen.File, error) {
+func (gen *ptlJenny) Generate(decls ...*kindsys.PluginDecl) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	vars := templateVars_plugin_registry{
 		Header: templateVars_autogen_header{
@@ -59,13 +54,11 @@ func (gen *ptlJenny) Generate(decls ...*PluginTreeDeclForGen) (*codejen.File, er
 		NoAlias                   bool
 	}
 
-	// No sub-plugin support here. If we never allow subplugins in core, that's probably fine.
-	// But still worth noting.
 	for _, decl := range decls {
-		rp := decl.Tree.RootPlugin()
+		meta := decl.PluginMeta
 		vars.Plugins = append(vars.Plugins, tpl{
-			PkgName:    sanitizePluginId(rp.Meta().Id),
-			NoAlias:    sanitizePluginId(rp.Meta().Id) != filepath.Base(decl.Path),
+			PkgName:    sanitizePluginId(meta.Id),
+			NoAlias:    sanitizePluginId(meta.Id) != filepath.Base(decl.Path),
 			ImportPath: filepath.ToSlash(filepath.Join(prefix, decl.Path)),
 			Path:       path.Join(append(strings.Split(prefix, "/")[3:], decl.Path)...),
 		})
