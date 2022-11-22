@@ -119,7 +119,7 @@ func CreateEnterpriseStatus(ctx context.Context, client StatusesService, sha, li
 	check, _, err := client.CreateStatus(ctx, RepoOwner, OSSRepo, sha, &github.RepoStatus{
 		Context:     github.String(EnterpriseCheckName),
 		Description: github.String(EnterpriseCheckDescription),
-		URL:         github.String(link),
+		TargetURL:   github.String(link),
 		State:       github.String(status),
 	})
 
