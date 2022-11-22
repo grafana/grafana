@@ -1,5 +1,10 @@
 {
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Cőpįęđ"
+    }
+  },
   "common": {
     "locale": {
       "default": "Đęƒäūľŧ"
@@ -412,6 +417,9 @@
       "dark": "Đäřĸ",
       "field-name": "Ŧĥęmę",
       "light": "Ŀįģĥŧ"
+    },
+    "view-json": {
+      "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
   },
   "shared-dashboard": {

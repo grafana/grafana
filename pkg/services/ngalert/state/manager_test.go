@@ -2170,7 +2170,7 @@ func printAllAnnotations(annos map[int64]annotations.Item) string {
 
 func TestStaleResultsHandler(t *testing.T) {
 	evaluationTime := time.Now()
-	interval := 60 * time.Second
+	interval := time.Minute
 
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, 1)

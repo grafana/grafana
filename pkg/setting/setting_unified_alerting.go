@@ -20,7 +20,7 @@ const (
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
 	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
-	alertmanagerDefaultConfigPollInterval = 60 * time.Second
+	alertmanagerDefaultConfigPollInterval = time.Minute
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -45,7 +45,7 @@ const (
 }
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
-	schedulerDefaultAdminConfigPollInterval = 60 * time.Second
+	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
