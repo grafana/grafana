@@ -3,7 +3,7 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorHeader, EditorRows, FlexItem, Space } from '@grafana/experimental';
+import { EditorHeader, EditorRows, FlexItem, Space, Stack } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
@@ -140,12 +140,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           onChange={onChangeInternal}
           onRunQuery={onRunQuery}
         />
-        <div
-          className={css`
-            display: flex;
-            gap: 6px;
-          `}
-        >
+        <Stack gap={1}>
           <Button
             aria-label={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
@@ -174,7 +169,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           >
             {labelBrowserText}
           </Button>
-        </div>
+        </Stack>
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
         {editorMode === QueryEditorMode.Builder && (
           <>
