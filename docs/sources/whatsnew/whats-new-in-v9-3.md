@@ -110,6 +110,18 @@ $ grafana-cli user-manager conflicts validate-file <filepath>
 $ grafana-cli user-manager conflicts ingest-file <filepath>
 ```
 
+## LDAP role mapping improvements
+
+If you use an LDAP directory to authenticate to Grafana but prefer to assign organizations and roles in the Grafana UI
+or via API, you can now enable a configuration option to skip user organization roles synchronization with your LDAP
+directory.
+
+Use the `skip_org_role_sync` configuration option when configuring LDAP authentication to prevent the synchronization
+between your LDAP groups and organization roles and make user roles editable from within Grafana.
+
+For more details, see the [`skip_org_role_sync` LDAP authentication configuration option]({{< relref
+"../setup-grafana/configure-security/configure-authentication/ldap/#disable-org-role-synchronization" >}}).
+
 ## Terraform - Extended support for provisioning permissions
 
 All Grafana users can now use the latest release of [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) (version 1.31.0) to provision [user and team access to service accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/#manage-users-and-teams-permissions-for-a-service-account-in-grafana). This allows full management of service accounts through Terraform - from creating a service account and allowing users to access it to assigning roles to the service account and generating service account tokens.
