@@ -3,7 +3,10 @@ const pseudoizer = require('pseudoizer');
 
 function pseudoizeJsonReplacer(key, value) {
   if (typeof value === 'string') {
-    return pseudoizer.pseudoize(value);
+    // Split string on braces. Odd indicies will be {{variables}}
+    const phraseParts = value.split(/(\{\{[^}]+}\})/g);
+    const translatedParts = phraseParts.map((str, index) => index % 2 === 0 ? pseudoizer.pseudoize(str) : str)
+    return translatedParts.join("")
   }
 
   return value;
