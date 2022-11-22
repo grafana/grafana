@@ -503,5 +503,14 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

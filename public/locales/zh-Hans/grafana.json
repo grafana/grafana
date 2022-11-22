@@ -503,5 +503,14 @@
   },
   "user-sessions": {
     "loading": "正在加载会话..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }
