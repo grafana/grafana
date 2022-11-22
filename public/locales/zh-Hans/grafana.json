@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -99,6 +104,15 @@
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
     },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
       "title": "警报"
@@ -184,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "在整个 Grafana 服务器上管理和创建用户",
-      "title": "用户"
+      "title": "用户",
+      "titleBeforeTopnav": ""
     },
     "help": {
       "title": "帮助"
@@ -227,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
-      "title": "首选项"
+      "title": "首选项",
+      "titleBeforeTopnav": ""
     },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
@@ -401,6 +417,9 @@
       "dark": "深色",
       "field-name": "主题",
       "light": "浅色"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
