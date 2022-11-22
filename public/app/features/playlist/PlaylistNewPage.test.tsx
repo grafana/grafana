@@ -1,10 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+
+import { backendSrv } from '../../core/services/backend_srv';
+import { configureStore } from '../../store/configureStore';
 
 import { PlaylistNewPage } from './PlaylistNewPage';
 import { Playlist } from './types';
@@ -21,11 +24,16 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 }));
 
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+  const store = configureStore();
   jest.clearAllMocks();
   const playlist = { name, items, interval } as unknown as Playlist;
   const backendSrvMock = jest.spyOn(backendSrv, 'post');
 
-  const { rerender } = render(<PlaylistNewPage />);
+  const { rerender } = render(
+    <Provider store={store}>
+      <PlaylistNewPage />
+    </Provider>
+  );
 
   return { playlist, rerender, backendSrvMock };
 }
