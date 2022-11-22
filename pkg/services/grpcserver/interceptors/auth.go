@@ -4,12 +4,14 @@ import (
 	"context"
 	"strings"
 
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
-	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/setting"
+
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"google.golang.org/grpc/codes"
@@ -23,22 +25,26 @@ type Authenticator interface {
 
 // authenticator can authenticate GRPC requests.
 type authenticator struct {
+	cfg            *setting.Cfg
 	contextHandler grpccontext.ContextHandler
 	logger         log.Logger
 
-	APIKeyService        apikey.Service
 	UserService          user.Service
 	AccessControlService accesscontrol.Service
+	PluginAuthService    jwt.PluginAuthService
+	OrgService           org.Service
 }
 
-func ProvideAuthenticator(apiKeyService apikey.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler) Authenticator {
+func ProvideAuthenticator(cfg *setting.Cfg, orgService org.Service, userService user.Service, accessControlService accesscontrol.Service, contextHandler grpccontext.ContextHandler, pluginAuthService jwt.PluginAuthService) Authenticator {
 	return &authenticator{
+		cfg:            cfg,
 		contextHandler: contextHandler,
 		logger:         log.New("grpc-server-authenticator"),
 
 		AccessControlService: accessControlService,
-		APIKeyService:        apiKeyService,
 		UserService:          userService,
+		PluginAuthService:    pluginAuthService,
+		OrgService:           orgService,
 	}
 }
 
@@ -79,42 +85,36 @@ func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 }
 
 func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*user.SignedInUser, error) {
-	decoded, err := apikeygenprefix.Decode(token)
+	claims, err := a.PluginAuthService.Verify(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, err := decoded.Hash()
-	if err != nil {
-		return nil, err
+	subject, ok := claims["sub"].(string)
+	if !ok || subject == "" {
+		return nil, status.Error(codes.Unauthenticated, "token missing subject claim")
 	}
 
-	apikey, err := a.APIKeyService.GetAPIKeyByHash(ctx, hash)
-	if err != nil {
-		return nil, err
+	userInfo := store.UserInfoFromString(subject)
+	if userInfo == nil {
+		if a.cfg.AnonymousEnabled {
+			return a.UserService.NewAnonymousSignedInUser(ctx)
+		}
+		return nil, status.Error(codes.Unauthenticated, "invalid subject claim")
 	}
 
-	if apikey == nil || apikey.ServiceAccountId == nil {
-		return nil, status.Error(codes.Unauthenticated, "api key does not have a service account")
-	}
-
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: userInfo.UserID, OrgID: userInfo.OrgID}
 	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err
 	}
 
 	if signedInUser == nil {
-		return nil, status.Error(codes.Unauthenticated, "service account not found")
+		return nil, status.Error(codes.Unauthenticated, "user not found")
 	}
 
-	if !signedInUser.HasRole(org.RoleAdmin) {
-		return nil, status.Error(codes.PermissionDenied, "service account does not have admin role")
-	}
-
-	// disabled service accounts are not allowed to access the API
 	if signedInUser.IsDisabled {
-		return nil, status.Error(codes.PermissionDenied, "service account is disabled")
+		return nil, status.Error(codes.PermissionDenied, "user account has been disabled")
 	}
 
 	if signedInUser.Permissions == nil {

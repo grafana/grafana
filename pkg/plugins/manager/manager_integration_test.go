@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -119,7 +121,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	verifyBundledPlugins(t, ctx, ps, reg)
 	verifyPluginStaticRoutes(t, ctx, ps, reg)
 	verifyBackendProcesses(t, reg.Plugins(ctx))
-	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg))
+	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg, &fakeJWTAuth{}))
 }
 
 func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
@@ -297,4 +299,20 @@ func verifyBackendProcesses(t *testing.T, ps []*plugins.Plugin) {
 			require.NotNil(t, pc)
 		}
 	}
+}
+
+type fakeJWTAuth struct {
+	jwt.PluginAuthService
+}
+
+func (f *fakeJWTAuth) IsEnabled() bool {
+	return true
+}
+
+func (f *fakeJWTAuth) Generate(string, string) (string, error) {
+	return "", nil
+}
+
+func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
+	return models.JWTClaims{}, nil
 }
