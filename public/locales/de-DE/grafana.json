@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Standard"
@@ -412,6 +417,9 @@
       "dark": "Dunkel",
       "field-name": "Design",
       "light": "Hell"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {

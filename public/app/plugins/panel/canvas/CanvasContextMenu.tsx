@@ -36,8 +36,11 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       panel.setActivePanel();
 
       const shouldSelectElement = event.currentTarget !== scene.div;
-      if (shouldSelectElement) {
-        scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
+      if (
+        shouldSelectElement &&
+        (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
+      ) {
+        scene.select({ targets: [event.currentTarget] });
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);

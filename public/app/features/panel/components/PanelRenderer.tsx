@@ -38,7 +38,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
+  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone);
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
@@ -117,13 +117,12 @@ function useOptionDefaults<P extends object = any, F extends object = any>(
   }, [plugin, fieldConfig, options]);
 }
 
-function useFieldOverrides(
+export function useFieldOverrides(
   plugin: PanelPlugin | undefined,
-  defaultOptions: OptionDefaults | undefined,
+  fieldConfig: FieldConfigSource | undefined,
   data: PanelData | undefined,
   timeZone: string
 ): PanelData | undefined {
-  const fieldConfig = defaultOptions?.fieldConfig;
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const theme = useTheme2();
   const structureRev = useRef(0);
