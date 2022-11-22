@@ -1,4 +1,4 @@
-package request
+package resources
 
 import (
 	"net/url"
