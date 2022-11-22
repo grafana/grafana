@@ -139,7 +139,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       name: 'Blue-Yellow-Red (Bidirectional)',
       isContinuous: true,
       isByValue: true,
-      getColors: (theme: GrafanaTheme2) => ['dark-blue', 'super-light-yellow', 'dark-blue', 'super-light-yellow', 'dark-red'],
+      getColors: (theme: GrafanaTheme2) => ['dark-red', 'super-light-yellow', 'dark-blue', 'super-light-yellow', 'dark-red'],
     }),
     new FieldColorSchemeMode({
       id: 'continuous-YlRd-BiDir',
