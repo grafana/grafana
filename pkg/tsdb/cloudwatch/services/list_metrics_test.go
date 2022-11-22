@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -47,11 +47,11 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
-		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(&request.DimensionKeysRequest{
-			ResourceRequest: &request.ResourceRequest{Region: "us-east-1"},
+		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(resources.DimensionKeysRequest{
+			ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
 			Namespace:       "AWS/EC2",
 			MetricName:      "CPUUtilization",
-			DimensionFilter: []*request.Dimension{
+			DimensionFilter: []*resources.Dimension{
 				{Name: "InstanceId", Value: ""},
 			},
 		})
@@ -80,12 +80,12 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
 		listMetricsService := NewListMetricsService(fakeMetricsClient)
 
-		resp, err := listMetricsService.GetDimensionValuesByDimensionFilter(&request.DimensionValuesRequest{
-			ResourceRequest: &request.ResourceRequest{Region: "us-east-1"},
+		resp, err := listMetricsService.GetDimensionValuesByDimensionFilter(resources.DimensionValuesRequest{
+			ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
 			Namespace:       "AWS/EC2",
 			MetricName:      "CPUUtilization",
 			DimensionKey:    "InstanceId",
-			DimensionFilter: []*request.Dimension{
+			DimensionFilter: []*resources.Dimension{
 				{Name: "InstanceId", Value: ""},
 			},
 		})

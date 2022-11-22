@@ -1,4 +1,4 @@
-package request
+package resources
 
 import (
 	"net/url"
@@ -12,13 +12,13 @@ type DimensionValuesRequest struct {
 	DimensionFilter []*Dimension
 }
 
-func GetDimensionValuesRequest(parameters url.Values) (*DimensionValuesRequest, error) {
+func GetDimensionValuesRequest(parameters url.Values) (DimensionValuesRequest, error) {
 	resourceRequest, err := getResourceRequest(parameters)
 	if err != nil {
-		return nil, err
+		return DimensionValuesRequest{}, err
 	}
 
-	request := &DimensionValuesRequest{
+	request := DimensionValuesRequest{
 		ResourceRequest: resourceRequest,
 		Namespace:       parameters.Get("namespace"),
 		MetricName:      parameters.Get("metricName"),
@@ -28,7 +28,7 @@ func GetDimensionValuesRequest(parameters url.Values) (*DimensionValuesRequest, 
 
 	dimensions, err := parseDimensionFilter(parameters.Get("dimensionFilters"))
 	if err != nil {
-		return nil, err
+		return DimensionValuesRequest{}, err
 	}
 
 	request.DimensionFilter = dimensions

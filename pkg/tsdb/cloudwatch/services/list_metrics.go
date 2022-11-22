@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
 type ListMetricsService struct {
@@ -18,7 +18,7 @@ func NewListMetricsService(metricsClient models.MetricsClientProvider) models.Li
 	return &ListMetricsService{metricsClient}
 }
 
-func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r *request.DimensionKeysRequest) ([]string, error) {
+func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.DimensionKeysRequest) ([]string, error) {
 	input := &cloudwatch.ListMetricsInput{}
 	if r.Namespace != "" {
 		input.Namespace = aws.String(r.Namespace)
@@ -63,7 +63,7 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r *request.Dimens
 	return dimensionKeys, nil
 }
 
-func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r *request.DimensionValuesRequest) ([]string, error) {
+func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.DimensionValuesRequest) ([]string, error) {
 	input := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(r.Namespace),
 		MetricName: aws.String(r.MetricName),
@@ -116,26 +116,26 @@ func (l *ListMetricsService) GetDimensionKeysByNamespace(namespace string) ([]st
 	return dimensionKeys, nil
 }
 
-func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]models.Metric, error) {
+func (l *ListMetricsService) GetMetricsByNamespace(namespace string) ([]resources.Metric, error) {
 	metrics, err := l.ListMetricsWithPageLimit(&cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
 	if err != nil {
 		return nil, err
 	}
 
-	response := []models.Metric{}
+	response := []resources.Metric{}
 	dupCheck := make(map[string]struct{})
 	for _, metric := range metrics {
 		if _, exists := dupCheck[*metric.MetricName]; exists {
 			continue
 		}
 		dupCheck[*metric.MetricName] = struct{}{}
-		response = append(response, models.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace})
+		response = append(response, resources.Metric{Name: *metric.MetricName, Namespace: *metric.Namespace})
 	}
 
 	return response, nil
 }
 
-func setDimensionFilter(input *cloudwatch.ListMetricsInput, dimensionFilter []*request.Dimension) {
+func setDimensionFilter(input *cloudwatch.ListMetricsInput, dimensionFilter []*resources.Dimension) {
 	for _, dimension := range dimensionFilter {
 		df := &cloudwatch.DimensionFilter{
 			Name: aws.String(dimension.Name),

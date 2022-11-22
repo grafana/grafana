@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -699,10 +700,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []models.Metric{}
+		res := []resources.Metric{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []models.Metric{{Name: "Test_MetricName1", Namespace: "AWS/EC2"}, {Name: "Test_MetricName2", Namespace: "AWS/EC2"}, {Name: "Test_MetricName3", Namespace: "AWS/ECS"}, {Name: "Test_MetricName10", Namespace: "AWS/ECS"}, {Name: "Test_MetricName4", Namespace: "AWS/ECS"}, {Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}, res)
+		assert.Equal(t, []resources.Metric{{Name: "Test_MetricName1", Namespace: "AWS/EC2"}, {Name: "Test_MetricName2", Namespace: "AWS/EC2"}, {Name: "Test_MetricName3", Namespace: "AWS/ECS"}, {Name: "Test_MetricName10", Namespace: "AWS/ECS"}, {Name: "Test_MetricName4", Namespace: "AWS/ECS"}, {Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}, res)
 	})
 }
 

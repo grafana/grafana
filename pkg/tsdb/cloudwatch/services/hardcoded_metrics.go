@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
 var GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]string, error) {
@@ -16,8 +16,8 @@ var GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]string, err
 	return dimensionKeys, nil
 }
 
-var GetHardCodedMetricsByNamespace = func(namespace string) ([]models.Metric, error) {
-	response := []models.Metric{}
+var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.Metric, error) {
+	response := []resources.Metric{}
 	exists := false
 	var metrics []string
 	if metrics, exists = constants.NamespaceMetricsMap[namespace]; !exists {
@@ -25,17 +25,17 @@ var GetHardCodedMetricsByNamespace = func(namespace string) ([]models.Metric, er
 	}
 
 	for _, metric := range metrics {
-		response = append(response, models.Metric{Namespace: namespace, Name: metric})
+		response = append(response, resources.Metric{Namespace: namespace, Name: metric})
 	}
 
 	return response, nil
 }
 
-var GetAllHardCodedMetrics = func() []models.Metric {
-	response := []models.Metric{}
+var GetAllHardCodedMetrics = func() []resources.Metric {
+	response := []resources.Metric{}
 	for namespace, metrics := range constants.NamespaceMetricsMap {
 		for _, metric := range metrics {
-			response = append(response, models.Metric{Namespace: namespace, Name: metric})
+			response = append(response, resources.Metric{Namespace: namespace, Name: metric})
 		}
 	}
 
