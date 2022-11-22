@@ -99,7 +99,7 @@ const AnnotationsField = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   annotationValueInput: css`
-    width: 426px;
+    width: 394px;
   `,
   textarea: css`
     height: 76px;

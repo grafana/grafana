@@ -75,7 +75,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
   };
 
   onInstantChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-    const instant = (e.target as HTMLInputElement).checked;
+    const instant = e.currentTarget.checked;
     this.query.instant = instant;
     this.setState({ instant }, this.onRunQuery);
   };
