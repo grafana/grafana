@@ -9,20 +9,19 @@ import (
 var _ loginattempt.Service = new(MockLoginAttemptService)
 
 type MockLoginAttemptService struct {
-	RecordAttemptCalled          bool
-	ValidateAttemptsCalled       bool
-	DeleteOldLoginAttemptsCalled bool
+	AddCalled      bool
+	ValidateCalled bool
 
 	ExpectedValid bool
 	ExpectedErr   error
 }
 
 func (f *MockLoginAttemptService) Add(ctx context.Context, username, IPAddress string) error {
-	f.RecordAttemptCalled = true
+	f.AddCalled = true
 	return f.ExpectedErr
 }
 
 func (f *MockLoginAttemptService) Validate(ctx context.Context, username string) (bool, error) {
-	f.ValidateAttemptsCalled = true
+	f.ValidateCalled = true
 	return f.ExpectedValid, f.ExpectedErr
 }
