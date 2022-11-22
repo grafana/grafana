@@ -75,6 +75,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		return fmt.Errorf("plugins cdn mode %q is not valid", cfg.PluginsCDNMode)
 	}
 	cfg.PluginsCDNBasePath = strings.TrimRight(pluginsCDNSection.Key("url").MustString(defaultHGPluginsCDNBaseURL), "/")
-	
+
 	return nil
 }
