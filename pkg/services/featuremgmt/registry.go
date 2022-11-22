@@ -210,9 +210,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheusStreamingJSONParser",
-			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateBeta,
+			Name:        "prometheusBufferedClient",
+			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "newDBLibrary",
@@ -356,6 +356,16 @@ var (
 			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "accessTokenExpirationCheck",
+			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "elasticsearchBackendMigration",
+			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

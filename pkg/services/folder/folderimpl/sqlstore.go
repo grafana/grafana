@@ -10,6 +10,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -122,12 +123,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			args = append(args, cmd.Folder.UID)
 		}
 
-		if cmd.NewParentUID != nil {
-			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
-			cmd.Folder.ParentUID = *cmd.NewParentUID
-			args = append(args, cmd.Folder.UID)
-		}
-
 		if len(columnsToUpdate) == 0 {
 			return folder.ErrBadRequest.Errorf("no columns to update")
 		}
@@ -179,6 +174,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
+	foldr.Url = models.GetFolderUrl(foldr.UID, models.SlugifyTitle(foldr.Title))
 	return foldr, err
 }
 

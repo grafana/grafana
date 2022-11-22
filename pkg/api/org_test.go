@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -104,7 +105,8 @@ func TestAPIEndpoint_PutCurrentOrg_LegacyAccessControl(t *testing.T) {
 	})
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
-	sc.hs.orgService = orgimpl.ProvideService(sc.db, sc.cfg)
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
 	t.Run("Admin can update current org", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
@@ -118,7 +120,8 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", sc.initCtx.UserID)
 	require.NoError(t, err)
 
-	sc.hs.orgService = orgimpl.ProvideService(sc.db, sc.cfg)
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
 
 	input := strings.NewReader(testUpdateOrgNameForm)
 	t.Run("AccessControl allows updating current org with correct permissions", func(t *testing.T) {
@@ -436,7 +439,9 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
-	sc.hs.orgService = orgimpl.ProvideService(sc.db, sc.cfg)
+	var err error
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
 	// Create two orgs, to update another one than the logged in one
 	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
@@ -456,7 +461,9 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 
 func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	sc.hs.orgService = orgimpl.ProvideService(sc.db, sc.cfg)
+	var err error
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
 	// Create two orgs, to update another one than the logged in one
 	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 

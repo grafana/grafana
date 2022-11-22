@@ -4,12 +4,11 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+import { FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
 import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 import { VariableModel } from '../variables/types';
-
-import { FormatRegistryID } from './formatRegistry';
 
 const key = 'key';
 

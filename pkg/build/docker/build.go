@@ -85,6 +85,11 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	var additionalDockerRepo string
 	var tags []string
 	var imageFileBase string
+	var dockerEnterprise2Repo string
+	if repo, ok := os.LookupEnv("DOCKER_ENTERPRISE2_REPO"); ok {
+		dockerEnterprise2Repo = repo
+	}
+
 	switch edition {
 	case config.EditionOSS:
 		dockerRepo = "grafana/grafana-image-tags"
@@ -94,6 +99,10 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 		dockerRepo = "grafana/grafana-enterprise-image-tags"
 		imageFileBase = "grafana-enterprise"
 		editionStr = "-enterprise"
+	case config.EditionEnterprise2:
+		dockerRepo = dockerEnterprise2Repo
+		imageFileBase = "grafana-enterprise2"
+		editionStr = "-enterprise2"
 	default:
 		return []string{}, fmt.Errorf("unrecognized edition %s", edition)
 	}
