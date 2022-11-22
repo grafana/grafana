@@ -396,8 +396,9 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.UserId = c.UserID
 	if cmd.FolderUid != "" {
 		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID: c.OrgID,
-			UID:   &cmd.FolderUid,
+			OrgID:        c.OrgID,
+			UID:          &cmd.FolderUid,
+			SignedInUser: c.SignedInUser,
 		})
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {

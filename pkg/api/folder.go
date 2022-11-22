@@ -68,7 +68,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -94,7 +94,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -122,6 +122,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgID = c.OrgID
+	cmd.SignedInUser = c.SignedInUser
 
 	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
