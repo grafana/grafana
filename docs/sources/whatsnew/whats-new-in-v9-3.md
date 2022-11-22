@@ -121,15 +121,6 @@ Use the [`skip_org_role_sync` LDAP authentication configuration option]({{< relr
 when configuring LDAP authentication to prevent the synchronization between your LDAP groups and organization roles
 and make user roles editable from within Grafana.
 
-## RBAC - List token's permissions
-
-We added a new endpoint to help users diagnose permissions-related issues with user and token authorization.
-[This endpoint]({{< relref "../developers/http_api/access_control/#list-your-permissions" >}}) allows users to get the
-full list of RBAC permissions associated with their token.
-
-For more details, see the related service accounts [section]({{< relref
-"../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
-
 ## Azure AD OAuth2 - New option to always fetch groups from the Graph API
 
 If you use Azure AD OAuth2 authentication and use `SecurityEnabled` groups that you don't want Azure to embed in the
@@ -138,6 +129,15 @@ authentication token, you can force Grafana to use Microsoft's Graph API instead
 Use the [`force_use_graph_api` configuration option]({{< relref
 "../setup-grafana/configure-security/configure-authentication/azuread/#force-fetching-groups-from-microsoft-graph-api" >}})
 when configuring Azure AD authentication to force Grafana to fetch
+
+## RBAC - List token's permissions
+
+We added a new endpoint to help users diagnose permissions-related issues with user and token authorization.
+[This endpoint]({{< relref "../developers/http_api/access_control/#list-your-permissions" >}}) allows users to get the
+full list of RBAC permissions associated with their token.
+
+For more details, see the related service accounts [section]({{< relref
+"../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
 
 ## Terraform - Extended support for provisioning permissions
 
