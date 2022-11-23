@@ -280,7 +280,7 @@ it('walk() should iterate over every item and compute the right deep on each nod
   const nodeB0 = new TreeNode('B0');
   const nodeB1 = new TreeNode('B1');
   const nodeC3 = new TreeNode('C3');
-  const depthMap = { A: 0, B0: 1, B1: 1, C0: 2, C1: 2, C2: 2, C3: 2, D: 3 };
+  const depthMap: { [key: string]: number } = { A: 0, B0: 1, B1: 1, C0: 2, C1: 2, C2: 2, C3: 2, D: 3 };
   nodeA.addChild(nodeB0);
   nodeA.addChild(nodeB0);
   nodeA.addChild(nodeB1);
@@ -289,5 +289,9 @@ it('walk() should iterate over every item and compute the right deep on each nod
   nodeB1.addChild('C2');
   nodeB1.addChild(nodeC3);
   nodeC3.addChild('D');
-  nodeA.walk((value, node, depth) => expect(depth).toBe(depthMap[value]));
+  nodeA.walk((value, _, depth) => {
+    if (typeof value === 'string') {
+      expect(depth).toBe(depthMap[value]);
+    }
+  });
 });

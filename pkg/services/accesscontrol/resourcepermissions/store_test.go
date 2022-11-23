@@ -486,8 +486,10 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 	var org *models.Org
 	for i := 0; i < numUsers; i++ {
 		if org == nil {
-			addedOrg, err := sql.CreateOrgWithMember("test", int64(i))
+			cmd := &models.CreateOrgCommand{Name: "test", UserId: int64(i)}
+			err := sql.CreateOrg(context.Background(), cmd)
 			require.NoError(t, err)
+			addedOrg := cmd.Result
 			org = &addedOrg
 		}
 
