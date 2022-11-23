@@ -76,10 +76,10 @@ def identify_runner_step(platform = "linux"):
         }
 
 def clone_enterprise_step(ver_mode):
-    """TODO
+    """Clone the enterprise source into the ./grafana-enterprise directory.
 
     Args:
-      ver_mode: TODO
+      ver_mode: indirectly controls which revision of grafana-enterprise is cloned.
     Returns:
       Drone step.
     """
