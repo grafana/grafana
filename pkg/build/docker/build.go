@@ -152,7 +152,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 		}
 		gcsURL := fmt.Sprintf("gs://grafana-prerelease/artifacts/docker/%s/%s", version, imageFile)
 		//nolint:gosec
-		cmd = exec.Command("gsutil", "cp", imageFile, gcsURL)
+		cmd = exec.Command("gsutil", "-q", "cp", imageFile, gcsURL)
 		cmd.Dir = buildDir
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
