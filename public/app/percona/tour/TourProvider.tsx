@@ -1,27 +1,31 @@
-import React from 'react';
 import { TourProvider } from '@reactour/tour';
-import getSteps from './steps';
-import { isPmmAdmin } from '../percona/shared/helpers/permissions';
-import { contextSrv } from '../core/services/context_srv';
-import Close from './Close';
-import Navigation from './Navigation';
-import { useAppDispatch } from 'app/store/store';
-import { setProductTourCompleted } from 'app/percona/shared/core/reducers/user/user';
-import { getTheme } from '@grafana/ui';
+import React from 'react';
+
 import { config } from '@grafana/runtime';
+import { getTheme } from '@grafana/ui';
+import usePerconaTour from 'app/percona/shared/core/hooks/tour';
+
+import Close from './components/Close';
+import Navigation from './components/Navigation';
 
 const PerconaTourProvider: React.FC = ({ children }) => {
-  const dispatch = useAppDispatch();
+  const { tour, steps, endTour } = usePerconaTour();
 
   return (
     <TourProvider
-      steps={getSteps(isPmmAdmin(contextSrv.user))}
+      steps={steps}
       components={{ Close, Navigation }}
       showBadge={false}
       badgeContent={({ totalSteps, currentStep }) => `${currentStep + 1}/${totalSteps}`}
       disableFocusLock
-      onClickClose={({ setIsOpen }) => {
-        dispatch(setProductTourCompleted(true));
+      onClickClose={({ setIsOpen, setCurrentStep }) => {
+        tour && endTour(tour);
+        setCurrentStep(0);
+        setIsOpen(false);
+      }}
+      onClickMask={({ setCurrentStep, setIsOpen }) => {
+        tour && endTour(tour);
+        setCurrentStep(0);
         setIsOpen(false);
       }}
       className="pmm-tour"

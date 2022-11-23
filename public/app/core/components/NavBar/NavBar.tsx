@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import { useTour } from '@reactour/tour';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,6 +10,7 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import usePerconaTour from 'app/percona/shared/core/hooks/tour';
 import { KioskMode, StoreState } from 'app/types';
 
 import { OrgSwitcher } from '../OrgSwitcher';
@@ -48,7 +48,7 @@ export const NavBar = React.memo(() => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
   const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>();
-  const { isOpen: isTourOpen } = useTour();
+  const { navMenuId, isOpen: isTourOpen } = usePerconaTour();
 
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
@@ -103,8 +103,7 @@ export const NavBar = React.memo(() => {
       <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
         <NavBarContext.Provider
           value={{
-            // Show MySQL item during onboarding tour
-            menuIdOpen: isTourOpen ? 'mysql' : menuIdOpen,
+            menuIdOpen: isTourOpen && navMenuId ? navMenuId : menuIdOpen,
             setMenuIdOpen: setMenuIdOpen,
           }}
         >

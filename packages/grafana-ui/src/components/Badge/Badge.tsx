@@ -4,8 +4,7 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme } from '@grafana/data';
 
-import { useTheme } from '../../themes';
-import { stylesFactory } from '../../themes';
+import { useTheme, stylesFactory } from '../../themes';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup } from '../Layout/Layout';

@@ -10,6 +10,7 @@ import { toUserDetailsModel } from './user.utils';
 export const initialUserState: PerconaUserState = {
   userId: 0,
   productTourCompleted: true,
+  alertingTourCompleted: true,
   isAuthorized: false,
   isPlatformUser: false,
 };
@@ -58,6 +59,16 @@ export const setProductTourCompleted = createAsyncThunk(
   'percona/setProductTourCompleted',
   async (productTourCompleted: boolean, thunkAPI): Promise<UserDetails> => {
     const res = await UserService.setProductTourCompleted(productTourCompleted);
+    const details = toUserDetailsModel(res);
+    thunkAPI.dispatch(setUserDetails(details));
+    return details;
+  }
+);
+
+export const setAlertingTourCompleted = createAsyncThunk(
+  'percona/setAlertingTourCompleted',
+  async (alertingTourCompleted: boolean, thunkAPI): Promise<UserDetails> => {
+    const res = await UserService.setAlertingTourCompeted(alertingTourCompleted);
     const details = toUserDetailsModel(res);
     thunkAPI.dispatch(setUserDetails(details));
     return details;

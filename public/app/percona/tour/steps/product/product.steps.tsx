@@ -1,12 +1,18 @@
-import { StepType } from '@reactour/tour';
 import React from 'react';
 
 import { Settings } from 'app/percona/settings/Settings.types';
+import { TourStep } from 'app/percona/shared/core/reducers/tour';
+import { ServiceType } from 'app/percona/shared/services/services/Services.types';
+import SidebarStep from 'app/percona/tour/components/SidebarStep';
 
-import SidebarStep from './SidebarStep';
-import { Messages } from './steps.messages';
+import { Messages } from './product.messages';
+import { getPMMDashboardsStep } from './product.utils';
 
-export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => [
+export const getProductTourSteps = (
+  isPmmAdmin = true,
+  settings?: Settings,
+  activeServices?: ServiceType[]
+): TourStep[] => [
   {
     selector: '.dropdown > [aria-label="Dashboards"]',
     content: (
@@ -17,18 +23,7 @@ export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => 
       </SidebarStep>
     ),
   },
-  {
-    selector: '#navbar-menu-portal-container [role="dialog"]',
-    content: (
-      <SidebarStep title={Messages.pmmDashboards.title}>
-        <p>{Messages.pmmDashboards.grafanaTechnology}</p>
-        <p>{Messages.pmmDashboards.observe}</p>
-        <p>{Messages.pmmDashboards.zoomIn}</p>
-      </SidebarStep>
-    ),
-    highlightedSelectors: ['.dropdown > [aria-label="MySQL"]', '#navbar-menu-portal-container [role="dialog"]'],
-    position: 'right',
-  },
+  getPMMDashboardsStep(activeServices || []),
   {
     selector: '.dropdown > [aria-label="Query Analytics (QAN)"]',
     content: (
@@ -173,4 +168,4 @@ export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => 
     : []),
 ];
 
-export default getSteps;
+export default getProductTourSteps;

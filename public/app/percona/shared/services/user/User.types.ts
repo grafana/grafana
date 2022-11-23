@@ -5,8 +5,10 @@ export interface UserStatusResponse {
 export interface UserDetailsResponse {
   user_id: number;
   product_tour_completed?: boolean;
+  alerting_tour_completed?: boolean;
 }
 
 export interface UserDetailsPutPayload {
-  product_tour_completed: boolean;
+  product_tour_completed?: boolean;
+  alerting_tour_completed?: boolean;
 }

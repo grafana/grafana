@@ -24,7 +24,7 @@ import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import PerconaTourProvider from './tour/TourProvider';
+import PerconaTourProvider from './percona/tour/TourProvider';
 
 interface AppWrapperProps {
   app: GrafanaApp;

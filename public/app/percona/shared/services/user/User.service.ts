@@ -21,4 +21,8 @@ export const UserService = {
     const payload: UserDetailsPutPayload = { product_tour_completed: completed };
     return await api.put('/v1/user', payload);
   },
+  async setAlertingTourCompeted(completed: boolean): Promise<UserDetailsResponse> {
+    const payload: UserDetailsPutPayload = { alerting_tour_completed: completed };
+    return await api.put('/v1/user', payload);
+  },
 };
