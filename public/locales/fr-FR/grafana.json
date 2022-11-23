@@ -21,7 +21,7 @@
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
       "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter\u00a0: {{panelTitle}}"
+      "title": "Inspecter : {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -51,7 +51,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu\u00a0: {{show}}"
+      "unknown": "Objet inconnu : {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -95,7 +95,7 @@
   },
   "library-panels": {
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -198,8 +198,8 @@
     },
     "global-users": {
       "subtitle": "Gérer et créer des utilisateurs sur l'ensemble du serveur Grafana",
-      "title": "Utilisateurs",
-      "titleBeforeTopnav": ""
+      "title": "",
+      "titleBeforeTopnav": "Utilisateurs"
     },
     "help": {
       "title": "Aide"
@@ -242,8 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "Préférences",
-      "titleBeforeTopnav": ""
+      "title": "",
+      "titleBeforeTopnav": "Préférences"
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -336,7 +336,7 @@
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "",
+      "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
       "duration-selected": ""
     },
     "live-option": {
@@ -344,8 +344,8 @@
       "label": ""
     },
     "off-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Désactiver l'actualisation automatique",
+      "label": "Désactivé"
     },
     "select-button": {
       "auto-refresh": ""
@@ -403,7 +403,7 @@
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur\u00a0? ",
+      "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
@@ -454,7 +454,7 @@
     },
     "calendar": {
       "apply-button": "",
-      "cancel-button": "",
+      "cancel-button": "Annuler",
       "select-time": ""
     },
     "content": {
@@ -508,7 +508,7 @@
       "email-label": "Adresse e-mail",
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
-      "username-label": "Nom d´utilisateur"
+      "username-label": "Nom d’utilisateur"
     },
     "title": "Modifier le profil"
   },
