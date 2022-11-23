@@ -206,6 +206,8 @@ func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser,
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	logger := s.log.FromContext(ctx)
+
 	dashFolder := models.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgId = cmd.OrgID
 
@@ -270,36 +272,28 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	if permissionErr != nil {
-		s.log.Error("Could not make user admin", "folder", createdFolder.Title, "user", userID, "error", permissionErr)
+		logger.Error("Could not make user admin", "folder", createdFolder.Title, "user", userID, "error", permissionErr)
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		var description string
-		if dash.Data != nil {
-			description = dash.Data.Get("description").MustString()
-		}
-
-		parentUID := folder.RootFolderUID
-		if cmd.ParentUID != "" {
-			parentUID = cmd.ParentUID
-		}
-		_, err := s.store.Create(ctx, folder.CreateFolderCommand{
+		cmd := &folder.CreateFolderCommand{
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
 			// well, but for now we take the UID from the newly created folder.
 			UID:         dash.Uid,
 			OrgID:       cmd.OrgID,
 			Title:       cmd.Title,
-			Description: description,
-			ParentUID:   parentUID,
-		})
-		if err != nil {
+			Description: cmd.Description,
+			ParentUID:   cmd.ParentUID,
+		}
+		if err := s.nestedFolderCreate(ctx, cmd); err != nil {
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
-			s.log.Error("error saving folder to nested folder store", err)
-			err = s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.UID, OrgID: cmd.OrgID, ForceDeleteRules: true})
-			if err != nil {
-				s.log.Error("error deleting folder after failed save to nested folder store", err)
+			logger.Error("error saving folder to nested folder store", err)
+			// do not shallow create error if the legacy folder delete fails
+			deleteErr := s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.UID, OrgID: cmd.OrgID, ForceDeleteRules: true, SignedInUser: user})
+			if deleteErr != nil {
+				logger.Error("error deleting folder after failed save to nested folder store", err)
 			}
 			return folder.FromDashboard(dash), err
 		}
@@ -346,6 +340,8 @@ func (s *Service) Update(ctx context.Context, user *user.SignedInUser, orgID int
 }
 
 func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
+	logger := s.log.FromContext(ctx)
+
 	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
 	_, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
@@ -496,6 +492,29 @@ func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) ([]*fol
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
 	return s.dashboardService.MakeUserAdmin(ctx, orgID, userID, folderID, setViewAndEditPermissions)
+}
+
+func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) error {
+	if cmd.ParentUID != "" {
+		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID); err != nil {
+			return err
+		}
+	}
+	_, err := s.store.Create(ctx, *cmd)
+	return err
+}
+
+func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string) error {
+	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: parentUID, OrgID: orgID})
+	if err != nil {
+		return err
+	}
+
+	if len(ancestors) == folder.MaxNestedFolderDepth {
+		return folder.ErrMaximumDepthReached
+	}
+
+	return nil
 }
 
 func toFolderError(err error) error {

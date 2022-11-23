@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -348,6 +349,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		dashboardStore:   &dashStore,
 		dashboardService: &dashboardsvc,
 		features:         features,
+		log:              log.New("test-folder-service"),
 	}
 	t.Run("create folder", func(t *testing.T) {
 		folderStore.ExpectedFolder = &folder.Folder{}
@@ -550,5 +552,44 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			require.True(t, store.DeleteCalled)
 		})
+
+		t.Run("create returns error if maximum depth reached", func(t *testing.T) {
+			// This test creates and deletes the dashboard, so needs some extra setup.
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			// dashboard store & service commands that should be called.
+			dashboardsvc.On("BuildSaveDashboardCommand",
+				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
+
+			parents := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth)
+			for i := 0; i < folder.MaxNestedFolderDepth; i++ {
+				parents = append(parents, &folder.Folder{UID: fmt.Sprintf("folder%d", i)})
+			}
+			store.ExpectedFolders = parents
+			store.ExpectedError = nil
+
+			_, err := foldersvc.Create(context.Background(), &folder.CreateFolderCommand{
+				Title:        "folder",
+				OrgID:        orgID,
+				ParentUID:    parents[len(parents)-1].UID,
+				UID:          util.GenerateShortUID(),
+				SignedInUser: usr,
+			})
+			assert.ErrorIs(t, err, folder.ErrMaximumDepthReached)
+			require.NotNil(t, actualCmd)
+		})
+
 	})
 }
