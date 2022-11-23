@@ -11,10 +11,10 @@ import { Messages } from '../AddBackupPage.messages';
 import { getStyles } from './PageSwitcher.styles';
 import { PageSwitcherProps } from './PageSwitcher.types';
 
-export const PageSwitcher = ({ editing, setModalTitle }: PageSwitcherProps) => {
+export const PageSwitcher = ({ scheduleMode, editing, setModalTitle }: PageSwitcherProps) => {
   const styles = useStyles2(getStyles);
   const [, setQueryParams] = useQueryParams();
-  const [selected, setSelected] = useState({ onDemand: true, scheduled: false });
+  const [selected, setSelected] = useState({ onDemand: !scheduleMode, scheduled: scheduleMode });
   const cardStyles = cx({
     [styles.wrapper]: true,
     [styles.disabled]: false,
@@ -54,7 +54,7 @@ export const PageSwitcher = ({ editing, setModalTitle }: PageSwitcherProps) => {
             }}
           >
             <Card.Heading> {Messages.schedule}</Card.Heading>
-            <Card.Description>Scheduled Backup on demand</Card.Description>
+            <Card.Description>Scheduled Backup</Card.Description>
           </Card>
         )}
       </Field>
