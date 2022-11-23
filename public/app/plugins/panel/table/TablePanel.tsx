@@ -125,6 +125,7 @@ export class TablePanel extends Component<Props> {
 
     const frames = data.series;
     const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
+    const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
     const count = mainFrames?.length;
     const hasFields = mainFrames[0]?.fields.length;
 
@@ -144,7 +145,7 @@ export class TablePanel extends Component<Props> {
       });
 
       const main = mainFrames[currentIndex];
-      const subData = frames.filter((f) => f.meta?.custom?.parentRowIndex === currentIndex);
+      const subData = subFrames.filter((f) => f.refId === main.refId);
       return (
         <div className={tableStyles.wrapper}>
           {this.renderTable(main, width, height - inputHeight - padding, subData)}
@@ -155,7 +156,7 @@ export class TablePanel extends Component<Props> {
       );
     }
 
-    const subData = frames.filter((f) => f.meta?.custom?.parentRowIndex === 0);
+    const subData = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
     return this.renderTable(data.series[0], width, height, subData);
   }
 }
