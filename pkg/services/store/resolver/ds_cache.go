@@ -122,9 +122,12 @@ func (c *dsCache) getDS(ctx context.Context, uid string) (*dsVal, error) {
 		}
 	}
 
-	orgID := appcontext.MustUser(ctx).OrgID
+	usr, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, nil // no user
+	}
 
-	v, ok := c.cache[orgID]
+	v, ok := c.cache[usr.OrgID]
 	if !ok {
 		return nil, nil // org not found
 	}

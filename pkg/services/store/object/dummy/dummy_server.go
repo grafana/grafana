@@ -399,8 +399,9 @@ func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRe
 // This sets the TenantId on the request GRN
 func getFullGRN(ctx context.Context, grn *object.GRN) *object.GRN {
 	if grn.TenantId == 0 {
-		modifier := appcontext.MustUser(ctx)
-		grn.TenantId = modifier.OrgID
+		if modifier, err := appcontext.User(ctx); err == nil {
+			grn.TenantId = modifier.OrgID
+		}
 	}
 	return grn
 }
