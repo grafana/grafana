@@ -34,7 +34,7 @@ type Service struct {
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
 	searchService    *search.SearchService
-	features         *featuremgmt.FeatureManager
+	features         featuremgmt.FeatureToggles
 	permissions      accesscontrol.FolderPermissionsService
 	accessControl    accesscontrol.AccessControl
 
@@ -49,7 +49,7 @@ func ProvideService(
 	dashboardService dashboards.DashboardService,
 	dashboardStore dashboards.Store,
 	db db.DB, // DB for the (new) nested folder store
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	searchService *search.SearchService,
 ) folder.Service {
