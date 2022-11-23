@@ -760,6 +760,10 @@ Text used as placeholder text on login page for password input.
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
 
+### default_language
+
+Set the default UI language. Must be a supported IETF language tag, such as en-US
+
 ### home_page
 
 Path to a custom home page. Users are only redirected to this if the default home dashboard is used. It should match a frontend route and contain a leading slash.

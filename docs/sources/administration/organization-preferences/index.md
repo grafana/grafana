@@ -101,7 +101,7 @@ Here is an example of the light theme.
 
 ### Change server UI theme
 
-Grafana server administrators can change the Grafana UI theme for all users on the server by setting the [default_theme]({{< relref "../../setup-grafana/configure-grafana/#default-theme" >}}) option in the Grafana configuration file.
+Grafana server administrators can change the default Grafana UI theme for all users on the server by setting the [default_theme]({{< relref "../../setup-grafana/configure-grafana/#default-theme" >}}) option in the Grafana configuration file.
 
 To see what the current settings are, refer to [View server settings]({{< relref "../stats-and-license#view-server-settings" >}}).
 
@@ -236,4 +236,37 @@ You can choose your own personal home dashboard. This setting overrides all home
 1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
 1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
 1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
+1. Click **Save**.
+
+## Change Grafana language
+
+### Change server language
+
+Grafana server administrators can change the default Grafana UI language for all users on the server by setting the [default_language]({{< relref "../../setup-grafana/configure-grafana/#default-language" >}}) option in the Grafana configuration file.
+
+### Change organization language
+
+Organization administrators can change the language for all users in an organization.
+
+1. Hover your cursor over the **Configuration** (gear) icon.
+1. Click **Preferences**.
+1. In the Preferences section, select the **Language**.
+1. Click **Save**.
+
+### Change team language
+
+Organization and team administrators can change the language for all users in a team.
+
+1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
+1. Click **Teams**. Grafana displays the team list.
+1. Click on the team that you want to change the language for and then navigate to the **Settings** tab.
+1. In the Preferences section, select the **Language**.
+1. Click **Save**.
+
+### Change your personal language
+
+You can change the language for your user account. This setting overrides language settings at higher levels.
+
+1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
+1. In the Preferences section, select the **language**.
 1. Click **Save**.
