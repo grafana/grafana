@@ -42,7 +42,7 @@ export function getQueryWithDefaults(query: LokiQuery): LokiQuery {
   }
 
   if (query.expr == null) {
-    result = { ...result, expr: '{} |= ``' };
+    result = { ...result, expr: '' };
   }
 
   if (query.queryType == null) {
