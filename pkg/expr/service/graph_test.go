@@ -1,4 +1,4 @@
-package expr
+package service
 
 import (
 	"encoding/json"
@@ -6,23 +6,24 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func TestServicebuildPipeLine(t *testing.T) {
 	var tests = []struct {
 		name              string
-		req               *Request
+		req               *expr.Request
 		expectedOrder     []string
 		expectErrContains string
 	}{
 		{
 			name: "simple: a requires b",
-			req: &Request{
-				Queries: []Query{
+			req: &expr.Request{
+				Queries: []expr.Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "B",
 							"reducer": "mean",
@@ -34,7 +35,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
-						TimeRange: AbsoluteTimeRange{},
+						TimeRange: expr.AbsoluteTimeRange{},
 					},
 				},
 			},
@@ -42,11 +43,11 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 		{
 			name: "cycle will error",
-			req: &Request{
-				Queries: []Query{
+			req: &expr.Request{
+				Queries: []expr.Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
@@ -54,7 +55,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:      "B",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -66,11 +67,11 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 		{
 			name: "self reference will error",
-			req: &Request{
-				Queries: []Query{
+			req: &expr.Request{
+				Queries: []expr.Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -82,11 +83,11 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 		{
 			name: "missing dependency will error",
-			req: &Request{
-				Queries: []Query{
+			req: &expr.Request{
+				Queries: []expr.Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
@@ -98,11 +99,11 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 		{
 			name: "classic can not take input from another expression",
-			req: &Request{
-				Queries: []Query{
+			req: &expr.Request{
+				Queries: []expr.Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -133,7 +134,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:      "B",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "C",
 							"reducer": "mean",
@@ -145,7 +146,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
-						TimeRange: AbsoluteTimeRange{},
+						TimeRange: expr.AbsoluteTimeRange{},
 					},
 				},
 			},
@@ -153,11 +154,11 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 		{
 			name: "classic can not output to another expression",
-			req: &Request{
-				Queries: []Query{
+			req: &expr.Request{
+				Queries: []expr.Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -188,7 +189,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:      "B",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "A",
 							"reducer": "mean",
@@ -200,7 +201,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
-						TimeRange: AbsoluteTimeRange{},
+						TimeRange: expr.AbsoluteTimeRange{},
 					},
 				},
 			},
@@ -208,11 +209,11 @@ func TestServicebuildPipeLine(t *testing.T) {
 		},
 		{
 			name: "Queries with new datasource ref object",
-			req: &Request{
-				Queries: []Query{
+			req: &expr.Request{
+				Queries: []expr.Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: expr.DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "B",
 							"reducer": "mean",
@@ -224,7 +225,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
-						TimeRange: AbsoluteTimeRange{},
+						TimeRange: expr.AbsoluteTimeRange{},
 					},
 				},
 			},

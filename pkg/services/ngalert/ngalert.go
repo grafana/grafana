@@ -49,7 +49,7 @@ func ProvideService(
 	routeRegister routing.RouteRegister,
 	sqlStore db.DB,
 	kvStore kvstore.KVStore,
-	expressionService *expr.Service,
+	expressionService expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service,
 	secretsService secrets.Service,
@@ -107,7 +107,7 @@ type AlertNG struct {
 	RouteRegister       routing.RouteRegister
 	SQLStore            db.DB
 	KVStore             kvstore.KVStore
-	ExpressionService   *expr.Service
+	ExpressionService   expr.Service
 	DataProxy           *datasourceproxy.DataSourceProxyService
 	QuotaService        quota.Service
 	SecretsService      secrets.Service

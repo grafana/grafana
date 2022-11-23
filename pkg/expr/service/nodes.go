@@ -1,4 +1,4 @@
-package expr
+package service
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,19 +23,6 @@ var (
 	logger = log.New("expr")
 )
 
-type QueryError struct {
-	RefID string
-	Err   error
-}
-
-func (e QueryError) Error() string {
-	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
-}
-
-func (e QueryError) Unwrap() error {
-	return e.Err
-}
-
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
@@ -45,7 +33,7 @@ type rawNode struct {
 	RefID      string `json:"refId"`
 	Query      map[string]interface{}
 	QueryType  string
-	TimeRange  TimeRange
+	TimeRange  expr.TimeRange
 	DataSource *datasources.DataSource
 }
 
@@ -144,10 +132,10 @@ type DSNode struct {
 
 	orgID      int64
 	queryType  string
-	timeRange  TimeRange
+	timeRange  expr.TimeRange
 	intervalMS int64
 	maxDP      int64
-	request    Request
+	request    expr.Request
 }
 
 // NodeType returns the data pipeline node type.
@@ -155,7 +143,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *expr.Request) (*DSNode, error) {
 	if rn.TimeRange == nil {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
@@ -214,22 +202,22 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		User:                       dn.request.User,
 	}
 
-	q := []backend.DataQuery{
-		{
-			RefID:         dn.refID,
-			MaxDataPoints: dn.maxDP,
-			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-			JSON:          dn.query,
-			TimeRange:     dn.timeRange.AbsoluteTime(now),
-			QueryType:     dn.queryType,
+	req := &backend.QueryDataRequest{
+		PluginContext: pc,
+		Queries: []backend.DataQuery{
+			{
+				RefID:         dn.refID,
+				MaxDataPoints: dn.maxDP,
+				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+				JSON:          dn.query,
+				TimeRange:     dn.timeRange.AbsoluteTime(now),
+				QueryType:     dn.queryType,
+			},
 		},
+		Headers: dn.request.Headers,
 	}
 
-	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
-		PluginContext: pc,
-		Queries:       q,
-		Headers:       dn.request.Headers,
-	})
+	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
@@ -237,7 +225,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
 		if qr.Error != nil {
-			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
+			return mathexp.Results{}, expr.QueryError{RefID: refID, Err: qr.Error}
 		}
 
 		dataSource := dn.datasource.Type

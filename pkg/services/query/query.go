@@ -39,7 +39,7 @@ const (
 func ProvideService(
 	cfg *setting.Cfg,
 	dataSourceCache datasources.CacheService,
-	expressionService *expr.Service,
+	expressionService expr.Service,
 	pluginRequestValidator models.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
@@ -62,7 +62,7 @@ func ProvideService(
 type Service struct {
 	cfg                    *setting.Cfg
 	dataSourceCache        datasources.CacheService
-	expressionService      *expr.Service
+	expressionService      expr.Service
 	pluginRequestValidator models.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client

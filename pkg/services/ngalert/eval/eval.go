@@ -42,7 +42,7 @@ type ConditionEvaluator interface {
 
 type conditionEvaluator struct {
 	pipeline          expr.DataPipeline
-	expressionService *expr.Service
+	expressionService expr.Service
 	condition         models.Condition
 	evalTimeout       time.Duration
 }
@@ -82,13 +82,13 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 type evaluatorImpl struct {
 	evaluationTimeout time.Duration
 	dataSourceCache   datasources.CacheService
-	expressionService *expr.Service
+	expressionService expr.Service
 }
 
 func NewEvaluatorFactory(
 	cfg setting.UnifiedAlertingSettings,
 	datasourceCache datasources.CacheService,
-	expressionService *expr.Service) EvaluatorFactory {
+	expressionService expr.Service) EvaluatorFactory {
 	return &evaluatorImpl{
 		evaluationTimeout: cfg.EvaluationTimeout,
 		dataSourceCache:   datasourceCache,
@@ -610,8 +610,9 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if err != nil {
 		return nil, err
 	}
-	conditions := make([]string, 0, len(pipeline))
-	for _, node := range pipeline {
+	pipelineNodes := pipeline.GetPipelineNodes()
+	conditions := make([]string, 0, len(pipelineNodes))
+	for _, node := range pipelineNodes {
 		if node.RefID() == condition.Condition {
 			return &conditionEvaluator{
 				pipeline:          pipeline,

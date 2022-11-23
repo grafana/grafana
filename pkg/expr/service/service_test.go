@@ -1,4 +1,4 @@
-package expr
+package service
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,7 +35,7 @@ func TestService(t *testing.T) {
 		dataSourceService: &datafakes.FakeDataSourceService{},
 	}
 
-	queries := []Query{
+	queries := []expr.Query{
 		{
 			RefID: "A",
 			DataSource: &datasources.DataSource{
@@ -43,19 +44,19 @@ func TestService(t *testing.T) {
 				Type:  "test",
 			},
 			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
-			TimeRange: AbsoluteTimeRange{
+			TimeRange: expr.AbsoluteTimeRange{
 				From: time.Time{},
 				To:   time.Time{},
 			},
 		},
 		{
 			RefID:      "B",
-			DataSource: DataSourceModel(),
+			DataSource: expr.DataSourceModel(),
 			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
 		},
 	}
 
-	req := &Request{Queries: queries}
+	req := &expr.Request{Queries: queries}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
