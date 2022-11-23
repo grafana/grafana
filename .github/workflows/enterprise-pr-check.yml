@@ -13,7 +13,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: km/make-enterprise-test-a-check
+          ref: main
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Repository Dispatch
