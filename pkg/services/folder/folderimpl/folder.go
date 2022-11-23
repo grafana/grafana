@@ -97,7 +97,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		if ok, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, accesscontrol.EvalPermission(
 			dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.UID),
 		)); !ok {
