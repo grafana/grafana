@@ -340,6 +340,9 @@ type errorMessageCoder interface {
 
 	// Code returns the error code associated to the error.
 	Code() int
+
+	// Unwrap returns the inner error that the errorMessageCoder is wrapping.
+	Unwrap() error
 }
 
 // errorWithCode is an implementation of errorCoder.
@@ -355,6 +358,10 @@ func (err errorWithCode) Code() int {
 
 func (err errorWithCode) Message() string {
 	return err.message
+}
+
+func (err errorWithCode) Unwrap() error {
+	return err.error
 }
 
 // newErrorWithCode returns a new *errorWithCode with the specified error and code.
@@ -498,7 +505,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 	if err != nil {
 		if err, ok := err.(errorMessageCoder); ok {
-			c.JsonApiErr(err.Code(), err.Message(), err)
+			c.JsonApiErr(err.Code(), err.Message(), err.Unwrap())
 			return
 		}
 		c.JsonApiErr(500, err.Error(), err)
