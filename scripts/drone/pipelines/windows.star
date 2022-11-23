@@ -18,9 +18,10 @@ def windows(trigger, edition, ver_mode):
     """Generates the pipeline used for building Grafana on Windows.
 
     Args:
-      trigger: TODO
-      edition: TODO
-      ver_mode: TODO
+      trigger: a Drone trigger for the pipeline.
+      edition: controls whether enterprise code is included in the pipeline steps.
+      ver_mode: controls whether a pre-release or actual release pipeline is generated.
+        Also indirectly controls which version of enterprise code is used.
 
     Returns:
       Drone pipeline.
