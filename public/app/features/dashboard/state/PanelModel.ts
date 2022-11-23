@@ -237,7 +237,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     switch (this.type) {
       case 'graph':
-        if (config?.featureToggles?.autoMigrateGraphPanels) {
+        if (config.featureToggles?.autoMigrateGraphPanels || !config.angularSupportEnabled) {
           this.autoMigrateFrom = this.type;
           this.type = 'timeseries';
         }
