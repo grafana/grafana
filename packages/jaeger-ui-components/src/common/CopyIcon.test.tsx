@@ -26,7 +26,7 @@ describe('<CopyIcon />', () => {
     copyText: 'copyTextValue',
     tooltipTitle: 'tooltipTitleValue',
   };
-  let copySpy;
+  let copySpy: jest.SpyInstance;
 
   beforeAll(() => {
     copySpy = jest.spyOn(copy, 'default');
