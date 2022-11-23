@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { Icon, Spinner, Switch, useStyles2 } from '@grafana/ui';
+import { Icon, Spinner, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
 
@@ -62,8 +62,12 @@ export const ScheduledBackupsActions: FC<ScheduledBackupsActionsProps> = ({
           <span>
             <Switch value={backup.enabled} onClick={handleToggle} data-testid="toggle-scheduled-backpup" />
           </span>
+          <Tooltip content={Messages.details} placement="top">
+            <span>
+              <ExpandableRowButton row={row} />
+            </span>
+          </Tooltip>
           <MultipleActions actions={getActions} dataTestId="scheduled-backups-actions" />
-          <ExpandableRowButton row={row} />
         </>
       )}
     </div>
