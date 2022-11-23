@@ -270,4 +270,8 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagSecureSocksDatasourceProxy
+	// Enable secure socks5 proxies to be used for supported core plugins
+	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
 )

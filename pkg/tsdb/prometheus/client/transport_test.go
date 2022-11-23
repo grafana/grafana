@@ -41,4 +41,36 @@ func TestCreateTransportOptions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, len(opts.Middlewares))
 	})
+
+	t.Run("add socks proxy label if configured", func(t *testing.T) {
+		// the label should not exist normally
+		settings := backend.DataSourceInstanceSettings{
+			BasicAuthEnabled:        false,
+			BasicAuthUser:           "",
+			JSONData:                []byte(`{}`),
+			DecryptedSecureJSONData: map[string]string{},
+		}
+		opts, err := CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+		require.NoError(t, err)
+		_, ok := opts.CustomOptions["socks_proxy"]
+		require.False(t, ok)
+
+		// the label should be added if enableSocksProxy is specified at true in the json code
+		settings.JSONData = []byte(`{
+			"enableSocksProxy": true
+		}`)
+		opts, err = CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+		require.NoError(t, err)
+		_, ok = opts.CustomOptions["socks_proxy"]
+		require.True(t, ok)
+
+		// the label should not exist if specified as false in the json data
+		settings.JSONData = []byte(`{
+			"enableSocksProxy": false
+		}`)
+		opts, err = CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+		require.NoError(t, err)
+		_, ok = opts.CustomOptions["socks_proxy"]
+		require.False(t, ok)
+	})
 }

@@ -475,6 +475,8 @@ type Cfg struct {
 
 	Search SearchSettings
 
+	SecureSocksDSProxy SecureSocksDSProxySettings
+
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
@@ -1079,6 +1081,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
+	cfg.SecureSocksDSProxy = readSecureSocksDSProxySettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")

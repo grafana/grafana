@@ -367,5 +367,10 @@ var (
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "secureSocksDatasourceProxy",
+			Description: "Enable secure socks tunneling for supported core datasources",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
