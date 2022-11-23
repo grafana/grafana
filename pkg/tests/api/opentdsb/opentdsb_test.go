@@ -21,6 +21,9 @@ import (
 )
 
 func TestIntegrationOpenTSDB(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})

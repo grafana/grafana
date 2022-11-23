@@ -1,9 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { useStyles } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
@@ -13,7 +11,6 @@ export default function CloudAdminPage() {
   const navModel = useNavModel('live-cloud');
   const [cloud, setCloud] = useState<GrafanaCloudBackend[]>([]);
   const [error, setError] = useState<string>();
-  const styles = useStyles(getStyles);
 
   useEffect(() => {
     getBackendSrv()
@@ -47,10 +44,8 @@ export default function CloudAdminPage() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    row: css`
-      cursor: pointer;
-    `,
-  };
+const styles = {
+  row: css`
+    cursor: pointer;
+  `,
 };

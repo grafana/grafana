@@ -24,6 +24,7 @@ export class User implements CurrentUserInternal {
   timezone: string;
   weekStart: string;
   locale: string;
+  language: string;
   helpFlags1: number;
   hasEditPermissionInFolders: boolean;
   permissions?: UserPermission;
@@ -47,6 +48,7 @@ export class User implements CurrentUserInternal {
     this.email = '';
     this.name = '';
     this.locale = '';
+    this.language = '';
     this.weekStart = '';
     this.gravatarUrl = '';
 
@@ -69,7 +71,7 @@ export class ContextSrv {
 
   constructor() {
     if (!config.bootData) {
-      config.bootData = { user: {}, settings: {} } as any;
+      config.bootData = { user: {}, settings: {}, navTree: [] } as any;
     }
 
     this.user = new User();
@@ -83,7 +85,7 @@ export class ContextSrv {
   async fetchUserPermissions() {
     try {
       if (this.accessControlEnabled()) {
-        this.user.permissions = await getBackendSrv().get('/api/access-control/user/permissions', {
+        this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
           reloadcache: true,
         });
       }

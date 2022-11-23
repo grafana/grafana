@@ -8,6 +8,7 @@ import {
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   isValidGoDuration,
   LoadingState,
@@ -69,6 +70,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     datasourceUid?: string;
   };
   traceQuery?: {
+    timeShiftEnabled?: boolean;
     spanStartTimeShift?: string;
     spanEndTimeShift?: string;
   };
@@ -325,18 +327,25 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   traceIdQueryRequest(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): DataQueryRequest<TempoQuery> {
-    return {
+    const request = {
       ...options,
-      range: options.range && {
+      targets,
+    };
+
+    if (this.traceQuery?.timeShiftEnabled) {
+      request.range = options.range && {
         ...options.range,
         from: options.range.from.subtract(
           rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
           'milliseconds'
         ),
         to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
-      },
-      targets,
-    };
+      };
+    } else {
+      request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
+    }
+
+    return request;
   }
 
   async metadataRequest(url: string, params = {}) {

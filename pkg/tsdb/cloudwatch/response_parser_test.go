@@ -121,8 +121,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb1"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -136,8 +136,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb2"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -185,8 +185,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb1 Sum"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -200,8 +200,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb2 Average"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -248,8 +248,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -263,8 +263,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb4"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -307,8 +307,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values:     []*float64{},
 					StatusCode: aws.String("Complete"),
@@ -346,8 +346,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values:     []*float64{},
 					StatusCode: aws.String("Complete"),
@@ -432,8 +432,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),

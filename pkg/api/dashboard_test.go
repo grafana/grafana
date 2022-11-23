@@ -17,11 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashvertest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -39,7 +40,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -65,7 +66,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		SQLStore:                mockstore.NewSQLStoreMock(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
-		Coremodels:              registry.NewBase(nil),
+		Kinds:                   corekind.NewBase(nil),
 	}
 
 	tests := []struct {
@@ -149,7 +150,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Features:                featuremgmt.WithFeatures(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
-			Coremodels:              registry.NewBase(nil),
+			Kinds:                   corekind.NewBase(nil),
+			QuotaService:            quotatest.New(false, nil),
 		}
 
 		setUp := func() {
@@ -271,7 +273,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
-			Coremodels:              registry.NewBase(nil),
+			Kinds:                   corekind.NewBase(nil),
 		}
 
 		setUp := func() {
@@ -642,8 +644,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&models.Dashboard{Id: dashID, Uid: "uid", Title: "Dash", Slug: "dash", Version: 2}, nil)
 
-			mockFolder := &fakeFolderService{
-				GetFolderByUIDResult: &models.Folder{Id: 1, Uid: "folderUID", Title: "Folder"},
+			mockFolder := &foldertest.FakeService{
+				ExpectedFolder: &folder.Folder{ID: 1, UID: "folderUID", Title: "Folder"},
 			}
 
 			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
@@ -673,8 +675,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			dashboardService := dashboards.NewFakeDashboardService(t)
 
-			mockFolder := &fakeFolderService{
-				GetFolderByUIDError: errors.New("Error while searching Folder ID"),
+			mockFolder := &foldertest.FakeService{
+				ExpectedError: errors.New("Error while searching Folder ID"),
 			}
 
 			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
@@ -920,7 +922,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		dashboardStore := dashboards.NewFakeDashboardStore(t)
-		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
+		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
 
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
@@ -968,7 +970,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
-				Coremodels:                   registry.NewBase(nil),
+				Kinds:                        corekind.NewBase(nil),
 			}
 			hs.callGetDashboard(sc)
 
@@ -990,9 +992,12 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
+	var err error
 	if dashboardStore == nil {
 		sql := db.InitTestDB(t)
-		dashboardStore = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+		require.NoError(t, err)
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -1023,7 +1028,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),
-		Coremodels:       registry.NewBase(nil),
+		Kinds:            corekind.NewBase(nil),
 	}
 
 	hs.callGetDashboard(sc)
@@ -1031,7 +1036,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	require.Equal(sc.t, 200, sc.resp.Code)
 
 	dash := dtos.DashboardFullWithMeta{}
-	err := json.NewDecoder(sc.resp.Body).Decode(&dash)
+	err = json.NewDecoder(sc.resp.Body).Decode(&dash)
 	require.NoError(sc.t, err)
 
 	return dash
@@ -1077,19 +1082,17 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
-			Cfg:                 cfg,
-			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                newTestLive(t, db.InitTestDB(t)),
-			QuotaService: &quotaimpl.Service{
-				Cfg: cfg,
-			},
+			Cfg:                   cfg,
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
+			Live:                  newTestLive(t, db.InitTestDB(t)),
+			QuotaService:          quotatest.New(false, nil),
 			pluginStore:           &plugins.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
-			Coremodels:            registry.NewBase(nil),
+			Kinds:                 corekind.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1116,12 +1119,12 @@ func postValidateScenario(t *testing.T, desc string, url string, routePattern st
 			Cfg:                   cfg,
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, db.InitTestDB(t)),
-			QuotaService:          &quotaimpl.Service{Cfg: cfg},
+			QuotaService:          quotatest.New(false, nil),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              sqlmock,
 			Features:              featuremgmt.WithFeatures(),
-			Coremodels:            registry.NewBase(nil),
+			Kinds:                 corekind.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1152,13 +1155,13 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, db.InitTestDB(t)),
-			QuotaService:            &quotaimpl.Service{Cfg: cfg},
+			QuotaService:            quotatest.New(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
-			Coremodels:              registry.NewBase(nil),
+			Kinds:                   corekind.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1190,14 +1193,14 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                    newTestLive(t, db.InitTestDB(t)),
-			QuotaService:            &quotaimpl.Service{Cfg: cfg},
+			QuotaService:            quotatest.New(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
 			DashboardService:        mock,
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
-			Coremodels:              registry.NewBase(nil),
+			Kinds:                   corekind.NewBase(nil),
 		}
 
 		sc := setupScenarioContext(t, url)

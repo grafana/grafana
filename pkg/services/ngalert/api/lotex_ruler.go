@@ -205,13 +205,13 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	subTypePrefix, ok := subtypeToPrefix[subtype]
 	if !ok {
 		r.log.Debug(
-			"unable to determine prometheus datasource subtype, using default prefix",
-			"datasource", ds.Uid, "datasource_type", ds.Type, "subtype", subtype, "prefix", prefix)
+			"Unable to determine prometheus datasource subtype, using default prefix",
+			"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype, "prefix", prefix)
 		return prefix, nil
 	}
 
-	r.log.Debug("determined prometheus datasource subtype",
-		"datasource", ds.Uid, "datasource_type", ds.Type, "subtype", subtype)
+	r.log.Debug("Determined prometheus datasource subtype",
+		"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype)
 	return subTypePrefix, nil
 }
 

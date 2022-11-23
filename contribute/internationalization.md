@@ -30,7 +30,7 @@ const SearchTitle = ({ term }) => (
 
 Prefer using `<Trans />` for JSX children, and `t()` for props and other javascript usage.
 
-When translating in grafana-ui, import `<Trans />` and `t()` from `src/utils/i18n`.
+When translating in grafana-ui, use a relative path to import `<Trans />` and `t()` from `src/utils/i18n`.
 
 Note that our tooling must be able to statically analyse the code to extract the phrase, so the `i18nKey` can not be dynamic. e.g. the following will not work:
 

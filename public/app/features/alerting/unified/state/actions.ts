@@ -1,4 +1,4 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
@@ -60,6 +60,7 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
+import { getAlertInfo, safeParseDurationstr, getGroupFromRuler } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -442,10 +443,13 @@ export const saveRuleFormAction = createAsyncThunk(
       values,
       existing,
       redirectOnSave,
+      evaluateEvery,
     }: {
       values: RuleFormValues;
       existing?: RuleWithLocation;
       redirectOnSave?: string;
+      initialAlertRuleName?: string;
+      evaluateEvery: string;
     },
     thunkAPI
   ): Promise<void> =>
@@ -462,15 +466,18 @@ export const saveRuleFormAction = createAsyncThunk(
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
             }
+
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, values.dataSourceName);
             const rulerClient = getRulerClient(rulerConfig);
-            identifier = await rulerClient.saveLotexRule(values, existing);
+            identifier = await rulerClient.saveLotexRule(values, evaluateEvery, existing);
+            await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: values.dataSourceName }));
 
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
-            identifier = await rulerClient.saveGrafanaRule(values, existing);
+            identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
+            await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
           } else {
             throw new Error('Unexpected rule form type');
           }
@@ -752,8 +759,30 @@ interface UpdateNamespaceAndGroupOptions {
   groupInterval?: string;
 }
 
+export const rulesInSameGroupHaveInvalidFor = (
+  rulerRules: RulerRulesConfigDTO | null | undefined,
+  groupName: string,
+  folderName: string,
+  everyDuration: string
+) => {
+  const group = getGroupFromRuler(rulerRules, groupName, folderName);
+
+  const rulesSameGroup: RulerRuleDTO[] = group?.rules ?? [];
+
+  return rulesSameGroup.filter((rule: RulerRuleDTO) => {
+    const { forDuration } = getAlertInfo(rule, everyDuration);
+    const forNumber = safeParseDurationstr(forDuration);
+    const everyNumber = safeParseDurationstr(everyDuration);
+    return forNumber !== 0 && forNumber < everyNumber;
+  });
+};
+
 // allows renaming namespace, renaming group and changing group interval, all in one go
-export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
+export const updateLotexNamespaceAndGroupAction: AsyncThunk<
+  void,
+  UpdateNamespaceAndGroupOptions,
+  { state: StoreState }
+> = createAsyncThunk<void, UpdateNamespaceAndGroupOptions, { state: StoreState }>(
   'unifiedalerting/updateLotexNamespaceAndGroup',
   async (options: UpdateNamespaceAndGroupOptions, thunkAPI): Promise<void> => {
     return withAppEvents(
@@ -790,8 +819,29 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           ) {
             throw new Error('Nothing changed.');
           }
-
+          // validation for new groupInterval
+          if (groupInterval !== existingGroup.interval) {
+            const storeState = thunkAPI.getState();
+            const groupfoldersForSource = storeState?.unifiedAlerting.rulerRules[rulesSourceName];
+            const notValidRules = rulesInSameGroupHaveInvalidFor(
+              groupfoldersForSource?.result,
+              groupName,
+              namespaceName,
+              groupInterval ?? '1m'
+            );
+            if (notValidRules.length > 0) {
+              throw new Error(
+                `These alerts belonging to this group will have an invalid 'For' value: ${notValidRules
+                  .map((rule) => {
+                    const { alertName } = getAlertInfo(rule, groupInterval ?? '');
+                    return alertName;
+                  })
+                  .join(',')}`
+              );
+            }
+          }
           // if renaming namespace - make new copies of all groups, then delete old namespace
+
           if (newNamespaceName !== namespaceName) {
             for (const group of rulesResult[namespaceName]) {
               await setRulerRuleGroup(

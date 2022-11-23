@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
+import { DataSourceApi, DataQuery, GrafanaTheme2 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
+import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -47,47 +47,47 @@ interface OwnProps<T extends DataQuery = DataQuery> {
 
 export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
 
-const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
   const rightColumnWidth = '240px';
   const rightColumnContentWidth = '170px';
 
   /* If datasource was removed, card will have inactive color */
-  const cardColor = theme.colors.bg2;
+  const cardColor = theme.colors.background.secondary;
 
   return {
     queryCard: css`
       display: flex;
       flex-direction: column;
-      border: 1px solid ${theme.colors.border1};
-      margin: ${theme.spacing.sm} 0;
+      border: 1px solid ${theme.colors.border.weak};
+      margin: ${theme.spacing(1)} 0;
       background-color: ${cardColor};
-      border-radius: ${theme.border.radius.sm};
+      border-radius: ${theme.shape.borderRadius(1)};
       .starred {
-        color: ${theme.palette.orange};
+        color: ${theme.v1.palette.orange};
       }
     `,
     cardRow: css`
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
       border-bottom: none;
       :first-of-type {
-        border-bottom: 1px solid ${theme.colors.border1};
-        padding: ${theme.spacing.xs} ${theme.spacing.sm};
+        border-bottom: 1px solid ${theme.colors.border.weak};
+        padding: ${theme.spacing(0.5, 1)};
       }
       img {
-        height: ${theme.typography.size.base};
-        max-width: ${theme.typography.size.base};
-        margin-right: ${theme.spacing.sm};
+        height: ${theme.typography.fontSize}px;
+        max-width: ${theme.typography.fontSize}px;
+        margin-right: ${theme.spacing(1)};
       }
     `,
     datasourceContainer: css`
       display: flex;
       align-items: center;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightMedium};
     `,
     queryActionButtons: css`
       max-width: ${rightColumnContentWidth};
@@ -95,15 +95,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       justify-content: flex-end;
       font-size: ${theme.typography.size.base};
       button {
-        margin-left: ${theme.spacing.sm};
+        margin-left: ${theme.spacing(1)};
       }
     `,
     queryContainer: css`
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
       width: calc(100% - ${rightColumnWidth});
     `,
     queryRow: css`
-      border-top: 1px solid ${theme.colors.border1};
+      border-top: 1px solid ${theme.colors.border.weak};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
@@ -113,17 +113,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
     `,
     updateCommentContainer: css`
       width: calc(100% + ${rightColumnWidth});
-      margin-top: ${theme.spacing.sm};
+      margin-top: ${theme.spacing(1)};
     `,
     comment: css`
       overflow-wrap: break-word;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.regular};
-      margin-top: ${theme.spacing.xs};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightRegular};
+      margin-top: ${theme.spacing(0.5)};
     `,
     commentButtonRow: css`
       > * {
-        margin-right: ${theme.spacing.sm};
+        margin-right: ${theme.spacing(1)};
       }
     `,
     textArea: css`
@@ -135,7 +135,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       justify-content: flex-end;
       button {
         height: auto;
-        padding: ${theme.spacing.xs} ${theme.spacing.md};
+        padding: ${theme.spacing(0.5, 2)};
         line-height: 1.4;
         span {
           white-space: normal !important;
@@ -143,7 +143,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
   };
-});
+};
 
 export function RichHistoryCard(props: Props) {
   const {
@@ -171,8 +171,7 @@ export function RichHistoryCard(props: Props) {
     getQueryDsInstance();
   }, [query.datasourceUid]);
 
-  const theme = useTheme();
-  const styles = getStyles(theme, isRemoved);
+  const styles = useStyles2(getStyles);
 
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
@@ -261,6 +260,7 @@ export function RichHistoryCard(props: Props) {
   const updateComment = (
     <div className={styles.updateCommentContainer} aria-label={comment ? 'Update comment form' : 'Add comment form'}>
       <TextArea
+        onKeyDown={onKeyDown}
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={(e) => setComment(e.currentTarget.value)}
@@ -299,7 +299,7 @@ export function RichHistoryCard(props: Props) {
   );
 
   return (
-    <div className={styles.queryCard} onKeyDown={onKeyDown}>
+    <div className={styles.queryCard}>
       <div className={styles.cardRow}>
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />

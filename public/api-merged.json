@@ -5255,6 +5255,7 @@
         }
       },
       "post": {
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -5362,6 +5363,7 @@
         }
       },
       "put": {
+        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "tags": [
           "folders"
         ],
@@ -5409,7 +5411,7 @@
         }
       },
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
         "tags": [
           "folders"
         ],
@@ -11399,6 +11401,10 @@
         "replyTo": {
           "type": "string"
         },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
         },
@@ -11618,8 +11624,15 @@
       }
     },
     "CreateFolderCommand": {
+      "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
+        "parent_uid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -11705,6 +11718,10 @@
         },
         "replyTo": {
           "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
         },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
@@ -12051,6 +12068,9 @@
         "hasAcl": {
           "type": "boolean"
         },
+        "hasPublicDashboard": {
+          "type": "boolean"
+        },
         "isFolder": {
           "type": "boolean"
         },
@@ -12334,11 +12354,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -12587,7 +12610,7 @@
       "type": "string"
     },
     "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
       "type": "integer",
       "format": "int64"
     },
@@ -12605,6 +12628,9 @@
         },
         "auth_password": {
           "$ref": "#/definitions/Secret"
+        },
+        "auth_password_file": {
+          "type": "string"
         },
         "auth_secret": {
           "$ref": "#/definitions/Secret"
@@ -12962,6 +12988,10 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "parent_uid": {
+          "description": "only used if nested folders are enabled",
+          "type": "string"
         },
         "title": {
           "type": "string"
@@ -13519,6 +13549,9 @@
         "smtp_auth_password": {
           "$ref": "#/definitions/Secret"
         },
+        "smtp_auth_password_file": {
+          "type": "string"
+        },
         "smtp_auth_secret": {
           "$ref": "#/definitions/Secret"
         },
@@ -13733,6 +13766,9 @@
         "folderId": {
           "type": "integer",
           "format": "int64"
+        },
+        "folderUid": {
+          "type": "string"
         },
         "imported": {
           "type": "boolean"
@@ -14078,6 +14114,10 @@
           "type": "string"
         },
         "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schemaVersion": {
           "type": "integer",
           "format": "int64"
         },
@@ -16844,12 +16884,8 @@
       "type": "string"
     },
     "Status": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      }
+      "type": "integer",
+      "format": "int64"
     },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
@@ -17272,6 +17308,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "location": {
+          "type": "string"
         },
         "months": {
           "type": "array",
@@ -18323,7 +18362,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -18515,7 +18553,6 @@
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -18564,13 +18601,13 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -18667,6 +18704,15 @@
         }
       }
     },
+    "postSilencesOKBody": {
+      "type": "object",
+      "properties": {
+        "silenceID": {
+          "description": "silence ID",
+          "type": "string"
+        }
+      }
+    },
     "postableAlert": {
       "description": "PostableAlert postable alert",
       "type": "object",
@@ -18705,7 +18751,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -18743,6 +18788,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -19933,6 +19979,15 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
+      }
+    },
+    "receiversResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/receiver"
+        }
       }
     },
     "recordingRuleResponse": {

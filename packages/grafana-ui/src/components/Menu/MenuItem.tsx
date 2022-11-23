@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactElement, useCallback, useState, useRef, useImperativeHandle } from 'react';
+import React, { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties } from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 
@@ -40,6 +40,8 @@ export interface MenuItemProps<T = any> {
   tabIndex?: number;
   /** List of menu items for the subMenu */
   childItems?: Array<ReactElement<MenuItemProps>>;
+  /** Custom style for SubMenu */
+  customSubMenuContainerStyles?: CSSProperties;
 }
 
 /** @internal */
@@ -59,6 +61,7 @@ export const MenuItem = React.memo(
       childItems,
       role = 'menuitem',
       tabIndex = -1,
+      customSubMenuContainerStyles,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -138,6 +141,7 @@ export const MenuItem = React.memo(
             openedWithArrow={openedWithArrow}
             setOpenedWithArrow={setOpenedWithArrow}
             close={closeSubMenu}
+            customStyle={customSubMenuContainerStyles}
           />
         )}
       </ItemElement>

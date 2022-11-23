@@ -2,6 +2,7 @@ import { within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -10,11 +11,13 @@ import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/ru
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
+import { configureStore } from '../../../../store/configureStore';
 import { DashboardModel } from '../../state/DashboardModel';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
 function setup(dashboard: DashboardModel, editIndex?: number) {
+  const store = configureStore();
   const sectionNav = {
     main: { text: 'Dashboard' },
     node: {
@@ -24,9 +27,11 @@ function setup(dashboard: DashboardModel, editIndex?: number) {
 
   return render(
     <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <BrowserRouter>
-        <AnnotationsSettings sectionNav={sectionNav} dashboard={dashboard} editIndex={editIndex} />
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <AnnotationsSettings sectionNav={sectionNav} dashboard={dashboard} editIndex={editIndex} />
+        </BrowserRouter>
+      </Provider>
     </GrafanaContext.Provider>
   );
 }
@@ -101,7 +106,7 @@ describe('AnnotationsSettings', () => {
   test('it renders empty list cta if only builtIn annotation', async () => {
     setup(dashboard);
 
-    expect(screen.queryByRole('table')).toBeInTheDocument();
+    expect(screen.queryByRole('grid')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
     expect(
       screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))

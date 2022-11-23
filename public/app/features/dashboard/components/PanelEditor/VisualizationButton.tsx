@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ToolbarButton, ButtonGroup, useStyles } from '@grafana/ui';
+import { ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types';
 
 import { PanelModel } from '../../state';
@@ -15,8 +14,7 @@ type Props = {
   panel: PanelModel;
 };
 
-export const VisualizationButton: FC<Props> = ({ panel }) => {
-  const styles = useStyles(getStyles);
+export const VisualizationButton = ({ panel }: Props) => {
   const dispatch = useDispatch();
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const isPanelOptionsVisible = useSelector((state) => state.panelEditor.ui.isPanelOptionsVisible);
@@ -63,14 +61,12 @@ export const VisualizationButton: FC<Props> = ({ panel }) => {
 
 VisualizationButton.displayName = 'VisualizationTab';
 
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    wrapper: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    vizButton: css`
-      text-align: left;
-    `,
-  };
+const styles = {
+  wrapper: css`
+    display: flex;
+    flex-direction: column;
+  `,
+  vizButton: css`
+    text-align: left;
+  `,
 };

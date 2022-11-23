@@ -3,21 +3,29 @@ package folder
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
+var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
+var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
+var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
+var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
+
 const (
 	GeneralFolderUID     = "general"
+	RootFolderUID        = ""
 	MaxNestedFolderDepth = 8
 )
 
 var ErrFolderNotFound = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
 
 type Folder struct {
-	ID          int64
-	OrgID       int64
-	UID         string
-	ParentUID   string
+	ID          int64  `xorm:"pk autoincr 'id'"`
+	OrgID       int64  `xorm:"org_id"`
+	UID         string `xorm:"uid"`
+	ParentUID   string `xorm:"parent_uid"`
 	Title       string
 	Description string
 
@@ -25,7 +33,18 @@ type Folder struct {
 	Updated time.Time
 
 	// TODO: validate if this field is required/relevant to folders.
+	// currently there is no such column
+	Version   int
+	Url       string
 	UpdatedBy int64
+	CreatedBy int64
+	HasACL    bool
+}
+
+type FolderDTO struct {
+	Folder
+
+	Children []FolderDTO
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -42,11 +61,11 @@ func NewFolder(title string, description string) *Folder {
 // CreateFolderCommand captures the information required by the folder service
 // to create a folder.
 type CreateFolderCommand struct {
-	UID         string `json:"uid" xorm:"uid"`
-	OrgID       int64  `json:"orgId" xorm:"org_id"`
+	UID         string `json:"uid"`
+	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid" xorm:"parent_uid"`
+	ParentUID   string `json:"parent_uid"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -63,12 +82,15 @@ type UpdateFolderCommand struct {
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
 	NewParentUID string `json:"new_parent_uid"`
+	OrgID        int64  `json:"-"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid" xorm:"uid"`
+	UID              string `json:"uid" xorm:"uid"`
+	OrgID            int64  `json:"orgId" xorm:"org_id"`
+	ForceDeleteRules bool   `json:"forceDeleteRules"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -77,14 +99,16 @@ type DeleteFolderCommand struct {
 // Title.
 type GetFolderQuery struct {
 	UID   *string
-	ID    *int
+	ID    *int64
 	Title *string
+	OrgID int64
 }
 
 // GetParentsQuery captures the information required by the folder service to
 // return a list of all parent folders of a given folder.
 type GetParentsQuery struct {
-	UID string `xorm:"uid"`
+	UID   string `xorm:"uid"`
+	OrgID int64  `xorm:"org_id"`
 }
 
 // GetTreeCommand captures the information required by the folder service to
@@ -98,4 +122,35 @@ type GetTreeQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+}
+
+// ToLegacyModel is temporary until the two folder services are merged
+func (f *Folder) ToLegacyModel() *models.Folder {
+	return &models.Folder{
+		Id:        f.ID,
+		Uid:       f.UID,
+		Title:     f.Title,
+		Url:       models.GetFolderUrl(f.UID, models.SlugifyTitle(f.Title)),
+		Version:   0,
+		Created:   f.Created,
+		Updated:   f.Updated,
+		UpdatedBy: 0,
+		CreatedBy: 0,
+		HasACL:    false,
+	}
+}
+
+func FromDashboard(dash *models.Dashboard) *Folder {
+	return &Folder{
+		ID:        dash.Id,
+		UID:       dash.Uid,
+		Title:     dash.Title,
+		HasACL:    dash.HasACL,
+		Url:       models.GetFolderUrl(dash.Uid, dash.Slug),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
+	}
 }

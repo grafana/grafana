@@ -32,7 +32,7 @@ func TestSQLStore_AddOrgUser(t *testing.T) {
 	require.Equal(t, int64(-1), sa.OrgID)
 
 	// assign the sa to the org but without the override. should fail
-	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+	err = store.addOrgUser(context.Background(), &models.AddOrgUserCommand{
 		Role:   "Viewer",
 		OrgId:  orgID,
 		UserId: sa.ID,
@@ -40,7 +40,7 @@ func TestSQLStore_AddOrgUser(t *testing.T) {
 	require.Error(t, err)
 
 	// assign the sa to the org with the override. should succeed
-	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+	err = store.addOrgUser(context.Background(), &models.AddOrgUserCommand{
 		Role:                      "Viewer",
 		OrgId:                     orgID,
 		UserId:                    sa.ID,

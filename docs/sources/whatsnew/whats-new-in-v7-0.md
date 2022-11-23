@@ -196,7 +196,7 @@ You can now override the [time zone]({{< relref "../dashboards/manage-dashboards
 
 The Azure Monitor data source supports multiple Azure services. Log Analytics queries in the data source now have alerting support too (Azure Monitor and Application Insights already had alerting support).
 
-A new feature is [deep linking from the graph panel to the Log Analytics query editor in the Azure Portal]({{< relref "../datasources/azuremonitor/#deep-linking-from-grafana-panels-to-the-log-analytics-query-editor-in-azure-portal" >}}). Click on a time series in the panel to see a context menu with a link to View in Azure Portal. Clicking that link opens the Azure Log Analytics query editor in the Azure Portal and runs the query from the Grafana panel.
+A new feature is [deep linking from the graph panel to the Log Analytics query editor in the Azure Portal]({{< relref "../datasources/azure-monitor#deep-link-from-grafana-panels-to-the-log-analytics-query-editor-in-azure-portal" >}}). Click on a time series in the panel to see a context menu with a link to View in Azure Portal. Clicking that link opens the Azure Log Analytics query editor in the Azure Portal and runs the query from the Grafana panel.
 
 ## Grafana Enterprise
 

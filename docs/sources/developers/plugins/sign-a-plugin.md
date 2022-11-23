@@ -36,24 +36,24 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
 1. Submit your plugin for [review]({{< relref "package-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
 2. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
-3. In your plugin directory, sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
+3. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/toolkit plugin:sign
+   npx @grafana/sign-plugin plugin:sign
    ```
 
 > **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
 
 ## Sign a private plugin
 
-1. In your plugin directory, sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
+1. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    The `rootUrls` flag accepts a comma-separated list of URLs to the Grafana instances where you intend to install the plugin.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/toolkit plugin:sign --rootUrls https://example.com/grafana
+   npx @grafana/sign-plugin plugin:sign --rootUrls https://example.com/grafana
    ```
 
 ## Plugin signature levels
@@ -119,7 +119,7 @@ T6scfmuhWC/TOcm83EVoCzIV3R5dOTKHqkjIUg==
 
 ### Why am I getting a "Modified signature" in Grafana?
 
-Due to an issue when signing the plugin on Windows, grafana-toolkit generates an invalid MANIFEST.txt. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/` in the MANIFEST.txt file. You need to do this every time you sign your plugin.
+Due to an issue when signing the plugin on Windows, in some cases an invalid MANIFEST.txt is being generated. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/` in the MANIFEST.txt file. You need to do this every time you sign your plugin.
 
 ### Error signing manifest: Field is required: rootUrls
 

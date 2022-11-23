@@ -9,10 +9,11 @@ import {
   LoadingState,
   SplitOpen,
   TimeZone,
+  EventBus,
 } from '@grafana/data';
 import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { ExploreGraph } from './ExploreGraph';
+import { ExploreGraph } from './Graph/ExploreGraph';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -25,6 +26,7 @@ type Props = {
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
+  eventBus: EventBus;
 };
 
 const SHORT_ERROR_MESSAGE_LIMIT = 100;
@@ -123,7 +125,7 @@ export function LogsVolumePanel(props: Props) {
           loadingState={LoadingState.Done}
           data={logsVolumeData.data}
           height={height}
-          width={width - spacing}
+          width={width - spacing * 2}
           absoluteRange={range}
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
@@ -131,6 +133,7 @@ export function LogsVolumePanel(props: Props) {
           tooltipDisplayMode={TooltipDisplayMode.Multi}
           onHiddenSeriesChanged={onHiddenSeriesChanged}
           anchorToZero
+          eventBus={props.eventBus}
         />
       );
     } else {

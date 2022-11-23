@@ -14,8 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -54,7 +55,7 @@ func (e *AWSError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
-func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	resultChan := make(chan backend.Responses, len(req.Queries))
@@ -69,7 +70,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 
 		query := query
 		eg.Go(func() error {
-			dataframe, err := e.executeLogAction(ectx, model, query, req.PluginContext)
+			dataframe, err := e.executeLogAction(ectx, logger, model, query, req.PluginContext)
 			if err != nil {
 				var AWSError *AWSError
 				if errors.As(err, &AWSError) {
@@ -109,7 +110,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQueryJson, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
+func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Logger, model LogQueryJson, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
 	instance, err := e.getInstance(pluginCtx)
 	if err != nil {
 		return nil, err
@@ -130,7 +131,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQuer
 	case "GetLogGroupFields":
 		data, err = e.handleGetLogGroupFields(ctx, logsClient, model, query.RefID)
 	case "StartQuery":
-		data, err = e.handleStartQuery(ctx, logsClient, model, query.TimeRange, query.RefID)
+		data, err = e.handleStartQuery(ctx, logger, logsClient, model, query.TimeRange, query.RefID)
 	case "StopQuery":
 		data, err = e.handleStopQuery(ctx, logsClient, model)
 	case "GetQueryResults":
@@ -235,13 +236,13 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 
-func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logger log.Logger, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	model LogQueryJson, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			cwlog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+			logger.Debug("executeStartQuery limit exceeded", "err", awsErr)
 			return nil, &AWSError{Code: limitExceededException, Message: err.Error()}
 		}
 		return nil, err

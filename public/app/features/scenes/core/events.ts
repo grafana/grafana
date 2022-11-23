@@ -10,12 +10,5 @@ export interface SceneObjectStateChangedPayload {
 }
 
 export class SceneObjectStateChangedEvent extends BusEventWithPayload<SceneObjectStateChangedPayload> {
-  static type = 'scene-object-state-change';
-}
-
-export class SceneObjectActivedEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'scene-object-activated';
-}
-export class SceneObjectDeactivatedEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'scene-object-deactivated';
+  public static readonly type = 'scene-object-state-change';
 }
