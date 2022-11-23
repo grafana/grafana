@@ -204,11 +204,12 @@ def lint_starlark_step():
     }
 
 def enterprise_downstream_step(edition, ver_mode):
-    """TODO
+    """Triggers a downstream pipeline in the grafana-enterprise repository.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
+      edition: inhibits step behavior for enterprise pipelines.
+      ver_mode: indirectly controls the revision used for downstream pipelines.
+        It also used to allow the step to fail for pull requests without blocking merging.
     Returns:
       Drone step.
     """
