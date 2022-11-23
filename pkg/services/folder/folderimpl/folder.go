@@ -34,7 +34,7 @@ type Service struct {
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
 	searchService    *search.SearchService
-	features         *featuremgmt.FeatureManager
+	features         featuremgmt.FeatureToggles
 	permissions      accesscontrol.FolderPermissionsService
 	accessControl    accesscontrol.AccessControl
 
@@ -49,7 +49,7 @@ func ProvideService(
 	dashboardService dashboards.DashboardService,
 	dashboardStore dashboards.Store,
 	db db.DB, // DB for the (new) nested folder store
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	searchService *search.SearchService,
 ) folder.Service {
@@ -97,7 +97,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		if ok, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, accesscontrol.EvalPermission(
 			dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.UID),
 		)); !ok {
