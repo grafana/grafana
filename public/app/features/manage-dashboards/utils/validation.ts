@@ -29,9 +29,9 @@ export const validateGcomDashboard = (gcomDashboard: string) => {
   return match && (match[1] || match[2]) ? true : 'Could not find a valid Grafana.com ID';
 };
 
-export const validateTitle = (newTitle: string, folderId: number) => {
+export const validateTitle = (newTitle: string, folderUid: string) => {
   return validationSrv
-    .validateNewDashboardName(folderId, newTitle)
+    .validateNewDashboardName(folderUid, newTitle)
     .then(() => {
       return true;
     })

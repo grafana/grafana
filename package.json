@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "9.3.0-pre",
+  "version": "9.4.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "yarn i18n:compile && NODE_ENV=production webpack --config scripts/webpack/webpack.prod.js",
@@ -205,7 +205,7 @@
     "lerna": "5.5.4",
     "lint-staged": "13.0.3",
     "mini-css-extract-plugin": "2.6.1",
-    "msw": "0.47.4",
+    "msw": "0.48.1",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",

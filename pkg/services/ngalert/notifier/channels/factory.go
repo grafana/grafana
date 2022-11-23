@@ -5,9 +5,10 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/prometheus/alertmanager/template"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/template"
 )
 
 type FactoryConfig struct {
@@ -65,6 +66,7 @@ var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, err
 	"victorops":               VictorOpsFactory,
 	"webhook":                 WebHookFactory,
 	"wecom":                   WeComFactory,
+	"webex":                   WebexFactory,
 }
 
 func Factory(receiverType string) (func(FactoryConfig) (NotificationChannel, error), bool) {

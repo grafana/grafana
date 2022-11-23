@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/stretchr/testify/assert"
@@ -203,7 +202,7 @@ func TestSetEndsAt(t *testing.T) {
 			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
 			expected: evaluationTime.Add(time.Second * 300 * 3),
 			testRule: &ngmodels.AlertRule{
-				For:             60 * time.Second,
+				For:             time.Minute,
 				IntervalSeconds: 300,
 			},
 		},
@@ -358,9 +357,9 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, image.ErrNoDashboard)
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoDashboard)
 		image, err := takeImage(ctx, s, &r)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
@@ -372,9 +371,9 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo")}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, image.ErrNoPanel)
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
 		image, err := takeImage(ctx, s, &r)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
@@ -386,7 +385,7 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
 		image, err := takeImage(ctx, s, &r)
@@ -400,7 +399,7 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
 		image, err := takeImage(ctx, s, &r)
@@ -414,7 +413,7 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)
 		image, err := takeImage(ctx, s, &r)
