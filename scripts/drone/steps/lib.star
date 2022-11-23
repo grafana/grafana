@@ -985,14 +985,17 @@ def fetch_images_step(edition):
     }
 
 def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
-    """TODO
+    """Generates a step for publishing public Docker images with grabpl.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
-      mode: TODO
-      docker_repo: TODO
-      trigger: TODO
+      edition: controls which version of an image is fetched in the case of a release.
+        It also controls which publishing implementation is used.
+      ver_mode: controls whether the image needs to be built or retrieved from a previous build.
+        If ver_mode == 'release', the previously built image is fetched instead of being built again.
+      mode: uses to control the publishing of security images when mode == 'security'.
+      docker_repo: the Docker image name.
+        It is combined with the 'grafana/' library prefix.
+      trigger: a Drone trigger for the pipeline.
         Defaults to None.
     Returns:
       Drone step.
