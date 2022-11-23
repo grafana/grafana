@@ -22,8 +22,8 @@ import {
 export interface RulerClient {
   findEditableRule(ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null>;
   deleteRule(ruleWithLocation: RuleWithLocation): Promise<void>;
-  saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier>;
-  saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier>;
+  saveLotexRule(values: RuleFormValues, evaluateEvery: string, existing?: RuleWithLocation): Promise<RuleIdentifier>;
+  saveGrafanaRule(values: RuleFormValues, evaluateEvery: string, existing?: RuleWithLocation): Promise<RuleIdentifier>;
 }
 
 export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient {
@@ -95,7 +95,11 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     });
   };
 
-  const saveLotexRule = async (values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier> => {
+  const saveLotexRule = async (
+    values: RuleFormValues,
+    evaluateEvery: string,
+    existing?: RuleWithLocation
+  ): Promise<RuleIdentifier> => {
     const { dataSourceName, group, namespace } = values;
     const formRule = formValuesToRulerRuleDTO(values);
     if (dataSourceName && group && namespace) {
@@ -116,6 +120,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
             rules: freshExisting.group.rules.map((existingRule) =>
               existingRule === freshExisting.rule ? formRule : existingRule
             ),
+            evaluateEvery: evaluateEvery,
           };
           await setRulerRuleGroup(rulerConfig, namespace, payload);
           return ruleId.fromRulerRule(dataSourceName, namespace, group, formRule);
@@ -143,8 +148,12 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     }
   };
 
-  const saveGrafanaRule = async (values: RuleFormValues, existingRule?: RuleWithLocation): Promise<RuleIdentifier> => {
-    const { folder, group, evaluateEvery } = values;
+  const saveGrafanaRule = async (
+    values: RuleFormValues,
+    evaluateEvery: string,
+    existingRule?: RuleWithLocation
+  ): Promise<RuleIdentifier> => {
+    const { folder, group } = values;
     if (!folder) {
       throw new Error('Folder must be specified');
     }

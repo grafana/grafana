@@ -396,8 +396,9 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.UserId = c.UserID
 	if cmd.FolderUid != "" {
 		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID: c.OrgID,
-			UID:   &cmd.FolderUid,
+			OrgID:        c.OrgID,
+			UID:          &cmd.FolderUid,
+			SignedInUser: c.SignedInUser,
 		})
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
@@ -411,7 +412,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.Id == 0
 	if newDashboard {
-		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
+		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
 		if err != nil {
 			return response.Error(500, "failed to get quota", err)
 		}

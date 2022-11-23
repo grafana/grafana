@@ -4,6 +4,7 @@ import { LoadingState, PanelData } from '@grafana/data';
 
 import { SceneDataNode } from '../core/SceneDataNode';
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import {
   SceneComponentProps,
   SceneObject,
@@ -21,7 +22,7 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
     super.activate();
 
     this._subs.add(
-      this.getData().subscribeToState({
+      sceneGraph.getData(this).subscribeToState({
         next: (data) => {
           if (data.data?.state === LoadingState.Done) {
             this.performRepeat(data.data);

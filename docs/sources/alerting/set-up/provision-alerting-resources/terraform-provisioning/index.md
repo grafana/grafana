@@ -139,9 +139,10 @@ In this example, the alerts are grouped by `alertname`, which means that any not
 
 If you want to route specific notifications differently, you can add sub-policies. Sub-policies allow you to apply routing to different alerts based on label matching. In this example, we apply a mute timing to all alerts with the label a=b.
 
+```terraform
 resource "grafana_notification_policy" "my_policy" {
-group_by = ["alertname"]
-contact_point = grafana_contact_point.my_slack_contact_point.name
+    group_by = ["alertname"]
+    contact_point = grafana_contact_point.my_slack_contact_point.name
 
     group_wait = "45s"
     group_interval = "6m"
@@ -167,8 +168,8 @@ contact_point = grafana_contact_point.my_slack_contact_point.name
             group_by = ["..."]
         }
     }
-
 }
+```
 
 2. In the mute_timings field, link a mute timing to your notification policy.
 
@@ -192,8 +193,9 @@ To provision mute timings, complete the following steps.
 
 In this example, alert notifications are muted on weekends.
 
+```terraform
 resource "grafana_mute_timing" "my_mute_timing" {
-name = "My Mute Timing"
+    name = "My Mute Timing"
 
     intervals {
         times {
@@ -204,8 +206,8 @@ name = "My Mute Timing"
         months = ["january:march", "12"]
         years = ["2025:2027"]
     }
-
 }
+```
 
 2. Run the command ‘terraform apply’.
 3. Go to the Grafana UI and check the details of your mute timing.

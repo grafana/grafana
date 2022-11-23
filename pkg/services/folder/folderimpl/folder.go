@@ -34,7 +34,7 @@ type Service struct {
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
 	searchService    *search.SearchService
-	features         *featuremgmt.FeatureManager
+	features         featuremgmt.FeatureToggles
 	permissions      accesscontrol.FolderPermissionsService
 	accessControl    accesscontrol.AccessControl
 
@@ -49,7 +49,7 @@ func ProvideService(
 	dashboardService dashboards.DashboardService,
 	dashboardStore dashboards.Store,
 	db db.DB, // DB for the (new) nested folder store
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	searchService *search.SearchService,
 ) folder.Service {
@@ -93,13 +93,12 @@ func (s *Service) DBMigration(db db.DB) {
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return nil, err
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
-		if ok, err := s.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		if ok, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, accesscontrol.EvalPermission(
 			dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.UID),
 		)); !ok {
 			if err != nil {
@@ -112,11 +111,11 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 
 	switch {
 	case cmd.UID != nil:
-		return s.getFolderByUID(ctx, user, cmd.OrgID, *cmd.UID)
+		return s.getFolderByUID(ctx, cmd.SignedInUser, cmd.OrgID, *cmd.UID)
 	case cmd.ID != nil:
-		return s.getFolderByID(ctx, user, *cmd.ID, cmd.OrgID)
+		return s.getFolderByID(ctx, cmd.SignedInUser, *cmd.ID, cmd.OrgID)
 	case cmd.Title != nil:
-		return s.getFolderByTitle(ctx, user, cmd.OrgID, *cmd.Title)
+		return s.getFolderByTitle(ctx, cmd.SignedInUser, cmd.OrgID, *cmd.Title)
 	default:
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
@@ -217,10 +216,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	dashFolder.SetUid(trimmedUID)
 
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return nil, err
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
+	user := cmd.SignedInUser
 	userID := user.UserID
 	if userID == 0 {
 		userID = -1
@@ -433,9 +432,14 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
 	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
-		UID:   &cmd.UID,
-		OrgID: cmd.OrgID,
+		UID:          &cmd.UID,
+		OrgID:        cmd.OrgID,
+		SignedInUser: cmd.SignedInUser,
 	})
 	if err != nil {
 		return nil, err
@@ -448,9 +452,14 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	if cmd.SignedInUser == nil {
+		return folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
 	_, err := s.Get(ctx, &folder.GetFolderQuery{
-		UID:   &cmd.UID,
-		OrgID: cmd.OrgID,
+		UID:          &cmd.UID,
+		OrgID:        cmd.OrgID,
+		SignedInUser: cmd.SignedInUser,
 	})
 	if err != nil {
 		return err

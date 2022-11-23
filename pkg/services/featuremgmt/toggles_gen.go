@@ -263,6 +263,10 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
+	// FlagAccessTokenExpirationCheck
+	// Enable OAuth access_token expiration check and token refresh using the refresh_token
+	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
+
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"

@@ -16,7 +16,7 @@ func Test_Namespaces_Route(t *testing.T) {
 	customNamespaces := ""
 	factoryFunc := func(pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
 		return models.RequestContext{
-			Settings: &models.CloudWatchSettings{
+			Settings: models.CloudWatchSettings{
 				Namespace: customNamespaces,
 			},
 		}, nil

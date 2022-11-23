@@ -417,7 +417,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let over = u.over;
     over.style.overflow = 'hidden';
     u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
-      (el as HTMLElement).style.borderRadius = '0';
+      if (el instanceof HTMLElement) {
+        el.style.borderRadius = '0';
+      }
     });
   };
 
