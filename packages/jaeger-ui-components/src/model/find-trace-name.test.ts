@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceSpan } from '../types/trace';
+
 import { _getTraceNameImpl as getTraceName } from './trace-viewer';
 
 describe('getTraceName', () => {
@@ -223,22 +225,22 @@ describe('getTraceName', () => {
   const fullTraceName = `${serviceName}: ${operationName}`;
 
   it('returns an empty string if given spans with no root among them', () => {
-    expect(getTraceName(spansWithNoRoots)).toEqual('');
+    expect(getTraceName(spansWithNoRoots as TraceSpan[])).toEqual('');
   });
 
   it('returns an id of root span with the earliest startTime', () => {
-    expect(getTraceName(spansWithMultipleRootsDifferentByStartTime)).toEqual(fullTraceName);
+    expect(getTraceName(spansWithMultipleRootsDifferentByStartTime as TraceSpan[])).toEqual(fullTraceName);
   });
 
   it('returns an id of root span without any refs', () => {
-    expect(getTraceName(spansWithMultipleRootsWithOneWithoutRefs)).toEqual(fullTraceName);
+    expect(getTraceName(spansWithMultipleRootsWithOneWithoutRefs as unknown as TraceSpan[])).toEqual(fullTraceName);
   });
 
   it('returns an id of root span with remote ref', () => {
-    expect(getTraceName(spansWithOneRootWithRemoteRef)).toEqual(fullTraceName);
+    expect(getTraceName(spansWithOneRootWithRemoteRef as TraceSpan[])).toEqual(fullTraceName);
   });
 
   it('returns an id of root span with no refs', () => {
-    expect(getTraceName(spansWithOneRootWithNoRefs)).toEqual(fullTraceName);
+    expect(getTraceName(spansWithOneRootWithNoRefs as unknown as TraceSpan[])).toEqual(fullTraceName);
   });
 });
