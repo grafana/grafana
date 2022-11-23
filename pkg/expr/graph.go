@@ -1,4 +1,4 @@
-package service
+package expr
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
 	"gonum.org/v1/gonum/graph/simple"
@@ -61,19 +60,9 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 	return vars, nil
 }
 
-func (dp DataPipeline) GetPipelineNodes() []expr.Node {
-	nodes := []expr.Node{}
-
-	for _, n := range dp {
-		nodes = append(nodes, n)
-	}
-
-	return nodes
-}
-
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
-func (s *Service) buildPipeline(req *expr.Request) (DataPipeline, error) {
+func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
 	graph, err := s.buildDependencyGraph(req)
 	if err != nil {
 		return nil, err
@@ -88,7 +77,7 @@ func (s *Service) buildPipeline(req *expr.Request) (DataPipeline, error) {
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func (s *Service) buildDependencyGraph(req *expr.Request) (*simple.DirectedGraph, error) {
+func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, error) {
 	graph, err := s.buildGraph(req)
 	if err != nil {
 		return nil, err
@@ -134,7 +123,7 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 }
 
 // buildGraph creates a new graph populated with nodes for every query.
-func (s *Service) buildGraph(req *expr.Request) (*simple.DirectedGraph, error) {
+func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for _, query := range req.Queries {
@@ -164,7 +153,7 @@ func (s *Service) buildGraph(req *expr.Request) (*simple.DirectedGraph, error) {
 
 		var node Node
 
-		if expr.IsDataSource(rn.DataSource.Uid) {
+		if IsDataSource(rn.DataSource.Uid) {
 			node, err = buildCMDNode(dp, rn)
 		} else {
 			node, err = s.buildDSNode(dp, rn, req)

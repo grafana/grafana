@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
-	exprservice "github.com/grafana/grafana/pkg/expr/service"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -443,7 +443,7 @@ func TestValidate(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
 			condition := testCase.condition(cacheService)
 
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, exprservice.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, nil))
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
 			evalCtx := Context(context.Background(), u)
 
 			_, err := evaluator.Create(evalCtx, condition)

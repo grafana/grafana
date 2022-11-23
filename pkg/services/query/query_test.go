@@ -14,7 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	exprservice "github.com/grafana/grafana/pkg/expr/service"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -440,7 +440,7 @@ func setup(t *testing.T) *testContext {
 		DataSources:           nil,
 		SimulatePluginFailure: false,
 	}
-	exprService := exprservice.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService, nil)
+	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService)
 	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, tc) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,

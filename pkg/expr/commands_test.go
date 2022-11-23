@@ -1,4 +1,4 @@
-package service
+package expr
 
 import (
 	"context"
@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -82,7 +81,7 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 				RefID:      "A",
 				Query:      qmap,
 				QueryType:  "",
-				TimeRange:  expr.RelativeTimeRange{},
+				TimeRange:  RelativeTimeRange{},
 				DataSource: nil,
 			})
 

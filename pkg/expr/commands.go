@@ -1,4 +1,4 @@
-package service
+package expr
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -188,12 +187,12 @@ type ResampleCommand struct {
 	VarToResample string
 	Downsampler   string
 	Upsampler     string
-	TimeRange     expr.TimeRange
+	TimeRange     TimeRange
 	refID         string
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr expr.TimeRange) (*ResampleCommand, error) {
+func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr TimeRange) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
 	window, err := gtime.ParseDuration(rawWindow)
 	if err != nil {

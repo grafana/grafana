@@ -1,4 +1,4 @@
-package service
+package expr
 
 import (
 	"context"
@@ -7,18 +7,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -26,6 +21,19 @@ import (
 var (
 	logger = log.New("expr")
 )
+
+type QueryError struct {
+	RefID string
+	Err   error
+}
+
+func (e QueryError) Error() string {
+	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
+}
+
+func (e QueryError) Unwrap() error {
+	return e.Err
+}
 
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
@@ -37,7 +45,7 @@ type rawNode struct {
 	RefID      string `json:"refId"`
 	Query      map[string]interface{}
 	QueryType  string
-	TimeRange  expr.TimeRange
+	TimeRange  TimeRange
 	DataSource *datasources.DataSource
 }
 
@@ -136,10 +144,10 @@ type DSNode struct {
 
 	orgID      int64
 	queryType  string
-	timeRange  expr.TimeRange
+	timeRange  TimeRange
 	intervalMS int64
 	maxDP      int64
-	request    expr.Request
+	request    Request
 }
 
 // NodeType returns the data pipeline node type.
@@ -147,7 +155,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *expr.Request) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	if rn.TimeRange == nil {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
@@ -206,53 +214,22 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		User:                       dn.request.User,
 	}
 
-	req := &backend.QueryDataRequest{
-		PluginContext: pc,
-		Queries: []backend.DataQuery{
-			{
-				RefID:         dn.refID,
-				MaxDataPoints: dn.maxDP,
-				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-				JSON:          dn.query,
-				TimeRange:     dn.timeRange.AbsoluteTime(now),
-				QueryType:     dn.queryType,
-			},
+	q := []backend.DataQuery{
+		{
+			RefID:         dn.refID,
+			MaxDataPoints: dn.maxDP,
+			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+			JSON:          dn.query,
+			TimeRange:     dn.timeRange.AbsoluteTime(now),
+			QueryType:     dn.queryType,
 		},
-		Headers: dn.request.Headers,
 	}
 
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx != nil && reqCtx.Req != nil {
-		middlewares := []httpclient.Middleware{}
-		if reqCtx.Req != nil {
-			middlewares = append(middlewares,
-				httpclientprovider.ForwardedCookiesMiddleware(reqCtx.Req.Cookies(), dn.datasource.AllowedCookies(), []string{s.cfg.LoginCookieName}),
-			)
-		}
-
-		if s.oAuthTokenService.IsOAuthPassThruEnabled(dn.datasource) {
-			if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, reqCtx.SignedInUser); token != nil {
-				req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-
-				idToken, ok := token.Extra("id_token").(string)
-				if ok && idToken != "" {
-					req.Headers["X-ID-Token"] = idToken
-				}
-				middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
-			}
-		}
-
-		if reqCtx.Req != nil {
-			proxyutil.ClearCookieHeader(reqCtx.Req, dn.datasource.AllowedCookies(), []string{s.cfg.LoginCookieName})
-			if cookieStr := reqCtx.Req.Header.Get("Cookie"); cookieStr != "" {
-				req.Headers["Cookie"] = cookieStr
-			}
-		}
-
-		ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
-	}
-
-	resp, err := s.dataService.QueryData(ctx, req)
+	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
+		PluginContext: pc,
+		Queries:       q,
+		Headers:       dn.request.Headers,
+	})
 	if err != nil {
 		return mathexp.Results{}, err
 	}
@@ -260,7 +237,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
 		if qr.Error != nil {
-			return mathexp.Results{}, expr.QueryError{RefID: refID, Err: qr.Error}
+			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
 		}
 
 		dataSource := dn.datasource.Type
