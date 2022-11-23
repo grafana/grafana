@@ -118,7 +118,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
-	store.quotaService = quotatest.NewQuotaServiceFake()
+	store.quotaService = quotatest.New(false, nil)
 
 	return store, mockStorage, storageName
 }
@@ -297,7 +297,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
-	store.quotaService = quotatest.NewQuotaServiceFake()
+	store.quotaService = quotatest.New(false, nil)
 	fileName := "file.jpg"
 
 	tests := []struct {

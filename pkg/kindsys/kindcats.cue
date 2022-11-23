@@ -163,4 +163,3 @@ _sharedKind: {
 	// It is required that lineage.name is the same as the [machineName].
 	lineage: thema.#Lineage & { name: S.machineName }
 }
-

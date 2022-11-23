@@ -24,7 +24,9 @@ Reporting enables you to automatically generate PDFs from any of your dashboards
 > If you have [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
 
-{{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
+<!--
+{{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" >}}
+-->
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes.
 

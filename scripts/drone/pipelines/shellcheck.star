@@ -38,11 +38,12 @@ def shellcheck_step():
     }
 
 def shellcheck_pipeline():
+    environment = {'EDITION': 'oss'}
     steps = [
         compile_build_cmd(),
         shellcheck_step(),
     ]
     return pipeline(
-            name='pr-shellcheck', edition="oss", trigger=trigger, services=[], steps=steps,
+            name='pr-shellcheck', edition="oss", trigger=trigger, services=[], steps=steps, environment=environment,
     )
 
