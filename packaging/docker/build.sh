@@ -68,11 +68,16 @@ docker_build () {
   grafana_tgz=${GRAFANA_TGZ:-"grafana-latest.linux-${arch}${libc}.tar.gz"}
   tag="${_docker_repo}${repo_arch}:${_grafana_version}${TAG_SUFFIX}"
 
+  DOCKER_BUILDKIT=1 \
   docker build \
     --build-arg BASE_IMAGE=${base_image} \
     --build-arg GRAFANA_TGZ=${grafana_tgz} \
+    --build-arg GO_SRC=tgz-builder \
+    --build-arg JS_SRC=tgz-builder \
+    --build-arg RUN_SH=./run.sh \
     --tag "${tag}" \
     --no-cache=true \
+    --file ../../Dockerfile \
     .
 }
 
