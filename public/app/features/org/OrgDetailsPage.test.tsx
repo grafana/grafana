@@ -6,9 +6,9 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { NavModel } from '@grafana/data';
 import { ModalManager } from 'app/core/services/ModalManager';
-import { configureStore } from 'app/store/configureStore';
 
 import { backendSrv } from '../../core/services/backend_srv';
+import { configureStore } from '../../store/configureStore';
 import { Organization } from '../../types';
 
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
@@ -37,6 +37,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 const setup = (propOverrides?: object) => {
+  const store = configureStore();
   jest.clearAllMocks();
   // needed because SharedPreferences is rendered in the test
   jest.spyOn(backendSrv, 'put');
@@ -62,7 +63,7 @@ const setup = (propOverrides?: object) => {
   Object.assign(props, propOverrides);
 
   render(
-    <Provider store={configureStore()}>
+    <Provider store={store}>
       <OrgDetailsPage {...props} />
     </Provider>
   );
