@@ -18,10 +18,11 @@ import { createUrl } from './utils/url';
 export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
   const dispatch = useDispatch();
 
-  const { loading, value: rule } = useAsync(
-    () => dispatch(fetchEditableRuleAction(sourceRuleId)).unwrap(),
-    [sourceRuleId]
-  );
+  const {
+    loading,
+    value: rule,
+    error,
+  } = useAsync(() => dispatch(fetchEditableRuleAction(sourceRuleId)).unwrap(), [sourceRuleId]);
 
   if (loading) {
     return <LoadingPlaceholder text="Loading the rule" />;
@@ -32,6 +33,14 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
     changeRuleName(ruleClone.rule, generateCopiedRuleTitle(ruleClone));
 
     return <AlertRuleForm prefill={rulerRuleToFormValues(ruleClone)} />;
+  }
+
+  if (error) {
+    return (
+      <Alert title="Error" severity="error">
+        {error.message}
+      </Alert>
+    );
   }
 
   return (
