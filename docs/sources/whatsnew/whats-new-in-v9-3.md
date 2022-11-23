@@ -28,6 +28,22 @@ Description. Include an overview of the feature and problem it solves, and where
 
 Add a screenshot to this enablement material folder and link to it here.
 
+## Geomap panel
+
+Generally available in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced
+
+We have added a new alpha layer type in Geomap called photo layer. This layer enables you to render a photo at each data point. To learn more about the photo layer and the geomap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/geomap/#photos-layer-alpha" >}}).
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="750px" caption="Geomap panel photos layer" >}}
+
+## Canvas panel
+
+Available in beta in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced
+
+We have added icon value mapping support. This enables you to dynamically set which icon to display based on your data. To learn more about the Canvas panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-icon-value-mapping-support-9-3-0.mp4" max-width="750px" caption="Canvas panel icon value mapping support" >}}
+
 ## Public Dashboards - Audit Table
 
 Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud Advanced
