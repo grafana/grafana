@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +49,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		})
 	}
 
-	service := &Service{logger: log.New("tsdb.graphite")}
+	service := &Service{}
 
 	t.Run("Converts response without tags to data frames", func(*testing.T) {
 		body := `
@@ -69,7 +68,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse)
+		dataFrames, err := service.toDataFrames(logger, httpResponse)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -102,7 +101,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse)
+		dataFrames, err := service.toDataFrames(logger, httpResponse)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {

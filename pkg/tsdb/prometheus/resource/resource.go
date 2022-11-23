@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
@@ -70,7 +71,7 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 	delHopHeaders(req.Headers)
 	delStopHeaders(req.Headers)
 
-	r.log.Debug("Sending resource query", "URL", req.URL)
+	r.log.FromContext(ctx).Debug("Sending resource query", "URL", req.URL)
 	resp, err := r.promClient.QueryResource(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error querying resource: %v", err)
@@ -97,4 +98,24 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 	}
 
 	return callResponse, err
+}
+
+func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	newReq := &backend.CallResourceRequest{
+		PluginContext: req.PluginContext,
+		Path:          "/api/v1/status/buildinfo",
+	}
+
+	resp, err := r.Execute(ctx, newReq)
+
+	if err != nil {
+		return nil, err
+	}
+
+	callResponse := &backend.CallResourceResponse{
+		Status: 200,
+		Body:   resp.Body,
+	}
+
+	return callResponse, nil
 }

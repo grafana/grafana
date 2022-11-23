@@ -1,12 +1,13 @@
 {
-  "_comment": "",
+  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
-      "default": "Standard",
-      "en-US": "Englisch",
-      "es-ES": "Spanisch",
-      "fr-FR": "Französisch",
-      "zh-Hans": "Chinesisch (vereinfacht)"
+      "default": "Standard"
     },
     "save": "Speichern"
   },
@@ -19,7 +20,7 @@
       "meta-tab": "Metadaten",
       "query-tab": "Abfrage",
       "stats-tab": "Statistiken",
-      "subtitle": "{{queryCount}} Abfragen mit einer Gesamtabfragezeit von {{formatted}}",
+      "subtitle": "{{queryCount}} Abfragen mit einer Gesamtabfragezeit von {{formatted}}",
       "title": "Überprüfen: {{panelTitle}}"
     },
     "inspect-data": {
@@ -63,12 +64,6 @@
       "rows": "Gesamtanzahl an Zeilen",
       "table-title": "Statistiken"
     },
-    "refresh-picker": {
-      "off-arialabel": "Automatische Aktualisierung deaktivieren",
-      "off-description": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "off-label": "Aus",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
       "comments-show": "Dashboard-Kommentare anzeigen",
@@ -86,7 +81,7 @@
     }
   },
   "folder-picker": {
-    "loading": "Ordner werden geladen …"
+    "loading": "Ordner werden geladen …"
   },
   "library-panel": {
     "add-modal": {
@@ -108,6 +103,15 @@
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
+    },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -144,7 +148,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
-      "title": "Warnungen & Vorfälle"
+      "title": "Warnungen & Vorfälle"
     },
     "api-keys": {
       "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
@@ -194,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "Erstelle und verwalte Benutzer auf dem gesamten Grafana-Server",
-      "title": "Benutzer"
+      "title": "Benutzer",
+      "titleBeforeTopnav": ""
     },
     "help": {
       "title": "Hilfe"
@@ -237,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "Einstellungen"
+      "title": "Einstellungen",
+      "titleBeforeTopnav": ""
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -262,6 +268,9 @@
     },
     "search": {
       "placeholder": "Grafana durchsuchen"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
@@ -311,12 +320,31 @@
   },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
-      "more": "Mehr …",
+      "more": "Mehr …",
       "share": "Teilen",
+      "show-legend": "",
       "view": "Anzeigen"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
@@ -334,7 +362,7 @@
     "export": {
       "cancel-button": "Abbrechen",
       "info-text": "Dieses Dashboard exportieren.",
-      "save-button": "In Datei speichern …",
+      "save-button": "In Datei speichern …",
       "share-default-label": "Export mit entfernten Standardwerten",
       "share-externally-label": "Export für externe Freigabe",
       "view-button": "JSON anzeigen"
@@ -364,17 +392,18 @@
       "delete-button": "Schnappschuss löschen.",
       "deleted-message": "Der Schnappschuss wurde gelöscht. Wenn du bereits einmal darauf zugegriffen hast, kann es bis zu eine Stunde dauern, bevor es aus den Browser-Caches oder den CDN-Caches gelöscht wird.",
       "expire": "Läuft ab nach",
-      "expire-day": "1 Tag",
-      "expire-hour": "1 Stunde",
+      "expire-day": "1 Tag",
+      "expire-hour": "1 Stunde",
       "expire-never": "Nie",
-      "expire-week": "7 Tage",
+      "expire-week": "7 Tage",
       "info-text-1": "Ein Schnappschuss ist eine Möglichkeit, ein interaktives Dashboard sofort öffentlich zu teilen. Beim Erstellen entfernen wir sensible Daten wie Abfragen (Metriken, Vorlagen und Anmerkungen) und Panel-Links, sodass nur die sichtbaren Metrikdaten und die in dein Dashboard eingebetteten Seriennamen angezeigt werden.",
       "info-text-2": "Beachte, dass dein Schnappschuss <1>für jeden sichtbar ist</1>, der den Link hat und auf die URL zugreifen kann. Teile Schnappschüsse daher mit Bedacht.",
       "local-button": "Lokaler Schnappschuss",
       "mistake-message": "Hast du einen Fehler gemacht? ",
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
-      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen."
+      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Einbetten",
@@ -388,6 +417,9 @@
       "dark": "Dunkel",
       "field-name": "Design",
       "light": "Hell"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -415,6 +447,48 @@
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",
       "title": "Absoluter Zeitbereich"
+    },
+    "calendar": {
+      "apply-button": "",
+      "cancel-button": "",
+      "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -435,13 +509,22 @@
     "title": "Profil bearbeiten"
   },
   "user-session": {
-    "browser-column": "Browser & Betriebssystem",
+    "browser-column": "Browser & Betriebssystem",
     "created-at-column": "Angemeldet",
     "ip-column": "IP-Adresse",
     "revoke": "Benutzersitzung widerrufen",
     "seen-at-column": "Zuletzt gesehen"
   },
   "user-sessions": {
-    "loading": "Sitzungen werden geladen …"
+    "loading": "Sitzungen werden geladen …"
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

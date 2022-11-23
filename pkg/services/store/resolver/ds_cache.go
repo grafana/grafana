@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -22,11 +22,11 @@ type dsVal struct {
 }
 
 type dsCache struct {
-	ds             datasources.DataSourceService
-	pluginRegistry registry.Service
-	cache          map[int64]map[string]*dsVal
-	timestamp      time.Time // across all orgIDs
-	mu             sync.Mutex
+	ds          datasources.DataSourceService
+	pluginStore plugins.Store
+	cache       map[int64]map[string]*dsVal
+	timestamp   time.Time // across all orgIDs
+	mu          sync.Mutex
 }
 
 func (c *dsCache) refreshCache(ctx context.Context) error {
@@ -56,7 +56,7 @@ func (c *dsCache) refreshCache(ctx context.Context) error {
 			Type:       ds.Type,
 			IsDefault:  ds.IsDefault,
 		}
-		_, ok := c.pluginRegistry.Plugin(ctx, val.Type)
+		_, ok := c.pluginStore.Plugin(ctx, val.Type)
 		val.PluginExists = ok
 
 		orgCache, ok := cache[ds.OrgId]

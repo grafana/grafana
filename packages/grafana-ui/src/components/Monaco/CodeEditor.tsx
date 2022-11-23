@@ -95,7 +95,8 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
-    const { onEditorDidMount } = this.props;
+    const { onChange, onEditorDidMount } = this.props;
+
     this.getEditorValue = () => editor.getValue();
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
@@ -103,6 +104,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
 
     if (onEditorDidMount) {
       languagePromise.then(() => onEditorDidMount(editor, monaco));
+      editor.getModel()?.onDidChangeContent(() => onChange?.(editor.getValue()));
     }
   };
 

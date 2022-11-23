@@ -39,6 +39,10 @@ const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
+const phlarePlugin = async () =>
+  await import(/* webpackChunkName: "phlarePlugin" */ 'app/plugins/datasource/phlare/module');
+const parcaPlugin = async () =>
+  await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
 
 import { config } from '@grafana/runtime';
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
@@ -113,6 +117,8 @@ const builtInPlugins: any = {
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
   'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
+  'app/plugins/datasource/phlare/module': phlarePlugin,
+  'app/plugins/datasource/parca/module': parcaPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,

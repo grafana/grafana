@@ -10,15 +10,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/util/converter"
-	jsoniter "github.com/json-iterator/go"
 )
 
 func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (*backend.DataResponse, error) {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.log.Error("Failed to close response body", "err", err)
+			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -159,7 +160,6 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		// copy the frame metadata to the new exemplar frame
 		exemplarFrame.Meta = frame.Meta
 		exemplarFrame.RefID = frame.RefID
-		frame.Meta.Type = data.FrameTypeTimeSeriesMany
 
 		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
 		seriesLabels := getSeriesLabels(frame)

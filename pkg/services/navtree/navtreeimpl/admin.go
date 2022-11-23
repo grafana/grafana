@@ -166,16 +166,8 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 		Children:   adminNavLinks,
 	}
 
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagTopnav) {
-		adminNode.SubTitle = "Manage server-wide settings and access to resources such as organizations, users, and licenses"
-	}
-
 	if len(adminNavLinks) > 0 {
-		if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagTopnav) {
-			adminNode.Url = s.cfg.AppSubURL + "/admin/server"
-		} else {
-			adminNode.Url = adminNavLinks[0].Url
-		}
+		adminNode.Url = adminNavLinks[0].Url
 	}
 
 	return adminNode

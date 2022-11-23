@@ -29,6 +29,11 @@ export interface TempoJsonData extends DataSourceJsonData {
   spanBar?: {
     tag: string;
   };
+  traceQuery?: {
+    timeShiftEnabled?: boolean;
+    spanStartTimeShift?: string;
+    spanEndTimeShift?: string;
+  };
 }
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -56,9 +61,9 @@ export type TraceSearchMetadata = {
   traceID: string;
   rootServiceName: string;
   rootTraceName: string;
-  startTimeUnixNano: string;
-  durationMs: number;
-  spanSets?: Spanset[];
+  startTimeUnixNano?: string;
+  durationMs?: number;
+  spanSet?: { spans: Span[] };
 };
 
 export type SearchMetrics = {
@@ -81,15 +86,16 @@ export enum SpanKind {
 }
 
 export type Span = {
-  traceId: string;
-  spanId: string;
+  durationNanos: string;
+  traceId?: string;
+  spanID: string;
   traceState?: string;
   parentSpanId?: string;
-  name: string;
-  kind: SpanKind;
-  startTimeUnixNano: number;
-  endTimeUnixNano: number;
-  attributes?: KeyValue[];
+  name?: string;
+  kind?: SpanKind;
+  startTimeUnixNano: string;
+  endTimeUnixNano?: string;
+  attributes?: Array<{ key: string; value: { stringValue: string } }>;
   dropped_attributes_count?: number;
 };
 

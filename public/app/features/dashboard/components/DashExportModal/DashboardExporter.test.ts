@@ -40,6 +40,20 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('app/features/library-panels/state/api', () => ({
+  getLibraryPanel: jest.fn().mockReturnValue(
+    Promise.resolve({
+      model: {
+        type: 'graph',
+        datasource: {
+          type: 'testdb',
+          uid: '${DS_GFDB}',
+        },
+      },
+    })
+  ),
+}));
+
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
@@ -146,8 +160,6 @@ describe('given dashboard with repeated panels', () => {
         { id: 9, datasource: { uid: '$ds', type: 'other2' } },
         {
           id: 17,
-          datasource: { uid: '$ds', type: 'other2' },
-          type: 'graph',
           libraryPanel: {
             name: 'Library Panel 2',
             uid: 'ah8NqyDPs',
@@ -181,8 +193,8 @@ describe('given dashboard with repeated panels', () => {
             { id: 15, repeat: null, repeatPanelId: 14 },
             {
               id: 16,
-              datasource: { uid: 'gfdb', type: 'testdb' },
-              type: 'graph',
+              // datasource: { uid: 'gfdb', type: 'testdb' },
+              // type: 'graph',
               libraryPanel: {
                 name: 'Library Panel',
                 uid: 'jL6MrxCMz',
@@ -218,6 +230,18 @@ describe('given dashboard with repeated panels', () => {
     } as PanelPluginMeta;
 
     dash = new DashboardModel(dash, {}, () => dash.templating.list);
+
+    // init library panels
+    dash.getPanelById(17).initLibraryPanel({
+      uid: 'ah8NqyDPs',
+      name: 'Library Panel 2',
+      model: {
+        datasource: { type: 'other2', uid: '$ds' },
+        targets: [{ refId: 'A', datasource: { type: 'other2', uid: '$ds' } }],
+        type: 'graph',
+      },
+    });
+
     const exporter = new DashboardExporter();
     exporter.makeExportable(dash).then((clean) => {
       exported = clean;

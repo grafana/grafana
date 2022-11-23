@@ -31,83 +31,68 @@ var (
 // alert notifications to pagerduty
 type PagerdutyNotifier struct {
 	*Base
-	Key           string
-	Severity      string
-	CustomDetails map[string]string
-	Class         string
-	Component     string
-	Group         string
-	Summary       string
-	tmpl          *template.Template
-	log           log.Logger
-	ns            notifications.WebhookSender
-	images        ImageStore
+	tmpl     *template.Template
+	log      log.Logger
+	ns       notifications.WebhookSender
+	images   ImageStore
+	settings pagerdutySettings
 }
 
-type PagerdutyConfig struct {
-	*NotificationChannelConfig
-	Key       string
-	Severity  string
-	Class     string
-	Component string
-	Group     string
-	Summary   string
+type pagerdutySettings struct {
+	Key           string `json:"integrationKey,omitempty" yaml:"integrationKey,omitempty"`
+	Severity      string `json:"severity,omitempty" yaml:"severity,omitempty"`
+	customDetails map[string]string
+	Class         string `json:"class,omitempty" yaml:"class,omitempty"`
+	Component     string `json:"component,omitempty" yaml:"component,omitempty"`
+	Group         string `json:"group,omitempty" yaml:"group,omitempty"`
+	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
 }
 
 func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewPagerdutyConfig(fc.Config, fc.DecryptFunc)
+	pdn, err := newPagerdutyNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
-}
-
-func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PagerdutyConfig, error) {
-	key := decryptFunc(context.Background(), config.SecureSettings, "integrationKey", config.Settings.Get("integrationKey").MustString())
-	if key == "" {
-		return nil, errors.New("could not find integration key property in settings")
-	}
-	return &PagerdutyConfig{
-		NotificationChannelConfig: config,
-		Key:                       key,
-		Severity:                  config.Settings.Get("severity").MustString("critical"),
-		Class:                     config.Settings.Get("class").MustString("default"),
-		Component:                 config.Settings.Get("component").MustString("Grafana"),
-		Group:                     config.Settings.Get("group").MustString("default"),
-		Summary:                   config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
-	}, nil
+	return pdn, nil
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *PagerdutyNotifier {
+func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
+	key := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "integrationKey", fc.Config.Settings.Get("integrationKey").MustString())
+	if key == "" {
+		return nil, errors.New("could not find integration key property in settings")
+	}
+
 	return &PagerdutyNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
 		}),
-		Key: config.Key,
-		CustomDetails: map[string]string{
-			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
-			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
-			"num_firing":   `{{ .Alerts.Firing | len }}`,
-			"num_resolved": `{{ .Alerts.Resolved | len }}`,
+		tmpl:   fc.Template,
+		log:    log.New("alerting.notifier." + fc.Config.Name),
+		ns:     fc.NotificationService,
+		images: fc.ImageStore,
+		settings: pagerdutySettings{
+			Key:      key,
+			Severity: fc.Config.Settings.Get("severity").MustString("critical"),
+			customDetails: map[string]string{
+				"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
+				"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
+				"num_firing":   `{{ .Alerts.Firing | len }}`,
+				"num_resolved": `{{ .Alerts.Resolved | len }}`,
+			},
+			Class:     fc.Config.Settings.Get("class").MustString("default"),
+			Component: fc.Config.Settings.Get("component").MustString("Grafana"),
+			Group:     fc.Config.Settings.Get("group").MustString("default"),
+			Summary:   fc.Config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
 		},
-		Severity:  config.Severity,
-		Class:     config.Class,
-		Component: config.Component,
-		Group:     config.Group,
-		Summary:   config.Summary,
-		tmpl:      t,
-		log:       log.New("alerting.notifier." + config.Name),
-		ns:        ns,
-		images:    images,
-	}
+	}, nil
 }
 
 // Notify sends an alert notification to PagerDuty
@@ -158,8 +143,8 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	var tmplErr error
 	tmpl, data := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
-	details := make(map[string]string, len(pn.CustomDetails))
-	for k, v := range pn.CustomDetails {
+	details := make(map[string]string, len(pn.settings.customDetails))
+	for k, v := range pn.settings.customDetails {
 		detail, err := pn.tmpl.ExecuteTextString(v, data)
 		if err != nil {
 			return nil, "", fmt.Errorf("%q: failed to template %q: %w", k, v, err)
@@ -170,21 +155,20 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
 		ClientURL:   pn.tmpl.ExternalURL.String(),
-		RoutingKey:  pn.Key,
+		RoutingKey:  pn.settings.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
 		Links: []pagerDutyLink{{
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: tmpl(DefaultMessageTitleEmbed), // TODO: this can be configurable template.
 		Payload: pagerDutyPayload{
-			Component:     tmpl(pn.Component),
-			Summary:       tmpl(pn.Summary),
-			Severity:      tmpl(pn.Severity),
+			Component:     tmpl(pn.settings.Component),
+			Summary:       tmpl(pn.settings.Summary),
+			Severity:      tmpl(pn.settings.Severity),
 			CustomDetails: details,
-			Class:         tmpl(pn.Class),
-			Group:         tmpl(pn.Group),
+			Class:         tmpl(pn.settings.Class),
+			Group:         tmpl(pn.settings.Group),
 		},
 	}
 
@@ -223,7 +207,6 @@ type pagerDutyMessage struct {
 	RoutingKey  string           `json:"routing_key,omitempty"`
 	ServiceKey  string           `json:"service_key,omitempty"`
 	DedupKey    string           `json:"dedup_key,omitempty"`
-	Description string           `json:"description,omitempty"`
 	EventAction string           `json:"event_action"`
 	Payload     pagerDutyPayload `json:"payload"`
 	Client      string           `json:"client,omitempty"`

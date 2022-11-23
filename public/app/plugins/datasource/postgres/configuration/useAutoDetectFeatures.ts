@@ -47,7 +47,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
           // timescaledb is only available for 9.6+
           if (versionNumber >= 906 && !options.jsonData.timescaledb) {
             const timescaledbVersion = await datasource.getTimescaleDBVersion();
-            if (timescaledbVersion?.length) {
+            if (timescaledbVersion) {
               updateDatasourcePluginJsonDataOption({ options, onOptionsChange }, 'timescaledb', true);
             }
           }

@@ -1,4 +1,5 @@
 import { NavModel, NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
@@ -29,7 +30,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     url: `${folder.url}/library-panels`,
   });
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
+  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
     model.children!.push({
       active: false,
       icon: 'bell',

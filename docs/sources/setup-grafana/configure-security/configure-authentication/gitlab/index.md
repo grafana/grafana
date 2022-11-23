@@ -33,10 +33,10 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select _read_api_as the_Scope_and submit the form. Note that if you're
+Finally, select `read_api` as the scope and submit the form. Note that if you're
 not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select_read_user_ instead of _read_api_as
-the_Scope_, thus giving a more restricted access to your GitLab API.
+`allowed_groups`, see below), you can select `read_user` instead of `read_api` as
+the scope, thus giving a more restricted access to your GitLab API.
 
 You'll get an _Application Id_ and a _Secret_ in return; we'll call them
 `GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
@@ -80,6 +80,18 @@ to login on your Grafana instance.
 
 You can limit access to only members of a given group or list of
 groups by setting the `allowed_groups` option.
+
+### Configure refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+
+Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
+
+By default, GitLab provides a refresh token.
 
 ### allowed_groups
 

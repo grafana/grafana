@@ -113,7 +113,7 @@ export default class DraggableManager {
     window.removeEventListener('mouseup', this._handleDragEvent);
     const style = _get(document, 'body.style');
     if (style) {
-      style.userSelect = null;
+      style.userSelect = 'auto';
     }
     this._isDragging = false;
   }

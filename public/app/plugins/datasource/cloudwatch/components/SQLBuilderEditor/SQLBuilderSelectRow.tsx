@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorSwitch, Select } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
@@ -49,7 +50,12 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   const namespaceOptions = useNamespaces(datasource);
   const metricOptions = useMetrics(datasource, query.region, namespace);
   const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
-  const unusedDimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName, existingFilters);
+  const unusedDimensionKeys = useDimensionKeys(datasource, {
+    region: query.region,
+    namespace,
+    metricName,
+    dimensionFilters: existingFilters,
+  });
   const dimensionKeys = useMemo(
     () => (schemaLabels?.length ? [...unusedDimensionKeys, ...schemaLabels.map(toOption)] : unusedDimensionKeys),
     [unusedDimensionKeys, schemaLabels]
@@ -61,8 +67,8 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   };
 
   const validateMetricName = async (query: CloudWatchMetricsQuery) => {
-    let { region, sql } = query;
-    await datasource.api.getMetrics(query.namespace, region).then((result: Array<SelectableValue<string>>) => {
+    let { region, sql, namespace } = query;
+    await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.some((metric) => metric.value === metricName)) {
         sql = removeMetricName(query).sql;
       }

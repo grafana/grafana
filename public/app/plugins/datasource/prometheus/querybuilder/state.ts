@@ -56,5 +56,11 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined)
     }
   }
 
+  // Unified Alerting does not support "both" for query type – fall back to "range".
+  const isBothInstantAndRange = query.instant && query.range;
+  if (app === CoreApp.UnifiedAlerting && isBothInstantAndRange) {
+    result = { ...result, instant: false, range: true };
+  }
+
   return result;
 }

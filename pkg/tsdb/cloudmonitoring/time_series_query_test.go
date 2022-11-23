@@ -102,6 +102,28 @@ func TestTimeSeriesQuery(t *testing.T) {
 		assert.Equal(t, "6724404429462225363", labels["resource.label.instance_id"])
 	})
 
+	t.Run("includes time interval", func(t *testing.T) {
+		data, err := loadTestFile("./test-data/7-series-response-mql.json")
+		require.NoError(t, err)
+
+		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+		res := &backend.DataResponse{}
+		query := &cloudMonitoringTimeSeriesQuery{
+			ProjectName: "test-proj",
+			Query:       "test-query",
+			timeRange: backend.TimeRange{
+				From: fromStart,
+				To:   fromStart.Add(34 * time.Minute),
+			},
+			GraphPeriod: "60s",
+		}
+		err = query.parseResponse(res, data, "")
+		require.NoError(t, err)
+		frames := res.Frames
+		timeField := frames[0].Fields[0]
+		assert.Equal(t, float64(60*1000), timeField.Config.Interval)
+	})
+
 	t.Run("appends graph_period to the query", func(t *testing.T) {
 		query := &cloudMonitoringTimeSeriesQuery{}
 		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), " | graph_period 1ms")

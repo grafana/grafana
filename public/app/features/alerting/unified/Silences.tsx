@@ -5,9 +5,11 @@ import { Alert, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { featureDiscoveryApi } from './api/featureDiscoveryApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
@@ -24,6 +26,7 @@ const Silences = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const dispatch = useDispatch();
+  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const silences = useUnifiedAlertingSelector((state) => state.silences);
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
   const alertsRequest = alertManagerSourceName
@@ -38,6 +41,8 @@ const Silences = () => {
     { amSourceName: alertManagerSourceName ?? '' },
     { skip: !alertManagerSourceName }
   );
+
+  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
   useEffect(() => {
     function fetchAll() {
@@ -78,6 +83,10 @@ const Silences = () => {
         current={alertManagerSourceName}
         onChange={setAlertManagerSourceName}
         dataSources={alertManagers}
+      />
+      <GrafanaAlertmanagerDeliveryWarning
+        currentAlertmanager={alertManagerSourceName}
+        alertmanagerChoice={alertmanagerChoice}
       />
 
       {mimirLazyInitError && (

@@ -13,7 +13,8 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
 } from '@grafana/data';
-import { RelativeTimeRangePicker, useStyles2, Tooltip, Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { RelativeTimeRangePicker, useStyles2, Tooltip, Icon } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';

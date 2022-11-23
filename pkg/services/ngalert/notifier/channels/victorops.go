@@ -31,6 +31,8 @@ const (
 type victorOpsSettings struct {
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
 	MessageType string `json:"messageType,omitempty" yaml:"messageType,omitempty"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 func buildVictorOpsSettings(fc FactoryConfig) (victorOpsSettings, error) {
@@ -44,6 +46,12 @@ func buildVictorOpsSettings(fc FactoryConfig) (victorOpsSettings, error) {
 	}
 	if settings.MessageType == "" {
 		settings.MessageType = victoropsAlertStateCritical
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+	if settings.Description == "" {
+		settings.Description = DefaultMessageEmbed
 	}
 	return settings, nil
 }
@@ -101,15 +109,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
 
-	messageType := strings.ToUpper(tmpl(vn.settings.MessageType))
-	if messageType == "" {
-		vn.log.Warn("expansion of message type template resulted in an empty string. Using fallback", "fallback", victoropsAlertStateCritical, "template", vn.settings.MessageType)
-		messageType = victoropsAlertStateCritical
-	}
-	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved {
-		messageType = victoropsAlertStateRecovery
-	}
+	messageType := buildMessageType(vn.log, tmpl, vn.settings.MessageType, as...)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
@@ -119,9 +119,9 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON := map[string]interface{}{
 		"message_type":        messageType,
 		"entity_id":           groupKey.Hash(),
-		"entity_display_name": tmpl(DefaultMessageTitleEmbed),
+		"entity_display_name": tmpl(vn.settings.Title),
 		"timestamp":           time.Now().Unix(),
-		"state_message":       tmpl(DefaultMessageEmbed),
+		"state_message":       tmpl(vn.settings.Description),
 		"monitoring_tool":     "Grafana v" + setting.BuildVersion,
 	}
 
@@ -168,4 +168,15 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 func (vn *VictoropsNotifier) SendResolved() bool {
 	return !vn.GetDisableResolveMessage()
+}
+
+func buildMessageType(l log.Logger, tmpl func(string) string, msgType string, as ...*types.Alert) string {
+	if types.Alerts(as...).Status() == model.AlertResolved {
+		return victoropsAlertStateRecovery
+	}
+	if messageType := strings.ToUpper(tmpl(msgType)); messageType != "" {
+		return messageType
+	}
+	l.Warn("expansion of message type template resulted in an empty string. Using fallback", "fallback", victoropsAlertStateCritical, "template", msgType)
+	return victoropsAlertStateCritical
 }

@@ -1,3 +1,4 @@
+import { TableIdentifier } from '@grafana/experimental';
 import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
   ColumnDefinition,
@@ -35,13 +36,17 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
           processedToken = processedToken.next;
         }
 
-        return tablePath;
+        return { table: tablePath };
       },
     },
 
     columns: {
-      resolve: async (t: string) => {
-        const [database, schema, tableName] = t.split('.');
+      resolve: async (t: TableIdentifier | undefined) => {
+        if (!t?.table) {
+          return [];
+        }
+        // TODO: Use schema instead of table
+        const [database, schema, tableName] = t.table.split('.');
         return await getColumns.current({ table: `${schema}.${tableName}`, dataset: database, refId: 'A' });
       },
     },

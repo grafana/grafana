@@ -244,7 +244,7 @@ export const Table = memo((props: Props) => {
       setFooterItems(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [footerOptions, theme, state.filters]);
+  }, [footerOptions, theme, state.filters, data]);
 
   let listHeight = height - (headerHeight + footerHeight);
 

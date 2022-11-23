@@ -66,15 +66,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 			_, err = sqlStore.CreateUser(context.Background(), serviceaccountcmd)
 			require.NoError(t, err)
 
-			t.Run("Should be able to read user info projection", func(t *testing.T) {
-				query := models.GetUserProfileQuery{UserId: ac1.ID}
-				err = sqlStore.GetUserProfile(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Equal(t, query.Result.Email, "ac1@test.com")
-				require.Equal(t, query.Result.Login, "ac1")
-			})
-
 			t.Run("Given an added org user", func(t *testing.T) {
 				cmd := models.AddOrgUserCommand{
 					OrgId:  ac1.OrgID,
@@ -82,7 +73,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					Role:   org.RoleViewer,
 				}
 
-				err := sqlStore.AddOrgUser(context.Background(), &cmd)
+				err := sqlStore.addOrgUser(context.Background(), &cmd)
 				t.Run("Should have been saved without error", func(t *testing.T) {
 					require.NoError(t, err)
 				})
@@ -151,7 +142,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						Role:   org.RoleViewer,
 					}
 
-					err = sqlStore.AddOrgUser(context.Background(), &orgUserCmd)
+					err = sqlStore.addOrgUser(context.Background(), &orgUserCmd)
 					require.NoError(t, err)
 
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgID, 0, false, "prod", "webapp")

@@ -53,6 +53,8 @@ func coreTreeList(rt *thema.Runtime) pfs.TreeList {
 		makeTreeOrPanic("public/app/plugins/datasource/loki", "loki", rt),
 		makeTreeOrPanic("public/app/plugins/datasource/mssql", "mssql", rt),
 		makeTreeOrPanic("public/app/plugins/datasource/mysql", "mysql", rt),
+		makeTreeOrPanic("public/app/plugins/datasource/parca", "parca", rt),
+		makeTreeOrPanic("public/app/plugins/datasource/phlare", "phlare", rt),
 		makeTreeOrPanic("public/app/plugins/datasource/postgres", "postgres", rt),
 		makeTreeOrPanic("public/app/plugins/datasource/prometheus", "prometheus", rt),
 		makeTreeOrPanic("public/app/plugins/datasource/tempo", "tempo", rt),

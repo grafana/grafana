@@ -1,9 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { ThresholdsMode, FieldConfig, FieldColorModeId } from '@grafana/data';
-
-import { getTheme } from '../../themes';
+import { ThresholdsMode, FieldConfig, FieldColorModeId, createTheme } from '@grafana/data';
 
 import { Gauge, Props } from './Gauge';
 
@@ -21,6 +19,9 @@ const field: FieldConfig = {
     mode: ThresholdsMode.Absolute,
     steps: [{ value: -Infinity, color: '#7EB26D' }],
   },
+  custom: {
+    neeutral: 0,
+  },
 };
 
 const props: Props = {
@@ -33,7 +34,7 @@ const props: Props = {
     text: '25',
     numeric: 25,
   },
-  theme: getTheme(),
+  theme: createTheme({ colors: { mode: 'dark' } }),
 };
 
 describe('Gauge', () => {
