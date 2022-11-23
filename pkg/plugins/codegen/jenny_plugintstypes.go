@@ -38,30 +38,38 @@ func (j *ptsJenny) Generate(decl *kindsys.PluginDecl) (*codejen.File, error) {
 		return nil, fmt.Errorf("error executing header template: %w", err)
 	}
 
-	f := &tsast.File{}
-	f.Doc = &tsast.Comment{
+	tsf := &tsast.File{}
+	tsf.Doc = &tsast.Comment{
 		Text: buf.String(),
+	}
+
+	for _, im := range decl.Imports {
+		if tsim, err := convertImport(im); err != nil {
+			return nil, err
+		} else if tsim.From.Value != "" {
+			tsf.Imports = append(tsf.Imports, tsim)
+		}
 	}
 
 	slotname := decl.Slot.Name()
 	v := decl.Lineage.Latest().Version()
 
-	f.Nodes = append(f.Nodes, tsast.Raw{
+	tsf.Nodes = append(tsf.Nodes, tsast.Raw{
 		Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", slotname, v[0], v[1]),
 	})
 
-	jif, err := j.inner.Generate(decl)
+	jf, err := j.inner.Generate(decl)
 	if err != nil {
 		return nil, err
 	}
 
-	f.Nodes = append(f.Nodes, tsast.Raw{
-		Data: string(jif.Data),
+	tsf.Nodes = append(tsf.Nodes, tsast.Raw{
+		Data: string(jf.Data),
 	})
 
 	path := filepath.Join(j.root, decl.PluginPath, "models.gen.ts")
-	body := []byte(f.String())
+	body := []byte(tsf.String())
 	body = body[:len(body)-1] // remove the additional line break added by the inner jenny
 
-	return codejen.NewFile(path, body, append(jif.From, j)...), nil
+	return codejen.NewFile(path, body, append(jf.From, j)...), nil
 }
