@@ -354,7 +354,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {}'.format(edition),
+            './bin/build upload-cdn --edition {}'.format(edition),
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
@@ -622,15 +622,10 @@ def codespell_step():
 def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     deps = [
         'build-plugins',
-        'build-backend',
+        'build-backend' + enterprise2_suffix(edition),
         'build-frontend',
         'build-frontend-packages',
     ]
-    if include_enterprise2:
-        sfx = '-enterprise2'
-        deps.extend([
-            'build-backend' + sfx,
-        ])
 
     variants_str = ''
     if variants:
@@ -773,12 +768,12 @@ def build_docs_website_step():
     }
 
 
-def copy_packages_for_docker_step():
+def copy_packages_for_docker_step(edition=None):
     return {
         'name': 'copy-packages-for-docker',
         'image': build_image,
         'depends_on': [
-            'package',
+            'package' + enterprise2_suffix(edition),
         ],
         'commands': [
             'ls dist/*.tar.gz*',
@@ -800,6 +795,13 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if archs:
         cmd += ' -archs {}'.format(','.join(archs))
 
+    environment = {
+        'GCP_KEY': from_secret('gcp_key'),
+    }
+
+    if edition == 'enterprise2':
+        environment.update({'DOCKER_ENTERPRISE2_REPO': from_secret('docker_enterprise2_repo')})
+
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
         'image': 'google/cloud-sdk',
@@ -814,9 +816,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
             'name': 'docker',
             'path': '/var/run/docker.sock'
         }],
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-        },
+        'environment': environment
     }
 
 def fetch_images_step(edition):
@@ -827,6 +827,7 @@ def fetch_images_step(edition):
             'GCP_KEY': from_secret('gcp_key'),
             'DOCKER_USER': from_secret('docker_username'),
             'DOCKER_PASSWORD': from_secret('docker_password'),
+            'DOCKER_ENTERPRISE2_REPO': from_secret('docker_enterprise2_repo'),
         },
         'commands': ['./bin/build artifacts docker fetch --edition {}'.format(edition)],
         'depends_on': ['compile-build-cmd'],
@@ -838,13 +839,20 @@ def fetch_images_step(edition):
 
 
 def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
+    name = docker_repo
+    docker_repo = 'grafana/{}'.format(docker_repo)
     if mode == 'security':
         mode = '--{} '.format(mode)
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(
-        mode, docker_repo)
+    environment = {
+        'GCP_KEY': from_secret('gcp_key'),
+        'DOCKER_USER': from_secret('docker_username'),
+        'DOCKER_PASSWORD': from_secret('docker_password'),
+    }
+
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(mode, docker_repo)
 
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
@@ -852,14 +860,16 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     else:
         deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
+    if edition == 'enterprise2':
+        name = edition
+        docker_repo = '$${DOCKER_ENTERPRISE2_REPO}'
+        environment.update({'GCP_KEY': from_secret('gcp_key_hg'), 'DOCKER_ENTERPRISE2_REPO': from_secret('docker_enterprise2_repo')})
+        cmd = './bin/build artifacts docker publish-enterprise2 --dockerhub-repo {}'.format(docker_repo)
+
     step = {
-        'name': 'publish-images-{}'.format(docker_repo),
+        'name': 'publish-images-{}'.format(name),
         'image': 'google/cloud-sdk',
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-            'DOCKER_USER': from_secret('docker_username'),
-            'DOCKER_PASSWORD': from_secret('docker_password'),
-        },
+        'environment': environment,
         'commands': [cmd],
         'depends_on': deps,
         'volumes': [{
@@ -995,7 +1005,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': ['./bin/grabpl upload-packages --edition {}'.format(edition),],
+        'commands': ['./bin/build upload-packages --edition {}'.format(edition),],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when=trigger)
