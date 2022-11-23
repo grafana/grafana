@@ -117,6 +117,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 
 	args := []string{
 		"build",
+		"-q",
 		"--build-arg", fmt.Sprintf("BASE_IMAGE=%s", baseImage),
 		"--build-arg", fmt.Sprintf("GRAFANA_TGZ=%s", archive),
 		"--build-arg", "GO_SRC=tgz-builder",
