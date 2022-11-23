@@ -4609,7 +4609,7 @@ __metadata:
     "@typescript-eslint/parser": 5.36.2
     axios: ^0.26.1
     babel-jest: 27.5.1
-    babel-loader: ^8.2.5
+    babel-loader: ^9.1.0
     babel-plugin-angularjs-annotate: 0.10.0
     chalk: ^4.1.2
     command-exists: ^1.2.9
@@ -13968,7 +13968,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:9.1.0":
+"babel-loader@npm:9.1.0, babel-loader@npm:^9.1.0":
   version: 9.1.0
   resolution: "babel-loader@npm:9.1.0"
   dependencies:
@@ -13981,7 +13981,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:^8.0.0, babel-loader@npm:^8.2.5":
+"babel-loader@npm:^8.0.0":
   version: 8.2.5
   resolution: "babel-loader@npm:8.2.5"
   dependencies:

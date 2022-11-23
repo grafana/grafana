@@ -72,7 +72,7 @@
     "@typescript-eslint/parser": "5.36.2",
     "axios": "^0.26.1",
     "babel-jest": "27.5.1",
-    "babel-loader": "^8.2.5",
+    "babel-loader": "^9.1.0",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "chalk": "^4.1.2",
     "command-exists": "^1.2.9",
