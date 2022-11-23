@@ -3,8 +3,6 @@ package codegen
 import (
 	"bytes"
 	"fmt"
-	"io/fs"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -13,7 +11,6 @@ import (
 	"cuelang.org/go/pkg/encoding/yaml"
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/grafana/cuetsy"
 	tsast "github.com/grafana/cuetsy/ts/ast"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/kindsys"
@@ -67,116 +64,10 @@ func MapCUEImportToTS(path string) (string, error) {
 	return i, nil
 }
 
-// ExtractPluginTrees attempts to create a *pfs.Tree for each of the top-level child
-// directories in the provided fs.FS.
-//
-// Errors returned from [pfs.ParsePluginFS] are placed in the option map. Only
-// filesystem traversal and read errors will result in a non-nil second return
-// value.
-func ExtractPluginTrees(parent fs.FS, rt *thema.Runtime) (map[string]PluginTreeOrErr, error) {
-	ents, err := fs.ReadDir(parent, ".")
-	if err != nil {
-		return nil, fmt.Errorf("error reading fs root directory: %w", err)
-	}
-
-	ptrees := make(map[string]PluginTreeOrErr)
-	for _, plugdir := range ents {
-		subpath := plugdir.Name()
-		sub, err := fs.Sub(parent, subpath)
-		if err != nil {
-			return nil, fmt.Errorf("error creating subfs for path %s: %w", subpath, err)
-		}
-
-		var either PluginTreeOrErr
-		if ptree, err := pfs.ParsePluginFS(sub, rt); err == nil {
-			either.Tree = (*PluginTree)(ptree)
-		} else {
-			either.Err = err
-		}
-		ptrees[subpath] = either
-	}
-
-	return ptrees, nil
-}
-
-// PluginTreeOrErr represents either a *pfs.Tree, or the error that occurred
-// while trying to create one.
-// TODO replace with generic option type after go 1.18
-type PluginTreeOrErr struct {
-	Err  error
-	Tree *PluginTree
-}
-
 // PluginTree is a pfs.Tree. It exists so we can add methods for code generation to it.
 //
 // It is, for now, tailored specifically to Grafana core's codegen needs.
 type PluginTree pfs.Tree
-
-func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
-	t := (*pfs.Tree)(pt)
-	f := &tsast.File{}
-
-	tf := templateVars_autogen_header{
-		GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
-		LineagePath:   "models.cue",
-	}
-	var buf bytes.Buffer
-	err := tmpls.Lookup("autogen_header.tmpl").Execute(&buf, tf)
-	if err != nil {
-		return nil, fmt.Errorf("error executing header template: %w", err)
-	}
-
-	f.Doc = &tsast.Comment{
-		Text: buf.String(),
-	}
-
-	pi := t.RootPlugin()
-	slotimps := pi.SlotImplementations()
-	if len(slotimps) == 0 {
-		return nil, nil
-	}
-	for _, im := range pi.CUEImports() {
-		if tsim, err := convertImport(im); err != nil {
-			return nil, err
-		} else if tsim.From.Value != "" {
-			f.Imports = append(f.Imports, tsim)
-		}
-	}
-
-	for slotname, lin := range slotimps {
-		v := thema.LatestVersion(lin)
-		sch := thema.SchemaP(lin, v)
-		// Inject a node for the const with the version
-		f.Nodes = append(f.Nodes, tsast.Raw{
-			// TODO need call expressions in cuetsy tsast to be able to do these properly
-			Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", slotname, v[0], v[1]),
-		})
-
-		// TODO this is hardcoded for now, but should ultimately be a property of
-		// whether the slot is a grouped lineage:
-		// https://github.com/grafana/thema/issues/62
-		if isGroupLineage(slotname) {
-			tsf, err := cuetsy.GenerateAST(sch.Underlying(), cuetsy.Config{
-				Export: true,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
-			}
-			f.Nodes = append(f.Nodes, tsf.Nodes...)
-		} else {
-			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.Underlying(), cuetsy.TypeInterface)
-			if err != nil {
-				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
-			}
-			f.Nodes = append(f.Nodes, pair.T)
-			if pair.D != nil {
-				f.Nodes = append(f.Nodes, pair.D)
-			}
-		}
-	}
-
-	return f, nil
-}
 
 func isGroupLineage(slotname string) bool {
 	sl, has := kindsys.AllSlots(nil)[slotname]
@@ -371,65 +262,6 @@ func sanitizePluginId(s string) string {
 			return -1
 		}
 	}, s)
-}
-
-// FIXME unexport this and refactor, this is way too one-off to be in here
-func GenPluginTreeList(trees []TreeAndPath, prefix, target string, ref bool) (corecodegen.WriteDiffer, error) {
-	buf := new(bytes.Buffer)
-	vars := templateVars_plugin_registry{
-		Header: templateVars_autogen_header{
-			GenLicense: true,
-		},
-		Plugins: make([]struct {
-			PkgName, Path, ImportPath string
-			NoAlias                   bool
-		}, 0, len(trees)),
-	}
-
-	type tpl struct {
-		PkgName, Path, ImportPath string
-		NoAlias                   bool
-	}
-
-	// No sub-plugin support here. If we never allow subplugins in core, that's probably fine.
-	// But still worth noting.
-	for _, pt := range trees {
-		rp := (*pfs.Tree)(pt.Tree).RootPlugin()
-		vars.Plugins = append(vars.Plugins, tpl{
-			PkgName:    sanitizePluginId(rp.Meta().Id),
-			NoAlias:    sanitizePluginId(rp.Meta().Id) != filepath.Base(pt.Path),
-			ImportPath: filepath.ToSlash(filepath.Join(prefix, pt.Path)),
-			Path:       path.Join(append(strings.Split(prefix, "/")[3:], pt.Path)...),
-		})
-	}
-
-	tmplname := "plugin_registry.tmpl"
-	if ref {
-		tmplname = "plugin_registry_ref.tmpl"
-	}
-
-	if err := tmpls.Lookup(tmplname).Execute(buf, vars); err != nil {
-		return nil, fmt.Errorf("failed executing plugin registry template: %w", err)
-	}
-
-	byt, err := postprocessGoFile(genGoFile{
-		path: target,
-		in:   buf.Bytes(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error postprocessing plugin registry: %w", err)
-	}
-
-	wd := corecodegen.NewWriteDiffer()
-	wd[target] = byt
-	return wd, nil
-}
-
-// FIXME unexport this and refactor, this is way too one-off to be in here
-type TreeAndPath struct {
-	Tree *PluginTree
-	// path relative to path prefix UUUGHHH (basically {panel,datasource}/<dir>}
-	Path string
 }
 
 // TODO convert this to use cuetsy ts types, once import * form is supported
