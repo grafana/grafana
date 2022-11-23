@@ -505,8 +505,8 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 	defer func() {
-		if err := asset.readSeekCloser.Close(); err != nil {
-			hs.log.Warn("Failed to close asset readSeekCloser", "err", err)
+		if err := asset.Close(); err != nil {
+			hs.log.Warn("Failed to close asset", "err", err)
 		}
 	}()
 	if hs.Cfg.Env == setting.Dev {
