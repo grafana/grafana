@@ -31,7 +31,7 @@ func (gen *genBaseRegistry) JennyName() string {
 	return "BaseCoreRegistryJenny"
 }
 
-func (gen *genBaseRegistry) Generate(decls []*DeclForGen) (*codejen.File, error) {
+func (gen *genBaseRegistry) Generate(decls ...*DeclForGen) (*codejen.File, error) {
 	var numRaw int
 	for _, k := range decls {
 		if k.IsRaw() {

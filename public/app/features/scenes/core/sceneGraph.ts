@@ -108,7 +108,7 @@ export const EmptyDataNode = new SceneDataNode({
   },
 });
 
-export const DefaultTimeRange = new SceneTimeRangeImpl(getDefaultTimeRange());
+export const DefaultTimeRange = new SceneTimeRangeImpl();
 
 export const sceneGraph = {
   getVariables,

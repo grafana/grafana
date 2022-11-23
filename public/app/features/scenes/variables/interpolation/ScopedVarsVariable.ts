@@ -2,18 +2,18 @@ import { property } from 'lodash';
 
 import { ScopedVar } from '@grafana/data';
 
-import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneVariable, SceneVariableState, VariableValue } from '../types';
+import { VariableValue } from '../types';
 
-export interface ScopedVarsProxyVariableState extends SceneVariableState {
-  value: ScopedVar;
-}
+import { FormatVariable } from './formatRegistry';
 
-export class ScopedVarsVariable
-  extends SceneObjectBase<ScopedVarsProxyVariableState>
-  implements SceneVariable<ScopedVarsProxyVariableState>
-{
+export class ScopedVarsVariable implements FormatVariable {
   private static fieldAccessorCache: FieldAccessorCache = {};
+
+  public state: { name: string; value: ScopedVar };
+
+  public constructor(name: string, value: ScopedVar) {
+    this.state = { name, value };
+  }
 
   public getValue(fieldPath: string): VariableValue {
     let { value } = this.state;
@@ -63,9 +63,10 @@ let scopedVarsVariable: ScopedVarsVariable | undefined;
  */
 export function getSceneVariableForScopedVar(name: string, value: ScopedVar) {
   if (!scopedVarsVariable) {
-    scopedVarsVariable = new ScopedVarsVariable({ name, value });
+    scopedVarsVariable = new ScopedVarsVariable(name, value);
   } else {
-    scopedVarsVariable.setState({ name, value });
+    scopedVarsVariable.state.name = name;
+    scopedVarsVariable.state.value = value;
   }
 
   return scopedVarsVariable;

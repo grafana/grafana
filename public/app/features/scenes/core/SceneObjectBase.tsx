@@ -32,7 +32,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
       state.key = uuidv4();
     }
 
-    this._state = state;
+    this._state = Object.freeze(state);
     this._subject.next(state);
     this.setParent();
   }
@@ -92,19 +92,21 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
 
   public setState(update: Partial<TState>) {
     const prevState = this._state;
-    this._state = {
+    const newState: TState = {
       ...this._state,
       ...update,
     };
 
+    this._state = Object.freeze(newState);
+
     this.setParent();
-    this._subject.next(this._state);
+    this._subject.next(newState);
 
     // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
     this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
-        newState: this._state,
+        newState,
         partialUpdate: update,
         changedObject: this,
       }),

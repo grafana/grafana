@@ -1,13 +1,12 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
 import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
 export function getMultipleGridLayoutTest(): Scene {
   const scene = new Scene({
@@ -100,19 +99,8 @@ export function getMultipleGridLayoutTest(): Scene {
     }),
 
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $timeRange: new SceneTimeRange(),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 

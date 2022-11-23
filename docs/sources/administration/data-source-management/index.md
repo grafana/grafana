@@ -27,9 +27,6 @@ Before you can create your first dashboard, you need to add your data source.
 **To add a data source:**
 
 1. Select the cog icon on the side menu to show the configuration options.
-
-   {{< figure src="/static/img/docs/v75/sidemenu-datasource-7-5.png" max-width="150px" class="docs-image--no-shadow">}}
-
 1. Select **Data sources**.
 
    This opens the data sources page, which displays a list of previously configured data sources for the Grafana instance.
@@ -44,9 +41,7 @@ Before you can create your first dashboard, you need to add your data source.
 
 1. Move the cursor over the data source you want to add.
 
-   {{< figure src="/static/img/docs/v75/select-data-source-7-5.png" max-width="700px" class="docs-image--no-shadow">}}
-
-1. Select **Select**.
+1. Click **Select**.
 
    This opens the data source configuration page.
 
@@ -62,8 +57,6 @@ Each data source's configuration includes a permissions page where you can enabl
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 ### Enable data source permissions
-
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_enable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_enable.gif" >}}
 
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
 queries that exist on dashboards they have access to.
@@ -82,8 +75,6 @@ When permissions are enabled for a data source in an organization, the user who 
 
 ### Allow users and teams to query a data source
 
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_add_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_add.gif" >}}
-
 After you have enabled permissions for a data source you can assign query permissions to users and teams which will allow access to query the data source.
 
 **Assign query permission to users and teams:**
@@ -97,8 +88,6 @@ After you have enabled permissions for a data source you can assign query permis
 <div class="clearfix"></div>
 
 ### Disable data source permissions
-
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_disable.gif" >}}
 
 If you have enabled permissions for a data source and want to return data source permissions to the default, then you can disable permissions with a click of a button.
 
