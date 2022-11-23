@@ -837,20 +837,6 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 	return err
 }
 
-func (ss *sqlStore) getOrgUsersForTest(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	result := make([]*org.OrgUserDTO, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		sess := dbSess.Table("org_user")
-		sess.Join("LEFT ", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
-		sess.Where("org_user.org_id=?", query.OrgID)
-		sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role")
-
-		err := sess.Find(&result)
-		return err
-	})
-	return result, err
-}
-
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
