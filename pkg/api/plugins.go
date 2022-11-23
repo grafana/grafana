@@ -430,20 +430,39 @@ func (hs *HTTPServer) proxyCDNPluginAsset(c *models.ReqContext, plugin plugins.P
 	remoteURL := hs.getCDNPluginAssetRemoteURL(plugin, path)
 	req, err := http.NewRequestWithContext(c.Req.Context(), http.MethodGet, remoteURL, nil)
 	if err != nil {
-		return pluginAsset{}, fmt.Errorf("get %s: %w", remoteURL, err)
+		return pluginAsset{}, newErrorWithCode(
+			http.StatusInternalServerError, "Remote NewRequest error",
+			fmt.Errorf("get %s: %w", remoteURL, err),
+		)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return pluginAsset{}, fmt.Errorf("do requets %s: %w", remoteURL, err)
+		return pluginAsset{}, newErrorWithCode(
+			http.StatusInternalServerError, "Remote request error",
+			fmt.Errorf("do request %s: %w", remoteURL, err),
+		)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			hs.log.Warn("failed to close response body", "err", err)
 		}
 	}()
+	switch resp.StatusCode {
+	case http.StatusOK:
+		break
+	case http.StatusNotFound:
+		return pluginAsset{}, newErrorWithCode(http.StatusNotFound, "Remote CDN returned 404", nil)
+	default:
+		return pluginAsset{}, newErrorWithCode(
+			http.StatusInternalServerError, fmt.Sprintf("Remote CDN returned %d", resp.StatusCode), nil,
+		)
+	}
+	// resp.Body is a reader, but we need an io.ReadSeekerCloser, so read it all in-memory and use that buffer instead.
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return pluginAsset{}, fmt.Errorf("readall: %w", err)
+		return pluginAsset{}, newErrorWithCode(
+			http.StatusInternalServerError, "Response read error", fmt.Errorf("readall: %w", err),
+		)
 	}
 	hs.log.Debug("remote downloaded", "url", remoteURL)
 	return pluginAsset{
