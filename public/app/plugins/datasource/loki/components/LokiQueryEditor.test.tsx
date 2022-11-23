@@ -94,7 +94,7 @@ describe('LokiQueryEditorSelector', () => {
     });
   });
 
-  it('Should show raw query by default', async () => {
+  it('Should show the query by default', async () => {
     renderWithProps({
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
