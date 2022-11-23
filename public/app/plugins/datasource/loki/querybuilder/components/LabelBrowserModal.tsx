@@ -23,19 +23,16 @@ export const LabelBrowserModal = (props: Props) => {
 
   const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
-  const changeQuery = (value: string, override?: boolean) => {
+  const changeQuery = (value: string) => {
     const { query, onChange, onRunQuery } = props;
 
     const nextQuery = { ...query, expr: value };
     onChange(nextQuery);
-
-    if (override && onRunQuery) {
-      onRunQuery();
-    }
+    onRunQuery();
   };
 
   const onChange = (selector: string) => {
-    changeQuery(selector, true);
+    changeQuery(selector);
     onClose();
   };
 
