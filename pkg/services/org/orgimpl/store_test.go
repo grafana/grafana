@@ -402,7 +402,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 		t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
 			// make sure ac2 has no org
-			err := ss.DeleteOrg(context.Background(), &models.DeleteOrgCommand{Id: ac2.OrgID})
+			err := orgUserStore.Delete(context.Background(), &org.DeleteOrgCommand{ID: ac2.OrgID})
 			require.NoError(t, err)
 
 			// remove ac2 user from ac1 org
