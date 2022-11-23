@@ -35,9 +35,9 @@ func TestGetHeadersForCallResource(t *testing.T) {
 				"X-Id-Token":       {idTokn1, idTokn2},
 			},
 			expectedHeaders: map[string]string{
-				"Authorization":   authTokn1,
-				"Cookie":          "a=1",
-				"X-ID-Token":      idTokn1,
+				"Authorization": authTokn1,
+				"Cookie":        "a=1",
+				"X-ID-Token":    idTokn1,
 			},
 		},
 		"Headers with single value": {
@@ -49,9 +49,9 @@ func TestGetHeadersForCallResource(t *testing.T) {
 				"X-Id-Token":       {idTokn1},
 			},
 			expectedHeaders: map[string]string{
-				"Authorization":   authTokn1,
-				"Cookie":          "a=1",
-				"X-ID-Token":      idTokn1,
+				"Authorization": authTokn1,
+				"Cookie":        "a=1",
+				"X-ID-Token":    idTokn1,
 			},
 		},
 		"Non Canonical 'X-Id-Token' header key": {
