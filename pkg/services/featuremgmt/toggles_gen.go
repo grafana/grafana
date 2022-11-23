@@ -196,7 +196,7 @@ const (
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
-	// Enables work-in-progress internationalization
+	// Enables internationalization
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
