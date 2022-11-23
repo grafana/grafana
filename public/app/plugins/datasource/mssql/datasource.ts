@@ -1,14 +1,9 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { LanguageDefinition } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
-import { AGGREGATE_FNS } from 'app/features/plugins/sql/constants';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import {
-  DB,
-  LanguageCompletionProvider,
-  ResponseParser,
-  SQLQuery,
-  SQLSelectableValue,
-} from 'app/features/plugins/sql/types';
+import { DB, ResponseParser, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
+import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
 import { getSchema, showDatabases, getSchemaAndName } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
@@ -18,7 +13,7 @@ import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
 import { MssqlOptions } from './types';
 
 export class MssqlDatasource extends SqlDatasource {
-  completionProvider: LanguageCompletionProvider | undefined = undefined;
+  sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
   constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>) {
     super(instanceSettings);
   }
@@ -59,16 +54,20 @@ export class MssqlDatasource extends SqlDatasource {
     return result;
   }
 
-  getSqlCompletionProvider(db: DB): LanguageCompletionProvider {
-    if (this.completionProvider !== undefined) {
-      return this.completionProvider;
+  getSqlLanguageDefinition(db: DB): LanguageDefinition {
+    if (this.sqlLanguageDefinition !== undefined) {
+      return this.sqlLanguageDefinition;
     }
     const args = {
       getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
       getTables: { current: (dataset?: string) => fetchTables(db, dataset) },
     };
-    this.completionProvider = getSqlCompletionProvider(args);
-    return this.completionProvider;
+    this.sqlLanguageDefinition = {
+      id: 'sql',
+      completionProvider: getSqlCompletionProvider(args),
+      formatter: formatSQL,
+    };
+    return this.sqlLanguageDefinition;
   }
 
   getDB(): DB {
@@ -79,7 +78,7 @@ export class MssqlDatasource extends SqlDatasource {
       init: () => Promise.resolve(true),
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),
-      getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
+      getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(this.db),
       fields: async (query: SQLQuery) => {
         if (!query?.dataset || !query?.table) {
           return [];
@@ -94,7 +93,7 @@ export class MssqlDatasource extends SqlDatasource {
       lookup: async (path?: string) => {
         if (!path) {
           const datasets = await this.fetchDatasets();
-          return datasets.map((d) => ({ name: d, completion: d }));
+          return datasets.map((d) => ({ name: d, completion: `${d}.` }));
         } else {
           const parts = path.split('.').filter((s: string) => s);
           if (parts.length > 2) {
@@ -108,7 +107,6 @@ export class MssqlDatasource extends SqlDatasource {
           }
         }
       },
-      functions: async () => AGGREGATE_FNS,
     };
   }
 }
