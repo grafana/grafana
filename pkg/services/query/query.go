@@ -137,25 +137,8 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 	}
 
 	if user != nil { // for passthrough authentication, SSE does not authenticate
-		exprReq.User = &backend.User{
-			Login: user.Login,
-			Name:  user.Name,
-			Email: user.Email,
-			Role:  string(user.OrgRole),
-		}
+		exprReq.User = adapters.BackendUserFromSignedInUser(user)
 		exprReq.OrgId = user.OrgID
-	}
-
-	if parsedReq.httpRequest != nil && parsedReq.httpRequest.Header != nil {
-		clippedHeaders := make(map[string]string, len(parsedReq.httpRequest.Header))
-		for k, v := range parsedReq.httpRequest.Header {
-			if len(v) == 0 {
-				clippedHeaders[k] = ""
-				continue
-			}
-			clippedHeaders[k] = v[0]
-		}
-		exprReq.Headers = clippedHeaders
 	}
 
 	for _, pq := range parsedReq.getFlattenedQueries() {
