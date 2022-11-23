@@ -74,6 +74,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
       <Tooltip placement="top" content={'View'}>
         <LinkButton
           className={style.button}
+          title="View"
           size="sm"
           key="view"
           variant="secondary"
@@ -113,13 +114,29 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
 
     buttons.push(
       <Tooltip placement="top" content={'Edit'}>
-        <LinkButton className={style.button} size="sm" key="edit" variant="secondary" icon="pen" href={editURL} />
+        <LinkButton
+          title="Edit"
+          className={style.button}
+          size="sm"
+          key="edit"
+          variant="secondary"
+          icon="pen"
+          href={editURL}
+        />
       </Tooltip>
     );
 
     buttons.push(
       <Tooltip placement="top" content="Duplicate">
-        <LinkButton className={style.button} size="sm" key="clone" variant="secondary" icon="copy" href={cloneUrl} />
+        <LinkButton
+          title="Duplicate"
+          className={style.button}
+          size="sm"
+          key="clone"
+          variant="secondary"
+          icon="copy"
+          href={cloneUrl}
+        />
       </Tooltip>
     );
   }
@@ -128,6 +145,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     buttons.push(
       <Tooltip placement="top" content={'Delete'}>
         <Button
+          title="Delete"
           className={style.button}
           size="sm"
           type="button"
