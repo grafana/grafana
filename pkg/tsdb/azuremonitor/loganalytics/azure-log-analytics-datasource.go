@@ -190,7 +190,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
-	appendErrorNotice(frame, logResponse.Error)
+	frame = appendErrorNotice(frame, logResponse.Error)
 	if frame == nil {
 		return dataResponse
 	}
