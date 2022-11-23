@@ -21,10 +21,10 @@ def test_frontend(trigger, ver_mode, edition = "oss"):
     """Generates the pipeline used for testing frontend code.
 
     Args:
-      trigger: TODO
-      edition: TODO
+      trigger: a Drone trigger for the pipeline
+      edition: controls whether the testing is performed with the addition of enterprise code.
         Defaults to 'oss'.
-      ver_mode: TODO
+      ver_mode: indirectly controls which revision of enterprise code to use.
 
     Returns:
       Drone pipeline.
