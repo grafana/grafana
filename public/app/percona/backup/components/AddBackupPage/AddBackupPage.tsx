@@ -60,6 +60,7 @@ import { ScheduleSection } from './ScheduleSection/ScheduleSection';
 const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = ({ match }) => {
   const [queryParams] = useQueryParams();
   const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || match.params.type === SCHEDULED_TYPE;
+  //const type: BackupType = scheduleMode ? BackupType.SCHEDULED : BackupType.DEMAND;
   const [backup, setBackup] = useState<Backup | ScheduledBackup | null>(null);
   const [pending, setPending] = useState(false);
   const styles = useStyles2(getStyles);
@@ -137,6 +138,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
   };
 
   const handleSubmit = (values: AddBackupFormProps) => {
+    console.log(values);
     handleBackup({
       ...values,
       retention: parseInt(`${values.retention}`, 10),

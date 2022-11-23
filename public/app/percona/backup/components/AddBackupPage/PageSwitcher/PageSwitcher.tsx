@@ -1,8 +1,8 @@
-import { RadioButton } from '@percona/platform-core/dist/components/RadioButtonGroup/RadioButton';
-import React from 'react';
+import { cx } from '@emotion/css';
+import React, { useState } from 'react';
 import { Field } from 'react-final-form';
 
-import { useStyles2 } from '@grafana/ui';
+import { Card, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { BackupType } from 'app/percona/backup/Backup.types';
 
@@ -14,34 +14,46 @@ import { PageSwitcherProps } from './PageSwitcher.types';
 export const PageSwitcher = ({ editing, setModalTitle }: PageSwitcherProps) => {
   const styles = useStyles2(getStyles);
   const [, setQueryParams] = useQueryParams();
+  const [selected, setSelected] = useState({ onDemand: true, scheduled: false });
+  const cardStyles = cx({
+    [styles.wrapper]: true,
+    [styles.disabled]: false,
+  });
+
   return (
     <div className={styles.pageSwitcherWrapper}>
       <Field name="type" component="input" type="radio" value={BackupType.DEMAND}>
         {({ input }) => (
-          <RadioButton
-            {...input}
-            onChange={() => {
+          <Card
+            className={cardStyles}
+            isSelected={selected.onDemand}
+            onClick={() => {
+              input.onChange({ target: { value: input.value } });
+              setSelected({ onDemand: true, scheduled: false });
               setQueryParams({ scheduled: null });
               setModalTitle(Messages.getModalTitle(false, editing));
-              input.onChange({ target: { value: input.value } });
             }}
           >
-            {Messages.onDemand}
-          </RadioButton>
+            <Card.Heading>{Messages.onDemand}</Card.Heading>
+            <Card.Description>Backup on demand</Card.Description>
+          </Card>
         )}
       </Field>
       <Field name="type" component="input" type="radio" value={BackupType.SCHEDULED}>
         {({ input }) => (
-          <RadioButton
-            {...input}
-            onChange={() => {
+          <Card
+            className={cardStyles}
+            isSelected={selected.scheduled}
+            onClick={() => {
+              input.onChange({ target: { value: input.value } });
+              setSelected({ onDemand: false, scheduled: true });
               setQueryParams({ scheduled: true });
               setModalTitle(Messages.getModalTitle(true, editing));
-              input.onChange({ target: { value: input.value } });
             }}
           >
-            {Messages.schedule}
-          </RadioButton>
+            <Card.Heading> {Messages.schedule}</Card.Heading>
+            <Card.Description>Scheduled Backup on demand</Card.Description>
+          </Card>
         )}
       </Field>
     </div>
