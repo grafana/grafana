@@ -41,16 +41,32 @@ func VerifyStarlark(c *cli.Context) error {
 	}
 
 	workspace := c.Args().Get(0)
-	errs := verifyStarlark(c.Context, workspace)
-	if len(errs) == 0 {
+	verificationErrs, executionErr := verifyStarlark(c.Context, workspace, buildifierLintCommand)
+	if executionErr != nil {
+		return cli.Exit(executionErr.Error(), 1)
+	}
+
+	if len(verificationErrs) == 0 {
 		return nil
 	}
-	return fmt.Errorf("%d errors occurred:\n%s",
-		len(errs),
+
+	noun := "file"
+	if len(verificationErrs) > 1 {
+		noun += "s"
+	}
+	return fmt.Errorf("verification failed for %d %s:\n%s",
+		len(verificationErrs),
+		noun,
 		strings.Join(
-			mapSlice(errs, func(e error) string { return e.Error() }),
+			mapSlice(verificationErrs, func(e error) string { return e.Error() }),
 			"\n",
 		))
+}
+
+type commandFunc = func(path string) (command string, args []string)
+
+func buildifierLintCommand(path string) (string, []string) {
+	return "buildifier", []string{"-lint", "warn", path}
 }
 
 // verifyStarlark walks all directories starting at provided workspace path and
@@ -58,17 +74,26 @@ func VerifyStarlark(c *cli.Context) error {
 // Starlark files are assumed to end with the .star extension.
 // The verification relies on linting frovided by the 'buildifier' binary which
 // must be in the PATH.
-func verifyStarlark(ctx context.Context, workspace string) []error {
-	var errs []error
+// A slice of verification errors are returned, one for each file that failed verification.
+// If any execution of the `buildifier` command fails, this is returned separately.
+func verifyStarlark(ctx context.Context, workspace string, commandFn commandFunc) ([]error, error) {
+	var verificationErrs []error
+	var executionErr error
 
 	// All errors from filepath.WalkDir are filtered by the fs.WalkDirFunc.
 	// The anonymous function used here never returns an error.
+	// Lstat or ReadDir errors are reported as verificationErrors.
+	// If any execution of the `buildifier` command fails, it is reported as executionErr and
+	// any verification of subsequent files is skipped.
 	if err := filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
 		// Skip verification of the file or files within the directory if there is an error
 		// returned by Lstat or ReadDir.
-		// Report the Lstat or ReadDir error as part of errs.
 		if err != nil {
-			errs = append(errs, err)
+			verificationErrs = append(verificationErrs, err)
+			return nil
+		}
+
+		if executionErr != nil {
 			return nil
 		}
 
@@ -77,43 +102,46 @@ func verifyStarlark(ctx context.Context, workspace string) []error {
 		}
 
 		if filepath.Ext(path) == ".star" {
-			cmd := exec.CommandContext(ctx, "buildifier", "-lint", "warn", path)
+			command, args := commandFn(path)
+			cmd := exec.CommandContext(ctx, command, args...)
 			cmd.Dir = workspace
 
-			output, err := cmd.CombinedOutput()
+			_, err := cmd.Output()
 			if err == nil { // No error, early return.
 				return nil
 			}
 
-			var exitError *exec.ExitError
-			if errors.As(err, &exitError) {
-				switch err.(*exec.ExitError).ExitCode() {
+			if err, ok := err.(*exec.ExitError); ok {
+				switch err.ExitCode() {
 				// Case comments are informed by the output of `buildifier --help`
 				case 1: // syntax errors in input
-					errs = append(errs, fmt.Errorf("command %q: unexpected syntax error in input: %s", cmd, string(output)))
+					verificationErrs = append(verificationErrs, errors.New(string(err.Stderr)))
 					return nil
 				case 2: // usage errors: invoked incorrectly
-					errs = append(errs, fmt.Errorf("command %q: usage error: %s", cmd, string(output)))
+					executionErr = fmt.Errorf("command %q: %s", cmd, err.Stderr)
 					return nil
 				case 3: // unexpected runtime errors: file I/O problems or internal bugs
-					errs = append(errs, fmt.Errorf("command %q: runtime error: %s", cmd, string(output)))
+					executionErr = fmt.Errorf("command %q: %s", cmd, err.Stderr)
 					return nil
 				case 4: // check mode failed (reformat is needed)
-					errs = append(errs, errors.New(string(output)))
+					verificationErrs = append(verificationErrs, errors.New(string(err.Stderr)))
+					return nil
+				default:
+					executionErr = fmt.Errorf("command %q: %s", cmd, err.Stderr)
 					return nil
 				}
 			}
 
-			// Error was either an *exec.exitError with an unexpected exit code or
-			// a different error entirely.
-			errs = append(errs, fmt.Errorf("command %q: unexpected error: %v", cmd, err))
+			// Error was not an exit error from the command.
+			executionErr = fmt.Errorf("command %q: %v", cmd, err)
 			return nil
 		}
 
 		return nil
 	}); err != nil {
+		// Should never happen. See comment by the invocation of WalkDir for more information.
 		panic(fmt.Sprintf("unexpected error from filepath.WalkDir: %v", err))
 	}
 
-	return errs
+	return verificationErrs, executionErr
 }
