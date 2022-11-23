@@ -50,7 +50,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 
 		for slot, lin := range slots {
 			decls = append(decls, &PluginDecl{
-				Slot:       slot,
+				Slot:       slot, //FIXME should return kindsys.Slot instead of slot name
 				Lineage:    lin,
 				PluginMeta: p.Meta(),
 				PluginPath: path,

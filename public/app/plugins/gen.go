@@ -55,7 +55,8 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
+		//adaptToPipeline(corecodegen.GoTypesJenny{}),
+		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})), // FIXME should pass imports mapper to TSTypesJenny
 	)
 
 	declParser := kindsys.NewDeclParser(rt, skipPlugins)
@@ -83,7 +84,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    pd.PluginMeta.Name,
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.Slot == "Panel" || pd.Slot == "DSConfig", // should be provided by the pkg/kindsys
+			IsGroup: pd.Slot == "Panel" || pd.Slot == "DSConfig", // should be provided by the pkg/kindsys.Slot
 		}
 	})
 }
