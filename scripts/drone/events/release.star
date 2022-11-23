@@ -245,7 +245,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     return pipelines
 
 def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
-    """Generates all pipelines used in an an enterprise release.
+    """Generates all pipelines used for Grafana Enterprise.
 
     Args:
       ver_mode: controls which steps are included in the pipeline.
@@ -395,10 +395,11 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     return pipelines
 
 def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_trigger):
-    """TODO
+    """Generate the next generation of pipelines for Grafana Enterprise.
 
     Args:
-      prefix: TODO
+      prefix: a prefix for the pipeline name used to differentiate multiple instances of
+        the same pipeline.
         Defaults to ''.
       ver_mode: controls which steps are included in the pipeline.
         Defaults to 'release'.
