@@ -21,22 +21,27 @@ def pipeline(
         depends_on = [],
         environment = None,
         volumes = []):
-    """TODO
+    """Generate a Drone Docker pipeline with commonly used values.
+
+    In addition to the parameters provided, it configures:
+      - the use of an image pull secret
+      - a retry count for cloning
+      - a volume 'docker' that can be used to access the Docker socket
 
     Args:
-      name: TODO
-      edition: TODO
-      trigger: TODO
-      steps: TODO
-      services: TODO
+      name: controls the pipeline name.
+      edition: used to differentiate the pipeline for enterprise builds.
+      trigger: a Drone trigger for the pipeline.
+      steps: the Drone steps for the pipeline.
+      services: auxilliary services used during the pipeline.
         Defaults to [].
-      platform: TODO
+      platform: abstracts platform specific configuration primarily for different Drone behavior on Windows.
         Defaults to 'linux'.
-      depends_on: TODO
+      depends_on: list of pipelines that must have succeeded before this pipeline can start.
         Defaults to [].
-      environment: TODO
+      environment: environment variables passed through to pipeline steps.
         Defaults to None.
-      volumes: TODO
+      volumes: additional volumes available to be mounted by pipeline steps.
         Defaults to [].
     Returns:
       Drone pipeline
