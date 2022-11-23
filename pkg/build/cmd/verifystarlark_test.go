@@ -31,7 +31,7 @@ function()`)
 			t.Fatalf(`verifyStarlark returned multiple errors for the "has-lint.star" file but only one was expected: %v`, errs)
 		}
 		if !strings.Contains(errs[0].Error(), "has-lint.star:1: module-docstring: The file has no module docstring.") {
-			t.Fatalf(`"has-lint.star" is missing a module docstring but the verifyStarlark function linting error did not mention this`)
+			t.Fatalf(`"has-lint.star" is missing a module docstring but the verifyStarlark function linting error did not mention this, instead we got: %v`, errs[0])
 		}
 	})
 
@@ -74,10 +74,10 @@ function()`)
 			t.Fatalf(`verifyStarlark returned more errors than expected: %v`, errs)
 		}
 		if !strings.Contains(errs[0].Error(), "has-lint.star:1: module-docstring: The file has no module docstring.") {
-			t.Fatalf(`"has-lint.star" is missing a module docstring but the verifyStarlark function linting error did not mention this`)
+			t.Fatalf(`"has-lint.star" is missing a module docstring but the verifyStarlark function linting error did not mention this, instead we got: %v`, errs[0])
 		}
 		if !strings.Contains(errs[1].Error(), "has-lint2.star:1: module-docstring: The file has no module docstring.") {
-			t.Fatalf(`"has-lint.star" is missing a module docstring but the verifyStarlark function linting error did not mention this`)
+			t.Fatalf(`"has-lint2.star" is missing a module docstring but the verifyStarlark function linting error did not mention this, instead we got: %v`, errs[0])
 		}
 	})
 }

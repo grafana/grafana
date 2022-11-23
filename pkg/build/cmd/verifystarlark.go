@@ -61,7 +61,17 @@ func VerifyStarlark(c *cli.Context) error {
 func verifyStarlark(ctx context.Context, workspace string) []error {
 	var errs []error
 
-	_ = filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
+	// All errors from filepath.WalkDir are filtered by the fs.WalkDirFunc.
+	// The anonymous function used here never returns an error.
+	if err := filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
+		// Skip verification of the file or files within the directory if there is an error
+		// returned by Lstat or ReadDir.
+		// Report the Lstat or ReadDir error as part of errs.
+		if err != nil {
+			errs = append(errs, err)
+			return nil
+		}
+
 		if d.IsDir() {
 			return nil
 		}
@@ -69,25 +79,41 @@ func verifyStarlark(ctx context.Context, workspace string) []error {
 		if filepath.Ext(path) == ".star" {
 			cmd := exec.CommandContext(ctx, "buildifier", "-lint", "warn", path)
 			cmd.Dir = workspace
+
 			output, err := cmd.CombinedOutput()
-			if err != nil {
-				switch err.Error() {
-				case "exit status 1": // syntax errors in input
-					errs = append(errs, fmt.Errorf("unexpected syntax error from command %q: %s", cmd, string(output)))
-				case "exit status 2": // usage errors: invoked incorrectly
-					errs = append(errs, fmt.Errorf("unexpected usage error from command %q: %s", cmd, string(output)))
-				case "exit status 3": // unexpected runtime errors: file I/O problems or internal bugs
-					errs = append(errs, fmt.Errorf("unexpected runtime error from command %q: %s", cmd, string(output)))
-				case "exit status 4": // check mode failed (reformat is needed)
+			if err == nil { // No error, early return.
+				return nil
+			}
+
+			var exitError *exec.ExitError
+			if errors.As(err, &exitError) {
+				switch err.(*exec.ExitError).ExitCode() {
+				// Case comments are informed by the output of `buildifier --help`
+				case 1: // syntax errors in input
+					errs = append(errs, fmt.Errorf("command %q: unexpected syntax error in input: %s", cmd, string(output)))
+					return nil
+				case 2: // usage errors: invoked incorrectly
+					errs = append(errs, fmt.Errorf("command %q: usage error: %s", cmd, string(output)))
+					return nil
+				case 3: // unexpected runtime errors: file I/O problems or internal bugs
+					errs = append(errs, fmt.Errorf("command %q: runtime error: %s", cmd, string(output)))
+					return nil
+				case 4: // check mode failed (reformat is needed)
 					errs = append(errs, errors.New(string(output)))
-				default:
-					errs = append(errs, fmt.Errorf("unexpected error from command %q: %v", cmd, err))
+					return nil
 				}
 			}
+
+			// Error was either an *exec.exitError with an unexpected exit code or
+			// a different error entirely.
+			errs = append(errs, fmt.Errorf("command %q: unexpected error: %v", cmd, err))
+			return nil
 		}
 
 		return nil
-	})
+	}); err != nil {
+		panic(fmt.Sprintf("unexpected error from filepath.WalkDir: %v", err))
+	}
 
 	return errs
 }
