@@ -46,10 +46,7 @@ interface RegistrySelectInfo {
   current: Array<SelectableValue<string>>;
 }
 
-export function getElementTypesOptions(
-  items: Array<CanvasElementItem<any>>,
-  current: string | undefined
-): RegistrySelectInfo {
+export function getElementTypesOptions(items: CanvasElementItem[], current: string | undefined): RegistrySelectInfo {
   const selectables: RegistrySelectInfo = { options: [], current: [] };
   const alpha: Array<SelectableValue<string>> = [];
 

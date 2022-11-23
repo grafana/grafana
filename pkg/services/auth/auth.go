@@ -16,10 +16,6 @@ const (
 	QuotaTarget    quota.Target    = "session"
 )
 
-type ActiveTokenService interface {
-	ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error)
-}
-
 // Typed errors
 var (
 	ErrUserTokenNotFound = errors.New("user token not found")
