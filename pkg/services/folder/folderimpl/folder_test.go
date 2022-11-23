@@ -561,6 +561,5 @@ func TestNestedFolderService(t *testing.T) {
 			assert.ErrorIs(t, err, folder.ErrMaximumDepthReached)
 			require.NotNil(t, actualCmd)
 		})
-
 	})
 }
