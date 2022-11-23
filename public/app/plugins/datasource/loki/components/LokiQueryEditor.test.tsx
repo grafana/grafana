@@ -149,6 +149,11 @@ describe('LokiQueryEditorSelector', () => {
     expect(screen.getByText('Rate')).toBeInTheDocument();
     expect(screen.getByText('$__interval')).toBeInTheDocument();
   });
+
+  it('renders the label browser button', async () => {
+    renderWithMode(QueryEditorMode.Code);
+    expect(await screen.findByTestId('label-browser-button')).toBeInTheDocument();
+  });
 });
 
 function renderWithMode(mode: QueryEditorMode) {
