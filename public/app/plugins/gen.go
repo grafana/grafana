@@ -84,7 +84,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    pd.PluginMeta.Name,
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.Slot == "Panel" || pd.Slot == "DSConfig", // should be provided by the pkg/kindsys.Slot
+			IsGroup: pd.Slot.IsGroup(),
 		}
 	})
 }

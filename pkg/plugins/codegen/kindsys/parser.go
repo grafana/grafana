@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	corekindsys "github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema"
 )
@@ -48,9 +49,14 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		p := ptree.RootPlugin()
 		slots := p.SlotImplementations()
 
-		for slot, lin := range slots {
+		for slotName, lin := range slots {
+			slot, err := corekindsys.FindSlot(slotName)
+			if err != nil {
+				log.Println(fmt.Errorf("parsing plugin failed for %s: %s", dir, err))
+				continue
+			}
 			decls = append(decls, &PluginDecl{
-				Slot:       slot, //FIXME should return kindsys.Slot instead of slot name
+				Slot:       slot,
 				Lineage:    lin,
 				PluginMeta: p.Meta(),
 				PluginPath: path,
