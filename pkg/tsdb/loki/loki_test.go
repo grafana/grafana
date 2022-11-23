@@ -37,7 +37,6 @@ func TestGetHeadersForCallResource(t *testing.T) {
 			expectedHeaders: map[string]string{
 				"Authorization":   authTokn1,
 				"Cookie":          "a=1",
-				"Accept-Encoding": "gzip",
 				"X-ID-Token":      idTokn1,
 			},
 		},
@@ -52,7 +51,6 @@ func TestGetHeadersForCallResource(t *testing.T) {
 			expectedHeaders: map[string]string{
 				"Authorization":   authTokn1,
 				"Cookie":          "a=1",
-				"Accept-Encoding": "gzip",
 				"X-ID-Token":      idTokn1,
 			},
 		},
@@ -67,7 +65,7 @@ func TestGetHeadersForCallResource(t *testing.T) {
 	}
 	for name, test := range testCases {
 		t.Run(name, func(t *testing.T) {
-			headers := getHeadersForCallResource(test.headers)
+			headers := getAuthHeadersForCallResource(test.headers)
 			assert.Equal(t, test.expectedHeaders, headers)
 		})
 	}
