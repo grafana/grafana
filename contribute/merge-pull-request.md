@@ -139,9 +139,9 @@ Some examples when backport is not required:
 
 To ensure that we don't backport pull requests that don't need to be backported, i.e. implement new features, and only backport pull requests that address bugs, have a product approval, or refer to docs changes, backport labels need to be followed by either:
 
-* `type/bug` label: Pull requests which address bugs,
-* `product-approved` label: Urgent fixes which need product approval, in order to get merged,
-* `type/docs` label: Docs changes`.
+- `type/bug` label: Pull requests which address bugs,
+- `product-approved` label: Urgent fixes which need product approval, in order to get merged,
+- `type/docs` label: Docs changes`.
 
 > **Note:** You can still backport a pull request after it's been merged.
 
