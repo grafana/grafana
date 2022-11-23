@@ -357,6 +357,7 @@ var wireBasicSet = wire.NewSet(
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
+	grpcserver.ProvideQueryDataService,
 	grpcserver.ProvideReflectionService,
 	jwtgrpc.ProvidePluginAuthServer,
 	interceptors.ProvideAuthenticator,
