@@ -69,7 +69,13 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
       />
       <FlexItem grow={1} />
 
-      {shouldDisplayMonitoringBadge && <Badge text="Monitoring account" color="blue"></Badge>}
+      {shouldDisplayMonitoringBadge && (
+        <Badge
+          text="Monitoring account"
+          color="blue"
+          tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
+        ></Badge>
+      )}
 
       <RadioButtonGroup options={editorModes} size="sm" value={metricEditorMode} onChange={onEditorModeChange} />
 

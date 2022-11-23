@@ -70,7 +70,11 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
       {shouldDisplayMonitoringBadge && (
         <>
           <FlexItem grow={1} />
-          <Badge text="Monitoring account" color="blue"></Badge>
+          <Badge
+            text="Monitoring account"
+            color="blue"
+            tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
+          ></Badge>
         </>
       )}
 
