@@ -87,7 +87,13 @@
             "ignoreNonDOM": true
           }
         ],
-        "jsx-a11y/no-static-element-interactions": "off"
+        "jsx-a11y/no-static-element-interactions": "off",
+        "jsx-a11y/label-has-associated-control": [ 1, {
+          "labelComponents": ["SliderValueEditor"],
+          "labelAttributes": ["label"],
+          "controlComponents": ["NumberInput"],
+          "depth": 3
+        }]
       }
     }
   ]
