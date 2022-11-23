@@ -185,7 +185,8 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 }
 
 func buildRedactedAMs(l log.Logger, alertmanagers []string, ordId int64) []string {
-	redactedAMs := make([]string, 0, len(alertmanagers))
+	//nolint:prealloc // should be nil by test
+	var redactedAMs []string
 	for _, am := range alertmanagers {
 		parsedAM, err := url.Parse(am)
 		if err != nil {
