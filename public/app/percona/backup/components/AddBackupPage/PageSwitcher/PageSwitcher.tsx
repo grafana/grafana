@@ -27,7 +27,8 @@ export const PageSwitcher = ({ editing, setModalTitle }: PageSwitcherProps) => {
           <Card
             className={cardStyles}
             isSelected={selected.onDemand}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               input.onChange({ target: { value: input.value } });
               setSelected({ onDemand: true, scheduled: false });
               setQueryParams({ scheduled: null });
@@ -44,7 +45,8 @@ export const PageSwitcher = ({ editing, setModalTitle }: PageSwitcherProps) => {
           <Card
             className={cardStyles}
             isSelected={selected.scheduled}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               input.onChange({ target: { value: input.value } });
               setSelected({ onDemand: false, scheduled: true });
               setQueryParams({ scheduled: true });
