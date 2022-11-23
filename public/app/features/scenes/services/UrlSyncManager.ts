@@ -11,6 +11,7 @@ export class UrlSyncManager {
   private locationListenerUnsub: () => void;
   private stateChangeSub: Unsubscribable;
   private initialStates: Map<string, string> = new Map();
+  private urlKeyMapper = new UniqueUrlKeyMapper();
 
   public constructor(private sceneRoot: SceneObject) {
     this.stateChangeSub = sceneRoot.subscribeToEvent(SceneObjectStateChangedEvent, this.onStateChanged);
@@ -19,6 +20,9 @@ export class UrlSyncManager {
 
   private onLocationUpdate = (location: Location) => {
     const urlParams = new URLSearchParams(location.search);
+    // Rebuild key mapper index before starting sync
+    this.urlKeyMapper.rebuldIndex(this.sceneRoot);
+    // Sync scene state tree from url
     this.syncSceneStateFromUrl(this.sceneRoot, urlParams);
   };
 
@@ -32,9 +36,11 @@ export class UrlSyncManager {
       const searchParams = locationService.getSearch();
       const mappedUpdated: Record<string, string> = {};
 
+      this.urlKeyMapper.rebuldIndex(this.sceneRoot);
+
       for (const [key, newUrlValue] of newUrlState) {
         const currentUrlValue = searchParams.get(key);
-        const uniqueKey = this.getUniqueKey(key, changedObject);
+        const uniqueKey = this.urlKeyMapper.getUniqueKey(key, changedObject);
 
         if (currentUrlValue !== newUrlValue) {
           mappedUpdated[uniqueKey] = newUrlValue;
@@ -52,10 +58,6 @@ export class UrlSyncManager {
     }
   };
 
-  private getUniqueKey(key: string, changedObject: SceneObject) {
-    return key;
-  }
-
   public cleanUp() {
     this.stateChangeSub.unsubscribe();
     this.locationListenerUnsub();
@@ -67,7 +69,7 @@ export class UrlSyncManager {
       const currentState = sceneObject.urlSync.getUrlState(sceneObject.state);
 
       for (const key of sceneObject.urlSync.getKeys()) {
-        const uniqueKey = this.getUniqueKey(key, sceneObject);
+        const uniqueKey = this.urlKeyMapper.getUniqueKey(key, sceneObject);
         const newValue = urlParams.get(uniqueKey);
         const currentValue = currentState.get(key);
 
@@ -95,5 +97,43 @@ export class UrlSyncManager {
     }
 
     forEachSceneObjectInState(sceneObject.state, (obj) => this.syncSceneStateFromUrl(obj, urlParams));
+  }
+}
+
+class UniqueUrlKeyMapper {
+  private index = new Map<string, SceneObject[]>();
+
+  public getUniqueKey(key: string, obj: SceneObject) {
+    const objectsWithKey = this.index.get(key);
+    if (!objectsWithKey) {
+      throw new Error("Cannot find any scene object that uses the key '" + key + "'");
+    }
+
+    const address = objectsWithKey.indexOf(obj);
+    if (address > 0) {
+      return `${key}-${address + 1}`;
+    }
+
+    return key;
+  }
+
+  public rebuldIndex(root: SceneObject) {
+    this.index.clear();
+    this.buildIndex(root);
+  }
+
+  private buildIndex(sceneObject: SceneObject) {
+    if (sceneObject.urlSync) {
+      for (const key of sceneObject.urlSync.getKeys()) {
+        const hit = this.index.get(key);
+        if (hit) {
+          hit.push(sceneObject);
+        } else {
+          this.index.set(key, [sceneObject]);
+        }
+      }
+    }
+
+    forEachSceneObjectInState(sceneObject.state, (obj) => this.buildIndex(obj));
   }
 }

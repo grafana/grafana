@@ -128,9 +128,23 @@ describe('UrlSyncManager', () => {
       // When making state changes for second object with same key
       obj2.setState({ name: 'test2' });
 
-      // Should update url
-      const searchObj = locationService.getSearchObject();
-      expect(searchObj.name2).toBe('test2');
+      // Should use unique key based where it is in the scene
+      expect(locationService.getSearchObject()).toEqual({ ['name-2']: 'test2' });
+
+      obj1.setState({ name: 'test1' });
+
+      // Should not suffix key for first object
+      expect(locationService.getSearchObject()).toEqual({
+        name: 'test1',
+        ['name-2']: 'test2',
+      });
+
+      // When updating via url
+      locationService.partial({ ['name-2']: 'updated-from-url' });
+      // should find the correct object
+      expect(obj2.state.name).toBe('updated-from-url');
+      // should not update the first object
+      expect(obj1.state.name).toBe('test1');
     });
   });
 });
