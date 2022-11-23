@@ -201,6 +201,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       width: '100%',
+      contain: 'strict',
       flexGrow: 1,
     }),
     headerContainer: css({
