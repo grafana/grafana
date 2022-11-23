@@ -420,14 +420,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// When the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
+		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		query1 := &org.GetOrgUsersQuery{OrgID: users[0].OrgID, User: usr}
-		query1Result, err := userStore.getOrgUsersForTest(context.Background(), query1)
-		require.Nil(t, err)
-
-		require.Len(t, query1Result, 1)
 
 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
 		err = userStore.getDashboardACLInfoList(permQuery)
@@ -492,15 +486,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query5Result.TotalCount, 5)
 
 		// the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
+		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		// delete connected org users and permissions
-		query2 := &org.GetOrgUsersQuery{OrgID: users[0].OrgID}
-		query2Result, err := userStore.getOrgUsersForTest(context.Background(), query2)
-		require.Nil(t, err)
-
-		require.Len(t, query2Result, 1)
 
 		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
 		err = userStore.getDashboardACLInfoList(permQuery)
