@@ -300,6 +300,42 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
+// pluginAsset represents a plugin asset.
+type pluginAsset struct {
+	// readSeekCloser is the io.ReadSeekCloser that will be used to read the asset's content.
+	readSeekCloser io.ReadSeekCloser
+
+	// modTime is the latest edit time of the asset.
+	modTime time.Time
+
+	// Path is the relative path of the asset.
+	path string
+}
+
+// Close closes the readSeekCloser associated to the pluginAsset, if any.
+func (a pluginAsset) Close() error {
+	if a.readSeekCloser == nil {
+		return nil
+	}
+	return a.readSeekCloser.Close()
+}
+
+// nopCloserReadSeeker wraps io.ReadSeeker with a nop io.Closer
+type nopCloserReadSeeker struct {
+	io.ReadSeeker
+}
+
+// Close does nothing
+func (nopCloserReadSeeker) Close() error {
+	return nil
+}
+
+// getLocalPluginAssets returns a pluginAsset for a locally stored plugin.
+// If err != nil, the file is opened and then caller should
+//
+//	defer call pluginAsset.Close()
+//
+// to close the opened file.
 func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
 	// TODO: plugins cdn: add back error codes
 
@@ -324,11 +360,8 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 		return r */
 		return pluginAsset{}, errors.New("could not open plugin file")
 	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			hs.log.Error("Failed to close file", "err", err)
-		}
-	}()
+
+	// f.Close() should be called by caller by calling pluginAsset.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
@@ -337,9 +370,9 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 		return pluginAsset{}, errors.New("plugin file exists but could not open")
 	}
 	return pluginAsset{
-		readSeeker: f,
-		modTime:    fi.ModTime(),
-		path:       pluginFilePath,
+		readSeekCloser: f,
+		modTime:        fi.ModTime(),
+		path:           pluginFilePath,
 	}, nil
 }
 
@@ -379,16 +412,12 @@ func (hs *HTTPServer) proxyCDNPluginAsset(c *models.ReqContext, plugin plugins.P
 	}
 	hs.log.Debug("remote downloaded", "url", remoteURL)
 	return pluginAsset{
-		readSeeker: bytes.NewReader(b),
-		modTime:    time.Now(),
-		path:       path,
+		// Wrap the io.ReadSeeker with a nop closer via nopCloserReadSeeker
+		readSeekCloser: nopCloserReadSeeker{bytes.NewReader(b)},
+		// TODO: plugins cdn: implement?
+		modTime: time.Now(),
+		path:    path,
 	}, nil
-}
-
-type pluginAsset struct {
-	readSeeker io.ReadSeeker
-	modTime    time.Time
-	path       string
 }
 
 // getPluginAssets returns public plugin assets (images, JS, etc.)
@@ -443,12 +472,17 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		c.JsonApiErr(500, err.Error(), err)
 		return
 	}
+	defer func() {
+		if err := asset.readSeekCloser.Close(); err != nil {
+			hs.log.Warn("Failed to close asset readSeekCloser", "err", err)
+		}
+	}()
 	if hs.Cfg.Env == setting.Dev {
 		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
-	http.ServeContent(c.Resp, c.Req, asset.path, asset.modTime, asset.readSeeker)
+	http.ServeContent(c.Resp, c.Req, asset.path, asset.modTime, asset.readSeekCloser)
 }
 
 // CheckHealth returns the health of a plugin.
