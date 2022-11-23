@@ -80,7 +80,7 @@ func newSecureSocksProxy(cfg *setting.Cfg, transport *http.Transport) error {
 	if cfg.SecureSocksDSProxy.RootCA == "" {
 		return errors.New("missing rootCA")
 	} else if cfg.SecureSocksDSProxy.ClientCert == "" || cfg.SecureSocksDSProxy.ClientKey == "" {
-		return errors.New("missing client cert and key pair")
+		return errors.New("missing client key pair")
 	} else if cfg.SecureSocksDSProxy.ServerName == "" {
 		return errors.New("missing server name")
 	} else if cfg.SecureSocksDSProxy.ProxyAddress == "" {

@@ -99,9 +99,14 @@ func TestHTTPClientProvider(t *testing.T) {
 }
 
 func TestNewSecureSocksProxy(t *testing.T) {
-	tempDir := t.TempDir()
 	proxyAddress := "localhost:3000"
 	serverName := "localhost"
+	tempDir := t.TempDir()
+
+	// create empty file for testing invalid configs
+	tempEmptyFile := filepath.Join(tempDir, "emptyfile.txt")
+	_, err := os.Create(tempEmptyFile)
+	require.NoError(t, err)
 
 	// generate test rootCA
 	ca := &x509.Certificate{
@@ -173,12 +178,7 @@ func TestNewSecureSocksProxy(t *testing.T) {
 		require.NoError(t, newSecureSocksProxy(settings, &http.Transport{}))
 	})
 
-	// create empty file to use for testing errors
-	tempEmptyFile := filepath.Join(tempDir, "emptyfile.txt")
-	_, err = os.Create(tempEmptyFile)
-	require.NoError(t, err)
-
-	t.Run("The socks proxy should not be initialized if the client cert is not valid", func(t *testing.T) {
+	t.Run("Client cert must be valid", func(t *testing.T) {
 		settings.SecureSocksDSProxy.ClientCert = tempEmptyFile
 		t.Cleanup(func() {
 			settings.SecureSocksDSProxy.ClientCert = clientCert
@@ -186,7 +186,7 @@ func TestNewSecureSocksProxy(t *testing.T) {
 		require.Error(t, newSecureSocksProxy(settings, &http.Transport{}))
 	})
 
-	t.Run("The socks proxy should not be initialized if the client cert is not valid", func(t *testing.T) {
+	t.Run("Client key must be valid", func(t *testing.T) {
 		settings.SecureSocksDSProxy.ClientKey = tempEmptyFile
 		t.Cleanup(func() {
 			settings.SecureSocksDSProxy.ClientKey = clientKey
@@ -194,7 +194,7 @@ func TestNewSecureSocksProxy(t *testing.T) {
 		require.Error(t, newSecureSocksProxy(settings, &http.Transport{}))
 	})
 
-	t.Run("The socks proxy should not be initialized if the root CA is not valid", func(t *testing.T) {
+	t.Run("Root CA must be valid", func(t *testing.T) {
 		settings.SecureSocksDSProxy.RootCA = tempEmptyFile
 		t.Cleanup(func() {
 			settings.SecureSocksDSProxy.RootCA = rootCACert

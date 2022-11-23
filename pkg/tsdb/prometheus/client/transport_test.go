@@ -42,35 +42,35 @@ func TestCreateTransportOptions(t *testing.T) {
 		require.Equal(t, 3, len(opts.Middlewares))
 	})
 
-	t.Run("add socks proxy label if configured", func(t *testing.T) {
-		// the label should not exist normally
-		settings := backend.DataSourceInstanceSettings{
-			BasicAuthEnabled:        false,
-			BasicAuthUser:           "",
-			JSONData:                []byte(`{}`),
-			DecryptedSecureJSONData: map[string]string{},
+	t.Run("add socks proxy option if enableSocksProxy is true in the json data", func(t *testing.T) {
+		tests := []struct {
+			jsonData  string
+			optExists bool
+		}{
+			{
+				jsonData:  "{}",
+				optExists: false,
+			},
+			{
+				jsonData:  `{"enableSocksProxy": false}`,
+				optExists: false,
+			},
+			{
+				jsonData:  `{"enableSocksProxy": true}`,
+				optExists: true,
+			},
 		}
-		opts, err := CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
-		require.NoError(t, err)
-		_, ok := opts.CustomOptions["socks_proxy"]
-		require.False(t, ok)
-
-		// the label should be added if enableSocksProxy is specified at true in the json code
-		settings.JSONData = []byte(`{
-			"enableSocksProxy": true
-		}`)
-		opts, err = CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
-		require.NoError(t, err)
-		_, ok = opts.CustomOptions["socks_proxy"]
-		require.True(t, ok)
-
-		// the label should not exist if specified as false in the json data
-		settings.JSONData = []byte(`{
-			"enableSocksProxy": false
-		}`)
-		opts, err = CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
-		require.NoError(t, err)
-		_, ok = opts.CustomOptions["socks_proxy"]
-		require.False(t, ok)
+		for _, test := range tests {
+			settings := backend.DataSourceInstanceSettings{
+				BasicAuthEnabled:        false,
+				BasicAuthUser:           "",
+				JSONData:                []byte(test.jsonData),
+				DecryptedSecureJSONData: map[string]string{},
+			}
+			opts, err := CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+			require.NoError(t, err)
+			_, ok := opts.CustomOptions["socks_proxy"]
+			require.Equal(t, test.optExists, ok)
+		}
 	})
 }
