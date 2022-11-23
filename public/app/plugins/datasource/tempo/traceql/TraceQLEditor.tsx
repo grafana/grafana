@@ -55,6 +55,7 @@ export function TraceQLEditor(props: Props) {
         setupAutocompleteFn(editor, monaco);
         setupActions(editor, monaco, onRunQuery);
         setupPlaceholder(editor, monaco, styles);
+        setupAutoHeight(editor);
       }}
     />
   );
@@ -92,17 +93,28 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
   editor.addAction({
     id: 'run-query',
     label: 'Run Query',
-
     keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-
     contextMenuGroupId: 'navigation',
-
     contextMenuOrder: 1.5,
-
     run: function () {
       onRunQuery();
     },
   });
+}
+
+function setupAutoHeight(editor: monacoTypes.editor.IStandaloneCodeEditor) {
+  const container = editor.getDomNode();
+  const updateHeight = () => {
+    if (container) {
+      const contentHeight = Math.min(1000, editor.getContentHeight());
+      const width = parseInt(container.style.width, 10);
+      container.style.width = `${width}px`;
+      container.style.height = `${contentHeight}px`;
+      editor.layout({ width, height: contentHeight });
+    }
+  };
+  editor.onDidContentSizeChange(updateHeight);
+  updateHeight();
 }
 
 /**
