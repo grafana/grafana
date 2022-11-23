@@ -318,6 +318,10 @@
   "news": {
     "title": "最新博客"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
       "hide-legend": "",
