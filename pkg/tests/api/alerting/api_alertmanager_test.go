@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -2540,8 +2541,10 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 }
 
 func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {
-	org, err := store.CreateOrgWithMember(name, userID)
+	cmd := &models.CreateOrgCommand{Name: name, UserId: userID}
+	err := store.CreateOrg(context.Background(), cmd)
 	require.NoError(t, err)
+	org := cmd.Result
 	return org.Id
 }
 
