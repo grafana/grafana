@@ -298,12 +298,12 @@ def build_storybook_step(edition, ver_mode):
     }
 
 def store_storybook_step(edition, ver_mode, trigger = None):
-    """TODO
+    """Publishes the Grafana UI components storybook.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
-      trigger: TODO
+      edition: prevents the publishing of storybooks for enterprise editions.
+      ver_mode: controls whether a release or canary version is published.
+      trigger: a Drone trigger for the step.
         Defaults to None.
     Returns:
       Drone step.
@@ -384,12 +384,12 @@ def e2e_tests_artifacts(edition):
     }
 
 def upload_cdn_step(edition, ver_mode, trigger = None):
-    """TODO
+    """Uploads CDN assets using the Grafana build tool.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
-      trigger: TODO
+      edition: controls the output directory for the CDN assets.
+      ver_mode: only uses the step trigger when ver_mode == 'release-branch' or 'main'
+      trigger: a Drone trigger for the step.
         Defaults to None.
     Returns:
       Drone step.
@@ -421,12 +421,15 @@ def upload_cdn_step(edition, ver_mode, trigger = None):
     return step
 
 def build_backend_step(edition, ver_mode, variants = None):
-    """TODO
+    """Build the backend code using the Grafana build tool.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
-      variants: TODO
+      edition: controls which edition of the backend is built.
+      ver_mode: if ver_mode != 'release', pass the DRONE_BUILD_NUMBER environment
+        variable as the value for the --build-id option.
+        TODO: is this option actually used by the build-backend subcommand?
+      variants: a list of variants be passed to the build-backend subcommand
+        using the --variants option.
         Defaults to None.
     Returns:
       Drone step.
@@ -463,11 +466,12 @@ def build_backend_step(edition, ver_mode, variants = None):
     }
 
 def build_frontend_step(edition, ver_mode):
-    """TODO
+    """Build the frontend code using the Grafana build tool.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
+      edition: controls which edition of the frontend is built.
+      ver_mode: if ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
+        variable as a build identifier.
     Returns:
       Drone step.
     """
@@ -499,11 +503,12 @@ def build_frontend_step(edition, ver_mode):
     }
 
 def build_frontend_package_step(edition, ver_mode):
-    """TODO
+    """Build the frontend packages using the Grafana build tool.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
+      edition: controls which edition of the frontend is built.
+      ver_mode: if ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
+        variable as a build identifier.
     Returns:
       Drone step.
     """
@@ -580,10 +585,10 @@ def test_backend_integration_step():
     }
 
 def betterer_frontend_step(edition = "oss"):
-    """TODO
+    """Run betterer on frontend code.
 
     Args:
-      edition: TODO
+      edition: controls whether enterprise code is also included in the source.
         Defaults to 'oss'.
     Returns:
       Drone step.
@@ -602,10 +607,10 @@ def betterer_frontend_step(edition = "oss"):
     }
 
 def test_frontend_step(edition = "oss"):
-    """TODO
+    """Runs tests on frontend code.
 
     Args:
-      edition: TODO
+      edition: controls whether enterprise code is also included in the source.
         Defaults to 'oss'.
     Returns:
       Drone step.
@@ -645,12 +650,13 @@ def lint_frontend_step():
     }
 
 def test_a11y_frontend_step(ver_mode, edition, port = 3001):
-    """TODO
+    """Runs automated accessiblity tests against the frontend.
 
     Args:
-      ver_mode: TODO
-      edition: TODO
-      port: TODO
+      ver_mode: controls whether the step is blocking or just reporting.
+        If ver_mode == 'pr', the step causes the pipeline to fail.
+      edition: controls which edition of grafana-server to test against.
+      port: which port to grafana-server is expected to be listening on.
         Defaults to 3001.
     Returns:
       Drone step.
@@ -685,11 +691,11 @@ def test_a11y_frontend_step(ver_mode, edition, port = 3001):
     }
 
 def frontend_metrics_step(edition, trigger = None):
-    """TODO
+    """Reports frontend metrics to Grafana Cloud.
 
     Args:
-      edition: TODO
-      trigger: TODO
+      edition: skips publishing of metrics for enterprise editions.
+      trigger: a Drone trigger for the step.
         Defaults to None.
     Returns:
       Drone step.
@@ -728,12 +734,15 @@ def codespell_step():
     }
 
 def package_step(edition, ver_mode, variants = None):
-    """TODO
+    """Packages Grafana with the Grafana build tool.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
-      variants: TODO
+      edition: controls which edition of Grafana is packaged.
+      ver_mode: controls whether the packages are signed for a release.
+        If ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
+        variable as a build identifier.
+      variants: a list of variants be passed to the package subcommand
+        using the --variants option.
         Defaults to None.
     Returns:
       Drone step.
@@ -787,11 +796,11 @@ def package_step(edition, ver_mode, variants = None):
     }
 
 def grafana_server_step(edition, port = 3001):
-    """TODO
+    """Runs the grafana-server binary as a service.
 
     Args:
-      edition: TODO
-      port: TODO
+      edition: controls which edition of grafana-server to run.
+      port: port to listen on.
         Defaults to 3001.
     Returns:
       Drone step.
@@ -845,13 +854,14 @@ def e2e_tests_step(suite, edition, port = 3001, tries = None):
     }
 
 def cloud_plugins_e2e_tests_step(suite, edition, cloud, trigger = None):
-    """TODO
+    """Run cloud plugins end-to-end tests.
 
     Args:
-      suite: TODO
-      edition: TODO
-      cloud: TODO
-      trigger: TODO
+      suite: affects the pipeline name.
+        TODO: check if this actually affects step behavior.
+      edition: which edition of grafana-server to test against.
+      cloud: used to determine cloud provider specific tests.
+      trigger: a Drone trigger for the step.
         Defaults to None.
     Returns:
       Drone step.
@@ -917,15 +927,15 @@ def copy_packages_for_docker_step(edition = None):
     }
 
 def build_docker_images_step(edition, archs = None, ubuntu = False, publish = False):
-    """TODO
+    """Build Docker images using the Grafana build tool.
 
     Args:
-      edition: TODO
-      archs: TODO
+      edition: controls which repository the image is published to.
+      archs: a list of architectures to build the image for.
         Defaults to None.
-      ubuntu: TODO
+      ubuntu: controls whether the final image is built from an Ubuntu base image.
         Defaults to False.
-      publish: TODO
+      publish: controls whether the built image is saved to a pre-release repository.
         Defaults to False.
     Returns:
       Drone step.
@@ -1116,11 +1126,11 @@ def memcached_integration_tests_step():
     }
 
 def release_canary_npm_packages_step(edition, trigger = None):
-    """TODO
+    """Releases canary NPM packages.
 
     Args:
-      edition: TODO
-      trigger: TODO
+      edition: prevents releasing canary NPM packages for enterprise editions.
+      trigger: a Drone trigger for the step.
         Defaults to None.
     Returns:
       Drone step.
@@ -1149,12 +1159,13 @@ def enterprise2_suffix(edition):
     return ""
 
 def upload_packages_step(edition, ver_mode, trigger = None):
-    """TODO
+    """Upload packages to object storage.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
-      trigger: TODO
+      edition: controls which edition of Grafana packages to upload.
+      ver_mode: when ver_mode == 'main', inhibit upload of enterprise
+        edition packages when executed.
+      trigger: a Drone trigger for the step.
         Defaults to None.
     Returns:
       Drone step.
@@ -1185,11 +1196,14 @@ def upload_packages_step(edition, ver_mode, trigger = None):
     return step
 
 def publish_grafanacom_step(edition, ver_mode):
-    """TODO
+    """Publishes Grafana packages to grafana.com.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
+      edition: controls which edition of Grafana to publish to.
+      ver_mode: if ver_mode == 'main', pass the DRONE_BUILD_NUMBER environment
+        variable as the value for the --build-id option.
+        TODO: is this actually used by the grafanacom subcommand? I think it might
+        just use the environment varaiable directly.
     Returns:
       Drone step.
     """
@@ -1245,13 +1259,13 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
     }
 
 def get_windows_steps(edition, ver_mode):
-    """TODO
+    """Generate the list of Windows steps.
 
     Args:
-      edition: TODO
-      ver_mode: TODO
+      edition: used to differentiate steps for different Grafana editions.
+      ver_mode: used to differentiate steps for different version modes.
     Returns:
-      Drone step.
+      List of Drone steps.
     """
     init_cmds = []
     if edition not in ("enterprise", "enterprise2"):
@@ -1476,12 +1490,12 @@ def compile_build_cmd(edition = "oss"):
     }
 
 def get_trigger_storybook(ver_mode):
-    """TODO
+    """Generate a Drone trigger for UI changes that affect the Grafana UI storybook.
 
     Args:
-      ver_mode: TODO
+      ver_mode: affects whether the trigger is event tags or changed files.
     Returns:
-      Drone step.
+      Drone trigger.
     """
     trigger_storybook = ""
     if ver_mode == "release":
