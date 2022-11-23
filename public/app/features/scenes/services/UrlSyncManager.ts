@@ -18,6 +18,15 @@ export class UrlSyncManager {
     this.locationListenerUnsub = locationService.getHistory().listen(this.onLocationUpdate);
   }
 
+  /**
+   * Updates the current scene state to match URL state.
+   */
+  public initialSync() {
+    const urlParams = locationService.getSearch();
+    this.urlKeyMapper.rebuldIndex(this.sceneRoot);
+    this.syncSceneStateFromUrl(this.sceneRoot, urlParams);
+  }
+
   private onLocationUpdate = (location: Location) => {
     const urlParams = new URLSearchParams(location.search);
     // Rebuild key mapper index before starting sync
@@ -100,8 +109,12 @@ export class UrlSyncManager {
   }
 }
 
+interface SceneObjectWithDepth {
+  sceneObject: SceneObject;
+  depth: number;
+}
 class UniqueUrlKeyMapper {
-  private index = new Map<string, SceneObject[]>();
+  private index = new Map<string, SceneObjectWithDepth[]>();
 
   public getUniqueKey(key: string, obj: SceneObject) {
     const objectsWithKey = this.index.get(key);
@@ -109,7 +122,7 @@ class UniqueUrlKeyMapper {
       throw new Error("Cannot find any scene object that uses the key '" + key + "'");
     }
 
-    const address = objectsWithKey.indexOf(obj);
+    const address = objectsWithKey.findIndex((o) => o.sceneObject === obj);
     if (address > 0) {
       return `${key}-${address + 1}`;
     }
@@ -119,21 +132,22 @@ class UniqueUrlKeyMapper {
 
   public rebuldIndex(root: SceneObject) {
     this.index.clear();
-    this.buildIndex(root);
+    this.buildIndex(root, 0);
   }
 
-  private buildIndex(sceneObject: SceneObject) {
+  private buildIndex(sceneObject: SceneObject, depth: number) {
     if (sceneObject.urlSync) {
       for (const key of sceneObject.urlSync.getKeys()) {
         const hit = this.index.get(key);
         if (hit) {
-          hit.push(sceneObject);
+          hit.push({ sceneObject, depth });
+          hit.sort((a, b) => a.depth - b.depth);
         } else {
-          this.index.set(key, [sceneObject]);
+          this.index.set(key, [{ sceneObject, depth }]);
         }
       }
     }
 
-    forEachSceneObjectInState(sceneObject.state, (obj) => this.buildIndex(obj));
+    forEachSceneObjectInState(sceneObject.state, (obj) => this.buildIndex(obj, depth + 1));
   }
 }

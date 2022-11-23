@@ -4,6 +4,7 @@ import { locationService } from '@grafana/runtime';
 
 import { SceneFlexLayout } from '../components';
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneLayoutChildState } from '../core/types';
 
 import { SceneObjectUrlSyncConfig } from './SceneObjectUrlSyncConfig';
@@ -111,40 +112,46 @@ describe('UrlSyncManager', () => {
 
   describe('When multiple scene objects wants to set same url keys', () => {
     it('should give each object a unique key', () => {
-      const obj1 = new TestObj({ name: 'obj1' });
-      const obj2 = new TestObj({ name: 'obj2' });
+      const outerTimeRange = new SceneTimeRange();
+      const innerTimeRange = new SceneTimeRange();
 
       const scene = new SceneFlexLayout({
         children: [
-          obj1,
           new SceneFlexLayout({
-            children: [obj2],
+            $timeRange: innerTimeRange,
+            children: [],
           }),
         ],
+        $timeRange: outerTimeRange,
       });
 
       urlManager = new UrlSyncManager(scene);
 
       // When making state changes for second object with same key
-      obj2.setState({ name: 'test2' });
+      innerTimeRange.setState({ from: 'now-10m' });
 
       // Should use unique key based where it is in the scene
-      expect(locationService.getSearchObject()).toEqual({ ['name-2']: 'test2' });
+      expect(locationService.getSearchObject()).toEqual({
+        ['from-2']: 'now-10m',
+        ['to-2']: 'now',
+      });
 
-      obj1.setState({ name: 'test1' });
+      outerTimeRange.setState({ from: 'now-20m' });
 
       // Should not suffix key for first object
       expect(locationService.getSearchObject()).toEqual({
-        name: 'test1',
-        ['name-2']: 'test2',
+        from: 'now-20m',
+        to: 'now',
+        ['from-2']: 'now-10m',
+        ['to-2']: 'now',
       });
 
       // When updating via url
-      locationService.partial({ ['name-2']: 'updated-from-url' });
+      locationService.partial({ ['from-2']: 'now-10s' });
       // should find the correct object
-      expect(obj2.state.name).toBe('updated-from-url');
+      expect(innerTimeRange.state.from).toBe('now-10s');
       // should not update the first object
-      expect(obj1.state.name).toBe('test1');
+      expect(outerTimeRange.state.from).toBe('now-20m');
     });
   });
 });
