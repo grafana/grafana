@@ -103,10 +103,12 @@ def clone_enterprise_step(ver_mode):
     }
 
 def init_enterprise_step(ver_mode):
-    """TODO
+    """Adds the enterprise deployment configuration into the source directory.
 
     Args:
-      ver_mode: TODO
+      ver_mode: controls what revision of the OSS source to use.
+        If ver_mode is 'release', the step uses the tagged revision.
+        Otherwise, the DRONE_SOURCE_BRANCH is used.
     Returns:
       Drone step.
     """
