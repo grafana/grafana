@@ -1,5 +1,11 @@
 package models
 
+import (
+	"context"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+)
+
 type cloudWatchLink struct {
 	View    string        `json:"view"`
 	Stacked bool          `json:"stacked"`
@@ -21,3 +27,11 @@ type metricStatMeta struct {
 	Label     string `json:"label,omitempty"`
 	AccountId string `json:"accountId,omitempty"`
 }
+
+type BaseQuery struct {
+	QueryType string `json:"type,omitempty"`
+	Region    string `json:"region,omitempty"`
+	QueryMode string
+}
+
+type QueryHandlerFunc func(context.Context, *backend.QueryDataRequest, backend.DataQuery, RequestContextFactoryFunc) backend.DataResponse

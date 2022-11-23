@@ -31,10 +31,22 @@ type ListMetricsProvider interface {
 
 type MetricsClientProvider interface {
 	ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error)
+	DescribeAlarms(*cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error)
+	DescribeAlarmsForMetric(*cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error)
+	DescribeAlarmHistory(*cloudwatch.DescribeAlarmHistoryInput) (*cloudwatch.DescribeAlarmHistoryOutput, error)
+}
+
+type AnnotationProvider interface {
+	GetAlarmNamesByPrefixMatching(query *AnnotationQuery) ([]*string, error)
+	GetAlarmNamesByMetric(query *AnnotationQuery) ([]*string, error)
+	GetAnnotationEvents(timeRange backend.TimeRange, alarmNames []*string) (AnnotationEvents, error)
 }
 
 type CloudWatchMetricsAPIProvider interface {
 	ListMetricsPages(*cloudwatch.ListMetricsInput, func(*cloudwatch.ListMetricsOutput, bool) bool) error
+	DescribeAlarms(*cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error)
+	DescribeAlarmsForMetric(*cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error)
+	DescribeAlarmHistory(*cloudwatch.DescribeAlarmHistoryInput) (*cloudwatch.DescribeAlarmHistoryOutput, error)
 }
 
 type CloudWatchLogsAPIProvider interface {

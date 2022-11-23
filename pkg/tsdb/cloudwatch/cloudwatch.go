@@ -31,22 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/handlers"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
-
-type DataQueryJson struct {
-	QueryType       string `json:"type,omitempty"`
-	QueryMode       string
-	PrefixMatching  bool
-	Region          string
-	Namespace       string
-	MetricName      string
-	Dimensions      map[string]interface{}
-	Statistic       *string
-	Period          string
-	ActionPrefix    string
-	AlarmNamePrefix string
-}
 
 type DataSource struct {
 	Settings   models.CloudWatchSettings
@@ -322,22 +309,22 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
 	*/
 	q := req.Queries[0]
-	var model DataQueryJson
-	err := json.Unmarshal(q.JSON, &model)
+	var baseQuery models.BaseQuery
+	err := json.Unmarshal(q.JSON, &baseQuery)
 	if err != nil {
 		return nil, err
 	}
 	_, fromAlert := req.Headers["FromAlert"]
-	isLogAlertQuery := fromAlert && model.QueryMode == logsQueryMode
+	isLogAlertQuery := fromAlert && baseQuery.QueryMode == logsQueryMode
 
 	if isLogAlertQuery {
 		return e.executeLogAlertQuery(ctx, req)
 	}
 
 	var result *backend.QueryDataResponse
-	switch model.QueryType {
+	switch baseQuery.QueryType {
 	case annotationQuery:
-		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
+		result, err = e.processQueries(ctx, req, handlers.AnnotationHandler)
 	case logAction:
 		result, err = e.executeLogActions(ctx, logger, req)
 	case timeSeriesQuery:
@@ -413,6 +400,18 @@ func (e *cloudWatchExecutor) getInstance(pluginCtx backend.PluginContext) (*Data
 	instance := i.(DataSource)
 
 	return &instance, nil
+}
+
+func (e *cloudWatchExecutor) processQueries(ctx context.Context, req *backend.QueryDataRequest, handler models.QueryHandlerFunc) (*backend.QueryDataResponse, error) {
+	res := backend.Responses{}
+	for _, v := range req.Queries {
+		res[v.RefID] = handler(ctx, req, v, e.getRequestContext)
+	}
+
+	return &backend.QueryDataResponse{
+		Responses: res,
+	}, nil
+
 }
 
 func isTerminated(queryStatus string) bool {

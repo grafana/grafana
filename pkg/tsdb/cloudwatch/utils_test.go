@@ -184,6 +184,18 @@ func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeL
 	return nil, nil
 }
 
+func (fakeCheckHealthClient) DescribeAlarms(input *cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error) {
+	return nil, nil
+}
+
+func (fakeCheckHealthClient) DescribeAlarmsForMetric(input *cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error) {
+	return nil, nil
+}
+
+func (fakeCheckHealthClient) DescribeAlarmHistory(input *cloudwatch.DescribeAlarmHistoryInput) (*cloudwatch.DescribeAlarmHistoryOutput, error) {
+	return nil, nil
+}
+
 func newTestConfig() *setting.Cfg {
 	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true, AWSListMetricsPageLimit: 1000}
 }

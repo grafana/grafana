@@ -39,3 +39,9 @@ func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsI
 
 	return cloudWatchMetrics, err
 }
+
+// func (l *metricsClient) DescribeAlarms(*cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error) {
+// 	return l.CloudWatchMetricsAPIProvider.DescribeAlarms()
+// }
+// func (l *metricsClient) DescribeAlarmsForMetric(*cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error)
+// func (l *metricsClient) DescribeAlarmHistory(*cloudwatch.DescribeAlarmHistoryInput) (*cloudwatch.DescribeAlarmHistoryOutput, error)

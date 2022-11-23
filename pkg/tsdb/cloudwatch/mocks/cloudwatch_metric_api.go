@@ -32,6 +32,18 @@ func (c *FakeMetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn
 	return nil
 }
 
+func (*FakeMetricsAPI) DescribeAlarms(input *cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error) {
+	return nil, nil
+}
+
+func (*FakeMetricsAPI) DescribeAlarmsForMetric(input *cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error) {
+	return nil, nil
+}
+
+func (*FakeMetricsAPI) DescribeAlarmHistory(input *cloudwatch.DescribeAlarmHistoryInput) (*cloudwatch.DescribeAlarmHistoryOutput, error) {
+	return nil, nil
+}
+
 func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
 	var chunks [][]*cloudwatch.Metric
 	for {
