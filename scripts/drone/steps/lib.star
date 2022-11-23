@@ -80,6 +80,7 @@ def clone_enterprise_step(ver_mode):
 
     Args:
       ver_mode: indirectly controls which revision of grafana-enterprise is cloned.
+
     Returns:
       Drone step.
     """
@@ -109,6 +110,7 @@ def init_enterprise_step(ver_mode):
       ver_mode: controls what revision of the OSS source to use.
         If ver_mode is 'release', the step uses the tagged revision.
         Otherwise, the DRONE_SOURCE_BRANCH is used.
+
     Returns:
       Drone step.
     """
@@ -210,6 +212,7 @@ def enterprise_downstream_step(edition, ver_mode):
       edition: inhibits step behavior for enterprise pipelines.
       ver_mode: indirectly controls the revision used for downstream pipelines.
         It also used to allow the step to fail for pull requests without blocking merging.
+
     Returns:
       Drone step.
     """
@@ -305,6 +308,7 @@ def store_storybook_step(edition, ver_mode, trigger = None):
       ver_mode: controls whether a release or canary version is published.
       trigger: a Drone trigger for the step.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -391,6 +395,7 @@ def upload_cdn_step(edition, ver_mode, trigger = None):
       ver_mode: only uses the step trigger when ver_mode == 'release-branch' or 'main'
       trigger: a Drone trigger for the step.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -431,6 +436,7 @@ def build_backend_step(edition, ver_mode, variants = None):
       variants: a list of variants be passed to the build-backend subcommand
         using the --variants option.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -472,6 +478,7 @@ def build_frontend_step(edition, ver_mode):
       edition: controls which edition of the frontend is built.
       ver_mode: if ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
+
     Returns:
       Drone step.
     """
@@ -509,6 +516,7 @@ def build_frontend_package_step(edition, ver_mode):
       edition: controls which edition of the frontend is built.
       ver_mode: if ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
+
     Returns:
       Drone step.
     """
@@ -590,6 +598,7 @@ def betterer_frontend_step(edition = "oss"):
     Args:
       edition: controls whether enterprise code is also included in the source.
         Defaults to 'oss'.
+
     Returns:
       Drone step.
     """
@@ -612,6 +621,7 @@ def test_frontend_step(edition = "oss"):
     Args:
       edition: controls whether enterprise code is also included in the source.
         Defaults to 'oss'.
+
     Returns:
       Drone step.
     """
@@ -658,6 +668,7 @@ def test_a11y_frontend_step(ver_mode, edition, port = 3001):
       edition: controls which edition of grafana-server to test against.
       port: which port to grafana-server is expected to be listening on.
         Defaults to 3001.
+
     Returns:
       Drone step.
     """
@@ -697,6 +708,7 @@ def frontend_metrics_step(edition, trigger = None):
       edition: skips publishing of metrics for enterprise editions.
       trigger: a Drone trigger for the step.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -744,6 +756,7 @@ def package_step(edition, ver_mode, variants = None):
       variants: a list of variants be passed to the package subcommand
         using the --variants option.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -802,6 +815,7 @@ def grafana_server_step(edition, port = 3001):
       edition: controls which edition of grafana-server to run.
       port: port to listen on.
         Defaults to 3001.
+
     Returns:
       Drone step.
     """
@@ -863,6 +877,7 @@ def cloud_plugins_e2e_tests_step(suite, edition, cloud, trigger = None):
       cloud: used to determine cloud provider specific tests.
       trigger: a Drone trigger for the step.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -937,6 +952,7 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
         Defaults to False.
       publish: controls whether the built image is saved to a pre-release repository.
         Defaults to False.
+
     Returns:
       Drone step.
     """
@@ -1007,6 +1023,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         It is combined with the 'grafana/' library prefix.
       trigger: a Drone trigger for the pipeline.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -1132,6 +1149,7 @@ def release_canary_npm_packages_step(edition, trigger = None):
       edition: prevents releasing canary NPM packages for enterprise editions.
       trigger: a Drone trigger for the step.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -1167,6 +1185,7 @@ def upload_packages_step(edition, ver_mode, trigger = None):
         edition packages when executed.
       trigger: a Drone trigger for the step.
         Defaults to None.
+
     Returns:
       Drone step.
     """
@@ -1204,6 +1223,7 @@ def publish_grafanacom_step(edition, ver_mode):
         variable as the value for the --build-id option.
         TODO: is this actually used by the grafanacom subcommand? I think it might
         just use the environment varaiable directly.
+
     Returns:
       Drone step.
     """
@@ -1264,6 +1284,7 @@ def get_windows_steps(edition, ver_mode):
     Args:
       edition: used to differentiate steps for different Grafana editions.
       ver_mode: used to differentiate steps for different version modes.
+
     Returns:
       List of Drone steps.
     """
@@ -1494,6 +1515,7 @@ def get_trigger_storybook(ver_mode):
 
     Args:
       ver_mode: affects whether the trigger is event tags or changed files.
+
     Returns:
       Drone trigger.
     """
