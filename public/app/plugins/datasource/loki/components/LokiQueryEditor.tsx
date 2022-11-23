@@ -9,11 +9,7 @@ import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybu
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
-import {
-  lokiQueryEditorExplainKey,
-  lokiQueryEditorRawQueryKey,
-  useFlag,
-} from '../../prometheus/querybuilder/shared/hooks/useFlag';
+import { lokiQueryEditorExplainKey, useFlag } from '../../prometheus/querybuilder/shared/hooks/useFlag';
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
 import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
@@ -37,7 +33,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
   const [labelsLoaded, setLabelsLoaded] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
-  const { flag: rawQuery, setFlag: setRawQuery } = useFlag(lokiQueryEditorRawQueryKey, true);
 
   const query = getQueryWithDefaults(props.query);
   // This should be filled in from the defaults by now.
@@ -76,11 +71,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const onChangeInternal = (query: LokiQuery) => {
     setDataIsStale(true);
     onChange(query);
-  };
-
-  const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
-    const isEnabled = event.currentTarget.checked;
-    setRawQuery(isEnabled);
   };
 
   const onClickChooserButton = () => {
@@ -170,11 +160,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           </Button>
         </Stack>
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />
-        {editorMode === QueryEditorMode.Builder && (
-          <>
-            <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
-          </>
-        )}
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && (
           <Button
@@ -200,7 +185,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             query={query}
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
-            showRawQuery={rawQuery}
             showExplain={explain}
           />
         )}

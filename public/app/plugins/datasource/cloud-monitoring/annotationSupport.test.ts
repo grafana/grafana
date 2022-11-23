@@ -13,8 +13,7 @@ import {
 
 const query: CloudMonitoringQuery = {
   refId: 'query',
-  queryType: QueryType.METRICS,
-  type: 'annotationQuery',
+  queryType: QueryType.ANNOTATION,
   intervalMs: 0,
   metricQuery: {
     editorMode: EditorMode.Visual,
@@ -84,9 +83,8 @@ describe('CloudMonitoringAnnotationSupport', () => {
             text: 'text',
             title: 'title',
           },
-          queryType: 'metrics',
+          queryType: 'annotation',
           refId: 'annotationQuery',
-          type: 'annotationQuery',
         },
       };
       expect(annotationSupport.prepareAnnotation?.(legacyAnnotationQuery)).toEqual(expectedQuery);

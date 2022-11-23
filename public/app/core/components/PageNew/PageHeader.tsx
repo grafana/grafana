@@ -36,7 +36,6 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
         <div className={styles.actions}>{actions}</div>
       </div>
       {sub && <div className={styles.subTitle}>{sub}</div>}
-      {navItem.headerExtra && <navItem.headerExtra />}
     </div>
   );
 }
@@ -44,6 +43,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     topRow: css({
+      alignItems: 'center',
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -72,13 +72,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
+      marginBottom: theme.spacing(2),
     }),
     pageTitle: css({
       display: 'flex',
       marginBottom: 0,
     }),
     subTitle: css({
-      marginBottom: theme.spacing(2),
       position: 'relative',
       color: theme.colors.text.secondary,
     }),

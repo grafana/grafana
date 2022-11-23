@@ -94,14 +94,7 @@ describe('LokiQueryEditorSelector', () => {
     });
   });
 
-  it('Can enable raw query', async () => {
-    renderWithMode(QueryEditorMode.Builder);
-    expect(await screen.findByLabelText('selector')).toBeInTheDocument();
-    screen.getByLabelText('Raw query').click();
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-  });
-
-  it('Should show raw query by default', async () => {
+  it('Should show the query by default', async () => {
     renderWithProps({
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',

@@ -111,7 +111,6 @@ export const PageHeader: FC<Props> = ({ navItem: model, renderTitle, actions, in
             : renderHeaderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
           {info && <PageInfo info={info} />}
           {sub && <div className="page-header__sub-title">{sub}</div>}
-          {main.headerExtra && <main.headerExtra />}
           {actions && <div className={styles.actions}>{actions}</div>}
         </div>
       </div>

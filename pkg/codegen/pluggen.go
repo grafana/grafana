@@ -15,7 +15,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
 	tsast "github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/framework/coremodel"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
@@ -146,7 +146,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 		// whether the slot is a grouped lineage:
 		// https://github.com/grafana/thema/issues/62
 		if isGroupLineage(slotname) {
-			tsf, err := cuetsy.GenerateAST(sch.UnwrapCUE(), cuetsy.Config{
+			tsf, err := cuetsy.GenerateAST(sch.Underlying(), cuetsy.Config{
 				Export: true,
 			})
 			if err != nil {
@@ -154,7 +154,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 			}
 			f.Nodes = append(f.Nodes, tsf.Nodes...)
 		} else {
-			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.UnwrapCUE(), cuetsy.TypeInterface)
+			pair, err := cuetsy.GenerateSingleAST(strings.Title(lin.Name()), sch.Underlying(), cuetsy.TypeInterface)
 			if err != nil {
 				return nil, fmt.Errorf("error translating %s lineage to TypeScript: %w", slotname, err)
 			}
@@ -169,7 +169,7 @@ func (pt *PluginTree) GenerateTypeScriptAST() (*tsast.File, error) {
 }
 
 func isGroupLineage(slotname string) bool {
-	sl, has := coremodel.AllSlots()[slotname]
+	sl, has := kindsys.AllSlots(nil)[slotname]
 	if !has {
 		panic("unknown slotname name: " + slotname)
 	}
@@ -209,7 +209,7 @@ func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (WriteDiffer, err
 	for subpath, plug := range all {
 		fullp := filepath.Join(path, subpath)
 		if cfg.Types {
-			gwd, err := genGoTypes(plug, path, subpath, cfg.DocPathPrefix)
+			gwd, err := pgenGoTypes(plug, path, subpath, cfg.DocPathPrefix)
 			if err != nil {
 				return nil, fmt.Errorf("error generating go types for %s: %w", fullp, err)
 			}
@@ -218,7 +218,7 @@ func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (WriteDiffer, err
 			}
 		}
 		if cfg.ThemaBindings {
-			twd, err := genThemaBindings(plug, path, subpath, cfg.DocPathPrefix)
+			twd, err := pgenThemaBindings(plug, path, subpath, cfg.DocPathPrefix)
 			if err != nil {
 				return nil, fmt.Errorf("error generating thema bindings for %s: %w", fullp, err)
 			}
@@ -231,7 +231,7 @@ func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (WriteDiffer, err
 	return wd, nil
 }
 
-func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
+func pgenGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
 	wd := NewWriteDiffer()
 	for slotname, lin := range plug.SlotImplementations() {
 		lowslot := strings.ToLower(slotname)
@@ -287,7 +287,7 @@ func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer,
 		finalpath := filepath.Join(path, subpath, fmt.Sprintf("types_%s_gen.go", lowslot))
 		byt, err := postprocessGoFile(genGoFile{
 			path:   finalpath,
-			walker: makePrefixDropper(strings.Title(lin.Name()), slotname),
+			walker: PrefixDropper(strings.Title(lin.Name())),
 			in:     buf.Bytes(),
 		})
 		if err != nil {
@@ -300,7 +300,7 @@ func genGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer,
 	return wd, nil
 }
 
-func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
+func pgenThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteDiffer, error) {
 	wd := NewWriteDiffer()
 	bindings := make([]tvars_plugin_lineage_binding, 0)
 	for slotname, lin := range plug.SlotImplementations() {

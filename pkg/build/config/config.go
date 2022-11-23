@@ -16,4 +16,5 @@ type Config struct {
 	PullEnterprise     bool
 	NetworkConcurrency bool
 	PackageVersion     string
+	SignPackages       bool
 }
