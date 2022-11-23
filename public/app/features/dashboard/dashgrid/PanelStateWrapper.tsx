@@ -522,8 +522,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // Yes this is called ever render for a function that is triggered on every mouse move
     this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
 
-    const timezone =
-      this.props.timezone && this.props.timezone !== '' ? this.props.timezone : this.props.dashboard.getTimezone();
+    const timeZone = this.props.timezone || this.props.dashboard.getTimezone();
 
     return (
       <>
@@ -535,7 +534,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
                 data={data}
                 title={panel.title}
                 timeRange={timeRange}
-                timeZone={timezone}
+                timeZone={timeZone}
                 options={panelOptions}
                 fieldConfig={panel.fieldConfig}
                 transparent={panel.transparent}
