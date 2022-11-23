@@ -184,6 +184,15 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	require.NoError(t, err)
 	ctx := context.Background()
 
+	// No successfully applied configurations should be found at first.
+	{
+		for _, org := range orgs {
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+			require.NoError(t, err)
+			require.Len(t, configs, 0)
+		}
+	}
+
 	// When you sync the first time, the alertmanager is created but is doesn't become ready until you have a configuration applied.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
@@ -194,12 +203,13 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 		// The configuration should be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
-			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+			require.NoError(t, err)
+
 			if org == orgWithBadConfig {
-				require.False(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
+				require.Len(t, configs, 0)
 			} else {
-				require.True(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
+				require.Len(t, configs, 1)
 			}
 		}
 	}
@@ -214,12 +224,13 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 		// The configuration should still be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
-			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+			require.NoError(t, err)
+
 			if org == orgWithBadConfig {
-				require.False(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
+				require.Len(t, configs, 0)
 			} else {
-				require.True(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
+				require.Len(t, configs, 1)
 			}
 		}
 	}
@@ -234,6 +245,14 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[3].ready())
 
 		// All configurations should be marked as successfully applied.
+		for _, org := range orgs {
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+			require.NoError(t, err)
+
+			require.Len(t, configs, 1)
+		}
+
+		// Let's double check this by getting the latest AM config for each org.
 		for _, org := range orgs {
 			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
 			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))

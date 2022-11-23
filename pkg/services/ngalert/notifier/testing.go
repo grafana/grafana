@@ -159,14 +159,19 @@ func (f *fakeConfigStore) GetSuccessfullyAppliedAlertmanagerConfigurations(_ con
 
 	configsByOrg, ok := f.configsByOrg[query.OrgID]
 	if !ok {
-		return fmt.Errorf("configs not found for org %d", query.OrgID)
+		query.Result = []*models.AlertConfiguration{}
+		return nil
 	}
 
 	// Iterating backwards to get the latest successfully applied configs.
 	var successfullyAppliedConfigs []*models.AlertConfiguration
 	start := len(configsByOrg) - 1
 	end := start - query.Limit
-	for i := start; i >= end; i++ {
+	if end < 0 {
+		end = 0
+	}
+
+	for i := start; i >= end; i-- {
 		if configsByOrg[i].SuccessfullyApplied {
 			successfullyAppliedConfigs = append(successfullyAppliedConfigs, configsByOrg[i])
 		}

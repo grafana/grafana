@@ -160,7 +160,7 @@ func (st *DBstore) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.
 
 	var result []*models.AlertConfiguration
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.Table("alert_configuration").Where("org_id = ? AND successfully_applied = true", query.OrgID).Desc("id").Find(&result)
+		err := sess.Table("alert_configuration").Where("org_id = ? AND successfully_applied = true", query.OrgID).Desc("id").Limit(query.Limit).Find(&result)
 		if err != nil {
 			return err
 		}

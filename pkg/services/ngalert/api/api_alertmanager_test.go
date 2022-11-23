@@ -290,6 +290,48 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 }
 
+func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 200 and empty slice when no successfully applied configurations are found", func(t *testing.T) {
+		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 10,
+			},
+		}
+
+		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		require.Equal(t, 200, response.Status())
+
+		var configs apimodels.GettableUserConfigs
+		json.Unmarshal(response.Body(), &configs)
+
+		require.Len(t, configs, 0)
+	})
+
+	t.Run("assert 200 and one config in the response for an org that has one successfully applied configuration", func(tt *testing.T) {
+		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+
+		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		require.Equal(t, 200, response.Status())
+
+		var configs apimodels.GettableUserConfigs
+		json.Unmarshal(response.Body(), &configs)
+
+		require.Len(t, configs, 1)
+	})
+}
+
 func TestSilenceCreate(t *testing.T) {
 	makeSilence := func(comment string, createdBy string,
 		startsAt, endsAt strfmt.DateTime, matchers amv2.Matchers) amv2.Silence {

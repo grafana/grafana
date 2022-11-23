@@ -175,6 +175,134 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 	})
 }
 
+func TestMarkAlertmanagerConfigurationAsSuccessfullyApplied(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
+	}
+
+	t.Run("attempting to mark a non existent config as successful should fail", func(tt *testing.T) {
+		err := store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(context.Background(), 1)
+		require.Error(tt, err)
+	})
+
+	t.Run("marking an existent config should succeed", func(tt *testing.T) {
+		const orgID = 1
+		ctx := context.Background()
+
+		config, _ := setupConfig(t, "test", store)
+		err := store.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: config,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(tt, err)
+
+		query := models.GetLatestAlertmanagerConfigurationQuery{
+			OrgID: orgID,
+		}
+		err = store.GetLatestAlertmanagerConfiguration(ctx, &query)
+		require.NoError(tt, err)
+
+		// Config should not be marked as valid yet.
+		require.False(tt, query.Result.SuccessfullyApplied)
+
+		err = store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, query.Result.ID)
+		require.NoError(tt, err)
+
+		// Config should now be marked as valid.
+		query = models.GetLatestAlertmanagerConfigurationQuery{
+			OrgID: orgID,
+		}
+		err = store.GetLatestAlertmanagerConfiguration(ctx, &query)
+		require.NoError(tt, err)
+
+		require.True(tt, query.Result.SuccessfullyApplied)
+	})
+}
+
+func TestGetSuccessfullyAppliedAlertmanagerConfigurations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
+	}
+
+	t.Run("limit set to a value <1 should return an error", func(tt *testing.T) {
+		query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
+			Limit: 0,
+		}
+		err := store.GetSuccessfullyAppliedAlertmanagerConfigurations(context.Background(), &query)
+		require.Error(t, err)
+	})
+
+	t.Run("when no configurations are found an empty slice should be returned", func(tt *testing.T) {
+		query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
+			OrgID: 1,
+			Limit: 10,
+		}
+		err := store.GetSuccessfullyAppliedAlertmanagerConfigurations(context.Background(), &query)
+		require.NoError(t, err)
+
+		require.Len(t, query.Result, 0)
+	})
+
+	t.Run("when successfully applied configurations are available all of them should be returned within the given limit", func(tt *testing.T) {
+		const orgID = 1
+		const numConfigs = 3
+		ctx := context.Background()
+
+		for i := 0; i < numConfigs; i++ {
+			config, _ := setupConfig(t, fmt.Sprintf("record-%d", i+1), store)
+			err := store.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+				AlertmanagerConfiguration: config,
+				ConfigurationVersion:      "v1",
+				Default:                   false,
+				OrgID:                     orgID,
+			})
+			require.NoError(tt, err)
+
+			query := models.GetLatestAlertmanagerConfigurationQuery{
+				OrgID: orgID,
+			}
+			err = store.GetLatestAlertmanagerConfiguration(ctx, &query)
+			require.NoError(tt, err)
+
+			err = store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, query.Result.ID)
+			require.NoError(tt, err)
+		}
+
+		query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
+			OrgID: orgID,
+			Limit: 10,
+		}
+
+		err := store.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, &query)
+		require.NoError(tt, err)
+
+		require.Len(tt, query.Result, numConfigs)
+
+		// Let's try with a limit that's lower than the actual number of configs.
+		query = models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
+			OrgID: orgID,
+			Limit: 2,
+		}
+
+		err = store.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, &query)
+		require.NoError(tt, err)
+
+		require.Len(tt, query.Result, 2)
+	})
+}
+
 func setupConfig(t *testing.T, config string, store *DBstore) (string, string) {
 	t.Helper()
 	config, configMD5 := config, fmt.Sprintf("%x", md5.Sum([]byte(config)))
