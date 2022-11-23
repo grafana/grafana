@@ -64,72 +64,12 @@ func MapCUEImportToTS(path string) (string, error) {
 	return i, nil
 }
 
-// PluginTree is a pfs.Tree. It exists so we can add methods for code generation to it.
-//
-// It is, for now, tailored specifically to Grafana core's codegen needs.
-type PluginTree pfs.Tree
-
 func isGroupLineage(slotname string) bool {
 	sl, has := kindsys.AllSlots(nil)[slotname]
 	if !has {
 		panic("unknown slotname name: " + slotname)
 	}
 	return sl.IsGroup()
-}
-
-type GoGenConfig struct {
-	// Types indicates whether corresponding Go types should be generated from the
-	// latest version in the lineage(s).
-	Types bool
-
-	// ThemaBindings indicates whether Thema bindings (an implementation of
-	// ["github.com/grafana/thema".LineageFactory]) should be generated for
-	// lineage(s).
-	ThemaBindings bool
-
-	// DocPathPrefix allows the caller to optionally specify a path to be prefixed
-	// onto paths generated for documentation. This is useful for io/fs-based code
-	// generators, which typically only have knowledge of paths relative to the fs.FS
-	// root, typically an encapsulated subpath, but docs are easier to understand when
-	// paths are relative to a repository root.
-	//
-	// Note that all paths are normalized to use slashes, regardless of the
-	// OS running the code generator.
-	DocPathPrefix string
-}
-
-func (pt *PluginTree) GenerateGo(path string, cfg GoGenConfig) (corecodegen.WriteDiffer, error) {
-	t := (*pfs.Tree)(pt)
-	wd := corecodegen.NewWriteDiffer()
-
-	all := t.SubPlugins()
-	if all == nil {
-		all = make(map[string]pfs.PluginInfo)
-	}
-	all[""] = t.RootPlugin()
-	for subpath, plug := range all {
-		fullp := filepath.Join(path, subpath)
-		if cfg.Types {
-			gwd, err := pgenGoTypes(plug, path, subpath, cfg.DocPathPrefix)
-			if err != nil {
-				return nil, fmt.Errorf("error generating go types for %s: %w", fullp, err)
-			}
-			if err = wd.Merge(gwd); err != nil {
-				return nil, fmt.Errorf("error merging file set to generate for %s: %w", fullp, err)
-			}
-		}
-		if cfg.ThemaBindings {
-			twd, err := pgenThemaBindings(plug, path, subpath, cfg.DocPathPrefix)
-			if err != nil {
-				return nil, fmt.Errorf("error generating thema bindings for %s: %w", fullp, err)
-			}
-			if err = wd.Merge(twd); err != nil {
-				return nil, fmt.Errorf("error merging file set to generate for %s: %w", fullp, err)
-			}
-		}
-	}
-
-	return wd, nil
 }
 
 func pgenGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (corecodegen.WriteDiffer, error) {
@@ -196,47 +136,6 @@ func pgenGoTypes(plug pfs.PluginInfo, path, subpath, prefix string) (corecodegen
 		}
 
 		wd[finalpath] = byt
-	}
-
-	return wd, nil
-}
-
-func pgenThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (corecodegen.WriteDiffer, error) {
-	wd := corecodegen.NewWriteDiffer()
-	bindings := make([]templateVars_plugin_lineage_binding, 0)
-	for slotname, lin := range plug.SlotImplementations() {
-		lv := thema.LatestVersion(lin)
-		bindings = append(bindings, templateVars_plugin_lineage_binding{
-			SlotName:   slotname,
-			LatestMajv: lv[0],
-			LatestMinv: lv[1],
-		})
-	}
-
-	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("plugin_lineage_file.tmpl").Execute(buf, templateVars_plugin_lineage_file{
-		PackageName: sanitizePluginId(plug.Meta().Id),
-		PluginType:  string(plug.Meta().Type),
-		PluginID:    plug.Meta().Id,
-		SlotImpls:   bindings,
-		HasModels:   len(bindings) != 0,
-		Header: templateVars_autogen_header{
-			GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
-			GenLicense:    true,
-			LineagePath:   filepath.Join(prefix, subpath),
-		},
-	}); err != nil {
-		return nil, fmt.Errorf("error executing plugin lineage file template: %w", err)
-	}
-
-	fullpath := filepath.Join(path, subpath, "pfs_gen.go")
-	if byt, err := postprocessGoFile(genGoFile{
-		path: fullpath,
-		in:   buf.Bytes(),
-	}); err != nil {
-		return nil, err
-	} else {
-		wd[fullpath] = byt
 	}
 
 	return wd, nil
