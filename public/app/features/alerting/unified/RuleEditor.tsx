@@ -1,25 +1,20 @@
-import { cloneDeep } from 'lodash';
 import React from 'react';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
-import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
-import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
-
 import { AlertWarning } from './AlertWarning';
+import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
-import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
+import { fetchAllPromBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
-import { rulerRuleToFormValues } from './utils/rule-form';
 import * as ruleId from './utils/rule-id';
-import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 
 type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
 
@@ -86,66 +81,3 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
 };
 
 export default withErrorBoundary(RuleEditor, { style: 'page' });
-
-function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
-  const dispatch = useDispatch();
-
-  const { loading, value: rule } = useAsync(
-    () => dispatch(fetchEditableRuleAction(sourceRuleId)).unwrap(),
-    [sourceRuleId]
-  );
-
-  if (loading) {
-    return <LoadingPlaceholder text="Loading the rule" />;
-  }
-
-  if (rule) {
-    const ruleClone = cloneDeep(rule);
-    changeRuleName(ruleClone.rule, generateCopiedRuleTitle(ruleClone));
-
-    return <AlertRuleForm prefill={rulerRuleToFormValues(ruleClone)} />;
-  }
-
-  return <Alert title="Cannot clone. The rule does not exist" />;
-}
-
-function generateCopiedRuleTitle(originRuleWithLocation: RuleWithLocation): string {
-  const originName = getRuleName(originRuleWithLocation.rule);
-  const existingRulesNames = originRuleWithLocation.group.rules.map(getRuleName);
-
-  let newName = `${originName} (Copied)`;
-
-  for (let i = 1; existingRulesNames.includes(newName); i++) {
-    newName = `${originName} (Copied ${i})`;
-  }
-
-  return newName;
-}
-
-function getRuleName(rule: RulerRuleDTO) {
-  if (isGrafanaRulerRule(rule)) {
-    return rule.grafana_alert.title;
-  }
-  if (isAlertingRulerRule(rule)) {
-    return rule.alert;
-  }
-
-  if (isRecordingRulerRule(rule)) {
-    return rule.record;
-  }
-
-  return '';
-}
-
-function changeRuleName(rule: RulerRuleDTO, newName: string) {
-  if (isGrafanaRulerRule(rule)) {
-    rule.grafana_alert.title = newName;
-  }
-  if (isAlertingRulerRule(rule)) {
-    rule.alert = newName;
-  }
-
-  if (isRecordingRulerRule(rule)) {
-    rule.record = newName;
-  }
-}

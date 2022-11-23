@@ -3,19 +3,10 @@ import React, { FC, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import {
-  Button,
-  ClipboardButton,
-  ConfirmModal,
-  HorizontalGroup,
-  LinkButton,
-  Tooltip,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Button, ClipboardButton, ConfirmModal, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
@@ -32,25 +23,6 @@ export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
-}
-function DontShowIfSmallDevice({ children }: { children: JSX.Element | string }) {
-  const theme = useTheme2();
-  const smBreakpoint = theme.breakpoints.values.xxl;
-  const [isSmallScreen, setIsSmallScreen] = useState(matchesWidth(smBreakpoint));
-  const style = useStyles2(getStyles);
-
-  useMediaQueryChange({
-    breakpoint: smBreakpoint,
-    onChange: (e) => {
-      setIsSmallScreen(e.matches);
-    },
-  });
-
-  if (isSmallScreen) {
-    return null;
-  } else {
-    return <div className={style.buttonText}>{children}</div>;
-  }
 }
 
 export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
@@ -102,7 +74,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
       <Tooltip placement="top" content={'View'}>
         <LinkButton
           className={style.button}
-          size="xs"
+          size="sm"
           key="view"
           variant="secondary"
           icon="eye"
@@ -141,27 +113,13 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
 
     buttons.push(
       <Tooltip placement="top" content={'Edit'}>
-        <LinkButton
-          className={style.button}
-          size="xs"
-          key="edit"
-          variant="secondary"
-          icon="pen"
-          href={editURL}
-        ></LinkButton>
+        <LinkButton className={style.button} size="sm" key="edit" variant="secondary" icon="pen" href={editURL} />
       </Tooltip>
     );
 
     buttons.push(
       <Tooltip placement="top" content="Duplicate">
-        <LinkButton
-          className={style.button}
-          size="xs"
-          key="clone"
-          variant="secondary"
-          icon="copy"
-          href={cloneUrl}
-        ></LinkButton>
+        <LinkButton className={style.button} size="sm" key="clone" variant="secondary" icon="copy" href={cloneUrl} />
       </Tooltip>
     );
   }
@@ -171,13 +129,13 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
       <Tooltip placement="top" content={'Delete'}>
         <Button
           className={style.button}
-          size="xs"
+          size="sm"
           type="button"
           key="delete"
           variant="secondary"
           icon="trash-alt"
           onClick={() => setRuleToDelete(rule)}
-        ></Button>
+        />
       </Tooltip>
     );
   }
@@ -185,11 +143,11 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (buttons.length) {
     return (
       <>
-        <div className={style.wrapper}>
-          <HorizontalGroup width="auto">
-            {buttons.length ? buttons.map((button, index) => <div key={index}>{button}</div>) : <div />}
-          </HorizontalGroup>
-        </div>
+        <Stack gap={1}>
+          {buttons.map((button, index) => (
+            <React.Fragment key={index}>{button}</React.Fragment>
+          ))}
+        </Stack>
         {!!ruleToDelete && (
           <ConfirmModal
             isOpen={true}
@@ -213,20 +171,7 @@ function inViewMode(pathname: string): boolean {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  `,
   button: css`
-    height: 24px;
-    font-size: ${theme.typography.size.sm};
-    svg {
-      margin-right: 0;
-    }
-  `,
-  buttonText: css`
-    margin-left: 8px;
+    padding: 0 ${theme.spacing(2)};
   `,
 });
