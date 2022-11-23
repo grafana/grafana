@@ -10,7 +10,7 @@ export interface FnGlobalState {
   uid: string;
   slug: string;
   mode: GrafanaThemeType.Light | GrafanaThemeType.Dark;
-  controlsContainer: HTMLElement | null | undefined;
+  controlsContainer: string | null;
   pageTitle: string;
   queryParams: AnyObject;
   hiddenVariables: string[];

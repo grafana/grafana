@@ -90,7 +90,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type OwnProps = {
   isPublic?: boolean;
   isFNDashboard?: boolean;
-  controlsContainer?: HTMLElement | null;
+  controlsContainer?: string | null;
   hiddenVariables?: string[];
   fnLoader?: ReactNode;
 };
@@ -420,7 +420,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         layout={PageLayoutType.Dashboard}
         toolbar={
           this.props.controlsContainer ? (
-            <RenderPortal renderContainer={this.props.controlsContainer}>{toolbar}</RenderPortal>
+            <RenderPortal ID={this.props.controlsContainer}>{toolbar}</RenderPortal>
           ) : (
             toolbar
           )
