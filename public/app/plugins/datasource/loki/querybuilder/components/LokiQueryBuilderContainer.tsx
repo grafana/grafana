@@ -66,7 +66,7 @@ export function LokiQueryBuilderContainer(props: Props) {
         showExplain={showExplain}
         data-testid={testIds.editor}
       />
-      <QueryPreview query={query.expr} />
+      {query.expr !== '' && <QueryPreview query={query.expr} />}
     </>
   );
 }
