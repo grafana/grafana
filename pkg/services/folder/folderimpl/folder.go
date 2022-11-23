@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -388,22 +387,23 @@ func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, org
 			UID:       dash.Uid,
 			OrgID:     orgID,
 		}); err != nil {
-			s.log.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
+			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
 		}
 	}
 	return foldr, nil
 }
 
 func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	logger := s.log.FromContext(ctx)
+	if cmd.SignedInUser == nil {
+		return folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		err := s.Delete(ctx, cmd)
 		if err != nil {
-			s.log.Error("the delete folder on folder table failed with err: ", err.Error())
+			logger.Error("the delete folder on folder table failed with err: ", err.Error())
 		}
-	}
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return err
 	}
 
 	dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, cmd.OrgID, cmd.UID)
@@ -411,7 +411,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return err
 	}
 
-	guard := guardian.New(ctx, dashFolder.ID, cmd.OrgID, user)
+	guard := guardian.New(ctx, dashFolder.ID, cmd.OrgID, cmd.SignedInUser)
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return toFolderError(err)
