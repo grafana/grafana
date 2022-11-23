@@ -191,6 +191,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		return dataResponseErrorWithExecuted(err)
 	}
 	appendErrorNotice(frame, logResponse.Error)
+	if frame == nil {
+		return dataResponse
+	}
 
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
@@ -222,10 +225,15 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	return dataResponse
 }
 
-func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) {
-	if err != nil {
-		frame.AppendNotices(apiErrorToNotice(err))
+func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.Frame {
+	if err == nil {
+		return frame
 	}
+	if frame == nil {
+		frame = &data.Frame{}
+	}
+	frame.AppendNotices(apiErrorToNotice(err))
+	return frame
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger log.Logger, url string) (*http.Request, error) {
