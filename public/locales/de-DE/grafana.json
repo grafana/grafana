@@ -402,7 +402,8 @@
       "mistake-message": "Hast du einen Fehler gemacht? ",
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
-      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen."
+      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Einbetten",

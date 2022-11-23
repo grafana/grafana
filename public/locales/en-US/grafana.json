@@ -402,7 +402,8 @@
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
     },
     "tab-title": {
       "embed": "Embed",
