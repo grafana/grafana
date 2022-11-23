@@ -36,52 +36,8 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
-	cfg, err := Load([]byte(query.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
-	}
 
-	result := definitions.GettableUserConfig{
-		TemplateFiles: cfg.TemplateFiles,
-		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: cfg.AlertmanagerConfig.Config,
-		},
-	}
-
-	for _, recv := range cfg.AlertmanagerConfig.Receivers {
-		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
-		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			secureFields := make(map[string]bool, len(pr.SecureSettings))
-			for k := range pr.SecureSettings {
-				decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)
-				if err != nil {
-					return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt stored secure setting: %w", err)
-				}
-				if decryptedValue == "" {
-					continue
-				}
-				secureFields[k] = true
-			}
-			gr := definitions.GettableGrafanaReceiver{
-				UID:                   pr.UID,
-				Name:                  pr.Name,
-				Type:                  pr.Type,
-				DisableResolveMessage: pr.DisableResolveMessage,
-				Settings:              pr.Settings,
-				SecureFields:          secureFields,
-			}
-			receivers = append(receivers, &gr)
-		}
-		gettableApiReceiver := definitions.GettableApiReceiver{
-			GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
-				GrafanaManagedReceivers: receivers,
-			},
-		}
-		gettableApiReceiver.Name = recv.Name
-		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
-	}
-
-	result, err = moa.mergeProvenance(ctx, result, org)
+	result, err := moa.gettableUserConfigFromAMConfigString(ctx, org, query.Result.AlertmanagerConfiguration)
 	if err != nil {
 		return definitions.GettableUserConfig{}, err
 	}
@@ -97,63 +53,17 @@ func (moa *MultiOrgAlertmanager) GetSuccessfullyAppliedAlertmanagerConfiguration
 		return definitions.GettableUserConfigs{}, fmt.Errorf("failed to get successfully applied configurations: %w", err)
 	}
 
-	result := make(definitions.GettableUserConfigs, 0, len(query.Result))
+	configs := make(definitions.GettableUserConfigs, 0, len(query.Result))
 	for _, config := range query.Result {
-		cfg, err := Load([]byte(config.AlertmanagerConfiguration))
-		if err != nil {
-			return definitions.GettableUserConfigs{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
-		}
-
-		gettableUserConfig := definitions.GettableUserConfig{
-			TemplateFiles: cfg.TemplateFiles,
-			AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-				Config: cfg.AlertmanagerConfig.Config,
-			},
-		}
-
-		// TODO: extract duplicated code
-		for _, recv := range cfg.AlertmanagerConfig.Receivers {
-			receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
-			for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				secureFields := make(map[string]bool, len(pr.SecureSettings))
-				for k := range pr.SecureSettings {
-					decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)
-					if err != nil {
-						return definitions.GettableUserConfigs{}, fmt.Errorf("failed to decrypt stored secure setting: %w", err)
-					}
-					if decryptedValue == "" {
-						continue
-					}
-					secureFields[k] = true
-				}
-				gr := definitions.GettableGrafanaReceiver{
-					UID:                   pr.UID,
-					Name:                  pr.Name,
-					Type:                  pr.Type,
-					DisableResolveMessage: pr.DisableResolveMessage,
-					Settings:              pr.Settings,
-					SecureFields:          secureFields,
-				}
-				receivers = append(receivers, &gr)
-			}
-			gettableApiReceiver := definitions.GettableApiReceiver{
-				GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
-					GrafanaManagedReceivers: receivers,
-				},
-			}
-			gettableApiReceiver.Name = recv.Name
-			gettableUserConfig.AlertmanagerConfig.Receivers = append(gettableUserConfig.AlertmanagerConfig.Receivers, &gettableApiReceiver)
-		}
-
-		gettableUserConfig, err = moa.mergeProvenance(ctx, gettableUserConfig, org)
+		gettableUserConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration)
 		if err != nil {
 			return definitions.GettableUserConfigs{}, err
 		}
 
-		result = append(result, gettableUserConfig)
+		configs = append(configs, gettableUserConfig)
 	}
 
-	return result, nil
+	return configs, nil
 }
 
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
@@ -227,4 +137,66 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	config.AlertmanagerConfig.MuteTimeProvenances = mtProvs
 
 	return config, nil
+}
+
+func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string) (definitions.GettableUserConfig, error) {
+	cfg, err := Load([]byte(config))
+	if err != nil {
+		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
+	}
+
+	gettableConfig := definitions.GettableUserConfig{
+		TemplateFiles: cfg.TemplateFiles,
+		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
+			Config: cfg.AlertmanagerConfig.Config,
+		},
+	}
+
+	for _, recv := range cfg.AlertmanagerConfig.Receivers {
+		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
+		for _, postableReceiver := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			gettableReceiver, err := moa.gettableReceiverFromPostableReceiver(postableReceiver)
+			if err != nil {
+				return definitions.GettableUserConfig{}, err
+			}
+
+			receivers = append(receivers, gettableReceiver)
+		}
+		gettableApiReceiver := definitions.GettableApiReceiver{
+			GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
+				GrafanaManagedReceivers: receivers,
+			},
+		}
+		gettableApiReceiver.Name = recv.Name
+		gettableConfig.AlertmanagerConfig.Receivers = append(gettableConfig.AlertmanagerConfig.Receivers, &gettableApiReceiver)
+	}
+
+	gettableConfig, err = moa.mergeProvenance(ctx, gettableConfig, orgID)
+	if err != nil {
+		return definitions.GettableUserConfig{}, err
+	}
+
+	return gettableConfig, nil
+}
+
+func (moa *MultiOrgAlertmanager) gettableReceiverFromPostableReceiver(pr *definitions.PostableGrafanaReceiver) (*definitions.GettableGrafanaReceiver, error) {
+	secureFields := make(map[string]bool, len(pr.SecureSettings))
+	for k := range pr.SecureSettings {
+		decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt stored secure setting: %w", err)
+		}
+		if decryptedValue == "" {
+			continue
+		}
+		secureFields[k] = true
+	}
+	return &definitions.GettableGrafanaReceiver{
+		UID:                   pr.UID,
+		Name:                  pr.Name,
+		Type:                  pr.Type,
+		DisableResolveMessage: pr.DisableResolveMessage,
+		Settings:              pr.Settings,
+		SecureFields:          secureFields,
+	}, nil
 }
