@@ -68,8 +68,8 @@ func (j *ptsJenny) Generate(decl *kindsys.PluginDecl) (*codejen.File, error) {
 	})
 
 	path := filepath.Join(j.root, decl.PluginPath, "models.gen.ts")
-	body := []byte(tsf.String())
-	body = body[:len(body)-1] // remove the additional line break added by the inner jenny
+	data := []byte(tsf.String())
+	data = data[:len(data)-1] // remove the additional line break added by the inner jenny
 
-	return codejen.NewFile(path, body, append(jf.From, j)...), nil
+	return codejen.NewFile(path, data, append(jf.From, j)...), nil
 }

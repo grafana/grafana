@@ -57,9 +57,10 @@ func (j *ptlJenny) Generate(decls ...*kindsys.PluginDecl) (*codejen.File, error)
 			continue
 		}
 
+		pluginId := j.sanitizePluginId(meta.Id)
 		vars.Plugins = append(vars.Plugins, tpl{
-			PkgName:    sanitizePluginId(meta.Id),
-			NoAlias:    sanitizePluginId(meta.Id) != filepath.Base(decl.PluginPath),
+			PkgName:    pluginId,
+			NoAlias:    pluginId != filepath.Base(decl.PluginPath),
 			ImportPath: filepath.ToSlash(filepath.Join(prefix, decl.PluginPath)),
 			Path:       path.Join(append(strings.Split(prefix, "/")[3:], decl.PluginPath)...),
 		})
@@ -80,4 +81,23 @@ func (j *ptlJenny) Generate(decls ...*kindsys.PluginDecl) (*codejen.File, error)
 	}
 
 	return codejen.NewFile(j.outputFile, byt, j), nil
+}
+
+func (j *ptlJenny) sanitizePluginId(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z':
+			fallthrough
+		case r >= 'A' && r <= 'Z':
+			fallthrough
+		case r >= '0' && r <= '9':
+			fallthrough
+		case r == '_':
+			return r
+		case r == '-':
+			return '_'
+		default:
+			return -1
+		}
+	}, s)
 }
