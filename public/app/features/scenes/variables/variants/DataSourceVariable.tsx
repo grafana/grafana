@@ -15,7 +15,6 @@ import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } f
 export interface DataSourceVariableState extends MultiValueVariableState {
   query: string;
   regex: string;
-  refresh: VariableRefresh;
 }
 
 export class DataSourceVariable extends MultiValueVariable<DataSourceVariableState> {
@@ -31,7 +30,6 @@ export class DataSourceVariable extends MultiValueVariable<DataSourceVariableSta
       name: '',
       regex: '',
       query: '',
-      refresh: VariableRefresh.onDashboardLoad,
       ...initialState,
     });
   }
