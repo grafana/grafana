@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -46,7 +46,8 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
-	-i pkg/api/swagger_tags.json
+	-i pkg/api/swagger_tags.json \
+	--exclude-tag=alpha
 
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
@@ -65,6 +66,8 @@ openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 a
 ##@ Building
 gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
+	go generate ./pkg/plugins/plugindef
+	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins
 
@@ -72,9 +75,16 @@ gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
+gen-jsonnet:
+	go generate ./devenv/jsonnet
+
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-backend: ## Build Grafana backend.
+	@echo "build backend"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
 
 build-server: ## Build Grafana server.
 	@echo "build server"

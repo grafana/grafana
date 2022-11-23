@@ -102,6 +102,9 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.subs.unsubscribe();
+    if (this.props.angularComponent) {
+      this.props.angularComponent?.destroy();
+    }
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {

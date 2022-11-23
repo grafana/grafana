@@ -80,6 +80,9 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid: "test-app",
 			skip:   "has a 'page'-type include which isn't a known part of spec",
 		},
+		"test-app-with-roles": {
+			rootid: "test-app",
+		},
 		"unsigned-datasource": {
 			rootid:  "test-datasource",
 			subpath: "plugin",
@@ -169,6 +172,7 @@ func TestParseTreeTestdata(t *testing.T) {
 			if tst.err == nil {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
+				require.Error(t, err)
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
 			}

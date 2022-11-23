@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const { onRunQuery, placeholder } = props;
+  const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
@@ -31,7 +31,8 @@ export function TraceQLEditor(props: Props) {
     <CodeEditor
       value={props.value}
       language={langId}
-      onBlur={props.onChange}
+      onBlur={onChange}
+      onChange={onChange}
       height={'30px'}
       containerStyles={styles.queryField}
       monacoOptions={{

@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
@@ -15,7 +15,7 @@ import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBui
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { findRect, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -51,6 +51,7 @@ export interface BarsOptions {
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   fillOpacity?: number;
   formatValue: (seriesIdx: number, value: any) => string;
+  timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
@@ -416,7 +417,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let over = u.over;
     over.style.overflow = 'hidden';
     u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
-      (el as HTMLElement).style.borderRadius = '0';
+      if (el instanceof HTMLElement) {
+        el.style.borderRadius = '0';
+      }
     });
   };
 
@@ -436,7 +439,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            hRect = o;
+            if (isStacked) {
+              // choose the smallest hovered rect (when stacked bigger ones overlap smaller ones)
+              if (hRect == null || o.h * o.w < hRect.h * hRect.w) {
+                hRect = o;
+              }
+            } else {
+              hRect = o;
+            }
           }
         });
       }
@@ -448,11 +458,18 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       bbox: (u, seriesIdx) => {
         let isHovered = hRect && seriesIdx === hRect.sidx;
 
+        let heightReduce = 0;
+
+        // get height of bar rect at same index of the series below the hovered one
+        if (isStacked && isHovered && hRect!.sidx > 1) {
+          heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
+        }
+
         return {
           left: isHovered ? hRect!.x / devicePixelRatio : -10,
           top: isHovered ? hRect!.y / devicePixelRatio : -10,
           width: isHovered ? hRect!.w / devicePixelRatio : 0,
-          height: isHovered ? hRect!.h / devicePixelRatio : 0,
+          height: isHovered ? (hRect!.h - heightReduce) / devicePixelRatio : 0,
         };
       },
     },

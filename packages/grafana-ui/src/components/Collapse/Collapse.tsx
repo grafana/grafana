@@ -4,6 +4,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -71,9 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: collapse__header;
     padding: ${theme.spacing(1, 2, 1, 2)};
     display: flex;
-    cursor: inherit;
     transition: all 0.1s linear;
-    cursor: pointer;
   `,
   headerCollapsed: css`
     label: collapse__header--collapsed;
@@ -123,7 +122,7 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   );
 };
 
-export const Collapse: FunctionComponent<Props> = ({
+export const Collapse = ({
   isOpen,
   label,
   loading,
@@ -131,7 +130,8 @@ export const Collapse: FunctionComponent<Props> = ({
   onToggle,
   className,
   children,
-}) => {
+}: React.PropsWithChildren<Props>) => {
+  const buttonStyles = useStyles2(clearButtonStyles);
   const style = useStyles2(getStyles);
   const onClickToggle = () => {
     if (onToggle) {
@@ -145,10 +145,10 @@ export const Collapse: FunctionComponent<Props> = ({
 
   return (
     <div className={panelClass}>
-      <div className={headerClass} onClick={onClickToggle}>
+      <button type="button" className={cx(buttonStyles, headerClass)} onClick={onClickToggle}>
         {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-down' : 'angle-right'} />}
         <div className={cx([style.headerLabel])}>{label}</div>
-      </div>
+      </button>
       {isOpen && (
         <div className={cx([style.collapseBody])}>
           <div className={loaderClass} />

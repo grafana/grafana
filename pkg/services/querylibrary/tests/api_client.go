@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -22,10 +23,10 @@ type queryLibraryAPIClient struct {
 	token    string
 	url      string
 	user     *user.SignedInUser
-	sqlStore *sqlstore.SQLStore
+	sqlStore db.DB
 }
 
-func newQueryLibraryAPIClient(token string, baseUrl string, user *user.SignedInUser, sqlStore *sqlstore.SQLStore) *queryLibraryAPIClient {
+func newQueryLibraryAPIClient(token string, baseUrl string, user *user.SignedInUser, sqlStore db.DB) *queryLibraryAPIClient {
 	return &queryLibraryAPIClient{
 		token:    token,
 		url:      baseUrl,
@@ -52,11 +53,12 @@ func (q *queryLibraryAPIClient) update(ctx context.Context, query *querylibrary.
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+	if err != nil {
+		return err
+	}
 
-	return err
+	_ = resp.Body.Close()
+	return nil
 }
 
 func (q *queryLibraryAPIClient) delete(ctx context.Context, uid string) error {

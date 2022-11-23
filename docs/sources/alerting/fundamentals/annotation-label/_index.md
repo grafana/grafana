@@ -16,7 +16,7 @@ weight: 401
 
 # Annotations and labels for alerting rules
 
-Annotations and labels are key value pairs associated with alerts originating from the alerting rule, datasource response, and as a result of alerting rule evaluation. They can be used in alert notifications directly or in [templates]({{< relref "../../contact-points/message-templating/" >}}) and [template functions]({{< relref "../../contact-points/fundamentals/annotation-label/template-functions/" >}}) to create notification content dynamically.
+Annotations and labels are key value pairs associated with alerts originating from the alerting rule, datasource response, and as a result of alerting rule evaluation. They can be used in alert notifications directly or in templates and template functions to create notification content dynamically.
 
 ## Annotations
 
@@ -25,9 +25,3 @@ Annotations are key-value pairs that provide additional meta-information about a
 ## Labels
 
 Labels are key-value pairs that contain information about, and are used to uniquely identify an alert. The label set for an alert is generated and added to throughout the alerting evaluation and notification process.
-
-Before you begin using annotations and labels, familiarize yourself with:
-
-- [Labels in Grafana Alerting]({{< relref "how-to-use-labels/" >}})
-- [How label matching works]({{< relref "how-to-use-labels/" >}})
-- [How to template annotations and labels]({{< relref "variables-label-annotation/" >}})

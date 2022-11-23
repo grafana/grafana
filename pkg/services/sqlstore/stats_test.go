@@ -80,43 +80,31 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		users[i] = *user
 	}
 
-	// get 1st user's organisation
-	getOrgByIdQuery := &models.GetOrgByIdQuery{Id: users[0].OrgID}
-	err := sqlStore.GetOrgById(context.Background(), getOrgByIdQuery)
-	require.NoError(t, err)
-	orga := getOrgByIdQuery.Result
-
 	// add 2nd user as editor
 	cmd := &models.AddOrgUserCommand{
-		OrgId:  orga.Id,
+		OrgId:  users[0].OrgID,
 		UserId: users[1].ID,
 		Role:   org.RoleEditor,
 	}
-	err = sqlStore.AddOrgUser(context.Background(), cmd)
+	err := sqlStore.addOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// add 3rd user as viewer
 	cmd = &models.AddOrgUserCommand{
-		OrgId:  orga.Id,
+		OrgId:  users[0].OrgID,
 		UserId: users[2].ID,
 		Role:   org.RoleViewer,
 	}
-	err = sqlStore.AddOrgUser(context.Background(), cmd)
+	err = sqlStore.addOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
-
-	// get 2nd user's organisation
-	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[1].OrgID}
-	err = sqlStore.GetOrgById(context.Background(), getOrgByIdQuery)
-	require.NoError(t, err)
-	orga = getOrgByIdQuery.Result
 
 	// add 1st user as admin
 	cmd = &models.AddOrgUserCommand{
-		OrgId:  orga.Id,
+		OrgId:  users[1].OrgID,
 		UserId: users[0].ID,
 		Role:   org.RoleAdmin,
 	}
-	err = sqlStore.AddOrgUser(context.Background(), cmd)
+	err = sqlStore.addOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// force renewal of user stats

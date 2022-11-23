@@ -4,59 +4,8 @@ import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } fr
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { useSelector } from 'app/types';
 
+import { alertmanagerApi } from '../api/alertmanagerApi';
 import { getAlertManagerDataSources } from '../utils/datasource';
-
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
-
-const SUFFIX_REGEX = /\/api\/v[1|2]\/alerts/i;
-type AlertmanagerConfig = { url: string; status: string; actualUrl: string };
-
-export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
-  const discoveredAlertmanagers = useSelector(
-    (state) => state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result?.data
-  );
-  const alertmanagerConfig = useSelector(
-    (state) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagers
-  );
-
-  if (!discoveredAlertmanagers || !alertmanagerConfig) {
-    return [];
-  }
-
-  const enabledAlertmanagers: AlertmanagerConfig[] = [];
-  const droppedAlertmanagers: AlertmanagerConfig[] = discoveredAlertmanagers.droppedAlertManagers.map((am) => ({
-    url: am.url.replace(SUFFIX_REGEX, ''),
-    status: 'dropped',
-    actualUrl: am.url,
-  }));
-
-  for (const url of alertmanagerConfig) {
-    if (discoveredAlertmanagers.activeAlertManagers.length === 0) {
-      enabledAlertmanagers.push({
-        url: url,
-        status: 'pending',
-        actualUrl: '',
-      });
-    } else {
-      const matchingActiveAM = discoveredAlertmanagers.activeAlertManagers.find(
-        (am) => am.url === `${url}/api/v2/alerts`
-      );
-      matchingActiveAM
-        ? enabledAlertmanagers.push({
-            url: matchingActiveAM.url.replace(SUFFIX_REGEX, ''),
-            status: 'active',
-            actualUrl: matchingActiveAM.url,
-          })
-        : enabledAlertmanagers.push({
-            url: url,
-            status: 'pending',
-            actualUrl: '',
-          });
-    }
-  }
-
-  return [...enabledAlertmanagers, ...droppedAlertmanagers];
-}
 
 export interface ExternalDataSourceAM {
   dataSource: DataSourceInstanceSettings<AlertManagerDataSourceJsonData>;
@@ -66,6 +15,9 @@ export interface ExternalDataSourceAM {
 }
 
 export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
+  const { useGetExternalAlertmanagersQuery } = alertmanagerApi;
+  const { currentData: discoveredAlertmanagers } = useGetExternalAlertmanagersQuery();
+
   const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 
   const alertmanagerDatasources = useSelector((state) =>
@@ -73,10 +25,6 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
       state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
       (ds) => ds.uid
     )
-  );
-
-  const discoveredAlertmanagers = useUnifiedAlertingSelector(
-    (state) => state.externalAlertmanagers.discoveredAlertmanagers.result?.data
   );
 
   const droppedAMUrls = countBy(discoveredAlertmanagers?.droppedAlertManagers, (x) => x.url);

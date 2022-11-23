@@ -9,7 +9,6 @@ import { CompletionProvider } from './autocomplete';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
 }));
 
 describe('CompletionProvider', () => {

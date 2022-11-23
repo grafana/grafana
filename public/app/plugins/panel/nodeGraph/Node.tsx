@@ -123,7 +123,7 @@ export const Node = memo(function Node(props: {
  */
 function ColorCircle(props: { node: NodeDatum }) {
   const { node } = props;
-  const fullStat = node.arcSections.find((s) => s.values.get(node.dataFrameRowIndex) === 1);
+  const fullStat = node.arcSections.find((s) => s.values.get(node.dataFrameRowIndex) >= 1);
   const theme = useTheme2();
 
   if (fullStat) {
@@ -159,6 +159,7 @@ function ColorCircle(props: { node: NodeDatum }) {
     (acc, section) => {
       const color = section.config.color?.fixedColor || '';
       const value = section.values.get(node.dataFrameRowIndex);
+
       const el = (
         <ArcSection
           key={color}
@@ -166,7 +167,13 @@ function ColorCircle(props: { node: NodeDatum }) {
           x={node.x!}
           y={node.y!}
           startPercent={acc.percent}
-          percent={value}
+          percent={
+            value + acc.percent > 1
+              ? // If the values aren't correct and add up to more than 100% lets still render correctly the amounts we
+                // already have and cap it at 100%
+                1 - acc.percent
+              : value
+          }
           color={theme.visualization.getColorByName(color)}
           strokeWidth={2}
         />

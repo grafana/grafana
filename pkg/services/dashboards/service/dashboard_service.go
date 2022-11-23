@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -586,4 +587,18 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *mod
 
 func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int64) error {
 	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
+}
+
+func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, query *dashboards.CountDashboardsInFolderQuery) (int64, error) {
+	u, err := appcontext.User(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	folder, err := dr.dashboardStore.GetFolderByUID(ctx, u.OrgID, query.FolderUID)
+	if err != nil {
+		return 0, err
+	}
+
+	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: u.OrgID})
 }

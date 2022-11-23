@@ -62,7 +62,7 @@ var config = {
       url: '${HOST}/login',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 12,
+      threshold: 13,
     },
     {
       url: '${HOST}/login',
@@ -74,7 +74,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 13,
+      threshold: 14,
       rootElement: '.main-view',
     },
     {
@@ -101,49 +101,49 @@ var config = {
       rootElement: '.main-view',
       // the unified alerting promotion alert's content contrast is too low
       // see https://github.com/grafana/grafana/pull/41829
-      threshold: 5,
+      threshold: 6,
     },
     {
       url: '${HOST}/datasources',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 1,
     },
     {
       url: '${HOST}/org/users',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 1,
     },
     {
       url: '${HOST}/org/teams',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 1,
     },
     {
       url: '${HOST}/plugins',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 1,
     },
     {
       url: '${HOST}/org',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 1,
     },
     {
       url: '${HOST}/org/apikeys',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 3,
+      threshold: 4,
     },
     {
       url: '${HOST}/dashboards',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 1,
     },
   ],
 };

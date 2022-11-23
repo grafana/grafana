@@ -64,86 +64,109 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 
 ## Data sources
 
-> This feature is available from v5.0
+> **Note:** Available in Grafana v5.0 and higher.
 
-It's possible to manage data sources in Grafana by adding one or more YAML config files in the [`provisioning/datasources`](/administration/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will get added or updated during start up. If the data source already exists, then Grafana updates it to match the configuration file. The config file can also contain a list of data sources that should be deleted. That list is called `deleteDatasources`. Grafana will delete data sources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
+You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+Each config file can contain a list of `datasources` to add or update during startup.
+If the data source already exists, Grafana reconfigures it to match the provisioned configuration file.
 
-### Running Multiple Grafana Instances
+The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
+Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
-If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
+### Running multiple Grafana instances
 
-### Example data source Config File
+If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
+Grafana updates only data sources with the same or lower version number than specified in the config.
+This prevents old configurations from overwriting newer ones if you have different versions of the `datasource.yaml` file that don't define version numbers, and then restart instances at the same time.
+
+### Example data source config file
+
+This example provisions a [Graphite data source]({{< relref "../../datasources/graphite" >}}):
 
 ```yaml
-# config file version
+# Configuration file version
 apiVersion: 1
 
-# list of datasources that should be deleted from the database
+# List of data sources to delete from the database.
 deleteDatasources:
   - name: Graphite
     orgId: 1
 
-# list of datasources to insert/update depending
-# what's available in the database
+# List of data sources to insert/update depending on what's
+# available in the database.
 datasources:
-  # <string, required> name of the datasource. Required
+  # <string, required> Sets the name you use to refer to
+  # the data source in panels and queries.
   - name: Graphite
-    # <string, required> datasource type. Required
+    # <string, required> Sets the data source type.
     type: graphite
-    # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
+    # <string, required> Sets the access mode, either
+    # proxy or direct (Server or Browser in the UI).
+    # Some data sources are incompatible with any setting
+    # but proxy (Server).
     access: proxy
-    # <int> org id. will default to orgId 1 if not specified
+    # <int> Sets the organization id. Defaults to orgId 1.
     orgId: 1
-    # <string> custom UID which can be used to reference this datasource in other parts of the configuration, if not specified will be generated automatically
+    # <string> Sets a custom UID to reference this
+    # data source in other parts of the configuration.
+    # If not specified, Grafana generates one.
     uid: my_unique_uid
-    # <string> url
+    # <string> Sets the data source's URL, including the
+    # port.
     url: http://localhost:8080
-    # <string> database user, if used
+    # <string> Sets the database user, if necessary.
     user:
-    # <string> database name, if used
+    # <string> Sets the database name, if necessary.
     database:
-    # <bool> enable/disable basic auth
+    # <bool> Enables basic authorization.
     basicAuth:
-    # <string> basic auth username
+    # <string> Sets the basic authorization username.
     basicAuthUser:
-    # <bool> enable/disable with credentials headers
+    # <bool> Enables credential headers.
     withCredentials:
-    # <bool> mark as default datasource. Max one per org
+    # <bool> Toggles whether the data source is pre-selected
+    # for new panels. You can set only one default
+    # data source per organization.
     isDefault:
-    # <map> fields that will be converted to json and stored in jsonData
+    # <map> Fields to convert to JSON and store in jsonData.
     jsonData:
+      # <string> Defines the Graphite service's version.
       graphiteVersion: '1.1'
+      # <bool> Enables TLS authentication using a client
+      # certificate configured in secureJsonData.
       tlsAuth: true
+      # <bool> Enables TLS authentication using a CA
+      # certificate.
       tlsAuthWithCACert: true
-    # <string> json object of data that will be encrypted.
+    # <map> Fields to encrypt before storing in jsonData.
     secureJsonData:
+      # <string> Defines the CA cert, client cert, and
+      # client key for encrypted authentication.
       tlsCACert: '...'
       tlsClientCert: '...'
       tlsClientKey: '...'
-      # <string> database password, if used
+      # <string> Sets the database password, if necessary.
       password:
-      # <string> basic auth password
+      # <string> Sets the basic authorization password.
       basicAuthPassword:
     version: 1
-    # <bool> allow users to edit datasources from the UI.
+    # <bool> Allows users to edit data sources from the
+    # Grafana UI.
     editable: false
 ```
 
-#### Custom Settings per Datasource
-
-Please refer to each datasource documentation for specific provisioning examples.
-
-| Datasource    | Misc                                                                               |
-| ------------- | ---------------------------------------------------------------------------------- |
-| Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
+For provisioning examples of specific data sources, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
 
 #### JSON Data
 
-Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
+Since not all data sources have the same configuration settings, we include only the most common ones as fields.
+To provision the rest of a data source's settings, include them as a JSON blob in the `jsonData` field.
 
-> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+Common settings in the [built-in core data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}) include:
 
-| Name                       | Type    | Datasource                                                       | Description                                                                                                                                                                                                                                                                                                         |
+> **Note:** Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which includes all core data source plugins except MySQL, PostgreSQL, and MSSQL.
+
+| Name                       | Type    | Data source                                                      | Description                                                                                                                                                                                                                                                                                                         |
 | -------------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | tlsAuth                    | boolean | _HTTP\*_, MySQL                                                  | Enable TLS authentication using client cert configured in secure json data                                                                                                                                                                                                                                          |
 | tlsAuthWithCACert          | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Enable TLS authentication using CA cert                                                                                                                                                                                                                                                                             |
@@ -157,7 +180,8 @@ Since not all datasources have the same configuration settings we only have the 
 | httpMethod                 | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                                                                                                                                                                                                                                        |
 | customQueryParameters      | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                                                                                                                                                                                                                                   |
 | manageAlerts               | boolean | Prometheus and Loki                                              | Manage alerts via Alerting UI                                                                                                                                                                                                                                                                                       |
-| esVersion                  | string  | Elasticsearch                                                    | Elasticsearch version (E.g. `7.0.0`, `7.6.1`)                                                                                                                                                                                                                                                                       |
+| alertmanagerUid            | string  | Prometheus and Loki                                              | UID of Alert Manager that manages Alert for this data source.                                                                                                                                                                                                                                                       |
+| esVersion                  | string  | Elasticsearch                                                    | Elasticsearch version (e.g. `7.0.0`, `7.6.1`)                                                                                                                                                                                                                                                                       |
 | timeField                  | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                                                                                                                                                                                                                                        |
 | interval                   | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly'                                                                                                                                                                                                                         |
 | logMessageField            | string  | Elasticsearch                                                    | Which field should be used as the log message                                                                                                                                                                                                                                                                       |
@@ -188,17 +212,19 @@ Since not all datasources have the same configuration settings we only have the 
 | maxOpenConns               | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                                                                                                                                                                                                                                                  |
 | maxIdleConns               | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                                                                                                                                                                                                                                           |
 | connMaxLifetime            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                                                                                                                                                                                                                                        |
-| keepCookies                | array   | _HTTP\*_                                                         | Cookies that needs to be passed along while communicating with datasources                                                                                                                                                                                                                                          |
+| keepCookies                | array   | _HTTP\*_                                                         | Cookies that needs to be passed along while communicating with data sources                                                                                                                                                                                                                                         |
+| prometheusVersion          | string  | Prometheus                                                       | The version of the Prometheus data source, such as `2.37.0`, `2.24.0`                                                                                                                                                                                                                                               |
+| prometheusType             | string  | Prometheus                                                       | The type of the Prometheus data sources. such as `Prometheus`, `Cortex`, `Thanos`, `Mimir`                                                                                                                                                                                                                          |
 
-#### Secure Json Data
+For examples of specific data sources' JSON data, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
 
-`{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
+#### Secure JSON Data
 
-Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana/#secret_key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure JSON data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana#secret_key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
-> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+> **Note:** The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, including all core data source plugins except MySQL, PostgreSQL, and MSSQL.
 
-| Name              | Type   | Datasource                         | Description                                              |
+| Name              | Type   | Data source                        | Description                                              |
 | ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
 | tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests                           |
 | tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests                    |
@@ -210,10 +236,10 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 | sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider |
 | sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider |
 
-#### Custom HTTP headers for datasources
+#### Custom HTTP headers for data sources
 
 Data sources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
-going to that datasource. The header name is configured in the `jsonData` field and the header value should be
+going to that data source. The header name is configured in the `jsonData` field and the header value should be
 configured in `secureJsonData`.
 
 ```yaml
@@ -231,12 +257,12 @@ datasources:
 
 ## Plugins
 
-> This feature is available from v7.1
+> **Note:** Available in Grafana v7.1 and higher.
 
-You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
 > **Note:** This feature enables you to provision plugin configurations, not the plugins themselves.
-> The plugins must already be installed on the grafana instance
+> The plugins must already be installed on the Grafana instance.
 
 ### Example plugin configuration file
 
@@ -264,7 +290,7 @@ apps:
 
 ## Dashboards
 
-You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana/" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana#dashboards" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -605,6 +631,15 @@ The following sections detail the supported settings and secure settings for eac
 | Name |
 | ---- |
 | url  |
+
+#### Alert notification `Cisco Webex Teams`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| message   |                |
+| room_id   |                |
+| api_url   |                |
+| bot_token | yes            |
 
 ## Grafana Enterprise
 

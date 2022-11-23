@@ -613,6 +613,7 @@ describe('UPlotConfigBuilder', () => {
           Object {
             "facets": undefined,
             "fill": [Function],
+            "gaps": [Function],
             "paths": [Function],
             "points": Object {
               "fill": "#0000ff",
@@ -740,6 +741,7 @@ describe('UPlotConfigBuilder', () => {
             Object {
               "facets": undefined,
               "fill": [Function],
+              "gaps": [Function],
               "paths": [Function],
               "points": Object {
                 "fill": "#0000ff",
@@ -758,6 +760,7 @@ describe('UPlotConfigBuilder', () => {
             Object {
               "facets": undefined,
               "fill": [Function],
+              "gaps": [Function],
               "paths": [Function],
               "points": Object {
                 "fill": "#00ff00",
@@ -776,6 +779,7 @@ describe('UPlotConfigBuilder', () => {
             Object {
               "facets": undefined,
               "fill": [Function],
+              "gaps": [Function],
               "paths": [Function],
               "points": Object {
                 "fill": "#ff0000",

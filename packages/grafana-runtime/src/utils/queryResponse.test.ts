@@ -47,7 +47,7 @@ const resp = {
       },
     },
   },
-} as any as FetchResponse<BackendDataSourceResponse>;
+} as unknown as FetchResponse<BackendDataSourceResponse>;
 
 const resWithError = {
   data: {
@@ -75,7 +75,7 @@ const resWithError = {
       },
     },
   },
-} as any as FetchResponse<BackendDataSourceResponse>;
+} as unknown as FetchResponse<BackendDataSourceResponse>;
 
 const emptyResults = {
   data: { results: { '': { refId: '' } } },

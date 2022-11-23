@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -12,6 +13,7 @@ import (
 type fullAccessControl interface {
 	accesscontrol.AccessControl
 	accesscontrol.Service
+	plugins.RoleRegistry
 	RegisterFixedRoles(context.Context) error
 }
 
@@ -20,6 +22,7 @@ type Calls struct {
 	GetUserPermissions             []interface{}
 	IsDisabled                     []interface{}
 	DeclareFixedRoles              []interface{}
+	DeclarePluginRoles             []interface{}
 	GetUserBuiltInRoles            []interface{}
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
@@ -42,6 +45,7 @@ type Mock struct {
 	GetUserPermissionsFunc             func(context.Context, *user.SignedInUser, accesscontrol.Options) ([]accesscontrol.Permission, error)
 	IsDisabledFunc                     func() bool
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
+	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
 	GetUserBuiltInRolesFunc            func(user *user.SignedInUser) []string
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
@@ -53,6 +57,7 @@ type Mock struct {
 // Ensure the mock stays in line with the interface
 var _ fullAccessControl = New()
 
+// Deprecated: use fake service and real access control evaluator instead
 func New() *Mock {
 	mock := &Mock{
 		Calls:          Calls{},
@@ -164,6 +169,18 @@ func (m *Mock) RegisterFixedRoles(ctx context.Context) error {
 	// Use override if provided
 	if m.RegisterFixedRolesFunc != nil {
 		return m.RegisterFixedRolesFunc()
+	}
+	return nil
+}
+
+// DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their
+// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+// This mock returns no error unless an override is provided.
+func (m *Mock) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
+	m.Calls.DeclarePluginRoles = append(m.Calls.DeclarePluginRoles, []interface{}{ctx, ID, name, regs})
+	// Use override if provided
+	if m.DeclarePluginRolesFunc != nil {
+		return m.DeclarePluginRolesFunc(ctx, ID, name, regs)
 	}
 	return nil
 }

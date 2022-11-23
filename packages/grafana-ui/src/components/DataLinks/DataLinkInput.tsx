@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import React, { memo, RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Popper as ReactPopper } from 'react-popper';
 import usePrevious from 'react-use/lib/usePrevious';
 import { Value } from 'slate';
@@ -74,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // was used and changes to different state were propagated here.
 export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
   ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
-    const editorRef = useRef<Editor>() as RefObject<Editor>;
+    const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -141,7 +141,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
         editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
       } else {
-        editor.insertText(`\${${item.value}:queryparam}`);
+        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);

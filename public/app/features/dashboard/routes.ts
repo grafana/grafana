@@ -7,6 +7,17 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
   if (config.featureToggles.publicDashboards) {
     return [
       {
+        path: '/dashboard/public',
+        pageClass: 'page-dashboard',
+        routeName: DashboardRoutes.Public,
+        component: SafeDynamicImport(
+          () =>
+            import(
+              /* webpackChunkName: "ListPublicDashboardPage" */ '../../features/manage-dashboards/PublicDashboardListPage'
+            )
+        ),
+      },
+      {
         path: '/public-dashboards/:accessToken',
         pageClass: 'page-dashboard',
         routeName: DashboardRoutes.Public,

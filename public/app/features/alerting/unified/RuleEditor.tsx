@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
@@ -31,7 +31,7 @@ const getPageNav = (state: 'edit' | 'add') => {
   return undefined;
 };
 
-const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
+const RuleEditor = ({ match }: RuleEditorProps) => {
   const dispatch = useDispatch();
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);

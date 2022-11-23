@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"sync"
 
@@ -14,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -117,7 +119,15 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
 		}
 	}
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
+
+	list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+	if list != nil {
+		for _, name := range list.Items {
+			req.Header.Del(name)
+		}
+	}
+
+	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies, []string{hs.Cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
 	body, err := io.ReadAll(req.Body)
@@ -182,17 +192,22 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 		}
 
 		// Expected that headers and status are only part of first stream
-		if processedStreams == 0 && resp.Headers != nil {
-			// Make sure a content type always is returned in response
-			if _, exists := resp.Headers["Content-Type"]; !exists {
-				resp.Headers["Content-Type"] = []string{"application/json"}
-			}
-
+		if processedStreams == 0 {
+			var hasContentType bool
 			for k, values := range resp.Headers {
-				// Due to security reasons we don't want to forward
-				// cookies from a backend plugin to clients/browsers.
-				if k == "Set-Cookie" {
+				// Convert the keys to the canonical format of MIME headers.
+				// This ensures that we can safely add/overwrite headers
+				// even if the plugin returns them in non-canonical format
+				// and be sure they won't be present multiple times in the response.
+				k = textproto.CanonicalMIMEHeaderKey(k)
+
+				switch k {
+				case "Set-Cookie":
+					// Due to security reasons we don't want to forward
+					// cookies from a backend plugin to clients/browsers.
 					continue
+				case "Content-Type":
+					hasContentType = true
 				}
 
 				for _, v := range values {
@@ -200,6 +215,11 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 					// nolint:gocritic
 					w.Header().Add(k, v)
 				}
+			}
+
+			// Make sure a content type always is returned in response
+			if !hasContentType && resp.Status != http.StatusNoContent {
+				w.Header().Set("Content-Type", "application/json")
 			}
 
 			proxyutil.SetProxyResponseHeaders(w.Header())

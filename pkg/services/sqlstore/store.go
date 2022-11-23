@@ -3,11 +3,12 @@ package sqlstore
 import (
 	"context"
 
+	"xorm.io/core"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
-	"xorm.io/core"
 )
 
 type Store interface {
@@ -18,21 +19,10 @@ type Store interface {
 	GetDialect() migrator.Dialect
 	GetDBType() core.DbType
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
-	GetOrgByName(name string) (*models.Org, error)
-	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
-	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
-	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
 	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error
-	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
-	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
-	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error
-	GetUserQuotaByTarget(ctx context.Context, query *models.GetUserQuotaByTargetQuery) error
-	GetUserQuotas(ctx context.Context, query *models.GetUserQuotasQuery) error
-	UpdateUserQuota(ctx context.Context, cmd *models.UpdateUserQuotaCmd) error
-	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 	Migrate(bool) error
@@ -40,6 +30,5 @@ type Store interface {
 	Reset() error
 	Quote(value string) string
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
-	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	GetSqlxSession() *session.SessionDB
 }

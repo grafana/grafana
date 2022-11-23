@@ -12,12 +12,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 )
 
 type configReader struct {
-	log      log.Logger
-	orgStore utils.OrgStore
+	log        log.Logger
+	orgService org.Service
 }
 
 func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs, error) {
@@ -130,7 +131,7 @@ func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasourc
 }
 
 func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDataSourceFromConfig) error {
-	if err := utils.CheckOrgExists(ctx, cr.orgStore, ds.OrgID); err != nil {
+	if err := utils.CheckOrgExists(ctx, cr.orgService, ds.OrgID); err != nil {
 		return err
 	}
 

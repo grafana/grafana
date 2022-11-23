@@ -15,15 +15,17 @@
       "kind": "panel",
       "name": "Req/s",
       "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=2",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -32,15 +34,17 @@
       "kind": "panel",
       "name": "Req/s",
       "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=11",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -49,15 +53,17 @@
       "kind": "panel",
       "name": "Memory",
       "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=7",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -66,28 +72,29 @@
       "kind": "panel",
       "name": "Req/s",
       "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=10",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds",
-      "type": "default.type",
-      "UID": "default.uid"
+      "kind": "ds"
     },
     {
-      "kind": "panel",
-      "type": "graph"
+      "kind": "plugin",
+      "type": "panel",
+      "UID": "graph"
     }
   ]
 }

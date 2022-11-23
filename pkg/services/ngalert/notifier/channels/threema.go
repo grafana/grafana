@@ -37,6 +37,8 @@ type threemaSettings struct {
 	GatewayID   string `json:"gateway_id,omitempty" yaml:"gateway_id,omitempty"`
 	RecipientID string `json:"recipient_id,omitempty" yaml:"recipient_id,omitempty"`
 	APISecret   string `json:"api_secret,omitempty" yaml:"api_secret,omitempty"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 func buildThreemaSettings(fc FactoryConfig) (threemaSettings, error) {
@@ -67,6 +69,14 @@ func buildThreemaSettings(fc FactoryConfig) (threemaSettings, error) {
 	if settings.APISecret == "" {
 		return settings, errors.New("could not find Threema API secret in settings")
 	}
+
+	if settings.Description == "" {
+		settings.Description = DefaultMessageEmbed
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+
 	return settings, nil
 }
 
@@ -106,43 +116,12 @@ func NewThreemaNotifier(fc FactoryConfig) (*ThreemaNotifier, error) {
 func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	tn.log.Debug("sending threema alert notification", "from", tn.settings.GatewayID, "to", tn.settings.RecipientID)
 
-	var tmplErr error
-	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
-
 	// Set up basic API request data
 	data := url.Values{}
 	data.Set("from", tn.settings.GatewayID)
 	data.Set("to", tn.settings.RecipientID)
 	data.Set("secret", tn.settings.APISecret)
-
-	// Determine emoji
-	stateEmoji := "\u26A0\uFE0F " // Warning sign
-	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved {
-		stateEmoji = "\u2705 " // Check Mark Button
-	}
-
-	// Build message
-	message := fmt.Sprintf("%s%s\n\n*Message:*\n%s\n*URL:* %s\n",
-		stateEmoji,
-		tmpl(DefaultMessageTitleEmbed),
-		tmpl(DefaultMessageEmbed),
-		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
-	)
-
-	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
-			if image.URL != "" {
-				message += fmt.Sprintf("*Image:* %s\n", image.URL)
-			}
-			return nil
-		}, as...)
-
-	data.Set("text", message)
-
-	if tmplErr != nil {
-		tn.log.Warn("failed to template Threema message", "err", tmplErr.Error())
-	}
+	data.Set("text", tn.buildMessage(ctx, as...))
 
 	cmd := &models.SendWebhookSync{
 		Url:        ThreemaGwBaseURL,
@@ -153,7 +132,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		tn.log.Error("Failed to send threema notification", "err", err, "webhook", tn.Name)
+		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
 		return false, err
 	}
 
@@ -162,4 +141,37 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 func (tn *ThreemaNotifier) SendResolved() bool {
 	return !tn.GetDisableResolveMessage()
+}
+
+func (tn *ThreemaNotifier) buildMessage(ctx context.Context, as ...*types.Alert) string {
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+
+	message := fmt.Sprintf("%s%s\n\n*Message:*\n%s\n*URL:* %s\n",
+		selectEmoji(as...),
+		tmpl(tn.settings.Title),
+		tmpl(tn.settings.Description),
+		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
+	)
+
+	if tmplErr != nil {
+		tn.log.Warn("failed to template Threema message", "error", tmplErr.Error())
+	}
+
+	_ = withStoredImages(ctx, tn.log, tn.images,
+		func(_ int, image ngmodels.Image) error {
+			if image.URL != "" {
+				message += fmt.Sprintf("*Image:* %s\n", image.URL)
+			}
+			return nil
+		}, as...)
+
+	return message
+}
+
+func selectEmoji(as ...*types.Alert) string {
+	if types.Alerts(as...).Status() == model.AlertResolved {
+		return "\u2705 " // Check Mark Button
+	}
+	return "\u26A0\uFE0F " // Warning sign
 }

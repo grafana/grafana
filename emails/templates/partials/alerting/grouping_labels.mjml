@@ -1,0 +1,30 @@
+<mj-section padding="0">
+  <mj-column>
+    <!-- we show this only when we're using the default grouping (grafana_folder, alertname) -->
+    <mj-raw>
+      {{ if eq (.GroupLabels.SortedPairs.Names | join ",") "alertname,grafana_folder" }}
+    </mj-raw>
+    <mj-text padding="0" align="left">
+      <h2>📁 {{ .GroupLabels.grafana_folder }} &rsaquo; {{ .GroupLabels.alertname }}</h2>
+    </mj-text>
+    <mj-raw>
+      {{ else }}
+    </mj-raw>
+    <!-- non-default grouping labels are just printed verbatim -->
+    <mj-text padding="0" align="left">
+      <h2>
+        📁 Grouped by&nbsp;
+      </h2>
+      <mj-raw>
+        {{ range .GroupLabels.SortedPairs }}
+      </mj-raw>
+      {{ .Name }}={{ .Value }}
+      <mj-raw>
+        {{ end }}
+      </mj-raw>
+    </mj-text>
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+  </mj-column>
+</mj-section>

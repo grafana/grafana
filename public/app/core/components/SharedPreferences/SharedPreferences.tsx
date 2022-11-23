@@ -19,13 +19,14 @@ import {
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
-import { ENGLISH_US, FRENCH_FRANCE, PSEUDO_LOCALE, SPANISH_SPAIN } from 'app/core/internationalization/constants';
+import { LANGUAGES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { UserPreferencesDTO } from 'app/types';
 
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
+  onConfirm?: () => Promise<boolean>;
 }
 
 export type State = UserPreferencesDTO;
@@ -36,29 +37,22 @@ const themes: SelectableValue[] = [
   { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
 ];
 
-const languages: Array<SelectableValue<string>> = [
-  {
-    value: '',
-    label: t('common.locale.default', 'Default'),
-  },
-  {
-    value: ENGLISH_US,
-    label: t('common.locale.en', 'English'),
-  },
-  {
-    value: SPANISH_SPAIN,
-    label: t('common.locale.es', 'Spanish'),
-  },
-  {
-    value: FRENCH_FRANCE,
-    label: t('common.locale.fr', 'French'),
-  },
-  // TODO: dev only
-  {
-    value: PSEUDO_LOCALE,
-    label: 'Pseudo-locale', // no need to translate this key
-  },
-];
+function getLanguageOptions(): Array<SelectableValue<string>> {
+  const languageOptions = LANGUAGES.map((v) => ({
+    value: v.code,
+    label: v.name,
+  }));
+
+  const options = [
+    {
+      value: '',
+      label: t('common.locale.default', 'Default'),
+    },
+    ...languageOptions,
+  ];
+
+  return options;
+}
 
 const i18nFlag = Boolean(config.featureToggles.internationalization);
 
@@ -73,7 +67,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       theme: '',
       timezone: '',
       weekStart: '',
-      locale: '',
+      language: '',
       queryHistory: { homeTab: '' },
     };
   }
@@ -86,15 +80,19 @@ export class SharedPreferences extends PureComponent<Props, State> {
       theme: prefs.theme,
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
-      locale: prefs.locale,
+      language: prefs.language,
       queryHistory: prefs.queryHistory,
     });
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardUID, theme, timezone, weekStart, locale, queryHistory } = this.state;
-    await this.service.update({ homeDashboardUID, theme, timezone, weekStart, locale, queryHistory });
-    window.location.reload();
+    const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
+
+    if (confirmationResult) {
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
+      window.location.reload();
+    }
   };
 
   onThemeChanged = (value: string) => {
@@ -116,14 +114,15 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ homeDashboardUID: dashboardUID });
   };
 
-  onLocaleChanged = (locale: string) => {
-    this.setState({ locale });
+  onLanguageChanged = (language: string) => {
+    this.setState({ language });
   };
 
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, locale } = this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, language } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
+    const languages = getLanguageOptions();
 
     return (
       <Form onSubmit={this.onSubmitForm}>
@@ -194,8 +193,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
                   data-testid="User preferences language drop down"
                 >
                   <Select
-                    value={languages.find((lang) => lang.value === locale)}
-                    onChange={(locale: SelectableValue<string>) => this.onLocaleChanged(locale.value ?? '')}
+                    value={languages.find((lang) => lang.value === language)}
+                    onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
                     options={languages}
                     placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
                     inputId="locale-select"

@@ -1,32 +1,26 @@
-import i18n, { BackendModule, ResourceKey } from 'i18next';
+import i18n, { BackendModule } from 'i18next';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LOCALE, ENGLISH_US, FRENCH_FRANCE, SPANISH_SPAIN, PSEUDO_LOCALE, VALID_LOCALES } from './constants';
-
-const messageLoaders: Record<string, () => Promise<ResourceKey>> = {
-  [ENGLISH_US]: () => import('../../../locales/en-US/grafana.json'),
-  [FRENCH_FRANCE]: () => import('../../../locales/fr-FR/grafana.json'),
-  [SPANISH_SPAIN]: () => import('../../../locales/es-ES/grafana.json'),
-  [PSEUDO_LOCALE]: () => import('../../../locales/pseudo-LOCALE/grafana.json'),
-};
+import { DEFAULT_LANGUAGE, LANGUAGES, VALID_LANGUAGES } from './constants';
 
 const loadTranslations: BackendModule = {
   type: 'backend',
   init() {},
   async read(language, namespace, callback) {
-    const loader = messageLoaders[language];
-    if (!loader) {
+    const localeDef = LANGUAGES.find((v) => v.code === language);
+
+    if (!localeDef) {
       return callback(new Error('No message loader available for ' + language), null);
     }
 
-    const messages = await loader();
+    const messages = await localeDef.loader();
     callback(null, messages);
   },
 };
 
-export function initializeI18n(locale: string) {
-  const validLocale = VALID_LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
+export function initializeI18n(language: string) {
+  const validLocale = VALID_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
 
   i18n
     .use(loadTranslations)
@@ -40,11 +34,20 @@ export function initializeI18n(locale: string) {
 
       // If translations are empty strings (no translation), fall back to the default value in source code
       returnEmptyString: false,
+
+      pluralSeparator: '__',
     });
+
+  // This is a placeholder so we can put a 'comment' in the message json files.
+  // Starts with an underscore so it's sorted to the top of the file
+  t(
+    '_comment',
+    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
+  );
 }
 
 export function changeLanguage(locale: string) {
-  const validLocale = VALID_LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
+  const validLocale = VALID_LANGUAGES.includes(locale) ? locale : DEFAULT_LANGUAGE;
   return i18n.changeLanguage(validLocale);
 }
 
@@ -60,7 +63,7 @@ export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFor
   if (typeof value === 'string') {
     return i18nDate(new Date(value), format);
   }
-  const locale = i18n.options.lng ?? DEFAULT_LOCALE;
+  const locale = i18n.options.lng ?? DEFAULT_LANGUAGE;
 
   const dateFormatter = new Intl.DateTimeFormat(locale, format);
   return dateFormatter.format(value);

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -52,7 +53,7 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Respo
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	err := postableSilence.Validate(strfmt.Default)
 	if err != nil {
-		srv.log.Error("silence failed validation", "err", err)
+		srv.log.Error("silence failed validation", "error", err)
 		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
 	}
 
@@ -85,7 +86,9 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 
 		return ErrResp(http.StatusInternalServerError, err, "failed to create silence")
 	}
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "silence created", "id": silenceID})
+	return response.JSON(http.StatusAccepted, apimodels.PostSilencesOKBody{
+		SilenceID: silenceID,
+	})
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
@@ -95,7 +98,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 	}
 
 	if err := am.SaveAndApplyDefaultConfig(c.Req.Context()); err != nil {
-		srv.log.Error("unable to save and apply default alertmanager configuration", "err", err)
+		srv.log.Error("unable to save and apply default alertmanager configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
 	}
 
@@ -242,10 +245,6 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	}
 
 	return ErrResp(http.StatusInternalServerError, err, "")
-}
-
-func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.PostableAlerts) response.Response {
-	return NotImplementedResp
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *models.ReqContext) response.Response {
@@ -401,6 +400,6 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response
 		return am, response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	srv.log.Error("unable to obtain the org's Alertmanager", "err", err)
+	srv.log.Error("unable to obtain the org's Alertmanager", "error", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
+  const [saving, setSaving] = useState(false);
   const { name, interval, items: propItems } = playlist;
   const tagOptions = useMemo(() => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
@@ -25,9 +26,14 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
   const { items, addById, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
+  const doSubmit = (list: Playlist) => {
+    setSaving(true);
+    onSubmit({ ...list, items });
+  };
+
   return (
     <div>
-      <Form onSubmit={(list: Playlist) => onSubmit({ ...list, items })} validateOn={'onBlur'}>
+      <Form onSubmit={doSubmit} validateOn={'onBlur'}>
         {({ register, errors }) => {
           const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
           return (
@@ -73,7 +79,12 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
               </div>
 
               <HorizontalGroup>
-                <Button type="submit" variant="primary" disabled={isDisabled}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={isDisabled}
+                  icon={saving ? 'fa fa-spinner' : undefined}
+                >
                   Save
                 </Button>
                 <LinkButton variant="secondary" href={`${config.appSubUrl}/playlists`}>

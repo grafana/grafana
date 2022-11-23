@@ -8,10 +8,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
+func (e *cloudWatchExecutor) buildMetricDataQuery(logger log.Logger, query *models.CloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
 	mdq := &cloudwatch.MetricDataQuery{
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
@@ -21,16 +24,16 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 		mdq.Label = &query.Label
 	}
 
-	switch query.getGMDAPIMode() {
-	case GMDApiModeMathExpression:
+	switch query.GetGMDAPIMode(logger) {
+	case models.GMDApiModeMathExpression:
 		mdq.Period = aws.Int64(int64(query.Period))
 		mdq.Expression = aws.String(query.Expression)
-	case GMDApiModeSQLExpression:
+	case models.GMDApiModeSQLExpression:
 		mdq.Period = aws.Int64(int64(query.Period))
 		mdq.Expression = aws.String(query.SqlExpression)
-	case GMDApiModeInferredSearchExpression:
+	case models.GMDApiModeInferredSearchExpression:
 		mdq.Expression = aws.String(buildSearchExpression(query, query.Statistic))
-	case GMDApiModeMetricStat:
+	case models.GMDApiModeMetricStat:
 		mdq.MetricStat = &cloudwatch.MetricStat{
 			Metric: &cloudwatch.Metric{
 				Namespace:  aws.String(query.Namespace),
@@ -58,7 +61,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 	return mdq, nil
 }
 
-func buildSearchExpression(query *cloudWatchQuery, stat string) string {
+func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 	knownDimensions := make(map[string][]string)
 	dimensionNames := []string{}
 	dimensionNamesWithoutKnownValues := []string{}

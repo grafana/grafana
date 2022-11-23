@@ -14,79 +14,6 @@ import (
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
 
-func (ss *SQLStore) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		query.Result = make([]*models.OrgDTO, 0)
-		sess := dbSession.Table("org")
-		if query.Query != "" {
-			sess.Where("name LIKE ?", query.Query+"%")
-		}
-		if query.Name != "" {
-			sess.Where("name=?", query.Name)
-		}
-
-		if len(query.Ids) > 0 {
-			sess.In("id", query.Ids)
-		}
-
-		if query.Limit > 0 {
-			sess.Limit(query.Limit, query.Limit*query.Page)
-		}
-
-		sess.Cols("id", "name")
-		err := sess.Find(&query.Result)
-		return err
-	})
-}
-
-func (ss *SQLStore) GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var org models.Org
-		exists, err := dbSession.ID(query.Id).Get(&org)
-		if err != nil {
-			return err
-		}
-
-		if !exists {
-			return models.ErrOrgNotFound
-		}
-
-		query.Result = &org
-		return nil
-	})
-}
-
-func (ss *SQLStore) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var org models.Org
-		exists, err := dbSession.Where("name=?", query.Name).Get(&org)
-		if err != nil {
-			return err
-		}
-
-		if !exists {
-			return models.ErrOrgNotFound
-		}
-
-		query.Result = &org
-		return nil
-	})
-}
-
-// GetOrgByName gets an organization by name.
-func (ss *SQLStore) GetOrgByName(name string) (*models.Org, error) {
-	var org models.Org
-	exists, err := ss.engine.Where("name=?", name).Get(&org)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, models.ErrOrgNotFound
-	}
-
-	return &org, nil
-}
-
 func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error) {
 	// check if org name is taken
 	var org models.Org
@@ -109,7 +36,7 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	if err := inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
+	if err := ss.inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
 		if isNameTaken, err := isOrgNameTaken(name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {

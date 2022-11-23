@@ -9,19 +9,16 @@ import "context"
 const (
 	StandardKindDashboard = "dashboard"
 	StandardKindPlaylist  = "playlist"
+	StandardKindSnapshot  = "snapshot"
 	StandardKindFolder    = "folder"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
 	// Types: influx, prometheus, testdata, ...
 	StandardKindDataSource = "ds"
 
-	// StandardKindPanel: currently used in two ways :( in search it defines a panel within a dashboard
-	// This is also used to refer to a panel plugin with type:  heatmap, timeseries, table, ...
+	// StandardKindPanel: only used for searchV2 right now
+	// Standalone panel is not an object kind yet -- library panel, or nested in dashboard
 	StandardKindPanel = "panel"
-
-	// StandardKindTransform: used to show that a dashboard depends on a set of transformations
-	// NOTE: this should likey be replaced with kind:system/type:transform/uid:joinByField or something like that
-	StandardKindTransform = "transform"
 
 	// StandardKindSVG SVG file support
 	StandardKindSVG = "svg"
@@ -29,9 +26,38 @@ const (
 	// StandardKindPNG PNG file support
 	StandardKindPNG = "png"
 
+	// StandardKindGeoJSON represents spatial data
+	StandardKindGeoJSON = "geojson"
+
+	// StandardKindDataFrame data frame
+	StandardKindDataFrame = "frame"
+
+	// StandardKindJSONObj generic json object
+	StandardKindJSONObj = "jsonobj"
+
 	// StandardKindQuery early development on panel query library
 	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
 	StandardKindQuery = "query"
+
+	//----------------------------------------
+	// References are referenced from objects
+	//----------------------------------------
+
+	// ExternalEntityReferencePlugin: requires a plugin to be installed
+	ExternalEntityReferencePlugin = "plugin"
+
+	// ExternalEntityReferenceRuntime: frontend runtime requirements
+	ExternalEntityReferenceRuntime = "runtime"
+
+	// ExternalEntityReferenceRuntime_Transformer is a "type" under runtime
+	// UIDs include: joinByField, organize, seriesToColumns, etc
+	ExternalEntityReferenceRuntime_Transformer = "transformer"
+
+	// ObjectStoreScopeEntity is organized in: {kind}/{uid}
+	ObjectStoreScopeEntity = "entity"
+
+	// ObjectStoreScopeDrive is organized in: {uid/with/slash}.{kind}
+	ObjectStoreScopeDrive = "drive"
 )
 
 // ObjectKindInfo describes information needed from the object store

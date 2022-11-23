@@ -5,24 +5,24 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var GetTime = time.Now
 
 type AuthInfoStore struct {
-	sqlStore       sqlstore.Store
+	sqlStore       db.DB
 	secretsService secrets.Service
 	logger         log.Logger
 	userService    user.Service
 }
 
-func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service, userService user.Service) login.Store {
+func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userService user.Service) login.Store {
 	store := &AuthInfoStore{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
@@ -71,7 +71,7 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 	var has bool
 	var err error
 
-	err = s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err = sess.Desc("created").Get(userAuth)
 		return err
 	})
@@ -145,7 +145,7 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfo
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Insert(authUser)
 		return err
 	})
@@ -161,7 +161,7 @@ func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models
 		UserId:     authInfo.UserId,
 		AuthModule: authInfo.AuthModule,
 	}
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Cols("created").Update(authInfo, cond)
 		return err
 	})
@@ -204,21 +204,24 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAu
 		authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 	}
 
-	cond := &models.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-	}
-
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		upd, err := sess.Update(authUser, cond)
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
 	})
 }
 
 func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Delete(cmd.UserAuth)
+		return err
+	})
+}
+
+func (s *AuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var rawSQL = "DELETE FROM user_auth WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
 }

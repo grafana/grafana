@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
 type State struct {
@@ -68,6 +70,41 @@ func (a *State) GetRuleKey() models.AlertRuleKey {
 		OrgID: a.OrgID,
 		UID:   a.AlertRuleUID,
 	}
+}
+
+func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
+	instanceLabels := models.InstanceLabels(a.Labels)
+	_, labelsHash, err := instanceLabels.StringAndHash()
+	if err != nil {
+		return models.AlertInstanceKey{}, err
+	}
+	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
+}
+
+func (a *State) Resolve(reason string, endsAt time.Time) {
+	a.State = eval.Normal
+	a.StateReason = reason
+	a.EndsAt = endsAt
+	a.Resolved = true
+}
+
+// StateTransition describes the transition from one state to another.
+type StateTransition struct {
+	*State
+	PreviousState       eval.State
+	PreviousStateReason string
+}
+
+func (c StateTransition) Formatted() string {
+	return FormatStateAndReason(c.State.State, c.State.StateReason)
+}
+
+func (c StateTransition) PreviousFormatted() string {
+	return FormatStateAndReason(c.PreviousState, c.PreviousStateReason)
+}
+
+func (c StateTransition) changed() bool {
+	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
 }
 
 type Evaluation struct {
@@ -283,4 +320,36 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 	}
 
 	return r
+}
+
+// shouldTakeImage returns true if the state just has transitioned to alerting from another state,
+// transitioned to alerting in a previous evaluation but does not have a screenshot, or has just
+// been resolved.
+func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) bool {
+	return resolved ||
+		state == eval.Alerting && previousState != eval.Alerting ||
+		state == eval.Alerting && previousImage == nil
+}
+
+// takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
+// the rule is not associated with a dashboard panel.
+func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*models.Image, error) {
+	img, err := s.NewImage(ctx, r)
+	if err != nil {
+		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
+			errors.Is(err, models.ErrNoDashboard) ||
+			errors.Is(err, models.ErrNoPanel) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return img, nil
+}
+
+func FormatStateAndReason(state eval.State, reason string) string {
+	s := fmt.Sprintf("%v", state)
+	if len(reason) > 0 {
+		s += fmt.Sprintf(" (%v)", reason)
+	}
+	return s
 }

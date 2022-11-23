@@ -35,8 +35,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
-  const keysForDimensionFilter = useDimensionKeys(datasource, region, namespace, metricName, dimensionFilters ?? {});
+  const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
+  const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -65,14 +65,14 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const sanitizeQuery = async (query: VariableQuery) => {
     let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
-      await datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
         }
       });
     }
     if (dimensionKey) {
-      await datasource.api.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getDimensionKeys({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
           dimensionFilters = {};

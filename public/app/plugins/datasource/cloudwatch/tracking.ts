@@ -2,10 +2,18 @@ import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
+import { migrateMetricQuery } from './migrations/metricQueryMigrations';
 import pluginJson from './plugin.json';
-import { CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from './types';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from './types';
+import { filterMetricsQuery } from './utils/utils';
 
-interface CloudWatchOnDashboardLoadedTrackingEvent {
+type CloudWatchOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
   dashboard_id?: string;
   org_id?: number;
@@ -44,7 +52,7 @@ interface CloudWatchOnDashboardLoadedTrackingEvent {
   /* The number of "Insights" queries that are using the code mode. 
   Should be measured in relation to metrics_query_count, e.g metrics_query_builder_count + metrics_query_code_count = metrics_query_count */
   metrics_query_code_count: number;
-}
+};
 
 export const onDashboardLoadedHandler = ({
   payload: { dashboardId, orgId, grafanaVersion, queries },
@@ -56,8 +64,21 @@ export const onDashboardLoadedHandler = ({
       return;
     }
 
-    const logsQueries = cloudWatchQueries.filter(isCloudWatchLogsQuery);
-    const metricsQueries = cloudWatchQueries.filter(isCloudWatchMetricsQuery);
+    let logsQueries: CloudWatchLogsQuery[] = [];
+    let metricsQueries: CloudWatchMetricsQuery[] = [];
+
+    for (const query of cloudWatchQueries) {
+      if (query.hide) {
+        continue;
+      }
+
+      if (isCloudWatchLogsQuery(query)) {
+        query.logGroupNames?.length && logsQueries.push(query);
+      } else if (isCloudWatchMetricsQuery(query)) {
+        const migratedQuery = migrateMetricQuery(query);
+        filterMetricsQuery(migratedQuery) && metricsQueries.push(query);
+      }
+    }
 
     const e: CloudWatchOnDashboardLoadedTrackingEvent = {
       grafana_version: grafanaVersion,

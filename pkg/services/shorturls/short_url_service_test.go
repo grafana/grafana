@@ -7,14 +7,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestShortURLService(t *testing.T) {
 	user := &user.SignedInUser{UserID: 1}
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
 		const refPath = "mock/path?test=true"

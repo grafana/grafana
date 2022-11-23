@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const disableProvenanceHeaderName = "X-Disable-Provenance"
+
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
@@ -257,9 +259,10 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	upstreamModel, err := ar.UpstreamModel()
 	upstreamModel.OrgID = c.OrgID
 	if err != nil {
-		ErrResp(http.StatusBadRequest, err, "")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.ProvenanceAPI, c.UserID)
+	provenance := determineProvenance(c)
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, provenance, c.UserID)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -273,7 +276,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	resp := definitions.NewAlertRule(createdAlertRule, alerting_models.ProvenanceAPI)
+	resp := definitions.NewAlertRule(createdAlertRule, provenance)
 	return response.JSON(http.StatusCreated, resp)
 }
 
@@ -284,7 +287,8 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 	}
 	updated.OrgID = c.OrgID
 	updated.UID = UID
-	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, provenance)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -298,7 +302,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	resp := definitions.NewAlertRule(updatedAlertRule, alerting_models.ProvenanceAPI)
+	resp := definitions.NewAlertRule(updatedAlertRule, provenance)
 	return response.JSON(http.StatusOK, resp)
 }
 
@@ -339,4 +343,11 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)
+}
+
+func determineProvenance(ctx *models.ReqContext) alerting_models.Provenance {
+	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
+		return alerting_models.ProvenanceNone
+	}
+	return alerting_models.ProvenanceAPI
 }

@@ -22,6 +22,6 @@ describe('<BasicSettings>', () => {
     setup();
 
     expect(screen.getByRole('textbox', { name: selectors.pages.DataSource.name })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Default' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Default/ })).toBeInTheDocument();
   });
 });

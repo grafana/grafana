@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
+	FooterIconURL      = "https://grafana.com/static/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
 
@@ -66,7 +66,7 @@ func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert ty
 	if errors.Is(err, models.ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
 		return nil, nil
 	} else if err != nil {
-		l.Warn("failed to get image with token", "token", token, "err", err)
+		l.Warn("failed to get image with token", "token", token, "error", err)
 		return nil, err
 	} else {
 		return img, nil
@@ -228,7 +228,7 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Warn("failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "error", err)
 		}
 	}()
 
@@ -250,7 +250,7 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 func joinUrlPath(base, additionalPath string, logger log.Logger) string {
 	u, err := url.Parse(base)
 	if err != nil {
-		logger.Debug("failed to parse URL while joining URL", "url", base, "err", err.Error())
+		logger.Debug("failed to parse URL while joining URL", "url", base, "error", err.Error())
 		return base
 	}
 

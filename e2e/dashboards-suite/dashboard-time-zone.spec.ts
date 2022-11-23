@@ -16,7 +16,7 @@ e2e.scenario({
   itName: 'Tests dashboard time zone scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 

@@ -7,13 +7,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
@@ -29,9 +32,12 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		var dashboardStore *DashboardStore
 
 		setup := func() {
-			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore = db.InitTestDB(t)
 			sqlStore.Cfg.RBACEnabled = false
-			dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+			quotaService := quotatest.New(false, nil)
+			var err error
+			dashboardStore, err = ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			require.NoError(t, err)
 			folder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")
 			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, folder.Id, false, "prod", "webapp")
@@ -183,8 +189,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var rootFolderId int64 = 0
 
 			setup2 := func() {
-				sqlStore = sqlstore.InitTestDB(t)
-				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+				sqlStore = db.InitTestDB(t)
+				quotaService := quotatest.New(false, nil)
+				dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
@@ -288,8 +296,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var adminUser, editorUser, viewerUser user.User
 
 			setup3 := func() {
-				sqlStore = sqlstore.InitTestDB(t)
-				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+				sqlStore = db.InitTestDB(t)
+				quotaService := quotatest.New(false, nil)
+				dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				insertTestDashboard(t, dashboardStore, "folder in another org", 2, 0, true, "prod")
@@ -470,8 +480,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			title := "Very Unique Name"
 			var sqlStore *sqlstore.SQLStore
 			var folder1, folder2 *models.Dashboard
-			sqlStore = sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+			sqlStore = db.InitTestDB(t)
+			quotaService := quotatest.New(false, nil)
+			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			require.NoError(t, err)
 			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.Id, false, "prod")
 			folder1 = insertTestDashboard(t, dashboardStore, title, orgId, 0, true, "prod")
@@ -479,20 +491,22 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
 				result, err := dashboardStore.GetFolderByTitle(context.Background(), orgId, title)
 				require.NoError(t, err)
-				require.Equal(t, folder1.Id, result.Id)
+				require.Equal(t, folder1.Id, result.ID)
 			})
 		})
 
 		t.Run("GetFolderByUID", func(t *testing.T) {
 			var orgId int64 = 1
-			sqlStore := sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+			sqlStore := db.InitTestDB(t)
+			quotaService := quotatest.New(false, nil)
+			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			require.NoError(t, err)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
 
 			t.Run("should return folder by UID", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, folder.Uid)
-				require.Equal(t, folder.Id, d.Id)
+				require.Equal(t, folder.Id, d.ID)
 				require.NoError(t, err)
 			})
 			t.Run("should not find dashboard", func(t *testing.T) {
@@ -509,14 +523,16 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		t.Run("GetFolderByID", func(t *testing.T) {
 			var orgId int64 = 1
-			sqlStore := sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+			sqlStore := db.InitTestDB(t)
+			quotaService := quotatest.New(false, nil)
+			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			require.NoError(t, err)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
 
 			t.Run("should return folder by ID", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, folder.Id)
-				require.Equal(t, folder.Id, d.Id)
+				require.Equal(t, folder.Id, d.ID)
 				require.NoError(t, err)
 			})
 			t.Run("should not find dashboard", func(t *testing.T) {

@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -60,13 +60,68 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 		return err
 	}
 
-	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
+		return r.synchronizeTags(ctx, item)
+	})
+}
 
+// AddMany inserts large batches of annotations at once.
+// It does not return IDs associated with created annotations, and it does not support annotations with tags. If you need this functionality, use the single-item Add instead.
+// This is due to a limitation with some supported databases:
+// We cannot correlate the IDs of batch-inserted records without acquiring a full table lock in MySQL.
+// Annotations have no other uniquifier field, so we also cannot re-query for them after the fact.
+// So, callers can only reliably use this endpoint if they don't care about returned IDs.
+func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
+	hasTags := make([]annotations.Item, 0)
+	hasNoTags := make([]annotations.Item, 0)
+
+	for i, item := range items {
+		tags := tag.ParseTagPairs(item.Tags)
+		item.Tags = tag.JoinTagPairs(tags)
+		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
+		item.Updated = item.Created
+		if item.Epoch == 0 {
+			item.Epoch = item.Created
+		}
+		if err := r.validateItem(&items[i]); err != nil {
+			return err
+		}
+
+		if len(item.Tags) > 0 {
+			hasTags = append(hasTags, item)
+		} else {
+			hasNoTags = append(hasNoTags, item)
+		}
+	}
+
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// We can batch-insert every annotation with no tags. If an annotation has tags, we need the ID.
+		opts := sqlstore.NativeSettingsForDialect(r.db.GetDialect())
+		if _, err := sess.BulkInsert("annotation", hasNoTags, opts); err != nil {
+			return err
+		}
+
+		for i, item := range hasTags {
+			if _, err := sess.Table("annotation").Insert(item); err != nil {
+				return err
+			}
+			if err := r.synchronizeTags(ctx, &hasTags[i]); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *xormRepositoryImpl) synchronizeTags(ctx context.Context, item *annotations.Item) error {
+	// Will re-use session if one has already been opened with the same ctx.
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if item.Tags != nil {
-			tags, err := r.tagService.EnsureTagsExist(ctx, tags)
+			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
 			if err != nil {
 				return err
 			}
@@ -81,7 +136,7 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 }
 
 func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var (
 			isExist bool
 			err     error
@@ -137,7 +192,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
-	err := r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := r.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql.WriteString(`
 			SELECT
 				annotation.id,
@@ -293,7 +348,7 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var (
 			sql        string
 			annoTagSQL string
@@ -330,7 +385,7 @@ func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.Del
 
 func (r *xormRepositoryImpl) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	var items []*annotations.Tag
-	err := r.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := r.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.Limit == 0 {
 			query.Limit = 100
 		}
@@ -446,7 +501,7 @@ func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sq
 			return totalAffected, ctx.Err()
 		default:
 			var affected int64
-			err := r.db.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+			err := r.db.WithDbSession(ctx, func(session *db.Session) error {
 				res, err := session.Exec(sql)
 				if err != nil {
 					return err

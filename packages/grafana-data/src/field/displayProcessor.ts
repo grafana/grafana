@@ -10,7 +10,7 @@ import { Field, FieldType } from '../types/dataFrame';
 import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
+import { FormattedValue, getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 
 import { getScaleCalculator } from './scale';
 
@@ -72,10 +72,17 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     unit = 'string';
   }
 
+  const hasCurrencyUnit = unit?.startsWith('currency');
+  const hasBoolUnit = unit === 'bool';
+  const isNumType = field.type === FieldType.number;
+  const isLocaleFormat = unit === 'locale';
+  const canTrimTrailingDecimalZeros =
+    !hasDateUnit && !hasCurrencyUnit && !hasBoolUnit && !isLocaleFormat && isNumType && config.decimals == null;
+
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any, decimals?: DecimalCount) => {
+  return (value: any, adjacentDecimals?: DecimalCount) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -109,9 +116,22 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    if (!isNaN(numeric)) {
+    if (!Number.isNaN(numeric)) {
       if (text == null && !isBoolean(value)) {
-        const v = formatFunc(numeric, decimals ?? config.decimals, null, options.timeZone, showMs);
+        let v: FormattedValue;
+
+        if (canTrimTrailingDecimalZeros && adjacentDecimals != null) {
+          v = formatFunc(numeric, adjacentDecimals, null, options.timeZone, showMs);
+
+          // if no explicit decimals config, we strip trailing zeros e.g. 60.00 -> 60
+          // this is needed because we may have determined the minimum determined `adjacentDecimals` for y tick increments based on
+          // e.g. 'seconds' field unit (0.15s, 0.20s, 0.25s), but then formatFunc decided to return milli or nanos (150, 200, 250)
+          // so we end up with excess precision: 150.00, 200.00, 250.00
+          v.text = +v.text + '';
+        } else {
+          v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
+        }
+
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;

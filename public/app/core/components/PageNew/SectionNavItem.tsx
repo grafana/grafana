@@ -4,19 +4,18 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, Icon } from '@grafana/ui';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { getNavTitle } from '../NavBar/navBarItem-translations';
 
 export interface Props {
   item: NavModelItem;
+  isSectionRoot?: boolean;
 }
 
-export function SectionNavItem({ item }: Props) {
+export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const styles = useStyles2(getStyles);
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
-  const isSectionRoot = item.parentItem?.id === HOME_NAV_ID;
   const hasActiveChild = Boolean(children?.length && children.find((x) => x.active));
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
@@ -25,7 +24,7 @@ export function SectionNavItem({ item }: Props) {
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: Boolean(children?.length),
+    [styles.isSection]: Boolean(children?.length) || item.isSection,
     [styles.hasActiveChild]: hasActiveChild,
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
@@ -58,6 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 0, 1, 1.5)};
       display: flex;
       align-items: center;
+      border-radius: ${theme.shape.borderRadius(2)};
       gap: ${theme.spacing(1)};
       height: 100%;
       position: relative;
@@ -66,13 +66,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover,
       &:focus {
         text-decoration: underline;
+        z-index: 1;
       }
     `,
     activeStyle: css`
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
       background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-      border-radius: ${theme.shape.borderRadius(2)};
       font-weight: ${theme.typography.fontWeightMedium};
 
       &::before {

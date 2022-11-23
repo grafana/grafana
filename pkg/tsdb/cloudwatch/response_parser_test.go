@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +30,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
 	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-a.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs-query-a.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idA := "a"
@@ -59,7 +60,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("when aggregating multi-outputs response with PartialData and ArithmeticError", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-b.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs-query-b.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idB := "b"
@@ -73,7 +74,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/single-output-multiple-metric-data-results.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/single-output-multiple-metric-data-results.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idA := "a"
@@ -91,7 +92,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("when aggregating response and error codes are in first GetMetricDataOutput", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs2.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs2.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		t.Run("response for id a", func(t *testing.T) {
@@ -120,8 +121,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb1"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -135,8 +136,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb2"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -148,7 +149,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			},
 		}
 
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			RefId:      "refId1",
 			Region:     "us-east-1",
 			Namespace:  "AWS/ApplicationELB",
@@ -160,8 +161,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			Alias:            "{{LoadBalancer}} Expanded",
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeBuilder,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
 		}
 		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
@@ -184,8 +185,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb1 Sum"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -199,8 +200,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb2 Average"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -211,7 +212,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				},
 			}}
 
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			RefId:      "refId1",
 			Region:     "us-east-1",
 			Namespace:  "AWS/ApplicationELB",
@@ -223,8 +224,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			Alias:            "{{LoadBalancer}} Expanded",
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeBuilder,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
 		}
 		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
@@ -247,8 +248,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -262,8 +263,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb4"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -275,7 +276,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			},
 		}
 
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			RefId:      "refId1",
 			Region:     "us-east-1",
 			Namespace:  "AWS/ApplicationELB",
@@ -287,8 +288,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			Alias:            "{{LoadBalancer}} Expanded",
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeBuilder,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
 		}
 		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
@@ -306,15 +307,15 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values:     []*float64{},
 					StatusCode: aws.String("Complete"),
 				},
 			},
 		}
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			RefId:      "refId1",
 			Region:     "us-east-1",
 			Namespace:  "AWS/ApplicationELB",
@@ -325,8 +326,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			Alias:            "{{LoadBalancer}} Expanded",
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeBuilder,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
 		}
 		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
@@ -345,8 +346,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values:     []*float64{},
 					StatusCode: aws.String("Complete"),
@@ -354,7 +355,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			},
 		}
 
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			RefId:      "refId1",
 			Region:     "us-east-1",
 			Namespace:  "AWS/ApplicationELB",
@@ -367,8 +368,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			Alias:            "{{LoadBalancer}} Expanded {{InstanceType}} - {{Resource}}",
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeBuilder,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
 		}
 		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
@@ -394,7 +395,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			},
 		}
 
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			RefId:      "refId1",
 			Region:     "us-east-1",
 			Namespace:  "AWS/ApplicationELB",
@@ -407,8 +408,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			Alias:            "{{LoadBalancer}} {{InstanceType}} {{metric}} {{namespace}} {{stat}} {{region}} {{period}}",
-			MetricQueryType:  MetricQueryTypeQuery,
-			MetricEditorMode: MetricEditorModeRaw,
+			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricEditorMode: models.MetricEditorModeRaw,
 		}
 		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
@@ -431,8 +432,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					Label: aws.String("lb"),
 					Timestamps: []*time.Time{
 						aws.Time(timestamp),
-						aws.Time(timestamp.Add(60 * time.Second)),
-						aws.Time(timestamp.Add(180 * time.Second)),
+						aws.Time(timestamp.Add(time.Minute)),
+						aws.Time(timestamp.Add(3 * time.Minute)),
 					},
 					Values: []*float64{
 						aws.Float64(10),
@@ -444,7 +445,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			},
 		}
 
-		query := &cloudWatchQuery{
+		query := &models.CloudWatchQuery{
 			RefId:      "refId1",
 			Region:     "us-east-1",
 			Namespace:  "AWS/ApplicationELB",
@@ -456,8 +457,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Statistic:        "Average",
 			Period:           60,
 			Alias:            "{{namespace}}_{{metric}}_{{stat}}",
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeBuilder,
+			MetricQueryType:  models.MetricQueryTypeSearch,
+			MetricEditorMode: models.MetricEditorModeBuilder,
 		}
 		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
@@ -485,7 +486,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			},
 		}
 
-		frames, err := buildDataFrames(startTime, endTime, *response, &cloudWatchQuery{}, true)
+		frames, err := buildDataFrames(startTime, endTime, *response, &models.CloudWatchQuery{}, true)
 
 		assert.NoError(t, err)
 		require.Len(t, frames, 1)
