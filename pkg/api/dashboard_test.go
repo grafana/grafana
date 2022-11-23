@@ -18,12 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -1083,9 +1082,6 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd models.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService folder.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
-		features := featuremgmt.WithFeatures()
-		acService, err := acimpl.ProvideService(cfg, mockstore.NewSQLStoreMock(), routing.NewRouteRegister(), localcache.ProvideService(), features)
-		require.NoError(t, err)
 		hs := HTTPServer{
 			Cfg:                   cfg,
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
@@ -1096,9 +1092,9 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			LibraryElementService: &mockLibraryElementService{},
 			DashboardService:      dashboardService,
 			folderService:         folderService,
-			Features:              features,
+			Features:              featuremgmt.WithFeatures(),
 			Kinds:                 corekind.NewBase(nil),
-			accesscontrolService:  acService,
+			accesscontrolService:  actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1195,9 +1191,6 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 	cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
-		features := featuremgmt.WithFeatures()
-		acService, err := acimpl.ProvideService(cfg, mockstore.NewSQLStoreMock(), routing.NewRouteRegister(), localcache.ProvideService(), features)
-		require.NoError(t, err)
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
@@ -1207,10 +1200,10 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			LibraryElementService:   &mockLibraryElementService{},
 			DashboardService:        mock,
 			SQLStore:                sqlStore,
-			Features:                features,
+			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
 			Kinds:                   corekind.NewBase(nil),
-			accesscontrolService:    acService,
+			accesscontrolService:    actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)

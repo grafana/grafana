@@ -146,7 +146,6 @@ func (m *Mock) ClearUserPermissionCache(user *user.SignedInUser) {
 	if m.ClearUserPermissionCacheFunc != nil {
 		m.ClearUserPermissionCacheFunc(user)
 	}
-	return
 }
 
 // Middleware checks if service disabled or not to switch to fallback authorization.
