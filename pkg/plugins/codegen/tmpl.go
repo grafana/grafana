@@ -29,21 +29,6 @@ type (
 		GenLicense     bool
 	}
 
-	templateVars_plugin_lineage_binding struct {
-		SlotName               string
-		LatestMajv, LatestMinv uint
-	}
-
-	templateVars_plugin_lineage_file struct {
-		PackageName string
-		PluginID    string
-		PluginType  string
-		HasModels   bool
-		RootCUE     bool
-		SlotImpls   []templateVars_plugin_lineage_binding
-		Header      templateVars_autogen_header
-	}
-
 	templateVars_plugin_registry struct {
 		Header  templateVars_autogen_header
 		Plugins []struct {
