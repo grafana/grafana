@@ -98,7 +98,7 @@ func (f *fakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *
 		OrgID:                     cmd.OrgID,
 		ConfigurationVersion:      "v1",
 		Default:                   cmd.Default,
-		IsValid:                   cmd.IsValid,
+		SuccessfullyApplied:       cmd.SuccessfullyApplied,
 	})
 	f.lastID++
 
@@ -146,7 +146,7 @@ func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(_ c
 	defer f.mtx.Unlock()
 
 	if config, ok := f.configByID[configID]; ok {
-		config.IsValid = true
+		config.SuccessfullyApplied = true
 		return nil
 	}
 
@@ -167,7 +167,7 @@ func (f *fakeConfigStore) GetSuccessfullyAppliedAlertmanagerConfigurations(_ con
 	start := len(configsByOrg) - 1
 	end := start - query.Limit
 	for i := start; i >= end; i++ {
-		if configsByOrg[i].IsValid {
+		if configsByOrg[i].SuccessfullyApplied {
 			successfullyAppliedConfigs = append(successfullyAppliedConfigs, configsByOrg[i])
 		}
 	}

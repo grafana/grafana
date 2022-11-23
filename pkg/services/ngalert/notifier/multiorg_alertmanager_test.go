@@ -62,12 +62,12 @@ grafana_alerting_active_configurations 3
 grafana_alerting_discovered_configurations 3
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
 
-		// Configurations should be marked as valid.
+		// Configurations should be marked as successfully applied.
 		for _, org := range orgStore.orgs {
 			configs, ok := configStore.configsByOrg[org]
 			for _, config := range configs {
 				require.True(t, ok)
-				require.True(t, config.IsValid)
+				require.True(t, config.SuccessfullyApplied)
 			}
 		}
 	}
@@ -192,14 +192,14 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.False(t, mam.alertmanagers[2].ready())
 		require.True(t, mam.alertmanagers[3].ready())
 
-		// The configuration should be marked as valid for all orgs except for org 2.
+		// The configuration should be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
 			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
 			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
 			if org == orgWithBadConfig {
-				require.False(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+				require.False(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
 			} else {
-				require.True(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+				require.True(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
 			}
 		}
 	}
@@ -212,14 +212,14 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.False(t, mam.alertmanagers[2].ready())
 		require.True(t, mam.alertmanagers[3].ready())
 
-		// The configuration should still be marked as valid for all orgs except for org 2.
+		// The configuration should still be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
 			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
 			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
 			if org == orgWithBadConfig {
-				require.False(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+				require.False(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
 			} else {
-				require.True(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+				require.True(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
 			}
 		}
 	}
@@ -233,11 +233,11 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.True(t, mam.alertmanagers[2].ready())
 		require.True(t, mam.alertmanagers[3].ready())
 
-		// All configurations should be marked as valid.
+		// All configurations should be marked as successfully applied.
 		for _, org := range orgs {
 			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
 			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
-			require.True(t, query.Result.IsValid, fmt.Sprintf("orgID: %d", org))
+			require.True(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
 		}
 	}
 }
