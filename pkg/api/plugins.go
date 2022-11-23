@@ -320,14 +320,50 @@ func (a pluginAsset) Close() error {
 	return a.readSeekCloser.Close()
 }
 
-// nopCloserReadSeeker wraps io.ReadSeeker with a nop io.Closer
+// nopCloserReadSeeker wraps io.ReadSeeker with a nop io.Closer.
 type nopCloserReadSeeker struct {
 	io.ReadSeeker
 }
 
-// Close does nothing
+// Close does nothing.
 func (nopCloserReadSeeker) Close() error {
 	return nil
+}
+
+// errorCoder is an interface that expands error with a Code() and Message() method.
+type errorMessageCoder interface {
+	// Original error.
+	error
+
+	// Message returns a human-readable message, with no sensitive information.
+	Message() string
+
+	// Code returns the error code associated to the error.
+	Code() int
+}
+
+// errorWithCode is an implementation of errorCoder.
+type errorWithCode struct {
+	error
+	code    int
+	message string
+}
+
+func (err errorWithCode) Code() int {
+	return err.code
+}
+
+func (err errorWithCode) Message() string {
+	return err.message
+}
+
+// newErrorWithCode returns a new *errorWithCode with the specified error and code.
+func newErrorWithCode(code int, message string, err error) *errorWithCode {
+	return &errorWithCode{
+		code:    code,
+		message: message,
+		error:   err,
+	}
 }
 
 // getLocalPluginAssets returns a pluginAsset for a locally stored plugin.
@@ -337,12 +373,9 @@ func (nopCloserReadSeeker) Close() error {
 //
 // to close the opened file.
 func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
-	// TODO: plugins cdn: add back error codes
-
 	absPluginDir, err := filepath.Abs(plugin.PluginDir)
 	if err != nil {
-		// c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
-		return pluginAsset{}, errors.New("failed to get plugin absolute path")
+		return pluginAsset{}, newErrorWithCode(500, "Failed to get plugin absolute path", nil)
 	}
 
 	pluginFilePath := filepath.Join(absPluginDir, path)
@@ -352,22 +385,17 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 	// nolint:gosec
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
-		/* if os.IsNotExist(err) {
-			c.JsonApiErr(404, "Plugin file not found", err)
-			return r
+		if os.IsNotExist(err) {
+			return pluginAsset{}, newErrorWithCode(404, "Plugin file not found", err)
 		}
-		c.JsonApiErr(500, "Could not open plugin file", err)
-		return r */
-		return pluginAsset{}, errors.New("could not open plugin file")
+		return pluginAsset{}, newErrorWithCode(500, "Could not open plugin file", err)
 	}
 
 	// f.Close() should be called by caller by calling pluginAsset.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
-		// c.JsonApiErr(500, "Plugin file exists but could not open", err)
-		// return r
-		return pluginAsset{}, errors.New("plugin file exists but could not open")
+		return pluginAsset{}, newErrorWithCode(500, "Plugin file exists but could not open", err)
 	}
 	return pluginAsset{
 		readSeekCloser: f,
@@ -469,6 +497,10 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		asset, err = hs.getLocalPluginAssets(c, plugin, rel)
 	}
 	if err != nil {
+		if err, ok := err.(errorMessageCoder); ok {
+			c.JsonApiErr(err.Code(), err.Message(), err)
+			return
+		}
 		c.JsonApiErr(500, err.Error(), err)
 		return
 	}
