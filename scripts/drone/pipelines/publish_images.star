@@ -15,12 +15,15 @@ load(
 )
 
 def publish_image_steps(edition, mode, docker_repo):
-    """Generates the steps used for publising Docker images.
+    """Generates the steps used for publising Docker images using grabpl.
 
     Args:
-      edition: TODO
-      mode: TODO
-      docker_repo: TODO
+      edition: controls which version of an image is fetched in the case of a release.
+        It also controls which publishing implementation is used.
+        If edition == 'oss', it additionally publishes the grafana/grafana-oss repository.
+      mode: uses to control the publishing of security images when mode == 'security'.
+      docker_repo: the Docker image name.
+        It is combined with the 'grafana/' library prefix.
 
     Returns:
       List of Drone steps.
