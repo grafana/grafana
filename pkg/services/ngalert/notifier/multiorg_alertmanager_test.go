@@ -201,7 +201,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		require.False(t, mam.alertmanagers[2].ready())
 		require.True(t, mam.alertmanagers[3].ready())
 
-		// The configuration should be marked as successfully applied for all orgs except for org 2.
+		// Configurations should be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
 			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
 			require.NoError(t, err)
@@ -248,7 +248,6 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		for _, org := range orgs {
 			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
 			require.NoError(t, err)
-
 			require.Len(t, configs, 1)
 		}
 

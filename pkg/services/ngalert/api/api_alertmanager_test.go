@@ -293,7 +293,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 	sut := createSut(t, nil)
 
-	t.Run("assert 200 and empty slice when no successfully applied configurations are found", func(t *testing.T) {
+	t.Run("assert 200 and empty slice when no successfully applied configurations are found", func(tt *testing.T) {
 		rc := models.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
@@ -304,12 +304,13 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 		}
 
 		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
-		require.Equal(t, 200, response.Status())
+		require.Equal(tt, 200, response.Status())
 
 		var configs apimodels.GettableUserConfigs
-		json.Unmarshal(response.Body(), &configs)
+		err := json.Unmarshal(response.Body(), &configs)
+		require.NoError(tt, err)
 
-		require.Len(t, configs, 0)
+		require.Len(tt, configs, 0)
 	})
 
 	t.Run("assert 200 and one config in the response for an org that has one successfully applied configuration", func(tt *testing.T) {
@@ -323,12 +324,13 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 		}
 
 		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
-		require.Equal(t, 200, response.Status())
+		require.Equal(tt, 200, response.Status())
 
 		var configs apimodels.GettableUserConfigs
-		json.Unmarshal(response.Body(), &configs)
+		err := json.Unmarshal(response.Body(), &configs)
+		require.NoError(tt, err)
 
-		require.Len(t, configs, 1)
+		require.Len(tt, configs, 1)
 	})
 }
 

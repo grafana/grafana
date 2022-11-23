@@ -36,5 +36,5 @@ type SaveAlertmanagerConfigurationCmd struct {
 	ConfigurationVersion      string
 	Default                   bool
 	OrgID                     int64
-	SuccessfullyApplied       bool
+	ResultID                  int64
 }

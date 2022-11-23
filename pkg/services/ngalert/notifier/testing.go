@@ -91,16 +91,20 @@ func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, 
 func (f *fakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
+	f.lastID++
 
-	f.configsByOrg[cmd.OrgID] = append(f.configsByOrg[cmd.OrgID], &models.AlertConfiguration{
-		ID:                        f.lastID + 1,
+	config := &models.AlertConfiguration{
+		ID:                        f.lastID,
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		OrgID:                     cmd.OrgID,
 		ConfigurationVersion:      "v1",
 		Default:                   cmd.Default,
-		SuccessfullyApplied:       cmd.SuccessfullyApplied,
-	})
-	f.lastID++
+	}
+
+	f.configsByOrg[cmd.OrgID] = append(f.configsByOrg[cmd.OrgID], config)
+	f.configByID[f.lastID] = config
+
+	cmd.ResultID = f.lastID
 
 	return nil
 }

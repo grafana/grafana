@@ -177,6 +177,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 
 		alertmanager, found := moa.alertmanagers[orgID]
 
+		// If no AM is found, create a new one and assign it to that org.
 		if !found {
 			// These metrics are not exported by Grafana and are mostly a placeholder.
 			// To export them, we need to translate the metrics from each individual registry and,
@@ -191,6 +192,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		}
 
 		dbConfig, cfgFound := dbConfigs[orgID]
+
+		// If no config for the org's AM is found, apply default config.
 		if !cfgFound {
 			if found {
 				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.

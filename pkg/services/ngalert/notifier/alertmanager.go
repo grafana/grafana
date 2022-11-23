@@ -257,8 +257,6 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
-		// Default configuration should always be valid.
-		SuccessfullyApplied: true,
 	}
 
 	cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
@@ -269,6 +267,9 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
 		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
 			return err
+		}
+		if err := am.Store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, cmd.ResultID); err != nil {
+			am.logger.Error("Failed to mark Alertmanager config as successfully applied", "id", cmd.ResultID, "error", err)
 		}
 		return nil
 	})
