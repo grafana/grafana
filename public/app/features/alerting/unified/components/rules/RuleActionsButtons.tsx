@@ -107,9 +107,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
           variant="secondary"
           icon="eye"
           href={createViewLink(rulesSource, rule, returnTo)}
-        >
-          <DontShowIfSmallDevice>View</DontShowIfSmallDevice>
-        </LinkButton>
+        ></LinkButton>
       </Tooltip>
     );
   }
@@ -143,17 +141,27 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
 
     buttons.push(
       <Tooltip placement="top" content={'Edit'}>
-        <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
-          <DontShowIfSmallDevice>Edit</DontShowIfSmallDevice>
-        </LinkButton>
+        <LinkButton
+          className={style.button}
+          size="xs"
+          key="edit"
+          variant="secondary"
+          icon="pen"
+          href={editURL}
+        ></LinkButton>
       </Tooltip>
     );
 
     buttons.push(
-      <Tooltip placement="top" content={'Clone'}>
-        <LinkButton className={style.button} size="xs" key="clone" variant="secondary" icon="copy" href={cloneUrl}>
-          <DontShowIfSmallDevice>Clone</DontShowIfSmallDevice>
-        </LinkButton>
+      <Tooltip placement="top" content="Duplicate">
+        <LinkButton
+          className={style.button}
+          size="xs"
+          key="clone"
+          variant="secondary"
+          icon="copy"
+          href={cloneUrl}
+        ></LinkButton>
       </Tooltip>
     );
   }
@@ -169,9 +177,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
           variant="secondary"
           icon="trash-alt"
           onClick={() => setRuleToDelete(rule)}
-        >
-          <DontShowIfSmallDevice>Delete</DontShowIfSmallDevice>
-        </Button>
+        ></Button>
       </Tooltip>
     );
   }

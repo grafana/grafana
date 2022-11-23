@@ -7,7 +7,8 @@ import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
-import { RuleIdentifier } from '../../../types/unified-alerting';
+import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
+import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { AlertWarning } from './AlertWarning';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
@@ -18,6 +19,7 @@ import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/ac
 import { useRulesAccess } from './utils/accessControlHooks';
 import { rulerRuleToFormValues } from './utils/rule-form';
 import * as ruleId from './utils/rule-id';
+import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 
 type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
 
@@ -88,10 +90,6 @@ export default withErrorBoundary(RuleEditor, { style: 'page' });
 function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
   const dispatch = useDispatch();
 
-  // const x = dispatch(fetchEditableRuleAction(sourceRuleId)).unwrap().then(x => x.);
-
-  // x.then((a) => a.payload.);
-
   const { loading, value: rule } = useAsync(
     () => dispatch(fetchEditableRuleAction(sourceRuleId)).unwrap(),
     [sourceRuleId]
@@ -103,8 +101,51 @@ function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
 
   if (rule) {
     const ruleClone = cloneDeep(rule);
+    changeRuleName(ruleClone.rule, generateCopiedRuleTitle(ruleClone));
+
     return <AlertRuleForm prefill={rulerRuleToFormValues(ruleClone)} />;
   }
 
   return <Alert title="Cannot clone. The rule does not exist" />;
+}
+
+function generateCopiedRuleTitle(originRuleWithLocation: RuleWithLocation): string {
+  const originName = getRuleName(originRuleWithLocation.rule);
+  const existingRulesNames = originRuleWithLocation.group.rules.map(getRuleName);
+
+  let newName = `${originName} (Copied)`;
+
+  for (let i = 1; existingRulesNames.includes(newName); i++) {
+    newName = `${originName} (Copied ${i})`;
+  }
+
+  return newName;
+}
+
+function getRuleName(rule: RulerRuleDTO) {
+  if (isGrafanaRulerRule(rule)) {
+    return rule.grafana_alert.title;
+  }
+  if (isAlertingRulerRule(rule)) {
+    return rule.alert;
+  }
+
+  if (isRecordingRulerRule(rule)) {
+    return rule.record;
+  }
+
+  return '';
+}
+
+function changeRuleName(rule: RulerRuleDTO, newName: string) {
+  if (isGrafanaRulerRule(rule)) {
+    rule.grafana_alert.title = newName;
+  }
+  if (isAlertingRulerRule(rule)) {
+    rule.alert = newName;
+  }
+
+  if (isRecordingRulerRule(rule)) {
+    rule.record = newName;
+  }
 }
