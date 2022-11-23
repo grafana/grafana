@@ -57,7 +57,6 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
 		features := featuremgmt.WithFeatures()
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		dashboardService := dashboardsvc.ProvideDashboardService(cfg, dashStore, nil, features, folderPermissions, dashboardPermissions, acmock.New())
@@ -325,21 +324,12 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
-	nestedFoldersEnabled := true
-	features := featuremgmt.WithFeatures()
-	cfg.IsFeatureToggleEnabled = func(key string) bool {
-		if key == featuremgmt.FlagNestedFolders {
-			return nestedFoldersEnabled
-		}
-		return false
-	}
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	folderService := &Service{
 		cfg:              cfg,
 		store:            folderStore,
 		dashboardStore:   &dashStore,
 		dashboardService: &dashboardsvc,
-		features:         features,
+		features:         featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		log:              log.New("test-folder-service"),
 	}
 	t.Run("create folder", func(t *testing.T) {
@@ -387,15 +377,13 @@ func TestNestedFolderService(t *testing.T) {
 		// nothing enabled yet
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
-		features := featuremgmt.WithFeatures()
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		foldersvc := &Service{
 			cfg:              cfg,
 			log:              log.New("test-folder-service"),
 			dashboardService: &dashboardsvc,
 			dashboardStore:   &dashStore,
 			store:            store,
-			features:         features,
+			features:         featuremgmt.WithFeatures(),
 		}
 
 		t.Run("When create folder, no create in folder table done", func(t *testing.T) {
@@ -445,15 +433,13 @@ func TestNestedFolderService(t *testing.T) {
 		// nothing enabled yet
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
-		features := featuremgmt.WithFeatures("nestedFolders")
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		foldersvc := &Service{
 			cfg:              cfg,
 			log:              log.New("test-folder-service"),
 			dashboardService: dashboardsvc,
 			dashboardStore:   dashStore,
 			store:            store,
-			features:         features,
+			features:         featuremgmt.WithFeatures("nestedFolders"),
 			accessControl: actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			},

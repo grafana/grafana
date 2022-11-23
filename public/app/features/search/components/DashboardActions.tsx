@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Menu, Dropdown, Button, Icon } from '@grafana/ui';
 
 export interface Props {
@@ -11,8 +12,13 @@ export interface Props {
 export const DashboardActions: FC<Props> = ({ folderUid, canCreateFolders = false, canCreateDashboards = false }) => {
   const actionUrl = (type: string) => {
     let url = `dashboard/${type}`;
+    const isTypeNewFolder = type === 'new_folder';
 
-    if (folderUid) {
+    if (isTypeNewFolder) {
+      url = `dashboards/folder/new/`;
+    }
+
+    if ((isTypeNewFolder && config.featureToggles.nestedFolders) || folderUid) {
       url += `?folderUid=${folderUid}`;
     }
 
@@ -23,7 +29,9 @@ export const DashboardActions: FC<Props> = ({ folderUid, canCreateFolders = fals
     return (
       <Menu>
         {canCreateDashboards && <Menu.Item url={actionUrl('new')} label="New Dashboard" />}
-        {!folderUid && canCreateFolders && <Menu.Item url="dashboards/folder/new" label="New Folder" />}
+        {canCreateFolders && (config.featureToggles.nestedFolders || !folderUid) && (
+          <Menu.Item url={actionUrl('new_folder')} label="New Folder" />
+        )}
         {canCreateDashboards && <Menu.Item url={actionUrl('import')} label="Import" />}
       </Menu>
     );
