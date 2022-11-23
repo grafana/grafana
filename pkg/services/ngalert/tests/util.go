@@ -95,7 +95,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, nil, features, folderPermissions, nil)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, nil, folderPermissions, nil)
 
 	ng, err := ngalert.ProvideService(
 		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),

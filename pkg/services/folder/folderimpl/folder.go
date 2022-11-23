@@ -34,7 +34,6 @@ type Service struct {
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
 	searchService    *search.SearchService
-	features         *featuremgmt.FeatureManager
 	permissions      accesscontrol.FolderPermissionsService
 	accessControl    accesscontrol.AccessControl
 
@@ -49,13 +48,12 @@ func ProvideService(
 	dashboardService dashboards.DashboardService,
 	dashboardStore dashboards.Store,
 	db db.DB, // DB for the (new) nested folder store
-	features *featuremgmt.FeatureManager,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	searchService *search.SearchService,
 ) folder.Service {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
-	store := ProvideStore(db, cfg, features)
+	store := ProvideStore(db, cfg)
 	svr := &Service{
 		cfg:              cfg,
 		log:              log.New("folder-service"),
@@ -63,12 +61,11 @@ func ProvideService(
 		dashboardStore:   dashboardStore,
 		store:            store,
 		searchService:    searchService,
-		features:         features,
 		permissions:      folderPermissionsService,
 		accessControl:    ac,
 		bus:              bus,
 	}
-	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
 		svr.DBMigration(db)
 	}
 	return svr
@@ -273,7 +270,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		s.log.Error("Could not make user admin", "folder", createdFolder.Title, "user", userID, "error", permissionErr)
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
 		var description string
 		if dash.Data != nil {
 			description = dash.Data.Get("description").MustString()
@@ -315,7 +312,7 @@ func (s *Service) Update(ctx context.Context, user *user.SignedInUser, orgID int
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
 		if cmd.Uid != "" {
 			if !util.IsValidShortUID(cmd.Uid) {
 				return nil, dashboards.ErrDashboardInvalidUid
@@ -399,7 +396,7 @@ func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, org
 }
 
 func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
 		err := s.Delete(ctx, cmd)
 		if err != nil {
 			s.log.Error("the delete folder on folder table failed with err: ", err.Error())

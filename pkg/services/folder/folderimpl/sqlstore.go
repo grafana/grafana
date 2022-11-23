@@ -27,8 +27,8 @@ type sqlStore struct {
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
+func ProvideStore(db db.DB, cfg *setting.Cfg) *sqlStore {
+	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg}
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
