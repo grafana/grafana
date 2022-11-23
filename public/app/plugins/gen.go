@@ -56,7 +56,7 @@ func main() {
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny(adaptToPipeline(corecodegen.GoTypesJenny{})),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})), // FIXME should pass imports mapper to TSTypesJenny
+		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
 	)
 
 	declParser := kindsys.NewDeclParser(rt, skipPlugins)

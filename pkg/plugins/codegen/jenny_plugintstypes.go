@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
+	tsast "github.com/grafana/cuetsy/ts/ast"
 	"github.com/grafana/grafana/pkg/plugins/codegen/kindsys"
 )
 
@@ -37,13 +38,30 @@ func (j *ptsJenny) Generate(decl *kindsys.PluginDecl) (*codejen.File, error) {
 		return nil, fmt.Errorf("error executing header template: %w", err)
 	}
 
-	f, err := j.inner.Generate(decl)
+	f := &tsast.File{}
+	f.Doc = &tsast.Comment{
+		Text: buf.String(),
+	}
+
+	slotname := decl.Slot.Name()
+	v := decl.Lineage.Latest().Version()
+
+	f.Nodes = append(f.Nodes, tsast.Raw{
+		Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", slotname, v[0], v[1]),
+	})
+
+	jif, err := j.inner.Generate(decl)
 	if err != nil {
 		return nil, err
 	}
 
-	f.Data = append(buf.Bytes(), f.Data...)
-	f.RelativePath = filepath.Join(j.root, decl.PluginPath, "models.gen.ts")
-	f.From = append(f.From, j)
-	return f, nil
+	f.Nodes = append(f.Nodes, tsast.Raw{
+		Data: string(jif.Data),
+	})
+
+	path := filepath.Join(j.root, decl.PluginPath, "models.gen.ts")
+	body := []byte(f.String())
+	body = body[:len(body)-1] // remove the additional line break added by the inner jenny
+
+	return codejen.NewFile(path, body, append(jif.From, j)...), nil
 }
