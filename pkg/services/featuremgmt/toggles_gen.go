@@ -179,10 +179,6 @@ const (
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
 
-	// FlagUseLegacyHeatmapPanel
-	// Continue to use the angular/flot based heatmap panel
-	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
