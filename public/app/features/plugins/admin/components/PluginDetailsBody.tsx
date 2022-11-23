@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { AppPlugin, GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
@@ -54,7 +54,9 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
       if (pageId === configPage.id) {
         return (
           <div className={styles.container}>
-            <configPage.body plugin={pluginConfig} query={queryParams} />
+            <PluginContextProvider meta={pluginConfig.meta}>
+              <configPage.body plugin={pluginConfig} query={queryParams} />
+            </PluginContextProvider>
           </div>
         );
       }

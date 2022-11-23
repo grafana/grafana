@@ -28,6 +28,9 @@ type setUserResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -110,6 +113,9 @@ type setTeamResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetTeamResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -195,6 +201,9 @@ type setBuiltInResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -276,6 +285,9 @@ type setResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -345,6 +357,9 @@ type getResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
@@ -471,8 +486,10 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 	var org *models.Org
 	for i := 0; i < numUsers; i++ {
 		if org == nil {
-			addedOrg, err := sql.CreateOrgWithMember("test", int64(i))
+			cmd := &models.CreateOrgCommand{Name: "test", UserId: int64(i)}
+			err := sql.CreateOrg(context.Background(), cmd)
 			require.NoError(t, err)
+			addedOrg := cmd.Result
 			org = &addedOrg
 		}
 

@@ -147,8 +147,10 @@ function SpanBar({
   return (
     <div
       className={cx(styles.wrapper, className)}
+      onBlur={setShortLabel}
       onClick={onClick}
-      onMouseLeave={setShortLabel}
+      onFocus={setLongLabel}
+      onMouseOut={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
       data-testid={selectors.components.TraceViewer.spanBar}

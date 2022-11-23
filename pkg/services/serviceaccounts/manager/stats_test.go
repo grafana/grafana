@@ -15,7 +15,7 @@ func Test_UsageStats(t *testing.T) {
 		ServiceAccounts: 1,
 		Tokens:          1,
 	}}
-	svc := ServiceAccountsService{store: storeMock}
+	svc := ServiceAccountsService{store: storeMock, secretScanEnabled: true}
 	err := svc.DeleteServiceAccount(context.Background(), 1, 1)
 	require.NoError(t, err)
 	assert.Len(t, storeMock.Calls.DeleteServiceAccount, 1)
@@ -25,4 +25,5 @@ func Test_UsageStats(t *testing.T) {
 
 	assert.Equal(t, int64(1), stats["stats.serviceaccounts.count"].(int64))
 	assert.Equal(t, int64(1), stats["stats.serviceaccounts.tokens.count"].(int64))
+	assert.Equal(t, int64(1), stats["stats.serviceaccounts.secret_scan.enabled.count"].(int64))
 }

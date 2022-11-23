@@ -93,7 +93,6 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 			RefID:      "",
 			Query:      qmap,
 			QueryType:  "",
-			TimeRange:  TimeRange{},
 			DataSource: nil,
 		})
 

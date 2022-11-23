@@ -1,4 +1,4 @@
-import { once, chain, difference } from 'lodash';
+import { chain, difference, once } from 'lodash';
 import LRU from 'lru-cache';
 import Prism from 'prismjs';
 import { Value } from 'slate';
@@ -471,6 +471,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
   }
 
+  /**
+   * @todo cache
+   * @param key
+   */
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getTimeRangeParams();
     const url = `/api/v1/label/${this.datasource.interpolateString(key)}/values`;
@@ -498,7 +502,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a series. This is cached by its args but also by the global timeRange currently selected as
+   * Fetches all values for a label, with optional match[]
+   * @param name
+   * @param match
+   */
+  fetchSeriesValues = async (name: string, match?: string): Promise<string[]> => {
+    const interpolatedName = name ? this.datasource.interpolateString(name) : null;
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      ...(interpolatedName && { 'match[]': match }),
+    };
+    return await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+  };
+
+  /**
+   * Fetch labels for a series using /series endpoint. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    * @param withName
@@ -528,6 +547,42 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const data = await this.request(url, [], urlParams);
       const { values } = processLabels(data, withName);
       value = values;
+      this.labelsCache.set(cacheKey, value);
+    }
+    return value;
+  };
+
+  /**
+   * Fetch labels for a series using /labels endpoint.  This is cached by its args but also by the global timeRange currently selected as
+   * they can change over requested time.
+   * @param name
+   * @param withName
+   */
+  fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    const interpolatedName = this.datasource.interpolateString(name);
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      'match[]': interpolatedName,
+    };
+    const url = `/api/v1/labels`;
+    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
+    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
+    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
+    // when user does not the newest values for a minute if already cached.
+    const cacheParams = new URLSearchParams({
+      'match[]': interpolatedName,
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      withName: withName ? 'true' : 'false',
+    });
+
+    const cacheKey = `${url}?${cacheParams.toString()}`;
+    let value = this.labelsCache.get(cacheKey);
+    if (!value) {
+      const data: string[] = await this.request(url, [], urlParams);
+      // Convert string array to Record<string , []>
+      value = data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
       this.labelsCache.set(cacheKey, value);
     }
     return value;

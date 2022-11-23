@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values 1`] = `
+Object {
+  "annotations": Object {
+    "description": "",
+    "runbook_url": "",
+    "summary": "",
+  },
+  "for": "5m",
+  "grafana_alert": Object {
+    "condition": "A",
+    "data": Array [],
+    "exec_err_state": "Error",
+    "no_data_state": "NoData",
+    "title": "",
+  },
+  "labels": Object {
+    "": "",
+  },
+}
+`;
+
+exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range type queries 1`] = `
+Object {
+  "annotations": Object {
+    "description": "",
+    "runbook_url": "",
+    "summary": "",
+  },
+  "for": "5m",
+  "grafana_alert": Object {
+    "condition": "A",
+    "data": Array [
+      Object {
+        "datasourceUid": "dsuid",
+        "model": Object {
+          "expr": "",
+          "instant": false,
+          "range": true,
+          "refId": "A",
+        },
+        "queryType": "query",
+        "refId": "A",
+        "relativeTimeRange": Object {
+          "from": 900,
+          "to": 1000,
+        },
+      },
+    ],
+    "exec_err_state": "Error",
+    "no_data_state": "NoData",
+    "title": "",
+  },
+  "labels": Object {
+    "": "",
+  },
+}
+`;

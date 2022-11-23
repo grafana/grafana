@@ -333,6 +333,13 @@ describe('Format value', () => {
     expect(disp.suffix).toEqual(' Mil');
   });
 
+  it('with value 15000000 and unit locale', () => {
+    const value = 1500000;
+    const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'locale' });
+    const disp = instance(value);
+    expect(disp.text).toEqual('1,500,000');
+  });
+
   it('with value 128000000 and unit bytes', () => {
     const value = 1280000125;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'bytes' });
@@ -367,6 +374,53 @@ describe('Format value', () => {
       const instance = getDisplayProcessorFromConfig({}, FieldType.string);
       const disp = instance(value);
       expect(disp.text).toEqual(value);
+    });
+  });
+
+  describe('number formatting for y axis ticks (dynamic decimals with trailing 0s trimming)', () => {
+    // all these tests have non-null adjacentDecimals != null, which we only do durink axis tick formatting
+
+    it('should trim trailing zeros after decimal from fractional seconds when formatted as millis with adjacentDecimals=2', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 's' }, FieldType.number);
+      expect(processor(0.06, 2).text).toEqual('60');
+    });
+
+    it('should trim trailing zeros after decimal from number', () => {
+      const processor = getDisplayProcessorFromConfig({}, FieldType.number);
+      expect(processor(1.2, 2).text).toEqual('1.2');
+
+      // dynamic!
+      expect(processor(13.50008, 3).text).toEqual('13.5');
+    });
+
+    it('should not attempt to trim zeros from currency*', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'currencyUSD' }, FieldType.number);
+      expect(processor(1.2, 2).text).toEqual('1.20');
+    });
+
+    it('should not attempt to trim zeros from bool', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'bool' }, FieldType.number);
+      expect(processor(1, 2).text).toEqual('True');
+    });
+
+    it('should not attempt to trim zeros from time', () => {
+      const processor = getDisplayProcessorFromConfig({}, FieldType.time);
+      expect(processor(1666402869517, 2).text).toEqual('2022-10-21 20:41:09');
+    });
+
+    it('should not attempt to trim zeros from dateTimeAsUS', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'dateTimeAsUS' }, FieldType.number);
+      expect(processor(1666402869517, 2).text).toEqual('10/21/2022 8:41:09 pm');
+    });
+
+    it('should not attempt to trim zeros from locale', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'locale' }, FieldType.number);
+      expect(processor(3500000, 2).text).toEqual('3,500,000');
+    });
+
+    it('should not attempt to trim zeros when explicit decimals: 5', () => {
+      const processor = getDisplayProcessorFromConfig({ decimals: 5 }, FieldType.number);
+      expect(processor(35, 2).text).toEqual('35.00000');
     });
   });
 });

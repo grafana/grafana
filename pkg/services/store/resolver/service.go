@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -32,19 +31,19 @@ type ObjectReferenceResolver interface {
 	Resolve(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error)
 }
 
-func ProvideObjectReferenceResolver(ds datasources.DataSourceService, pluginRegistry registry.Service) ObjectReferenceResolver {
+func ProvideObjectReferenceResolver(ds datasources.DataSourceService, pluginStore plugins.Store) ObjectReferenceResolver {
 	return &standardReferenceResolver{
-		pluginRegistry: pluginRegistry,
+		pluginStore: pluginStore,
 		ds: dsCache{
-			ds:             ds,
-			pluginRegistry: pluginRegistry,
+			ds:          ds,
+			pluginStore: pluginStore,
 		},
 	}
 }
 
 type standardReferenceResolver struct {
-	pluginRegistry registry.Service
-	ds             dsCache
+	pluginStore plugins.Store
+	ds          dsCache
 }
 
 func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error) {
@@ -101,8 +100,8 @@ func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *
 }
 
 func (r *standardReferenceResolver) resolvePlugin(ctx context.Context, ref *models.ObjectExternalReference) (ResolutionInfo, error) {
-	p, ok := r.pluginRegistry.Plugin(ctx, ref.UID)
-	if !ok || p == nil {
+	p, ok := r.pluginStore.Plugin(ctx, ref.UID)
+	if !ok {
 		return ResolutionInfo{
 			OK:        false,
 			Timestamp: getNow(),

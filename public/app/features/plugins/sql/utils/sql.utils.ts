@@ -50,8 +50,12 @@ export function defaultToRawSql({ sql, dataset, table }: SQLQuery): string {
 function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>): string {
   const columns = sqlColumns.map((c) => {
     let rawColumn = '';
-    if (c.name) {
+    if (c.name && c.alias) {
+      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)}) AS ${c.alias}`;
+    } else if (c.name) {
       rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)})`;
+    } else if (c.alias) {
+      rawColumn += `${c.parameters?.map((p) => `${p.name}`)} AS ${c.alias}`;
     } else {
       rawColumn += `${c.parameters?.map((p) => `${p.name}`)}`;
     }

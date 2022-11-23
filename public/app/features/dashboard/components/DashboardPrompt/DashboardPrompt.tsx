@@ -76,7 +76,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       showModal(SaveLibraryPanelModal, {
         isUnsavedPrompt: true,
         panel: dashboard.panelInEdit as PanelModelWithLibraryPanel,
-        folderId: dashboard.meta.folderId as number,
+        folderUid: dashboard.meta.folderUid ?? '',
         onConfirm: () => {
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);
@@ -165,7 +165,7 @@ export function ignoreChanges(current: DashboardModel, original: object | null) 
 /**
  * Remove stuff that should not count in diff
  */
-function cleanDashboardFromIgnoredChanges(dashData: any) {
+function cleanDashboardFromIgnoredChanges(dashData: unknown) {
   // need to new up the domain model class to get access to expand / collapse row logic
   const model = new DashboardModel(dashData);
 
@@ -193,7 +193,7 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   return dash;
 }
 
-export function hasChanges(current: DashboardModel, original: any) {
+export function hasChanges(current: DashboardModel, original: unknown) {
   if (current.hasUnsavedChanges()) {
     return true;
   }
@@ -201,8 +201,8 @@ export function hasChanges(current: DashboardModel, original: any) {
   const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelClone());
   const originalClean = cleanDashboardFromIgnoredChanges(original);
 
-  const currentTimepicker: any = find((currentClean as any).nav, { type: 'timepicker' });
-  const originalTimepicker: any = find((originalClean as any).nav, { type: 'timepicker' });
+  const currentTimepicker = find((currentClean as any).nav, { type: 'timepicker' });
+  const originalTimepicker = find((originalClean as any).nav, { type: 'timepicker' });
 
   if (currentTimepicker && originalTimepicker) {
     currentTimepicker.now = originalTimepicker.now;

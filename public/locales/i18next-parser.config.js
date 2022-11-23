@@ -2,7 +2,7 @@ module.exports = {
   // Default namespace used in your i18next config
   defaultNamespace: 'grafana',
 
-  locales: ['en-US', 'fr-FR', 'es-ES', "zh-Hans", 'pseudo-LOCALE'],
+  locales: ['en-US', 'fr-FR', 'es-ES', "de-DE", "zh-Hans", 'pseudo-LOCALE'],
 
   output: './public/locales/$LOCALE/$NAMESPACE.json',
 

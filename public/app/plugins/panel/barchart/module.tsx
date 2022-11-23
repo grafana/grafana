@@ -4,12 +4,15 @@ import {
   FieldConfigProperty,
   FieldType,
   getFieldDisplayName,
+  identityOverrideProcessor,
   PanelPlugin,
   VizOrientation,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphTransform, StackingMode, VisibilityMode } from '@grafana/schema';
+import { GraphTransform, GraphTresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+
+import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
@@ -83,6 +86,21 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
           isClearable: true,
         },
         hideFromDefaults: true,
+      });
+
+      builder.addCustomEditor({
+        id: 'thresholdsStyle',
+        path: 'thresholdsStyle',
+        name: 'Show thresholds',
+        category: ['Thresholds'],
+        defaultValue: { mode: GraphTresholdsStyleMode.Off },
+        settings: {
+          options: graphFieldOptions.thresholdsDisplayModes,
+        },
+        editor: ThresholdsStyleEditor,
+        override: ThresholdsStyleEditor,
+        process: identityOverrideProcessor,
+        shouldApply: () => true,
       });
 
       commonOptionsBuilder.addAxisConfig(builder, cfg, false);

@@ -2,6 +2,9 @@ package cloudmonitoring
 
 import (
 	"strings"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 func reverse(s string) string {
@@ -23,4 +26,22 @@ func containsLabel(labels []string, newLabel string) bool {
 		}
 	}
 	return false
+}
+
+func addInterval(period string, field *data.Field) error {
+	period = strings.TrimPrefix(period, "+")
+	p, err := intervalv2.ParseIntervalStringToTimeDuration(period)
+	if err != nil {
+		return err
+	}
+	if err == nil {
+		if field.Config != nil {
+			field.Config.Interval = float64(p.Milliseconds())
+		} else {
+			field.SetConfig(&data.FieldConfig{
+				Interval: float64(p.Milliseconds()),
+			})
+		}
+	}
+	return nil
 }

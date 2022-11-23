@@ -32,7 +32,8 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
     ),
 };
 
-const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
+// Exported to share with other implementations, but not exported to `@grafana/data`
+export const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
   if (!options) {
     return undefined;
   }

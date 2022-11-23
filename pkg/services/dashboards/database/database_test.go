@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -41,7 +43,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
 		starService = starimpl.ProvideService(sqlStore, cfg)
-		dashboardStore = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
+		quotaService := quotatest.New(false, nil)
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		require.NoError(t, err)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
@@ -243,8 +248,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Should be able to delete dashboard and related public dashboard", func(t *testing.T) {
 		setup()
 
-		uid, _ := publicDashboardStore.GenerateNewPublicDashboardUid(context.Background())
-		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
+		uid := util.GenerateShortUID()
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
 				DashboardUid: savedDash.Uid,
@@ -256,9 +261,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
+		_, err := publicDashboardStore.Create(context.Background(), cmd)
 		require.NoError(t, err)
-		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedDash.Id, OrgId: savedDash.OrgId}
@@ -270,16 +275,16 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, getErr, dashboards.ErrDashboardNotFound)
 		assert.Nil(t, dash)
 
-		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
-		require.Equal(t, err, publicDashboardModels.ErrPublicDashboardNotFound)
+		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.Nil(t, err)
 		require.Nil(t, pubdashConfig)
 	})
 
 	t.Run("Should be able to delete a dashboard folder, with its dashboard and related public dashboard", func(t *testing.T) {
 		setup()
 
-		uid, _ := publicDashboardStore.GenerateNewPublicDashboardUid(context.Background())
-		cmd := publicDashboardModels.SavePublicDashboardConfigCommand{
+		uid := util.GenerateShortUID()
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
 			PublicDashboard: publicDashboardModels.PublicDashboard{
 				Uid:          uid,
 				DashboardUid: savedDash.Uid,
@@ -291,9 +296,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				AccessToken:  "an-access-token",
 			},
 		}
-		err := publicDashboardStore.SavePublicDashboardConfig(context.Background(), cmd)
+		_, err := publicDashboardStore.Create(context.Background(), cmd)
 		require.NoError(t, err)
-		pubdashConfig, _, _ := publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
+		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
@@ -307,8 +312,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(query.Result), 0)
 
-		pubdashConfig, _, err = publicDashboardStore.GetPublicDashboard(context.Background(), "an-access-token")
-		require.Equal(t, err, publicDashboardModels.ErrPublicDashboardNotFound)
+		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.Nil(t, err)
 		require.Nil(t, pubdashConfig)
 	})
 
@@ -559,6 +564,22 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(res), 1)
 		require.Equal(t, res[0].Title, "starred dash")
 	})
+
+	t.Run("Can count dashboards by parent folder", func(t *testing.T) {
+		setup()
+		// setup() saves one dashboard in the general folder and two in the "savedFolder".
+		count, err := dashboardStore.CountDashboardsInFolder(
+			context.Background(),
+			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+
+		count, err = dashboardStore.CountDashboardsInFolder(
+			context.Background(),
+			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.Id, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, int64(2), count)
+	})
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
@@ -568,7 +589,9 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
-	dashboardStore := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	pluginId := "test-app"
 
 	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
@@ -580,7 +603,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		OrgId:    1,
 	}
 
-	err := dashboardStore.GetDashboardsByPluginID(context.Background(), &query)
+	err = dashboardStore.GetDashboardsByPluginID(context.Background(), &query)
 	require.NoError(t, err)
 	require.Equal(t, len(query.Result), 2)
 }
@@ -592,7 +615,9 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
-	dashboardStore := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
@@ -643,7 +668,9 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
-	dashboardStore := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{

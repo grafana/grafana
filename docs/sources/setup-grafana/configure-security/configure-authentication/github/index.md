@@ -23,8 +23,10 @@ settings page). When you create the application you will need to specify
 a callback URL. Specify this as callback:
 
 ```bash
-http://<my_grafana_server_name_or_ip>:<grafana_server_port>/grafana/login/github
+http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
 ```
+
+> Note: <my_grafana_server_name_or_ip>'s value should match your grafana server's `root_url`, the URL used to access grafana.
 
 This callback URL must match the full HTTP address that you use in your
 browser to access Grafana, but with the suffix path of `/login/github`.
@@ -61,6 +63,14 @@ user successfully authenticating via GitHub authentication will be
 automatically signed up.
 
 You can also use [variable expansion]({{< relref "../../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
+
+### GitHub refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+GitHub OAuth applications do not support refresh tokens because the provided access tokens do not expire.
 
 ### team_ids
 
@@ -141,7 +151,7 @@ if you have a team called 'example-group' you can use the following snippet to
 ensure those members inherit the role 'Editor'.
 
 ```bash
-role_attribute_path = contains(groups[*], '@github/example-group') && 'Editor' || 'Viewer'
+role_attribute_path = contains(groups[*], '@my-github-organization/my-github-team') && 'Editor' || 'Viewer'
 ```
 
 Note: If a match is found in other fields, teams will be ignored.

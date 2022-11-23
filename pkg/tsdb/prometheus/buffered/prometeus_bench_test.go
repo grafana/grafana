@@ -11,8 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // when memory-profiling this benchmark, these commands are recommended:
@@ -34,7 +36,7 @@ func BenchmarkExemplarJson(b *testing.B) {
 
 	tracer := tracing.InitializeTracerForTest()
 
-	s := Buffered{tracer: tracer, log: &fakeLogger{}, client: api}
+	s := Buffered{tracer: tracer, log: &logtest.Fake{}, client: api}
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -52,7 +54,7 @@ func BenchmarkRangeJson(b *testing.B) {
 	api, err := makeMockedApi(resp)
 	require.NoError(b, err)
 
-	s := Buffered{tracer: tracing.InitializeTracerForTest(), log: &fakeLogger{}, client: api}
+	s := Buffered{tracer: tracing.InitializeTracerForTest(), log: &logtest.Fake{}, client: api}
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {

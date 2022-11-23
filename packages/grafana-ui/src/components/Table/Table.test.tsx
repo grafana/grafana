@@ -207,5 +207,245 @@ describe('Table', () => {
       // 3 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
     });
+
+    it('should redo footer calculations', async () => {
+      getTestContext({
+        footerOptions: { show: true, reducer: ['sum'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('7');
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(screen.getByLabelText('1'));
+      await userEvent.click(screen.getByText('Ok'));
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('3');
+    });
+
+    it('should filter rows and recalculate footer values when multiple filter values are selected', async () => {
+      getTestContext({
+        footerOptions: { show: true, reducer: ['sum'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2, 3, 3],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(8);
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('13');
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(screen.getByLabelText('2'));
+      await userEvent.click(screen.getByLabelText('3'));
+      await userEvent.click(screen.getByText('Ok'));
+
+      //4 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('10');
+    });
+
+    it('should reset when clear filters button is pressed', async () => {
+      getTestContext({
+        footerOptions: { show: true, reducer: ['sum'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(screen.getByLabelText('1'));
+      await userEvent.click(screen.getByText('Ok'));
+
+      //3 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('3');
+
+      await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
+      await userEvent.click(screen.getByText('Clear filter'));
+
+      //5 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('7');
+    });
+  });
+
+  describe('on data change', () => {
+    it('should redo footer value calculations', async () => {
+      const { rerender } = getTestContext({
+        footerOptions: { show: true, reducer: ['sum'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      //5 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('7');
+
+      const onSortByChange = jest.fn();
+      const onCellFilterAdded = jest.fn();
+      const onColumnResize = jest.fn();
+      const props: Props = {
+        ariaLabel: 'aria-label',
+        data: getDefaultDataFrame(),
+        height: 600,
+        width: 800,
+        onSortByChange,
+        onCellFilterAdded,
+        onColumnResize,
+      };
+
+      const propOverrides = {
+        footerOptions: { show: true, reducer: ['sum'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      Object.assign(props, propOverrides);
+
+      rerender(<Table {...props} />);
+
+      //4 + header row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('5');
+    });
+  });
+
+  describe('on table footer disabled', () => {
+    it('should not show footer', async () => {
+      getTestContext({
+        footerOptions: { show: false, reducer: ['sum'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, 2],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(() => screen.getByTestId('table-footer')).toThrow('Unable to find an element');
+    });
+  });
+
+  describe('when mounted with data and sub-data', () => {
+    it('then correct rows should be rendered and new table is rendered when expander is clicked', () => {
+      getTestContext({
+        subData: new Array(getDefaultDataFrame().length).fill(0).map((i) =>
+          toDataFrame({
+            name: 'A',
+            fields: [
+              {
+                name: 'number' + i,
+                type: FieldType.number,
+                values: [i, i, i],
+                config: {
+                  custom: {
+                    filterable: true,
+                  },
+                },
+              },
+            ],
+            meta: {
+              custom: {
+                parentRowIndex: i,
+              },
+            },
+          })
+        ),
+      });
+      expect(getTable()).toBeInTheDocument();
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+      expect(getColumnHeader(/time/)).toBeInTheDocument();
+      expect(getColumnHeader(/temperature/)).toBeInTheDocument();
+      expect(getColumnHeader(/img/)).toBeInTheDocument();
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(getRowsData(rows)).toEqual([
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+      ]);
+
+      within(rows[1]).getByLabelText('Open trace').click();
+      const rowsAfterClick = within(getTable()).getAllByRole('row');
+      expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
+      expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();
+
+      expect(within(rowsAfterClick[2]).queryByRole('table')).toBeNull();
+    });
   });
 });

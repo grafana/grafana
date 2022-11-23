@@ -6,6 +6,7 @@ load(
     'test_backend_step',
     'test_backend_integration_step',
     'verify_gen_cue_step',
+    'verify_gen_jsonnet_step',
     'compile_build_cmd',
     'clone_enterprise_step',
     'init_enterprise_step',
@@ -25,6 +26,7 @@ def test_backend(trigger, ver_mode, edition="oss"):
         identify_runner_step(),
         compile_build_cmd(edition),
         verify_gen_cue_step(edition),
+        verify_gen_jsonnet_step(edition),
         wire_install_step(),
     ])
     test_steps = [

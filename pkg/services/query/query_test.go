@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -168,6 +170,40 @@ func TestParseMetricRequest(t *testing.T) {
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
 		assert.NoError(t, err)
 	})
+
+	t.Run("Header validation", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "sEx6ZvSVk",
+				"type": "testdata"
+			}
+		}`)
+		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+		mr.HTTPRequest = httpreq
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+
+		// With the second value it is OK
+		httpreq.Header.Add("X-Datasource-Uid", "sEx6ZvSVk")
+		mr.HTTPRequest = httpreq
+		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+
+		// Single header with comma syntax
+		httpreq, _ = http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq.Header.Set("X-Datasource-Uid", "gIEkMvIVz, sEx6ZvSVk")
+		mr.HTTPRequest = httpreq
+		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+	})
 }
 
 func TestQueryDataMultipleSources(t *testing.T) {
@@ -252,8 +288,16 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
+		// without query parameter
 		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		require.NoError(t, err)
 
+		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+		reqDTO.HTTPRequest = httpreq
+
+		// with query parameter
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 	})
 
@@ -353,6 +397,29 @@ func TestQueryData(t *testing.T) {
 
 		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
 	})
+
+	t.Run("it doesn't adds cookie header to the request when keepCookies configured with login cookie name", func(t *testing.T) {
+		tc := setup(t)
+		tc.queryService.cfg.LoginCookieName = "grafana_session"
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "grafana_session", "bar" ]}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.ds.JsonData = json
+
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		httpReq.AddCookie(&http.Cookie{Name: "a"})
+		httpReq.AddCookie(&http.Cookie{Name: "bar", Value: "rab"})
+		httpReq.AddCookie(&http.Cookie{Name: "b"})
+		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
+		httpReq.AddCookie(&http.Cookie{Name: "c"})
+		httpReq.AddCookie(&http.Cookie{Name: tc.queryService.cfg.LoginCookieName, Value: "val"})
+		metricReq.HTTPRequest = httpReq
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
+		require.NoError(t, err)
+
+		require.Equal(t, map[string]string{"Cookie": "bar=rab"}, tc.pluginContext.req.Headers)
+	})
 }
 
 func setup(t *testing.T) *testContext {
@@ -366,13 +433,15 @@ func setup(t *testing.T) *testContext {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	ssvc := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+	quotaService := quotatest.New(false, nil)
+	ds, err := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
 		DataSources:           nil,
 		SimulatePluginFailure: false,
 	}
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService)
-	queryService := ProvideService(nil, dc, exprService, rv, ds, pc, tc) // provider belonging to this package
+	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, tc) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,

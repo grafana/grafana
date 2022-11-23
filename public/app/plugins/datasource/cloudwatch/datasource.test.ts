@@ -206,16 +206,16 @@ describe('datasource', () => {
       const datasource = setupMockedDataSource({
         getMock: jest.fn().mockResolvedValue([
           {
-            text: 'AWS/EC2',
-            value: 'CPUUtilization',
+            namespace: 'AWS/EC2',
+            name: 'CPUUtilization',
           },
           {
-            text: 'AWS/Redshift',
-            value: 'CPUPercentage',
+            namespace: 'AWS/Redshift',
+            name: 'CPUPercentage',
           },
         ]),
       }).datasource;
-      const allMetrics = await datasource.api.getAllMetrics('us-east-2');
+      const allMetrics = await datasource.api.getAllMetrics({ region: 'us-east-2' });
       expect(allMetrics[0].metricName).toEqual('CPUUtilization');
       expect(allMetrics[0].namespace).toEqual('AWS/EC2');
       expect(allMetrics[1].metricName).toEqual('CPUPercentage');

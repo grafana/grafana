@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -25,6 +27,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	ss := db.InitTestDB(t)
+	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
+	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -202,6 +207,47 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Error(t, err)
 		})
 
+		t.Run("GetByLogin - user2 uses user1.email as login", func(t *testing.T) {
+			// create user_1
+			user1 := &user.User{
+				Email:      "user_1@mail.com",
+				Name:       "user_1",
+				Login:      "user_1",
+				Password:   "user_1_password",
+				Created:    time.Now(),
+				Updated:    time.Now(),
+				IsDisabled: true,
+			}
+			_, err := userStore.Insert(context.Background(), user1)
+			require.Nil(t, err)
+
+			// create user_2
+			user2 := &user.User{
+				Email:      "user_2@mail.com",
+				Name:       "user_2",
+				Login:      "user_1@mail.com",
+				Password:   "user_2_password",
+				Created:    time.Now(),
+				Updated:    time.Now(),
+				IsDisabled: true,
+			}
+			_, err = userStore.Insert(context.Background(), user2)
+			require.Nil(t, err)
+
+			// query user database for user_1 email
+			query := user.GetUserByLoginQuery{LoginOrEmail: "user_1@mail.com"}
+			result, err := userStore.GetByLogin(context.Background(), &query)
+			require.Nil(t, err)
+
+			// expect user_1 as result
+			require.Equal(t, user1.Email, result.Email)
+			require.Equal(t, user1.Login, result.Login)
+			require.Equal(t, user1.Name, result.Name)
+			require.NotEqual(t, user2.Email, result.Email)
+			require.NotEqual(t, user2.Login, result.Login)
+			require.NotEqual(t, user2.Name, result.Name)
+		})
+
 		ss.Cfg.CaseInsensitiveLogin = false
 	})
 
@@ -224,9 +270,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		err := ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err := orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -270,11 +316,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		require.Equal(t, user.ErrLastGrafanaAdmin, updatePermsError)
 
-		query := models.GetUserByIdQuery{Id: usr.ID}
-		getUserError := ss.GetUserById(context.Background(), &query)
+		query := user.GetUserByIDQuery{ID: usr.ID}
+		queryResult, getUserError := userStore.GetByID(context.Background(), query.ID)
 		require.Nil(t, getUserError)
 
-		require.True(t, query.Result.IsAdmin)
+		require.True(t, queryResult.IsAdmin)
 
 		// One user
 		const email = "user@test.com"
@@ -361,9 +407,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -374,14 +420,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// When the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
+		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		query1 := &org.GetOrgUsersQuery{OrgID: users[0].OrgID, User: usr}
-		query1Result, err := userStore.getOrgUsersForTest(context.Background(), query1)
-		require.Nil(t, err)
-
-		require.Len(t, query1Result, 1)
 
 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
 		err = userStore.getDashboardACLInfoList(permQuery)
@@ -400,9 +440,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -446,15 +486,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query5Result.TotalCount, 5)
 
 		// the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
+		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		// delete connected org users and permissions
-		query2 := &org.GetOrgUsersQuery{OrgID: users[0].OrgID}
-		query2Result, err := userStore.getOrgUsersForTest(context.Background(), query2)
-		require.Nil(t, err)
-
-		require.Len(t, query2Result, 1)
 
 		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
 		err = userStore.getDashboardACLInfoList(permQuery)
@@ -802,20 +835,6 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 		return err
 	})
 	return err
-}
-
-func (ss *sqlStore) getOrgUsersForTest(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	result := make([]*org.OrgUserDTO, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		sess := dbSess.Table("org_user")
-		sess.Join("LEFT ", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
-		sess.Where("org_user.org_id=?", query.OrgID)
-		sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role")
-
-		err := sess.Find(&result)
-		return err
-	})
-	return result, err
 }
 
 // This function was copied from pkg/services/dashboards/database to circumvent

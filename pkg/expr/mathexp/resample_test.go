@@ -245,6 +245,38 @@ func TestResampleSeries(t *testing.T) {
 				time.Unix(10, 0), nil,
 			}),
 		},
+		{
+			name:        "resample series: downsampling (last / pad )",
+			interval:    time.Second * 3,
+			downsampler: "last",
+			upsampler:   "pad",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(11, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(0, 0), float64Pointer(0),
+			}, tp{
+				time.Unix(2, 0), float64Pointer(2),
+			}, tp{
+				time.Unix(4, 0), float64Pointer(3),
+			}, tp{
+				time.Unix(6, 0), float64Pointer(4),
+			}, tp{
+				time.Unix(8, 0), float64Pointer(0),
+			}, tp{
+				time.Unix(10, 0), float64Pointer(1),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), float64Pointer(0),
+			}, tp{
+				time.Unix(3, 0), float64Pointer(2),
+			}, tp{
+				time.Unix(6, 0), float64Pointer(4),
+			}, tp{
+				time.Unix(9, 0), float64Pointer(0),
+			}),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

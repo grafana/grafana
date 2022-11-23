@@ -148,15 +148,13 @@ describe('MetricStatEditor', () => {
     });
 
     it('should remove metricName from metricStat if it does not exist in new namespace', async () => {
-      propsNamespaceMetrics.datasource.api.getMetrics = jest
-        .fn()
-        .mockImplementation((namespace: string, region: string) => {
-          let mockMetrics =
-            namespace === 'n1' && region === props.metricStat.region
-              ? metrics
-              : [{ value: 'oldNamespaceMetric', label: 'oldNamespaceMetric', text: 'oldNamespaceMetric' }];
-          return Promise.resolve(mockMetrics);
-        });
+      propsNamespaceMetrics.datasource.api.getMetrics = jest.fn().mockImplementation(({ namespace, region }) => {
+        let mockMetrics =
+          namespace === 'n1' && region === props.metricStat.region
+            ? metrics
+            : [{ value: 'oldNamespaceMetric', label: 'oldNamespaceMetric', text: 'oldNamespaceMetric' }];
+        return Promise.resolve(mockMetrics);
+      });
       propsNamespaceMetrics.metricStat.metricName = 'oldNamespaceMetric';
       propsNamespaceMetrics.metricStat.namespace = 'n2';
 
@@ -167,7 +165,7 @@ describe('MetricStatEditor', () => {
       expect(screen.getByText('n2')).toBeInTheDocument();
       expect(screen.getByText('oldNamespaceMetric')).toBeInTheDocument();
 
-      await selectEvent.select(namespaceSelect, 'n1', { container: document.body });
+      await waitFor(() => selectEvent.select(namespaceSelect, 'n1', { container: document.body }));
 
       expect(onChange.mock.calls).toEqual([[{ ...propsNamespaceMetrics.metricStat, metricName: '', namespace: 'n1' }]]);
     });
@@ -183,7 +181,7 @@ describe('MetricStatEditor', () => {
       expect(screen.getByText('n1')).toBeInTheDocument();
       expect(screen.getByText('m1')).toBeInTheDocument();
 
-      await selectEvent.select(namespaceSelect, 'n2', { container: document.body });
+      await waitFor(() => selectEvent.select(namespaceSelect, 'n2', { container: document.body }));
 
       expect(onChange).toHaveBeenCalledTimes(1);
       expect(onChange.mock.calls).toEqual([

@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { MutableDataFrame } from '@grafana/data';
+import { CoreApp, MutableDataFrame } from '@grafana/data';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
@@ -29,7 +29,7 @@ describe('FlameGraphContainer', () => {
       },
     };
 
-    return <FlameGraphContainer data={flameGraphData} />;
+    return <FlameGraphContainer data={flameGraphData} app={CoreApp.Explore} />;
   };
 
   it('should render without error', async () => {

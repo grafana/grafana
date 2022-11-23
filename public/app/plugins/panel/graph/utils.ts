@@ -30,7 +30,7 @@ export function getDataTimeRange(frames: DataFrame[]): AbsoluteTimeRange | undef
   return found ? range : undefined;
 }
 
-// Check wether event is LegacyGraphHoverEvent
-export function isLegacyGraphHoverEvent(event: any): event is LegacyGraphHoverEventPayload {
-  return event.hasOwnProperty('pos');
+// Check whether event is LegacyGraphHoverEvent
+export function isLegacyGraphHoverEvent(event: unknown): event is LegacyGraphHoverEventPayload {
+  return Boolean(event && typeof event === 'object' && event.hasOwnProperty('pos'));
 }

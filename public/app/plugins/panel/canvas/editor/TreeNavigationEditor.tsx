@@ -3,19 +3,17 @@ import { Global } from '@emotion/react';
 import Tree, { TreeNodeProps } from 'rc-tree';
 import React, { Key, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
-import { CanvasElementOptions, canvasElementRegistry } from '../../../../features/canvas';
-import { notFoundItem } from '../../../../features/canvas/elements/notFound';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
 import { getTreeData, onNodeDrop, TreeElement } from '../tree';
 import { DragNode, DropNode } from '../types';
-import { doSelect, getElementTypes } from '../utils';
+import { doSelect, getElementTypes, onAddItem } from '../utils';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
 import { TreeViewEditorProps } from './elementEditor';
@@ -32,7 +30,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
   const globalCSS = getGlobalStyles(theme);
   const styles = useStyles2(getStyles);
 
-  const selectedBgColor = theme.v1.colors.formInputBorderActive;
+  const selectedBgColor = theme.colors.primary.border;
   const { settings } = item;
   const selection = useMemo(
     () => (settings?.selected ? settings.selected.map((v) => v?.getName()) : []),
@@ -109,21 +107,6 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     allowSelection = allow;
   };
 
-  const onAddItem = (sel: SelectableValue<string>) => {
-    const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
-    const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
-    newElementOptions.type = newItem.id;
-    if (newItem.defaultSize) {
-      newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
-    }
-    const newElement = new ElementState(newItem, newElementOptions, layer);
-    newElement.updateData(layer.scene.context);
-    layer.elements.push(newElement);
-    layer.scene.save();
-
-    layer.reinitializeMoveable();
-  };
-
   const onClearSelection = () => {
     layer.scene.clearCurrentSelection();
   };
@@ -141,7 +124,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     }
   };
 
-  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes);
+  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
     <>
@@ -166,7 +149,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 
       <HorizontalGroup justify="space-between">
         <div className={styles.addLayerButton}>
-          <AddLayerButton onChange={onAddItem} options={typeOptions} label={'Add item'} />
+          <AddLayerButton onChange={(sel) => onAddItem(sel, layer)} options={typeOptions} label={'Add item'} />
         </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>

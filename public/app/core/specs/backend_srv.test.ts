@@ -40,15 +40,15 @@ const getTestContext = (overides?: object) => {
   const appEventsMock: EventBusExtended = {
     emit: jest.fn(),
     publish: jest.fn(),
-  } as any as EventBusExtended;
+  } as jest.MockedObject<EventBusExtended>;
 
   const user: User = {
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
-  } as any as User;
+  } as jest.MockedObject<User>;
   const contextSrvMock: ContextSrv = {
     user,
-  } as any as ContextSrv;
+  } as jest.MockedObject<ContextSrv>;
   const logoutMock = jest.fn();
   const parseRequestOptionsMock = jest.fn().mockImplementation((options) => options);
 
@@ -61,14 +61,14 @@ const getTestContext = (overides?: object) => {
 
   backendSrv['parseRequestOptions'] = parseRequestOptionsMock;
 
-  const expectCallChain = (options: any) => {
+  const expectCallChain = () => {
     expect(fromFetchMock).toHaveBeenCalledTimes(1);
   };
 
   const expectRequestCallChain = (options: any) => {
     expect(parseRequestOptionsMock).toHaveBeenCalledTimes(1);
     expect(parseRequestOptionsMock).toHaveBeenCalledWith(options);
-    expectCallChain(options);
+    expectCallChain();
   };
 
   return {

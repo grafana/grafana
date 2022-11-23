@@ -57,9 +57,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       top: 0px;
       justify-content: center;
-      border-radius: 20px;
-      width: 26px;
-      height: 26px;
+      border-radius: ${theme.shape.borderRadius(10)};
+      width: ${theme.spacing(3.25)};
+      height: ${theme.spacing(3.25)};
     `,
     wrapLine: css`
       label: wrapLine;
@@ -67,6 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,

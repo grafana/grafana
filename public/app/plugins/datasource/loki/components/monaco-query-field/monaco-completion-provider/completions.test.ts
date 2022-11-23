@@ -6,6 +6,10 @@ import { CompletionDataProvider } from './CompletionDataProvider';
 import { getCompletions } from './completions';
 import { Label, Situation } from './situation';
 
+jest.mock('../../../querybuilder/operations', () => ({
+  explainOperator: () => 'Operator docs',
+}));
+
 const history = [
   {
     ts: 12345678,
@@ -25,7 +29,8 @@ const history = [
 
 const labelNames = ['place', 'source'];
 const labelValues = ['moon', 'luna', 'server\\1'];
-const extractedLabelKeys = ['extracted', 'label'];
+// Source is duplicated to test handling duplicated labels
+const extractedLabelKeys = ['extracted', 'place', 'source'];
 const otherLabels: Label[] = [
   {
     name: 'place',
@@ -35,89 +40,97 @@ const otherLabels: Label[] = [
 ];
 const afterSelectorCompletions = [
   {
-    documentation: 'Log line contains string',
+    documentation: 'Operator docs',
     insertText: '|= "$0"',
     isSnippet: true,
     label: '|= ""',
     type: 'LINE_FILTER',
   },
   {
-    documentation: 'Log line does not contain string',
+    documentation: 'Operator docs',
     insertText: '!= "$0"',
     isSnippet: true,
     label: '!= ""',
     type: 'LINE_FILTER',
   },
   {
-    documentation: 'Log line contains a match to the regular expression',
+    documentation: 'Operator docs',
     insertText: '|~ "$0"',
     isSnippet: true,
     label: '|~ ""',
     type: 'LINE_FILTER',
   },
   {
-    documentation: 'Log line does not contain a match to the regular expression',
+    documentation: 'Operator docs',
     insertText: '!~ "$0"',
     isSnippet: true,
     label: '!~ ""',
     type: 'LINE_FILTER',
   },
   {
-    documentation: 'Parse and extract labels from the log content.',
+    documentation: 'Operator docs',
     insertText: '',
     label: '// Placeholder for the detected parser',
     type: 'DETECTED_PARSER_PLACEHOLDER',
   },
   {
-    documentation: 'Parse and extract labels from the log content.',
+    documentation: 'Operator docs',
     insertText: '',
     label: '// Placeholder for logfmt or json',
     type: 'OPPOSITE_PARSER_PLACEHOLDER',
   },
   {
-    documentation: 'Parse and extract labels from the log content.',
+    documentation: 'Operator docs',
     insertText: '| pattern',
     label: 'pattern',
     type: 'PARSER',
   },
   {
-    documentation: 'Parse and extract labels from the log content.',
+    documentation: 'Operator docs',
     insertText: '| regexp',
     label: 'regexp',
     type: 'PARSER',
   },
   {
-    documentation: 'Parse and extract labels from the log content.',
+    documentation: 'Operator docs',
     insertText: '| unpack',
     label: 'unpack',
     type: 'PARSER',
   },
   {
     insertText: '| unwrap extracted',
-    label: 'unwrap extracted (detected)',
+    label: 'unwrap extracted',
     type: 'LINE_FILTER',
   },
   {
-    insertText: '| unwrap label',
-    label: 'unwrap label (detected)',
+    insertText: '| unwrap place',
+    label: 'unwrap place',
+    type: 'LINE_FILTER',
+  },
+  {
+    insertText: '| unwrap source',
+    label: 'unwrap source',
     type: 'LINE_FILTER',
   },
   {
     insertText: '| unwrap',
     label: 'unwrap',
     type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
   },
   {
     insertText: '| line_format "{{.$0}}"',
     isSnippet: true,
     label: 'line_format',
     type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
   },
   {
     insertText: '| label_format',
     isSnippet: true,
     label: 'label_format',
     type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
   },
 ];
 
@@ -209,6 +222,12 @@ describe('getCompletions', () => {
 
     expect(completions).toEqual([
       {
+        insertText: 'extracted',
+        label: 'extracted',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
         insertText: 'place',
         label: 'place',
         triggerOnInsert: false,
@@ -217,18 +236,6 @@ describe('getCompletions', () => {
       {
         insertText: 'source',
         label: 'source',
-        triggerOnInsert: false,
-        type: 'LABEL_NAME',
-      },
-      {
-        insertText: 'extracted',
-        label: 'extracted (parsed)',
-        triggerOnInsert: false,
-        type: 'LABEL_NAME',
-      },
-      {
-        insertText: 'label',
-        label: 'label (parsed)',
         triggerOnInsert: false,
         type: 'LABEL_NAME',
       },

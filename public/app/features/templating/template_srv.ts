@@ -10,13 +10,14 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 
+import { formatRegistry, FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 
-import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
+import { getVariableWrapper } from './LegacyVariableWrapper';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -38,7 +39,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   private _variables: any[];
   private regex = variableRegex;
   private index: any = {};
-  private grafanaVariables: any = {};
+  private grafanaVariables = new Map<string, any>();
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
@@ -165,12 +166,12 @@ export class TemplateSrv implements BaseTemplateSrv {
       formatItem = formatRegistry.get(FormatRegistryID.glob);
     }
 
-    const options: FormatOptions = { value, args, text: text ?? value };
-    return formatItem.formatter(options, variable);
+    const formatVariable = getVariableWrapper(variable.name, value, text ?? value);
+    return formatItem.formatter(value, args, formatVariable);
   }
 
   setGrafanaVariable(name: string, value: any) {
-    this.grafanaVariables[name] = value;
+    this.grafanaVariables.set(name, value);
   }
 
   /**
@@ -306,7 +307,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         return this.formatValue(value, fmt, variable, text);
       }
 
-      const systemValue = this.grafanaVariables[variable.current.value];
+      const systemValue = this.grafanaVariables.get(variable.current.value);
       if (systemValue) {
         return this.formatValue(systemValue, fmt, variable);
       }

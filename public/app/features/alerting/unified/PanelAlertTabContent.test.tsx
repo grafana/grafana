@@ -6,6 +6,7 @@ import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { toggleOption } from 'app/features/variables/pickers/OptionsPicker/reducer';
@@ -33,8 +34,10 @@ import * as ruleFormUtils from './utils/rule-form';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
+jest.mock('../../../core/hooks/useMediaQueryChange');
 
 jest.spyOn(config, 'getAllDataSources');
+jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 
 const dataSources = {
   prometheus: mockDataSource<PromOptions>({
