@@ -20,6 +20,10 @@ func mapSlice[I any, O any](a []I, f func(I) O) []O {
 	return o
 }
 
+// VerifyStarlark is the CLI Action for verifying Starlark files in a workspace.
+// It expects a single context argument which is the path to the workspace.
+// The actual verification procedure can return multiple errors which are
+// joined together to be one holistic error for the action.
 func VerifyStarlark(c *cli.Context) error {
 	if c.NArg() != 1 {
 		var message string
@@ -49,6 +53,11 @@ func VerifyStarlark(c *cli.Context) error {
 		))
 }
 
+// verifyStarlark walks all directories starting at provided workspace path and
+// verifies any Starlark files it finds.
+// Starlark files are assumed to end with the .star extension.
+// The verification relies on linting frovided by the 'buildifier' binary which
+// must be in the PATH.
 func verifyStarlark(ctx context.Context, workspace string) []error {
 	var errs []error
 
