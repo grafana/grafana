@@ -29,8 +29,8 @@ func Test_DimensionKeys_Route(t *testing.T) {
 				r.Namespace == "AWS/EC2" &&
 				r.MetricName == "CPUUtilization" &&
 				len(r.DimensionFilter) == 2 &&
-				assert.Contains(t, r.DimensionFilter, &resources.Dimension{"NodeID", "Shared"}) &&
-				assert.Contains(t, r.DimensionFilter, &resources.Dimension{"stage", "QueryCommit"})
+				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "NodeID", Value: "Shared"}) &&
+				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "stage", Value: "QueryCommit"})
 		})).Return([]string{}, nil).Once()
 		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
