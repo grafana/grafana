@@ -288,11 +288,11 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if err := s.nestedFolderCreate(ctx, cmd); err != nil {
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
-			logger.Error("error saving folder to nested folder store", err)
+			logger.Error("error saving folder to nested folder store", "error", err)
 			// do not shallow create error if the legacy folder delete fails
 			deleteErr := s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.UID, OrgID: cmd.OrgID, ForceDeleteRules: true, SignedInUser: user})
 			if deleteErr != nil {
-				logger.Error("error deleting folder after failed save to nested folder store", err)
+				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
 			}
 			return folder.FromDashboard(dash), err
 		}
@@ -402,7 +402,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		err := s.Delete(ctx, cmd)
 		if err != nil {
-			logger.Error("the delete folder on folder table failed with err: ", err.Error())
+			logger.Error("the delete folder on folder table failed with err: ", "error", err)
 		}
 	}
 
