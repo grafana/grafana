@@ -116,8 +116,15 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	tags = append(tags, tag)
 
 	args := []string{
-		"build", "--build-arg", fmt.Sprintf("BASE_IMAGE=%s", baseImage),
-		"--build-arg", fmt.Sprintf("GRAFANA_TGZ=%s", archive), "--tag", tag, "--no-cache",
+		"build",
+		"--build-arg", fmt.Sprintf("BASE_IMAGE=%s", baseImage),
+		"--build-arg", fmt.Sprintf("GRAFANA_TGZ=%s", archive),
+		"--build-arg", "GO_SRC=tgz-builder",
+		"--build-arg", "JS_SRC=tgz-builder",
+		"--build-arg", "RUN_SH=./run.sh",
+		"--tag", tag,
+		"--no-cache",
+		"--file", "../../Dockerfile",
 		".",
 	}
 
@@ -125,7 +132,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	//nolint:gosec
 	cmd := exec.Command("docker", args...)
 	cmd.Dir = buildDir
-	cmd.Env = append(os.Environ(), "DOCKER_CLI_EXPERIMENTAL=enabled")
+	cmd.Env = append(os.Environ(), "DOCKER_CLI_EXPERIMENTAL=enabled", "DOCKER_BUILDKIT=1")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return []string{}, fmt.Errorf("building Docker image failed: %w\n%s", err, output)
 	}
