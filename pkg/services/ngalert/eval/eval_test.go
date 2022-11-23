@@ -443,7 +443,7 @@ func TestValidate(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
 			condition := testCase.condition(cacheService)
 
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, exprservice.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, exprservice.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, nil))
 			evalCtx := Context(context.Background(), u)
 
 			_, err := evaluator.Create(evalCtx, condition)
