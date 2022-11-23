@@ -1,7 +1,7 @@
 import React from 'react';
 import { Observable, of } from 'rxjs';
 
-import { stringToJsRegex, VariableRefresh, DataSourceInstanceSettings } from '@grafana/data';
+import { stringToJsRegex, DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { sceneGraph } from '../../core/sceneGraph';

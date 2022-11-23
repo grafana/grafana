@@ -60,6 +60,10 @@ export function getVariablesDemo(): Scene {
         }),
         new DataSourceVariable({
           name: 'DataSource',
+          query: 'testdata',
+        }),
+        new DataSourceVariable({
+          name: 'DataSource',
           query: 'prometheus',
         }),
         new DataSourceVariable({
