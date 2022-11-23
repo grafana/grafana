@@ -89,7 +89,7 @@ export interface TemplateAPI {
   summary: string;
   name: string;
   source: SourceDescription;
-  created_at: string | undefined;
+  created_at?: string;
   yaml: string;
   params?: TemplateParamAPI[];
   expr: string;
@@ -106,7 +106,7 @@ export interface FormattedTemplate {
   name: string;
   summary: string;
   source: SourceDescription;
-  created_at: string | undefined;
+  created_at?: string;
   yaml: string;
 }
 

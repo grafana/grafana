@@ -214,6 +214,7 @@ export const getAvailableIcons = () =>
     'percona-database-mongodb',
     'percona-database-proxysql',
     'percona-database-haproxy',
+    'percona-asterisk',
     'pmm-logo',
     'qan-logo',
   ] as const;

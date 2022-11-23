@@ -47,7 +47,7 @@ describe('KubernetesInventory::', () => {
           },
         } as StoreState)}
       >
-        <KubernetesInventory />
+        <KubernetesInventory setMode={jest.fn} />
       </Provider>
     );
 
@@ -75,7 +75,7 @@ describe('KubernetesInventory::', () => {
           },
         } as StoreState)}
       >
-        <KubernetesInventory />
+        <KubernetesInventory setMode={jest.fn} />
       </Provider>
     );
 

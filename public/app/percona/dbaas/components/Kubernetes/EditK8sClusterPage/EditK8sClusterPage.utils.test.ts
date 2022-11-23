@@ -1,7 +1,7 @@
-import { onKubeConfigValueChange } from './AddKubernatesModal.utils';
+import { onKubeConfigValueChange } from './EditK8sClusterPage.utils';
 import kubeConfigFile from './KubeConfigTestMock';
 
-describe('AddKubernetesModal.utils::', () => {
+describe('EditK8sClusterPage.utils::', () => {
   it('getClusterNameFromKubeConfig returns name of cluster', () => {
     const mutatorMock = jest.fn();
     onKubeConfigValueChange(kubeConfigFile, mutatorMock);

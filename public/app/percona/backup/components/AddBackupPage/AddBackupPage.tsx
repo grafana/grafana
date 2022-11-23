@@ -28,6 +28,8 @@ import { getBackupLocations } from 'app/percona/shared/core/selectors';
 import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api';
 import { useAppDispatch } from 'app/store/store';
 
+import { PageSwitcher } from '../../../shared/components/PageSwitcher/PageSwitcher';
+import { PageSwitcherValue } from '../../../shared/components/PageSwitcher/PageSwitcher.types';
 import { BACKUP_INVENTORY_URL, BACKUP_SCHEDULED_URL } from '../../Backup.constants';
 import { Messages as MessagesBackup } from '../../Backup.messages';
 import { BackupService } from '../../Backup.service';
@@ -53,12 +55,11 @@ import {
   isDataModelDisabled,
   getLabelForStorageOption,
 } from './AddBackupPage.utils';
-import { PageSwitcher } from './PageSwitcher/PageSwitcher';
 import { RetryModeSelector } from './RetryModeSelector';
 import { ScheduleSection } from './ScheduleSection/ScheduleSection';
 
 const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = ({ match }) => {
-  const [queryParams] = useQueryParams();
+  const [queryParams, setQueryParams] = useQueryParams();
   const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || match.params.type === SCHEDULED_TYPE;
   const [backup, setBackup] = useState<Backup | ScheduledBackup | null>(null);
   const [pending, setPending] = useState(false);
@@ -69,6 +70,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
   const initialValues = useMemo(() => toFormBackup(backup, scheduleMode), [backup]);
   const { result: locations = [], loading: locationsLoading } = useSelector(getBackupLocations);
   const { Form } = withTypes<AddBackupFormProps>();
+
   const locationsOptions = locations.map(
     ({ locationID, name, type }): SelectableValue<string> => ({
       label: name,
@@ -109,6 +111,16 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
     setPending(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const onDemandChange = useCallback(() => {
+    setQueryParams({ scheduled: null });
+    setModalTitle(Messages.getModalTitle(false, editing));
+  }, [editing, setQueryParams]);
+
+  const onScheduledChange = useCallback(() => {
+    setQueryParams({ scheduled: true });
+    setModalTitle(Messages.getModalTitle(true, editing));
+  }, [editing, setQueryParams]);
 
   const handleBackup = async (values: AddBackupFormProps) => {
     try {
@@ -151,6 +163,14 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
     dispatch(fetchStorageLocations());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const pageSwitcherValues: Array<PageSwitcherValue<BackupType>> = useMemo(
+    () => [
+      { name: 'type', value: BackupType.DEMAND, onChange: onDemandChange, label: Messages.onDemand },
+      { name: 'type', value: BackupType.SCHEDULED, onChange: onScheduledChange, label: Messages.schedule },
+    ],
+    [onDemandChange, onScheduledChange]
+  );
 
   return (
     <Overlay isPending={pending}>
@@ -206,7 +226,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
               <CustomScrollbar hideHorizontalTrack={true}>
                 <div className={styles.contentInner}>
                   <div className={styles.pageWrapper}>
-                    {!editing && <PageSwitcher editing={editing} setModalTitle={setModalTitle} />}
+                    {!editing && <PageSwitcher values={pageSwitcherValues} className={styles.pageSwitcher} />}
                     <h4 className={styles.headingStyle}>{Messages.backupInfo}</h4>
                     <div className={styles.formContainer}>
                       <span className={styles.wideField}>

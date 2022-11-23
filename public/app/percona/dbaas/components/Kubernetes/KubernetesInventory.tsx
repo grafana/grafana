@@ -13,7 +13,7 @@ import { Table } from 'app/percona/shared/components/Elements/Table';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { fetchKubernetesAction, deleteKubernetesAction, addKubernetesAction } from 'app/percona/shared/core/reducers';
+import { fetchKubernetesAction, deleteKubernetesAction } from 'app/percona/shared/core/reducers';
 import {
   getKubernetes as getKubernetesSelector,
   getDeleteKubernetes,
@@ -23,15 +23,11 @@ import {
 
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 
-import { AddKubernetesModal } from './AddKubernetesModal/AddKubernetesModal';
 import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
-import {
-  GET_KUBERNETES_CANCEL_TOKEN,
-  CHECK_OPERATOR_UPDATE_CANCEL_TOKEN,
-  DELETE_KUBERNETES_CANCEL_TOKEN,
-} from './Kubernetes.constants';
+import { K8sPageMode } from './K8sRouting/K8sRouting';
+import { GET_KUBERNETES_CANCEL_TOKEN, CHECK_OPERATOR_UPDATE_CANCEL_TOKEN } from './Kubernetes.constants';
 import { getStyles } from './Kubernetes.styles';
-import { Kubernetes, OperatorToUpdate, NewKubernetesCluster } from './Kubernetes.types';
+import { Kubernetes, OperatorToUpdate } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus';
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
@@ -39,14 +35,17 @@ import { OperatorStatusRow } from './OperatorStatusRow/OperatorStatusRow';
 import { PortalK8sFreeClusterPromotingMessage } from './PortalK8sFreeClusterPromotingMessage/PortalK8sFreeClusterPromotingMessage';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
 
-export const KubernetesInventory: FC = () => {
+interface KubernetesInventoryProps {
+  setMode: React.Dispatch<React.SetStateAction<K8sPageMode>>;
+}
+
+export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) => {
   const styles = useStyles(getStyles);
   const dispatch = useDispatch();
   const navModel = usePerconaNavModel('kubernetes');
   const [selectedCluster, setSelectedCluster] = useState<Kubernetes | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [viewConfigModalVisible, setViewConfigModalVisible] = useState(false);
-  const [addModalVisible, setAddModalVisible] = useState(false);
   const [manageComponentsModalVisible, setManageComponentsModalVisible] = useState(false);
   const [operatorToUpdate, setOperatorToUpdate] = useState<OperatorToUpdate | null>(null);
   const [updateOperatorModalVisible, setUpdateOperatorModalVisible] = useState(false);
@@ -107,23 +106,12 @@ export const KubernetesInventory: FC = () => {
     () => (
       <AddClusterButton
         label={Messages.kubernetes.addAction}
-        action={() => setAddModalVisible(!addModalVisible)}
+        action={() => setMode('register')}
         data-testid="kubernetes-new-cluster-button"
       />
     ),
-    [addModalVisible]
+    [setMode]
   );
-
-  const addKubernetes = useCallback(async (cluster: NewKubernetesCluster, setPMMAddress = false) => {
-    await dispatch(
-      addKubernetesAction({
-        kubernetesToAdd: cluster,
-        setPMMAddress,
-        token: generateToken(DELETE_KUBERNETES_CANCEL_TOKEN),
-      })
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('dbaasEnabled'), []);
@@ -154,11 +142,6 @@ export const KubernetesInventory: FC = () => {
                 selectedCluster={selectedCluster}
               />
             )}
-            <AddKubernetesModal
-              isVisible={addModalVisible}
-              addKubernetes={addKubernetes}
-              setAddModalVisible={setAddModalVisible}
-            />
             <Modal
               title={Messages.kubernetes.deleteModal.title}
               isVisible={deleteModalVisible}

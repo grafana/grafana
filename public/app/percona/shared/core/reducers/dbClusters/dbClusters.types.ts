@@ -2,8 +2,8 @@ import { DBCluster, DBClusterPayload } from '../../../../dbaas/components/DBClus
 
 export interface PerconaDBClustersState {
   result: DBCluster[];
-  loading: boolean | undefined;
-  credentialsLoading: boolean | undefined;
+  loading?: boolean;
+  credentialsLoading?: boolean;
 }
 
 export interface DBClusterListApi {

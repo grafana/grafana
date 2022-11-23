@@ -35,7 +35,7 @@ export interface AddDbClusterFormValues {
   [AddDBClusterFields.memory]: number;
   [AddDBClusterFields.cpu]: number;
   [AddDBClusterFields.disk]: number;
-  [AddDBClusterFields.databaseType]: DatabaseOptionInitial | undefined;
+  [AddDBClusterFields.databaseType]?: DatabaseOptionInitial;
   [AddDBClusterFields.kubernetesCluster]?: KubernetesOption;
   [AddDBClusterFields.name]?: string;
 }

@@ -23,15 +23,6 @@ export const Messages = {
       },
     },
     deleteSuccess: 'Cluster successfully unregistered',
-    addModal: {
-      title: 'Register Kubernetes Cluster',
-      confirm: 'Register',
-      fields: {
-        clusterName: 'Kubernetes Cluster Name',
-        kubeConfig: 'Kubeconfig file',
-      },
-      paste: 'Paste from clipboard',
-    },
     table: {
       nameColumn: 'Kubernetes Cluster Name',
       clusterStatusColumn: 'Kubernetes Cluster Status',

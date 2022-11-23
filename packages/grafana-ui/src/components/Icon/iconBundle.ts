@@ -192,6 +192,7 @@ import u1188 from '!!raw-loader!../../../../../public/img/icons/mono/percona-dat
 import u1189 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-mongodb.svg';
 import u1190 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-proxysql.svg';
 import u1191 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-haproxy.svg';
+import u1192 from '!!raw-loader!../../../../../public/img/icons/mono/percona-asterisk.svg';
 
 import { cacheStore } from 'react-inlinesvg';
 
@@ -402,4 +403,5 @@ export function initIconCache() {
   cacheItem(u1189, 'mono/percona-database-mongodb.svg');
   cacheItem(u1190, 'mono/percona-database-proxysql.svg');
   cacheItem(u1191, 'mono/percona-database-haproxy.svg');
+  cacheItem(u1192, 'mono/percona-asterisk.svg');
 }

@@ -10,7 +10,7 @@ import { getKubernetes as getKubernetesSelector } from '../../../shared/core/sel
 import { getStyles } from '../DBaasRouting/DBaasRouting.styles';
 import { CHECK_OPERATOR_UPDATE_CANCEL_TOKEN, GET_KUBERNETES_CANCEL_TOKEN } from '../Kubernetes/Kubernetes.constants';
 
-export const DBaaSRouting: FC = ({}) => {
+export const DBaaSRouting: FC = () => {
   const styles = useStyles(getStyles);
   const { result: kubernetes, loading: kubernetesLoading } = useSelector(getKubernetesSelector);
   const [generateToken] = useCancelToken();

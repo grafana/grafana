@@ -72,4 +72,7 @@ export const getStyles = ({ breakpoints, colors, shape, spacing, v1: { spacing: 
   headingStyle: css`
     margin-bottom: ${spacingV1.lg};
   `,
+  pageSwitcher: css`
+    margin-bottom: ${spacingV1.lg};
+  `,
 });
