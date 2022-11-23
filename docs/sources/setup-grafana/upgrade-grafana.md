@@ -474,7 +474,7 @@ encourage to move on with envelope encryption.
 Find [here]({{< relref "../setup-grafana/configure-security/configure-database-encryption/" >}}) more details and some
 possible workarounds in case you end up in an undesired situation.
 
-## A note on Grafana Enterprise licensing
+### A note on Grafana Enterprise licensing
 
 When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
 
