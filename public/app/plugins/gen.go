@@ -55,7 +55,7 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		//adaptToPipeline(corecodegen.GoTypesJenny{}),
+		codegen.PluginGoTypesJenny(adaptToPipeline(corecodegen.GoTypesJenny{})),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})), // FIXME should pass imports mapper to TSTypesJenny
 	)
 

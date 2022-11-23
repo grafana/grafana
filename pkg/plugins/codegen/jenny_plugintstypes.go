@@ -17,9 +17,8 @@ func PluginTSTypesJenny(root string, inner codejen.OneToOne[*kindsys.PluginDecl]
 }
 
 type ptsJenny struct {
-	fileName string
-	root     string
-	inner    codejen.OneToOne[*kindsys.PluginDecl]
+	root  string
+	inner codejen.OneToOne[*kindsys.PluginDecl]
 }
 
 func (j *ptsJenny) JennyName() string {
