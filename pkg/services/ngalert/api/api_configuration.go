@@ -60,7 +60,6 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 	}
 
 	resp := apimodels.GettableNGalertConfig{
-		Alertmanagers:       cfg.Alertmanagers,
 		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
 	}
 	return response.JSON(http.StatusOK, resp)
@@ -81,21 +80,13 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
 	}
 
-	if sendAlertsTo == ngmodels.ExternalAlertmanagers &&
-		len(body.Alertmanagers)+len(externalAlertmanagers) < 1 {
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(externalAlertmanagers) < 1 {
 		return response.Error(400, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
 	}
 
 	cfg := &ngmodels.AdminConfiguration{
-		Alertmanagers: body.Alertmanagers,
-		SendAlertsTo:  sendAlertsTo,
-		OrgID:         c.OrgID,
-	}
-
-	if err := cfg.Validate(); err != nil {
-		msg := "failed to validate admin configuration"
-		srv.log.Error(msg, "error", err)
-		return ErrResp(http.StatusBadRequest, err, msg)
+		SendAlertsTo: sendAlertsTo,
+		OrgID:        c.OrgID,
 	}
 
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}

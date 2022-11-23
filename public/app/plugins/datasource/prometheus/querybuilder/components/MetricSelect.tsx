@@ -8,6 +8,7 @@ import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { AsyncSelect, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
+import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
@@ -22,7 +23,7 @@ export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
 }
 
-const MAX_NUMBER_OF_RESULTS = 1000;
+export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
 export function MetricSelect({ datasource, query, onChange, onGetMetrics, labelsFilters }: Props) {
   const styles = useStyles2(getStyles);
@@ -83,14 +84,6 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
   };
 
   /**
-   * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
-   */
-  const regexifyLabelValuesQueryString = (query: string) => {
-    const queryArray = query.split(' ');
-    return queryArray.map((query) => `${query}.*`).join('');
-  };
-
-  /**
    * Reformat the query string and label filters to return all valid results for current query editor state
    */
   const formatKeyValueStringsForLabelValuesQuery = (
@@ -109,8 +102,8 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
     // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
     const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
     return results.then((results) => {
-      if (results.length > MAX_NUMBER_OF_RESULTS) {
-        results.splice(0, results.length - MAX_NUMBER_OF_RESULTS);
+      if (results.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+        results.splice(0, results.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
       }
       return results.map((result) => {
         return {
@@ -137,8 +130,8 @@ export function MetricSelect({ datasource, query, onChange, onGetMetrics, labels
           onOpenMenu={async () => {
             setState({ isLoading: true });
             const metrics = await onGetMetrics();
-            if (metrics.length > MAX_NUMBER_OF_RESULTS) {
-              metrics.splice(0, metrics.length - MAX_NUMBER_OF_RESULTS);
+            if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+              metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
             }
             setState({ metrics, isLoading: undefined });
           }}

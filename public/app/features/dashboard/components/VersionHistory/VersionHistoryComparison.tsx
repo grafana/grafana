@@ -15,7 +15,7 @@ type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  diffData: { lhs: any; rhs: any };
+  diffData: { lhs: unknown; rhs: unknown };
 };
 
 export const VersionHistoryComparison: React.FC<DiffViewProps> = ({ baseInfo, newInfo, diffData, isNewLatest }) => {

@@ -286,58 +286,6 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 	return nil
 }
 
-func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
-	data cloudMonitoringResponse, title, text string) error {
-	annotations := make([]*annotationEvent, 0)
-
-	for _, series := range data.TimeSeriesData {
-		metricLabels := make(map[string]string)
-		resourceLabels := make(map[string]string)
-
-		for n, d := range data.TimeSeriesDescriptor.LabelDescriptors {
-			key := toSnakeCase(d.Key)
-			labelValue := series.LabelValues[n]
-			value := ""
-			switch d.ValueType {
-			case "BOOL":
-				strVal := strconv.FormatBool(labelValue.BoolValue)
-				value = strVal
-			case "INT64":
-				value = labelValue.Int64Value
-			default:
-				value = labelValue.StringValue
-			}
-			if strings.Index(key, "metric.") == 0 {
-				key = key[len("metric."):]
-				metricLabels[key] = value
-			} else if strings.Index(key, "resource.") == 0 {
-				key = key[len("resource."):]
-				resourceLabels[key] = value
-			}
-		}
-
-		for n, d := range data.TimeSeriesDescriptor.PointDescriptors {
-			// reverse the order to be ascending
-			for i := len(series.PointData) - 1; i >= 0; i-- {
-				point := series.PointData[i]
-				value := strconv.FormatFloat(point.Values[n].DoubleValue, 'f', 6, 64)
-				if d.ValueType == "STRING" {
-					value = point.Values[n].StringValue
-				}
-				annotations = append(annotations, &annotationEvent{
-					Time:  point.TimeInterval.EndTime,
-					Title: formatAnnotationText(title, value, d.MetricKind, metricLabels, resourceLabels),
-					Tags:  "",
-					Text:  formatAnnotationText(text, value, d.MetricKind, metricLabels, resourceLabels),
-				})
-			}
-		}
-	}
-
-	timeSeriesQuery.transformAnnotationToFrame(annotations, queryRes)
-	return nil
-}
-
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {

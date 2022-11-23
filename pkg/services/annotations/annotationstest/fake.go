@@ -93,6 +93,9 @@ func (repo *fakeAnnotationsRepo) Len() int {
 func (repo *fakeAnnotationsRepo) Items() map[int64]annotations.Item {
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
-
-	return repo.annotations
+	ret := make(map[int64]annotations.Item)
+	for k, v := range repo.annotations {
+		ret[k] = v
+	}
+	return ret
 }

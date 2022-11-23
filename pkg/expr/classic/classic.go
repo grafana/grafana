@@ -69,106 +69,108 @@ func (cmd *ConditionsCmd) NeedsVars() []string {
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
 func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.Vars) (mathexp.Results, error) {
-	// isFiring and isNoData tracks whether ConditionsCmd is firing or no data
-	var isFiring, isNoData bool
-	var res mathexp.Results
+	firing := true
+	newRes := mathexp.Results{}
+	noDataFound := true
 
-	matches := make([]EvalMatch, 0)
-	for ix, cond := range cmd.Conditions {
-		// isCondFiring and isCondNoData tracks whether the condition is firing or no data
-		//
-		// There are a number of reasons a condition can have no data:
-		//
-		//  1. The input data vars[cond.InputRefID] has no values
-		//  2. The input data has one or more values, however all are mathexp.NoData
-		//  3. The input data has one or more values of mathexp.Number or mathexp.Series,
-		//     however the either all mathexp.Number have a nil float64 or the reduce function
-		//     for all mathexp.Series returns a mathexp.Number with a nil float64
-		//  4. The input data is a combination of all mathexp.NoData, mathexp.Number with a nil
-		//     float64, or mathexp.Series that reduce to a nil float64
-		var isCondFiring, isCondNoData bool
-		var numSeriesNoData int
+	matches := []EvalMatch{}
 
-		series := vars[cond.InputRefID]
-		for _, value := range series.Values {
-			var (
-				name   string
-				number mathexp.Number
-			)
-			switch v := value.(type) {
+	for i, c := range cmd.Conditions {
+		querySeriesSet := vars[c.InputRefID]
+		nilReducedCount := 0
+		firingCount := 0
+
+		if len(querySeriesSet.Values) == 0 {
+			// Append a NoData data frame so "has no value" still works
+			querySeriesSet.Values = append(querySeriesSet.Values, mathexp.NoData{}.New())
+		}
+
+		for _, val := range querySeriesSet.Values {
+			var reducedNum mathexp.Number
+			var name string
+			switch v := val.(type) {
 			case mathexp.NoData:
-				// Reduce expressions return v.New(), however classic conditions use the operator
-				// in the condition to determine if the outcome of ConditionsCmd is no data.
 				// To keep this code as simple as possible we translate mathexp.NoData into a
 				// mathexp.Number with a nil value so number.GetFloat64Value() returns nil
-				number = mathexp.NewNumber("no data", nil)
-				number.SetValue(nil)
+				reducedNum = mathexp.NewNumber("no data", nil)
+				reducedNum.SetValue(nil)
+			case mathexp.Series:
+				reducedNum = c.Reducer.Reduce(v)
+				name = v.GetName()
 			case mathexp.Number:
+				reducedNum = v
 				if len(v.Frame.Fields) > 0 {
 					name = v.Frame.Fields[0].Name
 				}
-				number = v
-			case mathexp.Series:
-				name = v.GetName()
-				number = cond.Reducer.Reduce(v)
 			default:
-				return res, fmt.Errorf("can only reduce type series, got type %v", v.Type())
+				return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 			}
 
-			// Check if the value was either a mathexp.NoData, a mathexp.Number with a nil float64,
-			// or mathexp.Series that reduced to a nil float64
-			if number.GetFloat64Value() == nil {
-				numSeriesNoData += 1
-			} else if isValueFiring := cond.Evaluator.Eval(number); isValueFiring {
-				isCondFiring = true
-				// If the condition is met then add it to the list of matching conditions
-				labels := number.GetLabels()
-				if labels != nil {
-					labels = labels.Copy()
-				}
-				matches = append(matches, EvalMatch{
+			// TODO handle error / no data signals
+			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
+
+			evalRes := c.Evaluator.Eval(reducedNum)
+
+			if evalRes {
+				match := EvalMatch{
+					Value:  reducedNum.GetFloat64Value(),
 					Metric: name,
-					Value:  number.GetFloat64Value(),
-					Labels: labels,
-				})
+				}
+				if reducedNum.GetLabels() != nil {
+					match.Labels = reducedNum.GetLabels().Copy()
+				}
+				matches = append(matches, match)
+				firingCount++
+			} else if thisCondNoDataFound {
+				nilReducedCount++
 			}
 		}
 
-		// The condition is no data iff all the input data is a combination of all mathexp.NoData,
-		// mathexp.Number with a nil loat64, or mathexp.Series that reduce to a nil float64
-		isCondNoData = numSeriesNoData == len(series.Values)
-		if isCondNoData {
+		thisCondFiring := firingCount > 0
+		thisCondNoData := len(querySeriesSet.Values) == nilReducedCount
+
+		if i == 0 {
+			firing = thisCondFiring
+			noDataFound = thisCondNoData
+		}
+
+		if c.Operator == "or" {
+			firing = firing || thisCondFiring
+			noDataFound = noDataFound || thisCondNoData
+		} else {
+			firing = firing && thisCondFiring
+			noDataFound = noDataFound && thisCondNoData
+		}
+
+		if thisCondNoData {
 			matches = append(matches, EvalMatch{
 				Metric: "NoData",
 			})
+			noDataFound = true
 		}
 
-		if ix == 0 {
-			isFiring = isCondFiring
-			isNoData = isCondNoData
-		} else if cond.Operator == "or" {
-			isFiring = isFiring || isCondFiring
-			isNoData = isNoData || isCondNoData
-		} else {
-			isFiring = isFiring && isCondFiring
-			isNoData = isNoData && isCondNoData
-		}
+		firingCount = 0
+		nilReducedCount = 0
 	}
+
+	num := mathexp.NewNumber("", nil)
+
+	num.SetMeta(matches)
 
 	var v float64
-	number := mathexp.NewNumber("", nil)
-	number.SetMeta(matches)
-	if isFiring {
+	switch {
+	case noDataFound:
+		num.SetValue(nil)
+	case firing:
 		v = 1
-		number.SetValue(&v)
-	} else if isNoData {
-		number.SetValue(nil)
-	} else {
-		number.SetValue(&v)
+		num.SetValue(&v)
+	case !firing:
+		num.SetValue(&v)
 	}
 
-	res.Values = append(res.Values, number)
-	return res, nil
+	newRes.Values = append(newRes.Values, num)
+
+	return newRes, nil
 }
 
 // EvalMatch represents the series violating the threshold.

@@ -16,7 +16,6 @@ type (
 		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
 			*backend.DataResponse, cloudMonitoringResponse, string, error)
 		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
-		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text string) error
 		buildDeepLink() string
 		getRefID() string
 	}
@@ -81,6 +80,7 @@ type (
 		QueryType    string
 		MetricQuery  metricQuery
 		SloQuery     sloQuery
+		Type         string
 	}
 
 	cloudMonitoringBucketOptions struct {

@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
+	FooterIconURL      = "https://grafana.com/static/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
 

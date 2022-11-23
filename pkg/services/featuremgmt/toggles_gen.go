@@ -151,9 +151,9 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagPrometheusStreamingJSONParser
-	// Enable streaming JSON parser for Prometheus datasource
-	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+	// FlagPrometheusBufferedClient
+	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
+	FlagPrometheusBufferedClient = "prometheusBufferedClient"
 
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
@@ -196,7 +196,7 @@ const (
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
-	// Enables work-in-progress internationalization
+	// Enables internationalization
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
@@ -262,4 +262,12 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
+
+	// FlagAccessTokenExpirationCheck
+	// Enable OAuth access_token expiration check and token refresh using the refresh_token
+	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
+
+	// FlagElasticsearchBackendMigration
+	// Use Elasticsearch as backend data source
+	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 )

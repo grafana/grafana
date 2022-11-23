@@ -3,11 +3,13 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/tools/go/ast/astutil"
@@ -64,4 +66,100 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 	}
 
 	return byt, nil
+}
+
+type prefixmod struct {
+	prefix  string
+	replace string
+	rxp     *regexp.Regexp
+	rxpsuff *regexp.Regexp
+}
+
+// PrefixDropper returns an astutil.ApplyFunc that removes the provided prefix
+// string when it appears as a leading sequence in type names, var names, and
+// comments in a generated Go file.
+func PrefixDropper(prefix string) astutil.ApplyFunc {
+	return (&prefixmod{
+		prefix:  prefix,
+		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]+)`, prefix)),
+		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, prefix)),
+	}).applyfunc
+}
+
+// PrefixReplacer returns an astutil.ApplyFunc that removes the provided prefix
+// string when it appears as a leading sequence in type names, var names, and
+// comments in a generated Go file.
+//
+// When an exact match for prefix is found, the provided replace string
+// is substituted.
+func PrefixReplacer(prefix, replace string) astutil.ApplyFunc {
+	return (&prefixmod{
+		prefix:  prefix,
+		replace: replace,
+		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]+)`, prefix)),
+		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, prefix)),
+	}).applyfunc
+}
+
+func depoint(e ast.Expr) ast.Expr {
+	if star, is := e.(*ast.StarExpr); is {
+		return star.X
+	}
+	return e
+}
+
+func (d prefixmod) applyfunc(c *astutil.Cursor) bool {
+	n := c.Node()
+
+	switch x := n.(type) {
+	case *ast.ValueSpec:
+		d.handleExpr(x.Type)
+		for _, id := range x.Names {
+			d.do(id)
+		}
+	case *ast.TypeSpec:
+		// Always do typespecs
+		d.do(x.Name)
+	case *ast.Field:
+		// Don't rename struct fields. We just want to rename type declarations, and
+		// field value specifications that reference those types.
+		d.handleExpr(x.Type)
+
+	case *ast.CommentGroup:
+		for _, c := range x.List {
+			c.Text = d.rxpsuff.ReplaceAllString(c.Text, "$1")
+			if d.replace != "" {
+				c.Text = d.rxp.ReplaceAllString(c.Text, d.replace+"$1")
+			}
+		}
+	}
+	return true
+}
+
+func (d prefixmod) handleExpr(e ast.Expr) {
+	// Deref a StarExpr, if there is one
+	expr := depoint(e)
+	switch x := expr.(type) {
+	case *ast.Ident:
+		d.do(x)
+	case *ast.ArrayType:
+		if id, is := depoint(x.Elt).(*ast.Ident); is {
+			d.do(id)
+		}
+	case *ast.MapType:
+		if id, is := depoint(x.Key).(*ast.Ident); is {
+			d.do(id)
+		}
+		if id, is := depoint(x.Value).(*ast.Ident); is {
+			d.do(id)
+		}
+	}
+}
+
+func (d prefixmod) do(n *ast.Ident) {
+	if n.Name != d.prefix {
+		n.Name = strings.TrimPrefix(n.Name, d.prefix)
+	} else if d.replace != "" {
+		n.Name = d.replace
+	}
 }

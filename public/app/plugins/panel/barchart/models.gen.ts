@@ -85,6 +85,10 @@ export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig 
    * Controls line width of the bars.
    */
   lineWidth?: number;
+  /**
+   * Threshold rendering
+   */
+  thresholdsStyle?: ui.GraphThresholdsStyleConfig;
 }
 
 export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {

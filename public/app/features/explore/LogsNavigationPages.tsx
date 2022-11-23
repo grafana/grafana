@@ -3,7 +3,7 @@ import React from 'react';
 
 import { dateTimeFormat, systemDateFormats, TimeZone, AbsoluteTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { CustomScrollbar, Spinner, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, Spinner, useTheme2, clearButtonStyles } from '@grafana/ui';
 
 import { LogsPage } from './LogsNavigation';
 
@@ -48,7 +48,8 @@ export function LogsNavigationPages({
       <div className={styles.pagesWrapper} data-testid="logsNavigationPages">
         <div className={styles.pagesContainer}>
           {pages.map((page: LogsPage, index: number) => (
-            <div
+            <button
+              type="button"
               data-testid={`page${index + 1}`}
               className={styles.page}
               key={page.queryRange.to}
@@ -64,7 +65,7 @@ export function LogsNavigationPages({
               <div className={cx(styles.time, { selectedText: currentPageIndex === index })}>
                 {createPageContent(page, index)}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -101,6 +102,7 @@ const getStyles = (theme: GrafanaTheme2, loading: boolean) => {
       flex-direction: column;
     `,
     page: css`
+      ${clearButtonStyles(theme)}
       display: flex;
       margin: ${theme.spacing(2)} 0;
       cursor: ${loading ? 'auto' : 'pointer'};

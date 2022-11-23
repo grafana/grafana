@@ -113,9 +113,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "lokiMonacoEditor",
-			Description: "Access to Monaco query editor for Loki",
-			State:       FeatureStateAlpha,
+			Name:         "lokiMonacoEditor",
+			Description:  "Access to Monaco query editor for Loki",
+			State:        FeatureStateAlpha,
+			Expression:   "true",
+			FrontendOnly: true,
 		},
 		{
 			Name:        "swaggerUi",
@@ -208,9 +210,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheusStreamingJSONParser",
-			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateBeta,
+			Name:        "prometheusBufferedClient",
+			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "newDBLibrary",
@@ -268,8 +270,8 @@ var (
 		},
 		{
 			Name:        "internationalization",
-			Description: "Enables work-in-progress internationalization",
-			State:       FeatureStateAlpha,
+			Description: "Enables internationalization",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "topnav",
@@ -354,6 +356,16 @@ var (
 			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "accessTokenExpirationCheck",
+			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "elasticsearchBackendMigration",
+			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

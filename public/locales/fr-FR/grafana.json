@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Par défaut"
@@ -16,7 +21,7 @@
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
       "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter\u00a0: {{panelTitle}}"
+      "title": "Inspecter : {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -46,7 +51,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu\u00a0: {{show}}"
+      "unknown": "Objet inconnu : {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -58,12 +63,6 @@
       "request-time": "Durée totale de la requête",
       "rows": "Nombre total de lignes",
       "table-title": "Statistiques"
-    },
-    "refresh-picker": {
-      "off-arialabel": "Désactiver l'actualisation automatique",
-      "off-description": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
-      "off-label": "Désactivé",
-      "on-description": ""
     },
     "toolbar": {
       "add-panel": "Ajouter un panneau",
@@ -96,7 +95,7 @@
   },
   "library-panels": {
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -104,6 +103,15 @@
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
+    },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
@@ -190,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "Gérer et créer des utilisateurs sur l'ensemble du serveur Grafana",
-      "title": "Utilisateurs"
+      "title": "",
+      "titleBeforeTopnav": "Utilisateurs"
     },
     "help": {
       "title": "Aide"
@@ -233,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "Préférences"
+      "title": "",
+      "titleBeforeTopnav": "Préférences"
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -258,6 +268,9 @@
     },
     "search": {
       "placeholder": "Rechercher dans Grafana"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
@@ -305,14 +318,37 @@
   "news": {
     "title": "Dernières nouvelles sur le blog"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
       "share": "Partager",
+      "show-legend": "",
       "view": "Afficher"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "Désactiver l'actualisation automatique",
+      "label": "Désactivé"
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
@@ -367,10 +403,11 @@
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur\u00a0? ",
+      "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
-      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps."
+      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Intégrer",
@@ -384,6 +421,9 @@
       "dark": "Sombre",
       "field-name": "Thème",
       "light": "Clair"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -414,14 +454,45 @@
     },
     "calendar": {
       "apply-button": "",
-      "cancel-button": "",
+      "cancel-button": "Annuler",
       "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
     },
     "time-range": {
       "aria-role": "",
       "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -437,7 +508,7 @@
       "email-label": "Adresse e-mail",
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
-      "username-label": "Nom d´utilisateur"
+      "username-label": "Nom d’utilisateur"
     },
     "title": "Modifier le profil"
   },
@@ -450,5 +521,14 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

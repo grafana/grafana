@@ -17,6 +17,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -91,11 +92,13 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
+  const currentTimeRange = formattedRange(value, timeZone);
+
   return (
     <ButtonGroup className={styles.container}>
       {hasAbsolute && (
         <ToolbarButton
-          aria-label="Move time range backwards"
+          aria-label={t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')}
           variant={variant}
           onClick={onMoveBackward}
           icon="angle-left"
@@ -106,7 +109,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
         <ToolbarButton
           data-testid={selectors.components.TimePicker.openButton}
-          aria-label={`Time range picker with current time range ${formattedRange(value, timeZone)} selected`}
+          aria-label={t('time-picker.range-picker.current-time-selected', 'Time range selected: {{currentTimeRange}}', {
+            currentTimeRange,
+          })}
           aria-controls="TimePickerContent"
           onClick={onOpen}
           icon="clock-nine"
@@ -140,7 +145,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
       {hasAbsolute && (
         <ToolbarButton
-          aria-label="Move time range forwards"
+          aria-label={t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')}
           onClick={onMoveForward}
           icon="angle-right"
           narrow
@@ -149,7 +154,12 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       )}
 
       <Tooltip content={ZoomOutTooltip} placement="bottom">
-        <ToolbarButton aria-label="Zoom out time range" onClick={onZoom} icon="search-minus" variant={variant} />
+        <ToolbarButton
+          aria-label={t('time-picker.range-picker.zoom-out-button', 'Zoom out time range')}
+          onClick={onZoom}
+          icon="search-minus"
+          variant={variant}
+        />
       </Tooltip>
     </ButtonGroup>
   );
@@ -159,7 +169,9 @@ TimeRangePicker.displayName = 'TimeRangePicker';
 
 const ZoomOutTooltip = () => (
   <>
-    Time range zoom out <br /> CTRL+Z
+    <Trans i18nKey="time-picker.range-picker.zoom-out-tooltip">
+      Time range zoom out <br /> CTRL+Z
+    </Trans>
   </>
 );
 
@@ -169,7 +181,9 @@ const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; time
   return (
     <>
       {dateTimeFormat(timeRange.from, { timeZone })}
-      <div className="text-center">to</div>
+      <div className="text-center">
+        <Trans i18nKey="time-picker.range-picker.to">to</Trans>
+      </div>
       {dateTimeFormat(timeRange.to, { timeZone })}
       <div className="text-center">
         <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>

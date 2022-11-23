@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
 var _ InstanceStore = &FakeInstanceStore{}
@@ -49,4 +50,18 @@ func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRu
 type FakeHistorian struct{}
 
 func (f *FakeHistorian) RecordStates(ctx context.Context, rule *models.AlertRule, states []StateTransition) {
+}
+
+// NotAvailableImageService is a service that returns ErrScreenshotsUnavailable.
+type NotAvailableImageService struct{}
+
+func (s *NotAvailableImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+	return nil, screenshot.ErrScreenshotsUnavailable
+}
+
+// NoopImageService is a no-op image service.
+type NoopImageService struct{}
+
+func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+	return &models.Image{}, nil
 }

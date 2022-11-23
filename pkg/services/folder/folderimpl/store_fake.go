@@ -10,6 +10,9 @@ type FakeStore struct {
 	ExpectedFolders []*folder.Folder
 	ExpectedFolder  *folder.Folder
 	ExpectedError   error
+
+	CreateCalled bool
+	DeleteCalled bool
 }
 
 func NewFakeStore() *FakeStore {
@@ -19,10 +22,12 @@ func NewFakeStore() *FakeStore {
 var _ store = (*FakeStore)(nil)
 
 func (f *FakeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
+	f.CreateCalled = true
 	return f.ExpectedFolder, f.ExpectedError
 }
 
 func (f *FakeStore) Delete(ctx context.Context, uid string, orgID int64) error {
+	f.DeleteCalled = true
 	return f.ExpectedError
 }
 
