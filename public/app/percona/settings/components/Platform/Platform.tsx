@@ -48,6 +48,11 @@ export const Platform: FC = () => {
         setConnecting(false);
         dispatch(fetchServerInfoAction());
         dispatch(fetchSettingsAction());
+        setInitialValues((oldValues) => ({
+          ...oldValues,
+          pmmServerName: '',
+          accessToken: '',
+        }));
       }, CONNECT_DELAY);
     } catch (e) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

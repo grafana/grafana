@@ -1,4 +1,5 @@
 import { LoaderButton, logger, TextInputField } from '@percona/platform-core';
+import { AxiosError } from 'axios';
 import React, { FC, useCallback, useState } from 'react';
 import { Form } from 'react-final-form';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,11 +11,13 @@ import { appEvents } from 'app/core/app_events';
 import { fetchServerInfoAction, fetchSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaServer, getPerconaUser } from 'app/percona/shared/core/selectors';
 
+import { FORCE_DISCONNECT_PORTAL_ERROR_CODE } from '../Platform.constants';
 import { Messages as PlatformMessages } from '../Platform.messages';
 import { PlatformService } from '../Platform.service';
 
 import { Messages } from './Connected.messages';
 import { getStyles } from './Connected.styles';
+import { ForceDisconnectErrorBody } from './Connected.types';
 import { ModalBody } from './ModalBody/ModalBody';
 
 export const Connected: FC = () => {
@@ -46,13 +49,21 @@ export const Connected: FC = () => {
     closeModal();
     try {
       await PlatformService.forceDisconnect();
-      appEvents.emit(AppEvents.alertSuccess, [Messages.forceDisconnectSucceeded]);
-      setDisconnecting(false);
-      dispatch(fetchServerInfoAction());
-      dispatch(fetchSettingsAction());
     } catch (e) {
-      logger.error(e);
-      setDisconnecting(false);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const error = e as AxiosError<ForceDisconnectErrorBody>;
+
+      if (error.response?.data?.code === FORCE_DISCONNECT_PORTAL_ERROR_CODE) {
+        appEvents.emit(AppEvents.alertSuccess, [Messages.forceDisconnectSucceeded]);
+        setDisconnecting(false);
+        dispatch(fetchServerInfoAction());
+        dispatch(fetchSettingsAction());
+      } else {
+        const message = error.response?.data?.message;
+        logger.error(e);
+        appEvents.emit(AppEvents.alertError, [message ?? 'Unknown error']);
+        setDisconnecting(false);
+      }
     }
   };
 
