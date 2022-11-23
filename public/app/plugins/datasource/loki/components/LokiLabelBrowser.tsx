@@ -466,7 +466,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
               onChange={this.onChangeSearch}
               aria-label="Filter expression for values"
               value={searchTerm}
-              placeholder={'Enter a label name'}
+              placeholder={'Enter a label value'}
             />
           </div>
           <div className={styles.valueListArea}>
