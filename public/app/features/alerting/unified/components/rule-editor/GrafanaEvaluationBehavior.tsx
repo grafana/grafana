@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Button, Card, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -132,7 +133,7 @@ function FolderGroupAndEvaluationInterval({
         <Card className={styles.cardContainer}>
           <Card.Heading>Evaluation behavior</Card.Heading>
           <Card.Meta>
-            <div className={styles.evaluationDescription}>
+            <Stack direction="column">
               <div className={styles.evaluateLabel}>
                 {`Alert rules in the `} <span className={styles.bold}>{group}</span> group are evaluated every{' '}
                 <span className={styles.bold}>{evaluateEvery}</span>.
@@ -145,10 +146,10 @@ function FolderGroupAndEvaluationInterval({
                 </div>
               )}
               <br />
-            </div>
+            </Stack>
           </Card.Meta>
           <Card.Actions>
-            <div className={styles.editGroup}>
+            <Stack direction="row" justify-content="right" align-items="center">
               {isNewGroup && (
                 <div className={styles.warningMessage}>
                   {`To edit the evaluation group interval, save the alert rule.`}
@@ -163,7 +164,7 @@ function FolderGroupAndEvaluationInterval({
               >
                 <span>{'Edit evaluation group'}</span>
               </Button>
-            </div>
+            </Stack>
           </Card.Actions>
         </Card>
       )}
@@ -181,7 +182,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const evaluateForId = 'eval-for-input';
 
   return (
-    <div className={styles.flexRow}>
+    <Stack direction="row" justify-content="flex-start" align-items="flex-start">
       <InlineLabel
         htmlFor={evaluateForId}
         width={7}
@@ -197,7 +198,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
-    </div>
+    </Stack>
   );
 }
 
@@ -216,14 +217,14 @@ export function GrafanaEvaluationBehavior({
   return (
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
-      <div className={styles.flexColumn}>
+      <Stack direction="column" justify-content="flex-start" align-items="flex-start">
         <FolderGroupAndEvaluationInterval
           initialFolder={initialFolder}
           setEvaluateEvery={setEvaluateEvery}
           evaluateEvery={evaluateEvery}
         />
         <ForInput evaluateEvery={evaluateEvery} />
-      </div>
+      </Stack>
       <CollapseToggle
         isCollapsed={!showErrorHandling}
         onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
@@ -269,20 +270,8 @@ export function GrafanaEvaluationBehavior({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-start;
-  `,
   inlineField: css`
     margin-bottom: 0;
-  `,
-  flexColumn: css`
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
   `,
   collapseToggle: css`
     margin: ${theme.spacing(2, 0, 2, -1)};
@@ -305,16 +294,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   warningMessage: css`
     color: ${theme.colors.warning.text};
   `,
-  editGroup: css`
-    display: flex;
-    align-items: center;
-    justify-content: right;
-  `,
   bold: css`
     font-weight: bold;
-  `,
-  evaluationDescription: css`
-    display: flex;
-    flex-direction: column;
   `,
 });
