@@ -108,4 +108,29 @@ describe('UrlSyncManager', () => {
       expect(obj.state).toBe(currentState);
     });
   });
+
+  describe('When multiple scene objects wants to set same url keys', () => {
+    it('should give each object a unique key', () => {
+      const obj1 = new TestObj({ name: 'obj1' });
+      const obj2 = new TestObj({ name: 'obj2' });
+
+      const scene = new SceneFlexLayout({
+        children: [
+          obj1,
+          new SceneFlexLayout({
+            children: [obj2],
+          }),
+        ],
+      });
+
+      urlManager = new UrlSyncManager(scene);
+
+      // When making state changes for second object with same key
+      obj2.setState({ name: 'test2' });
+
+      // Should update url
+      const searchObj = locationService.getSearchObject();
+      expect(searchObj.name2).toBe('test2');
+    });
+  });
 });
