@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -49,7 +51,7 @@ func TestAPIEndpoint_GetCurrentOrg_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
 	require.NoError(t, err)
 
 	t.Run("Viewer can view CurrentOrg", func(t *testing.T) {
@@ -68,7 +70,7 @@ func TestAPIEndpoint_GetCurrentOrg_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
 	require.NoError(t, err)
 
 	t.Run("AccessControl allows viewing CurrentOrg with correct permissions", func(t *testing.T) {
@@ -93,7 +95,7 @@ func TestAPIEndpoint_PutCurrentOrg_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
 	require.NoError(t, err)
 
 	input := strings.NewReader(testUpdateOrgNameForm)
@@ -117,7 +119,7 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	_, err := sc.db.CreateOrgWithMember("TestOrg", sc.initCtx.UserID)
+	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: sc.initCtx.UserID})
 	require.NoError(t, err)
 
 	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
@@ -148,7 +150,7 @@ func TestAPIEndpoint_PutCurrentOrgAddress_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
 	require.NoError(t, err)
 
 	input := strings.NewReader(testUpdateOrgAddressForm)
@@ -170,7 +172,7 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
 	require.NoError(t, err)
 
 	input := strings.NewReader(testUpdateOrgAddressForm)
@@ -206,7 +208,7 @@ func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c acc
 
 	// Create `orgsCount` orgs
 	for i := 1; i <= int(orgID); i++ {
-		_, err := db.CreateOrgWithMember(fmt.Sprintf("TestOrg%v", i), 0)
+		err := db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: fmt.Sprintf("TestOrg%v", i), UserId: 0})
 		require.NoError(t, err)
 	}
 }

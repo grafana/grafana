@@ -32,7 +32,6 @@ describe('LokiQueryBuilderContainer', () => {
       ),
       onChange: jest.fn(),
       onRunQuery: () => {},
-      showRawQuery: true,
       showExplain: false,
     };
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);

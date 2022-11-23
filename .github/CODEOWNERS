@@ -114,6 +114,8 @@ go.sum @grafana/backend-platform
 /contribute/architecture/backend @grafana/backend-platform
 /contribute/engineering/backend @grafana/backend-platform
 
+package.json @grafana/frontend-ops
+tsconfig.json @grafana/frontend-ops
 /crowdin.yml @grafana/user-essentials
 /public/locales @grafana/user-essentials
 /public/app/core/internationalization @grafana/user-essentials
@@ -167,8 +169,6 @@ go.sum @grafana/backend-platform
 /scripts/grunt @grafana/frontend-ops
 /scripts/webpack @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/user-essentials
-package.json @grafana/frontend-ops
-tsconfig.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 .babelrc @grafana/frontend-ops
 .prettierrc.js @grafana/frontend-ops
