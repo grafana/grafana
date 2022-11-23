@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,13 +38,20 @@ type Service struct {
 	cfg               *setting.Cfg
 	dataService       backend.QueryDataHandler
 	dataSourceService datasources.DataSourceService
+	oAuthTokenService oauthtoken.OAuthTokenService
 }
 
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService) *Service {
+func ProvideService(
+	cfg *setting.Cfg,
+	pluginClient plugins.Client,
+	dataSourceService datasources.DataSourceService,
+	oAuthTokenService oauthtoken.OAuthTokenService,
+) *Service {
 	return &Service{
 		cfg:               cfg,
 		dataService:       pluginClient,
 		dataSourceService: dataSourceService,
+		oAuthTokenService: oAuthTokenService,
 	}
 }
 

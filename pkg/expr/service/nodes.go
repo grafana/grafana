@@ -7,14 +7,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -215,6 +219,37 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			},
 		},
 		Headers: dn.request.Headers,
+	}
+
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx != nil && reqCtx.Req != nil {
+		middlewares := []httpclient.Middleware{}
+		if reqCtx.Req != nil {
+			middlewares = append(middlewares,
+				httpclientprovider.ForwardedCookiesMiddleware(reqCtx.Req.Cookies(), dn.datasource.AllowedCookies(), []string{s.cfg.LoginCookieName}),
+			)
+		}
+
+		if s.oAuthTokenService.IsOAuthPassThruEnabled(dn.datasource) {
+			if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, reqCtx.SignedInUser); token != nil {
+				req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+
+				idToken, ok := token.Extra("id_token").(string)
+				if ok && idToken != "" {
+					req.Headers["X-ID-Token"] = idToken
+				}
+				middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
+			}
+		}
+
+		if reqCtx.Req != nil {
+			proxyutil.ClearCookieHeader(reqCtx.Req, dn.datasource.AllowedCookies(), []string{s.cfg.LoginCookieName})
+			if cookieStr := reqCtx.Req.Header.Get("Cookie"); cookieStr != "" {
+				req.Headers["Cookie"] = cookieStr
+			}
+		}
+
+		ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
 	}
 
 	resp, err := s.dataService.QueryData(ctx, req)
