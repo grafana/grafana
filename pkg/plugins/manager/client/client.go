@@ -227,8 +227,8 @@ func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext
 		return ctx
 	}
 
-	user := appcontext.MustUser(ctx)
-	if user == nil || user.IsAnonymous || user.IsDisabled {
+	user, err := appcontext.User(ctx)
+	if err != nil || user == nil || user.IsAnonymous || user.IsDisabled {
 		return ctx
 	}
 
