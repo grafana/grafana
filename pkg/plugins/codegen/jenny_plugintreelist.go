@@ -29,7 +29,7 @@ type ptlJenny struct {
 	plugins    map[string]bool
 }
 
-func (gen *ptlJenny) JennyName() string {
+func (j *ptlJenny) JennyName() string {
 	return "PluginTreeListJenny"
 }
 
