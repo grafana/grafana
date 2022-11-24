@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -118,9 +119,14 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Respo
 // 500: internalServerError
 func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response {
 	cmd := user.UpdateUserCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	var err error
+	if err = web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	cmd.Email = strings.TrimSpace(cmd.Email)
+	cmd.Login = strings.TrimSpace(cmd.Login)
+
 	if setting.AuthProxyEnabled {
 		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
 			return response.Error(400, "Not allowed to change email when auth proxy is using email property", nil)
@@ -148,13 +154,18 @@ func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response
 func (hs *HTTPServer) UpdateUser(c *models.ReqContext) response.Response {
 	cmd := user.UpdateUserCommand{}
 	var err error
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	if err = web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	cmd.Email = strings.TrimSpace(cmd.Email)
+	cmd.Login = strings.TrimSpace(cmd.Login)
+
 	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
+
 	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
@@ -183,6 +194,16 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *models.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserCommand) response.Response {
+	// external user -> user data cannot be updated
+	isExternal, err := hs.isExternalUser(ctx, cmd.UserID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to validate User", err)
+	}
+
+	if isExternal {
+		return response.Error(http.StatusForbidden, "User info cannot be updated for external Users", nil)
+	}
+
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
@@ -198,6 +219,20 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 	}
 
 	return response.Success("User updated")
+}
+
+func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {
+	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
+	var err error
+	if err = hs.authInfoService.GetAuthInfo(ctx, &getAuthQuery); err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, user.ErrUserNotFound) {
+		return false, nil
+	}
+
+	return false, err
 }
 
 // swagger:route GET /user/orgs signed_in_user getSignedInUserOrgList
