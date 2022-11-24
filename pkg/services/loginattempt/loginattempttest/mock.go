@@ -10,6 +10,7 @@ var _ loginattempt.Service = new(MockLoginAttemptService)
 
 type MockLoginAttemptService struct {
 	AddCalled      bool
+	ResetCalled    bool
 	ValidateCalled bool
 
 	ExpectedValid bool
@@ -18,6 +19,11 @@ type MockLoginAttemptService struct {
 
 func (f *MockLoginAttemptService) Add(ctx context.Context, username, IPAddress string) error {
 	f.AddCalled = true
+	return f.ExpectedErr
+}
+
+func (f *MockLoginAttemptService) Reset(ctx context.Context, username string) error {
+	f.ResetCalled = true
 	return f.ExpectedErr
 }
 

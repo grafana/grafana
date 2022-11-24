@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
+import React from 'react';
 import { Row } from 'react-table';
 
 import {
@@ -23,6 +24,7 @@ import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
+import { RowExpander } from './RowExpander';
 import {
   CellComponent,
   TableCellDisplayMode,
@@ -31,6 +33,8 @@ import {
   GrafanaTableColumn,
   TableFooterCalc,
 } from './types';
+
+export const EXPANDER_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -61,10 +65,36 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
+  expandedIndexes: Set<number>,
+  setExpandedIndexes: (indexes: Set<number>) => void,
+  expander: boolean,
   footerValues?: FooterItem[]
 ): GrafanaTableColumn[] {
-  const columns: GrafanaTableColumn[] = [];
+  const columns: GrafanaTableColumn[] = expander
+    ? [
+        {
+          // Make an expander cell
+          Header: () => null, // No header
+          id: 'expander', // It needs an ID
+          Cell: ({ row }) => {
+            return <RowExpander row={row} expandedIndexes={expandedIndexes} setExpandedIndexes={setExpandedIndexes} />;
+          },
+          width: EXPANDER_WIDTH,
+          minWidth: EXPANDER_WIDTH,
+          filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+            return [];
+          },
+          justifyContent: 'left',
+          field: data.fields[0],
+          sortType: 'basic',
+        },
+      ]
+    : [];
   let fieldCountWithoutWidth = 0;
+
+  if (expander) {
+    availableWidth -= EXPANDER_WIDTH;
+  }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
