@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -110,7 +110,7 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     list: css({
       listStyle: 'none',
@@ -121,7 +121,7 @@ const getStyles = () => {
       objectFit: 'contain',
     }),
     button: css({
-      marginLeft: '16px',
+      marginLeft: theme.spacing(2),
     }),
   };
 };
