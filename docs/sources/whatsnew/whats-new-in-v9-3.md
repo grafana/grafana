@@ -119,7 +119,7 @@ directory.
 Use the [`skip_org_role_sync` LDAP authentication configuration option]({{< relref
 "../setup-grafana/configure-security/configure-authentication/ldap/#disable-org-role-synchronization" >}})
 when configuring LDAP authentication to prevent the synchronization between your LDAP groups and organization roles
-and make user roles editable from within Grafana.
+and make user roles editable manually.
 
 ## Azure AD OAuth2 - New option to always fetch groups from the Graph API
 
