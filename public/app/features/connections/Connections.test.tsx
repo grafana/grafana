@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMockDataSources } from 'app/features/datasources/__mocks__';
 import * as api from 'app/features/datasources/api';
 import { configureStore } from 'app/store/configureStore';
@@ -14,6 +15,7 @@ import Connections from './Connections';
 import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
 
+jest.mock('app/core/services/context_srv');
 jest.mock('app/features/datasources/api');
 
 const renderPage = (
@@ -36,6 +38,7 @@ describe('Connections', () => {
 
   beforeEach(() => {
     (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
+    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
   test('shows the "Data sources" page by default', async () => {

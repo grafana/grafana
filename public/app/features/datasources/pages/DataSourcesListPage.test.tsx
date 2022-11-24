@@ -3,6 +3,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { LayoutModes } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
 import { navIndex, getMockDataSources } from '../__mocks__';
@@ -11,6 +12,7 @@ import { initialState } from '../state';
 
 import { DataSourcesListPage } from './DataSourcesListPage';
 
+jest.mock('app/core/services/context_srv');
 jest.mock('../api', () => ({
   ...jest.requireActual('../api'),
   getDataSources: jest.fn().mockResolvedValue([]),
@@ -36,6 +38,10 @@ const setup = (options: { isSortAscending: boolean }) => {
 };
 
 describe('Render', () => {
+  beforeEach(() => {
+    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
+  });
+
   it('should render component', async () => {
     setup({ isSortAscending: true });
 
@@ -44,6 +50,17 @@ describe('Render', () => {
     expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Add new data source' })).toBeInTheDocument();
+  });
+
+  it('should not render "Add new data source" button if user has no permissions', async () => {
+    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(false);
+    setup({ isSortAscending: true });
+
+    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Add new data source' })).toBeNull();
   });
 
   it('should render action bar and datasources', async () => {
