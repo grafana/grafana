@@ -63,8 +63,11 @@ describe('TracePageHeader test', () => {
 
   it('should render the trace title', () => {
     setup();
-
-    expect(screen.getByRole('heading', { name: getTraceName(trace!.spans) })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: (content) => content.replace(/ /g, '').startsWith(getTraceName(trace!.spans).replace(/ /g, '')),
+      })
+    ).toBeInTheDocument();
   });
 
   it('should render the header items', () => {
