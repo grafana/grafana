@@ -2,7 +2,7 @@ package kindsys
 
 import "github.com/grafana/thema"
 
-// CommonMeta contains the kind metadata common to all categories of kinds.
+// CommonMeta contains the metadata common to all categories of kinds.
 type CommonMeta struct {
 	Name              string   `json:"name"`
 	PluralName        string   `json:"pluralName"`

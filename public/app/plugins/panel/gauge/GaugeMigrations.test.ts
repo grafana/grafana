@@ -141,7 +141,7 @@ describe('Gauge Panel Migrations', () => {
   });
 
   it('change from angular singlestat to gauge', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,

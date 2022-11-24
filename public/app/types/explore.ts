@@ -148,7 +148,7 @@ export interface ExploreItemState {
   /**
    * Table model that combines all query table results into a single table.
    */
-  tableResult: DataFrame | null;
+  tableResult: DataFrame[] | null;
 
   /**
    * React keys for rendering of QueryRows
@@ -203,6 +203,8 @@ export interface ExploreItemState {
   logsVolumeData?: DataQueryResponse;
 
   panelsState: ExplorePanelsState;
+
+  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -247,6 +249,6 @@ export interface ExplorePanelData extends PanelData {
   nodeGraphFrames: DataFrame[];
   flameGraphFrames: DataFrame[];
   graphResult: DataFrame[] | null;
-  tableResult: DataFrame | null;
+  tableResult: DataFrame[] | null;
   logsResult: LogsModel | null;
 }

@@ -97,6 +97,14 @@ func main() {
 			},
 		},
 		{
+			Name:   "upload-cdn",
+			Usage:  "Upload public/* to a cdn bucket",
+			Action: UploadCDN,
+			Flags: []cli.Flag{
+				&editionFlag,
+			},
+		},
+		{
 			Name:   "shellcheck",
 			Usage:  "Run shellcheck on shell scripts",
 			Action: Shellcheck,
@@ -154,6 +162,15 @@ func main() {
 			},
 		},
 		{
+			Name:   "upload-packages",
+			Usage:  "Upload Grafana packages",
+			Action: UploadPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+			},
+		},
+		{
 			Name:  "artifacts",
 			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
@@ -168,6 +185,18 @@ func main() {
 							Action:    ArgCountWrapper(1, FetchImages),
 							Flags: []cli.Flag{
 								&editionFlag,
+							},
+						},
+						{
+							Name:      "publish-enterprise2",
+							Usage:     "Handle Grafana Enterprise2 Docker images",
+							ArgsUsage: "[version]",
+							Action:    Enterprise2,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "dockerhub-repo",
+									Usage: "DockerHub repo to push images",
+								},
 							},
 						},
 					},
@@ -196,7 +225,7 @@ func main() {
 				{
 					Name:   "github",
 					Usage:  "Publish packages to GitHub releases",
-					Action: PublishGitHub,
+					Action: PublishGithub,
 					Flags: []cli.Flag{
 						&dryRunFlag,
 						&cli.StringFlag{
@@ -211,11 +240,38 @@ func main() {
 						},
 						&cli.StringFlag{
 							Name:  "tag",
-							Usage: "Release tag (default from metadata)ß",
+							Usage: "Release tag (default from metadata)",
 						},
 						&cli.BoolFlag{
 							Name:  "create",
 							Usage: "Create release if it doesn't exist",
+						},
+					},
+				},
+				{
+					Name:   "aws",
+					Usage:  "Publish image to AWS Marketplace releases",
+					Action: PublishAwsMarketplace,
+					Flags: []cli.Flag{
+						&dryRunFlag,
+						&cli.StringFlag{
+							Name:  "version",
+							Usage: "Release version (default from metadata)",
+						},
+						&cli.StringFlag{
+							Name:     "image",
+							Required: true,
+							Usage:    "Name of the image to be released",
+						},
+						&cli.StringFlag{
+							Name:     "repo",
+							Required: true,
+							Usage:    "AWS Marketplace ECR repository",
+						},
+						&cli.StringFlag{
+							Name:     "product",
+							Required: true,
+							Usage:    "AWS Marketplace product identifier",
 						},
 					},
 				},

@@ -60,8 +60,6 @@ Complete this task when you want to view a list of existing organizations.
 
 A list of organizations appears.
 
-![Server Admin organization list](/static/img/docs/manage-users/server-org-list-7-3.png)
-
 ## Create an organization
 
 Create an organization when you want to isolate dashboards and other resources from each other.
@@ -117,5 +115,3 @@ Edit an organization when you want to change its name.
 1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Orgs**.
 1. Click the organization you want to edit.
 1. Update the organization name and click **Update**.
-
-![Server admin Edit Organization](/static/img/docs/manage-users/server-admin-edit-org-7-3.png)
