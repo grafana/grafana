@@ -1,19 +1,17 @@
-import { prettyDOM, render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors/src';
 import { config, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import 'whatwg-fetch';
-import { testIds } from '../../../plugins/datasource/prometheus/components/PromQueryEditorForAlerting';
 import { RulerGrafanaRuleDTO } from '../../../types/unified-alerting-dto';
-import { getMockDataSourceMeta } from '../../datasources/__mocks__';
 
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
