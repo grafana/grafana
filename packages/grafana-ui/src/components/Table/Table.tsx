@@ -305,6 +305,10 @@ export const Table = memo((props: Props) => {
     }
   });
 
+  useEffect(() => {
+    setExpandedIndexes(new Set());
+  }, [data, subData]);
+
   const renderSubTable = React.useCallback(
     (rowIndex: number) => {
       if (expandedIndexes.has(rowIndex)) {
