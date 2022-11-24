@@ -214,7 +214,7 @@ function SearchSection({ logsDatasourceUid, onChange, onRunQuery, query }: Searc
           datasource={ds}
           onChange={onChange}
           onRunQuery={onRunQuery}
-          query={query.linkedQuery ?? ({ refId: 'linked' } as any)}
+          query={query.linkedQuery ?? ({ refId: 'linked' } as LokiQuery)}
           history={[]}
         />
       </>

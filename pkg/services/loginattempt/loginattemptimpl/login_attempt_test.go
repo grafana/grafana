@@ -96,3 +96,7 @@ func (f fakeStore) CreateLoginAttempt(ctx context.Context, command CreateLoginAt
 func (f fakeStore) DeleteOldLoginAttempts(ctx context.Context, command DeleteOldLoginAttemptsCommand) (int64, error) {
 	return f.ExpectedDeletedRows, f.ExpectedErr
 }
+
+func (f fakeStore) DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error {
+	return f.ExpectedErr
+}
