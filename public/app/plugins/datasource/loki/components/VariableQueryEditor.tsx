@@ -104,7 +104,7 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
             tooltip={
               <div>
                 {
-                  'Optional. If defined, a list of values for the label in the specified log stream selector is returned. E.g. {stream="name"}'
+                  'Optional. If defined, a list of values for the label in the specified log stream selector is returned. E.g. {name="value"}'
                 }
               </div>
             }
