@@ -218,12 +218,13 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	// set values to update
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:                existingPubdash.Uid,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			UpdatedBy:          dto.UserId,
-			UpdatedAt:          time.Now(),
+			Uid:                    existingPubdash.Uid,
+			IsEnabled:              dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled:     dto.PublicDashboard.AnnotationsEnabled,
+			TimeRangePickerEnabled: dto.PublicDashboard.TimeRangePickerEnabled,
+			TimeSettings:           dto.PublicDashboard.TimeSettings,
+			UpdatedBy:              dto.UserId,
+			UpdatedAt:              time.Now(),
 		},
 	}
 

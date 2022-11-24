@@ -31,13 +31,14 @@ const QueryFailure = "failure"
 var QueryResultStatuses = []string{QuerySuccess, QueryFailure}
 
 type PublicDashboard struct {
-	Uid                string        `json:"uid" xorm:"pk uid"`
-	DashboardUid       string        `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId              int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
-	TimeSettings       *TimeSettings `json:"timeSettings" xorm:"time_settings"`
-	IsEnabled          bool          `json:"isEnabled" xorm:"is_enabled"`
-	AccessToken        string        `json:"accessToken" xorm:"access_token"`
-	AnnotationsEnabled bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
+	Uid                    string        `json:"uid" xorm:"pk uid"`
+	DashboardUid           string        `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId                  int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
+	TimeSettings           *TimeSettings `json:"timeSettings" xorm:"time_settings"`
+	IsEnabled              bool          `json:"isEnabled" xorm:"is_enabled"`
+	AccessToken            string        `json:"accessToken" xorm:"access_token"`
+	AnnotationsEnabled     bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
+	TimeRangePickerEnabled bool          `json:"timeRangePickerEnabled" xorm:"time_range_picker_enabled"`
 
 	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
 	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
