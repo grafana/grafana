@@ -8,6 +8,7 @@ import { BackupType } from 'app/percona/backup/Backup.types';
 
 import { Messages } from '../AddBackupPage.messages';
 
+import { Messages as PageSwitcherMessages } from './PageSwitcher.messages';
 import { getStyles } from './PageSwitcher.styles';
 import { PageSwitcherProps } from './PageSwitcher.types';
 
@@ -36,7 +37,7 @@ export const PageSwitcher = ({ scheduleMode, editing, setModalTitle }: PageSwitc
             }}
           >
             <Card.Heading>{Messages.onDemand}</Card.Heading>
-            <Card.Description>Backup on demand</Card.Description>
+            <Card.Description>{PageSwitcherMessages.backupDescription}</Card.Description>
           </Card>
         )}
       </Field>
@@ -54,7 +55,7 @@ export const PageSwitcher = ({ scheduleMode, editing, setModalTitle }: PageSwitc
             }}
           >
             <Card.Heading> {Messages.schedule}</Card.Heading>
-            <Card.Description>Scheduled Backup</Card.Description>
+            <Card.Description>{PageSwitcherMessages.scheduleBackupDescription}</Card.Description>
           </Card>
         )}
       </Field>
