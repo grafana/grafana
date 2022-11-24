@@ -1,4 +1,3 @@
-import { ParsedQuery } from 'query-string';
 import { ReactNode } from 'react';
 
 import { GrafanaThemeType } from '@grafana/data';
@@ -23,11 +22,11 @@ export interface FNDashboardProps {
   uid: string;
   slug: string;
   mode: GrafanaThemeType.Dark | GrafanaThemeType.Light;
-  queryParams: ParsedQuery<string>;
+  queryParams: Partial<AnyObject<string, string>>;
   fnError?: ReactNode;
   fnLoader?: ReactNode;
   pageTitle?: string;
-  controlsContainer: string;
+  controlsContainer: HTMLElement | null;
   isLoading: (isLoading: boolean) => void;
   setErrors: (errors?: { [K: number | string]: string }) => void;
   hiddenVariables: string[];

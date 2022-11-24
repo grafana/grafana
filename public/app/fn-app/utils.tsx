@@ -1,23 +1,17 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 
 export interface RenderPortalProps {
-  ID: string;
+  renderContainer: HTMLElement;
 }
 
-export declare type PortalEffectReturn = {
-  portalDiv: HTMLElement | null;
-}
-
-export const getPortalContainer = (ID: string): HTMLElement | null => document.getElementById(ID);
-
-export const RenderPortal: FC<RenderPortalProps> = ({ ID, children }) => {
-  const portalDiv = getPortalContainer(ID)
-  
-  if(!portalDiv){
-    return null;
-  }
-
-  return ReactDOM.createPortal(children, portalDiv);
+export const RenderPortal: FC<RenderPortalProps> = ({ renderContainer, children }) => {
+  useEffect(() => {
+    const selector = $('#grafana-controls');
+    const noOfChildren = selector.children().length;
+    if (noOfChildren > 1) {
+      selector.find('header:first').remove();
+    }
+  }, []);
+  return ReactDOM.createPortal(children, renderContainer);
 };
-

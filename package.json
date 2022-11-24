@@ -353,7 +353,6 @@
     "pluralize": "^8.0.0",
     "prismjs": "1.28.0",
     "prop-types": "15.8.1",
-    "query-string": "^7.1.1",
     "rc-cascader": "3.6.1",
     "rc-drawer": "4.4.3",
     "rc-slider": "9.7.5",

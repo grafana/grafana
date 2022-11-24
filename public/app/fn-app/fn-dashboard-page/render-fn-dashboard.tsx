@@ -5,8 +5,10 @@ import { ThunkDispatch } from 'redux-thunk';
 
 /* eslint-disable-next-line  */
 import { locationService as locationSrv, HistoryWrapper } from '@grafana/runtime';
-import { setInitialMountState } from 'app/core/reducers/fn-slice';
+import { setInitialMountState, updateFnState } from 'app/core/reducers/fn-slice';
 import DashboardPage, { DashboardPageProps } from 'app/features/dashboard/containers/DashboardPage';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { cancelVariables } from 'app/features/variables/state/actions';
 import { FnLoggerService } from 'app/fn_logger';
 import { DashboardRoutes, StoreState, useSelector } from 'app/types';
 
@@ -97,6 +99,16 @@ export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
 
     locationService.fnPathnameChange(window.location.pathname, queryParams);
 
+    return () => {
+      getTimeSrv().stopAutoRefresh();
+      dispatch(
+        updateFnState({
+          type: 'FNDashboard',
+          payload: false,
+        })
+      );
+      dispatch(cancelVariables(uid));
+    };
   }, [dispatch, uid, slug, controlsContainer, pageTitle, hiddenVariables, queryParams, mode]);
 
   const dashboardPageProps: DashboardPageProps = merge({}, DEFAULT_DASHBOARD_PAGE_PROPS, {
