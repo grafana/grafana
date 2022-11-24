@@ -251,6 +251,7 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		Updated:       folder.Updated,
 		Version:       folder.Version,
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
+		ParentUID:     folder.ParentUID,
 	}
 }
 
