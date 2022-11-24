@@ -15,12 +15,33 @@ export enum Permission {
 }
 
 export interface Team {
+  /**
+   * TODO: probably needs a better description
+   * Accesscontrol metadata associated with a given resource
+   */
   accessControl: Record<string, unknown>;
+  /**
+   * Team avatar URL.
+   */
   avatarUrl: string;
-  email: string;
-  id?: number;
+  /**
+   * Email of the team.
+   */
+  email?: string;
+  /**
+   * Number of the team members.
+   */
   memberCount: number;
+  /**
+   * Name of the team.
+   */
   name: string;
+  /**
+   * The ID of an organisation the team belongs to.
+   */
   orgId?: number;
+  /**
+   * TODO - check if it's used in the code
+   */
   permission: Permission;
 }
