@@ -19,16 +19,16 @@ fi
 retry_counter=10
 errcode=1
 while true; do
-    [ $retry_counter -eq 0 ] && break
-    retry_counter=$((retry_counter - 1))
+    (( retry_counter-- )) || break
 
     set +e
     if fn --config-path "${JOB_ROOT}"/project/.opsninja.yaml \
-          argocd envs update "${args[@]}" "${ENVIRONMENT_PATH}"; then
+          manifests update "${args[@]}" "${ENVIRONMENT_PATH}"; then
         errcode=0
         break
+    else
+        errcode="${?}"
     fi
-    errcode=1
     set -e
     sleep 1
 done
