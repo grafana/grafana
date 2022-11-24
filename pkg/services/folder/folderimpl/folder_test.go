@@ -497,6 +497,13 @@ func TestNestedFolderService(t *testing.T) {
 		})
 
 		t.Run("move, no error", func(t *testing.T) {
+			// This test creates and deletes the dashboard, so needs some extra setup.
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
 			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
@@ -512,7 +519,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
 
 			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
 			err := foldersvc.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
