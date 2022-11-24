@@ -175,23 +175,11 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			pluginID: "test-app",
 			registrations: []plugins.RoleRegistration{
 				{
-					Role:   plugins.Role{Name: "plugins:test-app:test"},
+					Role:   plugins.Role{Name: "Tester"},
 					Grants: []string{"Admin"},
 				},
 			},
 			wantErr: false,
-		},
-		{
-			name:     "should fail registration invalid role name",
-			pluginID: "test-app",
-			registrations: []plugins.RoleRegistration{
-				{
-					Role:   plugins.Role{Name: "invalid.plugins:test-app:test"},
-					Grants: []string{"Admin"},
-				},
-			},
-			wantErr: true,
-			err:     &accesscontrol.ErrorInvalidRole{},
 		},
 		{
 			name:     "should add registration with valid permissions",
@@ -199,7 +187,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			registrations: []plugins.RoleRegistration{
 				{
 					Role: plugins.Role{
-						Name: "plugins:test-app:test",
+						Name: "Tester",
 						Permissions: []plugins.Permission{
 							{Action: "plugins.app:access"},
 							{Action: "test-app:read"},
@@ -217,7 +205,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			registrations: []plugins.RoleRegistration{
 				{
 					Role: plugins.Role{
-						Name: "plugins:test-app:test",
+						Name: "Tester",
 						Permissions: []plugins.Permission{
 							{Action: "invalid.test-app.resource:read"},
 						},
@@ -233,7 +221,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			pluginID: "test-app",
 			registrations: []plugins.RoleRegistration{
 				{
-					Role:   plugins.Role{Name: "plugins:test-app:test"},
+					Role:   plugins.Role{Name: "Tester"},
 					Grants: []string{"WrongAdmin"},
 				},
 			},
@@ -245,11 +233,11 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 			pluginID: "test-app",
 			registrations: []plugins.RoleRegistration{
 				{
-					Role:   plugins.Role{Name: "plugins:test-app:test"},
+					Role:   plugins.Role{Name: "Tester"},
 					Grants: []string{"Admin"},
 				},
 				{
-					Role:   plugins.Role{Name: "plugins:test-app:test2"},
+					Role:   plugins.Role{Name: "Tester2"},
 					Grants: []string{"Admin"},
 				},
 			},
@@ -335,7 +323,8 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Name:        "plugins:test-app:test",
+						Name:        accesscontrol.PluginRolePrefix + "test-app:tester",
+						DisplayName: "Tester",
 						Permissions: []accesscontrol.Permission{{Action: "test-app:test"}},
 					},
 					Grants: []string{"Editor"},

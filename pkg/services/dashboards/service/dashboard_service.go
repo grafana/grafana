@@ -600,5 +600,5 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 		return 0, err
 	}
 
-	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.Id, OrgID: u.OrgID})
+	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: u.OrgID})
 }

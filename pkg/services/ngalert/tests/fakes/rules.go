@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	models2 "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,7 +23,7 @@ type RuleStore struct {
 	Rules       map[int64][]*models.AlertRule
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
-	Folders     map[int64][]*models2.Folder
+	Folders     map[int64][]*folder.Folder
 }
 
 type GenericRecordedQuery struct {
@@ -38,7 +38,7 @@ func NewRuleStore(t *testing.T) *RuleStore {
 		Hook: func(interface{}) error {
 			return nil
 		},
-		Folders: map[int64][]*models2.Folder{},
+		Folders: map[int64][]*folder.Folder{},
 	}
 }
 
@@ -58,18 +58,18 @@ mainloop:
 		rgs = append(rgs, r)
 		f.Rules[r.OrgID] = rgs
 
-		var existing *models2.Folder
+		var existing *folder.Folder
 		folders := f.Folders[r.OrgID]
 		for _, folder := range folders {
-			if folder.Uid == r.NamespaceUID {
+			if folder.UID == r.NamespaceUID {
 				existing = folder
 				break
 			}
 		}
 		if existing == nil {
-			folders = append(folders, &models2.Folder{
-				Id:    rand.Int63(),
-				Uid:   r.NamespaceUID,
+			folders = append(folders, &folder.Folder{
+				ID:    rand.Int63(),
+				UID:   r.NamespaceUID,
 				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
 			})
 			f.Folders[r.OrgID] = folders
@@ -227,11 +227,11 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 	return nil
 }
 
-func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	namespacesMap := map[string]*models2.Folder{}
+	namespacesMap := map[string]*folder.Folder{}
 
 	_, ok := f.Rules[orgID]
 	if !ok {
@@ -239,12 +239,12 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *
 	}
 
 	for _, folder := range f.Folders[orgID] {
-		namespacesMap[folder.Uid] = folder
+		namespacesMap[folder.UID] = folder
 	}
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*folder.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
@@ -254,7 +254,7 @@ func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID i
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*models2.Folder, error) {
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
 		Params: []interface{}{orgID, uid},
@@ -262,7 +262,7 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
-		if folder.Uid == uid {
+		if folder.UID == uid {
 			return folder, nil
 		}
 	}
@@ -338,4 +338,8 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 		}
 	}
 	return result, nil
+}
+
+func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
+	return 0, nil
 }

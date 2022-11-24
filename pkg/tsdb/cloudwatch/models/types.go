@@ -8,7 +8,7 @@ import (
 
 type RequestContext struct {
 	MetricsClientProvider MetricsClientProvider
-	Settings              *CloudWatchSettings
+	Settings              CloudWatchSettings
 }
 
 type RequestContextFactoryFunc func(pluginCtx backend.PluginContext, region string) (reqCtx RequestContext, err error)
@@ -34,9 +34,4 @@ type metricStatMeta struct {
 	Stat   string `json:"stat"`
 	Period int    `json:"period"`
 	Label  string `json:"label,omitempty"`
-}
-
-type Metric struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
 }

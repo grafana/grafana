@@ -155,7 +155,10 @@ function ColorCircle(props: { node: NodeDatum }) {
     );
   }
 
-  const { elements } = nonZero.reduce(
+  const { elements } = nonZero.reduce<{
+    elements: React.ReactNode[];
+    percent: number;
+  }>(
     (acc, section) => {
       const color = section.config.color?.fixedColor || '';
       const value = section.values.get(node.dataFrameRowIndex);
@@ -182,7 +185,7 @@ function ColorCircle(props: { node: NodeDatum }) {
       acc.percent = acc.percent + value;
       return acc;
     },
-    { elements: [] as React.ReactNode[], percent: 0 }
+    { elements: [], percent: 0 }
   );
 
   return <>{elements}</>;
