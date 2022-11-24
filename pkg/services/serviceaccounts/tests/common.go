@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -111,14 +112,14 @@ type serviceAccountStore interface {
 
 // create mock for serviceaccountservice
 type ServiceAccountMock struct {
-	Store             serviceAccountStore
 	Calls             Calls
 	Stats             *serviceaccounts.Stats
 	SecretScanEnabled bool
 }
 
 func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	return s.Store.CreateServiceAccount(ctx, orgID, saForm)
+	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return &serviceaccounts.ServiceAccountDTO{}, nil
 }
 func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
@@ -222,6 +223,7 @@ func (s *ServiceAccountMock) SearchOrgServiceAccounts(
 
 func (s *ServiceAccountMock) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
 	s.Calls.AddServiceAccountToken = append(s.Calls.AddServiceAccountToken, []interface{}{ctx, cmd})
+	fmt.Printf("\nhey we are mocking the add service account token\n")
 	return nil
 }
 

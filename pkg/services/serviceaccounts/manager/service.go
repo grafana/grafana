@@ -6,13 +6,17 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/secretscan"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -37,10 +41,20 @@ func ProvideServiceAccountsService(
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
-	serviceAccountsStore store,
+	// serviceAccountsStore store,
+	store *sqlstore.SQLStore,
+	apiKeyService apikey.Service,
+	kvStore kvstore.KVStore,
+	orgService org.Service,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 	accesscontrolService accesscontrol.Service,
 ) (*ServiceAccountsService, error) {
+	serviceAccountsStore := database.ProvideServiceAccountsStore(
+		store,
+		apiKeyService,
+		kvStore,
+		orgService,
+	)
 	s := &ServiceAccountsService{
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),

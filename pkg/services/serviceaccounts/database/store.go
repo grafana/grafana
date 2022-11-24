@@ -25,7 +25,6 @@ type ServiceAccountsStoreImpl struct {
 	apiKeyService apikey.Service
 	kvStore       kvstore.KVStore
 	log           log.Logger
-	userService   user.Service
 	orgService    org.Service
 }
 
@@ -467,9 +466,6 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		}
 
 		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.ID); err != nil {
-			if err := s.userService.Delete(ctx, &user.DeleteUserCommand{UserID: newSA.ID}); err != nil {
-				s.log.Error("Error deleting service account", "error", err)
-			}
 			return fmt.Errorf("failed to migrate API key to service account token: %w", err)
 		}
 
