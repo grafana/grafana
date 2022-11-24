@@ -387,6 +387,10 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, 
 		if err != nil {
 			return nil, err
 		}
+		// we had a string-field named `timeField`
+		// in the past. we do not use it anymore.
+		// please do not create a new field with that name,
+		// to avoid potential problems with old, persisted queries.
 		rawQuery := model.Get("query").MustString()
 		bucketAggs, err := p.parseBucketAggs(model)
 		if err != nil {
