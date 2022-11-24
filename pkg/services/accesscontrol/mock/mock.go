@@ -28,7 +28,7 @@ type Calls struct {
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
 	DeleteUserPermissions          []interface{}
-	GetUsersPermissions            []interface{}
+	SearchUsersPermissions         []interface{}
 }
 
 type Mock struct {
@@ -53,7 +53,7 @@ type Mock struct {
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
-	GetUsersPermissionsFunc            func(context.Context, *user.SignedInUser, int64, string) (map[int64][]accesscontrol.Permission, error)
+	SearchUsersPermissionsFunc         func(context.Context, *user.SignedInUser, int64, accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -216,11 +216,11 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 }
 
 // GetSimplifiedUsersPermissions returns all users' permissions filtered by an action prefix
-func (m *Mock) GetUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, error) {
-	m.Calls.GetUsersPermissions = append(m.Calls.GetUsersPermissions, []interface{}{ctx, user, orgID, actionPrefix})
+func (m *Mock) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, orgID, options})
 	// Use override if provided
-	if m.GetUsersPermissionsFunc != nil {
-		return m.GetUsersPermissionsFunc(ctx, user, orgID, actionPrefix)
+	if m.SearchUsersPermissionsFunc != nil {
+		return m.SearchUsersPermissionsFunc(ctx, user, orgID, options)
 	}
 	return nil, nil
 }

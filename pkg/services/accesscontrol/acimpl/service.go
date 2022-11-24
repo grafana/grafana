@@ -60,7 +60,7 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
-	GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, error)
+	SearchUsersPermissions(ctx context.Context, orgID int64, option accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
 	GetUsersBasicRoles(ctx context.Context, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
@@ -249,14 +249,14 @@ func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []
 	return nil
 }
 
-// GetUsersPermissions returns all users' permissions filtered by action prefixes
-func (s *Service) GetUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
-	actionPrefix string) (map[int64][]accesscontrol.Permission, error) {
+// SearchUsersPermissions returns all users' permissions filtered by action prefixes
+func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
+	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
 	for role, basicRole := range s.roles {
 		for i := range basicRole.Permissions {
-			if strings.HasPrefix(basicRole.Permissions[i].Action, actionPrefix) {
+			if strings.HasPrefix(basicRole.Permissions[i].Action, options.ActionPrefix) {
 				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
 			}
 		}
@@ -268,7 +268,7 @@ func (s *Service) GetUsersPermissions(ctx context.Context, user *user.SignedInUs
 	}
 
 	// Get managed permissions (DB)
-	usersPermissions, err := s.store.GetUsersPermissions(ctx, orgID, actionPrefix)
+	usersPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, options)
 	if err != nil {
 		return nil, err
 	}

@@ -36,7 +36,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
 		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
 			rr.Get("/users/permissions", authorize(middleware.ReqSignedIn,
-				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.getUsersPermissions))
+				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.SearchUsersPermissions))
 		}
 	})
 }
@@ -66,16 +66,16 @@ func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.R
 }
 
 // GET /api/access-control/users/permissions
-func (api *AccessControlAPI) getUsersPermissions(c *models.ReqContext) response.Response {
-	actionPrefix := c.Query("actionPrefix")
+func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) response.Response {
+	searchOptions := ac.SearchOptions{ActionPrefix: c.Query("actionPrefix")}
 
 	// Validate request
-	if actionPrefix == "" {
+	if searchOptions.ActionPrefix == "" {
 		return response.JSON(http.StatusBadRequest, "missing action prefix")
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.GetUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, actionPrefix)
+	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, searchOptions)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}

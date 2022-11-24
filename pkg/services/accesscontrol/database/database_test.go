@@ -15,6 +15,7 @@ import (
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -305,14 +306,16 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	acstore := ProvideService(sql)
 	permissionStore := rs.NewStore(sql)
 	teamService := teamimpl.ProvideService(sql, cfg)
-	orgService := orgimpl.ProvideService(sql, cfg)
-	userService := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService())
+	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil))
+	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService
 }
 
-func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
+func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	ctx := context.Background()
-	actionPrefix := "teams:"
+	options := accesscontrol.SearchOptions{ActionPrefix: "teams:"}
 	readTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
 		return rs.SetResourcePermissionCommand{
 			Actions:           []string{"teams:read"},
@@ -465,7 +468,7 @@ func TestAccessControlStore_GetUsersPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test
-			dbPermissions, err := acStore.GetUsersPermissions(ctx, 1, actionPrefix)
+			dbPermissions, err := acStore.SearchUsersPermissions(ctx, 1, options)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

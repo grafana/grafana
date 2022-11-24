@@ -376,8 +376,8 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 	}
 }
 
-func TestService_GetUsersPermissions(t *testing.T) {
-	actionPrefix := "teams"
+func TestService_SearchUsersPermissions(t *testing.T) {
+	searchOption := accesscontrol.SearchOptions{ActionPrefix: "teams"}
 	ctx := context.Background()
 	listAllPerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}}
 	listSomePerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:id:2"}}
@@ -505,7 +505,7 @@ func TestService_GetUsersPermissions(t *testing.T) {
 			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
-			got, err := ac.GetUsersPermissions(ctx, siu, 2, actionPrefix)
+			got, err := ac.SearchUsersPermissions(ctx, siu, 2, searchOption)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

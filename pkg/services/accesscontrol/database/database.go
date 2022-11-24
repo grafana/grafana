@@ -55,8 +55,8 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
-// GetUsersPermissions returns the list of user permissions indexed by UserID
-func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int64, actionPrefix string) (map[int64][]accesscontrol.Permission, error) {
+// SearchUsersPermissions returns the list of user permissions indexed by UserID
+func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	type UserRBACPermission struct {
 		UserID int64  `xorm:"user_id"`
 		Action string `xorm:"action"`
@@ -97,7 +97,7 @@ func (s *AccessControlStore) GetUsersPermissions(ctx context.Context, orgID int6
 		WHERE (org_id = ? OR org_id = ?) AND action LIKE ?
 		`
 
-		return sess.SQL(q, accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID, actionPrefix+"%").
+		return sess.SQL(q, accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID, options.ActionPrefix+"%").
 			Find(&dbPerms)
 	}); err != nil {
 		return nil, err
