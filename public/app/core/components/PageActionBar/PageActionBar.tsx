@@ -41,9 +41,9 @@ export default class PageActionBar extends PureComponent<Props> {
         </div>
         {sortPicker && (
           <SortPicker
-            onChange={sortPicker?.onChange}
-            value={sortPicker?.value}
-            getSortOptions={sortPicker?.getSortOptions}
+            onChange={sortPicker.onChange}
+            value={sortPicker.value}
+            getSortOptions={sortPicker.getSortOptions}
           />
         )}
         {linkButton && <LinkButton {...linkProps}>{linkButton.title}</LinkButton>}
