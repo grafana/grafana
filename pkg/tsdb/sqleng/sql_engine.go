@@ -54,6 +54,7 @@ type JsonData struct {
 	MaxOpenConns        int    `json:"maxOpenConns"`
 	MaxIdleConns        int    `json:"maxIdleConns"`
 	ConnMaxLifetime     int    `json:"connMaxLifetime"`
+	ConnectionTimeout   int    `json:"connectionTimeout"`
 	Timescaledb         bool   `json:"timescaledb"`
 	Mode                string `json:"sslmode"`
 	ConfigurationMethod string `json:"tlsConfigurationMethod"`

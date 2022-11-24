@@ -45,7 +45,7 @@ Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and
 ### Edit annotation
 
 1. In the dashboard hover over an annotation indicator on the Time series panel.
-   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)
+   <!--![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)-->
 1. Click on the pencil icon in the annotation tooltip.
 1. Modify the description and/or tags.
 1. Click save.
@@ -53,7 +53,7 @@ Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and
 ### Delete annotation
 
 1. In the dashboard hover over an annotation indicator on the Time series panel.
-   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)
+   <!--![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)-->
 1. Click on the trash icon in the annotation tooltip.
 
 ### Built-in query

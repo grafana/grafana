@@ -46,7 +46,7 @@ func exportDashboardThumbnails(helper *commitHelper, job *gitExportJob) error {
 
 		err := sess.Find(&rows)
 		if err != nil {
-			if strings.HasPrefix(err.Error(), "no such table") {
+			if isTableNotExistsError(err) {
 				return nil
 			}
 			return err

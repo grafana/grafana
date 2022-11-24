@@ -59,6 +59,7 @@ var (
 const (
 	gceAuthentication         = "gce"
 	jwtAuthentication         = "jwt"
+	annotationQueryType       = "annotation"
 	metricQueryType           = "metrics"
 	sloQueryType              = "slo"
 	mqlEditorMode             = "mql"
@@ -137,10 +138,6 @@ type Service struct {
 	gceDefaultProjectGetter func(ctx context.Context) (string, error)
 }
 
-type QueryModel struct {
-	Type string `json:"type"`
-}
-
 type datasourceInfo struct {
 	id                 int64
 	updated            time.Time
@@ -154,6 +151,13 @@ type datasourceInfo struct {
 	decryptedSecureJSONData map[string]string
 }
 
+type datasourceJSONData struct {
+	AuthenticationType string `json:"authenticationType"`
+	DefaultProject     string `json:"defaultProject"`
+	ClientEmail        string `json:"clientEmail"`
+	TokenURI           string `json:"tokenUri"`
+}
+
 type datasourceService struct {
 	url    string
 	client *http.Client
@@ -161,40 +165,24 @@ type datasourceService struct {
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
+		var jsonData datasourceJSONData
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		authType := jwtAuthentication
-		if authTypeOverride, ok := jsonData["authenticationType"].(string); ok && authTypeOverride != "" {
-			authType = authTypeOverride
-		}
-
-		var defaultProject string
-		if jsonData["defaultProject"] != nil {
-			defaultProject = jsonData["defaultProject"].(string)
-		}
-
-		var clientEmail string
-		if jsonData["clientEmail"] != nil {
-			clientEmail = jsonData["clientEmail"].(string)
-		}
-
-		var tokenUri string
-		if jsonData["tokenUri"] != nil {
-			tokenUri = jsonData["tokenUri"].(string)
+		if jsonData.AuthenticationType == "" {
+			jsonData.AuthenticationType = jwtAuthentication
 		}
 
 		dsInfo := &datasourceInfo{
 			id:                      settings.ID,
 			updated:                 settings.Updated,
 			url:                     settings.URL,
-			authenticationType:      authType,
-			defaultProject:          defaultProject,
-			clientEmail:             clientEmail,
-			tokenUri:                tokenUri,
+			authenticationType:      jsonData.AuthenticationType,
+			defaultProject:          jsonData.DefaultProject,
+			clientEmail:             jsonData.ClientEmail,
+			tokenUri:                jsonData.TokenURI,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			services:                map[string]datasourceService{},
 		}
@@ -219,19 +207,54 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+func migrateRequest(req *backend.QueryDataRequest) error {
+	for i, q := range req.Queries {
+		var rawQuery map[string]interface{}
+		err := json.Unmarshal(q.JSON, &rawQuery)
+		if err != nil {
+			return err
+		}
+
+		if rawQuery["metricQuery"] == nil {
+			// migrate legacy query
+			var mq metricQuery
+			err = json.Unmarshal(q.JSON, &mq)
+			if err != nil {
+				return err
+			}
+
+			b, err := json.Marshal(grafanaQuery{
+				QueryType:   metricQueryType,
+				MetricQuery: mq,
+			})
+			if err != nil {
+				return err
+			}
+			q.JSON = b
+		}
+
+		// Migrate type to queryType, which is only used for annotations
+		if rawQuery["type"] != nil && rawQuery["type"].(string) == "annotationQuery" {
+			q.QueryType = annotationQueryType
+		}
+
+		req.Queries[i] = q
+	}
+
+	return nil
+}
+
 // QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := slog.FromContext(ctx)
-	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {
-		return resp, fmt.Errorf("query contains no queries")
+		return nil, fmt.Errorf("query contains no queries")
 	}
 
-	model := &QueryModel{}
-	err := json.Unmarshal(req.Queries[0].JSON, model)
+	err := migrateRequest(req)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
@@ -239,27 +262,23 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	switch model.Type {
-	case "annotationQuery":
-		resp, err = s.executeAnnotationQuery(ctx, logger, req, *dsInfo)
-	case "timeSeriesQuery":
-		fallthrough
-	default:
-		resp, err = s.executeTimeSeriesQuery(ctx, logger, req, *dsInfo)
+	queries, err := s.buildQueryExecutors(logger, req)
+	if err != nil {
+		return nil, err
 	}
 
-	return resp, err
+	switch req.Queries[0].QueryType {
+	case annotationQueryType:
+		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries)
+	default:
+		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries)
+	}
 }
 
-func (s *Service) executeTimeSeriesQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, queries []cloudMonitoringQueryExecutor) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	queryExecutors, err := s.buildQueryExecutors(logger, req)
-	if err != nil {
-		return resp, err
-	}
-
-	for _, queryExecutor := range queryExecutors {
+	for _, queryExecutor := range queries {
 		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, s.tracer)
 		if err != nil {
 			return resp, err
@@ -276,32 +295,11 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, logger log.Logger,
 }
 
 func queryModel(query backend.DataQuery) (grafanaQuery, error) {
-	var rawQuery map[string]interface{}
-	err := json.Unmarshal(query.JSON, &rawQuery)
-	if err != nil {
-		return grafanaQuery{}, err
-	}
-
-	if rawQuery["metricQuery"] == nil {
-		// migrate legacy query
-		var mq metricQuery
-		err = json.Unmarshal(query.JSON, &mq)
-		if err != nil {
-			return grafanaQuery{}, err
-		}
-
-		return grafanaQuery{
-			QueryType:   metricQueryType,
-			MetricQuery: mq,
-		}, nil
-	}
-
 	var q grafanaQuery
-	err = json.Unmarshal(query.JSON, &q)
+	err := json.Unmarshal(query.JSON, &q)
 	if err != nil {
 		return grafanaQuery{}, err
 	}
-
 	return q, nil
 }
 
@@ -330,7 +328,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			logger:   logger,
 		}
 		switch q.QueryType {
-		case metricQueryType:
+		case metricQueryType, annotationQueryType:
 			if q.MetricQuery.EditorMode == mqlEditorMode {
 				queryInterface = &cloudMonitoringTimeSeriesQuery{
 					RefID:       query.RefID,
@@ -363,7 +361,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
 		default:
-			panic(fmt.Sprintf("Unrecognized query type %q", q.QueryType))
+			return nil, fmt.Errorf("unrecognized query type %q", q.QueryType)
 		}
 
 		target = params.Encode()

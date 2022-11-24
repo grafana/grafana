@@ -1,12 +1,16 @@
 import { screen, render } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
+
+import { configureStore } from '../../../store/configureStore';
 
 import { NestedScene } from './NestedScene';
 import { Scene } from './Scene';
 import { SceneCanvasText } from './SceneCanvasText';
-import { SceneFlexLayout } from './SceneFlexLayout';
+import { SceneFlexLayout } from './layout/SceneFlexLayout';
 
 function setup() {
+  const store = configureStore();
   const scene = new Scene({
     title: 'Hello',
     layout: new SceneFlexLayout({
@@ -23,7 +27,11 @@ function setup() {
     }),
   });
 
-  render(<scene.Component model={scene} />);
+  render(
+    <Provider store={store}>
+      <scene.Component model={scene} />
+    </Provider>
+  );
 }
 
 describe('NestedScene', () => {

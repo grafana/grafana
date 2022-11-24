@@ -22,7 +22,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := db.InitTestDB(t)
-	store := DBstore{
+	store := &DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
@@ -136,7 +136,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	}
 
 	sqlStore := db.InitTestDB(t)
-	store := DBstore{SQLStore: sqlStore}
+	store := &DBstore{SQLStore: sqlStore}
 	rule := createRule(t, store)
 
 	tests := map[string]struct {
@@ -175,7 +175,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	}
 }
 
-func createRule(t *testing.T, store DBstore) *models.AlertRule {
+func createRule(t *testing.T, store *DBstore) *models.AlertRule {
 	rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))()
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)

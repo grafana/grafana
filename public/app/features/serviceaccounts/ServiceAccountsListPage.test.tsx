@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
+
+import { configureStore } from '../../store/configureStore';
 
 import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
 
@@ -15,6 +18,7 @@ jest.mock('app/core/core', () => ({
 }));
 
 const setup = (propOverrides: Partial<Props>) => {
+  const store = configureStore();
   const changeQueryMock = jest.fn();
   const fetchACOptionsMock = jest.fn();
   const fetchServiceAccountsMock = jest.fn();
@@ -51,9 +55,13 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<ServiceAccountsListPageUnconnected {...props} />);
+  const { rerender } = render(
+    <Provider store={store}>
+      <ServiceAccountsListPageUnconnected {...props} />
+    </Provider>
+  );
   return {
-    rerender,
+    rerender: (element: JSX.Element) => rerender(<Provider store={store}>{element}</Provider>),
     props,
     changeQueryMock,
     fetchACOptionsMock,

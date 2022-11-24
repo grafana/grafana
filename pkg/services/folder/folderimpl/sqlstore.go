@@ -10,6 +10,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,6 +37,11 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	}
 
 	var foldr *folder.Folder
+	/*
+		version := 1
+		updatedBy := cmd.SignedInUser.UserID
+		createdBy := cmd.SignedInUser.UserID
+	*/
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sqlOrArgs []interface{}
 		if cmd.ParentUID == "" {
@@ -47,7 +53,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 					UID:   &cmd.ParentUID,
 					OrgID: cmd.OrgID,
 				}); err != nil {
-					return err
+					return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
 				}
 			}
 			sql := "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
@@ -79,15 +85,6 @@ func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
 		}
-		/*
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return folder.ErrDatabaseError.Errorf("failed to get affected rows: %w", err)
-			}
-				if affected == 0 {
-					return folder.ErrFolderNotFound.Errorf("folder not found uid:%s org_id:%d", uid, orgID)
-				}
-		*/
 		return nil
 	})
 }
@@ -119,12 +116,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		if cmd.NewUID != nil {
 			columnsToUpdate = append(columnsToUpdate, "uid = ?")
 			cmd.Folder.UID = *cmd.NewUID
-			args = append(args, cmd.Folder.UID)
-		}
-
-		if cmd.NewParentUID != nil {
-			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
-			cmd.Folder.ParentUID = *cmd.NewParentUID
 			args = append(args, cmd.Folder.UID)
 		}
 
@@ -161,7 +152,6 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exists := false
 		var err error
-
 		switch {
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
@@ -180,6 +170,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
+	foldr.Url = models.GetFolderUrl(foldr.UID, models.SlugifyTitle(foldr.Title))
 	return foldr, err
 }
 
