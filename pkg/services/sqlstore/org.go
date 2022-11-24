@@ -71,11 +71,6 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 	return orga, nil
 }
 
-// CreateOrgWithMember creates an organization with a certain name and a certain user as member.
-func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return ss.createOrg(context.Background(), name, userID, ss.engine)
-}
-
 func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
 	org, err := ss.createOrg(ctx, cmd.Name, cmd.UserId, ss.engine)
 	if err != nil {
@@ -108,47 +103,6 @@ func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgA
 			Id:        org.Id,
 			Name:      org.Name,
 		})
-
-		return nil
-	})
-}
-
-func (ss *SQLStore) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
-			return err
-		} else if len(res) != 1 {
-			return models.ErrOrgNotFound
-		}
-
-		deletes := []string{
-			"DELETE FROM star WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND star.dashboard_id = dashboard.id)",
-			"DELETE FROM dashboard_tag WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND dashboard_tag.dashboard_id = dashboard.id)",
-			"DELETE FROM dashboard WHERE org_id = ?",
-			"DELETE FROM api_key WHERE org_id = ?",
-			"DELETE FROM data_source WHERE org_id = ?",
-			"DELETE FROM org_user WHERE org_id = ?",
-			"DELETE FROM org WHERE id = ?",
-			"DELETE FROM temp_user WHERE org_id = ?",
-			"DELETE FROM ngalert_configuration WHERE org_id = ?",
-			"DELETE FROM alert_configuration WHERE org_id = ?",
-			"DELETE FROM alert_instance WHERE rule_org_id = ?",
-			"DELETE FROM alert_notification WHERE org_id = ?",
-			"DELETE FROM alert_notification_state WHERE org_id = ?",
-			"DELETE FROM alert_rule WHERE org_id = ?",
-			"DELETE FROM alert_rule_tag WHERE EXISTS (SELECT 1 FROM alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
-			"DELETE FROM alert_rule_version WHERE rule_org_id = ?",
-			"DELETE FROM alert WHERE org_id = ?",
-			"DELETE FROM annotation WHERE org_id = ?",
-			"DELETE FROM kv_store WHERE org_id = ?",
-		}
-
-		for _, sql := range deletes {
-			_, err := sess.Exec(sql, cmd.Id)
-			if err != nil {
-				return err
-			}
-		}
 
 		return nil
 	})

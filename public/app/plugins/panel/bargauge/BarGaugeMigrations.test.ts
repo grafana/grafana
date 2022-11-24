@@ -49,7 +49,7 @@ describe('BarGauge Panel Migrations', () => {
     const newOptions = barGaugePanelMigrationHandler(panel as PanelModel);
 
     // should mutate panel model and move field config out of panel.options
-    expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
+    expect((panel as PanelModel).fieldConfig).toMatchInlineSnapshot(`
       Object {
         "defaults": Object {
           "color": Object {

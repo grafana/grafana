@@ -342,6 +342,7 @@ export const DashNav = React.memo<Props>((props) => {
     if (config.featureToggles.scenes) {
       buttons.push(
         <ToolbarButton
+          key="button-scenes"
           tooltip={'View as Scene'}
           icon="apps"
           onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}

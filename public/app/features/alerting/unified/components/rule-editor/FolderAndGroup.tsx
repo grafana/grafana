@@ -203,6 +203,9 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
           control={control}
           rules={{
             required: { value: true, message: 'Must enter a group name' },
+            validate: {
+              pathSeparator: (group_: string) => checkForPathSeparator(group_),
+            },
           }}
         />
       </Field>

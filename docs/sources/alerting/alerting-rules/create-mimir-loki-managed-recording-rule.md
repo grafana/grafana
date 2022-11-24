@@ -67,5 +67,6 @@ To create a Grafana Mimir or Loki managed recording rule
 1. In Step 4, add additional metadata associated with the rule.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
-   - Add custom labels.
+1. In Step 5, add custom labels.
+   - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
