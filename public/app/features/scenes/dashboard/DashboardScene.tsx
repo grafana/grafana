@@ -8,6 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayout, SceneObject, SceneObjectStatePlain } from '../core/types';
+import { UrlSyncManager } from '../services/UrlSyncManager';
 
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
@@ -18,6 +19,18 @@ interface DashboardSceneState extends SceneObjectStatePlain {
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public static Component = DashboardSceneRenderer;
+  private urlSyncManager?: UrlSyncManager;
+
+  public activate() {
+    super.activate();
+    this.urlSyncManager = new UrlSyncManager(this);
+    this.urlSyncManager.initialSync();
+  }
+
+  public deactivate() {
+    super.deactivate();
+    this.urlSyncManager!.cleanUp();
+  }
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {

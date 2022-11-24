@@ -17,6 +17,7 @@ import {
   SceneObject,
   SceneObjectSize,
 } from '../../core/types';
+import { SceneObjectUrlSyncConfig } from '../../services/SceneObjectUrlSyncConfig';
 import { SceneDragHandle } from '../SceneDragHandle';
 
 interface SceneGridLayoutState extends SceneLayoutState {}
@@ -379,6 +380,8 @@ interface SceneGridRowState extends SceneLayoutChildState {
 export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
   public static Component = SceneGridRowRenderer;
 
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['rowc'] });
+
   public constructor(state: SceneGridRowState) {
     super({
       isResizable: false,
@@ -407,6 +410,17 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 
     layout.toggleRow(this);
   };
+
+  public getUrlState(state: SceneGridRowState) {
+    return new Map<string, string>([['rowc', state.isCollapsed ? '1' : '0']]);
+  }
+
+  public updateFromUrl(values: Map<string, string>) {
+    const isCollapsed = values.get('rowc') === '1';
+    if (isCollapsed !== this.state.isCollapsed) {
+      this.onCollapseToggle();
+    }
+  }
 }
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
