@@ -176,16 +176,14 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 
 		t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
-			var err error
-			var cmd *models.CreateOrgCommand
 			ids := []int64{}
 
 			for i := 1; i < 4; i++ {
-				cmd = &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err = sqlStore.CreateOrg(context.Background(), cmd)
+				cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				org, err := orgStore.CreateWithMember(context.Background(), cmd)
 				require.NoError(t, err)
 
-				ids = append(ids, cmd.Result.Id)
+				ids = append(ids, org.ID)
 			}
 
 			query := &org.SearchOrgsQuery{IDs: ids}
