@@ -100,7 +100,7 @@ it('getSpanProcess() should return the process of the span', () => {
 });
 
 it('getSpanProcess() should throw if no process exists', () => {
-  expect(() => spanSelectors.getSpanProcess(generatedTrace.spans[0])).toThrow();
+  expect(() => spanSelectors.getSpanProcess(generatedTrace.spans[0] as TraceSpan)).toThrow();
 });
 
 it('getSpanServiceName() should return the service name of the span', () => {
@@ -108,7 +108,7 @@ it('getSpanServiceName() should return the service name of the span', () => {
   const span = {
     ...generatedTrace.spans[0],
     process: { serviceName },
-  };
+  } as TraceSpan;
 
   expect(spanSelectors.getSpanServiceName(span)).toBe(serviceName);
 });
@@ -186,7 +186,7 @@ it('filterSpansForText() should return a filtered list of spans between the time
       },
       spanID: 'start-time-1',
     },
-  ] as unknown as TraceSpanData[];
+  ] as TraceSpan[];
 
   expect(
     spanSelectors.filterSpansForText({

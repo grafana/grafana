@@ -16,7 +16,7 @@ import { values as _values } from 'lodash';
 import TreeNode from 'src/utils/TreeNode';
 
 import traceGenerator from '../demo/trace-generators';
-import { TraceResponse, TraceSpanData } from '../types/trace';
+import { TraceResponse, TraceSpan, TraceSpanData } from '../types/trace';
 import { numberSortComparator } from '../utils/sort';
 
 import {
@@ -41,7 +41,7 @@ it('hydrateSpansWithProcesses() should return the trace with processes on each s
   const hydratedTrace = traceSelectors.hydrateSpansWithProcesses(generatedTrace);
 
   hydratedTrace.spans.forEach((span) =>
-    expect(getSpanProcess(span)).toBe(generatedTrace.processes[getSpanProcessId(span)])
+    expect(getSpanProcess(span as TraceSpan)).toBe(generatedTrace.processes[getSpanProcessId(span)])
   );
 });
 

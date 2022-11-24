@@ -35,10 +35,8 @@ export const getSpanParentId = createSelector(
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
 );
 
-export const getSpanProcess = (span: TraceSpan | TraceSpanData) => {
-  if ('process' in span && span.process) {
-    return span.process;
-  } else {
+export const getSpanProcess = (span: TraceSpan) => {
+  if (!span.process) {
     throw new Error(
       `
       you must hydrate the spans with the processes, perhaps
@@ -46,6 +44,7 @@ export const getSpanProcess = (span: TraceSpan | TraceSpanData) => {
     `
     );
   }
+  return span.process;
 };
 
 export const getSpanServiceName = createSelector(getSpanProcess, getProcessServiceName);
@@ -59,7 +58,7 @@ export const filterSpansForTimestamps = createSelector(
 );
 
 export const filterSpansForText = createSelector(
-  ({ spans }: { spans: TraceSpanData[] }) => spans,
+  ({ spans }: { spans: TraceSpan[] }) => spans,
   ({ text }: { text: string }) => text,
   (spans, text) =>
     fuzzy
