@@ -127,8 +127,10 @@ func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) i
 	teamService := teamimpl.ProvideService(db, setting.NewCfg()) // FIXME
 	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
-	testOrg, err := db.CreateOrgWithMember("TestOrg", user.ID)
+	cmd := &models.CreateOrgCommand{Name: "TestOrg", UserId: user.ID}
+	err = db.CreateOrg(context.Background(), cmd)
 	require.NoError(t, err)
+	testOrg := cmd.Result
 
 	team, err := teamService.CreateTeam("test", "test@test.com", testOrg.Id)
 	require.NoError(t, err)

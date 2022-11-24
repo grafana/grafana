@@ -1,3 +1,5 @@
+import { Row } from 'react-table';
+
 import { ArrayVector, Field, FieldType, MutableDataFrame, SelectableValue } from '@grafana/data';
 
 import {
@@ -44,21 +46,29 @@ function getData() {
 describe('Table utils', () => {
   describe('getColumns', () => {
     it('Should build columns from DataFrame', () => {
-      const columns = getColumns(getData(), 1000, 120);
+      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, false);
 
       expect(columns[0].Header).toBe('Time');
       expect(columns[1].Header).toBe('Value');
     });
 
     it('Should distribute width and use field config width', () => {
-      const columns = getColumns(getData(), 1000, 120);
+      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, false);
 
       expect(columns[0].width).toBe(450);
       expect(columns[1].width).toBe(100);
     });
 
+    it('Should distribute width and use field config width with expander enabled', () => {
+      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, true);
+
+      expect(columns[0].width).toBe(50); // expander column
+      expect(columns[1].width).toBe(425);
+      expect(columns[2].width).toBe(100);
+    });
+
     it('Should set field on columns', () => {
-      const columns = getColumns(getData(), 1000, 120);
+      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, false);
 
       expect(columns[0].field.name).toBe('Time');
       expect(columns[1].field.name).toBe('Value');
@@ -82,8 +92,8 @@ describe('Table utils', () => {
 
   describe('filterByValue', () => {
     describe('happy path', () => {
-      const field: any = { values: new ArrayVector(['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c']) };
-      const rows: any = [
+      const field = { values: new ArrayVector(['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c']) } as unknown as Field;
+      const rows = [
         { index: 0, values: { 0: 'a' } },
         { index: 1, values: { 0: 'aa' } },
         { index: 2, values: { 0: 'ab' } },
@@ -91,7 +101,7 @@ describe('Table utils', () => {
         { index: 4, values: { 0: 'ba' } },
         { index: 5, values: { 0: 'bb' } },
         { index: 6, values: { 0: 'c' } },
-      ];
+      ] as unknown as Row[];
       const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
 
       const result = filterByValue(field)(rows, '0', filterValues);
@@ -106,8 +116,8 @@ describe('Table utils', () => {
     describe('fast exit cases', () => {
       describe('no rows', () => {
         it('should return empty array', () => {
-          const field: any = { values: new ArrayVector(['a']) };
-          const rows: any = [];
+          const field = { values: new ArrayVector(['a']) } as unknown as Field;
+          const rows: Row[] = [];
           const filterValues = [{ value: 'a' }];
 
           const result = filterByValue(field)(rows, '', filterValues);
@@ -118,8 +128,8 @@ describe('Table utils', () => {
 
       describe('no filterValues', () => {
         it('should return rows', () => {
-          const field: any = { values: new ArrayVector(['a']) };
-          const rows: any = [{}];
+          const field = { values: new ArrayVector(['a']) } as unknown as Field;
+          const rows = [{}] as Row[];
           const filterValues = undefined;
 
           const result = filterByValue(field)(rows, '', filterValues);
@@ -131,7 +141,7 @@ describe('Table utils', () => {
       describe('no field', () => {
         it('should return rows', () => {
           const field = undefined;
-          const rows: any = [{}];
+          const rows = [{}] as Row[];
           const filterValues = [{ value: 'a' }];
 
           const result = filterByValue(field)(rows, '', filterValues);
@@ -142,12 +152,12 @@ describe('Table utils', () => {
 
       describe('missing id in values', () => {
         it('should return rows', () => {
-          const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
-          const rows: any = [
+          const field = { values: new ArrayVector(['a', 'b', 'c']) } as unknown as Field;
+          const rows = [
             { index: 0, values: { 0: 'a' } },
             { index: 1, values: { 0: 'b' } },
             { index: 2, values: { 0: 'c' } },
-          ];
+          ] as unknown as Row[];
           const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
 
           const result = filterByValue(field)(rows, '1', filterValues);
@@ -188,7 +198,7 @@ describe('Table utils', () => {
             text: '1.0',
           }),
         };
-        const rows: any[] = [];
+        const rows = [] as Row[];
 
         const result = calculateUniqueFieldValues(rows, field);
 

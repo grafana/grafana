@@ -18,7 +18,15 @@ import (
 func Test_DimensionValues_Route(t *testing.T) {
 	t.Run("Calls GetDimensionValuesByDimensionFilter when a valid request is passed", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
-		mockListMetricsService.On("GetDimensionValuesByDimensionFilter", mock.Anything).Return([]string{}, nil).Once()
+		mockListMetricsService.On("GetDimensionValuesByDimensionFilter", mock.MatchedBy(func(r resources.DimensionValuesRequest) bool {
+			return r.ResourceRequest != nil && *r.ResourceRequest == resources.ResourceRequest{Region: "us-east-2"} &&
+				r.Namespace == "AWS/EC2" &&
+				r.MetricName == "CPUUtilization" &&
+				r.DimensionKey == "instanceId" &&
+				len(r.DimensionFilter) == 2 &&
+				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "NodeID", Value: "Shared"}) &&
+				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "stage", Value: "QueryCommit"})
+		})).Return([]string{}, nil).Once()
 		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
@@ -26,13 +34,6 @@ func Test_DimensionValues_Route(t *testing.T) {
 		req := httptest.NewRequest("GET", `/dimension-values?region=us-east-2&dimensionKey=instanceId&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionValuesHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
-		mockListMetricsService.AssertCalled(t, "GetDimensionValuesByDimensionFilter", resources.DimensionValuesRequest{
-			ResourceRequest: &resources.ResourceRequest{Region: "us-east-2"},
-			Namespace:       "AWS/EC2",
-			MetricName:      "CPUUtilization",
-			DimensionKey:    "instanceId",
-			DimensionFilter: []*resources.Dimension{{Name: "NodeID", Value: "Shared"}, {Name: "stage", Value: "QueryCommit"}},
-		})
 	})
 
 	t.Run("returns 500 if GetDimensionValuesByDimensionFilter returns an error", func(t *testing.T) {

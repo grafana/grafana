@@ -315,6 +315,10 @@ type LogAnalyticsMeta struct {
 }
 
 func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) error {
+	if frame.Meta == nil || frame.Meta.Custom == nil {
+		// empty response
+		return nil
+	}
 	frame.Meta.ExecutedQueryString = query
 	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
 	if !ok {

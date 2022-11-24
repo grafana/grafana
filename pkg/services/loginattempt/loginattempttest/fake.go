@@ -17,6 +17,10 @@ func (f FakeLoginAttemptService) Add(ctx context.Context, username, IPAddress st
 	return f.ExpectedErr
 }
 
+func (f FakeLoginAttemptService) Reset(ctx context.Context, username string) error {
+	return f.ExpectedErr
+}
+
 func (f FakeLoginAttemptService) Validate(ctx context.Context, username string) (bool, error) {
 	return f.ExpectedValid, f.ExpectedErr
 }
