@@ -45,7 +45,7 @@ export interface DashboardPageRouteParams {
 
 export type DashboardPageRouteSearchParams = {
   tab?: string;
-  folderId?: string;
+  folderUid?: string;
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
@@ -139,7 +139,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,
-      urlFolderId: queryParams.folderId,
+      urlFolderUid: queryParams.folderUid,
       panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
       fixUrl: !isPublic,
