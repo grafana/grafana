@@ -25,7 +25,7 @@ export const SilencesFilter = () => {
   const styles = useStyles2(getStyles);
 
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
-    const target = e.target as HTMLInputElement;
+    const target = e.currentTarget;
     setQueryParams({ queryString: target.value || null });
   }, 400);
 

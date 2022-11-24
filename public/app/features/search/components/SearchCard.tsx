@@ -47,8 +47,8 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onC
     },
     []
   );
-  const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
-  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
+  const [markerElement, setMarkerElement] = React.useState<HTMLElement | null>(null);
+  const [popperElement, setPopperElement] = React.useState<HTMLElement | null>(null);
   const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
     modifiers: [
       {
@@ -119,7 +119,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onC
       className={styles.card}
       key={item.uid}
       href={item.url}
-      ref={(ref) => setMarkerElement(ref as unknown as HTMLDivElement)}
+      ref={(ref) => setMarkerElement(ref)}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onMouseMove={onMouseMove}

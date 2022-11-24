@@ -439,7 +439,7 @@ export const Table = memo((props: Props) => {
   };
 
   const handleScroll: React.UIEventHandler = (event) => {
-    const { scrollTop } = event.target as HTMLDivElement;
+    const { scrollTop } = event.currentTarget;
 
     if (listRef.current !== null) {
       listRef.current.scrollTo(scrollTop);
