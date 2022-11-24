@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -296,8 +297,9 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
 		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
 	require.NoError(t, err)
+	acService := actest.FakeService{}
 
-	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
+	a := NewServiceAccountsAPI(cfg, svc, acmock, acService, routerRegister, saStore, saPermissionService)
 	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
