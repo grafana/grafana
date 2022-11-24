@@ -74,16 +74,24 @@ export function Drawer({
 
   return (
     <RcDrawer
-      level={null}
-      handler={false}
       open={isOpen}
       onClose={onClose}
-      maskClosable={closeOnMaskClick}
       placement="right"
       width={currentWidth}
       getContainer={inline ? undefined : 'body'}
       style={style}
-      className={drawerStyles.drawer}
+      className={drawerStyles.drawerContent}
+      rootClassName={drawerStyles.drawer}
+      motion={{
+        motionAppear: true,
+        motionName: drawerStyles.drawerMotion,
+      }}
+      maskClassName={drawerStyles.mask}
+      maskClosable={closeOnMaskClick}
+      maskMotion={{
+        motionAppear: true,
+        motionName: drawerStyles.maskMotion,
+      }}
       aria-label={
         typeof title === 'string'
           ? selectors.components.Drawer.General.title(title)
@@ -145,30 +153,43 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1 1 0;
     `,
     drawer: css`
-      .drawer-content {
-        background-color: ${theme.colors.background.primary};
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      &.drawer-open .drawer-mask {
-        background-color: ${theme.components.overlay.background};
-        backdrop-filter: blur(1px);
-        opacity: 1;
-      }
-      .drawer-mask {
-        background-color: ${theme.components.overlay.background};
-        backdrop-filter: blur(1px);
-      }
-      .drawer-open .drawer-content-wrapper {
+      .rc-drawer-content-wrapper {
         box-shadow: ${theme.shadows.z3};
-      }
 
-      z-index: ${theme.zIndex.dropdown};
-
-      ${theme.breakpoints.down('sm')} {
-        .drawer-content-wrapper {
+        ${theme.breakpoints.down('sm')} {
           width: 100% !important;
+        }
+      }
+    `,
+    drawerContent: css`
+      background-color: ${theme.colors.background.primary} !important;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: ${theme.zIndex.dropdown};
+    `,
+    drawerMotion: css`
+      &-appear {
+        transform: translateX(100%);
+        transition: none !important;
+
+        &-active {
+          transition: ${theme.transitions.create('transform')} !important;
+          transform: translateX(0);
+        }
+      }
+    `,
+    mask: css`
+      background-color: ${theme.components.overlay.background} !important;
+      backdrop-filter: blur(1px);
+    `,
+    maskMotion: css`
+      &-appear {
+        opacity: 0;
+
+        &-active {
+          opacity: 1;
+          transition: ${theme.transitions.create('opacity')};
         }
       }
     `,
