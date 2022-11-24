@@ -74,6 +74,10 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   };
 
   const onClickChooserButton = () => {
+    reportInteraction('grafana_loki_label_browser_opened', {
+      app: app,
+    });
+
     setLabelBrowserVisible((visible) => !visible);
   };
 
