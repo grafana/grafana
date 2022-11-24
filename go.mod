@@ -61,7 +61,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
 	github.com/grafana/grafana-plugin-sdk-go v0.142.0
-	github.com/grafana/thema v0.0.0-20221107225215-00ad2949c7bc
+	github.com/grafana/thema v0.0.0-20221113112305-b441ed85a1fd
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -253,10 +253,9 @@ require (
 	github.com/getkin/kin-openapi v0.103.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
-	github.com/grafana/codejen v0.0.2
+	github.com/grafana/codejen v0.0.3
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/kr/pretty v0.3.0
 	github.com/matryer/is v1.4.0
 	github.com/parca-dev/parca v0.12.1
 	github.com/urfave/cli v1.22.9
@@ -271,6 +270,8 @@ require (
 require (
 	cloud.google.com/go v0.102.0 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
+	github.com/Masterminds/goutils v1.1.1 // indirect
+	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
@@ -287,15 +288,19 @@ require (
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/memberlist v0.4.0 // indirect
+	github.com/huandu/xstrings v1.3.1 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-ieproxy v0.0.3 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.1.4 // indirect
+	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 )
 
@@ -305,6 +310,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.22.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.2.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.4.0 // indirect
+	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
@@ -349,7 +355,7 @@ require (
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.7.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.16.0 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/mod v0.7.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 

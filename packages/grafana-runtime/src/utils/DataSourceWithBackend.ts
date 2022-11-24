@@ -71,6 +71,14 @@ export enum HealthStatus {
   Error = 'ERROR',
 }
 
+// Internal for now
+enum PluginRequestHeaders {
+  PluginID = 'X-Plugin-Id', // can be used for routing
+  DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
+  DashboardUID = 'X-Dashboard-Uid', // mainly useful for debuging slow queries
+  PanelID = 'X-Panel-Id', // mainly useful for debuging slow queries
+}
+
 /**
  * Describes the details in the payload returned when checking the health of a data source
  * plugin.
@@ -119,11 +127,16 @@ class DataSourceWithBackend<
       targets = targets.filter((q) => this.filterQuery!(q));
     }
 
+    let hasExpr = false;
+    const pluginIDs = new Set<string>();
+    const dsUIDs = new Set<string>();
     const queries = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
+      let shouldApplyTemplateVariables = true;
 
       if (isExpressionReference(q.datasource)) {
+        hasExpr = true;
         return {
           ...q,
           datasource: ExpressionDatasourceRef,
@@ -137,12 +150,24 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasource = ds.rawRef ?? getDataSourceRef(ds);
-        datasourceId = ds.id;
+        const dsRef = ds.rawRef ?? getDataSourceRef(ds);
+        const dsId = ds.id;
+        if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
+          datasource = dsRef;
+          datasourceId = dsId;
+          // If the query is using a different datasource, we would need to retrieve the datasource
+          // instance (async) and apply the template variables but it seems it's not necessary for now.
+          shouldApplyTemplateVariables = false;
+        }
       }
-
+      if (datasource.type?.length) {
+        pluginIDs.add(datasource.type);
+      }
+      if (datasource.uid?.length) {
+        dsUIDs.add(datasource.uid);
+      }
       return {
-        ...this.applyTemplateVariables(q, request.scopedVars),
+        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars) : q),
         datasource,
         datasourceId, // deprecated!
         intervalMs,
@@ -170,13 +195,28 @@ class DataSourceWithBackend<
       });
     }
 
+    let url = '/api/ds/query';
+    if (hasExpr) {
+      url += '?expression=true';
+    }
+
+    const headers: Record<string, string> = {};
+    headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
+    headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
+    if (request.dashboardUID) {
+      headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
+    }
+    if (request.panelId) {
+      headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+    }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
+        url,
         method: 'POST',
         data: body,
         requestId,
         hideFromInspector,
+        headers,
       })
       .pipe(
         switchMap((raw) => {
@@ -191,6 +231,14 @@ class DataSourceWithBackend<
           return of(toDataQueryResponse(err));
         })
       );
+  }
+
+  /** Get request headers with plugin ID+UID set */
+  protected getRequestHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    headers[PluginRequestHeaders.PluginID] = this.type;
+    headers[PluginRequestHeaders.DatasourceUID] = this.uid;
+    return headers;
   }
 
   /**
@@ -221,23 +269,43 @@ class DataSourceWithBackend<
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(
+  async getResource<T = any>(
     path: string,
     params?: BackendSrvRequest['params'],
     options?: Partial<BackendSrvRequest>
-  ): Promise<any> {
-    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params, options?.requestId, options);
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'GET',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        params: params ?? options?.params,
+        url: `/api/datasources/${this.id}/resources/${path}`,
+      })
+    );
+    return result.data;
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(
+  async postResource<T = any>(
     path: string,
     data?: BackendSrvRequest['data'],
     options?: Partial<BackendSrvRequest>
-  ): Promise<any> {
-    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...data }, options);
+  ): Promise<T> {
+    const headers = this.getRequestHeaders();
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<T>({
+        ...options,
+        method: 'GET',
+        headers: options?.headers ? { ...options.headers, ...headers } : headers,
+        data: data ?? { ...data },
+        url: `/api/datasources/${this.id}/resources/${path}`,
+      })
+    );
+    return result.data;
   }
 
   /**
@@ -249,6 +317,7 @@ class DataSourceWithBackend<
         method: 'GET',
         url: `/api/datasources/${this.id}/health`,
         showErrorAlert: false,
+        headers: this.getRequestHeaders(),
       })
     )
       .then((v: FetchResponse) => v.data as HealthCheckResult)

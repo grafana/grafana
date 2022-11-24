@@ -187,7 +187,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an existing UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Existing UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Existing UID")
 			command.UID = util.GenerateShortUID()
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -307,7 +307,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Another Panel")
+			command := getCreatePanelCommand(sc.folder.ID, "Another Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
@@ -343,7 +343,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := PatchLibraryElementCommand{
-				FolderID: sc.folder.Id,
+				FolderID: sc.folder.ID,
 				Version:  1,
 				Kind:     int64(models.PanelElement),
 			}
@@ -357,7 +357,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an old version number, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := PatchLibraryElementCommand{
-				FolderID: sc.folder.Id,
+				FolderID: sc.folder.ID,
 				Version:  1,
 				Kind:     int64(models.PanelElement),
 			}
@@ -373,7 +373,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an other kind, it should succeed but panel should not change",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := PatchLibraryElementCommand{
-				FolderID: sc.folder.Id,
+				FolderID: sc.folder.ID,
 				Version:  1,
 				Kind:     int64(models.VariableElement),
 			}

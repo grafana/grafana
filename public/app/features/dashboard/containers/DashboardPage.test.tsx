@@ -17,7 +17,7 @@ import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
-import { setDashboardSrv } from '../services/DashboardSrv';
+import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
 import { DashboardModel } from '../state';
 
 import { Props, UnthemedDashboardPage } from './DashboardPage';
@@ -217,7 +217,7 @@ describe('DashboardPage', () => {
       });
       setDashboardSrv({
         getCurrent: () => getTestDashboard(),
-      } as any);
+      } as DashboardSrv);
       ctx.mount({
         dashboard: getTestDashboard(),
         queryParams: { viewPanel: '1' },

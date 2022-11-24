@@ -21,7 +21,7 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
-  diffData: { lhs: any; rhs: any };
+  diffData: { lhs: unknown; rhs: unknown };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;

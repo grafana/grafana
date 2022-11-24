@@ -36,10 +36,12 @@ func TestGetDefaults(t *testing.T) {
 	prefService.cfg.DefaultLocale = "en-US"
 	prefService.cfg.DefaultTheme = "light"
 	prefService.cfg.DateFormats.DefaultTimezone = "UTC"
+	weekStart := ""
 
 	t.Run("GetDefaults", func(t *testing.T) {
 		preference := prefService.GetDefaults()
 		expected := &pref.Preference{
+			WeekStart:       &weekStart,
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
@@ -55,6 +57,7 @@ func TestGetDefaults(t *testing.T) {
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		expected := &pref.Preference{
+			WeekStart:       &weekStart,
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
@@ -72,6 +75,7 @@ func TestGetDefaultsWithI18nFeatureFlag(t *testing.T) {
 		cfg:      setting.NewCfg(),
 		features: featuremgmt.WithFeatures(featuremgmt.FlagInternationalization),
 	}
+	weekStart := ""
 	prefService.cfg.DefaultLocale = "en-US"
 	prefService.cfg.DefaultTheme = "light"
 	prefService.cfg.DateFormats.DefaultTimezone = "UTC"
@@ -79,6 +83,7 @@ func TestGetDefaultsWithI18nFeatureFlag(t *testing.T) {
 	t.Run("GetDefaults", func(t *testing.T) {
 		preference := prefService.GetDefaults()
 		expected := &pref.Preference{
+			WeekStart:       &weekStart,
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
@@ -100,13 +105,15 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 	}
 	prefService.cfg.DefaultLocale = "en-US"
 
+	weekStartOne := "1"
+	weekStartTwo := "2"
 	insertPrefs(t, prefService.store,
 		pref.Preference{
 			OrgID:           1,
 			HomeDashboardID: 1,
 			Theme:           "dark",
 			Timezone:        "UTC",
-			WeekStart:       "1",
+			WeekStart:       &weekStartOne,
 			JSONData: &pref.PreferenceJSONData{
 				Locale: "en-GB",
 			},
@@ -117,7 +124,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			HomeDashboardID: 4,
 			Theme:           "light",
 			Timezone:        "browser",
-			WeekStart:       "2",
+			WeekStart:       &weekStartTwo,
 			JSONData: &pref.PreferenceJSONData{
 				Locale: "en-AU",
 			},
@@ -131,7 +138,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 		expected := &pref.Preference{
 			Theme:           "light",
 			Timezone:        "browser",
-			WeekStart:       "2",
+			WeekStart:       &weekStartTwo,
 			HomeDashboardID: 4,
 			JSONData: &pref.PreferenceJSONData{
 				Locale: "en-AU",
@@ -150,7 +157,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 		expected := &pref.Preference{
 			Theme:           "dark",
 			Timezone:        "UTC",
-			WeekStart:       "1",
+			WeekStart:       &weekStartOne,
 			HomeDashboardID: 1,
 			JSONData: &pref.PreferenceJSONData{
 				Locale: "en-GB",
@@ -163,6 +170,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 }
 
 func TestGetDefaults_JSONData(t *testing.T) {
+	weekStart := ""
 	queryPreference := pref.QueryHistoryPreference{
 		HomeTab: "hometab",
 	}
@@ -235,7 +243,8 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, &pref.Preference{
-			JSONData: &userPreferencesJsonData,
+			WeekStart: &weekStart,
+			JSONData:  &userPreferencesJsonData,
 		}, preference)
 	})
 
@@ -262,6 +271,7 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, &pref.Preference{
+			WeekStart: &weekStart,
 			JSONData: &pref.PreferenceJSONData{
 				Locale:       "en-GB",
 				Navbar:       userNavbarPreferences,
@@ -300,12 +310,15 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, &pref.Preference{
-			JSONData: &team2PreferencesJsonData,
+			JSONData:  &team2PreferencesJsonData,
+			WeekStart: &weekStart,
 		}, preference)
 	})
 }
 
 func TestGetWithDefaults_teams(t *testing.T) {
+	weekStartOne := "1"
+	weekStartTwo := "2"
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
@@ -317,7 +330,7 @@ func TestGetWithDefaults_teams(t *testing.T) {
 			HomeDashboardID: 1,
 			Theme:           "light",
 			Timezone:        "browser",
-			WeekStart:       "1",
+			WeekStart:       &weekStartOne,
 		},
 		pref.Preference{
 			OrgID:           1,
@@ -325,7 +338,7 @@ func TestGetWithDefaults_teams(t *testing.T) {
 			HomeDashboardID: 3,
 			Theme:           "light",
 			Timezone:        "browser",
-			WeekStart:       "2",
+			WeekStart:       &weekStartTwo,
 		},
 		pref.Preference{
 			OrgID:           1,
@@ -333,7 +346,7 @@ func TestGetWithDefaults_teams(t *testing.T) {
 			HomeDashboardID: 4,
 			Theme:           "light",
 			Timezone:        "browser",
-			WeekStart:       "2",
+			WeekStart:       &weekStartTwo,
 		},
 	)
 
@@ -343,7 +356,7 @@ func TestGetWithDefaults_teams(t *testing.T) {
 	expected := &pref.Preference{
 		Theme:           "light",
 		Timezone:        "browser",
-		WeekStart:       "2",
+		WeekStart:       &weekStartTwo,
 		HomeDashboardID: 4,
 		JSONData:        &pref.PreferenceJSONData{},
 	}
@@ -399,7 +412,7 @@ func TestSave(t *testing.T) {
 		assert.Equal(t, "dark", stored.Theme)
 		assert.Equal(t, "browser", stored.Timezone)
 		assert.EqualValues(t, 5, stored.HomeDashboardID)
-		assert.Equal(t, "1", stored.WeekStart)
+		assert.Equal(t, "1", *stored.WeekStart)
 		assert.EqualValues(t, 0, stored.Version)
 	})
 
@@ -421,7 +434,7 @@ func TestSave(t *testing.T) {
 		assert.Empty(t, stored.Theme)
 		assert.Equal(t, "UTC", stored.Timezone)
 		assert.Zero(t, stored.HomeDashboardID)
-		assert.Equal(t, "1", stored.WeekStart)
+		assert.Equal(t, "1", *stored.WeekStart)
 		assert.EqualValues(t, 1, stored.Version)
 	})
 
@@ -440,7 +453,7 @@ func TestSave(t *testing.T) {
 		assert.Equal(t, themeValue, stored.Theme)
 		assert.Equal(t, "UTC", stored.Timezone)
 		assert.Zero(t, stored.HomeDashboardID)
-		assert.Equal(t, "1", stored.WeekStart)
+		assert.Equal(t, "1", *stored.WeekStart)
 		assert.EqualValues(t, 2, stored.Version)
 	})
 }

@@ -7,7 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { byRole } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
@@ -16,7 +16,7 @@ import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralS
 
 setBackendSrv({
   get: jest.fn().mockResolvedValue([]),
-} as any);
+} as unknown as BackendSrv);
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {

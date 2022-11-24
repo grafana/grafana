@@ -66,6 +66,7 @@ openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 a
 ##@ Building
 gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
+	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins
@@ -75,7 +76,7 @@ gen-go: $(WIRE) gen-cue
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
 gen-jsonnet:
-	go generate ./devenv/dev-dashboards
+	go generate ./devenv/jsonnet
 
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"

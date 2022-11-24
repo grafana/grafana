@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -47,11 +48,11 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 		if *cmd.FolderUID == "" {
 			cmd.FolderID = 0
 		} else {
-			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, *cmd.FolderUID)
+			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: cmd.FolderUID})
 			if err != nil || folder == nil {
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}
-			cmd.FolderID = folder.Id
+			cmd.FolderID = folder.ID
 		}
 	}
 
@@ -61,12 +62,12 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 	}
 
 	if element.FolderID != 0 {
-		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgID)
+		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, ID: &element.FolderID})
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
 		}
-		element.FolderUID = folder.Uid
-		element.Meta.FolderUID = folder.Uid
+		element.FolderUID = folder.UID
+		element.Meta.FolderUID = folder.UID
 		element.Meta.FolderName = folder.Title
 	}
 
@@ -175,11 +176,11 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 		if *cmd.FolderUID == "" {
 			cmd.FolderID = 0
 		} else {
-			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, *cmd.FolderUID)
+			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: cmd.FolderUID})
 			if err != nil || folder == nil {
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}
-			cmd.FolderID = folder.Id
+			cmd.FolderID = folder.ID
 		}
 	}
 
@@ -189,12 +190,12 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 	}
 
 	if element.FolderID != 0 {
-		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgID)
+		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, ID: &element.FolderID})
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
 		}
-		element.FolderUID = folder.Uid
-		element.Meta.FolderUID = folder.Uid
+		element.FolderUID = folder.UID
+		element.Meta.FolderUID = folder.UID
 		element.Meta.FolderName = folder.Title
 	}
 

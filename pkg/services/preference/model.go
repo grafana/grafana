@@ -20,7 +20,7 @@ type Preference struct {
 	Version         int                 `db:"version"`
 	HomeDashboardID int64               `xorm:"home_dashboard_id" db:"home_dashboard_id"`
 	Timezone        string              `db:"timezone"`
-	WeekStart       string              `db:"week_start"`
+	WeekStart       *string             `db:"week_start"`
 	Theme           string              `db:"theme"`
 	Created         time.Time           `db:"created"`
 	Updated         time.Time           `db:"updated"`

@@ -4,7 +4,7 @@ import React from 'react';
 import { NestedScene } from './NestedScene';
 import { Scene } from './Scene';
 import { SceneCanvasText } from './SceneCanvasText';
-import { SceneFlexLayout } from './SceneFlexLayout';
+import { SceneFlexLayout } from './layout/SceneFlexLayout';
 
 function setup() {
   const scene = new Scene({
