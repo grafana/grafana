@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
@@ -19,10 +18,6 @@ type SocialGrafanaCom struct {
 
 type OrgRecord struct {
 	Login string `json:"login"`
-}
-
-func (s *SocialGrafanaCom) Type() int {
-	return int(models.GRAFANA_COM)
 }
 
 func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {

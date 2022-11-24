@@ -33,6 +33,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Change theme...',
       keywords: 'interface color dark light',
       section: 'Preferences',
+      shortcut: ['c', 't'],
     },
     {
       id: 'preferences/dark-theme',
