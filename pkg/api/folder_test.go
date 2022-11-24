@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -247,10 +248,11 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		store := mockstore.NewSQLStoreMock()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{
-			AccessControl: acmock.New(),
-			folderService: folderService,
-			Cfg:           setting.NewCfg(),
-			Features:      featuremgmt.WithFeatures(),
+			AccessControl:        acmock.New(),
+			folderService:        folderService,
+			Cfg:                  setting.NewCfg(),
+			Features:             featuremgmt.WithFeatures(),
+			accesscontrolService: actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)
