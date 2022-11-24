@@ -153,7 +153,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         ) : null}
       </FieldSet>
 
-      {jsonData.sslmode !== 'disable' ? (
+      {jsonData.sslmode !== PostgresTLSModes.disable ? (
         <FieldSet label="TLS/SSL Auth Details">
           {jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
             <TLSSecretsConfig
