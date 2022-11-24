@@ -7,6 +7,7 @@
 This module returns a Drone configuration including pipelines and secrets.
 """
 
+load("scripts/drone/events/push.star", "push_to_maintained_branch_pipelines")
 load("scripts/drone/events/pr.star", "pr_pipelines")
 load("scripts/drone/events/main.star", "main_pipelines")
 load("scripts/drone/events/release.star", "artifacts_page_pipeline", "enterprise2_pipelines", "enterprise_pipelines", "oss_pipelines", "publish_artifacts_pipelines", "publish_npm_pipelines", "publish_packages_pipeline")
@@ -17,9 +18,20 @@ load("scripts/drone/vault.star", "secrets")
 
 def main(_ctx):
     edition = "oss"
-    return pr_pipelines(edition = edition) + main_pipelines(edition = edition) + oss_pipelines() + enterprise_pipelines() + enterprise2_pipelines() + \
+    return artifacts_page_pipeline() + \
+           cronjobs(edition = edition) + \
+           enterprise2_pipelines() + \
            enterprise2_pipelines(prefix = "custom-", trigger = {"event": ["custom"]}) + \
-           publish_image_pipelines_public() + publish_image_pipelines_security() + \
-           publish_artifacts_pipelines("security") + publish_artifacts_pipelines("public") + \
-           publish_npm_pipelines("public") + publish_packages_pipeline() + artifacts_page_pipeline() + \
-           version_branch_pipelines() + cronjobs(edition = edition) + secrets()
+           enterprise_pipelines() + \
+           main_pipelines(edition = edition) + \
+           oss_pipelines() + \
+           pr_pipelines(edition = edition) + \
+           publish_artifacts_pipelines("public") + \
+           publish_artifacts_pipelines("security") + \
+           publish_image_pipelines_public() + \
+           publish_image_pipelines_security() + \
+           publish_npm_pipelines("public") + \
+           publish_packages_pipeline() + \
+           push_to_maintained_branch_pipelines() + \
+           secrets() + \
+           version_branch_pipelines()

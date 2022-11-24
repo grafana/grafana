@@ -4,15 +4,16 @@ This module is a library of Drone steps and other pipeline components.
 
 load("scripts/drone/vault.star", "drone_token", "from_secret", "github_token", "prerelease_bucket")
 
-grabpl_version = "v3.0.17"
-build_image = "grafana/build-container:1.6.4"
-publish_image = "grafana/grafana-ci-deploy:1.3.3"
-deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
 alpine_image = "alpine:3.15.6"
+build_image = "grafana/build-container:1.6.4"
 curl_image = "byrnedo/alpine-curl:0.1.8"
+deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
+go_image = "golang:1.19.3"
+google_sdk_image = "google/cloud-sdk:406.0.0"
+grabpl_version = "v3.0.17"
+publish_image = "grafana/grafana-ci-deploy:1.3.3"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.19.3"
 
 disable_tests = False
 trigger_oss = {
@@ -1533,3 +1534,107 @@ def get_trigger_storybook(ver_mode):
             },
         }
     return trigger_storybook
+
+def escapes_working_directory(path):
+    """Checks if a path escapes the working directory.
+
+    All absolute paths are considered to have escaped the working directory.
+
+    Args:
+      path: a string representing a path.
+    Returns:
+      bool
+    """
+    if type(path) != "string":
+        fail("parameter 'path' is expected to be of type string but it was of type {}".format(type(path)))
+
+    if path.startswith("/"):
+        return True
+
+    depth = 0
+    elems = path.split("/")
+    for elem in elems:
+        if elem == "." or "":
+            continue
+        if elem == "..":
+            depth -= 1
+        depth += 1
+    return depth < 0
+
+def clean_path(path):
+    """Cleans a path of empty and current working directory ('.') elements.
+
+    Args:
+      path: a string representing a path.
+
+    Returns:
+      string.
+    """
+    if type(path) != "string":
+        fail("parameter 'path' is expected to be of type string but it was of type {}".format(type(path)))
+
+    if path == "":
+        fail("parameter 'path' must not be an empty string")
+
+    elems = path.split("/")
+    cleaned = ""
+    if path[0] == "/":
+        cleaned = "/"
+    for i, elem in zip(range(0, len(elems)), elems):
+        if elem == "":
+            continue
+        if elem == "." and i != 0:
+            continue
+        cleaned += elem
+        if i != len(elems) - 1:
+            cleaned += "/"
+    return cleaned
+
+def build_docs_archive_step(archive_path = "./docs.tar.gz"):
+    """Produce an gzipped tape archive of technical documentation.
+
+    Args:
+      archive_path: desired archive_path for the archive.
+        Defaults to "./docs.tar.gz"
+
+    Returns:
+      Drone step.
+    """
+
+    if escapes_working_directory(archive_path):
+        fail("parameter 'archive_path' must be inside the working directory")
+    clean_archive_path = clean_path(archive_path)
+    return {
+        "name": "build-docs-archive",
+        "image": alpine_image,
+        "commands": [
+            "mkdir -p $(dirname {})".format(clean_archive_path),
+            "tar -czf {} -C docs/sources .".format(clean_archive_path),
+        ],
+    }
+
+def upload_docs_archive_step(archive_path = "./docs.tar.gz"):
+    """Upload a previously built technical documentation archive to the Grafana prerelease object storage bucket.
+
+    Args:
+      archive_path: path to the archive to be published.
+
+    Returns:
+      Drone step.
+    """
+
+    if escapes_working_directory(archive_path):
+        fail("parameter 'archive_path' must be inside the working directory")
+    clean_archive_path = clean_path(archive_path)
+    return {
+        "name": "upload-docs-archive",
+        "image": google_sdk_image,
+        "commands": [
+            "printenv SERVICE_ACCOUNT_KEY > /tmp/service_account_key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/service_account_key.json",
+            "gsutil -m cp {} gs://grafana-prerelease/{}/".format(clean_archive_path, "${DRONE_COMMIT}"),
+        ],
+        "environment": {
+            "SERVICE_ACCOUNT_KEY": from_secret("gcp_key"),
+        },
+    }
