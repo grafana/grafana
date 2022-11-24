@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/samber/lo"
 )
 
 type sqlStore struct {
@@ -44,21 +45,40 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	*/
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sqlOrArgs []interface{}
-		if cmd.ParentUID == "" {
-			sql := "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
-			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
-		} else {
-			if cmd.ParentUID != folder.GeneralFolderUID {
-				if _, err := ss.Get(ctx, folder.GetFolderQuery{
-					UID:   &cmd.ParentUID,
-					OrgID: cmd.OrgID,
-				}); err != nil {
-					return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
-				}
-			}
-			sql := "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
-			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+
+		t := time.Now()
+		m := map[string]interface{}{
+			"org_id":      cmd.OrgID,
+			"uid":         cmd.UID,
+			"title":       cmd.Title,
+			"description": cmd.Description,
+			"created":     t,
+			"updated":     t,
 		}
+		if cmd.ParentUID != "" {
+			if _, err := ss.Get(ctx, folder.GetFolderQuery{
+				UID:   &cmd.ParentUID,
+				OrgID: cmd.OrgID,
+			}); err != nil {
+				return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
+			}
+			m["parent_uid"] = cmd.ParentUID
+		}
+
+		if cmd.ID != 0 {
+			m["id"] = cmd.ID
+		}
+
+		keys := make([]string, 0, len(m))
+		values := make([]interface{}, 0, len(m))
+		for k := range m {
+			keys = append(keys, k)
+			values = append(values, m[k])
+		}
+		sql := fmt.Sprintf("INSERT INTO folder(%s) VALUES(%s)",
+			strings.Join(keys, ","),
+			strings.Join(lo.RepeatBy(len(m), func(index int) string { return "?" }), ","))
+		sqlOrArgs = append([]interface{}{sql}, values...)
 		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
@@ -208,7 +228,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 		return nil, folder.ErrFolderNotFound
 	}
 
-	return util.Reverse(folders[1:]), nil
+	return lo.Reverse(folders[1:]), nil
 }
 
 func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*folder.Folder, error) {

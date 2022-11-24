@@ -64,6 +64,7 @@ func NewFolder(title string, description string) *Folder {
 type CreateFolderCommand struct {
 	UID         string `json:"uid"`
 	OrgID       int64  `json:"-"`
+	ID          int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	ParentUID   string `json:"parentUid"`
