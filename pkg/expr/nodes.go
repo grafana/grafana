@@ -42,11 +42,12 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID      string `json:"refId"`
-	Query      map[string]interface{}
-	QueryType  string
-	TimeRange  TimeRange
-	DataSource *datasources.DataSource
+	RefID         string `json:"refId"`
+	Query         map[string]interface{}
+	QueryType     string
+	TimeRange     TimeRange
+	DataSource    *datasources.DataSource
+	QueryEnricher QueryDataRequestEnricher
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -139,8 +140,9 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query      json.RawMessage
-	datasource *datasources.DataSource
+	query         json.RawMessage
+	datasource    *datasources.DataSource
+	queryEnricher QueryDataRequestEnricher
 
 	orgID      int64
 	queryType  string
@@ -169,14 +171,15 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
-		orgID:      req.OrgId,
-		query:      json.RawMessage(encodedQuery),
-		queryType:  rn.QueryType,
-		intervalMS: defaultIntervalMS,
-		maxDP:      defaultMaxDP,
-		timeRange:  rn.TimeRange,
-		request:    *req,
-		datasource: rn.DataSource,
+		orgID:         req.OrgId,
+		query:         json.RawMessage(encodedQuery),
+		queryType:     rn.QueryType,
+		intervalMS:    defaultIntervalMS,
+		maxDP:         defaultMaxDP,
+		timeRange:     rn.TimeRange,
+		request:       *req,
+		datasource:    rn.DataSource,
+		queryEnricher: rn.QueryEnricher,
 	}
 
 	var floatIntervalMS float64
@@ -214,22 +217,26 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		User:                       dn.request.User,
 	}
 
-	q := []backend.DataQuery{
-		{
-			RefID:         dn.refID,
-			MaxDataPoints: dn.maxDP,
-			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-			JSON:          dn.query,
-			TimeRange:     dn.timeRange.AbsoluteTime(now),
-			QueryType:     dn.queryType,
+	req := &backend.QueryDataRequest{
+		PluginContext: pc,
+		Queries: []backend.DataQuery{
+			{
+				RefID:         dn.refID,
+				MaxDataPoints: dn.maxDP,
+				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+				JSON:          dn.query,
+				TimeRange:     dn.timeRange.AbsoluteTime(now),
+				QueryType:     dn.queryType,
+			},
 		},
+		Headers: dn.request.Headers,
 	}
 
-	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
-		PluginContext: pc,
-		Queries:       q,
-		Headers:       dn.request.Headers,
-	})
+	if dn.queryEnricher != nil {
+		ctx = dn.queryEnricher(ctx, req)
+	}
+
+	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
 		return mathexp.Results{}, err
 	}

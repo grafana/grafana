@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"golang.org/x/oauth2"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -141,6 +143,9 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 		exprReq.OrgId = user.OrgID
 	}
 
+	disallowedCookies := []string{s.cfg.LoginCookieName}
+	queryEnrichers := parsedReq.createDataSourceQueryEnrichers(ctx, user, s.oAuthTokenService, disallowedCookies)
+
 	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
 			return nil, ErrMissingDataSourceInfo.Build(errutil.TemplateData{
@@ -161,6 +166,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
 			},
+			QueryEnricher: queryEnrichers[pq.datasource.Uid],
 		})
 	}
 
@@ -202,37 +208,16 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		Queries: []backend.DataQuery{},
 	}
 
-	middlewares := []httpclient.Middleware{}
-	if parsedReq.httpRequest != nil {
-		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
-		)
-	}
+	disallowedCookies := []string{s.cfg.LoginCookieName}
+	queryEnrichers := parsedReq.createDataSourceQueryEnrichers(ctx, user, s.oAuthTokenService, disallowedCookies)
 
-	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
-			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Headers["X-ID-Token"] = idToken
-			}
-			middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
-		}
-	}
-
-	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
-		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
-			req.Headers["Cookie"] = cookieStr
-		}
+	if enricher, exists := queryEnrichers[instanceSettings.UID]; exists {
+		ctx = enricher(ctx, req)
 	}
 
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
-
-	ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
 
 	return s.pluginClient.QueryData(ctx, req)
 }
@@ -297,6 +282,93 @@ func (pr parsedRequest) validateRequest() error {
 		}
 	}
 	return nil
+}
+
+func (pr parsedRequest) createDataSourceQueryEnrichers(ctx context.Context, signedInUser *user.SignedInUser, oAuthTokenService oauthtoken.OAuthTokenService, disallowedCookies []string) map[string]expr.QueryDataRequestEnricher {
+	datasourcesHeaderProvider := map[string]expr.QueryDataRequestEnricher{}
+
+	if pr.httpRequest == nil {
+		return datasourcesHeaderProvider
+	}
+
+	isSingleDataSource := len(pr.parsedQueries) == 1
+
+	for uid, queries := range pr.parsedQueries {
+		if expr.IsDataSource(uid) {
+			continue
+		}
+
+		if len(queries) == 0 || queries[0].datasource == nil {
+			continue
+		}
+
+		if _, exists := datasourcesHeaderProvider[uid]; exists {
+			continue
+		}
+
+		ds := queries[0].datasource
+		allowedCookies := ds.AllowedCookies()
+		clonedReq := pr.httpRequest.Clone(pr.httpRequest.Context())
+
+		var once sync.Once
+		var token *oauth2.Token
+
+		extractUserOAuthTokenForDataSource := func(
+			ctx context.Context,
+			oAuthTokenService oauthtoken.OAuthTokenService,
+			ds *datasources.DataSource,
+			user *user.SignedInUser,
+		) func() {
+			return func() {
+				if oAuthTokenService.IsOAuthPassThruEnabled(ds) {
+					token = oAuthTokenService.GetCurrentOAuthToken(ctx, user)
+				}
+			}
+		}(ctx, oAuthTokenService, ds, signedInUser)
+
+		var beforeFn func()
+
+		if isSingleDataSource {
+			beforeFn = extractUserOAuthTokenForDataSource
+		} else {
+			beforeFn = func() {
+				// run only once per datasource
+				once.Do(extractUserOAuthTokenForDataSource)
+			}
+		}
+
+		datasourcesHeaderProvider[uid] = func(ctx context.Context, req *backend.QueryDataRequest) context.Context {
+			beforeFn()
+
+			if len(req.Headers) == 0 {
+				req.Headers = map[string]string{}
+			}
+
+			if len(allowedCookies) > 0 {
+				proxyutil.ClearCookieHeader(clonedReq, allowedCookies, disallowedCookies)
+				if cookieStr := clonedReq.Header.Get("Cookie"); cookieStr != "" {
+					req.Headers["Cookie"] = cookieStr
+				}
+
+				ctx = httpclient.WithContextualMiddleware(ctx, httpclientprovider.ForwardedCookiesMiddleware(clonedReq.Cookies(), allowedCookies, disallowedCookies))
+			}
+
+			if token != nil {
+				req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+
+				idToken, ok := token.Extra("id_token").(string)
+				if ok && idToken != "" {
+					req.Headers["X-ID-Token"] = idToken
+				}
+
+				ctx = httpclient.WithContextualMiddleware(ctx, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
+			}
+
+			return ctx
+		}
+	}
+
+	return datasourcesHeaderProvider
 }
 
 func splitHeaders(headers []string) []string {
