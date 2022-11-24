@@ -4,7 +4,7 @@ import { map, Observable } from 'rxjs';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneObject } from '../../core/types';
+import { SceneObject, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '../../core/types';
 import {
   SceneVariable,
   SceneVariableValueChangedEvent,
@@ -29,6 +29,8 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   extends SceneObjectBase<TState>
   implements SceneVariable<TState>
 {
+  protected _urlSync: SceneObjectUrlSyncHandler<TState> = new MultiValueUrlSyncHandler(this);
+
   /**
    * The source of value options.
    */
@@ -124,16 +126,12 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
-  private setStateAndPublishValueChangedEvent(state: Partial<MultiValueVariableState>) {
-    this.setStateHelper(state);
-  }
-
   /**
    * Change the value and publish SceneVariableValueChangedEvent event
    */
   public changeValueTo(value: VariableValue, text?: VariableValue) {
     if (value !== this.state.value || text !== this.state.text) {
-      this.setStateAndPublishValueChangedEvent({ value, text, loading: false });
+      this.setStateHelper({ value, text, loading: false });
       this.publishEvent(new SceneVariableValueChangedEvent(this), true);
     }
   }
@@ -144,5 +142,40 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   private setStateHelper(state: Partial<MultiValueVariableState>) {
     const test: SceneObject<MultiValueVariableState> = this;
     test.setState(state);
+  }
+}
+
+export class MultiValueUrlSyncHandler<TState extends MultiValueVariableState = MultiValueVariableState>
+  implements SceneObjectUrlSyncHandler<TState>
+{
+  public constructor(private _sceneObject: MultiValueVariable<TState>) {}
+
+  private getKey(): string {
+    return `var-${this._sceneObject.state.name}`;
+  }
+
+  public getKeys(): string[] {
+    return [this.getKey()];
+  }
+
+  public getUrlState(state: TState): SceneObjectUrlValues {
+    let urlValue: string | string[] | null = null;
+    let value = this._sceneObject.state.value;
+
+    if (Array.isArray(value)) {
+      urlValue = value.map(String);
+    } else {
+      urlValue = String(value);
+    }
+
+    return { [this.getKey()]: urlValue };
+  }
+
+  public updateFromUrl(values: SceneObjectUrlValues): void {
+    const urlValue = values[this.getKey()];
+
+    if (urlValue != null) {
+      this._sceneObject.changeValueTo(urlValue);
+    }
   }
 }

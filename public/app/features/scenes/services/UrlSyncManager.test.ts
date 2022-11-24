@@ -17,9 +17,7 @@ interface TestObjectState extends SceneLayoutChildState {
 }
 
 class TestObj extends SceneObjectBase<TestObjectState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, {
-    keys: ['name', 'array'],
-  });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['name', 'array'] });
 
   public getUrlState(state: TestObjectState) {
     return { name: state.name, array: state.array };
