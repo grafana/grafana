@@ -7,13 +7,29 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// this should reflect the api
+/*
+ServiceAccountService is the service that manages service accounts.
+
+Service accounts are used to authenticate API requests. They are not users and
+do not have a password.
+*/
 type Service interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 }
 
+/*
+Store is the database store for service accounts.
+
+migration from apikeys to service accounts:
+HideApiKeyTab is used to hide the api key tab in the UI.
+MigrateApiKeysToServiceAccounts migrates all API keys to service accounts.
+MigrateApiKey migrates a single API key to a service account.
+
+// only used for interal api calls
+RevertApiKey reverts a single service account to an API key.
+*/
 type Store interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, filter ServiceAccountFilter, page int, limit int,

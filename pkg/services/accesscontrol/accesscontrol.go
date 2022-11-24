@@ -28,6 +28,8 @@ type Service interface {
 	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
 	// GetUsersPermissions returns all users' permissions filtered by an action prefix
 	GetUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, actionPrefix string) (map[int64][]Permission, error)
+	// ClearUserPermissionCache removes the permission cache entry for the given user
+	ClearUserPermissionCache(user *user.SignedInUser)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error

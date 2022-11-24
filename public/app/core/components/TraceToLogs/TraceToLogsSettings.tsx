@@ -34,7 +34,12 @@ interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
-  const supportedDataSourceTypes = ['loki', 'grafana-splunk-datasource', 'elasticsearch'];
+  const supportedDataSourceTypes = [
+    'loki',
+    'elasticsearch',
+    'grafana-splunk-datasource', // external
+    'grafana-opensearch-datasource', // external
+  ];
 
   return (
     <div className={css({ width: '100%' })}>

@@ -255,8 +255,11 @@ export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: Loki
   };
 }
 
-export function getLineFilterRenderer(operation: string) {
+export function getLineFilterRenderer(operation: string, caseInsensitive?: boolean) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    if (caseInsensitive) {
+      return `${innerExpr} ${operation} \`(?i)${model.params[0]}\``;
+    }
     return `${innerExpr} ${operation} \`${model.params[0]}\``;
   };
 }

@@ -22,6 +22,9 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 // Context represents the runtime context of current request of Macaron instance.
@@ -33,6 +36,8 @@ type Context struct {
 	Resp     ResponseWriter
 	template *template.Template
 }
+
+var errMissingWrite = errutil.NewBase(errutil.StatusInternal, "web.missingWrite")
 
 func (ctx *Context) run() {
 	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -47,7 +52,11 @@ func (ctx *Context) run() {
 	// This indicates nearly always that a middleware is misbehaving and not calling its next.ServeHTTP().
 	// In rare cases where a blank http.StatusOK without any body is wished, explicitly state that using w.WriteStatus(http.StatusOK)
 	if !rw.Written() {
-		panic("chain did not write HTTP response")
+		errhttp.Write(
+			ctx.Req.Context(),
+			errMissingWrite.Errorf("chain did not write HTTP response: %s", ctx.Req.URL.Path),
+			rw,
+		)
 	}
 }
 

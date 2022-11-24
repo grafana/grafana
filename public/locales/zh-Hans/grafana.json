@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -59,12 +64,6 @@
       "rows": "总行数",
       "table-title": "统计信息"
     },
-    "refresh-picker": {
-      "off-arialabel": "关闭自动刷新",
-      "off-description": "自动刷新已关闭。选择刷新时间间隔",
-      "off-label": "关",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "添加面板",
       "comments-show": "显示仪表板备注",
@@ -104,6 +103,15 @@
     "admin": {
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
+    },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
@@ -190,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "在整个 Grafana 服务器上管理和创建用户",
-      "title": "用户"
+      "title": "",
+      "titleBeforeTopnav": "用户"
     },
     "help": {
       "title": "帮助"
@@ -233,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
-      "title": "首选项"
+      "title": "",
+      "titleBeforeTopnav": "首选项"
     },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
@@ -258,6 +268,9 @@
     },
     "search": {
       "placeholder": "搜索 Grafana"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
       "subtitle": "查看 Grafana 配置中定义的设置",
@@ -305,14 +318,37 @@
   "news": {
     "title": "最新博客"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "检查",
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
       "share": "分享",
+      "show-legend": "",
       "view": "查看"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "关闭自动刷新",
+      "label": "关"
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
@@ -370,7 +406,8 @@
       "mistake-message": "是不是弄错了什么？",
       "name": "快照名称",
       "timeout": "超时（秒）",
-      "timeout-description": "如果需要很长时间才能收集仪表板指标，则可能需要配置超时值。"
+      "timeout-description": "如果需要很长时间才能收集仪表板指标，则可能需要配置超时值。",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "嵌入",
@@ -384,6 +421,9 @@
       "dark": "深色",
       "field-name": "主题",
       "light": "浅色"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -413,11 +453,46 @@
       "title": "绝对时间范围"
     },
     "calendar": {
+      "apply-button": "",
+      "cancel-button": "取消",
       "select-time": ""
     },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
     "time-range": {
+      "aria-role": "",
+      "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -446,5 +521,14 @@
   },
   "user-sessions": {
     "loading": "正在加载会话..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

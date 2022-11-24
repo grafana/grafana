@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -29,43 +29,6 @@ const QuerySuccess = "success"
 const QueryFailure = "failure"
 
 var QueryResultStatuses = []string{QuerySuccess, QueryFailure}
-
-var (
-	ErrPublicDashboardFailedGenerateUniqueUid = PublicDashboardErr{
-		Reason:     "failed to generate unique public dashboard id",
-		StatusCode: 500,
-	}
-	ErrPublicDashboardFailedGenerateAccessToken = PublicDashboardErr{
-		Reason:     "failed to create public dashboard",
-		StatusCode: 500,
-	}
-	ErrPublicDashboardNotFound = PublicDashboardErr{
-		Reason:     "public dashboard not found",
-		StatusCode: 404,
-		Status:     "not-found",
-	}
-	ErrPublicDashboardPanelNotFound = PublicDashboardErr{
-		Reason:     "panel not found in dashboard",
-		StatusCode: 404,
-		Status:     "not-found",
-	}
-	ErrPublicDashboardIdentifierNotSet = PublicDashboardErr{
-		Reason:     "no Uid for public dashboard specified",
-		StatusCode: 400,
-	}
-	ErrPublicDashboardHasTemplateVariables = PublicDashboardErr{
-		Reason:     "public dashboard has template variables",
-		StatusCode: 422,
-	}
-	ErrPublicDashboardBadRequest = PublicDashboardErr{
-		Reason:     "bad Request",
-		StatusCode: 400,
-	}
-	ErrNoPanelQueriesFound = PublicDashboardErr{
-		Reason:     "failed to extract queries from panel",
-		StatusCode: 400,
-	}
-)
 
 type PublicDashboard struct {
 	Uid                string        `json:"uid" xorm:"pk uid"`

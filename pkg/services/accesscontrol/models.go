@@ -126,6 +126,10 @@ func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
+func (r *RoleDTO) IsPlugin() bool {
+	return strings.HasPrefix(r.Name, PluginRolePrefix)
+}
+
 func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
@@ -161,7 +165,7 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 func fallbackDisplayName(rName string) string {
 	// removing prefix for fixed roles
 	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
+	return strings.TrimSpace(strings.ReplaceAll(rNameWithoutPrefix, ":", " "))
 }
 
 type TeamRole struct {
@@ -278,6 +282,7 @@ const (
 	FixedRolePrefix    = "fixed:"
 	ManagedRolePrefix  = "managed:"
 	BasicRolePrefix    = "basic:"
+	PluginRolePrefix   = "plugins:"
 	BasicRoleUIDPrefix = "basic_"
 	RoleGrafanaAdmin   = "Grafana Admin"
 

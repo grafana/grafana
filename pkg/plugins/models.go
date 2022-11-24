@@ -87,6 +87,7 @@ type Includes struct {
 	Type       string       `json:"type"`
 	Component  string       `json:"component"`
 	Role       org.RoleType `json:"role"`
+	Action     string       `json:"action,omitempty"`
 	AddToNav   bool         `json:"addToNav"`
 	DefaultNav bool         `json:"defaultNav"`
 	Slug       string       `json:"slug"`
@@ -101,6 +102,10 @@ func (e Includes) DashboardURLPath() string {
 		return ""
 	}
 	return "/d/" + e.UID
+}
+
+func (e Includes) RequiresRBACAction() bool {
+	return e.Action != ""
 }
 
 type Dependency struct {
@@ -265,4 +270,25 @@ type Error struct {
 type PreloadPlugin struct {
 	Path    string `json:"path"`
 	Version string `json:"version"`
+}
+
+// Access-Control related definitions
+
+// RoleRegistration stores a role and its assignments to basic roles
+// (Viewer, Editor, Admin, Grafana Admin)
+type RoleRegistration struct {
+	Role   Role     `json:"role"`
+	Grants []string `json:"grants"`
+}
+
+// Role is the model for Role in RBAC.
+type Role struct {
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Permissions []Permission `json:"permissions"`
+}
+
+type Permission struct {
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
 }

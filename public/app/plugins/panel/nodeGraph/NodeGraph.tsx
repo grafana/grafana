@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, MouseEvent, MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
@@ -184,7 +184,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const topLevelRef = useCallback(
     (r: HTMLDivElement) => {
       measureRef(r);
-      (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
+      zoomRef.current = r;
     },
     [measureRef, zoomRef]
   );

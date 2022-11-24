@@ -83,7 +83,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
     `,
     logsRowLevel: css`
       label: logs-row__level;
-      max-width: 10px;
+      max-width: ${theme.spacing(1.25)};
       cursor: default;
       &::after {
         content: '';
@@ -92,7 +92,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
         top: 1px;
         bottom: 1px;
         width: 3px;
-        left: 4px;
+        left: ${theme.spacing(0.5)};
         background-color: ${logColor};
       }
     `,
@@ -124,14 +124,15 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       white-space: pre-wrap;
       word-break: break-all;
       width: 100%;
+      text-align: left;
     `,
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
       border: 1px solid ${theme.colors.border.medium};
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
-      border-radius: 3px;
-      margin: 20px 8px 20px 16px;
+      border-radius: ${theme.shape.borderRadius(1.5)};
+      margin: ${theme.spacing(2.5)} ${theme.spacing(1)} ${theme.spacing(2.5)} ${theme.spacing(2)};
       cursor: default;
     `,
     logDetailsTable: css`
@@ -146,8 +147,8 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       label: logs-row-details__icon;
       position: relative;
       color: ${theme.v1.palette.gray3};
-      padding-top: 6px;
-      padding-left: 6px;
+      padding-top: ${theme.spacing(0.75)};
+      padding-left: ${theme.spacing(0.75)};
     `,
     logDetailsLabel: css`
       label: logs-row-details__label;

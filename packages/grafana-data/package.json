@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "9.3.0-pre",
+  "version": "9.4.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.1",
-    "@grafana/schema": "9.3.0-pre",
+    "@grafana/schema": "9.4.0-pre",
     "@types/d3-interpolate": "^1.4.0",
     "d3-interpolate": "1.4.0",
     "date-fns": "2.29.3",
@@ -66,11 +66,11 @@
     "@testing-library/react-hooks": "8.0.1",
     "@testing-library/user-event": "14.4.3",
     "@types/history": "4.7.11",
-    "@types/jest": "28.1.6",
+    "@types/jest": "29.2.3",
     "@types/jquery": "3.5.14",
     "@types/lodash": "4.14.187",
     "@types/marked": "4.0.7",
-    "@types/node": "16.11.45",
+    "@types/node": "18.11.9",
     "@types/papaparse": "5.3.5",
     "@types/react": "17.0.42",
     "@types/react-dom": "17.0.14",
@@ -84,9 +84,9 @@
     "react-test-renderer": "17.0.2",
     "rimraf": "3.0.2",
     "rollup": "2.79.1",
-    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "4.10.1",
-    "rollup-plugin-node-externals": "^4.1.0",
+    "rollup-plugin-node-externals": "^5.0.0",
     "sinon": "14.0.1",
     "typescript": "4.8.4"
   },

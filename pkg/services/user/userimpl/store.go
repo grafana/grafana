@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +38,8 @@ type store interface {
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
 	Disable(context.Context, *user.DisableUserCommand) error
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
+
+	Count(ctx context.Context) (int64, error)
 }
 
 type sqlStore struct {
@@ -344,7 +347,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		user_auth.auth_id     as external_auth_id,
 		org.name              as org_name,
 		org_user.role         as org_role,
-		org.id                as org_id
+		org.id                as org_id,
+		u.is_service_account  as is_service_account
 		FROM ` + ss.dialect.Quote("user") + ` as u
 		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
@@ -458,6 +462,22 @@ func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin
 		}
 		return nil
 	})
+}
+
+func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
+	type result struct {
+		Count int64
+	}
+
+	r := result{}
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s WHERE is_service_account=%s", ss.db.GetDialect().Quote("user"), ss.db.GetDialect().BooleanStr(false))
+		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	})
+	return r.Count, err
 }
 
 // validateOneAdminLeft validate that there is an admin user left

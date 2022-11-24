@@ -50,7 +50,7 @@ type DataQueryJson struct {
 }
 
 type DataSource struct {
-	Settings   *models.CloudWatchSettings
+	Settings   models.CloudWatchSettings
 	HTTPClient *http.Client
 }
 
@@ -63,7 +63,7 @@ const (
 	logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
 	alertMaxAttempts = 8
-	alertPollPeriod  = 1000 * time.Millisecond
+	alertPollPeriod  = time.Second
 	logsQueryMode    = "Logs"
 
 	// QueryTypes

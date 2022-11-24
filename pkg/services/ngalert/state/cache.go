@@ -156,6 +156,27 @@ func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log lo
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
+	deleted := make([]*State, 0)
+	for id, state := range rs.states {
+		if predicate(state) {
+			delete(rs.states, id)
+			deleted = append(deleted, state)
+		}
+	}
+	return deleted
+}
+
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if ok {
+		return ruleStates.deleteStates(predicate)
+	}
+	return nil
+}
+
 func (c *cache) setAllStates(newStates map[int64]map[string]*ruleStates) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
@@ -282,14 +303,4 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		}
 	}
 	return newLbs
-}
-
-func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-	ruleStates, ok := c.states[orgID][alertRuleUID]
-	if !ok {
-		return
-	}
-	delete(ruleStates.states, cacheID)
 }

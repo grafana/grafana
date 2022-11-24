@@ -15,14 +15,14 @@ import { alertStateToReadable } from '../../utils/rules';
 
 const ViewOptions: SelectableValue[] = [
   {
-    icon: 'list-ul',
-    label: 'List',
-    value: 'list',
-  },
-  {
     icon: 'folder',
     label: 'Grouped',
     value: 'grouped',
+  },
+  {
+    icon: 'list-ul',
+    label: 'List',
+    value: 'list',
   },
   {
     icon: 'heart-rate',

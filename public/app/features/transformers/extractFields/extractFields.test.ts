@@ -21,7 +21,7 @@ describe('Fields from JSON', () => {
         return acc;
       }, {} as any)
     ).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "string",
         "av": "number",
         "c": "string",

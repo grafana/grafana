@@ -32,8 +32,12 @@ type RawObjectWithHistory struct {
 
 var (
 	// increment when RawObject changes
-	rawObjectVersion = 8
+	rawObjectVersion = 9
 )
+
+// Make sure we implement both store + admin
+var _ object.ObjectStoreServer = &dummyObjectServer{}
+var _ object.ObjectStoreAdminServer = &dummyObjectServer{}
 
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
 	objectServer := &dummyObjectServer{
@@ -82,9 +86,9 @@ func (i *dummyObjectServer) findObject(ctx context.Context, grn *object.GRN, ver
 		if objVersion.Version == version {
 			copy := &object.RawObject{
 				GRN:       obj.Object.GRN,
-				Created:   obj.Object.Created,
+				CreatedAt: obj.Object.CreatedAt,
 				CreatedBy: obj.Object.CreatedBy,
-				Updated:   objVersion.Updated,
+				UpdatedAt: objVersion.UpdatedAt,
 				UpdatedBy: objVersion.UpdatedBy,
 				ETag:      objVersion.ETag,
 				Version:   objVersion.Version,
@@ -149,7 +153,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) update(ctx context.Context, r *object.AdminWriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	builder := i.kinds.GetSummaryBuilder(r.GRN.Kind)
 	if builder == nil {
 		return nil, fmt.Errorf("unsupported kind: " + r.GRN.Kind)
@@ -174,9 +178,9 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 
 		updated := &object.RawObject{
 			GRN:       r.GRN,
-			Created:   i.Object.Created,
+			CreatedAt: i.Object.CreatedAt,
 			CreatedBy: i.Object.CreatedBy,
-			Updated:   time.Now().UnixMilli(),
+			UpdatedAt: time.Now().UnixMilli(),
 			UpdatedBy: store.GetUserIDString(modifier),
 			Size:      int64(len(r.Body)),
 			ETag:      createContentsHash(r.Body),
@@ -188,7 +192,7 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 			Body: r.Body,
 			ObjectVersionInfo: &object.ObjectVersionInfo{
 				Version:   updated.Version,
-				Updated:   updated.Updated,
+				UpdatedAt: updated.UpdatedAt,
 				UpdatedBy: updated.UpdatedBy,
 				Size:      updated.Size,
 				ETag:      updated.ETag,
@@ -222,12 +226,12 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 	return rsp, nil
 }
 
-func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) insert(ctx context.Context, r *object.AdminWriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
 		GRN:       r.GRN,
-		Updated:   time.Now().UnixMilli(),
-		Created:   time.Now().UnixMilli(),
+		UpdatedAt: time.Now().UnixMilli(),
+		CreatedAt: time.Now().UnixMilli(),
 		CreatedBy: modifier,
 		UpdatedBy: modifier,
 		Size:      int64(len(r.Body)),
@@ -238,7 +242,7 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 
 	info := &object.ObjectVersionInfo{
 		Version:   rawObj.Version,
-		Updated:   rawObj.Updated,
+		UpdatedAt: rawObj.UpdatedAt,
 		UpdatedBy: rawObj.UpdatedBy,
 		Size:      rawObj.Size,
 		ETag:      rawObj.ETag,
@@ -266,6 +270,15 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 }
 
 func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+	return i.doWrite(ctx, object.ToAdminWriteObjectRequest(r))
+}
+
+func (i *dummyObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
+	// Check permissions?
+	return i.doWrite(ctx, r)
+}
+
+func (i *dummyObjectServer) doWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
 	grn := getFullGRN(ctx, r.GRN)
 	namespace := namespaceFromUID(grn)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {
@@ -362,7 +375,7 @@ func (i *dummyObjectServer) Search(ctx context.Context, r *object.ObjectSearchRe
 		searchResults = append(searchResults, &object.ObjectSearchResult{
 			GRN:         o.Object.GRN,
 			Version:     o.Object.Version,
-			Updated:     o.Object.Updated,
+			UpdatedAt:   o.Object.UpdatedAt,
 			UpdatedBy:   o.Object.UpdatedBy,
 			Name:        summary.Name,
 			Description: summary.Description,

@@ -45,6 +45,12 @@
   },
   "overrides": [
     {
+      "files": ["public/app/features/scenes/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "explicit" }]
+      }
+    },
+    {
       "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
       "rules": {
         "react-hooks/rules-of-hooks": "off",

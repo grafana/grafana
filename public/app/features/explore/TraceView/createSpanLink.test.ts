@@ -594,14 +594,14 @@ describe('createSpanLinkFactory', () => {
     });
   });
 
-  describe('elasticsearch link', () => {
-    const elasticsearchUID = 'elasticsearchUID';
+  describe('elasticsearch/opensearch link', () => {
+    const searchUID = 'searchUID';
 
     beforeAll(() => {
       setDataSourceSrv({
         getInstanceSettings() {
           return {
-            uid: elasticsearchUID,
+            uid: searchUID,
             name: 'Elasticsearch',
             type: 'elasticsearch',
           } as unknown as DataSourceInstanceSettings;
@@ -614,7 +614,7 @@ describe('createSpanLinkFactory', () => {
 
     it('creates link with correct simple query', () => {
       const createLink = setupSpanLinkFactory({
-        datasourceUid: elasticsearchUID,
+        datasourceUid: searchUID,
       });
       const links = createLink!(createTraceSpan());
 
@@ -622,14 +622,14 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toContain(
         encodeURIComponent(
-          `datasource":"${elasticsearchUID}","queries":[{"query":"cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]`
+          `datasource":"${searchUID}","queries":[{"query":"cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]`
         )
       );
     });
 
     it('automatically timeshifts the time range by one second in a query', () => {
       const createLink = setupSpanLinkFactory({
-        datasourceUid: elasticsearchUID,
+        datasourceUid: searchUID,
       });
       const links = createLink!(createTraceSpan());
 
@@ -646,11 +646,11 @@ describe('createSpanLinkFactory', () => {
     it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
       const createLink = setupSpanLinkFactory(
         {
-          datasourceUid: elasticsearchUID,
+          datasourceUid: searchUID,
           filterByTraceID: true,
           filterBySpanID: true,
         },
-        elasticsearchUID
+        searchUID
       );
 
       expect(createLink).toBeDefined();
@@ -660,7 +660,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${elasticsearchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
         )}`
       );
     });
@@ -670,7 +670,7 @@ describe('createSpanLinkFactory', () => {
         {
           tags: ['ip'],
         },
-        elasticsearchUID
+        searchUID
       );
       expect(createLink).toBeDefined();
       const links = createLink!(
@@ -686,7 +686,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${elasticsearchUID}","queries":[{"query":"ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
         )}`
       );
     });
@@ -696,7 +696,7 @@ describe('createSpanLinkFactory', () => {
         {
           tags: ['ip', 'hostname'],
         },
-        elasticsearchUID
+        searchUID
       );
       expect(createLink).toBeDefined();
       const links = createLink!(
@@ -715,7 +715,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${elasticsearchUID}","queries":[{"query":"hostname:\\"hostname1\\" AND ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"hostname:\\"hostname1\\" AND ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
         )}`
       );
     });
@@ -729,7 +729,7 @@ describe('createSpanLinkFactory', () => {
             { key: 'k8s.pod.name', value: 'pod' },
           ],
         },
-        elasticsearchUID
+        searchUID
       );
       expect(createLink).toBeDefined();
       const links = createLink!(
@@ -748,7 +748,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${elasticsearchUID}","queries":[{"query":"service:\\"serviceName\\" AND pod:\\"podName\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"service:\\"serviceName\\" AND pod:\\"podName\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
         )}`
       );
     });
