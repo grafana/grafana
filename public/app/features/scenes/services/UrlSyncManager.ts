@@ -1,16 +1,17 @@
 import { Location } from 'history';
+import { isEqual } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import { locationService } from '@grafana/runtime';
 
 import { SceneObjectStateChangedEvent } from '../core/events';
-import { SceneObject, SceneObjectUrlValues } from '../core/types';
+import { SceneObject, SceneObjectUrlValue, SceneObjectUrlValues } from '../core/types';
 import { forEachSceneObjectInState } from '../core/utils';
 
 export class UrlSyncManager {
   private locationListenerUnsub: () => void;
   private stateChangeSub: Unsubscribable;
-  private initialStates: Map<string, string | string[]> = new Map();
+  private initialStates: Map<string, SceneObjectUrlValue> = new Map();
   private urlKeyMapper = new UniqueUrlKeyMapper();
 
   public constructor(private sceneRoot: SceneObject) {
@@ -49,9 +50,9 @@ export class UrlSyncManager {
 
       for (const [key, newUrlValue] of Object.entries(newUrlState)) {
         const uniqueKey = this.urlKeyMapper.getUniqueKey(key, changedObject);
-        const currentUrlValue = searchParams.get(uniqueKey);
+        const currentUrlValue = searchParams.getAll(uniqueKey);
 
-        if (currentUrlValue !== newUrlValue) {
+        if (!isUrlValueEqual(currentUrlValue, newUrlValue)) {
           mappedUpdated[uniqueKey] = newUrlValue;
 
           // Remember the initial state so we can go back to it
@@ -79,15 +80,20 @@ export class UrlSyncManager {
 
       for (const key of sceneObject.urlSync.getKeys()) {
         const uniqueKey = this.urlKeyMapper.getUniqueKey(key, sceneObject);
-        const newValue = urlParams.get(uniqueKey);
+        const newValue = urlParams.getAll(uniqueKey);
         const currentValue = currentState[key];
 
-        if (currentValue === newValue) {
+        if (isUrlValueEqual(newValue, currentValue)) {
           continue;
         }
 
-        if (newValue !== null) {
-          urlState[key] = newValue;
+        if (newValue.length > 0) {
+          if (Array.isArray(currentValue)) {
+            urlState[key] = newValue;
+          } else {
+            urlState[key] = newValue[0];
+          }
+
           // Remember the initial state so we can go back to it
           if (!this.initialStates.has(uniqueKey) && currentValue !== undefined) {
             this.initialStates.set(uniqueKey, currentValue);
@@ -150,4 +156,21 @@ class UniqueUrlKeyMapper {
 
     forEachSceneObjectInState(sceneObject.state, (obj) => this.buildIndex(obj, depth + 1));
   }
+}
+
+export function isUrlValueEqual(currentUrlValue: string[], newUrlValue: SceneObjectUrlValue): boolean {
+  if (currentUrlValue.length === 0 && newUrlValue == null) {
+    return true;
+  }
+
+  if (!Array.isArray(newUrlValue) && currentUrlValue?.length === 1) {
+    return newUrlValue === currentUrlValue[0];
+  }
+
+  if (newUrlValue?.length === 0 && currentUrlValue === null) {
+    return true;
+  }
+
+  // We have two arrays, lets compare them
+  return isEqual(currentUrlValue, newUrlValue);
 }

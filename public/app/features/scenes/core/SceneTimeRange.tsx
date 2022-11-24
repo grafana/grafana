@@ -3,7 +3,7 @@ import { dateMath, getTimeZone, TimeRange, TimeZone, toUtc } from '@grafana/data
 import { SceneObjectUrlSyncConfig } from '../services/SceneObjectUrlSyncConfig';
 
 import { SceneObjectBase } from './SceneObjectBase';
-import { SceneTimeRangeLike, SceneTimeRangeState, SceneObjectUrlValues } from './types';
+import { SceneTimeRangeLike, SceneTimeRangeState, SceneObjectUrlValues, SceneObjectUrlValue } from './types';
 
 export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> implements SceneTimeRangeLike {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['from', 'to'] });
@@ -63,7 +63,7 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
   }
 }
 
-function parseUrlParam(value: string | string[] | undefined): string | null {
+function parseUrlParam(value: SceneObjectUrlValue): string | null {
   if (typeof value !== 'string') {
     return null;
   }

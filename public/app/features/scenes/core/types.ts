@@ -163,4 +163,5 @@ export interface SceneObjectUrlSyncHandler<TState> {
   updateFromUrl(values: SceneObjectUrlValues): void;
 }
 
-export type SceneObjectUrlValues = Record<string, string | string[]>;
+export type SceneObjectUrlValue = string | string[] | undefined | null;
+export type SceneObjectUrlValues = Record<string, SceneObjectUrlValue>;

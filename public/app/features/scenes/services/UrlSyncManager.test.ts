@@ -8,25 +8,29 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneLayoutChildState, SceneObjectUrlValues } from '../core/types';
 
 import { SceneObjectUrlSyncConfig } from './SceneObjectUrlSyncConfig';
-import { UrlSyncManager } from './UrlSyncManager';
+import { isUrlValueEqual, UrlSyncManager } from './UrlSyncManager';
 
 interface TestObjectState extends SceneLayoutChildState {
   name: string;
+  array?: string[];
   other?: string;
 }
 
 class TestObj extends SceneObjectBase<TestObjectState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, {
-    keys: ['name'],
+    keys: ['name', 'array'],
   });
 
   public getUrlState(state: TestObjectState) {
-    return { name: state.name };
+    return { name: state.name, array: state.array };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
     if (typeof values.name === 'string') {
       this.setState({ name: values.name ?? 'NA' });
+    }
+    if (Array.isArray(values.array)) {
+      this.setState({ array: values.array });
     }
   }
 }
@@ -157,5 +161,49 @@ describe('UrlSyncManager', () => {
       // Should not cause another url update
       expect(locationUpdates.length).toBe(3);
     });
+  });
+
+  describe('When updating array value', () => {
+    it('Should update url correctly', () => {
+      const obj = new TestObj({ name: 'test' });
+      const scene = new SceneFlexLayout({
+        children: [obj],
+      });
+
+      urlManager = new UrlSyncManager(scene);
+
+      // When making state change
+      obj.setState({ array: ['A', 'B'] });
+
+      // Should update url
+      const searchObj = locationService.getSearchObject();
+      expect(searchObj.array).toEqual(['A', 'B']);
+
+      // When making unrelated state change
+      obj.setState({ other: 'not synced' });
+
+      // Should not update url
+      expect(locationUpdates.length).toBe(1);
+
+      // When updating via url
+      locationService.partial({ array: ['A', 'B', 'C'] });
+      // Should update state
+      expect(obj.state.array).toEqual(['A', 'B', 'C']);
+    });
+  });
+});
+
+describe('isUrlValueEqual', () => {
+  it('should handle all cases', () => {
+    expect(isUrlValueEqual([], [])).toBe(true);
+    expect(isUrlValueEqual([], undefined)).toBe(true);
+    expect(isUrlValueEqual([], null)).toBe(true);
+
+    expect(isUrlValueEqual(['asd'], 'asd')).toBe(true);
+    expect(isUrlValueEqual(['asd'], ['asd'])).toBe(true);
+    expect(isUrlValueEqual(['asd', '2'], ['asd', '2'])).toBe(true);
+
+    expect(isUrlValueEqual(['asd', '2'], 'asd')).toBe(false);
+    expect(isUrlValueEqual(['asd2'], 'asd')).toBe(false);
   });
 });
