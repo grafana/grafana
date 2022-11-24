@@ -126,6 +126,35 @@ $ grafana-cli user-manager conflicts validate-file <filepath>
 $ grafana-cli user-manager conflicts ingest-file <filepath>
 ```
 
+## LDAP - Role mapping improvements
+
+If you use an LDAP directory to authenticate to Grafana but prefer to assign organizations and roles in the Grafana UI
+or via API, you can now enable a configuration option to skip user organization roles synchronization with your LDAP
+directory.
+
+Use the [`skip_org_role_sync` LDAP authentication configuration option]({{< relref
+"../setup-grafana/configure-security/configure-authentication/ldap/#disable-org-role-synchronization" >}})
+when configuring LDAP authentication to prevent the synchronization between your LDAP groups and organization roles
+and make user roles editable manually.
+
+## Azure AD OAuth2 - New option to always fetch groups from the Graph API
+
+If you use Azure AD OAuth2 authentication and use `SecurityEnabled` groups that you don't want Azure to embed in the
+authentication token, you can force Grafana to use Microsoft's Graph API instead.
+
+Use the [`force_use_graph_api` configuration option]({{< relref
+"../setup-grafana/configure-security/configure-authentication/azuread/#force-fetching-groups-from-microsoft-graph-api" >}})
+when configuring Azure AD authentication to force Grafana to fetch groups using Graph API.
+
+## RBAC - List token's permissions
+
+We added a new endpoint to help users diagnose permissions-related issues with user and token authorization.
+[This endpoint]({{< relref "../developers/http_api/access_control/#list-your-permissions" >}}) allows users to get the
+full list of RBAC permissions associated with their token.
+
+For more details, see the related service accounts [documentation]({{< relref
+"../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
+
 ## Terraform - Extended support for provisioning permissions
 
 All Grafana users can now use the latest release of [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) (version 1.31.1+) to provision [user and team access to service accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/#manage-users-and-teams-permissions-for-a-service-account-in-grafana). This allows full management of service accounts through Terraform - from creating a service account and allowing users to access it to assigning roles to the service account and generating service account tokens.
