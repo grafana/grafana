@@ -74,4 +74,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 		Nullable: false,
 		Default:  "0",
 	}))
+
+	mg.AddMigration("delete orphaned public dashboards", NewRawSQLMigration(
+		"DELETE FROM dashboard_public WHERE dashboard_uid NOT IN (SELECT uid FROM dashboard)"))
 }

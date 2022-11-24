@@ -133,28 +133,6 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.Equal(t, "folder desc", ff.Description)
 		assert.Equal(t, parentUID, ff.ParentUID)
 	})
-
-	/*
-		t.Run("creating a nested folder with the maximum nested folder depth should fail", func(t *testing.T) {
-			ancestorUIDs := createSubTree(t, folderStore, orgID, accesscontrol.GeneralFolderUID, folder.MaxNestedFolderDepth, "")
-
-			t.Cleanup(func() {
-				for _, uid := range ancestorUIDs[1:] {
-					err := folderStore.Delete(context.Background(), uid, orgID)
-					require.NoError(t, err)
-				}
-			})
-
-			title := fmt.Sprintf("folder-%d", len(ancestorUIDs))
-			_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-				Title:     "folder1",
-				OrgID:     orgID,
-				ParentUID: ancestorUIDs[len(ancestorUIDs)-1],
-				UID:       util.GenerateShortUID(),
-			})
-			assert.Error(t, err)
-		})
-	*/
 }
 
 func TestIntegrationDelete(t *testing.T) {

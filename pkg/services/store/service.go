@@ -40,14 +40,6 @@ const RootContent = "content"
 const RootDevenv = "devenv"
 const RootSystem = "system"
 
-const brandingStorage = "branding"
-const SystemBrandingStorage = "system/" + brandingStorage
-
-var (
-	SystemBrandingReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
-	SystemBrandingAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
-)
-
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
 
 type DeleteFolderCmd struct {
@@ -96,6 +88,7 @@ type standardStorageService struct {
 	cfg          *GlobalStorageConfig
 	authService  storageAuthService
 	quotaService quota.Service
+	systemUsers  SystemUsersFilterProvider
 }
 
 func ProvideService(
@@ -103,6 +96,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
+	systemUsersService SystemUsers,
 ) (StorageService, error) {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
@@ -208,22 +202,17 @@ func ProvideService(
 		}
 
 		if storageName == RootSystem {
-			if user == SystemBrandingReader {
+			filter, err := systemUsersService.GetFilter(user)
+			if err != nil {
+				grafanaStorageLogger.Error("failed to create path filter for system user", "userID", user.UserID, "userLogin", user.Login, "err", err)
 				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   createSystemBrandingPathFilter(),
+					ActionFilesRead:   denyAllPathFilter,
 					ActionFilesWrite:  denyAllPathFilter,
 					ActionFilesDelete: denyAllPathFilter,
 				}
 			}
 
-			if user == SystemBrandingAdmin {
-				systemBrandingFilter := createSystemBrandingPathFilter()
-				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   systemBrandingFilter,
-					ActionFilesWrite:  systemBrandingFilter,
-					ActionFilesDelete: systemBrandingFilter,
-				}
-			}
+			return filter
 		}
 
 		if storageName == RootContent {
@@ -262,7 +251,7 @@ func ProvideService(
 		}
 	})
 
-	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, systemUsersService)
 	s.quotaService = quotaService
 	s.cfg = settings
 
@@ -298,20 +287,13 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func createSystemBrandingPathFilter() filestorage.PathFilter {
-	return filestorage.NewPathFilter(
-		[]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
-		[]string{filestorage.Delimiter + brandingStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
-		nil,
-		nil)
-}
-
 func newStandardStorageService(
 	sql db.DB,
 	globalRoots []storageRuntime,
 	initializeOrgStorages func(orgId int64) []storageRuntime,
 	authService storageAuthService,
 	cfg *setting.Cfg,
+	systemUsers SystemUsersFilterProvider,
 ) *standardStorageService {
 	prefixes := make(map[string]bool)
 
@@ -336,6 +318,7 @@ func newStandardStorageService(
 		sql:         sql,
 		tree:        res,
 		authService: authService,
+		systemUsers: systemUsers,
 	}
 }
 
