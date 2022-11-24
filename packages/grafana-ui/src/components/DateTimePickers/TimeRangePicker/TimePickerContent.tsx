@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,6 +10,7 @@ import { getFocusStyles } from '../../../themes/mixins';
 import { t, Trans } from '../../../utils/i18n';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
+import useInteractionObserver, { getHorizontalOffset } from '../useInteractionObserver';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
@@ -63,8 +64,17 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   const isHistoryEmpty = !history?.length;
   const isContainerTall =
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
+  const ref = useRef(null);
+  const entry = useInteractionObserver(ref);
   const theme = useTheme2();
-  const styles = getStyles(theme, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
+  const styles = getStyles(
+    theme,
+    isReversed,
+    hideQuickRanges,
+    isContainerTall,
+    isFullscreen,
+    getHorizontalOffset(entry)
+  );
   const historyOptions = mapToHistoryOptions(history, timeZone);
   const timeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
@@ -76,7 +86,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   };
 
   return (
-    <div id="TimePickerContent" className={cx(styles.container, className)}>
+    <div id="TimePickerContent" className={cx(styles.container, className)} ref={ref}>
       <div className={styles.body}>
         {(!isFullscreen || !hideQuickRanges) && (
           <div className={styles.rightSide}>
@@ -262,46 +272,48 @@ const useTimeOption = (raw: RawTimeRange, quickOptions: TimeOption[]): TimeOptio
   }, [raw, quickOptions]);
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall, isFullscreen) => {
-  return {
-    container: css`
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      position: absolute;
-      z-index: ${theme.zIndex.dropdown};
-      width: ${isFullscreen ? '546px' : '262px'};
-      top: 116%;
-      border-radius: 2px;
-      border: 1px solid ${theme.colors.border.weak};
-      ${isReversed ? 'left' : 'right'}: 0;
-    `,
-    body: css`
-      display: flex;
-      flex-direction: row-reverse;
-      height: ${isContainerTall ? '381px' : '217px'};
-    `,
-    leftSide: css`
-      display: flex;
-      flex-direction: column;
-      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`};
-      width: ${!hideQuickRanges ? '60%' : '100%'};
-      overflow: hidden;
-      order: ${isReversed ? 1 : 0};
-    `,
-    rightSide: css`
+const getStyles = stylesFactory(
+  (theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall, isFullscreen, offset) => {
+    return {
+      container: css`
+        background: ${theme.colors.background.primary};
+        box-shadow: ${theme.shadows.z3};
+        position: absolute;
+        z-index: ${theme.zIndex.dropdown};
+        width: ${isFullscreen ? '546px' : '262px'};
+        top: 116%;
+        border-radius: 2px;
+        border: 1px solid ${theme.colors.border.weak};
+        ${isReversed ? 'left' : 'right'}: ${offset}px;
+      `,
+      body: css`
+        display: flex;
+        flex-direction: row-reverse;
+        height: ${isContainerTall ? '381px' : '217px'};
+      `,
+      leftSide: css`
+        display: flex;
+        flex-direction: column;
+        border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`};
+        width: ${!hideQuickRanges ? '60%' : '100%'};
+        overflow: hidden;
+        order: ${isReversed ? 1 : 0};
+      `,
+      rightSide: css`
       width: ${isFullscreen ? '40%' : '100%'}; !important;
       border-right: ${isReversed ? `1px solid ${theme.colors.border.weak}` : 'none'};
       display: flex;
       flex-direction: column;
     `,
-    timeRangeFilter: css`
-      padding: ${theme.spacing(1)};
-    `,
-    spacing: css`
-      margin-top: 16px;
-    `,
-  };
-});
+      timeRangeFilter: css`
+        padding: ${theme.spacing(1)};
+      `,
+      spacing: css`
+        margin-top: 16px;
+      `,
+    };
+  }
+);
 
 const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
