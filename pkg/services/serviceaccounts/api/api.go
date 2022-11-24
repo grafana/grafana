@@ -21,31 +21,34 @@ import (
 )
 
 type ServiceAccountsAPI struct {
-	cfg               *setting.Cfg
-	service           serviceaccounts.Service
-	accesscontrol     accesscontrol.AccessControl
-	RouterRegister    routing.RouteRegister
-	store             serviceaccounts.Store
-	log               log.Logger
-	permissionService accesscontrol.ServiceAccountPermissionsService
+	cfg                  *setting.Cfg
+	service              serviceaccounts.Service
+	accesscontrol        accesscontrol.AccessControl
+	accesscontrolService accesscontrol.Service
+	RouterRegister       routing.RouteRegister
+	store                serviceaccounts.Store
+	log                  log.Logger
+	permissionService    accesscontrol.ServiceAccountPermissionsService
 }
 
 func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
 	service serviceaccounts.Service,
 	accesscontrol accesscontrol.AccessControl,
+	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	store serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
-		cfg:               cfg,
-		service:           service,
-		accesscontrol:     accesscontrol,
-		RouterRegister:    routerRegister,
-		store:             store,
-		log:               log.New("serviceaccounts.api"),
-		permissionService: permissionService,
+		cfg:                  cfg,
+		service:              service,
+		accesscontrol:        accesscontrol,
+		accesscontrolService: accesscontrolService,
+		RouterRegister:       routerRegister,
+		store:                store,
+		log:                  log.New("serviceaccounts.api"),
+		permissionService:    permissionService,
 	}
 }
 
@@ -127,6 +130,10 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 			}
 		}
+
+		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	return response.JSON(http.StatusCreated, serviceAccount)
