@@ -128,7 +128,7 @@ authentication token, you can force Grafana to use Microsoft's Graph API instead
 
 Use the [`force_use_graph_api` configuration option]({{< relref
 "../setup-grafana/configure-security/configure-authentication/azuread/#force-fetching-groups-from-microsoft-graph-api" >}})
-when configuring Azure AD authentication to force Grafana to fetch
+when configuring Azure AD authentication to force Grafana to fetch groups using Graph API.
 
 ## RBAC - List token's permissions
 
