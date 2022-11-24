@@ -132,8 +132,12 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 }
 
 func (srv AlertmanagerSrv) RouteGetSuccessfullyAppliedAlertingConfigs(c *models.ReqContext) response.Response {
-	configs, err := srv.mam.GetSuccessfullyAppliedAlertmanagerConfigurations(c.Req.Context(), c.OrgID)
+	limit := c.QueryInt("limit")
+	configs, err := srv.mam.GetSuccessfullyAppliedAlertmanagerConfigurations(c.Req.Context(), c.OrgID, limit)
 	if err != nil {
+		if errors.Is(err, notifier.ErrZeroLimit) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
 

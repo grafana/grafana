@@ -157,10 +157,6 @@ func (st *DBstore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx contex
 
 // GetSuccessfullyAppliedAlertmanagerConfigurations returns the latest n valid configurations for an org.
 func (st *DBstore) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, query *models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery) error {
-	if query.Limit < 1 {
-		return fmt.Errorf("failed to fetch previous valid configurations: limit is set to '%d' but needs to be > 0", query.Limit)
-	}
-
 	var result []*models.AlertConfiguration
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Table("alert_configuration").Where("org_id = ? AND successfully_applied = true", query.OrgID).Desc("id").Limit(query.Limit).Find(&result)

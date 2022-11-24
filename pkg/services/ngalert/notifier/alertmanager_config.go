@@ -10,6 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
+var (
+	ErrZeroLimit = errors.New("limit should be greater than 0")
+)
+
 type UnknownReceiverError struct {
 	UID string
 }
@@ -45,9 +49,16 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	return result, nil
 }
 
-func (moa *MultiOrgAlertmanager) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, org int64) (definitions.GettableUserConfigs, error) {
-	// TODO: determine limit
-	query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{OrgID: org, Limit: 10}
+func (moa *MultiOrgAlertmanager) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) (definitions.GettableUserConfigs, error) {
+	if limit < 1 {
+		return definitions.GettableUserConfigs{}, ErrZeroLimit
+	}
+
+	if limit > store.ConfigRecordsLimit {
+		limit = store.ConfigRecordsLimit
+	}
+
+	query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{OrgID: org, Limit: limit}
 	err := moa.configStore.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, &query)
 	if err != nil {
 		return definitions.GettableUserConfigs{}, fmt.Errorf("failed to get successfully applied configurations: %w", err)

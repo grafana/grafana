@@ -166,6 +166,10 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		orgs: orgs,
 	}
 
+	// Using an arbitrary limit of 10 to confirm that we only have 1 successfully applied record stored.
+	// If we were to use 1 as the limit we would always have 1 record max and the passing test could be a false positive.
+	const configRecordsLimit int = 10
+
 	tmpDir := t.TempDir()
 	kvStore := NewFakeKVStore(t)
 	provStore := provisioning.NewFakeProvisioningStore()
@@ -187,7 +191,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	// No successfully applied configurations should be found at first.
 	{
 		for _, org := range orgs {
-			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org, configRecordsLimit)
 			require.NoError(t, err)
 			require.Len(t, configs, 0)
 		}
@@ -203,7 +207,8 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 		// Configurations should be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
-			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org, configRecordsLimit)
 			require.NoError(t, err)
 
 			if org == orgWithBadConfig {
@@ -224,7 +229,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 		// The configuration should still be marked as successfully applied for all orgs except for org 2.
 		for _, org := range orgs {
-			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org, configRecordsLimit)
 			require.NoError(t, err)
 
 			if org == orgWithBadConfig {
@@ -246,7 +251,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 		// All configurations should be marked as successfully applied.
 		for _, org := range orgs {
-			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org)
+			configs, err := mam.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, org, configRecordsLimit)
 			require.NoError(t, err)
 			require.Len(t, configs, 1)
 		}

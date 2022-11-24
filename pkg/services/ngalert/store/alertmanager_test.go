@@ -236,14 +236,6 @@ func TestGetSuccessfullyAppliedAlertmanagerConfigurations(t *testing.T) {
 		Logger:   log.NewNopLogger(),
 	}
 
-	t.Run("limit set to a value <1 should return an error", func(tt *testing.T) {
-		query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
-			Limit: 0,
-		}
-		err := store.GetSuccessfullyAppliedAlertmanagerConfigurations(context.Background(), &query)
-		require.Error(t, err)
-	})
-
 	t.Run("when no configurations are found an empty slice should be returned", func(tt *testing.T) {
 		query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
 			OrgID: 1,

@@ -294,9 +294,15 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 	sut := createSut(t, nil)
 
 	t.Run("assert 200 and empty slice when no successfully applied configurations are found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "10")
+		req.URL.RawQuery = q.Encode()
+
 		rc := models.ReqContext{
 			Context: &web.Context{
-				Req: &http.Request{},
+				Req: req,
 			},
 			SignedInUser: &user.SignedInUser{
 				OrgID: 10,
@@ -307,16 +313,22 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 		require.Equal(tt, 200, response.Status())
 
 		var configs apimodels.GettableUserConfigs
-		err := json.Unmarshal(response.Body(), &configs)
+		err = json.Unmarshal(response.Body(), &configs)
 		require.NoError(tt, err)
 
 		require.Len(tt, configs, 0)
 	})
 
 	t.Run("assert 200 and one config in the response for an org that has one successfully applied configuration", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "10")
+		req.URL.RawQuery = q.Encode()
+
 		rc := models.ReqContext{
 			Context: &web.Context{
-				Req: &http.Request{},
+				Req: req,
 			},
 			SignedInUser: &user.SignedInUser{
 				OrgID: 1,
@@ -327,10 +339,44 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 		require.Equal(tt, 200, response.Status())
 
 		var configs apimodels.GettableUserConfigs
-		err := json.Unmarshal(response.Body(), &configs)
+		err = json.Unmarshal(response.Body(), &configs)
 		require.NoError(tt, err)
 
 		require.Len(tt, configs, 1)
+	})
+
+	t.Run("assert 400 when no limit is provided", func(tt *testing.T) {
+		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+
+		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		require.Equal(tt, 400, response.Status())
+	})
+
+	t.Run("assert 400 when limit is < 1", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "0")
+		req.URL.RawQuery = q.Encode()
+
+		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: req,
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+
+		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		require.Equal(tt, 400, response.Status())
 	})
 }
 

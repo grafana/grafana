@@ -349,11 +349,11 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts/valid"),
-			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/alerts/valid"),
+			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts/successfully-applied"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/alerts/successfully-applied"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/alertmanager/grafana/config/api/v1/alerts/valid",
+				"/api/alertmanager/grafana/config/api/v1/alerts/successfully-applied",
 				srv.RouteGetGrafanaSuccessfullyAppliedAlertingConfigs,
 				m,
 			),
