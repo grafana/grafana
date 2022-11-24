@@ -193,11 +193,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.toggleTableView();
   };
 
-  onTogglePanelOptions = () => {
-    const { uiState, updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
-  };
-
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
     const { dashboard, panel, uiState, tableViewEnabled, theme } = this.props;
 
