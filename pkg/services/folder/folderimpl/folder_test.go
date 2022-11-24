@@ -333,10 +333,11 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		log:              log.New("test-folder-service"),
 	}
 	t.Run("create folder", func(t *testing.T) {
-		folderStore.ExpectedFolder = &folder.Folder{}
+		folderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
 		res, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr})
 		require.NoError(t, err)
 		require.NotNil(t, res.UID)
+		require.NotEmpty(t, res.ParentUID)
 	})
 
 	t.Run("get parents folder", func(t *testing.T) {
