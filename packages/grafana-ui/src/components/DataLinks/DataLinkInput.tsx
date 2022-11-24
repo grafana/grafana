@@ -162,6 +162,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
         sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
           range = sel.getRangeAt(0).cloneRange();
+          // Collapse to the start of the range
           range.collapse(true);
           range.setStart(input, 0);
           precedingChar = range.toString().slice(-1);
