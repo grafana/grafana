@@ -272,11 +272,6 @@ type SetResourcePermissionCommand struct {
 	Permission  string `json:"permission"`
 }
 
-type GetUsersPermissionCommand struct {
-	OrgID        int64  `json:"-"`
-	ActionPrefix string `json:"actionPrefix"`
-}
-
 const (
 	GlobalOrgID        = 0
 	FixedRolePrefix    = "fixed:"
