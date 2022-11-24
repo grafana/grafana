@@ -19,6 +19,9 @@ const field: FieldConfig = {
     mode: ThresholdsMode.Absolute,
     steps: [{ value: -Infinity, color: '#7EB26D' }],
   },
+  custom: {
+    neeutral: 0,
+  },
 };
 
 const props: Props = {

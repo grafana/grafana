@@ -289,7 +289,14 @@ func TestTeamsNotifier(t *testing.T) {
 			clientStub := newMockClient(c.response)
 			notifications.SetWebhookClient(clientStub)
 
-			cfg, err := NewTeamsConfig(m)
+			fc := FactoryConfig{
+				Config:              m,
+				ImageStore:          &UnavailableImageStore{},
+				NotificationService: webhookSender,
+				Template:            tmpl,
+			}
+
+			pn, err := NewTeamsNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -299,7 +306,7 @@ func TestTeamsNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewTeamsNotifier(cfg, webhookSender, &UnavailableImageStore{}, tmpl)
+
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

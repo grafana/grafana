@@ -67,13 +67,14 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
+	uid := web.Params(c.Req)[":uid"]
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route GET /folders/id/{folder_id} folders getFolderByID
@@ -93,13 +94,13 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgID)
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
+	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
 // swagger:route POST /folders folders createFolder
@@ -121,6 +122,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgID = c.OrgID
+	cmd.SignedInUser = c.SignedInUser
 
 	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
@@ -182,8 +184,8 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), result.Id, c.OrgID, c.SignedInUser)
-	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, result))
+	g := guardian.New(c.Req.Context(), result.ID, c.OrgID, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, result))
 }
 
 // swagger:route DELETE /folders/{folder_uid} folders deleteFolder
@@ -210,7 +212,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules")})
+	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -218,7 +220,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	return response.JSON(http.StatusOK, "")
 }
 
-func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -234,8 +236,8 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 	}
 
 	return dtos.Folder{
-		Id:            folder.Id,
-		Uid:           folder.Uid,
+		Id:            folder.ID,
+		Uid:           folder.UID,
 		Title:         folder.Title,
 		Url:           folder.Url,
 		HasACL:        folder.HasACL,
@@ -248,43 +250,8 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 		UpdatedBy:     updater,
 		Updated:       folder.Updated,
 		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
-	}
-}
-
-func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
-	canEdit, _ := g.CanEdit()
-	canSave, _ := g.CanSave()
-	canAdmin, _ := g.CanAdmin()
-	canDelete, _ := g.CanDelete()
-
-	// Finding creator and last updater of the folder
-	updater, creator := anonString, anonString
-	/*
-		if folder.CreatedBy > 0 {
-			creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
-		}
-		if folder.UpdatedBy > 0 {
-			updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
-		}
-	*/
-
-	return dtos.Folder{
-		Id:    folder.ID,
-		Uid:   folder.UID,
-		Title: folder.Title,
-		//Url:           folder.Url,
-		//HasACL:        folder.HasACL,
-		CanSave:   canSave,
-		CanEdit:   canEdit,
-		CanAdmin:  canAdmin,
-		CanDelete: canDelete,
-		CreatedBy: creator,
-		Created:   folder.Created,
-		UpdatedBy: updater,
-		Updated:   folder.Updated,
-		//Version:       folder.Version,
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
+		ParentUID:     folder.ParentUID,
 	}
 }
 
