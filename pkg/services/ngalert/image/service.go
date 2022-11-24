@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	screenshotCacheTTL = 60 * time.Second
 	screenshotTimeout  = 10 * time.Second
+	screenshotCacheTTL = time.Minute
 )
 
 // DeleteExpiredService is a service to delete expired images.
@@ -113,27 +113,31 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 // alert rule has a Dashboard UID and the dashboard exists, but does not have a
 // Panel ID in its annotations then an models.ErrNoPanel error is returned.
 func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
-	if r.DashboardUID == nil || *r.DashboardUID == "" {
+	logger := s.logger.FromContext(ctx)
+
+	dashboardUID := r.GetDashboardUID()
+	if dashboardUID == "" {
+		logger.Debug("Cannot take screenshot for alert rule as it is not associated with a dashboard")
 		return nil, models.ErrNoDashboard
 	}
 
-	if r.PanelID == nil || *r.PanelID == 0 {
+	panelID := r.GetPanelID()
+	if panelID <= 0 {
+		logger.Debug("Cannot take screenshot for alert rule as it is not associated with a panel")
 		return nil, models.ErrNoPanel
 	}
 
+	logger = logger.New("dashboard", dashboardUID, "panel", panelID)
+
 	opts := screenshot.ScreenshotOptions{
-		DashboardUID: *r.DashboardUID,
-		PanelID:      *r.PanelID,
+		DashboardUID: dashboardUID,
+		PanelID:      panelID,
 		Timeout:      screenshotTimeout,
 	}
 
 	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,
 	// deduplicated on a base64 hash of the screenshot options.
 	optsHash := base64.StdEncoding.EncodeToString(opts.Hash())
-
-	logger := s.logger.FromContext(ctx).New(
-		"dashboard", opts.DashboardUID,
-		"panel", opts.PanelID)
 
 	// If there is an image is in the cache return it instead of taking another screenshot
 	if image, ok := s.cache.Get(ctx, optsHash); ok {

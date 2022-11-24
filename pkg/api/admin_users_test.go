@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -65,7 +66,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
 		mockUser := usertest.NewUserServiceFake()
 		mockUser.ExpectedError = user.ErrUserNotFound
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
@@ -263,7 +264,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, userService *usertest.FakeUserService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			AuthTokenService: auth.NewFakeUserAuthTokenService(),
+			AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 			userService:      userService,
 		}
 
@@ -285,9 +286,9 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 	})
 }
 
-func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc, userService user.Service) {
+func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd auth.RevokeAuthTokenCmd, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
@@ -315,7 +316,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 
 func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, userService *usertest.FakeUserService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
@@ -341,7 +342,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 
 func adminDisableUserScenario(t *testing.T, desc string, action string, url string, routePattern string, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		authInfoService := &logintest.AuthInfoServiceFake{}
 

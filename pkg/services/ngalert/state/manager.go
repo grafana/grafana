@@ -176,25 +176,22 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
 	}
-	resolvedStates := st.staleResultsHandler(ctx, logger, alertRule, evaluatedAt)
+	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
+	st.deleteAlertStates(ctx, logger, staleStates)
 
 	st.saveAlertStates(ctx, logger, states...)
 
-	changedStates := make([]StateTransition, 0, len(states))
-	for _, s := range states {
-		if s.changed() {
-			changedStates = append(changedStates, s)
-		}
-	}
+	st.logStateTransitions(ctx, alertRule, states, staleStates)
 
-	if st.historian != nil {
-		st.historian.RecordStates(ctx, alertRule, changedStates)
-	}
-
-	deltas := append(states, resolvedStates...)
 	nextStates := make([]*State, 0, len(states))
-	for _, s := range deltas {
+	for _, s := range states {
 		nextStates = append(nextStates, s.State)
+	}
+	// TODO refactor further. Do not filter because it will be filtered downstream
+	for _, s := range staleStates {
+		if s.PreviousState == eval.Alerting {
+			nextStates = append(nextStates, s.State)
+		}
 	}
 	return nextStates
 }
@@ -246,8 +243,8 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		image, err := takeImage(ctx, st.images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
-				"dashboard", alertRule.DashboardUID,
-				"panel", alertRule.PanelID,
+				"dashboard", alertRule.GetDashboardUID(),
+				"panel", alertRule.GetPanelID(),
 				"error", err)
 		} else if image != nil {
 			currentState.Image = image
@@ -281,7 +278,7 @@ func (st *Manager) Put(states []*State) {
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
 func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
-	if st.instanceStore == nil {
+	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
 
@@ -319,6 +316,49 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	}
 }
 
+func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.AlertRule, newStates, staleStates []StateTransition) {
+	if st.historian == nil {
+		return
+	}
+	changedStates := make([]StateTransition, 0, len(staleStates))
+	for _, s := range newStates {
+		if s.changed() {
+			changedStates = append(changedStates, s)
+		}
+	}
+
+	// TODO refactor further. Let historian decide what to log. Current logic removes states `Normal (reason-X) -> Normal (reason-Y)`
+	for _, t := range staleStates {
+		if t.PreviousState == eval.Alerting {
+			changedStates = append(changedStates, t)
+		}
+	}
+	st.historian.RecordStates(ctx, alertRule, changedStates)
+}
+
+func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
+	if st.instanceStore == nil || len(states) == 0 {
+		return
+	}
+
+	logger.Debug("Deleting alert states", "count", len(states))
+	toDelete := make([]ngModels.AlertInstanceKey, 0, len(states))
+
+	for _, s := range states {
+		key, err := s.GetAlertInstanceKey()
+		if err != nil {
+			logger.Error("Failed to delete alert instance with invalid labels", "cacheID", s.CacheID, "error", err)
+			continue
+		}
+		toDelete = append(toDelete, key)
+	}
+
+	err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...)
+	if err != nil {
+		logger.Error("Failed to delete stale states", "error", err)
+	}
+}
+
 // TODO: why wouldn't you allow other types like NoData or Error?
 func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	switch {
@@ -331,72 +371,50 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, logger log.Logger, r *ngModels.AlertRule, evaluatedAt time.Time) []StateTransition {
-	var (
-		// resolvedImage contains the image for all stale states that are resolved. The resolved image is shared between
-		// all resolved states as the alert rule is the same. TODO: We will need to change this when we support images
-		// without screenshots as each state will have a different image
-		resolvedImage *ngModels.Image
+func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule) []StateTransition {
+	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
+	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
+	var resolvedImage *ngModels.Image
 
-		// resolvedStates contains the stale states that were resolved
-		resolvedStates []StateTransition
-
-		// staleStates contains the current set of stale states from the state cache
-		staleStates []*State
-
-		// toDelete contains the stale states to delete
-		toDelete []ngModels.AlertInstanceKey
-	)
-
-	staleStates = st.cache.deleteRuleStates(r.GetKey(), func(s *State) bool {
-		return stateIsStale(evaluatedAt, s.LastEvaluationTime, r.IntervalSeconds)
+	var resolvedStates []StateTransition
+	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
 
 	for _, s := range staleStates {
 		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+		oldState := s.State
+		oldReason := s.StateReason
 
-		key, err := s.GetAlertInstanceKey()
-		if err != nil {
-			logger.Error("Unable to get alert instance key to delete it from database. Ignoring", "error", err)
-		} else {
-			toDelete = append(toDelete, key)
-		}
+		s.State = eval.Normal
+		s.StateReason = ngModels.StateReasonMissingSeries
+		s.EndsAt = evaluatedAt
+		s.LastEvaluationTime = evaluatedAt
 
-		// If the stale state is alerting then it should first be resolved
-		if s.State == eval.Alerting {
-			t := StateTransition{PreviousState: s.State, PreviousStateReason: s.StateReason}
-			s.Resolve(ngModels.StateReasonMissingSeries, evaluatedAt)
-			s.LastEvaluationTime = evaluatedAt
-
+		if oldState == eval.Alerting {
+			s.Resolved = true
 			// If there is no resolved image for this rule then take one
 			if resolvedImage == nil {
-				image, err := takeImage(ctx, st.images, r)
+				image, err := takeImage(ctx, st.images, alertRule)
 				if err != nil {
 					logger.Warn("Failed to take an image",
-						"dashboard", r.DashboardUID,
-						"panel", r.PanelID,
+						"dashboard", alertRule.GetDashboardUID(),
+						"panel", alertRule.GetPanelID(),
 						"error", err)
 				} else if image != nil {
 					resolvedImage = image
 				}
 			}
 			s.Image = resolvedImage
-
-			t.State = s
-			resolvedStates = append(resolvedStates, t)
 		}
-	}
 
-	if st.historian != nil {
-		st.historian.RecordStates(ctx, r, resolvedStates)
-	}
-
-	if st.instanceStore != nil {
-		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
-			logger.Error("Unable to delete stale instances from database", "error", err, "count", len(toDelete))
+		record := StateTransition{
+			State:               s,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
 		}
+		resolvedStates = append(resolvedStates, record)
 	}
-
 	return resolvedStates
 }
 

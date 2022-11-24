@@ -3,6 +3,8 @@ package folder
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -33,7 +35,17 @@ type Folder struct {
 
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
-	// UpdatedBy int64
+	Version   int
+	Url       string
+	UpdatedBy int64
+	CreatedBy int64
+	HasACL    bool
+}
+
+type FolderDTO struct {
+	Folder
+
+	Children []FolderDTO
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -51,10 +63,12 @@ func NewFolder(title string, description string) *Folder {
 // to create a folder.
 type CreateFolderCommand struct {
 	UID         string `json:"uid"`
-	OrgID       int64  `json:"orgId"`
+	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	ParentUID   string `json:"parent_uid"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -62,9 +76,10 @@ type CreateFolderCommand struct {
 type UpdateFolderCommand struct {
 	Folder         *Folder `json:"folder"` // The extant folder
 	NewUID         *string `json:"uid" xorm:"uid"`
-	NewParentUID   *string `json:"parent_uid" xorm:"parent_uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
@@ -72,14 +87,19 @@ type UpdateFolderCommand struct {
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
 	NewParentUID string `json:"new_parent_uid"`
-	OrgID        int64  `json:"orgId"`
+	OrgID        int64  `json:"-"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID   string `json:"uid" xorm:"uid"`
-	OrgID int64  `json:"orgId" xorm:"org_id"`
+	UID              string `json:"uid" xorm:"uid"`
+	OrgID            int64  `json:"orgId" xorm:"org_id"`
+	ForceDeleteRules bool   `json:"forceDeleteRules"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -91,6 +111,8 @@ type GetFolderQuery struct {
 	ID    *int64
 	Title *string
 	OrgID int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
@@ -111,4 +133,35 @@ type GetTreeQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+}
+
+// ToLegacyModel is temporary until the two folder services are merged
+func (f *Folder) ToLegacyModel() *models.Folder {
+	return &models.Folder{
+		Id:        f.ID,
+		Uid:       f.UID,
+		Title:     f.Title,
+		Url:       models.GetFolderUrl(f.UID, models.SlugifyTitle(f.Title)),
+		Version:   0,
+		Created:   f.Created,
+		Updated:   f.Updated,
+		UpdatedBy: 0,
+		CreatedBy: 0,
+		HasACL:    false,
+	}
+}
+
+func FromDashboard(dash *models.Dashboard) *Folder {
+	return &Folder{
+		ID:        dash.Id,
+		UID:       dash.Uid,
+		Title:     dash.Title,
+		HasACL:    dash.HasACL,
+		Url:       models.GetFolderUrl(dash.Uid, dash.Slug),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
+	}
 }

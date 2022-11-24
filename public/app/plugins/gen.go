@@ -19,7 +19,6 @@ import (
 var skipPlugins = map[string]bool{
 	"canvas":         true,
 	"heatmap":        true,
-	"heatmap-old":    true,
 	"candlestick":    true,
 	"state-timeline": true,
 	"status-history": true,
@@ -32,7 +31,6 @@ var skipPlugins = map[string]bool{
 
 const sep = string(filepath.Separator)
 
-// Generate TypeScript for all plugin models.cue
 func main() {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
