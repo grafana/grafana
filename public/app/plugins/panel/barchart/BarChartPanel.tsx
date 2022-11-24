@@ -190,13 +190,16 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
             />
           </div>
         )}
-        <DataHoverView
-          data={info.aligned}
-          rowIndex={datapointIdx}
-          columnIndex={seriesIdx}
-          sortOrder={options.tooltip.sort}
-          mode={options.tooltip.mode}
-        />
+        {options.customTooltipJSX && options.customTooltipJSX(info.aligned, datapointIdx, seriesIdx)}
+        {!options.customTooltipJSX && (
+          <DataHoverView
+            data={info.aligned}
+            rowIndex={datapointIdx}
+            columnIndex={seriesIdx}
+            sortOrder={options.tooltip.sort}
+            mode={options.tooltip.mode}
+          />
+        )}
       </>
     );
   };
