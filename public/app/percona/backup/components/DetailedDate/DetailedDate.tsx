@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import moment from 'moment/moment';
+import { format } from 'date-fns';
 import React, { FC } from 'react';
 
 import { useStyles } from '@grafana/ui';
@@ -16,9 +16,8 @@ export const DetailedDate: FC<DetailedDateProps> = ({
   className,
 }) => {
   const styles = useStyles(getStyles);
-  const momentObj = moment(date);
-  const dayTime = momentObj.format(dayFormat);
-  const hourTime = momentObj.format(hourFormat);
+  const dayTime = format(date, dayFormat);
+  const hourTime = format(date, hourFormat);
 
   return (
     <span data-testid={dataTestId} className={cx(className, styles.timeWrapper)}>

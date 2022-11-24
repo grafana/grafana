@@ -14,4 +14,7 @@ export const getStyles = ({ spacing, typography }: GrafanaTheme) => ({
     margin-right: ${spacing.md};
     font-weight: ${typography.weight.semibold};
   `,
+  pitrContainer: css`
+    display: flex;
+  `,
 });

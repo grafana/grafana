@@ -1,5 +1,5 @@
 export const Messages = {
   backupName: 'Backup name',
-  finished: 'Finished at',
+  pitr: 'PITR timestamp',
   dataModel: 'Data model',
 };

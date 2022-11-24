@@ -9,7 +9,7 @@ import { Messages } from './RestoreHistoryDetails.Messages';
 import { getStyles } from './RestoreHistoryDetails.styles';
 import { RestoreHistoryDetailsProps } from './RestoreHistoryDetails.types';
 
-export const RestoreHistoryDetails: FC<RestoreHistoryDetailsProps> = ({ name, finished, dataModel }) => {
+export const RestoreHistoryDetails: FC<RestoreHistoryDetailsProps> = ({ name, dataModel, pitrTimestamp }) => {
   const styles = useStyles(getStyles);
   const dataModelMsg = formatDataModel(dataModel);
 
@@ -18,15 +18,15 @@ export const RestoreHistoryDetails: FC<RestoreHistoryDetailsProps> = ({ name, fi
       <span data-testid="restore-details-name">
         <span className={styles.detailLabel}>{Messages.backupName}</span> <span>{name}</span>
       </span>
-      {finished ? (
-        <span data-testid="restore-details-finished">
-          <span className={styles.detailLabel}>{Messages.finished}</span>
-          <DetailedDate date={finished} dataTestId="restore-details-date" />
-        </span>
-      ) : null}
       <span data-testid="restore-details-data-model">
         <span className={styles.detailLabel}>{Messages.dataModel}</span> <span>{dataModelMsg}</span>
       </span>
+      {pitrTimestamp ? (
+        <span className={styles.pitrContainer} data-testid="restore-details-pitr">
+          <span className={styles.detailLabel}>{Messages.pitr}</span>
+          <DetailedDate date={pitrTimestamp} dataTestId="restore-details-date" />
+        </span>
+      ) : null}
     </div>
   );
 };

@@ -10,7 +10,8 @@ describe('Backup::utils', () => {
       expect(formatStatus(BackupStatus.BACKUP_STATUS_INVALID)).toBe(statusMsg.invalid);
       expect(formatStatus(RestoreStatus.RESTORE_STATUS_IN_PROGRESS)).toBe(statusMsg.inProgress);
       expect(formatStatus(RestoreStatus.RESTORE_STATUS_ERROR)).toBe(statusMsg.error);
-      expect(formatStatus('bla' as RestoreStatus)).toBe('');
+      expect(formatStatus(BackupStatus.BACKUP_STATUS_FAILED_NOT_SUPPORTED_BY_AGENT)).toBe(statusMsg.error);
+      expect(formatStatus('bla' as RestoreStatus)).toBe(statusMsg.error);
     });
   });
 

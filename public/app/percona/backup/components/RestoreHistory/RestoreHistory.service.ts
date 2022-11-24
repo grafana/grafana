@@ -8,7 +8,7 @@ const BASE_URL = '/v1/management/backup';
 
 export const RestoreHistoryService = {
   async list(token?: CancelToken): Promise<Restore[]> {
-    const { items = [] } = await api.post<RestoreResponse, any>(`${BASE_URL}/RestoreHistory/List`, {}, false, token);
+    const { items = [] } = await api.post<RestoreResponse, object>(`${BASE_URL}/RestoreHistory/List`, {}, false, token);
     return items.map(
       ({
         restore_id,
@@ -23,6 +23,7 @@ export const RestoreHistoryService = {
         status,
         started_at,
         finished_at,
+        pitr_timestamp,
       }) => ({
         id: restore_id,
         artifactId: artifact_id,
@@ -36,6 +37,7 @@ export const RestoreHistoryService = {
         status,
         started: new Date(started_at).getTime(),
         finished: finished_at ? new Date(finished_at).getTime() : null,
+        pitrTimestamp: pitr_timestamp ? new Date(pitr_timestamp).getTime() : undefined,
       })
     );
   },

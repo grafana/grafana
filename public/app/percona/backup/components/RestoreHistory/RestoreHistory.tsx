@@ -50,7 +50,13 @@ export const RestoreHistory: FC = () => {
       {
         Header: Messages.restoreHistory.table.columns.started,
         accessor: 'started',
-        Cell: ({ value }) => <DetailedDate date={value} />,
+        Cell: ({ value }) => <DetailedDate dataTestId="restore-started" date={value} />,
+        width: '200px',
+      },
+      {
+        Header: Messages.restoreHistory.table.columns.finished,
+        accessor: 'finished',
+        Cell: ({ value }) => (value ? <DetailedDate dataTestId="restore-finished" date={value} /> : null),
         width: '200px',
       },
       {
@@ -72,7 +78,7 @@ export const RestoreHistory: FC = () => {
     (row: Row<Restore>) => (
       <RestoreHistoryDetails
         name={row.original.name}
-        finished={row.original.finished}
+        pitrTimestamp={row.original.pitrTimestamp}
         dataModel={row.original.dataModel}
       />
     ),

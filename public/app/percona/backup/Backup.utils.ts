@@ -16,10 +16,11 @@ export const formatStatus = (status: BackupStatus | RestoreStatus): string => {
     [BackupStatus.BACKUP_STATUS_SUCCESS]: statusMsg.success,
     [RestoreStatus.RESTORE_STATUS_SUCCESS]: statusMsg.success,
     [BackupStatus.BACKUP_STATUS_ERROR]: statusMsg.error,
+    [BackupStatus.BACKUP_STATUS_FAILED_NOT_SUPPORTED_BY_AGENT]: statusMsg.error,
     [RestoreStatus.RESTORE_STATUS_ERROR]: statusMsg.error,
   };
 
-  return map[status] ?? '';
+  return map[status] ?? statusMsg.error;
 };
 
 export const formatDataModel = (model: DataModel): string => {

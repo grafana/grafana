@@ -6,6 +6,7 @@ export interface RawRestore extends Omit<RawBackup, 'created_at' | 'status' | 'm
   restore_id: string;
   started_at: string;
   finished_at?: string;
+  pitr_timestamp?: string;
 }
 
 export interface RestoreResponse {
@@ -17,4 +18,5 @@ export interface Restore extends Omit<Backup, 'created' | 'status' | 'mode'> {
   started: number;
   finished: number | null;
   status: RestoreStatus;
+  pitrTimestamp?: number;
 }

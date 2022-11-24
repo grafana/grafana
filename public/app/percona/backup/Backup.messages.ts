@@ -47,6 +47,7 @@ export const Messages = {
       noData: 'No restores found',
       columns: {
         started: 'Started at',
+        finished: 'Finished at',
         actions: 'Actions',
       },
     },
