@@ -19,7 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -55,7 +56,15 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
-	resolver := ConflictResolver{Users: conflicts, Store: s}
+	userService, err := userimpl.ProvideService(s, nil, nil, nil, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
+	}
+	acService, err := acimpl.ProvideService(nil, s, nil, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
+	}
+	resolver := ConflictResolver{Users: conflicts, Store: s, userService: userService, ac: acService}
 	resolver.BuildConflictBlocks(conflicts, f)
 	return &resolver, nil
 }
@@ -367,9 +376,13 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
 				}
 				// // delete the user
-				delErr := r.Store.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+				delErr := r.userService.Delete(ctx, &user.DeleteUserCommand{UserID: fromUserId})
 				if delErr != nil {
 					return fmt.Errorf("error during deletion of user: %w", delErr)
+				}
+				delACErr := r.ac.DeleteUserAccessControl(ctx, fromUserId)
+				if delACErr != nil {
+					return fmt.Errorf("error during deletion of user access control: %w", delACErr)
 				}
 			}
 			commitErr := sess.Commit()
@@ -598,6 +611,8 @@ func (r *ConflictResolver) ToStringPresentation() string {
 
 type ConflictResolver struct {
 	Store           *sqlstore.SQLStore
+	userService     user.Service
+	ac              accesscontrol.Service
 	Config          *setting.Cfg
 	Users           ConflictingUsers
 	ValidUsers      ConflictingUsers
