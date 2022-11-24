@@ -22,7 +22,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With defaults", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
 				"metrics": [{"type": "count", "id": "0" }]
 			}`, from, to, 15*time.Second)
@@ -43,7 +42,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With multiple bucket aggs", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "terms", "field": "@host", "id": "2", "settings": { "size": "0", "order": "asc" } },
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
@@ -65,7 +63,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With select field", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 				],
@@ -85,7 +82,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by metric agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -115,7 +111,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by count metric agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -139,7 +134,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by percentiles agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -164,7 +158,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by extended stats agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -189,7 +182,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by term", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -216,7 +208,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With metric percentiles", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
@@ -249,7 +240,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With filters aggs", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "2",
@@ -280,7 +270,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With raw document metric", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
 			}`, from, to, 15*time.Second)
@@ -293,7 +282,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With raw document metric size set", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": { "size": 1337 }	}]
 			}`, from, to, 15*time.Second)
@@ -306,7 +294,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With date histogram agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "2",
@@ -331,7 +318,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			t.Run("Should not include time_zone when timeZone is utc", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
 					"bucketAggs": [
 						{
 							"id": "2",
@@ -354,7 +340,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			t.Run("Should include time_zone when timeZone is not utc", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
 					"bucketAggs": [
 						{
 							"id": "2",
@@ -378,7 +363,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With histogram agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "3",
@@ -405,7 +389,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With geo hash grid agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "3",
@@ -430,7 +413,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With moving average", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -468,7 +450,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With moving average doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -500,7 +481,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With broken moving average", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "5" }
 				],
@@ -536,7 +516,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With cumulative sum", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -574,7 +553,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With cumulative sum doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -606,7 +584,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With broken cumulative sum", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "5" }
 				],
@@ -642,7 +619,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With derivative", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -671,7 +647,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With derivative doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -700,7 +675,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With serial_diff", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -729,7 +703,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With serial_diff doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -758,7 +731,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With bucket_script", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -795,7 +767,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With bucket_script doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -835,7 +806,6 @@ func TestSettingsCasting(t *testing.T) {
 	t.Run("Correctly transforms moving_average settings", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
-			"timeField": "@timestamp",
 			"bucketAggs": [
 				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 			],
@@ -879,7 +849,6 @@ func TestSettingsCasting(t *testing.T) {
 	t.Run("Correctly transforms serial_diff settings", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
-			"timeField": "@timestamp",
 			"bucketAggs": [
 				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 			],
@@ -908,7 +877,6 @@ func TestSettingsCasting(t *testing.T) {
 		t.Run("Correctly transforms date_histogram settings", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "date_histogram",
@@ -943,7 +911,6 @@ func TestSettingsCasting(t *testing.T) {
 		t.Run("Correctly uses already int min_doc_count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "date_histogram",
@@ -979,7 +946,6 @@ func TestSettingsCasting(t *testing.T) {
 			t.Run("Uses fixed_interval", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
 					"bucketAggs": [
 						{
 							"type": "date_histogram",
@@ -1008,7 +974,6 @@ func TestSettingsCasting(t *testing.T) {
 		t.Run("Correctly handles scripts", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 				],
@@ -1114,7 +1079,6 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 
 		t.Run("Should be able to parse query", func(t *testing.T) {
 			body := `{
-				"timeField": "@timestamp",
 				"query": "@metric:cpu",
 				"alias": "{{@hostname}} {{metric}}",
         		"interval": "10m",
@@ -1171,7 +1135,6 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 
 			q := queries[0]
 
-			require.Equal(t, q.TimeField, "@timestamp")
 			require.Equal(t, q.RawQuery, "@metric:cpu")
 			require.Equal(t, q.Alias, "{{@hostname}} {{metric}}")
 			require.Equal(t, q.Interval, "10m")

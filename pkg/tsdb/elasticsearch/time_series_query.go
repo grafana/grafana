@@ -387,10 +387,6 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, 
 		if err != nil {
 			return nil, err
 		}
-		timeField, err := model.Get("timeField").String()
-		if err != nil {
-			return nil, err
-		}
 		rawQuery := model.Get("query").MustString()
 		bucketAggs, err := p.parseBucketAggs(model)
 		if err != nil {
@@ -404,7 +400,6 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, 
 		interval := model.Get("interval").MustString("")
 
 		queries = append(queries, &Query{
-			TimeField:     timeField,
 			RawQuery:      rawQuery,
 			BucketAggs:    bucketAggs,
 			Metrics:       metrics,
