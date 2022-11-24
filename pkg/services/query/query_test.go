@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -169,6 +170,40 @@ func TestParseMetricRequest(t *testing.T) {
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
 		assert.NoError(t, err)
 	})
+
+	t.Run("Header validation", func(t *testing.T) {
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "sEx6ZvSVk",
+				"type": "testdata"
+			}
+		}`)
+		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+		mr.HTTPRequest = httpreq
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+
+		// With the second value it is OK
+		httpreq.Header.Add("X-Datasource-Uid", "sEx6ZvSVk")
+		mr.HTTPRequest = httpreq
+		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+
+		// Single header with comma syntax
+		httpreq, _ = http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq.Header.Set("X-Datasource-Uid", "gIEkMvIVz, sEx6ZvSVk")
+		mr.HTTPRequest = httpreq
+		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+	})
 }
 
 func TestQueryDataMultipleSources(t *testing.T) {
@@ -253,8 +288,16 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
+		// without query parameter
 		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		require.NoError(t, err)
 
+		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
+		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
+		reqDTO.HTTPRequest = httpreq
+
+		// with query parameter
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 	})
 

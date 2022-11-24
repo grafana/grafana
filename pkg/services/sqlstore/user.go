@@ -394,12 +394,6 @@ func getTeamSelectSQLBase(filteredUsers []string) string {
 		` FROM team as team `
 }
 
-func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		return deleteUserInTransaction(ss, sess, cmd)
-	})
-}
-
 func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	return deleteUserInTransaction(ss, sess, cmd)
 }

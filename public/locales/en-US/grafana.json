@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -99,6 +104,15 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
+    "admin-access": {
+      "title": "Users and access"
+    },
+    "admin-general": {
+      "title": "General"
+    },
+    "admin-plugins": {
+      "title": "Plugins and data"
+    },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
@@ -184,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users"
+      "title": "Users (All orgs)",
+      "titleBeforeTopnav": "Users"
     },
     "help": {
       "title": "Help"
@@ -227,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Preferences"
+      "title": "Default preferences",
+      "titleBeforeTopnav": "Preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -252,6 +268,9 @@
     },
     "search": {
       "placeholder": "Search Grafana"
+    },
+    "search-dashboards": {
+      "title": "Search dashboards"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -299,13 +318,19 @@
   "news": {
     "title": "Latest from the blog"
   },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
       "share": "Share",
+      "show-legend": "Show legend",
       "view": "View"
     }
   },
@@ -381,7 +406,8 @@
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
     },
     "tab-title": {
       "embed": "Embed",
@@ -395,6 +421,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {
@@ -492,5 +521,14 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Enter variable value",
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    }
   }
 }

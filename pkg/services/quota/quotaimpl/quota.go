@@ -82,12 +82,10 @@ func (s *service) QuotaReached(c *models.ReqContext, targetSrv quota.TargetSrv) 
 		return false, nil
 	}
 
-	var params *quota.ScopeParameters
+	params := &quota.ScopeParameters{}
 	if c.IsSignedIn {
-		params = &quota.ScopeParameters{
-			OrgID:  c.OrgID,
-			UserID: c.UserID,
-		}
+		params.OrgID = c.OrgID
+		params.UserID = c.UserID
 	}
 	return s.CheckQuotaReached(c.Req.Context(), targetSrv, params)
 }

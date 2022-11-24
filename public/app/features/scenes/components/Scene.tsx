@@ -41,6 +41,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   if ($editor) {
     toolbarActions.push(
       <ToolbarButton
+        key="scene-settings"
         icon="cog"
         variant={isEditing ? 'primary' : 'default'}
         onClick={() => model.setState({ isEditing: !model.state.isEditing })}
