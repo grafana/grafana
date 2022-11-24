@@ -45,3 +45,10 @@ func addInterval(period string, field *data.Field) error {
 	}
 	return nil
 }
+
+func toString(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	return v.(string)
+}

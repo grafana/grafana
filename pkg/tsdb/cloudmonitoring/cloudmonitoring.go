@@ -248,11 +248,11 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 		if rawQuery["metricQuery"] != nil {
 			metricQuery := rawQuery["metricQuery"].(map[string]interface{})
 
-			if metricQuery["editorMode"] != nil && metricQuery["editorMode"].(string) == "mql" {
-				rawQuery["timeSeriesQuery"] = map[string]interface{}{
-					"projectName": metricQuery["projectName"],
-					"query":       metricQuery["query"],
-					"graphPeriod": metricQuery["graphPeriod"],
+			if metricQuery["editorMode"] != nil && toString(metricQuery["editorMode"]) == "mql" {
+				rawQuery["timeSeriesQuery"] = &timeSeriesQuery{
+					ProjectName: toString(metricQuery["projectName"]),
+					Query:       toString(metricQuery["query"]),
+					GraphPeriod: toString(metricQuery["graphPeriod"]),
 				}
 			} else {
 				rawQuery["timeSeriesList"] = metricQuery
