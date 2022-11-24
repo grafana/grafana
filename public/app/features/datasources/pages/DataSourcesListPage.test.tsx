@@ -18,12 +18,12 @@ jest.mock('../api', () => ({
 
 const getDataSourcesMock = getDataSources as jest.Mock;
 
-const setup = (isSortAscending = true) => {
+const setup = (options: { isSortAscending: boolean }) => {
   const store = configureStore({
     dataSources: {
       ...initialState,
       layoutMode: LayoutModes.Grid,
-      isSortAscending,
+      isSortAscending: options.isSortAscending,
     },
     navIndex,
   });
@@ -37,7 +37,7 @@ const setup = (isSortAscending = true) => {
 
 describe('Render', () => {
   it('should render component', async () => {
-    setup();
+    setup({ isSortAscending: true });
 
     expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('Render', () => {
   it('should render action bar and datasources', async () => {
     getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
 
-    setup();
+    setup({ isSortAscending: true });
 
     expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();
     expect(await screen.findByRole('combobox', { name: 'Sort' })).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('Render', () => {
   describe('should render elements in sort order', () => {
     it('ascending', async () => {
       getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
-      setup(true);
+      setup({ isSortAscending: true });
 
       expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
       const dataSourceItems = await screen.findAllByRole('heading');
@@ -76,7 +76,7 @@ describe('Render', () => {
     });
     it('descending', async () => {
       getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
-      setup(false);
+      setup({ isSortAscending: false });
 
       expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
       const dataSourceItems = await screen.findAllByRole('heading');
