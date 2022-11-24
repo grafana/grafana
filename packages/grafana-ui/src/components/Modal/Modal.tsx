@@ -27,6 +27,7 @@ export interface Props {
 
   isOpen?: boolean;
   onDismiss?: () => void;
+  reportClose?: (method: string) => void;
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
@@ -42,6 +43,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     className,
     contentClassName,
     onDismiss,
+    reportClose,
     onClickBackdrop,
     trapFocus = true,
   } = props;
@@ -53,7 +55,14 @@ export function Modal(props: PropsWithChildren<Props>) {
   // Handle interacting outside the dialog and pressing
   // the Escape key to close the modal.
   const { overlayProps, underlayProps } = useOverlay(
-    { isKeyboardDismissDisabled: !closeOnEscape, isOpen, onClose: onDismiss },
+    {
+      isKeyboardDismissDisabled: !closeOnEscape,
+      isOpen,
+      onClose: () => {
+        onDismiss?.();
+        reportClose?.('modalEscPressed');
+      },
+    },
     ref
   );
 
@@ -70,7 +79,15 @@ export function Modal(props: PropsWithChildren<Props>) {
     <OverlayContainer>
       <div
         className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
+        onClick={
+          onClickBackdrop ||
+          (closeOnBackdropClick
+            ? () => {
+                onDismiss?.();
+                reportClose?.('modalBackdropClick');
+              }
+            : undefined)
+        }
         {...underlayProps}
       />
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
@@ -83,7 +100,15 @@ export function Modal(props: PropsWithChildren<Props>) {
               typeof title !== 'string' && title
             }
             <div className={styles.modalHeaderClose}>
-              <IconButton aria-label="Close dialogue" name="times" size="xl" onClick={onDismiss} />
+              <IconButton
+                aria-label="Close dialogue"
+                name="times"
+                size="xl"
+                onClick={() => {
+                  onDismiss?.();
+                  reportClose?.('modalCloseClick');
+                }}
+              />
             </div>
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>

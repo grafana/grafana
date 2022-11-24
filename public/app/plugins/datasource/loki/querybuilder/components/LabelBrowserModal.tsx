@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
@@ -36,8 +37,15 @@ export const LabelBrowserModal = (props: Props) => {
     onClose();
   };
 
+  const reportClose = (method: string) => {
+    reportInteraction('grafana_loki_label_browser_closed', {
+      app: app,
+      method: method,
+    });
+  };
+
   return (
-    <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose}>
+    <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose} reportClose={reportClose}>
       <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
         {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
           return (
