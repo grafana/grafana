@@ -136,7 +136,7 @@ We added a new endpoint to help users diagnose permissions-related issues with u
 [This endpoint]({{< relref "../developers/http_api/access_control/#list-your-permissions" >}}) allows users to get the
 full list of RBAC permissions associated with their token.
 
-For more details, see the related service accounts [section]({{< relref
+For more details, see the related service accounts [documentation]({{< relref
 "../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
 
 ## Terraform - Extended support for provisioning permissions
