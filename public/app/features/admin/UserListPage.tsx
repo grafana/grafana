@@ -29,7 +29,7 @@ export function UserListPage() {
   });
 
   const showToggle = hasAccessToOrgUsers && hasAccessToAdminUsers;
-  console.log('DDDD', hasAccessToOrgUsers, hasAccessToAdminUsers);
+
   return (
     <Page navId={'global-users'}>
       {showToggle && (
