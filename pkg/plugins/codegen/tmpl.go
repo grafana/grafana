@@ -30,7 +30,6 @@ type (
 	}
 
 	templateVars_plugin_registry struct {
-		Header  templateVars_autogen_header
 		Plugins []struct {
 			PkgName    string
 			Path       string

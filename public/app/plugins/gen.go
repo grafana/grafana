@@ -58,6 +58,8 @@ func main() {
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
 	)
 
+	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
+
 	declParser := kindsys.NewDeclParser(rt, skipPlugins)
 	decls, err := declParser.Parse(os.DirFS(cwd))
 	if err != nil {

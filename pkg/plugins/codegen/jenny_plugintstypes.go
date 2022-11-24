@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"bytes"
 	"fmt"
 	"path/filepath"
 
@@ -27,21 +26,7 @@ func (j *ptsJenny) JennyName() string {
 }
 
 func (j *ptsJenny) Generate(decl *kindsys.PluginDecl) (*codejen.File, error) {
-	tf := templateVars_autogen_header{
-		GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
-		LineagePath:   "models.cue",                // FIXME hardcosing is not OK
-	}
-
-	var buf bytes.Buffer
-	err := tmpls.Lookup("autogen_header.tmpl").Execute(&buf, tf)
-	if err != nil {
-		return nil, fmt.Errorf("error executing header template: %w", err)
-	}
-
 	tsf := &tsast.File{}
-	tsf.Doc = &tsast.Comment{
-		Text: buf.String(),
-	}
 
 	for _, im := range decl.Imports {
 		if tsim, err := convertImport(im); err != nil {

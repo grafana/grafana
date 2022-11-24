@@ -36,9 +36,6 @@ func (j *ptlJenny) JennyName() string {
 func (j *ptlJenny) Generate(decls ...*kindsys.PluginDecl) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	vars := templateVars_plugin_registry{
-		Header: templateVars_autogen_header{
-			GenLicense: true,
-		},
 		Plugins: make([]struct {
 			PkgName, Path, ImportPath string
 			NoAlias                   bool
