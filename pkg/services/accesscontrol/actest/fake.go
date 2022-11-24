@@ -28,6 +28,7 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedIn
 func (f FakeService) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
+
 func (f FakeService) ClearUserPermissionCache(user *user.SignedInUser) {}
 
 func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {

@@ -94,10 +94,24 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 					) AS sa ON 1 = 1 
 					WHERE br.role = ?
 		) AS up
-		WHERE (org_id = ? OR org_id = ?) AND action LIKE ?
+		WHERE (org_id = ? OR org_id = ?)
 		`
+		params := []interface{}{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
 
-		return sess.SQL(q, accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID, options.ActionPrefix+"%").
+		if options.ActionPrefix != "" {
+			q += `AND action LIKE ?`
+			params = append(params, options.ActionPrefix+"%")
+		}
+		if options.Permission.Action != "" {
+			q += `AND action = ?`
+			params = append(params, options.Permission.Action)
+		}
+		if options.Permission.Scope != "" {
+			q += `AND scope = ?`
+			params = append(params, options.Permission.Scope)
+		}
+
+		return sess.SQL(q, params...).
 			Find(&dbPerms)
 	}); err != nil {
 		return nil, err

@@ -315,7 +315,6 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 
 func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	ctx := context.Background()
-	options := accesscontrol.SearchOptions{ActionPrefix: "teams:"}
 	readTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
 		return rs.SetResourcePermissionCommand{
 			Actions:           []string{"teams:read"},
@@ -344,19 +343,21 @@ func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
 		name     string
 		users    []testUser
 		permCmds []rs.SetResourcePermissionsCommand
+		options  accesscontrol.SearchOptions
 		wantPerm map[int64][]accesscontrol.Permission
 		wantErr  bool
 	}{
 		{
-			name:  "user assignment",
+			name:  "user assignment by actionPrefix",
 			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
 			permCmds: []rs.SetResourcePermissionsCommand{
 				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
 			},
+			options:  accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
-			name: "users assignment",
+			name: "users assignment by actionPrefix",
 			users: []testUser{
 				{orgRole: org.RoleAdmin, isAdmin: false},
 				{orgRole: org.RoleEditor, isAdmin: false},
@@ -365,35 +366,39 @@ func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
 				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: writeTeamPerm("1")},
 				{User: accesscontrol.User{ID: 2, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
 			},
+			options: accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:write", Scope: "teams:id:1"}},
 				2: {{Action: "teams:read", Scope: "teams:id:2"}},
 			},
 		},
 		{
-			name:     "team assignment",
+			name:     "team assignment by actionPrefix",
 			users:    []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
 			permCmds: []rs.SetResourcePermissionsCommand{{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("1")}},
+			options:  accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
-			name:  "basic role assignment",
+			name:  "basic role assignment by actionPrefix",
 			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
 			permCmds: []rs.SetResourcePermissionsCommand{
 				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readTeamPerm("1")},
 			},
+			options:  accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
-			name:  "server admin assignment",
+			name:  "server admin assignment by actionPrefix",
 			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: true}},
 			permCmds: []rs.SetResourcePermissionsCommand{
 				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1")},
 			},
+			options:  accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 		{
-			name: "all assignments",
+			name: "all assignments by actionPrefix",
 			users: []testUser{
 				{orgRole: org.RoleAdmin, isAdmin: true},
 				{orgRole: org.RoleEditor, isAdmin: false},
@@ -411,6 +416,7 @@ func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
 				// Server Admin Assignment
 				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1000")},
 			},
+			options: accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
 					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
@@ -435,19 +441,43 @@ func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
 				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1000")},
 				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readDashPerm("d1000")},
 			},
+			options: accesscontrol.SearchOptions{ActionPrefix: "teams:"},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
 					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
 			},
 		},
 		{
-			name: "include not org member server admin permissions",
+			name: "include not org member server admin permissions by actionPrefix",
 			// Three users, one member, one not member but Server Admin, one not member and not server admin
 			users:    []testUser{{orgRole: org.RoleAdmin, isAdmin: false}, {isAdmin: true}, {}},
 			permCmds: []rs.SetResourcePermissionsCommand{{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1")}},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				2: {{Action: "teams:read", Scope: "teams:id:1"}},
 			},
+		},
+		{
+			name:  "user assignment by action",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
+			},
+			options: accesscontrol.SearchOptions{Permission: accesscontrol.Permission{Action: "teams:read"}},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:read", Scope: "teams:id:2"}},
+			},
+		},
+		{
+			name:  "user assignment by action and scope",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
+			},
+			options:  accesscontrol.SearchOptions{Permission: accesscontrol.Permission{Action: "teams:read", Scope: "teams:id:1"}},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {{Action: "teams:read", Scope: "teams:id:1"}}},
 		},
 	}
 	for _, tt := range tests {
@@ -468,7 +498,7 @@ func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test
-			dbPermissions, err := acStore.SearchUsersPermissions(ctx, 1, options)
+			dbPermissions, err := acStore.SearchUsersPermissions(ctx, 1, tt.options)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

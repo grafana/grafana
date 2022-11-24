@@ -68,6 +68,7 @@ func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.R
 // GET /api/access-control/users/permissions
 func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{ActionPrefix: c.Query("actionPrefix")}
+	// TODO add permission search options
 
 	// Validate request
 	if searchOptions.ActionPrefix == "" {

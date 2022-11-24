@@ -51,6 +51,7 @@ type Options struct {
 
 type SearchOptions struct {
 	ActionPrefix string
+	Permission   Permission
 }
 
 type TeamPermissionsService interface {
