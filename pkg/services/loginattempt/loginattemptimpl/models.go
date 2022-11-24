@@ -21,3 +21,7 @@ type GetUserLoginAttemptCountQuery struct {
 type DeleteOldLoginAttemptsCommand struct {
 	OlderThan time.Time
 }
+
+type DeleteLoginAttemptsCommand struct {
+	Username string
+}

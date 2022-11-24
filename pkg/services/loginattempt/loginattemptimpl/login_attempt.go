@@ -59,6 +59,10 @@ func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
 	})
 }
 
+func (s *Service) Reset(ctx context.Context, username string) error {
+	return s.store.DeleteLoginAttempts(ctx, DeleteLoginAttemptsCommand{username})
+}
+
 func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 	if s.cfg.DisableBruteForceLoginProtection {
 		return true, nil
