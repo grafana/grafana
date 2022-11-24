@@ -23,13 +23,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public activate() {
     super.activate();
+  }
+
+  /**
+   * It's better to do this before activate / mount to not trigger unnessary re-renders
+   */
+  public initUrlSync() {
     this.urlSyncManager = new UrlSyncManager(this);
-    this.urlSyncManager.initialSync();
+    this.urlSyncManager.initSync();
   }
 
   public deactivate() {
     super.deactivate();
-    this.urlSyncManager!.cleanUp();
+
+    if (this.urlSyncManager) {
+      this.urlSyncManager!.cleanUp();
+    }
   }
 }
 

@@ -21,7 +21,7 @@ export class UrlSyncManager {
   /**
    * Updates the current scene state to match URL state.
    */
-  public initialSync() {
+  public initSync() {
     const urlParams = locationService.getSearch();
     this.urlKeyMapper.rebuldIndex(this.sceneRoot);
     this.syncSceneStateFromUrl(this.sceneRoot, urlParams);
@@ -48,8 +48,8 @@ export class UrlSyncManager {
       this.urlKeyMapper.rebuldIndex(this.sceneRoot);
 
       for (const [key, newUrlValue] of newUrlState) {
-        const currentUrlValue = searchParams.get(key);
         const uniqueKey = this.urlKeyMapper.getUniqueKey(key, changedObject);
+        const currentUrlValue = searchParams.get(uniqueKey);
 
         if (currentUrlValue !== newUrlValue) {
           mappedUpdated[uniqueKey] = newUrlValue;

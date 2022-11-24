@@ -152,6 +152,8 @@ describe('UrlSyncManager', () => {
       expect(innerTimeRange.state.from).toBe('now-10s');
       // should not update the first object
       expect(outerTimeRange.state.from).toBe('now-20m');
+      // Should not cause another url update
+      expect(locationUpdates.length).toBe(3);
     });
   });
 });

@@ -19,8 +19,6 @@ export interface SceneLayoutChildSize {
 export interface SceneLayoutChildInteractions {
   isDraggable?: boolean;
   isResizable?: boolean;
-  isCollapsible?: boolean;
-  isCollapsed?: boolean;
 }
 
 export interface SceneLayoutChildState

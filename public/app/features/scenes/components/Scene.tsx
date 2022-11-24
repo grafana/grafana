@@ -25,7 +25,7 @@ export class Scene extends SceneObjectBase<SceneState> {
   public activate() {
     super.activate();
     this.urlSyncManager = new UrlSyncManager(this);
-    this.urlSyncManager.initialSync();
+    this.urlSyncManager.initSync();
   }
 
   public deactivate() {
