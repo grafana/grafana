@@ -33,7 +33,6 @@ export function TraceQLEditor(props: Props) {
       language={langId}
       onBlur={onChange}
       onChange={onChange}
-      height={'30px'}
       containerStyles={styles.queryField}
       monacoOptions={{
         folding: false,

@@ -1,8 +1,6 @@
 import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import differenceInHours from 'date-fns/differenceInHours';
-import formatDistance from 'date-fns/formatDistance';
 
 import {
   DataFrame,
@@ -767,13 +765,6 @@ interface TraceTableData {
 function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
   const spanStartTimeUnixMs = parseInt(span.startTimeUnixNano, 10) / 1000000;
   let spanStartTime = dateTimeFormat(spanStartTimeUnixMs);
-
-  if (Math.abs(differenceInHours(new Date(spanStartTime), Date.now())) <= 1) {
-    spanStartTime = formatDistance(new Date(spanStartTime), Date.now(), {
-      addSuffix: true,
-      includeSeconds: true,
-    });
-  }
 
   const data: TraceTableData = {
     traceIdHidden: traceID,
