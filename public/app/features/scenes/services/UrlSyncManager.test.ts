@@ -5,7 +5,7 @@ import { locationService } from '@grafana/runtime';
 import { SceneFlexLayout } from '../components';
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneTimeRange } from '../core/SceneTimeRange';
-import { SceneLayoutChildState } from '../core/types';
+import { SceneLayoutChildState, SceneObjectUrlValues } from '../core/types';
 
 import { SceneObjectUrlSyncConfig } from './SceneObjectUrlSyncConfig';
 import { UrlSyncManager } from './UrlSyncManager';
@@ -21,11 +21,13 @@ class TestObj extends SceneObjectBase<TestObjectState> {
   });
 
   public getUrlState(state: TestObjectState) {
-    return new Map([['name', state.name]]);
+    return { name: state.name };
   }
 
-  public updateFromUrl(values: Map<string, string>) {
-    this.setState({ name: values.get('name') ?? 'NA' });
+  public updateFromUrl(values: SceneObjectUrlValues) {
+    if (typeof values.name === 'string') {
+      this.setState({ name: values.name ?? 'NA' });
+    }
   }
 }
 

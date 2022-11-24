@@ -153,12 +153,14 @@ export function isSceneObject(obj: any): obj is SceneObject {
 
 /** These functions are still just temporary until this get's refined */
 export interface SceneObjectWithUrlSync<TState> extends SceneObject {
-  getUrlState(state: TState): Map<string, string>;
-  updateFromUrl(values: Map<string, string>): void;
+  getUrlState(state: TState): SceneObjectUrlValues;
+  updateFromUrl(values: SceneObjectUrlValues): void;
 }
 
 export interface SceneObjectUrlSyncHandler<TState> {
   getKeys(): Set<string>;
-  getUrlState(state: TState): Map<string, string>;
-  updateFromUrl(values: Map<string, string>): void;
+  getUrlState(state: TState): SceneObjectUrlValues;
+  updateFromUrl(values: SceneObjectUrlValues): void;
 }
+
+export type SceneObjectUrlValues = Record<string, string | string[]>;

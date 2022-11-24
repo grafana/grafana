@@ -1,4 +1,9 @@
-import { SceneObjectState, SceneObjectUrlSyncHandler, SceneObjectWithUrlSync } from '../core/types';
+import {
+  SceneObjectState,
+  SceneObjectUrlSyncHandler,
+  SceneObjectWithUrlSync,
+  SceneObjectUrlValues,
+} from '../core/types';
 
 interface SceneObjectUrlSyncConfigOptions {
   keys?: string[];
@@ -15,11 +20,11 @@ export class SceneObjectUrlSyncConfig<TState extends SceneObjectState> implement
     return this._keys;
   }
 
-  public getUrlState(state: TState): Map<string, string> {
+  public getUrlState(state: TState): SceneObjectUrlValues {
     return this._sceneObject.getUrlState(state);
   }
 
-  public updateFromUrl(values: Map<string, string>): void {
+  public updateFromUrl(values: SceneObjectUrlValues): void {
     this._sceneObject.updateFromUrl(values);
   }
 }

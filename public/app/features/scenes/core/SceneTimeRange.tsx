@@ -3,7 +3,7 @@ import { dateMath, getTimeZone, TimeRange, TimeZone, toUtc } from '@grafana/data
 import { SceneObjectUrlSyncConfig } from '../services/SceneObjectUrlSyncConfig';
 
 import { SceneObjectBase } from './SceneObjectBase';
-import { SceneTimeRangeLike, SceneTimeRangeState } from './types';
+import { SceneTimeRangeLike, SceneTimeRangeState, SceneObjectUrlValues } from './types';
 
 export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> implements SceneTimeRangeLike {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['from', 'to'] });
@@ -42,21 +42,18 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
   public onIntervalChanged = (_: string) => {};
 
   public getUrlState(state: SceneTimeRangeState) {
-    return new Map<string, string>([
-      ['from', state.from],
-      ['to', state.to],
-    ]);
+    return { from: state.from, to: state.to };
   }
 
-  public updateFromUrl(values: Map<string, string>) {
+  public updateFromUrl(values: SceneObjectUrlValues) {
     const update: Partial<SceneTimeRangeState> = {};
 
-    const from = parseUrlParam(values.get('from'));
+    const from = parseUrlParam(values.from);
     if (from) {
       update.from = from;
     }
 
-    const to = parseUrlParam(values.get('to'));
+    const to = parseUrlParam(values.to);
     if (to) {
       update.to = to;
     }
@@ -66,7 +63,7 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
   }
 }
 
-function parseUrlParam(value: string | undefined): string | null {
+function parseUrlParam(value: string | string[] | undefined): string | null {
   if (typeof value !== 'string') {
     return null;
   }

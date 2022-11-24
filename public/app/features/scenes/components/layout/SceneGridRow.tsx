@@ -7,7 +7,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { sceneGraph } from '../../core/sceneGraph';
-import { SceneComponentProps, SceneLayoutChildState, SceneObject } from '../../core/types';
+import { SceneComponentProps, SceneLayoutChildState, SceneObject, SceneObjectUrlValues } from '../../core/types';
 import { SceneObjectUrlSyncConfig } from '../../services/SceneObjectUrlSyncConfig';
 import { SceneDragHandle } from '../SceneDragHandle';
 
@@ -55,11 +55,11 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
   };
 
   public getUrlState(state: SceneGridRowState) {
-    return new Map<string, string>([['rowc', state.isCollapsed ? '1' : '0']]);
+    return { rowc: state.isCollapsed ? '1' : '0' };
   }
 
-  public updateFromUrl(values: Map<string, string>) {
-    const isCollapsed = values.get('rowc') === '1';
+  public updateFromUrl(values: SceneObjectUrlValues) {
+    const isCollapsed = values.rowc === '1';
     if (isCollapsed !== this.state.isCollapsed) {
       this.onCollapseToggle();
     }
