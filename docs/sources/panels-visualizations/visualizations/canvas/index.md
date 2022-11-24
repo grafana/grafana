@@ -55,9 +55,13 @@ Canvas introduces a new editing experience. You can now edit your canvas panel i
 
 Related to a fresh look at panel editing, the context menu enables you to perform common tasks quickly and efficiently. Supported functionality includes opening / closing the inline editor, duplicating an element, deleting an element, and more.
 
-The context menu is triggered by a right click action over the panel / over a given canvas element
+The context menu is triggered by a right click action over the panel / over a given canvas element. When right clicking the panel, you are able to set a background image and easily add elements to the canvas.
 
-{{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas context menu" >}}
+{{< figure src="/static/img/docs/canvas-panel/canvas-panel-context-menu-9-3-0.png" max-width="750px" caption="Canvas panel context menu" >}}
+
+When right clicking an element, you are able to edit, delete, duplicate, and modify the element's layer positioning.
+
+{{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
 
 ## Canvas Options
 
