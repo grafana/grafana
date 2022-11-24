@@ -159,7 +159,8 @@ type AzureMonitorDimensionFilter struct {
 }
 
 func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
-	filterStrings := make([]string, 0, len(a.Filters))
+	//nolint:prealloc // got issue there on e2e tests maybe related to  https://github.com/grafana/grafana/pull/57860#discussion_r1029150440
+	var filterStrings []string
 	for _, filter := range a.Filters {
 		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
 	}
