@@ -43,7 +43,7 @@ describe('prepare timeseries graph', () => {
     const frames = prepareGraphableFields(input, createTheme());
     const out = frames![0];
 
-    expect(out.fields.map((f) => f.name)).toEqual(['a', 'c', 'd']);
+    expect(out.fields.map((f) => f.name)).toEqual(['a', 'b', 'c', 'd']);
 
     const field = out.fields.find((f) => f.name === 'c');
     expect(field?.display).toBeDefined();

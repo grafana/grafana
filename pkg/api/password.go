@@ -60,7 +60,11 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 	}
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
+	// For now the only way to know the username to clear login attempts for is
+	// to set it in the function provided to NotificationService
+	var username string
 	getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
+		username = login
 		userQuery := user.GetUserByLoginQuery{LoginOrEmail: login}
 		usr, err := hs.userService.GetByLogin(ctx, &userQuery)
 		return usr, err
@@ -92,6 +96,10 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
+	}
+
+	if err := hs.loginAttemptService.Reset(c.Req.Context(), username); err != nil {
+		c.Logger.Warn("could not reset login attempts", "err", err, "username", username)
 	}
 
 	return response.Success("User password changed")

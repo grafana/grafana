@@ -366,7 +366,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await lastValueFrom(getBackendSrv().fetch<any>(options));
+    const response = await lastValueFrom(getBackendSrv().fetch(options));
 
     if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
