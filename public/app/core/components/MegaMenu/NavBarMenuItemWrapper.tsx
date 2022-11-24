@@ -39,7 +39,7 @@ export function NavBarMenuItemWrapper({
           {link.children.map((childLink) => {
             const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
             return (
-              !childLink.divider && (
+              !childLink.isCreateAction && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
                   isActive={isMatchOrChildMatch(childLink, activeItem)}
