@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -517,7 +518,7 @@ func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFold
 func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string) error {
 	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: parentUID, OrgID: orgID})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get parents: %w", err)
 	}
 
 	if len(ancestors) == folder.MaxNestedFolderDepth {
