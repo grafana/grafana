@@ -1,5 +1,6 @@
 import React, { useState, useEffect, FC } from 'react';
 import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
 
 import { config, navigationLogger } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles } from '@grafana/ui';
@@ -46,6 +47,7 @@ export const FnAppProvider: FC<FnAppProviderProps> = (props) => {
 
   return (
     <Provider store={store}>
+      <BrowserRouter>
       <I18nProvider>
         <ErrorBoundaryAlert style="page">
           <GrafanaContext.Provider value={app.context}>
@@ -56,6 +58,7 @@ export const FnAppProvider: FC<FnAppProviderProps> = (props) => {
           </GrafanaContext.Provider>
         </ErrorBoundaryAlert>
       </I18nProvider>
+      </BrowserRouter>
     </Provider>
   );
 };
