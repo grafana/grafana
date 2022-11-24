@@ -18,7 +18,9 @@ type SystemUsersFilterProvider interface {
 }
 
 // SystemUsersProvider interface used by `pkg/store` clients
-// Used to retrieve users with access only to their own slice of storage
+// Used by Grafana services to retrieve users having access only to their own slice of storage
+// For example, service 'Dashboard' could have exclusive access to paths matching `system/dashboard/*`
+// by creating a system user with appropriate permissions.
 type SystemUsersProvider interface {
 	GetUser(userType SystemUserType, orgID int64) (*user.SignedInUser, error)
 }
@@ -26,6 +28,8 @@ type SystemUsersProvider interface {
 type SystemUsers interface {
 	SystemUsersFilterProvider
 	SystemUsersProvider
+
+	// RegisterUser extension point - allows other Grafana services to register their own user type and assign them path-based permissions
 	RegisterUser(userType SystemUserType, filterFn func() map[string]filestorage.PathFilter)
 }
 
