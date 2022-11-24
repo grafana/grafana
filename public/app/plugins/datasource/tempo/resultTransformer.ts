@@ -622,20 +622,6 @@ export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
 ): DataFrame[] {
-  const spanDynamicAttrs: Record<string, FieldDTO> = {};
-
-  data?.forEach((trace) => {
-    trace.spanSet?.spans.forEach((span) => {
-      span.attributes?.forEach((attr) => {
-        spanDynamicAttrs[attr.key] = {
-          name: attr.key,
-          type: FieldType.string,
-          config: { displayNameFromDS: attr.key, custom: { subcol: true } },
-        };
-      });
-    });
-  });
-
   const frame = new MutableDataFrame({
     fields: [
       {
@@ -680,6 +666,16 @@ export function createTableFrameFromTraceQlQuery(
     .reduce((rows: TraceTableData[], trace, currentIndex) => {
       const traceData: TraceTableData = transformToTraceData(trace);
       rows.push(traceData);
+      const spanDynamicAttrs: Record<string, FieldDTO> = {};
+      trace.spanSet?.spans.forEach((span) => {
+        span.attributes?.forEach((attr) => {
+          spanDynamicAttrs[attr.key] = {
+            name: attr.key,
+            type: FieldType.string,
+            config: { displayNameFromDS: attr.key, custom: { subcol: true } },
+          };
+        });
+      });
       const subFrame = new MutableDataFrame({
         fields: [
           {
