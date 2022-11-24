@@ -207,4 +207,4 @@ func BenchmarkGetUsersPermissions_10K_1K(b *testing.B) {
 		b.Skip("Skipping benchmark in short mode")
 	}
 	benchGetUsersPermissions(b, 10000, 1000)
-} // ~70s/op
+} // ~50s/op
