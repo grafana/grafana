@@ -89,16 +89,17 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
                   <LinkButton icon="apps" fill="outline" variant="secondary" href="/dashboard/new">
                     Build a Dashboard
                   </LinkButton>
-                  <LinkButton
-                    icon="compass"
-                    fill="outline"
-                    variant="secondary"
-                    className={styles.button}
-                    href={constructDataSourceExploreUrl(dataSource)}
-                    disabled={!canExploreDataSources}
-                  >
-                    Explore
-                  </LinkButton>
+                  {canExploreDataSources && (
+                    <LinkButton
+                      icon="compass"
+                      fill="outline"
+                      variant="secondary"
+                      className={styles.button}
+                      href={constructDataSourceExploreUrl(dataSource)}
+                    >
+                      Explore
+                    </LinkButton>
+                  )}
                 </Card.Tags>
               </Card>
             </li>
