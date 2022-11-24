@@ -45,36 +45,13 @@ export function getVariablesDemo(): Scene {
           text: '',
           options: [],
         }),
-        new ConstantVariable({
-          name: 'constant',
-          value: 'slow',
-        }),
         new CustomVariable({
-          name: 'Single Custom',
+          name: 'custom',
           query: 'A : 10,B : 20',
-        }),
-        new CustomVariable({
-          name: 'Multi Custom',
-          query: 'A : 10,B : 20',
-          isMulti: true,
         }),
         new DataSourceVariable({
-          name: 'DataSource',
+          name: 'ds',
           query: 'testdata',
-        }),
-        new DataSourceVariable({
-          name: 'DataSource',
-          query: 'prometheus',
-        }),
-        new DataSourceVariable({
-          name: 'DataSource multi',
-          query: 'prometheus',
-          isMulti: true,
-        }),
-        new DataSourceVariable({
-          name: 'Datasource w/ regex and using $constant',
-          query: 'prometheus',
-          regex: '.*$constant.*',
         }),
       ],
     }),
