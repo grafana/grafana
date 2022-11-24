@@ -1,4 +1,4 @@
-import { DataSourceJsonData, DataSourceSettings, urlUtil } from '@grafana/data';
+import { DataSourceJsonData, DataSourceSettings, urlUtil, locationUtil } from '@grafana/data';
 
 interface ItemWithName {
   name: string;
@@ -50,7 +50,7 @@ function getNewName(name: string) {
 
 export const constructDataSourceExploreUrl = (dataSource: DataSourceSettings<DataSourceJsonData, {}>) => {
   const exploreState = JSON.stringify({ datasource: dataSource.name, context: 'explore' });
-  const exploreUrl = urlUtil.renderUrl('/explore', { left: exploreState });
+  const exploreUrl = urlUtil.renderUrl(locationUtil.assureBaseUrl('/explore'), { left: exploreState });
 
   return exploreUrl;
 };
