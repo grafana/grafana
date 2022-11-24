@@ -33,13 +33,13 @@ export default function Home() {
         <ContentBox title="Getting started" className={styles.gettingStartedBlock}>
           <ul>
             <li>Create alert rules for your data sources</li>
-            <li>Assign label to your alerts to give them context and meaning</li>
+            <li>Assign labels to your alerts to give them context and meaning</li>
             <li>Configure where to send your alerts based on assigned labels</li>
-            <li>Send notifications to tools you use like Slack, MS Teams, PagerDuty, OpsGenie and more</li>
+            <li>Send notifications to tools, such as Slack, MS Teams, PagerDuty, OpsGenie and more</li>
           </ul>
           <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Alerting Docs" />
         </ContentBox>
-        <ContentBox title="Deep dive into alerting" className={styles.universityBlock}>
+        <ContentBox title="Deep dive" className={styles.universityBlock}>
           To find out more you can enroll to our Alerting Grafana University course
           <ArrowLink
             href="https://university.grafana.com//lms/index.php?r=coursepath/deeplink&id_path=42&hash=caa235c6321f80e03df017ae9ec6eed5c79da9ec"
@@ -55,7 +55,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   grid: css`
     display: grid;
     grid-template-rows: min-content auto auto;
-    grid-template-columns: min-content 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1.25fr 1fr 1fr 1fr 1fr;
     gap: ${theme.spacing(2)};
   `,
   ctaContainer: css`
@@ -63,6 +63,12 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   `,
   flowBlock: css`
     grid-row: 2 / span 2;
+
+    img {
+      display: block;
+      margin: 0 auto;
+      height: 100%;
+    }
   `,
   videoBlock: css`
     grid-column: 2 / span 4;
@@ -102,21 +108,21 @@ function WelcomeHeader({ className }: { className?: string }) {
           description="Manage your alert rules. Combine data from multiple data sources"
           icon="list-ul"
           href="/alerting/new"
-          hrefText="Create a rule"
+          hrefText="Create alert rule"
         />
         <WelcomeCTABox
           title="Notification policies"
           description="Configure the flow of your alerts and route them to contact points"
           icon="sitemap"
           href="/alerting/routes"
-          hrefText="Check configuration"
+          hrefText="Configure notification policy"
         />
         <WelcomeCTABox
           title="Contact points"
           description="Configure who and how receives notifications"
           icon="comment-alt-share"
           href="/alerting/notifications"
-          hrefText="Configure contact points"
+          hrefText="Configure contact point"
         />
       </div>
     </div>
@@ -135,22 +141,6 @@ const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
     outline: 1px solid hsla(6deg, 60%, 80%, 0.14);
     outline-offset: -1px;
     border-radius: 3px;
-    //background-image: linear-gradient(
-    //  325deg,
-    //  hsl(36deg 96% 66%) 0%,
-    //  hsl(29deg 96% 66%) 52%,
-    //  hsl(21deg 96% 66%) 77%,
-    //  hsl(10deg 90% 67%) 91%,
-    //  hsl(356deg 76% 68%) 99%,
-    //  hsl(341deg 61% 69%) 100%
-    //);
-    //background: rgb(228, 211, 184);
-    //background: linear-gradient(
-    //  170deg,
-    //  rgba(228, 211, 184, 1) 0%,
-    //  rgba(196, 184, 186, 1) 45%,
-    //  rgba(157, 151, 188, 1) 100%
-    //);
   `,
   ctaContainer: css`
     padding: ${theme.spacing(4)};
