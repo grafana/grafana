@@ -12,26 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+type SearchFn = (value: string | number | undefined, node: TreeNode, depth?: number) => boolean;
+
 export default class TreeNode {
-  static iterFunction(fn, depth = 0) {
-    return (node) => fn(node.value, node, depth);
+  value: string | number | undefined;
+  children: TreeNode[];
+
+  static iterFunction(fn: SearchFn, depth = 0) {
+    return (node: TreeNode) => fn(node.value, node, depth);
   }
 
-  static searchFunction(search) {
+  static searchFunction(search: TreeNode | number | SearchFn) {
     if (typeof search === 'function') {
       return search;
     }
 
-    return (value, node) => (search instanceof TreeNode ? node === search : value === search);
+    return (value: string | number | undefined, node: TreeNode) =>
+      search instanceof TreeNode ? node === search : value === search;
   }
 
-  constructor(value, children = []) {
+  constructor(value?: string | number, children: TreeNode[] = []) {
     this.value = value;
     this.children = children;
   }
 
-  get depth() {
-    return this.children.reduce((depth, child) => Math.max(child.depth + 1, depth), 1);
+  get depth(): number {
+    return this.children?.reduce((depth: number, child: { depth: number }) => Math.max(child.depth + 1, depth), 1);
   }
 
   get size() {
@@ -40,12 +46,12 @@ export default class TreeNode {
     return i;
   }
 
-  addChild(child) {
-    this.children.push(child instanceof TreeNode ? child : new TreeNode(child));
+  addChild(child: string | number | TreeNode) {
+    this.children?.push(child instanceof TreeNode ? child : new TreeNode(child));
     return this;
   }
 
-  find(search) {
+  find(search: TreeNode | number | SearchFn): TreeNode | null {
     const searchFn = TreeNode.iterFunction(TreeNode.searchFunction(search));
     if (searchFn(this)) {
       return this;
@@ -59,10 +65,10 @@ export default class TreeNode {
     return null;
   }
 
-  getPath(search) {
+  getPath(search: TreeNode) {
     const searchFn = TreeNode.iterFunction(TreeNode.searchFunction(search));
 
-    const findPath = (currentNode, currentPath) => {
+    const findPath = (currentNode: TreeNode, currentPath: TreeNode[]): TreeNode[] | null => {
       // skip if we already found the result
       const attempt = currentPath.concat([currentNode]);
       // base case: return the array when there is a match
@@ -82,18 +88,21 @@ export default class TreeNode {
     return findPath(this, []);
   }
 
-  walk(fn, depth = 0) {
-    const nodeStack = [];
+  walk(fn: (value: string | number | undefined, node: TreeNode, depth?: number) => void, depth = 0) {
+    const nodeStack: Array<{ node: TreeNode; depth?: number }> = [];
     let actualDepth = depth;
     nodeStack.push({ node: this, depth: actualDepth });
     while (nodeStack.length) {
-      const { node, depth: nodeDepth } = nodeStack.pop();
-      fn(node.value, node, nodeDepth);
-      actualDepth = nodeDepth + 1;
-      let i = node.children.length - 1;
-      while (i >= 0) {
-        nodeStack.push({ node: node.children[i], depth: actualDepth });
-        i--;
+      const popped = nodeStack.pop();
+      if (popped) {
+        const { node, depth: nodeDepth } = popped;
+        fn(node.value, node, nodeDepth);
+        actualDepth = (nodeDepth || 0) + 1;
+        let i = node.children.length - 1;
+        while (i >= 0) {
+          nodeStack.push({ node: node.children[i], depth: actualDepth });
+          i--;
+        }
       }
     }
   }

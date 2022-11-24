@@ -341,9 +341,9 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, o
 	require.NoError(t, err)
 
 	// Create both orgs with server admin
-	_, err = db.CreateOrgWithMember(testServerAdminViewer.OrgName, testServerAdminViewer.UserID)
+	err = db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: testServerAdminViewer.OrgName, UserId: testServerAdminViewer.UserID})
 	require.NoError(t, err)
-	_, err = db.CreateOrgWithMember(testAdminOrg2.OrgName, testServerAdminViewer.UserID)
+	err = db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: testAdminOrg2.OrgName, UserId: testServerAdminViewer.UserID})
 	require.NoError(t, err)
 
 	err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgID: testAdminOrg2.OrgID, UserID: testAdminOrg2.UserID})

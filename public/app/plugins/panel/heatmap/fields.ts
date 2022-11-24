@@ -35,6 +35,12 @@ export interface HeatmapData {
   xLayout?: HeatmapCellLayout;
   yLayout?: HeatmapCellLayout;
 
+  xLog?: number;
+  yLog?: number;
+
+  xLogSplit?: number;
+  yLogSplit?: number;
+
   // color scale range
   minValue?: number;
   maxValue?: number;
@@ -224,6 +230,9 @@ const getDenseHeatmapData = (
     options.filterValues?.ge
   );
 
+  let calcX = options.calculation?.xBuckets;
+  let calcY = options.calculation?.yBuckets;
+
   const data: HeatmapData = {
     heatmap: frame,
     exemplars: exemplars?.length ? exemplars : undefined,
@@ -231,6 +240,12 @@ const getDenseHeatmapData = (
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
     yBucketCount: yBinQty,
+
+    yLog: calcY?.scale?.log ?? 0,
+    xLog: calcX?.scale?.log ?? 0,
+
+    xLogSplit: calcX?.scale?.log ? +(calcX?.value ?? '1') : 1,
+    yLogSplit: calcY?.scale?.log ? +(calcY?.value ?? '1') : 1,
 
     minValue,
     maxValue,

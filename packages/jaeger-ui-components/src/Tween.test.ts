@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import Tween from './Tween';
+import Tween, { TweenState } from './Tween';
 
 describe('Tween', () => {
   const oldNow = Date.now;
@@ -24,8 +24,10 @@ describe('Tween', () => {
 
   const baseOptions = { duration: 10, from: 0, to: 1 };
 
+  jest.useFakeTimers();
+  jest.spyOn(global, 'setTimeout');
+
   Date.now = nowFn;
-  window.setTimeout = setTimeoutFn;
   window.requestAnimationFrame = rafFn;
 
   beforeEach(() => {
@@ -60,7 +62,7 @@ describe('Tween', () => {
       it('schedules setTimeout if there is a delay', () => {
         const delay = 10;
         const tween = new Tween({ ...baseOptions, delay, onUpdate: jest.fn() });
-        expect(setTimeoutFn).lastCalledWith(tween._frameCallback, delay);
+        expect(setTimeout).lastCalledWith(tween._frameCallback, delay);
       });
 
       it('schedules animation frame if there is not a delay', () => {
@@ -110,7 +112,7 @@ describe('Tween', () => {
 
   describe('_frameCallback', () => {
     it('freezes the callback argument', () => {
-      let current;
+      let current: TweenState | undefined;
       const fn = jest.fn((_current) => {
         current = _current;
       });
@@ -119,7 +121,7 @@ describe('Tween', () => {
       expect(current).toBeDefined();
       const copy = { ...current };
       try {
-        current.done = !current.done;
+        current!.done = !current!.done;
         // eslint-disable-next-line no-empty
       } catch (_) {}
       expect(current).toEqual(copy);

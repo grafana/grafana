@@ -11,6 +11,10 @@ const geohash = ['9q94r', 'dr5rs'];
 const names = ['A', 'B'];
 
 describe('handle location parsing', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation();
+  });
+
   it('auto should find geohash field', async () => {
     const frame = toDataFrame({
       name: 'simple',
@@ -20,7 +24,7 @@ describe('handle location parsing', () => {
       ],
     });
 
-    const matchers = await getLocationMatchers();
+    const matchers = await getLocationMatchers({ mode: FrameGeometrySourceMode.Auto });
     const fields = getLocationFields(frame, matchers);
     expect(fields.mode).toEqual(FrameGeometrySourceMode.Geohash);
     expect(fields.geohash).toBeDefined();
@@ -78,7 +82,7 @@ describe('handle location parsing', () => {
     });
 
     const matchers = await getLocationMatchers({
-      mode: FrameGeometrySourceMode.Geohash,
+      mode: FrameGeometrySourceMode.Auto,
     });
     const geo = getGeometryField(frame, matchers).field!;
     expect(geo.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
