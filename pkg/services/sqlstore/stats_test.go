@@ -86,7 +86,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		UserId: users[1].ID,
 		Role:   org.RoleEditor,
 	}
-	err := sqlStore.AddOrgUser(context.Background(), cmd)
+	err := sqlStore.addOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// add 3rd user as viewer
@@ -95,7 +95,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		UserId: users[2].ID,
 		Role:   org.RoleViewer,
 	}
-	err = sqlStore.AddOrgUser(context.Background(), cmd)
+	err = sqlStore.addOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// add 1st user as admin
@@ -104,7 +104,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 		UserId: users[0].ID,
 		Role:   org.RoleAdmin,
 	}
-	err = sqlStore.AddOrgUser(context.Background(), cmd)
+	err = sqlStore.addOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// force renewal of user stats

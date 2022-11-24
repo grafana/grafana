@@ -49,16 +49,16 @@ describe('Merge dashbaord panels', () => {
       const info = dashboard.updatePanels(rawPanels);
       expect(info.changed).toBeFalsy();
       expect(info.actions).toMatchInlineSnapshot(`
-        Object {
-          "add": Array [],
-          "noop": Array [
+        {
+          "add": [],
+          "noop": [
             1,
             2,
             3,
           ],
-          "remove": Array [],
-          "replace": Array [],
-          "update": Array [],
+          "remove": [],
+          "replace": [],
+          "update": [],
         }
       `);
     });
@@ -115,17 +115,17 @@ describe('Merge dashbaord panels', () => {
       const info = dashboard.updatePanels(rawPanels);
       expect(info.changed).toBeTruthy();
       expect(info.actions).toMatchInlineSnapshot(`
-        Object {
-          "add": Array [],
-          "noop": Array [
+        {
+          "add": [],
+          "noop": [
             1,
             3,
           ],
-          "remove": Array [],
-          "replace": Array [
+          "remove": [],
+          "replace": [
             2,
           ],
-          "update": Array [],
+          "update": [],
         }
       `);
     });

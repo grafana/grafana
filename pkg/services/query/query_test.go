@@ -189,7 +189,7 @@ func TestParseMetricRequest(t *testing.T) {
 		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
 		mr.HTTPRequest = httpreq
 		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
-		require.Error(t, err)
+		require.NoError(t, err)
 
 		// With the second value it is OK
 		httpreq.Header.Add("X-Datasource-Uid", "sEx6ZvSVk")

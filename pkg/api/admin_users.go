@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -238,13 +239,13 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.userAuthService.Delete(ctx, cmd.UserID); err != nil {
+		if err := hs.authInfoService.DeleteUserAuthInfo(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.userAuthService.DeleteToken(ctx, cmd.UserID); err != nil {
+		if err := hs.AuthTokenService.RevokeAllUserTokens(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
@@ -416,7 +417,7 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Resp
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Response {
-	cmd := models.RevokeAuthTokenCmd{}
+	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -476,7 +477,7 @@ type AdminLogoutUserParams struct {
 type AdminRevokeUserAuthTokenParams struct {
 	// in:body
 	// required:true
-	Body models.RevokeAuthTokenCmd `json:"body"`
+	Body auth.RevokeAuthTokenCmd `json:"body"`
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
@@ -508,5 +509,5 @@ type AdminCreateUserResponseResponse struct {
 // swagger:response adminGetUserAuthTokensResponse
 type AdminGetUserAuthTokensResponse struct {
 	// in:body
-	Body []*models.UserToken `json:"body"`
+	Body []*auth.UserToken `json:"body"`
 }
