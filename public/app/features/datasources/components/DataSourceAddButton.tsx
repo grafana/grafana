@@ -11,8 +11,10 @@ export function DataSourceAddButton() {
   const dataSourcesRoutes = useDataSourcesRoutes();
 
   return (
-    <LinkButton icon="plus" href={dataSourcesRoutes.New} disabled={!canCreateDataSource}>
-      Add new data source
-    </LinkButton>
+    canCreateDataSource && (
+      <LinkButton icon="plus" href={dataSourcesRoutes.New}>
+        Add new data source
+      </LinkButton>
+    )
   );
 }
