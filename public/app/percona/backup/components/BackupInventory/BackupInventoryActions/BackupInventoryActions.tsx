@@ -20,7 +20,8 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const handeClick = () => onRestore(backup);
-  const handleBackup = () => onBackup(backup);
+  // TODO uncomment when there's definition for this action
+  // const handleBackup = () => onBackup(backup);
   const handleDelete = () => onDelete(backup);
 
   const getActions: Action[] = [
@@ -34,15 +35,15 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({
       disabled: backup.status !== BackupStatus.BACKUP_STATUS_SUCCESS,
       action: handeClick,
     },
-    {
-      content: (
-        <div className={styles.dropdownField}>
-          <DBIcon type="backup" data-testid="add-backup-artifact-button" role="button" />
-          {Messages.addBackup}
-        </div>
-      ),
-      action: handleBackup,
-    },
+    // {
+    //   content: (
+    //     <div className={styles.dropdownField}>
+    //       <DBIcon type="backup" data-testid="add-backup-artifact-button" role="button" />
+    //       {Messages.addBackup}
+    //     </div>
+    //   ),
+    //   action: handleBackup,
+    // },
     {
       content: (
         <div className={styles.dropdownField}>
