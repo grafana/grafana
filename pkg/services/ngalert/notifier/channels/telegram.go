@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"os"
 
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -165,7 +166,11 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	// Telegram supports 4096 chars max
 	messageText, truncated := TruncateInRunes(tmpl(tn.settings.Message), telegramMaxMessageLenRunes)
 	if truncated {
-		tn.log.Warn("Truncated message", "runes", telegramMaxMessageLenRunes)
+		key, err := notify.ExtractGroupKey(ctx)
+		if err != nil {
+			return nil, err
+		}
+		tn.log.Warn("Truncated message", "alert", key, "runes", telegramMaxMessageLenRunes)
 	}
 
 	m := make(map[string]string)

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -362,7 +363,11 @@ func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types
 
 	title, truncated := TruncateInRunes(tmpl(sn.settings.Title), slackMaxTitleLenRunes)
 	if truncated {
-		sn.log.Warn("Truncated title", "runes", slackMaxTitleLenRunes)
+		key, err := notify.ExtractGroupKey(ctx)
+		if err != nil {
+			return nil, err
+		}
+		sn.log.Warn("Truncated title", "key", key, "runes", slackMaxTitleLenRunes)
 	}
 
 	req := &slackMessage{
