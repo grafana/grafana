@@ -127,9 +127,9 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON := map[string]interface{}{
 		"message_type":        messageType,
 		"entity_id":           groupKey.Hash(),
-		"entity_display_name": stateMessage,
+		"entity_display_name": tmpl(vn.settings.Title),
 		"timestamp":           time.Now().Unix(),
-		"state_message":       tmpl(vn.settings.Description),
+		"state_message":       stateMessage,
 		"monitoring_tool":     "Grafana v" + setting.BuildVersion,
 	}
 
