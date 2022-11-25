@@ -7,7 +7,6 @@ import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { ConstantVariable } from '../variables/variants/ConstantVariable';
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { TestVariable } from '../variables/variants/TestVariable';
