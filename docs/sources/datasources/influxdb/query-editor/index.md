@@ -91,6 +91,7 @@ By default group by `time($__interval)` is selected as part of the query utilizi
 1. Click the "x" icon.
 
 ### Timezone
+
 Timezone is an optional field that returns results with the UTC offset for the specified timezone.
 
 If left blank, results will be returned with timestamps in UTC. When utilizing a group by time clause, UTC will be utilized time grouping unless an alternative timezone is specified.
