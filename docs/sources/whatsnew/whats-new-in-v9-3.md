@@ -96,6 +96,14 @@ With the Partition by values transformer, you can now issue a single query and s
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
+## Reporting: Zoom in and out to fit your data better into a PDF
+
+This feature is availabe in beta in Grafana Enterprise, Cloud Pro, and Cloud Advanced.
+
+Since dashboards appear on a screen and Reports are PDFs, it can be tricky to render data just the way you want to - maybe your report doesn't show enough columns in a table, or the titles appear too small. Now you can adjust the scale of your report, to zoom in or zoom out and choose to show more data or make each text and panel larger. 
+
+To try report zoom, turn on the `scaleFactor` feature toggle in Grafana Enterprise.
+
 ## Authentication - OAuth token handling improvements
 
 This feature is generally available in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced.
