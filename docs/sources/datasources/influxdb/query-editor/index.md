@@ -3,8 +3,8 @@ aliases:
   - /docs/grafana/latest/datasources/influxdb/influxdb-flux/
   - /docs/grafana/latest/datasources/influxdb/query-editor/
   - /docs/grafana/latest/data-sources/influxdb/query-editor/
-description: Guide for Flux in Grafana
-title: Flux support in Grafana
+description: Guide for InfluxQL and Flux in Grafana
+title: Query editor
 weight: 200
 ---
 
@@ -73,7 +73,12 @@ SELECT derivative(mean("value"), 10s) /10 AS "REQ/s" FROM ....
 
 ### Group query results
 
-To group results by a tag, define it in a "Group By".
+By default group by `time($__interval)` is selected as part of the query utilizing the **Min time interval** to group results by time. This can be manually changed to a desired interval. Additionally, to group results by a tag, define it in a "Group By".
+
+**To group by a specific time interval:**
+
+1. Click `$__interval` within `time($__interval)`.
+1. Select a time interval from the dropdown that appears or input a valid time interval.
 
 **To group by a tag:**
 
@@ -84,6 +89,13 @@ To group results by a tag, define it in a "Group By".
 
 1. Click the tag.
 1. Click the "x" icon.
+
+### Timezone
+Timezone is an optional field that returns results with the UTC offset for the specified timezone.
+
+If left blank, results will be returned with timestamps in UTC. When utilizing a group by time clause, UTC will be utilized time grouping unless an alternative timezone is specified.
+
+To specify a timezone parameter, input the desired timezone following the defined TZ database name in the [Internet Assigned Numbers Authority time zone database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List).
 
 ### Text editor mode (RAW)
 
