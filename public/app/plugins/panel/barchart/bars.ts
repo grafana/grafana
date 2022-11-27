@@ -131,35 +131,33 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   let qt: Quadtree;
   let hRect: Rect | null;
 
-  const xSplits: Axis.Splits = (u: uPlot) => {
-    const dim = isXHorizontal ? u.bbox.width : u.bbox.height;
-    const _dir = dir * (isXHorizontal ? 1 : -1);
+  // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
+  const xSplits: Axis.Splits | undefined = (u) => u.data[0].map((v, i) => i);
 
-    let dataLen = u.data[0].length;
-    let lastIdx = dataLen - 1;
+  const hFilter: Axis.Filter | undefined =
+    xSpacing === 0
+      ? undefined
+      : (u, splits) => {
+          // hSpacing?
+          const dim = u.bbox.width;
 
-    let skipMod = 0;
+          let dataLen = splits.length;
+          let lastIdx = dataLen - 1;
 
-    if (xSpacing !== 0) {
-      let cssDim = dim / devicePixelRatio;
-      let maxTicks = Math.abs(Math.floor(cssDim / xSpacing));
+          let skipMod = 0;
 
-      skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
-    }
+          let cssDim = dim / uPlot.pxRatio;
+          let maxTicks = Math.abs(Math.floor(cssDim / xSpacing));
 
-    let splits: number[] = [];
+          skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
 
-    // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
-    u.data[0].forEach((v, i) => {
-      let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? i : lastIdx - i) % skipMod > 0;
+          let splits2 = splits.map((v, i) => {
+            let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? i : lastIdx - i) % skipMod > 0;
+            return shouldSkip ? null : v;
+          });
 
-      if (!shouldSkip) {
-        splits.push(i);
-      }
-    });
-
-    return _dir === 1 ? splits : splits.reverse();
-  };
+          return dir === -1 ? splits2 : splits2.reverse();
+        };
 
   // the splits passed into here are data[0] values looked up by the indices returned from splits()
   const xValues: Axis.Values = (u, splits, axisIdx, foundSpace, foundIncr) => {
@@ -434,8 +432,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       if (seriesIdx === 1) {
         hRect = null;
 
-        let cx = u.cursor.left! * devicePixelRatio;
-        let cy = u.cursor.top! * devicePixelRatio;
+        let cx = u.cursor.left! * uPlot.pxRatio;
+        let cy = u.cursor.top! * uPlot.pxRatio;
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
@@ -466,10 +464,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         }
 
         return {
-          left: isHovered ? hRect!.x / devicePixelRatio : -10,
-          top: isHovered ? hRect!.y / devicePixelRatio : -10,
-          width: isHovered ? hRect!.w / devicePixelRatio : 0,
-          height: isHovered ? (hRect!.h - heightReduce) / devicePixelRatio : 0,
+          left: isHovered ? hRect!.x / uPlot.pxRatio : -10,
+          top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
+          width: isHovered ? hRect!.w / uPlot.pxRatio : 0,
+          height: isHovered ? (hRect!.h - heightReduce) / uPlot.pxRatio : 0,
         };
       },
     },
@@ -629,6 +627,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xRange,
     xValues,
     xSplits,
+    hFilter,
 
     barsBuilder,
 

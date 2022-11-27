@@ -138,7 +138,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
-        name: 'Rotate bar labels',
+        name: 'Rotate X tick labels',
         defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
@@ -147,14 +147,11 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
           marks: { '-90': '-90°', '-45': '-45°', 0: '0°', 45: '45°', 90: '90°' },
           included: false,
         },
-        showIf: (opts) => {
-          return opts.orientation === VizOrientation.Auto || opts.orientation === VizOrientation.Vertical;
-        },
       })
       .addNumberInput({
         path: 'xTickLabelMaxLength',
-        name: 'Bar label max length',
-        description: 'Bar labels will be truncated to the length provided',
+        name: 'X tick label max length',
+        description: 'X labels will be truncated to the length provided',
         settings: {
           placeholder: 'None',
           min: 0,

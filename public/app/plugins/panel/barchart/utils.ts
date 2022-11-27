@@ -126,7 +126,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
-  if (vizOrientation.xOri === ScaleOrientation.Horizontal && xTickLabelRotation !== 0) {
+  if (xTickLabelRotation !== 0) {
     builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength));
   }
 
@@ -155,12 +155,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     placement: xFieldAxisPlacement,
     label: frame.fields[0].config.custom?.axisLabel,
     splits: config.xSplits,
+    filter: vizOrientation.xOri === 0 ? config.hFilter : undefined,
     values: config.xValues,
     timeZone,
     grid: { show: false },
     ticks: { show: false },
     gap: 15,
-    tickLabelRotation: xTickLabelRotation * -1,
+    tickLabelRotation: vizOrientation.xOri === 0 ? xTickLabelRotation * -1 : 0,
     theme,
     show: xFieldAxisShow,
   });
@@ -272,6 +273,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         size: customConfig.axisWidth,
         placement,
         formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
+        filter: vizOrientation.yOri === 0 ? config.hFilter : undefined,
+        tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
       });
