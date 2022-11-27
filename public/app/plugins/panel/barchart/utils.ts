@@ -82,7 +82,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) => {
-    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), xTickLabelMaxLength);
+    return formattedValueToString(frame.fields[seriesIdx].display!(value));
   };
 
   // bar orientation -> x scale orientation & direction
