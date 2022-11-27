@@ -117,7 +117,7 @@ describe('createTableFrameFromSearch()', () => {
     expect(frame.fields[2].values.get(0)).toBe('2022-01-28 03:00:28');
     expect(frame.fields[2].values.get(1)).toBe('2022-01-27 22:56:06');
 
-    expect(frame.fields[3].name).toBe('duration');
+    expect(frame.fields[3].name).toBe('traceDuration');
     expect(frame.fields[3].values.get(0)).toBe(65);
   });
 });
@@ -131,34 +131,20 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[0].values.get(0)).toBe('b1586c3c8c34d');
     expect(frame.fields[0].config.unit).toBe('string');
     expect(frame.fields[0].values).toBeInstanceOf(ArrayVector);
-    // There should be a traceIdHidden field which is hidden
-    expect(frame.fields[1].name).toBe('traceIdHidden');
-    expect(frame.fields[1].config).toBeDefined();
-    expect(frame.fields[1].config.custom).toStrictEqual({ hidden: true });
-    expect(frame.fields[1].values).toBeInstanceOf(ArrayVector);
-    // Span ID field
-    expect(frame.fields[2].name).toBe('spanID');
-    expect(frame.fields[2].config.unit).toBe('string');
-    expect(frame.fields[2].values).toBeInstanceOf(ArrayVector);
     // Trace name field
-    expect(frame.fields[3].name).toBe('traceName');
-    expect(frame.fields[3].type).toBe('string');
-    expect(frame.fields[3].values.get(0)).toBe('lb HTTP Client');
-    expect(frame.fields[3].values).toBeInstanceOf(ArrayVector);
+    expect(frame.fields[1].name).toBe('traceName');
+    expect(frame.fields[1].type).toBe('string');
+    expect(frame.fields[1].values.get(0)).toBe('lb HTTP Client');
+    expect(frame.fields[1].values).toBeInstanceOf(ArrayVector);
     // Start time field
-    expect(frame.fields[4].name).toBe('startTime');
-    expect(frame.fields[4].type).toBe('string');
-    expect(frame.fields[4].values.get(1)).toBe('2022-10-19 09:03:34');
-    expect(frame.fields[4].values).toBeInstanceOf(ArrayVector);
+    expect(frame.fields[2].name).toBe('startTime');
+    expect(frame.fields[2].type).toBe('string');
+    expect(frame.fields[2].values.get(1)).toBe('2022-01-27 22:56:06');
+    expect(frame.fields[2].values).toBeInstanceOf(ArrayVector);
     // Duration field
-    expect(frame.fields[5].name).toBe('duration');
-    expect(frame.fields[5].type).toBe('number');
-    expect(frame.fields[5].values.get(2)).toBe(6686000);
-    // There should be a field for each attribute
-    expect(frame.fields[6].name).toBe('http.method');
-    expect(frame.fields[6].values).toBeInstanceOf(ArrayVector);
-    expect(frame.fields[7].name).toBe('service.name');
-    expect(frame.fields[7].values).toBeInstanceOf(ArrayVector);
+    expect(frame.fields[3].name).toBe('traceDuration');
+    expect(frame.fields[3].type).toBe('number');
+    expect(frame.fields[3].values.get(2)).toBe(44);
   });
 });
 

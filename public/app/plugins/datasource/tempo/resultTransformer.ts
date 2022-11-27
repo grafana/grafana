@@ -612,7 +612,7 @@ function transformToTraceData(data: TraceSearchMetadata) {
 
   return {
     traceID: data.traceID,
-    startTime: startTime,
+    startTime,
     traceDuration: data.durationMs?.toString(),
     traceName,
   };
@@ -666,79 +666,7 @@ export function createTableFrameFromTraceQlQuery(
     .reduce((rows: TraceTableData[], trace, currentIndex) => {
       const traceData: TraceTableData = transformToTraceData(trace);
       rows.push(traceData);
-      const spanDynamicAttrs: Record<string, FieldDTO> = {};
-      trace.spanSet?.spans.forEach((span) => {
-        span.attributes?.forEach((attr) => {
-          spanDynamicAttrs[attr.key] = {
-            name: attr.key,
-            type: FieldType.string,
-            config: { displayNameFromDS: attr.key, custom: { subcol: true } },
-          };
-        });
-      });
-      const subFrame = new MutableDataFrame({
-        fields: [
-          {
-            name: 'traceIdHidden',
-            config: {
-              custom: { hidden: true },
-            },
-          },
-          {
-            name: 'spanID',
-            type: FieldType.string,
-            config: {
-              unit: 'string',
-              displayNameFromDS: 'Span ID',
-              links: [
-                {
-                  title: 'Span: ${__value.raw}',
-                  url: '',
-                  internal: {
-                    datasourceUid: instanceSettings.uid,
-                    datasourceName: instanceSettings.name,
-                    query: {
-                      query: '${__data.fields.traceIdHidden}',
-                      queryType: 'traceId',
-                    },
-                    panelsState: {
-                      trace: {
-                        spanId: '${__value.raw}',
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-          {
-            name: 'spanName',
-            type: FieldType.string,
-            config: { displayNameFromDS: 'Name' },
-          },
-          {
-            name: 'spanStartTime',
-            type: FieldType.string,
-            config: { displayNameFromDS: 'Start time' },
-          },
-          ...Object.values(spanDynamicAttrs),
-          {
-            name: 'duration',
-            type: FieldType.number,
-            config: { displayNameFromDS: 'Duration', unit: 'ns' },
-          },
-        ],
-        meta: {
-          preferredVisualisationType: 'table',
-          custom: {
-            parentRowIndex: currentIndex,
-          },
-        },
-      });
-      trace.spanSet?.spans.forEach((span) => {
-        subFrame.add(transformSpanToTraceData(span, trace.traceID));
-      });
-      subDataFrames.push(subFrame);
+      subDataFrames.push(traceSubFrame(trace, instanceSettings, currentIndex));
       return rows;
     }, []);
 
@@ -748,6 +676,92 @@ export function createTableFrameFromTraceQlQuery(
 
   return [frame, ...subDataFrames];
 }
+
+const traceSubFrame = (
+  trace: TraceSearchMetadata,
+  instanceSettings: DataSourceInstanceSettings,
+  currentIndex: number
+): DataFrame => {
+  const spanDynamicAttrs: Record<string, FieldDTO> = {};
+  let hasNameAttribute = false;
+  trace.spanSet?.spans.forEach((span) => {
+    if (span.name) {
+      hasNameAttribute = true;
+    }
+    span.attributes?.forEach((attr) => {
+      spanDynamicAttrs[attr.key] = {
+        name: attr.key,
+        type: FieldType.string,
+        config: { displayNameFromDS: attr.key },
+      };
+    });
+  });
+  const subFrame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'traceIdHidden',
+        config: {
+          custom: { hidden: true },
+        },
+      },
+      {
+        name: 'spanID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Span ID',
+          links: [
+            {
+              title: 'Span: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__data.fields.traceIdHidden}',
+                  queryType: 'traceId',
+                },
+                panelsState: {
+                  trace: {
+                    spanId: '${__value.raw}',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        name: 'name',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Name', custom: { hidden: !hasNameAttribute } },
+      },
+      {
+        name: 'spanStartTime',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Start time' },
+      },
+      ...Object.values(spanDynamicAttrs),
+      {
+        name: 'duration',
+        type: FieldType.number,
+        config: { displayNameFromDS: 'Duration', unit: 'ns' },
+      },
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+      custom: {
+        parentRowIndex: currentIndex,
+      },
+    },
+  });
+
+  trace.spanSet?.spans.forEach((span) => {
+    subFrame.add(transformSpanToTraceData(span, trace.traceID));
+  });
+
+  return subFrame;
+};
 
 interface TraceTableData {
   [key: string]: string | number | boolean | undefined; // dynamic attribute name
@@ -765,9 +779,9 @@ function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
   const data: TraceTableData = {
     traceIdHidden: traceID,
     spanID: span.spanID,
-    spanStartTime: spanStartTime,
+    spanStartTime,
     duration: parseInt(span.durationNanos, 10),
-    spanName: span.name,
+    name: span.name,
   };
 
   span.attributes?.forEach((attr) => {
