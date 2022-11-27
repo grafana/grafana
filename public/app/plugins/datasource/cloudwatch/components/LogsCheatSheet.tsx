@@ -223,10 +223,9 @@ export default class LogsCheatSheet extends PureComponent<
   onClickExample(query: CloudWatchQuery) {
     this.props.onClickExample(query);
   }
-
   renderExpression(expr: string, keyPrefix: string) {
     return (
-      <div
+      <button
         className="cheat-sheet-item__example"
         key={expr}
         onClick={() =>
@@ -241,7 +240,7 @@ export default class LogsCheatSheet extends PureComponent<
         }
       >
         <pre>{renderHighlightedMarkup(expr, keyPrefix)}</pre>
-      </div>
+      </button>
     );
   }
 
