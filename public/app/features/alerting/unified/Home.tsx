@@ -55,11 +55,12 @@ export default function Home() {
         <ContentBox className={styles.videoBlock}>
           <iframe
             title="Alerting - Introductory video"
-            src="https://player.vimeo.com/video/720001629"
-            width="560"
-            height="349"
+            src="https://player.vimeo.com/video/720001629?h=c6c1732f92"
+            width="960"
+            height="540"
             allow="autoplay; fullscreen"
             allowFullScreen
+            frameBorder="0"
           ></iframe>
         </ContentBox>
       </div>
@@ -89,8 +90,9 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   videoBlock: css`
     grid-column: 3 / span 3;
     grid-row: 2 / span 2;
+    // Video required
     position: relative;
-    padding-bottom: 56.25%; /* 16:9 */
+    padding: 56.25% 0 0 0; /* 16:9 */
 
     iframe {
       position: absolute;
