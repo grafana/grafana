@@ -31,7 +31,7 @@ func Test_DimensionKeys_Route(t *testing.T) {
 				len(r.DimensionFilter) == 2 &&
 				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "NodeID", Value: "Shared"}) &&
 				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "stage", Value: "QueryCommit"})
-		})).Return([]string{}, nil).Once()
+		})).Return([]resources.ResourceResponse[string]{}, nil).Once()
 		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
