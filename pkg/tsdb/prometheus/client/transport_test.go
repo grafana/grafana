@@ -42,7 +42,7 @@ func TestCreateTransportOptions(t *testing.T) {
 		require.Equal(t, 3, len(opts.Middlewares))
 	})
 
-	t.Run("add socks proxy option if enableSocksProxy is true in the json data", func(t *testing.T) {
+	t.Run("add socks proxy option if enableSecureSocksProxy is true in the json data", func(t *testing.T) {
 		tests := []struct {
 			jsonData  string
 			optExists bool
@@ -52,11 +52,11 @@ func TestCreateTransportOptions(t *testing.T) {
 				optExists: false,
 			},
 			{
-				jsonData:  `{"enableSocksProxy": false}`,
+				jsonData:  `{"enableSecureSocksProxy": false}`,
 				optExists: false,
 			},
 			{
-				jsonData:  `{"enableSocksProxy": true}`,
+				jsonData:  `{"enableSecureSocksProxy": true}`,
 				optExists: true,
 			},
 		}
@@ -69,7 +69,7 @@ func TestCreateTransportOptions(t *testing.T) {
 			}
 			opts, err := CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
 			require.NoError(t, err)
-			_, ok := opts.CustomOptions["socks_proxy"]
+			_, ok := opts.CustomOptions["secure_socks_proxy"]
 			require.Equal(t, test.optExists, ok)
 		}
 	})

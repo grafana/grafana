@@ -61,8 +61,8 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 				return
 			}
 
-			_, enableSocksProxy := opts.CustomOptions["socks_proxy"]
-			if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && enableSocksProxy {
+			_, enableSecureSocksProxy := opts.CustomOptions["secure_socks_proxy"]
+			if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && enableSecureSocksProxy {
 				err = newSecureSocksProxy(cfg, transport)
 				if err != nil {
 					logger.Error("Failed to enable the socks proxy", "error", err.Error(), "datasource", datasourceName)

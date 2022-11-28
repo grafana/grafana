@@ -105,6 +105,8 @@ func TestNewSecureSocksProxy(t *testing.T) {
 
 	// create empty file for testing invalid configs
 	tempEmptyFile := filepath.Join(tempDir, "emptyfile.txt")
+	// nolint:gosec
+	// The gosec G304 warning can be ignored because all values come from the test
 	_, err := os.Create(tempEmptyFile)
 	require.NoError(t, err)
 
@@ -127,12 +129,15 @@ func TestNewSecureSocksProxy(t *testing.T) {
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
 	require.NoError(t, err)
 	rootCACert := filepath.Join(tempDir, "ca.cert")
+	// nolint:gosec
+	// The gosec G304 warning can be ignored because all values come from the test
 	caCertFile, err := os.Create(rootCACert)
 	require.NoError(t, err)
-	pem.Encode(caCertFile, &pem.Block{
+	err = pem.Encode(caCertFile, &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: caBytes,
 	})
+	require.NoError(t, err)
 
 	// generate test client cert & key
 	cert := &x509.Certificate{
@@ -152,19 +157,25 @@ func TestNewSecureSocksProxy(t *testing.T) {
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, ca, &certPrivKey.PublicKey, caPrivKey)
 	require.NoError(t, err)
 	clientCert := filepath.Join(tempDir, "client.cert")
+	// nolint:gosec
+	// The gosec G304 warning can be ignored because all values come from the test
 	certFile, err := os.Create(clientCert)
 	require.NoError(t, err)
-	pem.Encode(certFile, &pem.Block{
+	err = pem.Encode(certFile, &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: certBytes,
 	})
+	require.NoError(t, err)
 	clientKey := filepath.Join(tempDir, "client.key")
+	// nolint:gosec
+	// The gosec G304 warning can be ignored because all values come from the test
 	keyFile, err := os.Create(clientKey)
 	require.NoError(t, err)
-	pem.Encode(keyFile, &pem.Block{
+	err = pem.Encode(keyFile, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(certPrivKey),
 	})
+	require.NoError(t, err)
 
 	settings := &setting.Cfg{SecureSocksDSProxy: setting.SecureSocksDSProxySettings{
 		ClientCert:   clientCert,
