@@ -42,8 +42,8 @@ func TestWebhookNotifier(t *testing.T) {
 		expMsgError   error
 	}{
 		{
-			name:     "Default config with one alert",
-			settings: `{"url": "http://localhost/test"}`,
+			name:     "Default config with one alert with custom message",
+			settings: `{"url": "http://localhost/test", "message": "Custom message"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -90,16 +90,17 @@ func TestWebhookNotifier(t *testing.T) {
 				GroupKey: "alertname",
 				Title:    "[FIRING:1]  (val1)",
 				State:    "alerting",
-				Message:  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				Message:  "Custom message",
 				OrgID:    orgID,
 			},
 			expMsgError: nil,
 			expHeaders:  map[string]string{},
 		},
 		{
-			name: "Custom config with multiple alerts",
+			name: "Custom config with multiple alerts with custom title",
 			settings: `{
 				"url": "http://localhost/test1",
+				"title": "Alerts firing: {{ len .Alerts.Firing }}",
 				"username": "user1",
 				"password": "mysecret",
 				"httpMethod": "PUT",
@@ -168,7 +169,7 @@ func TestWebhookNotifier(t *testing.T) {
 				Version:         "1",
 				GroupKey:        "alertname",
 				TruncatedAlerts: 1,
-				Title:           "[FIRING:2]  ",
+				Title:           "Alerts firing: 2",
 				State:           "alerting",
 				Message:         "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 				OrgID:           orgID,

@@ -28,23 +28,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRowCount: css`
     label: logs-stats-row__count;
     text-align: right;
-    margin-left: 0.5em;
+    margin-left: ${theme.spacing(0.75)};
   `,
   logsStatsRowPercent: css`
     label: logs-stats-row__percent;
     text-align: right;
-    margin-left: 0.5em;
-    width: 3em;
+    margin-left: ${theme.spacing(0.75)};
+    width: ${theme.spacing(4.5)};
   `,
   logsStatsRowBar: css`
     label: logs-stats-row__bar;
-    height: 4px;
+    height: ${theme.spacing(0.5)};
     overflow: hidden;
     background: ${theme.colors.text.disabled};
   `,
   logsStatsRowInnerBar: css`
     label: logs-stats-row__innerbar;
-    height: 4px;
+    height: ${theme.spacing(0.5)};
     overflow: hidden;
     background: ${theme.colors.primary.main};
   `,

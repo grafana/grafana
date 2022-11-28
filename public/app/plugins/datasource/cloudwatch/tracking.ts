@@ -1,5 +1,5 @@
 import { DashboardLoadedEvent } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { migrateMetricQuery } from './migrations/metricQueryMigrations';
@@ -13,7 +13,7 @@ import {
 } from './types';
 import { filterMetricsQuery } from './utils/utils';
 
-interface CloudWatchOnDashboardLoadedTrackingEvent {
+type CloudWatchOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
   dashboard_id?: string;
   org_id?: number;
@@ -52,7 +52,10 @@ interface CloudWatchOnDashboardLoadedTrackingEvent {
   /* The number of "Insights" queries that are using the code mode. 
   Should be measured in relation to metrics_query_count, e.g metrics_query_builder_count + metrics_query_code_count = metrics_query_count */
   metrics_query_code_count: number;
-}
+
+  /* The number of CloudWatch metrics queries that have specified an account in its cross account metric stat query */
+  metrics_queries_with_account_count: number;
+};
 
 export const onDashboardLoadedHandler = ({
   payload: { dashboardId, orgId, grafanaVersion, queries },
@@ -93,6 +96,7 @@ export const onDashboardLoadedHandler = ({
       metrics_query_count: 0,
       metrics_query_builder_count: 0,
       metrics_query_code_count: 0,
+      metrics_queries_with_account_count: 0,
     };
 
     for (const q of metricsQueries) {
@@ -108,6 +112,9 @@ export const onDashboardLoadedHandler = ({
       );
       e.metrics_query_code_count += +Boolean(
         q.metricQueryType === MetricQueryType.Query && q.metricEditorMode === MetricEditorMode.Code
+      );
+      e.metrics_queries_with_account_count += +Boolean(
+        config.featureToggles.cloudWatchCrossAccountQuerying && isMetricSearchBuilder(q) && q.accountId
       );
     }
 

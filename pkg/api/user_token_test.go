@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -20,7 +21,7 @@ import (
 func TestUserTokenAPIEndpoint(t *testing.T) {
 	userMock := usertest.NewUserServiceFake()
 	t.Run("When current user attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
 		userMock.ExpectedError = user.ErrUserNotFound
 		revokeUserAuthTokenScenario(t, "Should return not found when calling POST on", "/api/user/revoke-auth-token",
 			"/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
@@ -59,15 +60,15 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When revoke an auth token for a user", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
-		token := &models.UserToken{Id: 1}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
+		token := &auth.UserToken{Id: 1}
 		mockUser := &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 200},
 		}
 
 		revokeUserAuthTokenInternalScenario(t, "Should be successful", cmd, 200, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
-				return &models.UserToken{Id: 2}, nil
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*auth.UserToken, error) {
+				return &auth.UserToken{Id: 2}, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 200, sc.resp.Code)
@@ -75,11 +76,11 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When revoke the active auth token used by himself", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
-		token := &models.UserToken{Id: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
+		token := &auth.UserToken{Id: 2}
 		mockUser := usertest.NewUserServiceFake()
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*auth.UserToken, error) {
 				return token, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -88,10 +89,10 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When gets auth tokens for a user", func(t *testing.T) {
-		currentToken := &models.UserToken{Id: 1}
+		currentToken := &auth.UserToken{Id: 1}
 		mockUser := usertest.NewUserServiceFake()
 		getUserAuthTokensInternalScenario(t, "Should be successful", currentToken, func(sc *scenarioContext) {
-			tokens := []*models.UserToken{
+			tokens := []*auth.UserToken{
 				{
 					Id:        1,
 					ClientIp:  "127.0.0.1",
@@ -107,7 +108,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 					SeenAt:    0,
 				},
 			}
-			sc.userAuthTokenService.GetUserTokensProvider = func(ctx context.Context, userId int64) ([]*models.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokensProvider = func(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 				return tokens, nil
 			}
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -145,10 +146,10 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 }
 
-func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd,
+func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd auth.RevokeAuthTokenCmd,
 	userId int64, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
@@ -175,7 +176,7 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 
 func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, userId int64, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
@@ -202,7 +203,7 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId int64, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
 		hs := HTTPServer{
-			AuthTokenService: auth.NewFakeUserAuthTokenService(),
+			AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 			userService:      userService,
 		}
 
@@ -222,10 +223,10 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 	})
 }
 
-func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.RevokeAuthTokenCmd, userId int64,
-	token *models.UserToken, fn scenarioFunc, userService user.Service) {
+func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd auth.RevokeAuthTokenCmd, userId int64,
+	token *auth.UserToken, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
@@ -248,9 +249,9 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 	})
 }
 
-func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.UserToken, fn scenarioFunc, userService user.Service) {
+func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *auth.UserToken, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,

@@ -8,6 +8,7 @@ import {
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   isValidGoDuration,
   LoadingState,
@@ -69,6 +70,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     datasourceUid?: string;
   };
   traceQuery?: {
+    timeShiftEnabled?: boolean;
     spanStartTimeShift?: string;
     spanEndTimeShift?: string;
   };
@@ -182,7 +184,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           this._request('/api/search', {
             q: targets.traceql[0].query,
             limit: options.targets[0].limit,
-            start: 0, // Currently the API doesn't return traces when using the 'From' time selected in Explore
+            start: options.range.from.unix(),
             end: options.range.to.unix(),
           }).pipe(
             map((response) => {
@@ -325,18 +327,25 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   traceIdQueryRequest(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): DataQueryRequest<TempoQuery> {
-    return {
+    const request = {
       ...options,
-      range: options.range && {
+      targets,
+    };
+
+    if (this.traceQuery?.timeShiftEnabled) {
+      request.range = options.range && {
         ...options.range,
         from: options.range.from.subtract(
           rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
           'milliseconds'
         ),
         to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
-      },
-      targets,
-    };
+      };
+    } else {
+      request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
+    }
+
+    return request;
   }
 
   async metadataRequest(url: string, params = {}) {
@@ -357,7 +366,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await lastValueFrom(getBackendSrv().fetch<any>(options));
+    const response = await lastValueFrom(getBackendSrv().fetch(options));
 
     if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };

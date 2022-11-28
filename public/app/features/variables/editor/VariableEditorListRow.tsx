@@ -52,7 +52,7 @@ export function VariableEditorListRow({
             ...provided.draggableProps.style,
           }}
         >
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <Button
               size="xs"
               fill="text"
@@ -67,6 +67,7 @@ export function VariableEditorListRow({
             </Button>
           </td>
           <td
+            role="gridcell"
             className={styles.definitionColumn}
             onClick={(event) => {
               event.preventDefault();
@@ -77,15 +78,15 @@ export function VariableEditorListRow({
             {definition}
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <VariableCheckIndicator passed={passed} />
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <VariableUsagesButton id={variable.id} isAdhoc={isAdHoc(variable)} usages={usagesNetwork} />
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <IconButton
               onClick={(event) => {
                 event.preventDefault();
@@ -98,7 +99,7 @@ export function VariableEditorListRow({
             />
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <IconButton
               onClick={(event) => {
                 event.preventDefault();
@@ -110,7 +111,7 @@ export function VariableEditorListRow({
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
             />
           </td>
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <div {...provided.dragHandleProps} className={styles.dragHandle}>
               <Icon name="draggabledots" size="lg" />
             </div>

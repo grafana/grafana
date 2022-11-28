@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 type suggestData struct {
@@ -66,7 +65,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
-		cwlog.Error("Failed to get regions", "error", err)
+		logger.Error("Failed to get regions", "error", err)
 	} else {
 		for _, region := range r.Regions {
 			exists := false
@@ -316,7 +315,6 @@ func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext,
 	if err != nil || response == nil {
 		return nil, err
 	}
-
 	result := make([]suggestData, 0)
 	for _, logGroup := range response.LogGroups {
 		logGroupName := *logGroup.LogGroupName

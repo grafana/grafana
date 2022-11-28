@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -26,6 +25,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	HeaderPluginID      = "X-Plugin-Id"      // can be used for routing
+	HeaderDatasourceUID = "X-Datasource-Uid" // can be used for routing/ load balancing
+	HeaderDashboardUID  = "X-Dashboard-Uid"  // mainly useful for debuging slow queries
+	HeaderPanelID       = "X-Panel-Id"       // mainly useful for debuging slow queries
 )
 
 func ProvideService(
@@ -75,6 +81,7 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	if err != nil {
 		return nil, err
 	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
@@ -124,9 +131,16 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
-		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 	}
+
+	if user != nil { // for passthrough authentication, SSE does not authenticate
+		exprReq.User = adapters.BackendUserFromSignedInUser(user)
+		exprReq.OrgId = user.OrgID
+	}
+
+	disallowedCookies := []string{s.cfg.LoginCookieName}
+	queryEnrichers := parsedReq.createDataSourceQueryEnrichers(ctx, user, s.oAuthTokenService, disallowedCookies)
 
 	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
@@ -148,6 +162,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
 			},
+			QueryEnricher: queryEnrichers[pq.datasource.Uid],
 		})
 	}
 
@@ -189,10 +204,11 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		Queries: []backend.DataQuery{},
 	}
 
+	disallowedCookies := []string{s.cfg.LoginCookieName}
 	middlewares := []httpclient.Middleware{}
 	if parsedReq.httpRequest != nil {
 		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), disallowedCookies),
 		)
 	}
 
@@ -209,7 +225,7 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 	}
 
 	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), disallowedCookies)
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}
@@ -224,26 +240,6 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 	return s.pluginClient.QueryData(ctx, req)
 }
 
-type parsedQuery struct {
-	datasource *datasources.DataSource
-	query      backend.DataQuery
-	rawQuery   *simplejson.Json
-}
-
-type parsedRequest struct {
-	hasExpression bool
-	parsedQueries map[string][]parsedQuery
-	httpRequest   *http.Request
-}
-
-func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
-	queries := make([]parsedQuery, 0)
-	for _, pq := range pr.parsedQueries {
-		queries = append(queries, pq...)
-	}
-	return queries
-}
-
 // parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
@@ -254,6 +250,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
+		dsTypes:       make(map[string]bool),
 	}
 
 	// Parse the queries and store them by datasource
@@ -270,6 +267,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		datasourcesByUid[ds.Uid] = ds
 		if expr.IsDataSource(ds.Uid) {
 			req.hasExpression = true
+		} else {
+			req.dsTypes[ds.Type] = true
 		}
 
 		if _, ok := req.parsedQueries[ds.Uid]; !ok {
@@ -304,7 +303,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		req.httpRequest = reqDTO.HTTPRequest
 	}
 
-	return req, nil
+	_ = req.validateRequest()
+	return req, nil // TODO req.validateRequest()
 }
 
 func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {

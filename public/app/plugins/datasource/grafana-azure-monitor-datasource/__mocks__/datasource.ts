@@ -49,5 +49,5 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
 
   const mockDatasource = _mockDatasource as Datasource;
 
-  return jest.mocked(mockDatasource, true);
+  return jest.mocked(mockDatasource);
 }

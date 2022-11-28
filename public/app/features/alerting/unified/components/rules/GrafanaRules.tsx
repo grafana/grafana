@@ -34,8 +34,8 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
   const loading = prom.loading || ruler.loading;
   const hasResult = !!prom.result || !!ruler.result;
 
-  const wantsGroupedView = queryParams['view'] === 'grouped';
-  const namespacesFormat = wantsGroupedView ? namespaces : flattenGrafanaManagedRules(namespaces);
+  const wantsListView = queryParams['view'] === 'list';
+  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
 
@@ -58,7 +58,7 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
           key={`${namespace.name}-${group.name}`}
           namespace={namespace}
           expandAll={expandAll}
-          viewMode={wantsGroupedView ? 'grouped' : 'list'}
+          viewMode={wantsListView ? 'list' : 'grouped'}
         />
       ))}
       {hasResult && namespacesFormat?.length === 0 && <p>No rules found.</p>}

@@ -9,10 +9,13 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/retryer"
 	"github.com/mattn/go-sqlite3"
 )
 
 var sessionLogger = log.New("sqlstore.session")
+var ErrMaximumRetriesReached = errutil.NewBase(errutil.StatusInternal, "sqlstore.max-retries-reached")
 
 type DBSession struct {
 	*xorm.Session
@@ -68,23 +71,34 @@ func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFun
 func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
 	defer sess.Close()
-	return ss.withRetry(ctx, callback, 0)(sess)
+	retry := 0
+	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
 }
 
-func (ss *SQLStore) withRetry(ctx context.Context, callback DBTransactionFunc, retry int) DBTransactionFunc {
-	return func(sess *DBSession) error {
+func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc, sess *DBSession, retry int) func() (retryer.RetrySignal, error) {
+	return func() (retryer.RetrySignal, error) {
+		retry++
+
 		err := callback(sess)
 
 		ctxLogger := tsclogger.FromContext(ctx)
 
 		var sqlError sqlite3.Error
-		if errors.As(err, &sqlError) && retry < ss.dbCfg.QueryRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
-			time.Sleep(time.Millisecond * time.Duration(10))
+		if errors.As(err, &sqlError) && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
 			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
-			return ss.withRetry(ctx, callback, retry+1)(sess)
+			// retryer immediately returns the error (if there is one) without checking the response
+			// therefore we only have to send it if we have reached the maximum retries
+			if retry == ss.dbCfg.QueryRetries {
+				return retryer.FuncError, ErrMaximumRetriesReached.Errorf("retry %d: %w", retry, err)
+			}
+			return retryer.FuncFailure, nil
 		}
 
-		return err
+		if err != nil {
+			return retryer.FuncError, err
+		}
+
+		return retryer.FuncComplete, nil
 	}
 }
 
@@ -96,7 +110,8 @@ func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, call
 	if isNew {
 		defer sess.Close()
 	}
-	return ss.withRetry(ctx, callback, 0)(sess)
+	retry := 0
+	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
 }
 
 func (sess *DBSession) InsertId(bean interface{}) (int64, error) {

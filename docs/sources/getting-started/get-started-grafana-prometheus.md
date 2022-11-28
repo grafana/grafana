@@ -43,8 +43,8 @@ Prometheus node_exporter is a widely used tool that exposes system metrics. Inst
         # metrics_path defaults to '/metrics'
         # scheme defaults to 'http'.
 
-        static_configs:
-        - targets: ['<hostname>:9100']
+          static_configs:
+          - targets: ['<hostname>:9100']
    ```
 
 1. Start the Prometheus service:

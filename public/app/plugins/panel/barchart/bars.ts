@@ -417,7 +417,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let over = u.over;
     over.style.overflow = 'hidden';
     u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
-      (el as HTMLElement).style.borderRadius = '0';
+      if (el instanceof HTMLElement) {
+        el.style.borderRadius = '0';
+      }
     });
   };
 
@@ -457,16 +459,21 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let isHovered = hRect && seriesIdx === hRect.sidx;
 
         let heightReduce = 0;
+        let widthReduce = 0;
 
         // get height of bar rect at same index of the series below the hovered one
         if (isStacked && isHovered && hRect!.sidx > 1) {
-          heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
+          if (isXHorizontal) {
+            heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
+          } else {
+            widthReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.w;
+          }
         }
 
         return {
-          left: isHovered ? hRect!.x / devicePixelRatio : -10,
+          left: isHovered ? (hRect!.x + widthReduce) / devicePixelRatio : -10,
           top: isHovered ? hRect!.y / devicePixelRatio : -10,
-          width: isHovered ? hRect!.w / devicePixelRatio : 0,
+          width: isHovered ? (hRect!.w - widthReduce) / devicePixelRatio : 0,
           height: isHovered ? (hRect!.h - heightReduce) / devicePixelRatio : 0,
         };
       },

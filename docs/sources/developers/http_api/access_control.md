@@ -527,11 +527,60 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
+### List your permissions
+
+`GET /api/access-control/users/permissions`
+
+Lists the permissions granted to the signed in user.
+
+#### Required permissions
+
+No permission is required.
+
+#### Query parameters
+
+| Param       | Type    | Required | Description                            |
+| ----------- | ------- | -------- | -------------------------------------- |
+| reloadcache | boolean | No       | A flag to reload the permission cache. |
+
+#### Example request
+
+```http
+GET /api/access-control/user/permissions
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+  "dashboards:read": ["dashboards:uid:70KrY6IVz"],
+  "dashboards:write": ["dashboards:uid:70KrY6IVz"],
+  "datasources.id:read": ["datasources:*"],
+  "datasources:read": ["datasources:*"],
+  "datasources:explore": [""],
+  "datasources:query": ["datasources:uid:grafana"],
+  "datasources:read": ["datasources:uid:grafana"],
+  "orgs:read": [""]
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Set of assigned permissions is returned.                             |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
 ### List permissions assigned to a user
 
 `GET /api/access-control/users/:userId/permissions`
 
-Lists the permissions that a given user has.
+Lists the permissions granted to a given user.
 
 #### Required permissions
 

@@ -5,15 +5,8 @@
   "enabledManagers": ["npm"],
   "ignoreDeps": [
     "@types/systemjs",
-    "@types/d3-force", // we should bump this once we move to esm modules
-    "@types/d3-interpolate", // we should bump this once we move to esm modules
-    "@types/d3-scale-chromatic", // we should bump this once we move to esm modules
     "@types/react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
     "commander", // we are planning to remove this, so no need to update it
-    "d3",
-    "d3-force", // we should bump this once we move to esm modules
-    "d3-interpolate", // we should bump this once we move to esm modules
-    "d3-scale-chromatic", // we should bump this once we move to esm modules
     "execa", // we should bump this once we move to esm modules
     "history", // we should bump this together with react-router-dom
     "@mdx-js/react", // storybook peer-depends on its 1.x version, we should upgrade this when we upgrade storybook
@@ -68,10 +61,19 @@
     {
       "groupName": "Slate",
       "matchPackageNames": [
+        "@types/slate",
+        "@types/slate-react",
         "slate",
         "slate-react"
       ]
-    }
+    },
+    {
+      "groupName": "d3",
+      "matchPackagePrefixes": [
+        "d3",
+        "@types/d3"
+      ]
+    },
   ],
   "pin": {
     "enabled": false

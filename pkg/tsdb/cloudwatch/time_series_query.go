@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"golang.org/x/sync/errgroup"
 )
 
 type responseWrapper struct {
@@ -17,8 +17,8 @@ type responseWrapper struct {
 	RefId        string
 }
 
-func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	cwlog.Debug("Executing time series query")
+func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	logger.Debug("Executing time series query")
 	resp := backend.NewQueryDataResponse()
 
 	if len(req.Queries) == 0 {
@@ -31,7 +31,9 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
 
-	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
+	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime,
+		e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels),
+		e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		eg.Go(func() error {
 			defer func() {
 				if err := recover(); err != nil {
-					cwlog.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
+					logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
 					if theErr, ok := err.(error); ok {
 						resultChan <- &responseWrapper{
 							DataResponse: &backend.DataResponse{
@@ -72,7 +74,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 				return err
 			}
 
-			metricDataInput, err := e.buildMetricDataInput(startTime, endTime, requestQueries)
+			metricDataInput, err := e.buildMetricDataInput(logger, startTime, endTime, requestQueries)
 			if err != nil {
 				return err
 			}

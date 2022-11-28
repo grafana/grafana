@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -29,6 +30,92 @@ import (
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
+
+func TestWarmStateCache(t *testing.T) {
+	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
+	require.NoError(t, err)
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, 1)
+
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
+
+	expectedEntries := []*state.State{
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test1","testValue1"]]`,
+			Labels:       data.Labels{"test1": "testValue1"},
+			State:        eval.Normal,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		}, {
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test2","testValue2"]]`,
+			Labels:       data.Labels{"test2": "testValue2"},
+			State:        eval.Alerting,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+	}
+
+	labels := models.InstanceLabels{"test1": "testValue1"}
+	_, hash, _ := labels.StringAndHash()
+	instance1 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateNormal,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	}
+
+	_ = dbstore.SaveAlertInstances(ctx, instance1)
+
+	labels = models.InstanceLabels{"test2": "testValue2"}
+	_, hash, _ = labels.StringAndHash()
+	instance2 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateFiring,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	}
+	_ = dbstore.SaveAlertInstances(ctx, instance2)
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
+	st.Warm(ctx, dbstore)
+
+	t.Run("instance cache has expected entries", func(t *testing.T) {
+		for _, entry := range expectedEntries {
+			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
+
+			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+				t.FailNow()
+			}
+		}
+	})
+}
 
 func TestDashboardAnnotations(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
@@ -39,7 +126,7 @@ func TestDashboardAnnotations(t *testing.T) {
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), hist)
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.New(), hist)
 
 	const mainOrgID int64 = 1
 
@@ -48,16 +135,22 @@ func TestDashboardAnnotations(t *testing.T) {
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx)
+	st.Warm(ctx, dbstore)
+	bValue := float64(42)
+	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
+		Values: map[string]eval.NumberValueCapture{
+			"B": {Var: "B", Value: &bValue, Labels: data.Labels{"job": "prometheus"}},
+			"C": {Var: "C", Value: &cValue, Labels: data.Labels{"job": "prometheus"}},
+		},
 	}}, data.Labels{
 		"alertname": rule.Title,
 	})
 
-	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - Alerting"}
+	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
 	require.Eventuallyf(t, func() bool {
 		var actual []string
@@ -1316,6 +1409,7 @@ func TestProcessEvalResults(t *testing.T) {
 					eval.Result{
 						Instance:           data.Labels{"instance_label": "test"},
 						State:              eval.Error,
+						Error:              errors.New("test error"),
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
 					},
@@ -1337,6 +1431,7 @@ func TestProcessEvalResults(t *testing.T) {
 					Values:      make(map[string]float64),
 					State:       eval.Pending,
 					StateReason: eval.Error.String(),
+					Error:       errors.New("test error"),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -2012,7 +2107,7 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.FakeInstanceStore{}, &image.NotAvailableImageService{}, clock.New(), hist)
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, &state.FakeInstanceStore{}, &state.NotAvailableImageService{}, clock.New(), hist)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
@@ -2039,7 +2134,7 @@ func TestProcessEvalResults(t *testing.T) {
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, instanceStore, &image.NotAvailableImageService{}, clk, &state.FakeHistorian{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, instanceStore, &state.NotAvailableImageService{}, clk, &state.FakeHistorian{})
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2075,7 +2170,7 @@ func printAllAnnotations(annos map[int64]annotations.Item) string {
 
 func TestStaleResultsHandler(t *testing.T) {
 	evaluationTime := time.Now()
-	interval := 60 * time.Second
+	interval := time.Minute
 
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, 1)
@@ -2168,8 +2263,8 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clock.New(), &state.FakeHistorian{})
-		st.Warm(ctx)
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.New(), &state.FakeHistorian{})
+		st.Warm(ctx, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -2230,7 +2325,7 @@ func TestStaleResults(t *testing.T) {
 		clk := clock.NewMock()
 		clk.Set(time.Now())
 
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &image.NoopImageService{}, clk, &state.FakeHistorian{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clk, &state.FakeHistorian{})
 
 		orgID := rand.Int63()
 		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)
