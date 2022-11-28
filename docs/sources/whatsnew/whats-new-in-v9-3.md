@@ -98,11 +98,11 @@ With the Partition by values transformer, you can now issue a single query and s
 
 ## Reporting: Zoom in and out to fit your data better into a PDF
 
-This feature is availabe in Grafana Enterprise, Cloud Pro, and Cloud Advanced.
+This feature is available in Grafana Enterprise, Cloud Pro, and Cloud Advanced.
 
-Since dashboards appear on a screen and Reports are PDFs, it can be tricky to render data just the way you want to - maybe your report doesn't show enough columns in a table, or the titles appear too small. Now you can adjust the scale of your report, to zoom in and make each text field and panel larger or zoom out to show more data. 
+Because dashboards appear on a screen and reports are PDFs, it can be challenging to render data just the way you want to. Sometimes the report doesn't show enough columns in a table, or the titles appear too small. Now you can adjust the scale of your report to zoom in and make each text field and panel larger or zoom out to show more data. 
 
-Find Zoom in the "Format Report" section of your reporting configuration, and learn more about Reporting in our [docs]({{< relref "../enterprise/reporting/">}}).
+The zoom feature is located in the **Format Report** section of your reporting configuration. To learn more about reporting, refer to [Create and manage reports]({{< relref "../dashboards/create-reports/">}}).
 
 ## Authentication - OAuth token handling improvements
 
