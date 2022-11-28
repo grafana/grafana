@@ -54,7 +54,7 @@ export const CollapsableSection: FC<Props> = ({
 
   return (
     <>
-      <div onClick={onClick} className={cx(styles.header, className)}>
+      <label className={cx(styles.header, className)}>
         <button
           id={`collapse-button-${id}`}
           className={styles.button}
@@ -72,7 +72,7 @@ export const CollapsableSection: FC<Props> = ({
         <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
           {label}
         </div>
-      </div>
+      </label>
       {open && (
         <div
           id={`collapse-content-${id}`}
@@ -96,7 +96,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
-    '&:focus-within': getFocusStyles(theme),
+    '&:has(:focus-visible)': getFocusStyles(theme),
   }),
   button: css({
     all: 'unset',
