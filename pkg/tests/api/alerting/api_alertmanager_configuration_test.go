@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -39,7 +41,10 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	})
 
 	// create another organisation
-	orgID := createOrg(t, store, "another org", userID)
+	cmd := &models.CreateOrgCommand{Name: "another org", UserId: userID}
+	err := store.CreateOrg(context.Background(), cmd)
+	require.NoError(t, err)
+	orgID := cmd.Result.Id
 
 	// create user under different organisation
 	createUser(t, store, user.CreateUserCommand{

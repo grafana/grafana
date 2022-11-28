@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -42,8 +44,13 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		Password:       "password",
 	})
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
 	// create another organisation
-	orgID := createOrg(t, s, "another org", userID)
+	cmd := &models.CreateOrgCommand{Name: "another org", UserId: userID}
+	err := s.CreateOrg(context.Background(), cmd)
+	require.NoError(t, err)
+	orgID := cmd.Result.Id
+
 	// ensure that the orgID is 3 (the disabled org)
 	require.Equal(t, disableOrgID, orgID)
 
