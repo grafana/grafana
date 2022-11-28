@@ -2,7 +2,9 @@ import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
 import React from 'react';
 
+import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
+import { clearLinkButtonStyles, LinkButton } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
@@ -28,6 +30,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   }
 
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
@@ -37,9 +40,9 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
           <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
             {(api) => {
               return (
-                <div onClick={api.openMenu} className={api.targetClassName}>
+                <LinkButton onClick={api.openMenu} className={cx(api.targetClassName, clearButtonStyle)}>
                   {displayValue}
-                </div>
+                </LinkButton>
               );
             }}
           </DataLinksContextMenu>
