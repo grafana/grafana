@@ -97,7 +97,7 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.admin.title', 'Server admin');
     case 'global-users':
       return config.featureToggles.topnav
-        ? t('nav.global-users.title', 'Users (All orgs)')
+        ? t('nav.global-users.title', 'Users')
         : t('nav.global-users.titleBeforeTopnav', 'Users');
     case 'global-orgs':
       return t('nav.global-orgs.title', 'Organizations');
