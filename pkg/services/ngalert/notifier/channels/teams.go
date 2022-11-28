@@ -366,20 +366,6 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return nil
 	}
 
-	// Teams does not always return non-2xx response when the request fails. Instead, the response body can contain an error message regardless of status code.
-	// Ex. 429 - Too Many Requests: https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors
-	cmd.Validation = func(b []byte, statusCode int) error {
-		body := string(b)
-
-		// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#send-messages-using-curl-and-powershell
-		// Above states that if the POST succeeds, you must see a simple "1" output.
-		if body != "1" {
-			return errors.New(body)
-		}
-
-		return nil
-	}
-
 	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
 	}

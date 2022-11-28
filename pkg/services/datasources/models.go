@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -156,7 +156,7 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgId           int64
 	DataSourceLimit int
-	User            *models.SignedInUser
+	User            *user.SignedInUser
 	Result          []*DataSource
 }
 
@@ -172,7 +172,7 @@ type GetDataSourcesByTypeQuery struct {
 
 type GetDefaultDataSourceQuery struct {
 	OrgId  int64
-	User   *models.SignedInUser
+	User   *user.SignedInUser
 	Result *DataSource
 }
 
@@ -188,33 +188,8 @@ type GetDataSourceQuery struct {
 	Result *DataSource
 }
 
-// ---------------------
-//  Permissions
-// ---------------------
-
-// Datasource permission
-// Description:
-// * `0` - No Access
-// * `1` - Query
-// Enum: 0,1
-// swagger:model
-type DsPermissionType int
-
-const (
-	DsPermissionNoAccess DsPermissionType = iota
-	DsPermissionQuery
-)
-
-func (p DsPermissionType) String() string {
-	names := map[int]string{
-		int(DsPermissionQuery):    "Query",
-		int(DsPermissionNoAccess): "No Access",
-	}
-	return names[int(p)]
-}
-
 type DatasourcesPermissionFilterQuery struct {
-	User        *models.SignedInUser
+	User        *user.SignedInUser
 	Datasources []*DataSource
 	Result      []*DataSource
 }

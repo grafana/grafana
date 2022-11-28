@@ -7,12 +7,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -21,8 +24,17 @@ import (
 )
 
 var (
-	namespace                             = "grafana"
-	subsystem                             = "search"
+	namespace                               = "grafana"
+	subsystem                               = "search"
+	dashboardSearchNotServedRequestsCounter = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dashboard_search_requests_not_served_total",
+			Help:      "A counter for dashboard search requests that could not be served due to an ongoing search engine indexing",
+		},
+		[]string{"reason"},
+	)
 	dashboardSearchFailureRequestsCounter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: namespace,
@@ -51,10 +63,11 @@ var (
 type StandardSearchService struct {
 	registry.BackgroundService
 
-	cfg  *setting.Cfg
-	sql  *sqlstore.SQLStore
-	auth FutureAuthService // eventually injected from elsewhere
-	ac   accesscontrol.AccessControl
+	cfg        *setting.Cfg
+	sql        *sqlstore.SQLStore
+	auth       FutureAuthService // eventually injected from elsewhere
+	ac         accesscontrol.Service
+	orgService org.Service
 
 	logger         log.Logger
 	dashboardIndex *searchIndex
@@ -66,7 +79,7 @@ func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSear
 	return s.dashboardIndex.isInitialized(ctx, orgId)
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -77,14 +90,18 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			ac:  ac,
 		},
 		dashboardIndex: newSearchIndex(
-			newSQLDashboardLoader(sql),
+			newSQLDashboardLoader(sql, tracer, cfg.Search),
 			entityEventStore,
 			extender.GetDocumentExtender(),
 			newFolderIDLookup(sql),
+			tracer,
+			features,
+			cfg.Search,
 		),
-		logger:    log.New("searchV2"),
-		extender:  extender,
-		reIndexCh: make(chan struct{}, 1),
+		logger:     log.New("searchV2"),
+		extender:   extender,
+		reIndexCh:  make(chan struct{}, 1),
+		orgService: orgService,
 	}
 	return s
 }
@@ -122,21 +139,21 @@ func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardInde
 	s.dashboardIndex.extender = ext.GetDocumentExtender()
 }
 
-func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
+func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*user.SignedInUser, error) {
 	// TODO: get user & user's permissions from the request context
 
-	var user *models.SignedInUser
+	var usr *user.SignedInUser
 	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
-		org, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
+		orga, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
 		if err != nil {
 			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
 			return nil, err
 		}
 
-		user = &models.SignedInUser{
-			OrgId:       org.Id,
-			OrgName:     org.Name,
-			OrgRole:     models.RoleType(s.cfg.AnonymousOrgRole),
+		usr = &user.SignedInUser{
+			OrgID:       orga.Id,
+			OrgName:     orga.Name,
+			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
 			IsAnonymous: true,
 		}
 	} else {
@@ -156,37 +173,51 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 			return nil, errors.New("auth error")
 		}
 
-		user = getSignedInUserQuery.Result
+		usr = getSignedInUserQuery.Result
 	}
 
 	if s.ac.IsDisabled() {
-		return user, nil
+		return usr, nil
 	}
 
-	if user.Permissions == nil {
-		user.Permissions = make(map[int64]map[string][]string)
+	if usr.Permissions == nil {
+		usr.Permissions = make(map[int64]map[string][]string)
 	}
 
-	if _, ok := user.Permissions[orgId]; ok {
+	if _, ok := usr.Permissions[orgId]; ok {
 		// permissions as part of the `s.sql.GetSignedInUser` query - return early
-		return user, nil
+		return usr, nil
 	}
 
 	// TODO: ensure this is cached
-	permissions, err := s.ac.GetUserPermissions(ctx, user,
+	permissions, err := s.ac.GetUserPermissions(ctx, usr,
 		accesscontrol.Options{ReloadCache: false})
 	if err != nil {
 		s.logger.Error("failed to retrieve user permissions", "error", err, "email", backendUser.Email)
 		return nil, errors.New("auth error")
 	}
 
-	user.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
-	return user, nil
+	usr.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
+	return usr, nil
 }
 
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
 	start := time.Now()
-	query := s.doDashboardQuery(ctx, user, orgID, q)
+
+	signedInUser, err := s.getUser(ctx, user, orgID)
+
+	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_user_error",
+		}).Inc()
+
+		duration := time.Since(start).Seconds()
+		dashboardSearchFailureRequestsDuration.Observe(duration)
+
+		return &backend.DataResponse{Error: err}
+	}
+
+	query := s.doDashboardQuery(ctx, signedInUser, orgID, q)
 
 	duration := time.Since(start).Seconds()
 	if query.Error != nil {
@@ -198,16 +229,8 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return query
 }
 
-func (s *StandardSearchService) doDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
-	signedInUser, err := s.getUser(ctx, user, orgID)
-	if err != nil {
-		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
-			"reason": "get_user_error",
-		}).Inc()
-		rsp.Error = err
-		return rsp
-	}
 
 	filter, err := s.auth.GetDashboardReadFilter(signedInUser)
 	if err != nil {

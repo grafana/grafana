@@ -105,7 +105,7 @@ func TestRenderErrorImage(t *testing.T) {
 
 type unavailableRendererManager struct{}
 
-func (m unavailableRendererManager) Renderer() *plugins.Plugin { return nil }
+func (m unavailableRendererManager) Renderer(_ context.Context) *plugins.Plugin { return nil }
 
 func TestRenderUnavailableError(t *testing.T) {
 	rs := RenderingService{

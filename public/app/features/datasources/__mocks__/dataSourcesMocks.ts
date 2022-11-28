@@ -1,6 +1,6 @@
 import { merge } from 'lodash';
 
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceSettings, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
 import { DataSourceSettingsState, PluginDashboard } from 'app/types';
 
 export const getMockDashboard = (override?: Partial<PluginDashboard>) => ({
@@ -32,7 +32,9 @@ export const getMockDataSources = (amount: number, overrides?: Partial<DataSourc
     })
   );
 
-export const getMockDataSource = <T>(overrides?: Partial<DataSourceSettings<T>>): DataSourceSettings<T> =>
+export const getMockDataSource = <T extends DataSourceJsonData>(
+  overrides?: Partial<DataSourceSettings<T>>
+): DataSourceSettings<T> =>
   merge(
     {
       access: '',

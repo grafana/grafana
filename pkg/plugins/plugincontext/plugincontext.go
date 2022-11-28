@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
@@ -43,13 +44,13 @@ type Provider struct {
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-func (p *Provider) Get(ctx context.Context, pluginID string, user *models.SignedInUser) (backend.PluginContext, bool, error) {
+func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedInUser) (backend.PluginContext, bool, error) {
 	return p.pluginContext(ctx, pluginID, user)
 }
 
 // GetWithDataSource allows getting plugin context by its ID and PluginContext.DataSourceInstanceSettings will be
 // resolved and appended to the returned context.
-func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *models.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, bool, error) {
+func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, bool, error) {
 	pCtx, exists, err := p.pluginContext(ctx, pluginID, user)
 	if err != nil {
 		return pCtx, exists, err
@@ -67,7 +68,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 const pluginSettingsCacheTTL = 5 * time.Second
 const pluginSettingsCachePrefix = "plugin-setting-"
 
-func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *models.SignedInUser) (backend.PluginContext, bool, error) {
+func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *user.SignedInUser) (backend.PluginContext, bool, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, false, nil
@@ -94,7 +95,7 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *mod
 	}
 
 	return backend.PluginContext{
-		OrgID:    user.OrgId,
+		OrgID:    user.OrgID,
 		PluginID: plugin.ID,
 		User:     adapters.BackendUserFromSignedInUser(user),
 		AppInstanceSettings: &backend.AppInstanceSettings{
@@ -105,19 +106,19 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *mod
 	}, true, nil
 }
 
-func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *models.SignedInUser) (*pluginsettings.DTO, error) {
+func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *user.SignedInUser) (*pluginsettings.DTO, error) {
 	cacheKey := pluginSettingsCachePrefix + pluginID
 
 	if cached, found := p.cacheService.Get(cacheKey); found {
 		ps := cached.(*pluginsettings.DTO)
-		if ps.OrgID == user.OrgId {
+		if ps.OrgID == user.OrgID {
 			return ps, nil
 		}
 	}
 
 	ps, err := p.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    user.OrgId,
+		OrgID:    user.OrgID,
 	})
 	if err != nil {
 		return nil, err

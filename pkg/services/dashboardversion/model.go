@@ -13,17 +13,17 @@ var (
 )
 
 type DashboardVersion struct {
-	ID            int64 `json:"id" xorm:"pk autoincr 'id'"`
-	DashboardID   int64 `json:"dashboardId"  xorm:"dashboard_id"`
-	ParentVersion int   `json:"parentVersion"`
-	RestoredFrom  int   `json:"restoredFrom"`
-	Version       int   `json:"version"`
+	ID            int64 `json:"id" xorm:"pk autoincr 'id'" db:"id"`
+	DashboardID   int64 `json:"dashboardId"  xorm:"dashboard_id" db:"dashboard_id"`
+	ParentVersion int   `json:"parentVersion" db:"parent_version"`
+	RestoredFrom  int   `json:"restoredFrom" db:"restored_from"`
+	Version       int   `json:"version" db:"version"`
 
-	Created   time.Time `json:"created"`
-	CreatedBy int64     `json:"createdBy"`
+	Created   time.Time `json:"created" db:"created"`
+	CreatedBy int64     `json:"createdBy" db:"created_by"`
 
-	Message string           `json:"message"`
-	Data    *simplejson.Json `json:"data"`
+	Message string           `json:"message" db:"message"`
+	Data    *simplejson.Json `json:"data" db:"data"`
 }
 
 type GetDashboardVersionQuery struct {
@@ -45,15 +45,17 @@ type ListDashboardVersionsQuery struct {
 }
 
 type DashboardVersionDTO struct {
-	ID            int64     `json:"id" xorm:"id"`
-	DashboardID   int64     `json:"dashboardId" xorm:"dashboard_id"`
-	DashboardUID  string    `json:"dashboardUid" xorm:"dashboard_uid"`
-	ParentVersion int       `json:"parentVersion"`
-	RestoredFrom  int       `json:"restoredFrom"`
-	Version       int       `json:"version"`
-	Created       time.Time `json:"created"`
-	CreatedBy     string    `json:"createdBy"`
-	Message       string    `json:"message"`
+	ID            int64     `json:"id" xorm:"id" db:"id"`
+	DashboardID   int64     `json:"dashboardId" xorm:"dashboard_id" db:"dashboard_id"`
+	DashboardUID  string    `json:"dashboardUid" xorm:"dashboard_uid" db:"dashboard_uid"`
+	ParentVersion int       `json:"parentVersion" db:"parent_version"`
+	RestoredFrom  int       `json:"restoredFrom" db:"restored_from"`
+	Version       int       `json:"version" db:"version"`
+	Created       time.Time `json:"created" db:"created"`
+	// Since we get created by with left join user table, this can be null technically,
+	// but in reality it will always be set, when database is not corrupted.
+	CreatedBy *string `json:"createdBy" db:"created_by_login"`
+	Message   string  `json:"message" db:"message"`
 }
 
 // DashboardVersionMeta extends the dashboard version model with the names

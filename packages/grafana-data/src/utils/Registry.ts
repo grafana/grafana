@@ -132,7 +132,7 @@ export class Registry<T extends RegistryItem> {
   /**
    * Return a list of values by ID, or all values if not specified
    */
-  list(ids?: any[]): T[] {
+  list(ids?: string[]): T[] {
     if (!this.initialized) {
       this.initialize();
     }

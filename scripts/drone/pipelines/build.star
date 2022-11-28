@@ -3,7 +3,6 @@ load(
     'download_grabpl_step',
     'build_image',
     'identify_runner_step',
-    'gen_version_step',
     'wire_install_step',
     'yarn_install_step',
     'build_backend_step',
@@ -29,7 +28,6 @@ load(
     'store_storybook_step',
     'release_canary_npm_packages_step',
     'upload_packages_step',
-    'store_packages_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
@@ -50,7 +48,6 @@ def build_e2e(trigger, ver_mode, edition):
         identify_runner_step(),
         download_grabpl_step(),
         compile_build_cmd(),
-        gen_version_step(ver_mode),
         verify_gen_cue_step(edition="oss"),
         wire_install_step(),
         yarn_install_step(),
@@ -58,8 +55,9 @@ def build_e2e(trigger, ver_mode, edition):
     build_steps = []
     if ver_mode == 'main':
         build_steps.extend([trigger_test_release()])
+    if ver_mode == 'pr':
+        build_steps.extend([enterprise_downstream_step(edition=edition, ver_mode=ver_mode)])
     build_steps.extend([
-        enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
@@ -91,8 +89,8 @@ def build_e2e(trigger, ver_mode, edition):
         build_steps.extend([
             build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
             build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
-            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', trigger=trigger_oss),
-            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', trigger=trigger_oss),
+            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana/grafana', trigger=trigger_oss),
+            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana/grafana-oss', trigger=trigger_oss),
             release_canary_npm_packages_step(edition, trigger=trigger_oss),
             upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss),
             upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)

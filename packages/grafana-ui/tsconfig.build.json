@@ -2,7 +2,6 @@
   "compilerOptions": {
     "paths": {
       "@emotion/core": ["./src/types/emotion-core-stub.d.ts"],
-      "@grafana/slate-react": ["slate-react"],
       "@grafana/ui": ["."]
     }
   },

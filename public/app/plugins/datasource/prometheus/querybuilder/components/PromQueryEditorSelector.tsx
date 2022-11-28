@@ -3,7 +3,7 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { CoreApp, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { ConfirmModal, Button } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQuery } from '../../types';
@@ -43,7 +43,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
 
       if (newMetricEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
-        // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
+        // If there are errors, give user a chance to decide if they want to go to builder as that can lose some data.
         if (result.errors.length) {
           setParseModalOpen(true);
           return;
@@ -77,7 +77,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       <ConfirmModal
         isOpen={parseModalOpen}
         title="Query parsing"
-        body="There were errors while trying to parse the query. Continuing to visual builder may loose some parts of the query."
+        body="There were errors while trying to parse the query. Continuing to visual builder may lose some parts of the query."
         confirmText="Continue"
         onConfirm={() => {
           changeEditorMode(query, QueryEditorMode.Builder, onChange);

@@ -3,7 +3,7 @@ package definitions
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -808,10 +808,10 @@ alertmanager_config: |
 func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
 	// the fields are not redacted.
-	yamlEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.yaml")
+	yamlEncoded, err := os.ReadFile("alertmanager_test_artifact.yaml")
 	require.Nil(t, err)
 
-	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
 	require.Nil(t, err)
 
 	// test GettableUserConfig (yamlDecode -> jsonEncode)
@@ -888,53 +888,43 @@ func Test_ReceiverMatchesBackend(t *testing.T) {
 	for _, tc := range []struct {
 		desc string
 		rec  ReceiverType
-		b    Backend
-		err  bool
+		b    ReceiverType
+		ok   bool
 	}{
 		{
 			desc: "graf=graf",
 			rec:  GrafanaReceiverType,
-			b:    GrafanaBackend,
-			err:  false,
+			b:    GrafanaReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "empty=graf",
 			rec:  EmptyReceiverType,
-			b:    GrafanaBackend,
-			err:  false,
+			b:    GrafanaReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "am=am",
 			rec:  AlertmanagerReceiverType,
-			b:    AlertmanagerBackend,
-			err:  false,
+			b:    AlertmanagerReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "empty=am",
 			rec:  EmptyReceiverType,
-			b:    AlertmanagerBackend,
-			err:  false,
+			b:    AlertmanagerReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "graf!=am",
 			rec:  GrafanaReceiverType,
-			b:    AlertmanagerBackend,
-			err:  true,
-		},
-		{
-			desc: "am!=ruler",
-			rec:  GrafanaReceiverType,
-			b:    LoTexRulerBackend,
-			err:  true,
+			b:    AlertmanagerReceiverType,
+			ok:   false,
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tc.rec.MatchesBackend(tc.b)
-			if tc.err {
-				require.NotNil(t, err)
-			} else {
-				require.Nil(t, err)
-			}
+			ok := tc.rec.Can(tc.b)
+			require.Equal(t, tc.ok, ok)
 		})
 	}
 }
@@ -1041,7 +1031,7 @@ routes:
 }
 
 func Test_Marshaling_Validation(t *testing.T) {
-	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
 	require.Nil(t, err)
 
 	var tmp GettableUserConfig

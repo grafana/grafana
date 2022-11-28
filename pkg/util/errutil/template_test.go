@@ -3,9 +3,29 @@ package errutil_test
 import (
 	"errors"
 	"fmt"
+	"testing"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/stretchr/testify/require"
 )
+
+func TestTemplate(t *testing.T) {
+	tmpl := errutil.NewBase(errutil.StatusInternal, "template.sample-error").MustTemplate("[{{ .Public.user }}] got error: {{ .Error }}")
+	err := tmpl.Build(errutil.TemplateData{
+		Public: map[string]interface{}{
+			"user": "grot the bot",
+		},
+		Error: errors.New("oh noes"),
+	})
+
+	t.Run("Built error should return true when compared with templated error ", func(t *testing.T) {
+		require.True(t, errors.Is(err, tmpl))
+	})
+
+	t.Run("Built error should return true when compared with templated error base ", func(t *testing.T) {
+		require.True(t, errors.Is(err, tmpl.Base))
+	})
+}
 
 func ExampleTemplate() {
 	// Initialization, this is typically done on a package or global

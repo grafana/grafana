@@ -3,7 +3,7 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -99,7 +99,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 		}
 	}()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		s.log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
 		return

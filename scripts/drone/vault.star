@@ -26,4 +26,12 @@ def secrets():
         vault_secret(drone_token, 'infra/data/ci/drone', 'machine-user-token'),
         vault_secret(prerelease_bucket, 'infra/data/ci/grafana/prerelease', 'bucket'),
         vault_secret(gcp_upload_artifacts_key, 'infra/data/ci/grafana/releng/artifacts-uploader-service-account', 'credentials.json'),
+    
+        # Package publishing
+        vault_secret('packages_gpg_public_key', 'infra/data/ci/packages-publish/gpg', 'public-key'),
+        vault_secret('packages_gpg_private_key', 'infra/data/ci/packages-publish/gpg', 'private-key'),
+        vault_secret('packages_gpg_passphrase', 'infra/data/ci/packages-publish/gpg', 'passphrase'),
+        vault_secret('packages_service_account', 'infra/data/ci/packages-publish/service-account', 'credentials.json'),
+        vault_secret('packages_access_key_id', 'infra/data/ci/packages-publish/bucket-credentials', 'AccessID'),
+        vault_secret('packages_secret_access_key', 'infra/data/ci/packages-publish/bucket-credentials', 'Secret'),
     ]

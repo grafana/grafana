@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
+import { PieChartLegendOptions, PieChartLegendValues, PanelOptions } from './models.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -33,7 +33,7 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
-interface Props extends PanelProps<PieChartOptions> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 /**
  * @beta

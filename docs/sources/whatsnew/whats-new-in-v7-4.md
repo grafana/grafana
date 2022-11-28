@@ -37,11 +37,11 @@ Apart from major performance improvements, the new Time series panel implements 
 
 The following documentation topics were added for this feature:
 
-- [Time series panel]({{< relref "../visualizations/time-series/" >}})
-- [Graph time series as lines]({{< relref "../visualizations/time-series#line-style" >}})
-- [Graph time series as bars]({{< relref "../visualizations/time-series#bar-alignment" >}})
-- [Graph time series as points]({{< relref "../visualizations/time-series#show-points" >}})
-- [Change axis display]({{< relref "../visualizations/time-series#axis-options" >}})
+- [Time series panel]({{< relref "../panels-visualizations/visualizations/time-series/" >}})
+- [Graph time series as lines]({{< relref "../panels-visualizations/visualizations/time-series#line-style" >}})
+- [Graph time series as bars]({{< relref "../panels-visualizations/visualizations/time-series#bar-alignment" >}})
+- [Graph time series as points]({{< relref "../panels-visualizations/visualizations/time-series#show-points" >}})
+- [Change axis display]({{< relref "../panels-visualizations/visualizations/time-series#axis-options" >}})
 
 ### Node graph panel visualization (Beta)
 
@@ -51,7 +51,7 @@ All the information and stats shown in the Node graph beta are driven by the dat
 
 For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
-For more information, refer to [Node graph panel]({{< relref "../visualizations/node-graph/" >}}).
+For more information, refer to [Node graph panel]({{< relref "../panels-visualizations/visualizations/node-graph/" >}}).
 
 ### New transformations
 
@@ -61,7 +61,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/transform-data/" >}}).
+For more information, refer to [Sort by]({{< relref "../panels-visualizations/query-transform-data/transform-data/#sort-by" >}}).
 
 #### Filter data by value transform
 
@@ -69,13 +69,13 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels-visualizations/query-transform-data/transform-data/#filter-data-by-value" >}}).
 
 ### New override option
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [About field overrides]({{< relref "../panels/configure-overrides" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels-visualizations/configure-overrides/" >}}).
 
 ### Exemplar support
 
@@ -85,7 +85,7 @@ Grafana graphs now support Prometheus _exemplars_. They are displayed as diamond
 
 {{< figure src="/static/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
 
-For more information, refer to [Exemplars]({{< relref "../datasources/prometheus/#exemplars" >}}).
+For more information, refer to [Exemplars]({{< relref "../fundamentals/exemplars/" >}}).
 
 ### Trace to logs
 
@@ -102,11 +102,11 @@ The following topics were updated as a result of this feature:
 
 _Server-side expressions_ is an experimental feature that allows you to manipulate data returned from backend data source queries. Expressions allow you to manipulate data with math and other operations when the data source is a backend data source or a **--Mixed--** data source.
 
-The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-dimensions/" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
+The main use case is for [multi-dimensional]({{< relref "../fundamentals/timeseries-dimensions/" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana Alerting.
 
-For more information, refer to [About expressions]({{< relref "../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}). [About queries]({{< relref "../panels/query-a-data-source/about-queries/" >}}) was also updated as a result of this feature.
+For more information, refer to [Write expression queries]({{< relref "../panels-visualizations/query-transform-data/expression-queries/" >}}). [About queries]({{< relref "../panels-visualizations/query-transform-data/#about-queries" >}}) was also updated as a result of this feature.
 
 ### Alert notification query label interpolation
 
@@ -175,7 +175,7 @@ For more information, refer to the [Google Cloud Monitoring docs]({{< relref "..
 
 The feature previously referred to as DataSource Start Pages or Cheat Sheets has been renamed to Query Editor Help, and is now supported in panel query editors (depending on the data source), as well as in Explore.
 
-[Queries]({{< relref "../panels/query-a-data-source/manage-queries/" >}}) was updated as a result of this feature.
+[Queries]({{< relref "../panels-visualizations/query-transform-data/#manage-queries" >}}) was updated as a result of this feature.
 
 For more information on adding a query editor help component to your plugin, refer to [Add a query editor help component]({{< relref "../developers/plugins/add-query-editor-help/" >}}).
 
@@ -183,7 +183,7 @@ For more information on adding a query editor help component to your plugin, ref
 
 The variables list has an additional column indicating whether variables are referenced in queries and panel names or not. The dependencies graph provides an easy way to check variable dependencies. You can click on a variable name within the graph to make updates to the variable as needed.
 
-For more information, refer to [Inspect variables and their dependencies]({{< relref "../variables/inspect-variable/" >}}).
+For more information, refer to [Inspect variables and their dependencies]({{< relref "../dashboards/variables/inspect-variable/" >}}).
 
 ## Grafana Enterprise features
 
@@ -217,7 +217,7 @@ Also, a counter for audit log writing actions with status (success / failure) an
 
 You can now select a font, other than the default, for Unicode-based scripts. As a result, an automatically generated PDF of a dashboard, which contains for example Chinese or Cyrillic text, can display them. Because the size of a report increases as additional fonts are added, this feature is not on by default.
 
-[Reporting]({{< relref "../share-dashboards-panels/#rendering-configuration" >}}) was updated as a result of this change.
+[Reporting]({{< relref "../dashboards/share-dashboards-panels/#rendering-configuration" >}}) was updated as a result of this change.
 
 ### Request security
 

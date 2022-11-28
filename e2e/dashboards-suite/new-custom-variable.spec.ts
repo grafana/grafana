@@ -44,7 +44,7 @@ describe('Variables - Custom', () => {
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Custom{enter}');
 
-    // Set it's name, label, and content
+    // Set its name, label, and content
     fillInCustomVariable('VariableUnderTest', 'Variable under test', 'One : 1,Two : 2, Three : 3');
     assertPreviewValues(['One', 'Two', 'Three']);
 

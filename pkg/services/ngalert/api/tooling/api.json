@@ -75,9 +75,6 @@
    "title": "AlertManager models a configured Alert Manager.",
    "type": "object"
   },
-  "AlertManagerNotFound": {
-   "type": "object"
-  },
   "AlertManagerNotReady": {
    "type": "object"
   },
@@ -147,124 +144,6 @@
   "AlertRuleGroup": {
    "properties": {
     "folderUid": {
-     "type": "string"
-    },
-    "interval": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "rules": {
-     "items": {
-      "$ref": "#/definitions/ProvisionedAlertRule"
-     },
-     "type": "array"
-    },
-    "title": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "AlertRuleGroupMetadata": {
-   "properties": {
-    "interval": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "AlertRule": {
-   "properties": {
-    "Annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object"
-    },
-    "Condition": {
-     "type": "string"
-    },
-    "DashboardUID": {
-     "type": "string"
-    },
-    "Data": {
-     "items": {
-      "$ref": "#/definitions/AlertQuery"
-     },
-     "type": "array"
-    },
-    "ExecErrState": {
-     "enum": [
-      "Alerting",
-      "Error",
-      "OK"
-     ],
-     "type": "string",
-     "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState\nOK OkErrState"
-    },
-    "For": {
-     "$ref": "#/definitions/Duration"
-    },
-    "ID": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "IntervalSeconds": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Labels": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object"
-    },
-    "NamespaceUID": {
-     "type": "string"
-    },
-    "NoDataState": {
-     "enum": [
-      "Alerting",
-      "NoData",
-      "OK"
-     ],
-     "type": "string",
-     "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK"
-    },
-    "OrgID": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "PanelID": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "RuleGroup": {
-     "type": "string"
-    },
-    "Title": {
-     "type": "string"
-    },
-    "UID": {
-     "type": "string"
-    },
-    "Updated": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "Version": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "AlertRule is the model for alert rules in unified alerting.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
-  },
-  "AlertRuleGroup": {
-   "properties": {
-    "folderUid": {
      "type": "string",
      "x-go-name": "FolderUID"
     },
@@ -275,7 +154,7 @@
     },
     "rules": {
      "items": {
-      "$ref": "#/definitions/AlertRule"
+      "$ref": "#/definitions/ProvisionedAlertRule"
      },
      "type": "array",
      "x-go-name": "Rules"
@@ -298,6 +177,9 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertStateType": {
+   "type": "string"
   },
   "AlertingRule": {
    "description": "adapted from cortex",
@@ -357,6 +239,19 @@
    ],
    "type": "object"
   },
+  "AlertingStatus": {
+   "properties": {
+    "alertmanagersChoice": {
+     "enum": [
+      "all",
+      "internal",
+      "external"
+     ],
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "ApiRuleNode": {
    "properties": {
     "alert": {
@@ -372,7 +267,7 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "labels": {
      "additionalProperties": {
@@ -416,6 +311,11 @@
    "title": "BasicAuth contains basic HTTP authentication credentials.",
    "type": "object"
   },
+  "ConfFloat64": {
+   "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
+   "format": "double",
+   "type": "number"
+  },
   "Config": {
    "properties": {
     "global": {
@@ -452,24 +352,38 @@
    },
    "type": "array"
   },
-  "DateTime": {
-   "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
-   "format": "date-time",
-   "type": "string"
-  },
-  "DayOfMonthRange": {
+  "DataLink": {
+   "description": "DataLink define what",
    "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
+    "targetBlank": {
+     "type": "boolean"
     },
-    "End": {
-     "format": "int64",
-     "type": "integer"
+    "title": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
     }
    },
-   "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
    "type": "object"
+  },
+  "DataResponse": {
+   "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
+   "properties": {
+    "Error": {
+     "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+     "type": "string"
+    },
+    "Frames": {
+     "$ref": "#/definitions/Frames"
+    }
+   },
+   "title": "DataResponse contains the results from a DataQuery.",
+   "type": "object"
+  },
+  "DataTopic": {
+   "title": "DataTopic is used to identify which topic the frame should be assigned to.",
+   "type": "string"
   },
   "DiscoveryBase": {
    "properties": {
@@ -505,6 +419,9 @@
     },
     "auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "auth_password_file": {
+     "type": "string"
     },
     "auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -679,6 +596,192 @@
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "Field": {
+   "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
+   "properties": {
+    "config": {
+     "$ref": "#/definitions/FieldConfig"
+    },
+    "labels": {
+     "$ref": "#/definitions/FrameLabels"
+    },
+    "name": {
+     "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+     "type": "string"
+    }
+   },
+   "title": "Field represents a typed column of data within a Frame.",
+   "type": "object"
+  },
+  "FieldConfig": {
+   "properties": {
+    "color": {
+     "additionalProperties": {},
+     "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+     "type": "object"
+    },
+    "custom": {
+     "additionalProperties": {},
+     "description": "Panel Specific Values",
+     "type": "object"
+    },
+    "decimals": {
+     "format": "uint16",
+     "type": "integer"
+    },
+    "description": {
+     "description": "Description is human readable field metadata",
+     "type": "string"
+    },
+    "displayName": {
+     "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+     "type": "string"
+    },
+    "displayNameFromDS": {
+     "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+     "type": "string"
+    },
+    "filterable": {
+     "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+     "type": "boolean"
+    },
+    "interval": {
+     "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+     "format": "double",
+     "type": "number"
+    },
+    "links": {
+     "description": "The behavior when clicking on a result",
+     "items": {
+      "$ref": "#/definitions/DataLink"
+     },
+     "type": "array"
+    },
+    "mappings": {
+     "$ref": "#/definitions/ValueMappings"
+    },
+    "max": {
+     "$ref": "#/definitions/ConfFloat64"
+    },
+    "min": {
+     "$ref": "#/definitions/ConfFloat64"
+    },
+    "noValue": {
+     "description": "Alternative to empty string",
+     "type": "string"
+    },
+    "path": {
+     "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+     "type": "string"
+    },
+    "thresholds": {
+     "$ref": "#/definitions/ThresholdsConfig"
+    },
+    "unit": {
+     "description": "Numeric Options",
+     "type": "string"
+    },
+    "writeable": {
+     "description": "Writeable indicates that the datasource knows how to update this value",
+     "type": "boolean"
+    }
+   },
+   "title": "FieldConfig represents the display properties for a Field.",
+   "type": "object"
+  },
+  "Frame": {
+   "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
+   "properties": {
+    "Fields": {
+     "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+     "items": {
+      "$ref": "#/definitions/Field"
+     },
+     "type": "array"
+    },
+    "Meta": {
+     "$ref": "#/definitions/FrameMeta"
+    },
+    "Name": {
+     "description": "Name is used in some Grafana visualizations.",
+     "type": "string"
+    },
+    "RefID": {
+     "description": "RefID is a property that can be set to match a Frame to its originating query.",
+     "type": "string"
+    }
+   },
+   "title": "Frame is a columnar data structure where each column is a Field.",
+   "type": "object"
+  },
+  "FrameLabels": {
+   "additionalProperties": {
+    "type": "string"
+   },
+   "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+   "type": "object"
+  },
+  "FrameMeta": {
+   "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+   "properties": {
+    "channel": {
+     "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+     "type": "string"
+    },
+    "custom": {
+     "description": "Custom datasource specific values."
+    },
+    "dataTopic": {
+     "$ref": "#/definitions/DataTopic"
+    },
+    "executedQueryString": {
+     "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+     "type": "string"
+    },
+    "notices": {
+     "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+     "items": {
+      "$ref": "#/definitions/Notice"
+     },
+     "type": "array"
+    },
+    "path": {
+     "description": "Path is a browsable path on the datasource.",
+     "type": "string"
+    },
+    "pathSeparator": {
+     "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
+     "type": "string"
+    },
+    "preferredVisualisationType": {
+     "$ref": "#/definitions/VisType"
+    },
+    "stats": {
+     "description": "Stats is an array of query result statistics.",
+     "items": {
+      "$ref": "#/definitions/QueryStat"
+     },
+     "type": "array"
+    },
+    "type": {
+     "$ref": "#/definitions/FrameType"
+    }
+   },
+   "title": "FrameMeta matches:",
+   "type": "object"
+  },
+  "FrameType": {
+   "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+   "type": "string"
+  },
+  "Frames": {
+   "description": "It is the main data container within a backend.DataResponse.",
+   "items": {
+    "$ref": "#/definitions/Frame"
+   },
+   "title": "Frames is a slice of Frame pointers.",
+   "type": "array"
+  },
   "GettableAlertmanagers": {
    "properties": {
     "data": {
@@ -829,7 +932,7 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "grafana_alert": {
      "$ref": "#/definitions/GettableGrafanaRule"
@@ -1075,6 +1178,9 @@
     "smtp_auth_password": {
      "$ref": "#/definitions/Secret"
     },
+    "smtp_auth_password_file": {
+     "type": "string"
+    },
     "smtp_auth_secret": {
      "$ref": "#/definitions/Secret"
     },
@@ -1129,6 +1235,10 @@
      "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
      "type": "string"
     },
+    "enable_http2": {
+     "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+     "type": "boolean"
+    },
     "follow_redirects": {
      "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
      "type": "boolean"
@@ -1156,20 +1266,6 @@
     }
    },
    "title": "HostPort represents a \"host:port\" network address.",
-   "type": "object"
-  },
-  "InclusiveRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
    "type": "object"
   },
   "InhibitRule": {
@@ -1206,6 +1302,11 @@
     }
    },
    "type": "object"
+  },
+  "InspectType": {
+   "format": "int64",
+   "title": "InspectType is a type for the Inspect property of a Notice.",
+   "type": "integer"
   },
   "Json": {
    "type": "object"
@@ -1247,6 +1348,82 @@
     "$ref": "#/definitions/Label"
    },
    "type": "array"
+  },
+  "LegacyAlert": {
+   "properties": {
+    "Created": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "DashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "EvalData": {
+     "$ref": "#/definitions/Json"
+    },
+    "ExecutionError": {
+     "type": "string"
+    },
+    "For": {
+     "$ref": "#/definitions/Duration"
+    },
+    "Frequency": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Handler": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Message": {
+     "type": "string"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "NewStateDate": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "OrgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "PanelId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "Severity": {
+     "type": "string"
+    },
+    "Silenced": {
+     "type": "boolean"
+    },
+    "State": {
+     "$ref": "#/definitions/AlertStateType"
+    },
+    "StateChanges": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Updated": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "Version": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
   },
   "MatchRegexps": {
    "additionalProperties": {
@@ -1310,27 +1487,6 @@
    },
    "type": "array"
   },
-  "MessageTemplates": {
-   "items": {
-    "$ref": "#/definitions/MessageTemplate"
-   },
-   "type": "array",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-  },
-  "MonthRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
-   "type": "object"
-  },
   "MultiStatus": {
    "type": "object"
   },
@@ -1374,9 +1530,30 @@
   "NotFound": {
    "type": "object"
   },
-  "NotFound": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  "Notice": {
+   "properties": {
+    "inspect": {
+     "$ref": "#/definitions/InspectType"
+    },
+    "link": {
+     "description": "Link is an optional link for display in the user interface and can be an\nabsolute URL or a path relative to Grafana's root url.",
+     "type": "string"
+    },
+    "severity": {
+     "$ref": "#/definitions/NoticeSeverity"
+    },
+    "text": {
+     "description": "Text is freeform descriptive text for the notice.",
+     "type": "string"
+    }
+   },
+   "title": "Notice provides a structure for presenting notifications in Grafana's user interface.",
+   "type": "object"
+  },
+  "NoticeSeverity": {
+   "format": "int64",
+   "title": "NoticeSeverity is a type for the Severity property of a Notice.",
+   "type": "integer"
   },
   "NotifierConfig": {
    "properties": {
@@ -1406,6 +1583,9 @@
       "type": "string"
      },
      "type": "object"
+    },
+    "proxy_url": {
+     "$ref": "#/definitions/URL"
     },
     "scopes": {
      "items": {
@@ -1733,7 +1913,7 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "grafana_alert": {
      "$ref": "#/definitions/PostableGrafanaRule"
@@ -2022,7 +2202,7 @@
   "PushoverConfig": {
    "properties": {
     "expire": {
-     "$ref": "#/definitions/duration"
+     "type": "string"
     },
     "html": {
      "type": "boolean"
@@ -2037,7 +2217,7 @@
      "type": "string"
     },
     "retry": {
-     "$ref": "#/definitions/duration"
+     "type": "string"
     },
     "send_resolved": {
      "type": "boolean"
@@ -2061,6 +2241,87 @@
      "$ref": "#/definitions/Secret"
     }
    },
+   "type": "object"
+  },
+  "QueryStat": {
+   "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
+   "properties": {
+    "color": {
+     "additionalProperties": {},
+     "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+     "type": "object"
+    },
+    "custom": {
+     "additionalProperties": {},
+     "description": "Panel Specific Values",
+     "type": "object"
+    },
+    "decimals": {
+     "format": "uint16",
+     "type": "integer"
+    },
+    "description": {
+     "description": "Description is human readable field metadata",
+     "type": "string"
+    },
+    "displayName": {
+     "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+     "type": "string"
+    },
+    "displayNameFromDS": {
+     "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+     "type": "string"
+    },
+    "filterable": {
+     "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+     "type": "boolean"
+    },
+    "interval": {
+     "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+     "format": "double",
+     "type": "number"
+    },
+    "links": {
+     "description": "The behavior when clicking on a result",
+     "items": {
+      "$ref": "#/definitions/DataLink"
+     },
+     "type": "array"
+    },
+    "mappings": {
+     "$ref": "#/definitions/ValueMappings"
+    },
+    "max": {
+     "$ref": "#/definitions/ConfFloat64"
+    },
+    "min": {
+     "$ref": "#/definitions/ConfFloat64"
+    },
+    "noValue": {
+     "description": "Alternative to empty string",
+     "type": "string"
+    },
+    "path": {
+     "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+     "type": "string"
+    },
+    "thresholds": {
+     "$ref": "#/definitions/ThresholdsConfig"
+    },
+    "unit": {
+     "description": "Numeric Options",
+     "type": "string"
+    },
+    "value": {
+     "format": "double",
+     "type": "number"
+    },
+    "writeable": {
+     "description": "Writeable indicates that the datasource knows how to update this value",
+     "type": "boolean"
+    }
+   },
+   "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
    "type": "object"
   },
   "Receiver": {
@@ -2158,6 +2419,14 @@
    },
    "type": "object"
   },
+  "Responses": {
+   "additionalProperties": {
+    "$ref": "#/definitions/DataResponse"
+   },
+   "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
+   "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
+   "type": "object"
+  },
   "Route": {
    "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
@@ -2171,10 +2440,10 @@
      "type": "array"
     },
     "group_interval": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "group_wait": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "match": {
      "additionalProperties": {
@@ -2205,7 +2474,7 @@
      "type": "string"
     },
     "repeat_interval": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "routes": {
      "items": {
@@ -2606,6 +2875,9 @@
      "description": "The client key file for the targets.",
      "type": "string"
     },
+    "min_version": {
+     "$ref": "#/definitions/TLSVersion"
+    },
     "server_name": {
      "description": "Used to verify the hostname for the targets.",
      "type": "string"
@@ -2613,6 +2885,10 @@
    },
    "title": "TLSConfig configures the options for TLS connections.",
    "type": "object"
+  },
+  "TLSVersion": {
+   "format": "uint16",
+   "type": "integer"
   },
   "TelegramConfig": {
    "properties": {
@@ -2742,18 +3018,56 @@
    },
    "type": "object"
   },
+  "Threshold": {
+   "description": "Threshold a single step on the threshold list",
+   "properties": {
+    "color": {
+     "type": "string"
+    },
+    "state": {
+     "type": "string"
+    },
+    "value": {
+     "$ref": "#/definitions/ConfFloat64"
+    }
+   },
+   "type": "object"
+  },
+  "ThresholdsConfig": {
+   "description": "ThresholdsConfig setup thresholds",
+   "properties": {
+    "mode": {
+     "$ref": "#/definitions/ThresholdsMode"
+    },
+    "steps": {
+     "description": "Must be sorted by 'value', first value is always -Infinity",
+     "items": {
+      "$ref": "#/definitions/Threshold"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "ThresholdsMode": {
+   "description": "ThresholdsMode absolute or percentage",
+   "type": "string"
+  },
   "TimeInterval": {
    "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
    "properties": {
     "days_of_month": {
      "items": {
-      "$ref": "#/definitions/DayOfMonthRange"
+      "type": "string"
      },
      "type": "array"
     },
+    "location": {
+     "type": "string"
+    },
     "months": {
      "items": {
-      "$ref": "#/definitions/MonthRange"
+      "type": "string"
      },
      "type": "array"
     },
@@ -2765,13 +3079,13 @@
     },
     "weekdays": {
      "items": {
-      "$ref": "#/definitions/WeekdayRange"
+      "type": "string"
      },
      "type": "array"
     },
     "years": {
      "items": {
-      "$ref": "#/definitions/YearRange"
+      "type": "string"
      },
      "type": "array"
     }
@@ -2794,7 +3108,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2804,6 +3117,9 @@
     },
     "Host": {
      "type": "string"
+    },
+    "OmitHost": {
+     "type": "boolean"
     },
     "Opaque": {
      "type": "string"
@@ -2827,7 +3143,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -2842,6 +3158,16 @@
     }
    },
    "type": "object"
+  },
+  "ValueMapping": {
+   "description": "ValueMapping allows mapping input values to text and color",
+   "type": "object"
+  },
+  "ValueMappings": {
+   "items": {
+    "$ref": "#/definitions/ValueMapping"
+   },
+   "type": "array"
   },
   "Vector": {
    "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
@@ -2891,6 +3217,10 @@
    },
    "title": "VictorOpsConfig configures notifications via VictorOps.",
    "type": "object"
+  },
+  "VisType": {
+   "title": "VisType is used to indicate how the data should be visualized in explore.",
+   "type": "string"
   },
   "WebhookConfig": {
    "properties": {
@@ -2951,34 +3281,6 @@
    "title": "WechatConfig configures notifications via Wechat.",
    "type": "object"
   },
-  "WeekdayRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
-   "type": "object"
-  },
-  "YearRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "A YearRange is a positive inclusive range.",
-   "type": "object"
-  },
   "alert": {
    "description": "Alert alert",
    "properties": {
@@ -2997,7 +3299,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3125,10 +3426,8 @@
    ],
    "type": "object"
   },
-  "duration": {
-   "$ref": "#/definitions/Duration"
-  },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3191,7 +3490,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3246,6 +3544,37 @@
    "type": "array",
    "x-go-name": "GettableSilences",
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+  },
+  "integration": {
+   "description": "Integration integration",
+   "properties": {
+    "lastNotifyAttempt": {
+     "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+     "format": "date-time",
+     "type": "string"
+    },
+    "lastNotifyAttemptDuration": {
+     "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+     "type": "string"
+    },
+    "lastNotifyAttemptError": {
+     "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+     "type": "string"
+    },
+    "name": {
+     "description": "name",
+     "type": "string"
+    },
+    "sendResolved": {
+     "description": "send resolved",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "name",
+    "sendResolved"
+   ],
+   "type": "object"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3312,6 +3641,15 @@
     "address",
     "name"
    ],
+   "type": "object"
+  },
+  "postSilencesOKBody": {
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
    "type": "object"
   },
   "postableAlert": {
@@ -3391,12 +3729,25 @@
   "receiver": {
    "description": "Receiver receiver",
    "properties": {
+    "active": {
+     "description": "active",
+     "type": "boolean"
+    },
+    "integrations": {
+     "description": "integrations",
+     "items": {
+      "$ref": "#/definitions/integration"
+     },
+     "type": "array"
+    },
     "name": {
      "description": "name",
      "type": "string"
     }
    },
    "required": [
+    "active",
+    "integrations",
     "name"
    ],
    "type": "object"
@@ -4147,6 +4498,17 @@
  "produces": [
   "application/json"
  ],
+ "responses": {
+  "receiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/receiver"
+    },
+    "type": "array"
+   }
+  }
+ },
  "schemes": [
   "http",
   "https"

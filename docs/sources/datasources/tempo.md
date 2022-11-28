@@ -15,7 +15,7 @@ weight: 1400
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
+Grafana ships with built-in support for Tempo, a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Add data source
 
@@ -80,7 +80,7 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
 
-### Loki Search
+### Loki search
 
 This is a configuration for the Loki search query type.
 
@@ -176,7 +176,7 @@ Here is an example JSON:
 }
 ```
 
-## Service Graph
+## Service graph
 
 A service graph is a visual representation of the relationships between services. Each node on the graph represents a service such as an API or database. With this graph, customers can easily detect performance issues, increases in error, fault, or throttle rates in any of their services, and dive deep into corresponding traces and root causes.
 
@@ -184,12 +184,12 @@ A service graph is a visual representation of the relationships between services
 
 To display the service graph:
 
-- [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
-- Link a Prometheus datasource in the Tempo datasource settings.
+- [Configure Grafana Agent](https://grafana.com/docs/tempo/latest/grafana-agent/service-graphs/#quickstart), or [Tempo or GET](https://grafana.com/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate service graph data
+- Link a Prometheus data source in the Tempo data source settings.
 - Navigate to [Explore]({{< relref "../explore/" >}}).
-- Select the Tempo datasource.
+- Select the Tempo data source.
 - Select the **Service Graph** query type and run the query.
-- (Optional): filter by service name.
+- (Optional): Filter by service name.
 
 You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/latest/panels/visualizations/node-graph/).
 
@@ -206,20 +206,23 @@ Click on the service to see a context menu with additional links for quick navig
 
 ## APM table
 
-The APM (Application Performance Management) table allows you to view several APM metrics out of the box.
+The Application Performance Management (APM) table lets you view several APM metrics out of the box.
+The APM table is part of the APM dashboard.
+For more information, refer to the [APM dashboard documentation](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/).
 
 To display the APM table:
 
-1. Activate the tempoApmTable feature flag in your ini file.
-1. Link a Prometheus datasource in the Tempo datasource settings.
+1. Activate the `tempoApmTable` feature flag in your `grafana.ini` file.
+1. Link a Prometheus data source in the Tempo data source settings.
 1. Navigate to [Explore]({{< relref "../explore/_index.md" >}}).
-1. Select the Tempo datasource.
+1. Select the Tempo data source.
 1. Select the **Service Graph** query type and run the query.
-1. (Optional): filter your results.
+1. (Optional): Filter your results.
 
-Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_latency_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
+> **Note:** The metric `traces_spanmetrics_calls_total` is used to display the name, rate, and error rate columns and `traces_spanmetrics_latency_bucket` is used to display the duration column. These metrics need to exist in your Prometheus data source.
 
-Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query. Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
+Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query.
+Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
 
 {{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Tempo APM table" >}}
 

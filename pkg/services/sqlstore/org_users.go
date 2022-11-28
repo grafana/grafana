@@ -152,6 +152,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 			"user.last_seen_at",
 			"user.created",
 			"user.updated",
+			"user.is_disabled",
 		)
 		sess.Asc("user.email", "user.login")
 

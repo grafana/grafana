@@ -18,11 +18,18 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 	authorize := ac.Middleware(s.AccessControl)
 
+	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
+
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
-		entities.Delete("/:correlationUID", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
-		entities.Patch("/:correlationUID", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
-	})
+		entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
+		entities.Post("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
+
+		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
+			entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
+			entities.Delete("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+			entities.Patch("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
+		})
+	}, middleware.ReqSignedIn)
 }
 
 // swagger:route POST /datasources/uid/{sourceUID}/correlations correlations createCorrelation
@@ -42,7 +49,7 @@ func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -90,7 +97,7 @@ func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Respo
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.OrgId,
+		OrgId:     c.OrgID,
 	}
 
 	err := s.DeleteCorrelation(c.Req.Context(), cmd)
@@ -148,7 +155,7 @@ func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Respo
 
 	cmd.UID = web.Params(c.Req)[":correlationUID"]
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -190,4 +197,126 @@ type UpdateCorrelationParams struct {
 type UpdateCorrelationResponse struct {
 	// in: body
 	Body UpdateCorrelationResponseBody `json:"body"`
+}
+
+// swagger:route GET /datasources/uid/{sourceUID}/correlations/{correlationUID} correlations getCorrelation
+//
+// Gets a correlation.
+//
+// Responses:
+// 200: getCorrelationResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 500: internalServerError
+func (s *CorrelationsService) getCorrelationHandler(c *models.ReqContext) response.Response {
+	query := GetCorrelationQuery{
+		UID:       web.Params(c.Req)[":correlationUID"],
+		SourceUID: web.Params(c.Req)[":uid"],
+		OrgId:     c.OrgID,
+	}
+
+	correlation, err := s.getCorrelation(c.Req.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "Correlation not found", err)
+		}
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Source data source not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, correlation)
+}
+
+// swagger:parameters getCorrelation
+type GetCorrelationParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"sourceUID"`
+	// in:path
+	// required:true
+	CorrelationUID string `json:"correlationUID"`
+}
+
+//swagger:response getCorrelationResponse
+type GetCorrelationResponse struct {
+	// in: body
+	Body Correlation `json:"body"`
+}
+
+// swagger:route GET /datasources/uid/{sourceUID}/correlations correlations getCorrelationsBySourceUID
+//
+// Gets all correlations originating from the given data source.
+//
+// Responses:
+// 200: getCorrelationsBySourceUIDResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 500: internalServerError
+func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqContext) response.Response {
+	query := GetCorrelationsBySourceUIDQuery{
+		SourceUID: web.Params(c.Req)[":uid"],
+		OrgId:     c.OrgID,
+	}
+
+	correlations, err := s.getCorrelationsBySourceUID(c.Req.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "No correlation found", err)
+		}
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Source data source not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
+	}
+
+	return response.JSON(http.StatusOK, correlations)
+}
+
+// swagger:parameters getCorrelationsBySourceUID
+type GetCorrelationsBySourceUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"sourceUID"`
+}
+
+//swagger:response getCorrelationsBySourceUIDResponse
+type GetCorrelationsBySourceUIDResponse struct {
+	// in: body
+	Body []Correlation `json:"body"`
+}
+
+// swagger:route GET /datasources/correlations correlations getCorrelations
+//
+// Gets all correlations.
+//
+// Responses:
+// 200: getCorrelationsResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 500: internalServerError
+func (s *CorrelationsService) getCorrelationsHandler(c *models.ReqContext) response.Response {
+	query := GetCorrelationsQuery{
+		OrgId: c.OrgID,
+	}
+
+	correlations, err := s.getCorrelations(c.Req.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "No correlation found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
+	}
+
+	return response.JSON(http.StatusOK, correlations)
+}
+
+//swagger:response getCorrelationsResponse
+type GetCorrelationsResponse struct {
+	// in: body
+	Body []Correlation `json:"body"`
 }

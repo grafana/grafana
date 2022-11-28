@@ -4,6 +4,7 @@ import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 /**
  * @deprecated prefer using dashboard uid rather than id
@@ -70,10 +71,12 @@ async function getDashboards(
   label: string,
   excludedDashboards?: string[]
 ): Promise<Array<SelectableValue<DashboardPickerItem>>> {
-  const result = await backendSrv.search({ type: 'dash-db', query, limit: 100 });
+  // FIXME: stop using id from search and use UID instead
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const result = (await backendSrv.search({ type: 'dash-db', query, limit: 100 })) as DashboardSearchHit[];
   const dashboards = result.map(({ id, uid = '', title, folderTitle }) => {
     const value: DashboardPickerItem = {
-      id,
+      id: id!,
       uid,
       [label]: `${folderTitle ?? 'General'}/${title}`,
     };

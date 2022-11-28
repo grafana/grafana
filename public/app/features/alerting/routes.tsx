@@ -3,6 +3,7 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 
 import { OrgRole } from '@grafana/data';
+import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
@@ -13,8 +14,8 @@ import { evaluateAccess } from './unified/utils/access-control';
 const commonRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
-    // eslint-disable-next-line react/display-name
-    component: () => <Redirect to="/alerting/alerts" />,
+    component: () =>
+      config.featureToggles.topnav ? <NavLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
   },
 ];
 
@@ -171,7 +172,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
-    path: '/alerting/notifications/templates/new',
+    path: '/alerting/notifications/:type/new',
     roles: evaluateAccess(
       [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
@@ -181,7 +182,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
-    path: '/alerting/notifications/templates/:id/edit',
+    path: '/alerting/notifications/:type/:id/edit',
     roles: evaluateAccess(
       [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
@@ -191,27 +192,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
-    path: '/alerting/notifications/receivers/new',
-    roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
-      ['Editor', 'Admin']
-    ),
-    component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
-    ),
-  },
-  {
-    path: '/alerting/notifications/receivers/:id/edit',
-    roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
-      ['Editor', 'Admin']
-    ),
-    component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
-    ),
-  },
-  {
-    path: '/alerting/notifications/global-config',
+    path: '/alerting/notifications/:type',
     roles: evaluateAccess(
       [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']

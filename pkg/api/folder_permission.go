@@ -26,13 +26,13 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
@@ -87,12 +87,12 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return response.Error(400, err.Error(), err)
 	}
 
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 	canAdmin, err := g.CanAdmin()
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -105,7 +105,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	var items []*models.DashboardACL
 	for _, item := range apiCmd.Items {
 		items = append(items, &models.DashboardACL{
-			OrgID:       c.OrgId,
+			OrgID:       c.OrgID,
 			DashboardID: folder.Id,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
@@ -140,7 +140,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgId, folder.Uid, true, items, old); err != nil {
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgID, folder.Uid, true, items, old); err != nil {
 			return response.Error(500, "Failed to create permission", err)
 		}
 		return response.Success("Dashboard permissions updated")

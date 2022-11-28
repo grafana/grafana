@@ -203,7 +203,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
  * This hook is always returning model.state instead of a useState that remembers the last state emitted on the subject
  * The reason for this is so that if the model instance change this function will always return the latest state.
  */
-function useSceneObjectState<TState>(model: SceneObjectBase<TState>): TState {
+function useSceneObjectState<TState extends SceneObjectState>(model: SceneObjectBase<TState>): TState {
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {

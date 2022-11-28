@@ -250,6 +250,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     placement: AxisPlacement.Bottom,
     isTime: true,
     theme: theme,
+    timeZone,
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;

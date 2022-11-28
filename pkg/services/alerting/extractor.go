@@ -26,11 +26,11 @@ type DashAlertExtractorService struct {
 	log                          log.Logger
 }
 
-func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService, alertStore AlertStore) *DashAlertExtractorService {
+func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService, store AlertStore) *DashAlertExtractorService {
 	return &DashAlertExtractorService{
 		datasourcePermissionsService: datasourcePermissionsService,
 		datasourceService:            datasourceService,
-		alertStore:                   alertStore,
+		alertStore:                   store,
 		log:                          log.New("alerting.extractor"),
 	}
 }

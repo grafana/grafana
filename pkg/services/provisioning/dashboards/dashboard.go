@@ -106,7 +106,7 @@ func (provider *Provisioner) PollChanges(ctx context.Context) {
 }
 
 // GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate
-// relative path to provisioning file from it's external_id.
+// relative path to provisioning file from its external_id.
 func (provider *Provisioner) GetProvisionerResolvedPath(name string) string {
 	for _, reader := range provider.fileReaders {
 		if reader.Cfg.Name == name {

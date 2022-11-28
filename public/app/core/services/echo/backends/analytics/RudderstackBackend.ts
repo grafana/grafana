@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import type { identify, load, page, track } from 'rudder-sdk-js'; // SDK is loaded dynamically from config, so we only import types from the SDK package
 
 import { CurrentUserDTO } from '@grafana/data';
 import {
@@ -11,6 +12,21 @@ import {
 } from '@grafana/runtime';
 
 import { getUserIdentifier } from '../../utils';
+
+interface Rudderstack {
+  identify: typeof identify;
+  load: typeof load;
+  page: typeof page;
+  track: typeof track;
+}
+
+declare global {
+  interface Window {
+    // We say all methods are undefined because we can't be sure they're there
+    // and we should be extra cautious
+    rudderanalytics?: Partial<Rudderstack>;
+  }
+}
 
 export interface RudderstackBackendOptions {
   writeKey: string;
@@ -32,9 +48,9 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       cache: true,
     });
 
-    const rds = ((window as any).rudderanalytics = []);
+    const tempRudderstack = ((window as any).rudderanalytics = []);
 
-    var methods = [
+    const methods = [
       'load',
       'page',
       'track',
@@ -49,20 +65,20 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
     for (let i = 0; i < methods.length; i++) {
       const method = methods[i];
-      (rds as Record<string, any>)[method] = (function (methodName) {
+      (tempRudderstack as Record<string, any>)[method] = (function (methodName) {
         return function () {
           // @ts-ignore
-          rds.push([methodName].concat(Array.prototype.slice.call(arguments)));
+          tempRudderstack.push([methodName].concat(Array.prototype.slice.call(arguments)));
         };
       })(method);
     }
 
-    (rds as any).load(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
+    window.rudderanalytics?.load?.(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
 
     if (options.user) {
       const identifier = getUserIdentifier(options.user);
 
-      (rds as any).identify(identifier, {
+      window.rudderanalytics?.identify?.(identifier, {
         email: options.user.email,
         orgId: options.user.orgId,
       });
@@ -70,20 +86,20 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
   }
 
   addEvent = (e: PageviewEchoEvent) => {
-    if (!(window as any).rudderanalytics) {
+    if (!window.rudderanalytics) {
       return;
     }
 
     if (isPageviewEvent(e)) {
-      (window as any).rudderanalytics.page();
+      window.rudderanalytics.page?.();
     }
 
     if (isInteractionEvent(e)) {
-      (window as any).rudderanalytics.track(e.payload.interactionName, e.payload.properties);
+      window.rudderanalytics.track?.(e.payload.interactionName, e.payload.properties);
     }
 
     if (isExperimentViewEvent(e)) {
-      (window as any).rudderanalytics.track('experiment_viewed', {
+      window.rudderanalytics.track?.('experiment_viewed', {
         experiment_id: e.payload.experimentId,
         experiment_group: e.payload.experimentGroup,
         experiment_variant: e.payload.experimentVariant,

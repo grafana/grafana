@@ -48,7 +48,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 func (g *Gateway) Handle(ctx *models.ReqContext) {
 	streamID := web.Params(ctx.Req)[":streamId"]
 
-	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, liveDto.ScopeStream, streamID)
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgID, liveDto.ScopeStream, streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -94,6 +94,8 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 			return
 		}
 	}
+
+	ctx.Resp.WriteHeader(http.StatusOK)
 }
 
 func (g *Gateway) HandlePipelinePush(ctx *models.ReqContext) {
@@ -111,7 +113,7 @@ func (g *Gateway) HandlePipelinePush(ctx *models.ReqContext) {
 		"bodyLength", len(body),
 	)
 
-	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.OrgId, channelID, body)
+	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.OrgID, channelID, body)
 	if err != nil {
 		logger.Error("Pipeline input processing error", "error", err, "body", string(body))
 		if errors.Is(err, liveDto.ErrInvalidChannelID) {
@@ -126,4 +128,6 @@ func (g *Gateway) HandlePipelinePush(ctx *models.ReqContext) {
 		ctx.Resp.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	ctx.Resp.WriteHeader(http.StatusOK)
 }

@@ -31,7 +31,7 @@ Service accounts are an evolution in machine access within Grafana.
 You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it.
 These benefits make service accounts a more flexible way for Terraform and other apps to authenticate with Grafana.
 
-Service accounts also work with [role-based access control]({{< relref "../administration/roles-and-permissions/access-control" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
+Service accounts also work with [role-based access control]({{< relref "../administration/roles-and-permissions/access-control" >}}) in [Grafana Enterprise]({{< relref "../introduction/grafana-enterprise" >}}).
 You can improve security by granting service accounts specific roles to limit the functions they can perform.
 Service accounts have been in beta since Grafana v8.5.
 During that time, we've improved the UI and migration path from API keys, made it possible to add service accounts to teams, and inherit team permissions.
@@ -45,7 +45,7 @@ You can now easily embed Grafana in other applications by adding a JWT token dir
 When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view.
 To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
-Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use the [Public Dashboards]({{< relref "../dashboards/dashboard-public/" >}}) feature. To enable that, [open a ticket with our Support team](https://grafana.com/docs/grafana-cloud/account-management/support/).
 
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 
@@ -85,10 +85,17 @@ As part of the upcoming improvements to Grafana's navigation, you can now direct
 #### Heatmap improvements
 
 The beta heatmap announced in version 9.0 is now used throughout Grafana.
-Its performance is improved, and it now supports [exemplars]({{< relref "../basics/exemplars/" >}}).
-To learn more about the heatmap panel, see the [documentation]({{< relref "../visualizations/heatmap/" >}}).
+Its performance is improved, and it now supports [exemplars]({{< relref "../fundamentals/exemplars/" >}}).
+To learn more about the heatmap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}).
 
 {{< figure src="/static/img/docs/panels/heatmap-panel-9-1.png" max-width="750px" caption="A heatmap panel" >}}
+
+#### Geomap
+
+You can now measure both distances and areas on Geomap visualizations by using the panel's new [measure tools]({{< relref "../panels-visualizations/visualizations/geomap/#show-measure-tools" >}}).
+To learn more about the Geomap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/geomap/" >}}).
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="750px" caption="Geomap panel measuring tool - area" >}}
 
 #### (Beta) Trace to metrics
 
@@ -176,7 +183,7 @@ Reporting is better in a few specific ways in Grafana version 9.1:
   For example, you can share last month's numbers as compared to the numbers for this month.
   The dashboard uses the same template variables if you attach the dashboard to a report twice.
 
-To learn more about reporting, see the [documentation]({{< relref "../share-dashboards-panels/#reporting" >}}).
+To learn more about reporting, see the [documentation]({{< relref "../dashboards/share-dashboards-panels/#reporting" >}}).
 
 {{< figure src="/static/img/docs/enterprise/reporting-draft-9-1.png" max-width="750px" caption="Saving a report as a draft" >}}
 

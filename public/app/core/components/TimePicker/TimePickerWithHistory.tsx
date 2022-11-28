@@ -9,7 +9,7 @@ const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 
 interface Props extends Omit<TimeRangePickerProps, 'history' | 'theme'> {}
 
-export const TimePickerWithHistory: React.FC<Props> = (props) => {
+export const TimePickerWithHistory = (props: Props) => {
   return (
     <LocalStorageValueProvider<TimeRange[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {

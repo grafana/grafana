@@ -6,62 +6,62 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 func TestUserTokenAPIEndpoint(t *testing.T) {
-	mock := mockstore.NewSQLStoreMock()
+	userMock := usertest.NewUserServiceFake()
 	t.Run("When current user attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
-		mock.ExpectedError = user.ErrUserNotFound
+		userMock.ExpectedError = user.ErrUserNotFound
 		revokeUserAuthTokenScenario(t, "Should return not found when calling POST on", "/api/user/revoke-auth-token",
 			"/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 404, sc.resp.Code)
-			}, mock)
+			}, userMock)
 	})
 
 	t.Run("When current user gets auth tokens for a non-existing user", func(t *testing.T) {
-		mock := &mockstore.SQLStoreMock{
+		mockUser := &usertest.FakeUserService{
 			ExpectedUser:  &user.User{ID: 200},
 			ExpectedError: user.ErrUserNotFound,
 		}
 		getUserAuthTokensScenario(t, "Should return not found when calling GET on", "/api/user/auth-tokens", "/api/user/auth-tokens", 200, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
-		}, mock)
+		}, mockUser)
 	})
 
 	t.Run("When logging out an existing user from all devices", func(t *testing.T) {
-		mock := &mockstore.SQLStoreMock{
+		userMock := &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 200},
 		}
 		logoutUserFromAllDevicesInternalScenario(t, "Should be successful", 1, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 200, sc.resp.Code)
-		}, mock)
+		}, userMock)
 	})
 
 	t.Run("When logout a non-existing user from all devices", func(t *testing.T) {
 		logoutUserFromAllDevicesInternalScenario(t, "Should return not found", testUserID, func(sc *scenarioContext) {
-			mock.ExpectedError = user.ErrUserNotFound
-
+			userMock.ExpectedError = user.ErrUserNotFound
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
-		}, mock)
+		}, userMock)
 	})
 
 	t.Run("When revoke an auth token for a user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 1}
-		mock := &mockstore.SQLStoreMock{
+		mockUser := &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 200},
 		}
 
@@ -71,25 +71,25 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 200, sc.resp.Code)
-		}, mock)
+		}, mockUser)
 	})
 
 	t.Run("When revoke the active auth token used by himself", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 2}
-		mock := mockstore.NewSQLStoreMock()
+		mockUser := usertest.NewUserServiceFake()
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
 			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
 				return token, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 400, sc.resp.Code)
-		}, mock)
+		}, mockUser)
 	})
 
 	t.Run("When gets auth tokens for a user", func(t *testing.T) {
 		currentToken := &models.UserToken{Id: 1}
-		mock := mockstore.NewSQLStoreMock()
+		mockUser := usertest.NewUserServiceFake()
 		getUserAuthTokensInternalScenario(t, "Should be successful", currentToken, func(sc *scenarioContext) {
 			tokens := []*models.UserToken{
 				{
@@ -141,18 +141,18 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 			assert.Equal(t, "11.0", resultTwo.Get("browserVersion").MustString())
 			assert.Equal(t, "iOS", resultTwo.Get("os").MustString())
 			assert.Equal(t, "11.0", resultTwo.Get("osVersion").MustString())
-		}, mock)
+		}, mockUser)
 	})
 }
 
 func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd,
-	userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
+	userId int64, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -160,9 +160,9 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
-			sc.context.UserId = userId
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = userId
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.RevokeUserAuthToken(c)
 		})
@@ -173,22 +173,22 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 	})
 }
 
-func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
+func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, userId int64, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = userId
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = userId
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.GetUserAuthTokens(c)
 		})
@@ -199,19 +199,19 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 	})
 }
 
-func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
+func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId int64, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
 		hs := HTTPServer{
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, "/")
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.logoutUserFromAllDevicesInternal(context.Background(), userId)
 		})
@@ -223,22 +223,22 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 }
 
 func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.RevokeAuthTokenCmd, userId int64,
-	token *models.UserToken, fn scenarioFunc, sqlStore sqlstore.Store) {
+	token *models.UserToken, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 			sc.context.UserToken = token
 
 			return hs.revokeUserAuthTokenInternal(c, userId, cmd)
@@ -248,22 +248,22 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 	})
 }
 
-func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.UserToken, fn scenarioFunc, sqlStore sqlstore.Store) {
+func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.UserToken, fn scenarioFunc, userService user.Service) {
 	t.Run(desc, func(t *testing.T) {
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
-			SQLStore:         sqlStore,
+			userService:      userService,
 		}
 
 		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 			sc.context.UserToken = token
 
 			return hs.getUserAuthTokensInternal(c, testUserID)

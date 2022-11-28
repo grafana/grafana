@@ -161,6 +161,8 @@ $panel-header-no-title-zindex: 1;
 }
 
 .panel-info-content {
+  overflow: auto;
+
   code {
     white-space: normal;
     word-wrap: break-word;

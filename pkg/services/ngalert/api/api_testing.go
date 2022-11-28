@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -31,22 +29,21 @@ type TestingApiSrv struct {
 
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
 	if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
-		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, body.Type().String()))
 	}
 
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: body.GrafanaManagedCondition.Data}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
-		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
+		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
 	}
 
 	evalCond := ngmodels.Condition{
 		Condition: body.GrafanaManagedCondition.Condition,
-		OrgID:     c.SignedInUser.OrgId,
 		Data:      body.GrafanaManagedCondition.Data,
 	}
 
-	if err := validateCondition(c.Req.Context(), evalCond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+	if err := srv.evaluator.Validate(c.Req.Context(), c.SignedInUser, evalCond); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
@@ -55,7 +52,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults := srv.evaluator.ConditionEval(c.Req.Context(), evalCond, now)
+	evalResults := srv.evaluator.ConditionEval(c.Req.Context(), c.SignedInUser, evalCond, now)
 
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
@@ -65,22 +62,21 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload, datasourceUID string) response.Response {
 	if body.Type() != apimodels.LoTexRulerBackend {
-		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.LoTexRulerBackend, body.Type().String()))
 	}
-
-	var path string
-	ds, err := srv.DatasourceCache.GetDatasourceByUID(context.Background(), datasourceUID, c.SignedInUser, c.SkipCache)
+	ds, err := getDatasourceByUID(c, srv.DatasourceCache, apimodels.LoTexRulerBackend)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")
+		return errorToResponse(err)
 	}
-
+	var path string
 	switch ds.Type {
 	case "loki":
 		path = "loki/api/v1/query"
 	case "prometheus":
 		path = "api/v1/query"
 	default:
-		return ErrResp(http.StatusBadRequest, fmt.Errorf("unexpected datasource type %s", ds.Type), "")
+		// this should not happen because getDatasourceByUID would not return the data source
+		return errorToResponse(unexpectedDatasourceTypeError(ds.Type, "loki, prometheus"))
 	}
 
 	t := timeNow()
@@ -114,11 +110,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
 
-	if _, err := validateQueriesAndExpressions(c.Req.Context(), cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
-	}
-
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser.OrgId, cmd.Data, now)
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser, cmd.Data, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

@@ -57,6 +57,7 @@ func TestSuccessResponse(t *testing.T) {
 			responseFileName := filepath.Join("testdata", test.filepath+".json")
 			goldenFileName := test.filepath + ".golden"
 
+			//nolint:gosec
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 

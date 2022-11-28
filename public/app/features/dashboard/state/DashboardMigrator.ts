@@ -23,6 +23,8 @@ import {
   ValueMap,
   ValueMapping,
 } from '@grafana/data';
+import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -45,14 +47,12 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 
-import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
-import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 import {
   migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
-import { VariableHide } from '../../variables/types';
+import { ConstantVariableModel, TextBoxVariableModel, VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -622,18 +622,27 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 27) {
-      for (const variable of this.dashboard.templating.list) {
+      this.dashboard.templating.list = this.dashboard.templating.list.map((variable) => {
         if (!isConstant(variable)) {
-          continue;
+          return variable;
         }
 
-        if (variable.hide === VariableHide.dontHide || variable.hide === VariableHide.hideLabel) {
-          variable.type = 'textbox';
+        const newVariable: ConstantVariableModel | TextBoxVariableModel = {
+          ...variable,
+        };
+
+        newVariable.current = { selected: true, text: newVariable.query ?? '', value: newVariable.query ?? '' };
+        newVariable.options = [newVariable.current];
+
+        if (newVariable.hide === VariableHide.dontHide || newVariable.hide === VariableHide.hideLabel) {
+          return {
+            ...newVariable,
+            type: 'textbox',
+          };
         }
 
-        variable.current = { selected: true, text: variable.query ?? '', value: variable.query ?? '' };
-        variable.options = [variable.current];
-      }
+        return newVariable;
+      });
     }
 
     if (oldVersion < 28) {
@@ -784,7 +793,11 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (panel.options?.legend && panel.options.legend.displayMode === 'hidden') {
+        if (
+          panel.options?.legend &&
+          // There were two ways to hide the legend, this normalizes to `legend.showLegend`
+          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
+        ) {
           panel.options.legend.displayMode = 'list';
           panel.options.legend.showLegend = false;
         } else if (panel.options?.legend) {

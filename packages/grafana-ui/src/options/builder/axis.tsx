@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
-import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
+import { graphFieldOptions, Select, RadioButtonGroup, Input, Field } from '../../index';
 
 /**
  * @alpha
@@ -128,6 +128,10 @@ const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
     label: 'Logarithmic',
     value: ScaleDistribution.Log,
   },
+  {
+    label: 'Symlog',
+    value: ScaleDistribution.Symlog,
+  },
 ];
 
 const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
@@ -147,32 +151,48 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
 export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
   const type = value?.type ?? ScaleDistribution.Linear;
   return (
-    <HorizontalGroup>
-      <RadioButtonGroup
-        value={type}
-        options={DISTRIBUTION_OPTIONS}
-        onChange={(v) => {
-          onChange({
-            ...value,
-            type: v!,
-            log: v === ScaleDistribution.Linear ? undefined : 2,
-          });
-        }}
-      />
-      {type === ScaleDistribution.Log && (
-        <Select
-          options={LOG_DISTRIBUTION_OPTIONS}
-          value={value.log || 2}
-          prefix={'base'}
-          width={12}
+    <>
+      <div style={{ marginBottom: 16 }}>
+        <RadioButtonGroup
+          value={type}
+          options={DISTRIBUTION_OPTIONS}
           onChange={(v) => {
             onChange({
               ...value,
-              log: v.value!,
+              type: v!,
+              log: v === ScaleDistribution.Linear ? undefined : value.log ?? 2,
             });
           }}
         />
+      </div>
+      {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
+        <Field label="Log base">
+          <Select
+            options={LOG_DISTRIBUTION_OPTIONS}
+            value={value.log ?? 2}
+            onChange={(v) => {
+              onChange({
+                ...value,
+                log: v.value!,
+              });
+            }}
+          />
+        </Field>
       )}
-    </HorizontalGroup>
+      {type === ScaleDistribution.Symlog && (
+        <Field label="Linear threshold">
+          <Input
+            placeholder="1"
+            value={value.linearThreshold}
+            onChange={(v) => {
+              onChange({
+                ...value,
+                linearThreshold: Number(v.currentTarget.value),
+              });
+            }}
+          />
+        </Field>
+      )}
+    </>
   );
 };

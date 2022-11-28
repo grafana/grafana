@@ -11,18 +11,40 @@
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
 
-# Documentation owner: Jita Chatterjee
+# Documentation
 /docs/ @grafana/docs-squad
-/contribute/ @marcusolsson @grafana/docs-squad
-/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/backend @marcusolsson @grafana/docs-squad @grafana/plugins-platform-backend
-/docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
+/contribute/ @grafana/docs-squad
+/docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/backend @grafana/docs-squad @grafana/plugins-platform-backend
+# Administration, data sources, querying, release updates: Garrett Guillotte
+# Set up, dashboards/visualization, best practices: Chris Moyer
+# Alerting: Brenda Muir
+/docs/sources/administration/ @gguillotte-grafana
+/docs/sources/alerting @brendamuir
+/docs/sources/best-practices/ @chri2547
+/docs/sources/dashboards/ @chri2547
+/docs/sources/datasources/ @gguillotte-grafana
+/docs/sources/enterprise/ @gguillotte-grafana
+/docs/sources/explore/ @gguillotte-grafana
+/docs/sources/getting-started/ @chri2547
+/docs/sources/old-alerting @brendamuir
+/docs/sources/panels/ @chri2547
+/docs/sources/release-notes/ @gguillotte-grafana
+/docs/sources/visualization/ @chri2547
+/docs/sources/whatsnew/ @gguillotte-grafana
 
 # Backend code
 *.go @grafana/backend-platform
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
 /.bingo @grafana/backend-platform
+
+# Backend code, developers environment
+/devenv/docker/blocks/auth @grafana/grafana-authnz-team
+
+# Logs code, developers environment
+/devenv/docker/blocks/loki* @grafana/observability-logs
+/devenv/docker/blocks/elastic* @grafana/observability-logs
 
 # Continuous Integration
 .drone.yml @grafana/grafana-release-eng
@@ -40,10 +62,10 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/influxdb @grafana/observability-metrics
 /pkg/tsdb/elasticsearch @grafana/observability-logs
 /pkg/tsdb/graphite @grafana/observability-metrics
-/pkg/tsdb/jaeger @grafana/observability-logs-and-traces
+/pkg/tsdb/jaeger @grafana/observability-traces-and-profiling
 /pkg/tsdb/loki @grafana/observability-logs
-/pkg/tsdb/zipkin @grafana/observability-logs-and-traces
-/pkg/tsdb/tempo @grafana/observability-logs-and-traces
+/pkg/tsdb/zipkin @grafana/observability-traces-and-profiling
+/pkg/tsdb/tempo @grafana/observability-traces-and-profiling
 
 # BI backend code
 /pkg/tsdb/mysql @grafana/grafana-bi-squad
@@ -60,7 +82,7 @@ go.sum @grafana/backend-platform
 /pkg/services/store/ @grafana/grafana-edge-squad
 /pkg/services/export/ @grafana/grafana-edge-squad
 /pkg/infra/filestore/ @grafana/grafana-edge-squad
-pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
+/pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 
 # Alerting
 /pkg/services/ngalert @grafana/alerting-squad-backend
@@ -78,6 +100,7 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /pkg/plugins @grafana/plugins-platform-backend
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
+/pkg/plugins/pfs @grafana/plugins-platform-backend @grafana/grafana-as-code
 
 # Dashboard previews / crawler (behind feature flag)
 /pkg/services/thumbs @grafana/grafana-edge-squad
@@ -95,11 +118,12 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /packages/grafana-ui/.storybook @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/DateTimePickers @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/GraphNG @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/Logs @grafana/observability-logs
 /packages/grafana-ui/src/components/Table @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/TimeSeries @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/uPlot @grafana/grafana-bi-squad
 /packages/grafana-ui/src/utils/storybook @grafana/plugins-platform-frontend
-/packages/jaeger-ui-components/ @grafana/observability-logs-and-traces
+/packages/jaeger-ui-components/ @grafana/observability-traces-and-profiling
 /plugins-bundled @grafana/plugins-platform-frontend
 # public folder
 /public/app/core/components/TimePicker @grafana/grafana-bi-squad
@@ -118,7 +142,8 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /public/app/plugins/panel/heatmap @grafana/grafana-bi-squad
 /public/app/plugins/panel/histogram @grafana/grafana-bi-squad
 /public/app/plugins/panel/logs @grafana/observability-logs
-/public/app/plugins/panel/nodeGraph @grafana/observability-logs-and-traces
+/public/app/plugins/panel/nodeGraph @grafana/observability-traces-and-profiling
+/public/app/plugins/panel/traces @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/piechart @grafana/grafana-bi-squad
 /public/app/plugins/panel/state-timeline @grafana/grafana-bi-squad
 /public/app/plugins/panel/status-history @grafana/grafana-bi-squad
@@ -131,8 +156,6 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /scripts/build/release-packages.sh @grafana/plugins-platform-frontend
 /scripts/circle-release-next-packages.sh @grafana/plugins-platform-frontend
 /scripts/ci-frontend-metrics.sh @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
-/scripts/ci-reference-docs-build.sh @grafana/plugins-platform-frontend
-/scripts/ci-reference-docs-lint.sh @grafana/plugins-platform-frontend
 /scripts/grunt @grafana/frontend-ops
 /scripts/webpack @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/user-essentials
@@ -147,7 +170,7 @@ lerna.json @grafana/frontend-ops
 .betterer.results @joshhunt
 
 # @grafana/ui component documentation
-*.mdx @marcusolsson @jessover9000 @grafana/plugins-platform-frontend
+*.mdx @jessover9000 @grafana/plugins-platform-frontend
 
 # Core datasources
 /public/app/plugins/datasource/cloudwatch @grafana/aws-plugins
@@ -155,7 +178,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/cloud-provider-plugins
 /public/app/plugins/datasource/graphite @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb @grafana/observability-metrics
-/public/app/plugins/datasource/jaeger @grafana/observability-logs-and-traces
+/public/app/plugins/datasource/jaeger @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/loki @grafana/observability-logs
 /public/app/plugins/datasource/mssql @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql @grafana/grafana-bi-squad
@@ -163,8 +186,8 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/postgres @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring @grafana/cloud-provider-plugins
-/public/app/plugins/datasource/zipkin @grafana/observability-logs-and-traces
-/public/app/plugins/datasource/tempo @grafana/observability-logs-and-traces
+/public/app/plugins/datasource/zipkin @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/tempo @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager @grafana/alerting-squad
 
 # Cloud middleware
@@ -183,3 +206,11 @@ lerna.json @grafana/frontend-ops
 /pkg/services/oauthtoken @grafana/grafana-authnz-team
 /pkg/services/teamguardian @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts @grafana/grafana-authnz-team
+
+# Grafana Partnerships Team
+/pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
+
+# Schema framework and code generation
+/pkg/codegen @grafana/grafana-as-code
+/pkg/framework/coremodel @grafana/grafana-as-code
+/public/app/plugins/*gen.go @grafana/grafana-as-code

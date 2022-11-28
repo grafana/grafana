@@ -30,9 +30,9 @@ filters = rendering:debug
 
 You can also enable more logs in image renderer service itself by:
 
-- Increasing the [log level]({{< relref "/#log-level" >}}).
-- Enabling [verbose logging]({{< relref "/#verbose-logging" >}}).
-- [Capturing headless browser output]({{< relref "/#capture-browser-output" >}}).
+- Increasing the [log level]({{< relref ".#log-level" >}}).
+- Enabling [verbose logging]({{< relref "./#verbose-logging" >}}).
+- [Capturing headless browser output]({{< relref "./#capture-browser-output" >}}).
 
 ## Missing libraries
 

@@ -47,6 +47,7 @@ export class ElementState implements LayerElement {
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
+    options.border = options.border ?? { color: { fixed: 'dark-green' } };
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -201,7 +202,9 @@ export class ElementState implements LayerElement {
     let parentBorderWidth = 0;
     if (!parentContainer) {
       parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
-      parentBorderWidth = parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
+      parentBorderWidth = this.parent?.isRoot()
+        ? 0
+        : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
     const relativeTop =
@@ -329,9 +332,9 @@ export class ElementState implements LayerElement {
       }
     }
 
-    if (border && border.color && border.width) {
+    if (border && border.color && border.width !== undefined) {
       const color = ctx.getColor(border.color);
-      css.borderWidth = border.width;
+      css.borderWidth = `${border.width}px`;
       css.borderStyle = 'solid';
       css.borderColor = color.value();
 
@@ -442,10 +445,19 @@ export class ElementState implements LayerElement {
   };
 
   render() {
-    const { item } = this;
+    const { item, div } = this;
+    const scene = this.getScene();
+    // TODO: Rethink selected state handling
+    const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
+
     return (
       <div key={this.UID} ref={this.initElement}>
-        <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
+        <item.display
+          key={`${this.UID}/${this.revId}`}
+          config={this.options.config}
+          data={this.data}
+          isSelected={isSelected}
+        />
       </div>
     );
   }

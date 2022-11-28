@@ -13,8 +13,6 @@ const { round, min, ceil } = Math;
 
 const textPadding = 2;
 
-const pxRatio = devicePixelRatio;
-
 const laneDistr = SPACE_BETWEEN;
 
 type WalkCb = (idx: number, offPx: number, dimPx: number) => void;
@@ -103,7 +101,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const size = [colWidth, Infinity];
   const gapFactor = 1 - size[0];
-  const maxWidth = (size[1] ?? Infinity) * pxRatio;
+  const maxWidth = (size[1] ?? Infinity) * uPlot.pxRatio;
 
   const fillPaths: Map<CanvasRenderingContext2D['fillStyle'], Path2D> = new Map();
   const strokePaths: Map<CanvasRenderingContext2D['strokeStyle'], Path2D> = new Map();
@@ -205,7 +203,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       u,
       sidx,
       (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
-        let strokeWidth = round((series.width || 0) * pxRatio);
+        let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
 
         let discrete = isDiscrete(sidx);
 
@@ -312,7 +310,7 @@ export function getConfig(opts: TimelineCoreOptions) {
             u,
             sidx,
             (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
-              let strokeWidth = round((series.width || 0) * pxRatio);
+              let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
 
               let y = round(yOff + yMids[sidx - 1]);
 
@@ -377,6 +375,8 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   function setHoverMark(i: number, o: Rect | null) {
     let h = hoverMarks[i];
+
+    let pxRatio = uPlot.pxRatio;
 
     if (o) {
       h.style.display = '';
@@ -459,8 +459,8 @@ export function getConfig(opts: TimelineCoreOptions) {
   const doHover = mode === TimelineMode.Changes ? hoverMulti : hoverOne;
 
   const setCursor = (u: uPlot) => {
-    let cx = round(u.cursor.left! * pxRatio);
-    let cy = round(u.cursor.top! * pxRatio);
+    let cx = round(u.cursor.left! * uPlot.pxRatio);
+    let cy = round(u.cursor.top! * uPlot.pxRatio);
 
     // if quadtree is empty, fill it
     if (!qt.o.length && qt.q == null) {
@@ -535,7 +535,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
         yMids[iy] = round(y0 + hgt / 2);
-        ySplits[iy] = u.posToVal(yMids[iy] / pxRatio, FIXED_UNIT);
+        ySplits[iy] = u.posToVal(yMids[iy] / uPlot.pxRatio, FIXED_UNIT);
       });
 
       return ySplits;

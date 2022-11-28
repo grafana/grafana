@@ -1870,7 +1870,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricDefinitionsQuery",
+            "kind": "MetricNamespaceQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"
@@ -1898,7 +1898,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricDefinitionsQuery",
+            "kind": "MetricNamespaceQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"
@@ -1926,7 +1926,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricDefinitionsQuery",
+            "kind": "MetricNamespaceQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"
@@ -1954,7 +1954,7 @@
         "options": [],
         "query": {
           "grafanaTemplateVariableFn": {
-            "kind": "MetricDefinitionsQuery",
+            "kind": "MetricNamespaceQuery",
             "rawQuery": "namespaces($sub,$rg)",
             "resourceGroup": "$rg",
             "subscription": "$sub"

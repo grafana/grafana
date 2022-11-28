@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes } from 'react';
+import React, { HTMLAttributes, useCallback } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme, stylesFactory } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup } from '../Layout/Layout';
@@ -20,8 +20,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, color);
+  const styles = useStyles2(useCallback((theme) => getStyles(theme, color), [color]));
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       <HorizontalGroup align="center" spacing="xs">
@@ -42,7 +41,7 @@ export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, class
 
 Badge.displayName = 'Badge';
 
-const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
+const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   let sourceColor = theme.visualization.getColorByName(color);
   let borderColor = '';
   let bgColor = '';
@@ -66,7 +65,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
       background: ${bgColor};
       border: 1px solid ${borderColor};
       color: ${textColor};
-      font-weight: ${theme.typography.weight.regular};
+      font-weight: ${theme.typography.fontWeightRegular};
 
       > span {
         position: relative;
@@ -75,4 +74,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
       }
     `,
   };
-});
+};

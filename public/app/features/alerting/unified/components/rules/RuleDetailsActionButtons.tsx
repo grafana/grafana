@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { FC, Fragment, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
@@ -8,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';

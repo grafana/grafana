@@ -21,33 +21,35 @@ Grafana includes built-in support for Prometheus. This topic explains options, v
 
 To access Prometheus settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
 
-| Name                        | Description                                                                                                                                                                                                                                                       |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                      | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                             |
-| `Default`                   | Default data source that is pre-selected for new panels.                                                                                                                                                                                                          |
-| `Url`                       | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                             |
-| `Access`                    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release.                                    |
-| `Basic Auth`                | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                        |
-| `User`                      | User name for basic authentication.                                                                                                                                                                                                                               |
-| `Password`                  | Password for basic authentication.                                                                                                                                                                                                                                |
-| `Scrape interval`           | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                                                                                 |
-| `HTTP method`               | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network. |
-| `Disable metrics lookup`    | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                     |
-| `Custom Query Parameters`   | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                           |
-| **Exemplars configuration** |                                                                                                                                                                                                                                                                   |
-| `Internal link`             | Enable this option is you have an internal link. When you enable this option, you will see a data source selector. Select the backend tracing data store for your exemplar data.                                                                                  |
-| `Data source`               | You will see this option only if you enable `Internal link` option. Select the backend tracing data store for your exemplar data.                                                                                                                                 |
-| `URL`                       | You will see this option only if the `Internal link` option is disabled. Enter the full URL of the external link. You can interpolate the value from the field with `${__value.raw }` macro.                                                                      |
-| `URL Label`                 | (Optional) add a custom display label to override the value of the `Label name` field.                                                                                                                                                                            |
-| `Label name`                | Add a name for the exemplar traceID property.                                                                                                                                                                                                                     |
+| Name                        | Description                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                      | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                          |
+| `Default`                   | Default data source that is pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                       |
+| `Url`                       | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                                                                                                                                                                          |
+| `Access`                    | Only Server access mode is functional. If Server mode is already selected this option is hidden. Otherwise change to Server mode to prevent errors.                                                                                                                                                                                                                                                            |
+| `Basic Auth`                | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                                                                                                                                                                     |
+| `User`                      | User name for basic authentication.                                                                                                                                                                                                                                                                                                                                                                            |
+| `Password`                  | Password for basic authentication.                                                                                                                                                                                                                                                                                                                                                                             |
+| `Scrape interval`           | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                                                                                                                                                                                                                              |
+| `HTTP method`               | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.                                                                                                                                              |
+| `Type`                      | The type of your Prometheus server, i.e `Prometheus`, `Cortex`, `Thanos` or `Mimir`. When this value is selected in the configuration UI, the Prometheus version field attempts to detect the version automatically using the Prometheus [buildinfo](https://semver.org/) API. Some Prometheus types do not support this API, and you will need to manually populate the version in those cases (e.g. Cortex). |
+| `Version`                   | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected.                                                                                                                                                                                                                                                                                              |
+| `Disable metrics lookup`    | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                                                                                                                                                                  |
+| `Custom Query Parameters`   | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                                                                                                                                                                        |
+| **Exemplars configuration** |                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `Internal link`             | Enable this option is you have an internal link. When you enable this option, you will see a data source selector. Select the backend tracing data store for your exemplar data.                                                                                                                                                                                                                               |
+| `Data source`               | You will see this option only if you enable `Internal link` option. Select the backend tracing data store for your exemplar data.                                                                                                                                                                                                                                                                              |
+| `URL`                       | You will see this option only if the `Internal link` option is disabled. Enter the full URL of the external link. You can interpolate the value from the field with `${__value.raw }` macro.                                                                                                                                                                                                                   |
+| `URL Label`                 | (Optional) add a custom display label to override the value of the `Label name` field.                                                                                                                                                                                                                                                                                                                         |
+| `Label name`                | Add a name for the exemplar traceID property.                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Prometheus query editor
 
-Prometheus query editor is separated into 3 distinct modes that you can switch between. See docs for each section below.
+Prometheus query editor is separated into 2 distinct modes that you can switch between. See docs for each section below.
 
-![Editor toolbar](/static/img/docs/prometheus/header-8-5.png 'Editor toolbar')
+![Editor toolbar](/static/img/docs/prometheus/header-9-1.png 'Editor toolbar')
 
-At the top of the editor, select `Run queries` to run a query. Select `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode, there are additional elements explained in the Builder section.
+At the top of the editor, select `Run queries` to run a query. Select `Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode, there are additional elements explained in the Builder section.
 
 > **Note:** In Explore, to run Prometheus queries, select `Run query`.
 
@@ -55,7 +57,7 @@ Each mode is synchronized with the other modes, so you can switch between them w
 
 ### Code mode
 
-![Code mode](/static/img/docs/prometheus/code-mode-8-5.png 'Code mode')
+![Code mode](/static/img/docs/prometheus/code-mode-9-1.png 'Code mode')
 
 Code mode allows you to write raw queries in a textual editor. It implements advanced autocomplete features and syntax highlighting to help with writing complex queries. In addition, it also contains `Metrics browser` to further aid with writing queries (see more docs below).
 
@@ -63,7 +65,7 @@ For more information about Prometheus query language, refer to the [Prometheus d
 
 #### Autocomplete
 
-![Autocomplete](/static/img/docs/prometheus/autocomplete-8-5.png 'Autocomplete')
+![Autocomplete](/static/img/docs/prometheus/autocomplete-9-1.png 'Autocomplete')
 
 Autocomplete kicks automatically in appropriate times during typing. Use `ctrl/cmd + space` to trigger autocomplete manually when needed. Autocomplete can suggest both static functions, aggregations and keywords but also dynamic items like metrics and labels. Autocomplete dropdown also shows documentation for the suggested items, either static one or dynamic metric documentation where available.
 
@@ -75,7 +77,7 @@ The metrics browser allows you to quickly find metrics and select relevant label
 When you open the browser you will see all available metrics and labels.
 If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip.
 
-![Metrics browser](/static/img/docs/prometheus/metric-browser-8-5.png 'Metrics browser')
+![Metrics browser](/static/img/docs/prometheus/metric-browser-9-1.png 'Metrics browser')
 
 When you select a metric, the browser narrows down the available labels to show only the ones applicable to the metric.
 You can then select one or more labels for which the available label values are shown in lists in the bottom section.
@@ -92,13 +94,13 @@ The "Validate selector" button will check with Prometheus how many time series a
 
 ![Options](/static/img/docs/prometheus/options-8-5.png 'Options')
 
-| Name        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Legend`    | Controls the name of the time series. Use predefined format or use custom format.<br/>`Auto` - if there is a single label, it shows just the value of that label for each series. If there are multiple labels, it works the same as `Verbose`<br/>`Verbose` - includes all labels.<br/>`Custom` - select will change to text input. Use templating to select which labels will be included. For example, `{{hostname}}` is replaced by the label value for the label `hostname`. Clear the input and click outside the input to go back to select mode.                                                                                                                                                                                                                                                                                                                                                  |
-| `Min step`  | Set the lower bounds on the interval between data points. For example, set "1h" to hint that measurements are not frequent (taken hourly). `$__interval` and `$__rate_interval` are supported.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `Format`    | You can switch between `Table` `Time series` or `Heatmap` options. The `Table` option works only in the Table panel. `Heatmap` displays metrics of the Histogram type on a Heatmap panel. Under the hood, it converts cumulative histograms to regular ones and sorts series by the bucket bound.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `Type`      | `Range` - Query returning a Range vector, a set of time series containing a range of data points over time for each time series.<br/>`Instant` - Perform an "instant" query to return only the latest value that Prometheus has scraped for the requested time series. Instant queries can return results much faster than normal range queries. Use them to look up label sets. Instant query results are made up only of one data point per series but can be shown in the graph panel in a dashboard with the help of [series overrides]({{< relref "../visualizations/graph-panel/#series-overrides" >}}). To show them in the graph as a latest value point, add a series override and select `Points > true`. To show a horizontal line across the whole graph, add a series override and select `Transform > constant`. <br/>`Both` - Available only in Explore. Runs both range and instant query |
-| `Exemplars` | If on, run exemplars query with the regular query and show exemplars in the graph.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Name        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Legend`    | Controls the name of the time series. Use predefined format or use custom format.<br/>`Auto` - if there is a single label, it shows just the value of that label for each series. If there are multiple labels, it works the same as `Verbose`<br/>`Verbose` - includes all labels.<br/>`Custom` - select will change to text input. Use templating to select which labels will be included. For example, `{{hostname}}` is replaced by the label value for the label `hostname`. Clear the input and click outside the input to go back to select mode.                                                                                                                                                                                                               |
+| `Min step`  | Set the lower bounds on the interval between data points. For example, set "1h" to hint that measurements are not frequent (taken hourly). `$__interval` and `$__rate_interval` are supported.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `Format`    | You can switch between `Table` `Time series` or `Heatmap` options. The `Table` option works only in the Table panel. `Heatmap` displays metrics of the Histogram type on a Heatmap panel. Under the hood, it converts cumulative histograms to regular ones and sorts series by the bucket bound.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `Type`      | `Range` - Query returning a Range vector, a set of time series containing a range of data points over time for each time series.<br/>`Instant` - Perform an "instant" query to return only the latest value that Prometheus has scraped for the requested time series. Instant queries can return results much faster than normal range queries. Use them to look up label sets. Instant query results are made up only of one data point per series and can be shown in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. For more information, refer to [Transform]({{< relref "../panels-visualizations/visualizations/time-series/#transform" >}}). |
+| `Exemplars` | If on, run exemplars query with the regular query and show exemplars in the graph.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step. This ensures consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
@@ -117,6 +119,7 @@ In addition to `Run query` button and mode switcher, in builder mode additional 
 | Name           | Description                                                                                                                       |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Query patterns | A list of useful operation patterns that can be used to quickly add multiple operations to your query to achieve a specific goal. |
+| Explain        | Toggle to show a step by step explanation of all query parts and the operations.                                                  |
 | Raw query      | Toggle to show raw query generated by the builder that will be sent to Prometheus instance.                                       |
 
 #### Metric and labels
@@ -129,7 +132,7 @@ Select desired labels and their values from the dropdown list. When metric is se
 
 #### Operations
 
-![Operations](/static/img/docs/prometheus/operations-8-5.gif 'Operations')
+![Operations](/static/img/docs/prometheus/operations-9-1.gif 'Operations')
 
 Use the `+ Operations` button to add operation to your query. Operations are grouped into sections for easier navigation. When the operations dropdown is open, write into the search input to search and filter operations list.
 
@@ -145,9 +148,15 @@ Some operations make sense only in specific order, if adding an operation would 
 
 In same cases the query editor can detect which operations would be most appropriate for a selected metric. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
+### Explain
+
+![Explain mode](/static/img/docs/prometheus/explain-9-1.gif 'Explain mode')
+
+Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
+
 #### Raw query
 
-![Raw query](/static/img/docs/prometheus/raw-query-8-5.gif 'Raw query')
+![Raw query](/static/img/docs/prometheus/raw-query-9-1.gif 'Raw query')
 
 This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
 
@@ -155,19 +164,13 @@ This section is shown only if the `Raw query` switch from the query editor top t
 
 Same set of option is available as in the `Code` mode. See the [Code mode options]({{< relref "#options" >}}) for details.
 
-### Explain mode
-
-![Explain mode](/static/img/docs/prometheus/explain-8-5.png 'Explain mode')
-
-Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
-
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place.
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -175,13 +178,13 @@ types of template variables.
 Variable of the type _Query_ allows you to query Prometheus for a list of metrics, labels or label values. The Prometheus data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                          | Description                                                             | Used API endpoints                |
-| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
-| `label_names()`               | Returns a list of label names.                                          | /api/v1/labels                    |
-| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         | /api/v1/label/`label`/values      |
-| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. | /api/v1/series                    |
-| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        | /api/v1/label/\_\_name\_\_/values |
-| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              | /api/v1/query                     |
+| Name                          | Description                                                             | Used API endpoints                                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `label_names()`               | Returns a list of label names.                                          | /api/v1/labels                                                                                                       |
+| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         | /api/v1/label/`label`/values                                                                                         |
+| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. | /api/v1/series or /api/v1/label/`label`/values, depending on prometheus type and version in datasource configuration |
+| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        | /api/v1/label/\_\_name\_\_/values                                                                                    |
+| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              | /api/v1/query                                                                                                        |
 
 For details of what _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
@@ -189,7 +192,7 @@ For details of what _metric names_, _label names_ and _label values_ are please 
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
+You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../dashboards/variables/add-template-variables/#global-variables" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
 
@@ -234,12 +237,12 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ### Ad hoc filters variable
 
-Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters/" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
+Prometheus supports the special [ad hoc filters]({{< relref "../dashboards/variables/add-template-variables/#add-ad-hoc-filters" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
 applied to all your Prometheus queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.
@@ -281,6 +284,8 @@ datasources:
     url: http://localhost:9090
     jsonData:
       httpMethod: POST
+      prometheusType: Prometheus
+      prometheusVersion: 2.37.0
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.

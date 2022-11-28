@@ -3,16 +3,12 @@ load(
     'build_image',
     'yarn_install_step',
     'identify_runner_step',
-    'gen_version_step',
     'download_grabpl_step',
     'lint_frontend_step',
     'codespell_step',
     'test_frontend_step',
     'build_storybook_step',
-    'build_frontend_docs_step',
-    'build_frontend_package_step',
     'build_docs_website_step',
-    'compile_build_cmd',
 )
 
 load(
@@ -26,19 +22,23 @@ load(
     'pipeline',
 )
 
+docs_paths = {
+    'include': [
+        '*.md',
+        'docs/**',
+        'packages/**/*.md',
+        'latest.json',
+    ],
+}
 
 def docs_pipelines(edition, ver_mode, trigger):
     steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        gen_version_step(ver_mode),
         yarn_install_step(),
         codespell_step(),
         lint_docs(),
-        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
-        compile_build_cmd(),
     ]
 
     return pipeline(
@@ -61,17 +61,19 @@ def lint_docs():
     }
 
 
-def trigger_docs():
+def trigger_docs_main():
+    return {
+        'branch': 'main',
+        'event': [
+            'push',
+        ],
+        'paths': docs_paths,
+    }
+
+def trigger_docs_pr():
     return {
         'event': [
             'pull_request',
         ],
-        'paths': {
-            'include': [
-                '*.md',
-                'docs/**',
-                'packages/**',
-                'latest.json',
-            ],
-        },
+        'paths': docs_paths,
     }

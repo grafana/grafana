@@ -17,6 +17,10 @@ This guide helps you identify the steps required to update a plugin from the Gra
 - [Plugin migration guide](#plugin-migration-guide)
   - [Introduction](#introduction)
   - [Table of contents](#table-of-contents)
+  - [From version 9.1.x to 9.2.x](#from-version-91x-to-92x)
+    - [React and React-dom as peer dependencies](#react-and-react-dom-as-peer-dependencies)
+    - [NavModelItem requires a valid icon name](#navmodelitem-requires-a-valid-icon-name)
+    - [Additional type availability](#additional-type-availability)
   - [From version 8.x to 9.x](#from-version-8x-to-9x)
     - [9.0 breaking changes](#90-breaking-changes)
       - [theme.visualization.getColorByName replaces getColorForTheme](#themevisualizationgetcolorbyname-replaces-getcolorfortheme)
@@ -59,6 +63,65 @@ This guide helps you identify the steps required to update a plugin from the Gra
       - [Migrate a data source plugin](#migrate-a-data-source-plugin)
       - [Migrate to data frames](#migrate-to-data-frames)
     - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+
+## From version 9.1.x to 9.2.x
+
+### React and React-dom as peer dependencies
+
+In earlier versions of Grafana packages `react` and `react-dom` were installed during a `yarn install` regardless of a plugins dependencies. In 9.2.0 the `@grafana` packages declare these react packages as peerDependencies and will need adding to a plugins `package.json` file for test commands to continue to run successfully.
+
+Example:
+
+```json
+// before
+"dependencies": {
+  "@grafana/data": "9.1.0",
+  "@grafana/ui": "9.1.0",
+},
+
+// after
+"dependencies": {
+  "@grafana/data": "9.2.0",
+  "@grafana/ui": "9.2.0",
+  "react": "17.0.2",
+  "react-dom": "17.0.2"
+},
+
+```
+
+### NavModelItem requires a valid icon name
+
+The typings of the `NavModelItem` have improved to only allow a valid `IconName` for the icon property. You can find the complete list of valid icons [here](https://github.com/grafana/grafana/blob/v9.2.0-beta1/packages/grafana-data/src/types/icon.ts). The icons specified in the list will work for older versions of Grafana 9.
+
+Example:
+
+```ts
+// before
+const model: NavModelItem = {
+  id: 'settings',
+  text: 'Settings',
+  icon: 'fa fa-cog',
+  url: `${baseUrl}/settings`,
+};
+
+// after
+const model: NavModelItem = {
+  id: 'settings',
+  text: 'Settings',
+  icon: 'cog',
+  url: `${baseUrl}/settings`,
+};
+```
+
+### Additional type availability
+
+FieldProps, ModalProps, and QueryFieldProps are now exposed from `@grafana/ui`. They can be imported in the same way as other types.
+
+Example:
+
+```ts
+import { FieldProps, ModalProps, QueryFieldProps } from '@grafana/ui';
+```
 
 ## From version 8.x to 9.x
 
@@ -708,9 +771,9 @@ import { PanelProps } from '@grafana/data';
 
 interface Props extends PanelProps<SimpleOptions> {}
 
-export const MyPanel: React.FC<Props> = ({ options, data, width, height }) => {
+export function MyPanel({ options, data, width, height }: Props) {
   // ...
-};
+}
 ```
 
 #### Migrate a data source plugin
@@ -732,9 +795,9 @@ Before 7.0, data source and panel plugins exchanged data using either time serie
 
 Grafana 7.0 is backward compatible with the old data format used in previous versions. Panels and data sources using the old format will still work with plugins using the new data frame format.
 
-The `DataQueryResponse` returned by the `query` method can be either a [LegacyResponseData](https://grafana.com/docs/grafana/latest/packages_api/data/legacyresponsedata/) or a [DataFrame](https://grafana.com/docs/grafana/latest/packages_api/data/dataframe/).
+The `DataQueryResponse` returned by the `query` method can be either a [LegacyResponseData](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/datasource.ts#L419) or a [DataFrame](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/dataFrame.ts#L200).
 
-The [toDataFrame()](https://grafana.com/docs/grafana/latest/packages_api/data/todataframe/) function converts a legacy response, such as `TimeSeries` or `Table`, to a `DataFrame`. Use it to gradually move your code to the new format.
+The [toDataFrame()](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/dataframe/processDataFrame.ts#L309) function converts a legacy response, such as `TimeSeries` or `Table`, to a `DataFrame`. Use it to gradually move your code to the new format.
 
 ```ts
 import { toDataFrame } from '@grafana/data';

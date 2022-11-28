@@ -28,8 +28,6 @@ export const LoginPage: FC = () => {
         {({
           loginHint,
           passwordHint,
-          ldapEnabled,
-          authProxyEnabled,
           disableLoginForm,
           disableUserSignUp,
           login,
@@ -48,19 +46,15 @@ export const LoginPage: FC = () => {
                     passwordHint={passwordHint}
                     isLoggingIn={isLoggingIn}
                   >
-                    {!(ldapEnabled || authProxyEnabled) ? (
-                      <HorizontalGroup justify="flex-end">
-                        <LinkButton
-                          className={forgottenPasswordStyles}
-                          fill="text"
-                          href={`${config.appSubUrl}/user/password/send-reset-email`}
-                        >
-                          Forgot your password?
-                        </LinkButton>
-                      </HorizontalGroup>
-                    ) : (
-                      <></>
-                    )}
+                    <HorizontalGroup justify="flex-end">
+                      <LinkButton
+                        className={forgottenPasswordStyles}
+                        fill="text"
+                        href={`${config.appSubUrl}/user/password/send-reset-email`}
+                      >
+                        Forgot your password?
+                      </LinkButton>
+                    </HorizontalGroup>
                   </LoginForm>
                 )}
                 <LoginServiceButtons />

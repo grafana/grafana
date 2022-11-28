@@ -3,7 +3,7 @@ package pipeline
 import (
 	"context"
 	"flag"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -19,7 +19,7 @@ func loadTestJson(t testing.TB, file string) []byte {
 	t.Helper()
 	// Safe to disable, this is a test.
 	// nolint:gosec
-	content, err := ioutil.ReadFile(filepath.Join("testdata", file+".json"))
+	content, err := os.ReadFile(filepath.Join("testdata", file+".json"))
 	require.NoError(t, err, "expected to be able to read file")
 	require.True(t, len(content) > 0)
 	return content

@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 )
@@ -28,7 +27,7 @@ func MD5File(fpath string) error {
 	}
 
 	// nolint:gosec
-	if err := ioutil.WriteFile(fpath+".md5", []byte(fmt.Sprintf("%x\n", h.Sum(nil))), 0664); err != nil {
+	if err := os.WriteFile(fpath+".md5", []byte(fmt.Sprintf("%x\n", h.Sum(nil))), 0664); err != nil {
 		return err
 	}
 

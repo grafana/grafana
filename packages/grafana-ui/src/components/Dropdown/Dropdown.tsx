@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { CSSTransition } from 'react-transition-group';
 
@@ -16,6 +16,7 @@ export interface Props {
 
 export const Dropdown = React.memo(({ children, overlay, placement }: Props) => {
   const [show, setShow] = useState(false);
+  const transitionRef = useRef(null);
 
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible } = usePopperTooltip({
     visible: show,
@@ -46,12 +47,13 @@ export const Dropdown = React.memo(({ children, overlay, placement }: Props) => 
             <div ref={setTooltipRef} {...getTooltipProps()} onClick={onOverlayClicked}>
               <div {...getArrowProps({ className: 'tooltip-arrow' })} />
               <CSSTransition
+                nodeRef={transitionRef}
                 appear={true}
                 in={true}
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                {ReactUtils.renderOrCallToRender(overlay)}
+                <div ref={transitionRef}>{ReactUtils.renderOrCallToRender(overlay)}</div>
               </CSSTransition>
             </div>
           </FocusScope>

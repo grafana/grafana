@@ -32,7 +32,7 @@ export function ClipboardButton({
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     if (showCopySuccess) {
       timeoutId = setTimeout(() => {

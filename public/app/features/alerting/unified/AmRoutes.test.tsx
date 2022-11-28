@@ -20,6 +20,7 @@ import { AccessControlAction } from 'app/types';
 
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
+import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
@@ -29,6 +30,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
 jest.mock('app/core/services/context_srv');
+jest.mock('./api/buildInfo');
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(getAllDataSources),
@@ -37,6 +39,7 @@ const mocks = {
     fetchAlertManagerConfig: jest.mocked(fetchAlertManagerConfig),
     updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
     fetchStatus: jest.mocked(fetchStatus),
+    discoverAlertmanagerFeatures: jest.mocked(discoverAlertmanagerFeatures),
   },
   contextSrv: jest.mocked(contextSrv),
 };
@@ -82,6 +85,8 @@ const ui = {
 
   editButton: byRole('button', { name: 'Edit' }),
   saveButton: byRole('button', { name: 'Save' }),
+
+  setDefaultReceiverCTA: byRole('button', { name: 'Set a default contact point' }),
 
   editRouteButton: byLabelText('Edit route'),
   deleteRouteButton: byLabelText('Delete route'),
@@ -192,6 +197,7 @@ describe('AmRoutes', () => {
     mocks.contextSrv.hasAccess.mockImplementation(() => true);
     mocks.contextSrv.hasPermission.mockImplementation(() => true);
     mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
+    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
@@ -499,7 +505,7 @@ describe('AmRoutes', () => {
     mocks.api.updateAlertManagerConfig.mockResolvedValue(Promise.resolve());
 
     await renderAmRoutes(GRAFANA_RULES_SOURCE_NAME);
-    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
+    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
 
     const deleteButtons = await ui.deleteRouteButton.findAll();
     expect(deleteButtons).toHaveLength(1);
@@ -696,6 +702,21 @@ describe('AmRoutes', () => {
         },
       },
     });
+  });
+
+  it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
+
+    mocks.api.fetchAlertManagerConfig.mockRejectedValue({
+      message: 'alertmanager storage object not found',
+    });
+
+    await renderAmRoutes();
+
+    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
+
+    expect(ui.rootReceiver.query()).toBeInTheDocument();
+    expect(ui.setDefaultReceiverCTA.query()).toBeInTheDocument();
   });
 });
 

@@ -72,7 +72,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const showTemplateStep = type === RuleFormType.templated;
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
-  useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
+  useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
 
   const submit = (values: RuleFormValues, exitOnSave: boolean) => {
     dispatch(

@@ -7,6 +7,8 @@ aliases:
   - /docs/grafana/latest/enterprise/license/license-expiration/
   - /docs/grafana/latest/enterprise/license-restrictions/
   - /docs/grafana/latest/enterprise/license/license-restrictions/
+  - /docs/grafana/latest/administration/enterprise-licensing/
+  - /docs/grafana/latest/administration/enterprise-licensing/license-restrictions/
 description: Activate and manage a Grafana Enterprise license
 keywords:
   - grafana
@@ -18,7 +20,7 @@ weight: 500
 
 # Grafana Enterprise license
 
-When you become a Grafana Enterprise customer, you gain access to Grafana's premium observability features, including enterprise data source plugins, reporting, and role-based access control. In order to use these [enhanced features of Grafana Enterprise]({{< relref "../../enterprise/" >}}), you must purchase and activate a Grafana Enterprise license.
+When you become a Grafana Enterprise customer, you gain access to Grafana's premium observability features, including enterprise data source plugins, reporting, and role-based access control. In order to use these [enhanced features of Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}), you must purchase and activate a Grafana Enterprise license.
 
 To purchase a license directly from Grafana Labs, [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise). To activate an Enterprise license purchased from Grafana Labs, refer to [Activate an Enterprise license]({{< ref "#activate-an-enterprise-license" >}}).
 

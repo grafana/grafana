@@ -1,8 +1,7 @@
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
-import { StoreState } from 'app/types/store';
+import { useSelector } from 'app/types';
 
 import { ROUTE_BASE_ID } from '../constants';
 
@@ -11,7 +10,7 @@ import { ROUTE_BASE_ID } from '../constants';
 // the child nav-model-item's ID on the call-site.)
 export const useNavModel = () => {
   const { pathname: currentPath } = useLocation();
-  const navIndex = useSelector((state: StoreState) => state.navIndex);
+  const navIndex = useSelector((state) => state.navIndex);
   const node = navIndex[ROUTE_BASE_ID];
   const main = node;
   const isDefaultRoute = (item: NavModelItem) =>

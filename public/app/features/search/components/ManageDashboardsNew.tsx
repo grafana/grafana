@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
-import { useDebounce, useLocalStorage } from 'react-use';
+import React from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -29,28 +29,30 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const folderId = folder?.id;
   // const folderUid = folder?.uid;
   const canSave = folder?.canSave;
+  const { isEditor } = contextSrv;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
+  const canCreateFolders = contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor);
+  const canCreateDashboardsFallback = hasEditPermissionInFolders || !!canSave;
+  const canCreateDashboards = folder?.id
+    ? contextSrv.hasAccessInMetadata(AccessControlAction.DashboardsCreate, folder, canCreateDashboardsFallback)
+    : contextSrv.hasAccess(AccessControlAction.DashboardsCreate, canCreateDashboardsFallback);
+  const viewActions = (folder === undefined && canCreateFolders) || canCreateDashboards;
 
   let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
   if (!config.featureToggles.panelTitleSearch) {
     includePanels = false;
   }
 
-  const { isEditor } = contextSrv;
-
-  const [inputValue, setInputValue] = useState(query.query ?? '');
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    setInputValue(e.currentTarget.value);
+    onQueryChange(e.currentTarget.value);
   };
-  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
 
   return (
     <>
       <div className={cx(styles.actionBar, 'page-action-bar')}>
         <div className={cx(styles.inputWrapper, 'gf-form gf-form--grow m-r-2')}>
           <Input
-            value={inputValue}
+            value={query.query ?? ''}
             onChange={onSearchQueryChange}
             onKeyDown={onKeyDown}
             autoFocus
@@ -60,23 +62,18 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
             suffix={false ? <Spinner /> : null}
           />
         </div>
-        <DashboardActions
-          folderId={folderId}
-          canCreateFolders={contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor)}
-          canCreateDashboards={contextSrv.hasAccess(
-            AccessControlAction.DashboardsCreate,
-            hasEditPermissionInFolders || !!canSave
-          )}
-        />
+        {viewActions && (
+          <DashboardActions
+            folderId={folderId}
+            canCreateFolders={canCreateFolders}
+            canCreateDashboards={canCreateDashboards}
+          />
+        )}
       </div>
 
       <SearchView
         showManage={isEditor || hasEditPermissionInFolders || canSave}
         folderDTO={folder}
-        queryText={query.query}
-        onQueryTextChange={(newQueryText) => {
-          setInputValue(newQueryText);
-        }}
         hidePseudoFolders={true}
         includePanels={includePanels!}
         setIncludePanels={setIncludePanels}

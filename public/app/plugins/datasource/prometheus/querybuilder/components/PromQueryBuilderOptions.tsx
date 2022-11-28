@@ -1,7 +1,7 @@
 import React, { SyntheticEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
-import { EditorRow, EditorField, EditorSwitch } from '@grafana/experimental';
+import { EditorField, EditorRow, EditorSwitch } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
@@ -38,7 +38,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const queryTypeOptions = getQueryTypeOptions(app === CoreApp.Explore);
+  const queryTypeOptions = getQueryTypeOptions(app === CoreApp.Explore || app === CoreApp.PanelEditor);
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {

@@ -33,7 +33,6 @@ def windows(trigger, edition, ver_mode):
     if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2'))) or ver_mode in (
         'release', 'release-branch',
     ):
-        bucket_part = ''
         bucket = '%PRERELEASE_BUCKET%/artifacts/downloads'
         if ver_mode == 'release':
             ver_part = '${DRONE_TAG}'
@@ -41,7 +40,6 @@ def windows(trigger, edition, ver_mode):
         else:
             dir = 'main'
             bucket = 'grafana-downloads'
-            bucket_part = ' --packages-bucket {}'.format(bucket)
             build_no = 'DRONE_BUILD_NUMBER'
             ver_part = '--build-id $$env:{}'.format(build_no)
         installer_commands = [
@@ -57,8 +55,7 @@ def windows(trigger, edition, ver_mode):
             'release',
         ):
             installer_commands.extend([
-                '.\\grabpl.exe gen-version {}'.format(ver_part),
-                '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
+                '.\\grabpl.exe windows-installer --edition {} {}'.format(edition, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
             ])
             if ver_mode == 'main':

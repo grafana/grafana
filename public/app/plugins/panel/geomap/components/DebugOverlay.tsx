@@ -6,6 +6,7 @@ import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors/src';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
@@ -43,7 +44,7 @@ export class DebugOverlay extends PureComponent<Props, State> {
     const { zoom, center } = this.state;
 
     return (
-      <div className={this.style.infoWrap}>
+      <div className={this.style.infoWrap} aria-label={selectors.components.DebugOverlay.wrapper}>
         <table>
           <tbody>
             <tr>

@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 
 import { PluginIncludeType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { isOrgAdmin } from '../permissions';
@@ -21,7 +23,8 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
   const { pathname } = useLocation();
 
   const [tabs, defaultTab] = useMemo(() => {
-    const canConfigurePlugins = isOrgAdmin();
+    const canConfigurePlugins =
+      plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
     const tabs: PluginDetailsTab[] = [...defaultTabs];
     let defaultTab;
     if (isPublished) {
@@ -90,7 +93,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
     }
 
     return [tabs, defaultTab];
-  }, [pluginConfig, defaultTabs, pathname, isPublished]);
+  }, [plugin, pluginConfig, defaultTabs, pathname, isPublished]);
 
   return {
     error,

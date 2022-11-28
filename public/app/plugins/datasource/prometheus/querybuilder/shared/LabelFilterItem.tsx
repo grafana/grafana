@@ -25,8 +25,8 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     isLoadingLabelValues?: boolean;
   }>({});
 
-  const isMultiSelect = () => {
-    return operators.find((op) => op.label === item.op)?.isMultiValue;
+  const isMultiSelect = (operator = item.op) => {
+    return operators.find((op) => op.label === operator)?.isMultiValue;
   };
 
   const getSelectOptionsFromString = (item?: string): string[] => {
@@ -51,6 +51,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         <Select
+          placeholder="Select label"
           aria-label={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
@@ -81,12 +82,17 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
+              onChange({
+                ...item,
+                op: change.value,
+                value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
+              } as any as QueryBuilderLabelFilter);
             }
           }}
         />
 
         <Select
+          placeholder="Select value"
           aria-label={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"

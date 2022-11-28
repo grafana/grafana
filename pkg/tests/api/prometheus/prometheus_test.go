@@ -12,8 +12,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -29,7 +29,7 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 	ctx := context.Background()
 
 	createUser(t, testEnv.SQLStore, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})
@@ -112,7 +112,7 @@ func TestIntegrationPrometheusClient(t *testing.T) {
 	ctx := context.Background()
 
 	createUser(t, testEnv.SQLStore, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})

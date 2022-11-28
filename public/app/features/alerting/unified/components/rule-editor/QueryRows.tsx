@@ -5,6 +5,7 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
   DataQuery,
   DataSourceInstanceSettings,
+  getDefaultRelativeTimeRange,
   LoadingState,
   PanelData,
   RelativeTimeRange,
@@ -14,6 +15,8 @@ import {
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -56,7 +59,17 @@ export class QueryRows extends PureComponent<Props, State> {
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
-          return item;
+          // It's an expression , let's update the relativeTimeRange with this new relativeTimeRange
+          if (item.datasourceUid === ExpressionDatasourceUID) {
+            const dataSource = this.findDataSourceFromExpression(queries, item.model.expression);
+            const timeRangeToUpdate: RelativeTimeRange =
+              dataSource?.datasourceUid === queries[index].datasourceUid
+                ? timeRange
+                : dataSource?.relativeTimeRange ?? getDefaultRelativeTimeRange();
+            return { ...item, relativeTimeRange: timeRangeToUpdate };
+          } else {
+            return item;
+          }
         }
         return {
           ...item,
@@ -116,6 +129,12 @@ export class QueryRows extends PureComponent<Props, State> {
     onQueriesChange(updatedQueries);
   };
 
+  findDataSourceFromExpression(queries: AlertQuery[], expression: string | undefined): AlertQuery | null | undefined {
+    const firstReference = queries.find((alertQuery) => alertQuery.refId === expression);
+    const dataSource = firstReference && findDataSourceFromExpressionRecursive(queries, firstReference);
+    return dataSource;
+  }
+
   onChangeQuery = (query: DataQuery, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
@@ -128,6 +147,11 @@ export class QueryRows extends PureComponent<Props, State> {
         if (itemIndex !== index) {
           return item;
         }
+        const dataSourceAlertQuery = this.findDataSourceFromExpression(queries, item.refId);
+
+        const relativeTimeRange = dataSourceAlertQuery
+          ? dataSourceAlertQuery.relativeTimeRange
+          : getDefaultRelativeTimeRange();
 
         return {
           ...item,
@@ -138,6 +162,7 @@ export class QueryRows extends PureComponent<Props, State> {
             ...query,
             datasource: query.datasource!,
           },
+          relativeTimeRange: relativeTimeRange,
         };
       })
     );

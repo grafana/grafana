@@ -1,10 +1,9 @@
 import { countBy, keyBy } from 'lodash';
-import { useSelector } from 'react-redux';
 
-import { DataSourceInstanceSettings, DataSourceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { useSelector } from 'app/types';
 
-import { StoreState } from '../../../../types';
 import { getAlertManagerDataSources } from '../utils/datasource';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
@@ -14,10 +13,10 @@ type AlertmanagerConfig = { url: string; status: string; actualUrl: string };
 
 export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
   const discoveredAlertmanagers = useSelector(
-    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result?.data
+    (state) => state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result?.data
   );
   const alertmanagerConfig = useSelector(
-    (state: StoreState) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagers
+    (state) => state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result?.alertmanagers
   );
 
   if (!discoveredAlertmanagers || !alertmanagerConfig) {
@@ -69,7 +68,7 @@ export interface ExternalDataSourceAM {
 export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
   const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 
-  const alertmanagerDatasources = useSelector((state: StoreState) =>
+  const alertmanagerDatasources = useSelector((state) =>
     keyBy(
       state.dataSources.dataSources.filter((ds) => ds.type === 'alertmanager'),
       (ds) => ds.uid
@@ -118,7 +117,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
   });
 }
 
-function getDataSourceUrlWithProtocol<T>(dsSettings: DataSourceSettings<T>) {
+function getDataSourceUrlWithProtocol<T extends DataSourceJsonData>(dsSettings: DataSourceSettings<T>) {
   const hasProtocol = new RegExp('^[^:]*://').test(dsSettings.url);
   if (!hasProtocol) {
     return `http://${dsSettings.url}`; // Grafana append http protocol if there is no any

@@ -56,6 +56,7 @@ apiVersion: 1
 #       # <string> state of the alert rule when the query execution 
 #       #          fails - possible values: "Error", "Alerting", "OK"
 #       #          default = Alerting
+#       executionErrorState: Alerting
 #       # <duration, required> how long the alert condition should be breached before Firing. Before this time has elapsed, the alert is considered to be Pending
 #       for: 60s
 #       # <map<string, string>> map of strings to attach arbitrary custom data

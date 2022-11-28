@@ -103,6 +103,10 @@ export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2):
     ) {
       palette.reverse();
     }
+
+    if (opts.reverse) {
+      palette.reverse();
+    }
   }
 
   return palette;

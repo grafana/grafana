@@ -108,56 +108,58 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     navigationLogger('AppWrapper', false, 'rendering');
 
     const commandPaletteActionSelected = (action: Action) => {
-      reportInteraction('commandPalette_action_selected', {
+      reportInteraction('command_palette_action_selected', {
         actionId: action.id,
         actionName: action.name,
       });
     };
 
     return (
-      <Provider store={store}>
-        <I18nProvider>
-          <ErrorBoundaryAlert style="page">
-            <GrafanaContext.Provider value={app.context}>
-              <ThemeProvider value={config.theme2}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <ModalsProvider>
-                    <GlobalStyles />
-                    {this.commandPaletteEnabled() && <CommandPalette />}
-                    <div className="grafana-app">
-                      <Router history={locationService.getHistory()}>
-                        <PerconaTourProvider>
-                          {this.renderNavBar()}
-                          {ready && <PerconaBootstrapper />}
-                          <AppChrome>
-                            {pageBanners.map((Banner, index) => (
-                              <Banner key={index.toString()} />
-                            ))}
+      <React.StrictMode>
+        <Provider store={store}>
+          <I18nProvider>
+            <ErrorBoundaryAlert style="page">
+              <GrafanaContext.Provider value={app.context}>
+                <ThemeProvider value={config.theme2}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <ModalsProvider>
+                      <GlobalStyles />
+                      {this.commandPaletteEnabled() && <CommandPalette />}
+                      <div className="grafana-app">
+                        <Router history={locationService.getHistory()}>
+                          <PerconaTourProvider>
+                            {this.renderNavBar()}
+                            {ready && <PerconaBootstrapper />}
+                            <AppChrome>
+                              {pageBanners.map((Banner, index) => (
+                                <Banner key={index.toString()} />
+                              ))}
 
-                            <AngularRoot />
-                            <AppNotificationList />
-                            {this.searchBarEnabled() && <SearchWrapper />}
-                            {ready && this.renderRoutes()}
-                            {bodyRenderHooks.map((Hook, index) => (
-                              <Hook key={index.toString()} />
-                            ))}
-                          </AppChrome>
-                        </PerconaTourProvider>
-                      </Router>
-                    </div>
-                    <LiveConnectionWarning />
-                    <ModalRoot />
-                    <PortalContainer />
-                  </ModalsProvider>
-                </KBarProvider>
-              </ThemeProvider>
-            </GrafanaContext.Provider>
-          </ErrorBoundaryAlert>
-        </I18nProvider>
-      </Provider>
+                              <AngularRoot />
+                              <AppNotificationList />
+                              {this.searchBarEnabled() && <SearchWrapper />}
+                              {ready && this.renderRoutes()}
+                              {bodyRenderHooks.map((Hook, index) => (
+                                <Hook key={index.toString()} />
+                              ))}
+                            </AppChrome>
+                          </PerconaTourProvider>
+                        </Router>
+                      </div>
+                      <LiveConnectionWarning />
+                      <ModalRoot />
+                      <PortalContainer />
+                    </ModalsProvider>
+                  </KBarProvider>
+                </ThemeProvider>
+              </GrafanaContext.Provider>
+            </ErrorBoundaryAlert>
+          </I18nProvider>
+        </Provider>
+      </React.StrictMode>
     );
   }
 }

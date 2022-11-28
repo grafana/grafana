@@ -14,13 +14,17 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertDataQuery,
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
   PostableRuleGrafanaRuleDTO,
+  RulerAlertingRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
@@ -54,7 +58,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     queries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
-    execErrState: GrafanaAlertStateDecision.Alerting,
+    execErrState: GrafanaAlertStateDecision.Error,
     evaluateEvery: '1m',
     evaluateFor: '5m',
 
@@ -106,7 +110,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
-        data: queries,
+        data: queries.map(fixBothInstantAndRangeQuery),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -143,37 +147,60 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     if (isAlertingRulerRule(rule)) {
-      const [forTime, forTimeUnit] = rule.for
-        ? parseInterval(rule.for)
-        : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+      const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.alert,
+        ...alertingRuleValues,
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        forTime,
-        forTimeUnit,
-        annotations: listifyLabelsOrAnnotations(rule.annotations),
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else if (isRecordingRulerRule(rule)) {
+      const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
+
       return {
         ...defaultFormValues,
-        name: rule.record,
+        ...recordingRuleValues,
         type: RuleFormType.cloudRecording,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
-        expression: rule.expr,
-        labels: listifyLabelsOrAnnotations(rule.labels),
       };
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
     }
   }
+}
+
+export function alertingRulerRuleToRuleForm(
+  rule: RulerAlertingRuleDTO
+): Pick<RuleFormValues, 'name' | 'forTime' | 'forTimeUnit' | 'expression' | 'annotations' | 'labels'> {
+  const defaultFormValues = getDefaultFormValues();
+
+  const [forTime, forTimeUnit] = rule.for
+    ? parseInterval(rule.for)
+    : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+
+  return {
+    name: rule.alert,
+    expression: rule.expr,
+    forTime,
+    forTimeUnit,
+    annotations: listifyLabelsOrAnnotations(rule.annotations),
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
+}
+
+export function recordingRulerRuleToRuleForm(
+  rule: RulerRecordingRuleDTO
+): Pick<RuleFormValues, 'name' | 'expression' | 'labels'> {
+  return {
+    name: rule.record,
+    expression: rule.expr,
+    labels: listifyLabelsOrAnnotations(rule.labels),
+  };
 }
 
 export const getDefaultQueries = (): AlertQuery[] => {
@@ -363,4 +390,23 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+export function fixBothInstantAndRangeQuery(query: AlertQuery) {
+  const model = query.model;
+
+  if (!isPromQuery(model)) {
+    return query;
+  }
+
+  const isBothInstantAndRange = model.instant && model.range;
+  if (isBothInstantAndRange) {
+    return { ...query, model: { ...model, range: true, instant: false } };
+  }
+
+  return query;
+}
+
+function isPromQuery(model: AlertDataQuery): model is PromQuery {
+  return 'expr' in model && 'instant' in model && 'range' in model;
 }

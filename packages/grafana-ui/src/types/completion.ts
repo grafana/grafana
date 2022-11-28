@@ -1,4 +1,5 @@
-import { Value, Editor as CoreEditor } from 'slate';
+import { Value } from 'slate';
+import { Editor } from 'slate-react';
 
 import { SearchFunctionType } from '../utils';
 
@@ -133,7 +134,7 @@ export interface TypeaheadInput {
   wrapperClasses: string[];
   labelKey?: string;
   value?: Value;
-  editor?: CoreEditor;
+  editor?: Editor;
 }
 
 export interface SuggestionsState {

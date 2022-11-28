@@ -69,6 +69,7 @@ type dashboard struct {
 	FolderID int64 `xorm:"folder_id"`
 	OrgID    int64 `xorm:"org_id"`
 	IsFolder bool
+	HasAcl   bool `xorm:"has_acl"`
 }
 
 func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
@@ -76,7 +77,7 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 	m.dialect = migrator.Dialect
 
 	var dashboards []dashboard
-	if err := m.sess.SQL("SELECT id, is_folder, folder_id, org_id FROM dashboard").Find(&dashboards); err != nil {
+	if err := m.sess.SQL("SELECT id, is_folder, folder_id, org_id, has_acl FROM dashboard").Find(&dashboards); err != nil {
 		return fmt.Errorf("failed to list dashboards: %w", err)
 	}
 
@@ -108,7 +109,7 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 			permissionMap[d.OrgID] = map[string][]*ac.Permission{}
 		}
 
-		if (d.IsFolder || d.FolderID == 0) && len(acls) == 0 {
+		if (d.IsFolder || d.FolderID == 0) && len(acls) == 0 && !d.HasAcl {
 			permissionMap[d.OrgID]["managed:builtins:editor:permissions"] = append(
 				permissionMap[d.OrgID]["managed:builtins:editor:permissions"],
 				m.mapPermission(d.ID, models.PERMISSION_EDIT, d.IsFolder)...,
@@ -407,6 +408,15 @@ func AddManagedFolderAlertActionsRepeatMigration(mg *migrator.Migrator) {
 	mg.AddMigration(managedFolderAlertActionsRepeatMigratorID, &managedFolderAlertActionsRepeatMigrator{})
 }
 
+const managedFolderAlertActionsRepeatMigratorFixedID = "managed folder permissions alert actions repeated fixed migration"
+
+/*
+AddManagedFolderAlertActionsRepeatFixedMigration is a fixed version of AddManagedFolderAlertActionsRepeatMigration.
+*/
+func AddManagedFolderAlertActionsRepeatFixedMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderAlertActionsRepeatMigratorFixedID, &managedFolderAlertActionsRepeatMigrator{})
+}
+
 type managedFolderAlertActionsRepeatMigrator struct {
 	migrator.MigrationBase
 }
@@ -443,8 +453,17 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 
 	for id, a := range mapped {
 		for scope, p := range a {
+			// previous migration added this permission, but it was not added to the toAdd slice
+			// because we were checking all permissions on top of folders, not just the scoped ones
+			//
+			// what we had:
+			// if !hasAction(ac.<Action>, permissions) {
+			// should have been:
+			// if !hasAction(ac.<Action>, p) {
+			//
+			// see PR for explanation: https://github.com/grafana/grafana/pull/58054
 			if hasFolderView(p) {
-				if !hasAction(ac.ActionAlertingRuleRead, permissions) {
+				if !hasAction(ac.ActionAlertingRuleRead, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,
@@ -456,7 +475,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 			}
 
 			if hasFolderAdmin(p) || hasFolderEdit(p) {
-				if !hasAction(ac.ActionAlertingRuleCreate, permissions) {
+				if !hasAction(ac.ActionAlertingRuleCreate, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,
@@ -465,7 +484,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 						Action:  ac.ActionAlertingRuleCreate,
 					})
 				}
-				if !hasAction(ac.ActionAlertingRuleDelete, permissions) {
+				if !hasAction(ac.ActionAlertingRuleDelete, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,
@@ -474,7 +493,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 						Action:  ac.ActionAlertingRuleDelete,
 					})
 				}
-				if !hasAction(ac.ActionAlertingRuleUpdate, permissions) {
+				if !hasAction(ac.ActionAlertingRuleUpdate, p) {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  id,
 						Updated: now,

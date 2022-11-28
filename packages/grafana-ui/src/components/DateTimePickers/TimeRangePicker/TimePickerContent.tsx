@@ -12,7 +12,7 @@ import { Icon } from '../../Icon/Icon';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
-import { TimeRangeForm } from './TimeRangeForm';
+import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
@@ -114,14 +114,14 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   );
 };
 
-export const TimePickerContent: React.FC<Props> = (props) => {
+export const TimePickerContent = (props: Props) => {
   const { widthOverride } = props;
   const theme = useTheme2();
   const isFullscreen = (widthOverride || window.innerWidth) >= theme.breakpoints.values.lg;
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-const NarrowScreenForm: React.FC<FormProps> = (props) => {
+const NarrowScreenForm = (props: FormProps) => {
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory } = props;
   const theme = useTheme2();
   const styles = getNarrowScreenStyles(theme);
@@ -155,7 +155,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
       {!collapsed && (
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
-            <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
+            <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
           {showHistory && (
             <TimeRangeList
@@ -185,7 +185,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
         <div className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
         </div>
-        <TimeRangeForm
+        <TimeRangeContent
           value={value}
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}

@@ -69,10 +69,10 @@ describe('Render', () => {
   it('should render section nav model based on navId', async () => {
     setup({ navId: 'child1' });
 
-    expect(screen.getByRole('heading', { name: 'Section name' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Child1' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getAllByRole('tab').length).toBe(2);
+    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
+    expect(screen.getAllByRole('tab').length).toBe(3);
   });
 
   it('should update chrome with section and pageNav', async () => {
@@ -84,7 +84,7 @@ describe('Render', () => {
   it('should render section nav model based on navId and item page nav', async () => {
     setup({ navId: 'child1', pageNav });
 
-    expect(screen.getByRole('heading', { name: 'Section name' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();

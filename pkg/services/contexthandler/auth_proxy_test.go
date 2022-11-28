@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
 	require.True(t, authEnabled)
 
-	require.Equal(t, userID, ctx.SignedInUser.UserId)
+	require.Equal(t, userID, ctx.SignedInUser.UserID)
 	require.True(t, ctx.IsSignedIn)
 
 	i, err := svc.RemoteCache.Get(context.Background(), key)
@@ -86,7 +87,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &FakeGetSignUserStore{})
 	authenticator := &fakeAuthenticator{}
 
-	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
+	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, &usertest.FakeUserService{})
 }
 
 type FakeGetSignUserStore struct {
@@ -98,9 +99,9 @@ func (f *FakeGetSignUserStore) GetSignedInUser(ctx context.Context, query *model
 		return user.ErrUserNotFound
 	}
 
-	query.Result = &models.SignedInUser{
-		UserId: userID,
-		OrgId:  orgID,
+	query.Result = &user.SignedInUser{
+		UserID: userID,
+		OrgID:  orgID,
 	}
 	return nil
 }

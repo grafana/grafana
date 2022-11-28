@@ -318,6 +318,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     [LiveChannelConnectionState.Connected]: css`
       border: 1px solid ${theme.palette.brandSuccess};
     `,
+    [LiveChannelConnectionState.Connecting]: css`
+      border: 1px solid ${theme.palette.brandWarning};
+    `,
     [LiveChannelConnectionState.Disconnected]: css`
       border: 1px solid ${theme.palette.brandWarning};
     `,

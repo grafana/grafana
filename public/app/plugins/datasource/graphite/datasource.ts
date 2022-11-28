@@ -17,6 +17,7 @@ import {
   QueryResultMetaStat,
   ScopedVars,
   TimeRange,
+  TimeZone,
   toDataFrame,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -37,8 +38,8 @@ import {
   GraphiteMetricLokiMatcher,
   GraphiteOptions,
   GraphiteQuery,
-  GraphiteQueryRequest,
   GraphiteQueryImportConfiguration,
+  GraphiteQueryRequest,
   GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
@@ -451,7 +452,7 @@ export class GraphiteDatasource
     return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
-  translateTime(date: any, roundUp: any, timezone: any) {
+  translateTime(date: any, roundUp: any, timezone: TimeZone) {
     if (isString(date)) {
       if (date === 'now') {
         return 'now';
@@ -855,15 +856,24 @@ export class GraphiteDatasource
   }
 
   testDatasource() {
-    const query = {
+    const query: DataQueryRequest<GraphiteQuery> = {
+      app: 'graphite',
+      interval: '10ms',
+      intervalMs: 10,
+      requestId: 'reqId',
+      scopedVars: {},
+      startTime: 0,
+      timezone: 'browser',
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
       range: {
+        from: dateTime('now-1h'),
+        to: dateTime('now'),
         raw: { from: 'now-1h', to: 'now' },
       },
-      targets: [{ target: 'constantLine(100)' }],
+      targets: [{ refId: 'A', target: 'constantLine(100)' }],
       maxDataPoints: 300,
-    } as unknown as DataQueryRequest<GraphiteQuery>;
+    };
 
     return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }

@@ -31,7 +31,7 @@ func TestWebhookNotifier(t *testing.T) {
 		settings string
 		alerts   []*types.Alert
 
-		expMsg        *webhookMessage
+		expMsg        *WebhookMessage
 		expUrl        string
 		expUsername   string
 		expPassword   string
@@ -53,7 +53,7 @@ func TestWebhookNotifier(t *testing.T) {
 			},
 			expUrl:        "http://localhost/test",
 			expHttpMethod: "POST",
-			expMsg: &webhookMessage{
+			expMsg: &WebhookMessage{
 				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",
@@ -126,7 +126,7 @@ func TestWebhookNotifier(t *testing.T) {
 			expHttpMethod: "PUT",
 			expUsername:   "user1",
 			expPassword:   "mysecret",
-			expMsg: &webhookMessage{
+			expMsg: &WebhookMessage{
 				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",
@@ -191,7 +191,7 @@ func TestWebhookNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: &webhookMessage{
+			expMsg: &WebhookMessage{
 				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",

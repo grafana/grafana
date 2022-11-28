@@ -37,7 +37,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   continueEditing: ActionInfo = {
     label: 'Continue editing',
     description:
-      'Keep your local changes and continue editing.  Note: when you save, this will overwrite the most recent chages',
+      'Keep your local changes and continue editing.  Note: when you save, this will overwrite the most recent changes',
     action: () => {
       this.onDismiss();
     },

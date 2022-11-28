@@ -29,6 +29,11 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
+
 const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {
     loading: false,

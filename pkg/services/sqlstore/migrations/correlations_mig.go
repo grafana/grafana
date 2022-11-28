@@ -15,7 +15,14 @@ func addCorrelationsMigrations(mg *Migrator) {
 			{Name: "label", Type: DB_Text, Nullable: false},
 			{Name: "description", Type: DB_Text, Nullable: false},
 		},
+		Indices: []*Index{
+			{Cols: []string{"uid"}},
+			{Cols: []string{"source_uid"}},
+		},
 	}
 
 	mg.AddMigration("create correlation table v1", NewAddTableMigration(correlationsV1))
+
+	mg.AddMigration("add index correlations.uid", NewAddIndexMigration(correlationsV1, correlationsV1.Indices[0]))
+	mg.AddMigration("add index correlations.source_uid", NewAddIndexMigration(correlationsV1, correlationsV1.Indices[1]))
 }

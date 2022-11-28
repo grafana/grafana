@@ -7,7 +7,7 @@ import { PanelChrome as PanelChromeComponent, PanelChromeProps } from './PanelCh
 /**
  * @internal
  */
-export { PanelChromeProps, PanelPadding } from './PanelChrome';
+export type { PanelChromeProps, PanelPadding } from './PanelChrome';
 
 /**
  * @internal
@@ -30,14 +30,14 @@ PanelChrome.ErrorIndicator = ErrorIndicator;
  */
 export {
   LoadingIndicator as PanelChromeLoadingIndicator,
-  LoadingIndicatorProps as PanelChromeLoadingIndicatorProps,
+  type LoadingIndicatorProps as PanelChromeLoadingIndicatorProps,
 } from './LoadingIndicator';
 
 export {
   ErrorIndicator as PanelChromeErrorIndicator,
-  ErrorIndicatorProps as PanelChromeErrorIndicatorProps,
+  type ErrorIndicatorProps as PanelChromeErrorIndicatorProps,
 } from './ErrorIndicator';
 
-export { usePanelContext, PanelContextProvider, PanelContext, PanelContextRoot } from './PanelContext';
+export { usePanelContext, PanelContextProvider, type PanelContext, PanelContextRoot } from './PanelContext';
 
 export * from './types';

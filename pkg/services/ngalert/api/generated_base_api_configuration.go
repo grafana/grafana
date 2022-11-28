@@ -22,6 +22,7 @@ type ConfigurationApi interface {
 	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
 	RouteGetAlertmanagers(*models.ReqContext) response.Response
 	RouteGetNGalertConfig(*models.ReqContext) response.Response
+	RouteGetStatus(*models.ReqContext) response.Response
 	RoutePostNGalertConfig(*models.ReqContext) response.Response
 }
 
@@ -33,6 +34,9 @@ func (f *ConfigurationApiHandler) RouteGetAlertmanagers(ctx *models.ReqContext) 
 }
 func (f *ConfigurationApiHandler) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetNGalertConfig(ctx)
+}
+func (f *ConfigurationApiHandler) RouteGetStatus(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetStatus(ctx)
 }
 func (f *ConfigurationApiHandler) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
@@ -72,6 +76,16 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 				http.MethodGet,
 				"/api/v1/ngalert/admin_config",
 				srv.RouteGetNGalertConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/ngalert"),
+			api.authorize(http.MethodGet, "/api/v1/ngalert"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/ngalert",
+				srv.RouteGetStatus,
 				m,
 			),
 		)

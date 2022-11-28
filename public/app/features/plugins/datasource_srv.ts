@@ -24,8 +24,6 @@ import {
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
 
-import { isDataSource } from '../variables/guard';
-
 import { importDataSourcePlugin } from './plugin_loader';
 
 export class DatasourceSrv implements DataSourceService {
@@ -246,7 +244,7 @@ export class DatasourceSrv implements DataSourceService {
 
     if (filters.variables) {
       for (const variable of this.templateSrv.getVariables()) {
-        if (!isDataSource(variable)) {
+        if (variable.type !== 'datasource') {
           continue;
         }
         let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;

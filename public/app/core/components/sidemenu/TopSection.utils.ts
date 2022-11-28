@@ -3,7 +3,7 @@ import { NavModelItem } from '@grafana/data';
 import config from '../../config';
 
 export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem[] => {
-  const integratedAlertingLink = {
+  const integratedAlertingLink: NavModelItem = {
     id: 'integrated-alerting',
     text: 'Integrated Alerting',
     icon: 'list-ul',

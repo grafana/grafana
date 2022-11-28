@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"testing"
@@ -388,7 +388,7 @@ func toAPIResponse(d interface{}) (*http.Response, error) {
 
 	return &http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(raw)),
+		Body:       io.NopCloser(bytes.NewReader(raw)),
 	}, nil
 }
 
@@ -405,7 +405,7 @@ func setup(wideFrames bool) (*testContext, error) {
 		},
 		res: &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 	}
 	settings := backend.DataSourceInstanceSettings{

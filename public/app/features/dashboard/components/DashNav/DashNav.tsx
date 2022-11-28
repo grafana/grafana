@@ -6,17 +6,27 @@ import { useLocation } from 'react-router-dom';
 import { locationUtil, textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate, Tag } from '@grafana/ui';
+import {
+  ButtonGroup,
+  ModalsController,
+  ToolbarButton,
+  PageToolbar,
+  useForceUpdate,
+  Tag,
+  ToolbarButtonRow,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
-import { toggleKioskMode } from 'app/core/navigation/kiosk';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
+import { DashboardMetaChangedEvent } from 'app/types/events';
 
 import { setStarred } from '../../../../core/reducers/navBarTree';
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -37,7 +47,7 @@ const selectors = e2eSelectors.pages.Dashboard.DashNav;
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
-  kioskMode: KioskMode;
+  kioskMode?: KioskMode | null;
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
@@ -65,12 +75,16 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
+  const { chrome } = useGrafana();
+
+  // We don't really care about the event payload here only that it triggeres a re-render of this component
+  useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
 
   const onStarDashboard = () => {
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
-    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
+    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState) => {
       setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
@@ -82,7 +96,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onToggleTVMode = () => {
-    toggleKioskMode();
+    chrome.onToggleKioskMode();
   };
 
   const onOpenSettings = () => {
@@ -119,7 +133,7 @@ export const DashNav = React.memo<Props>((props) => {
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (kioskMode !== KioskMode.Off || isPlaylistRunning()) {
+    if (kioskMode || isPlaylistRunning()) {
       return [];
     }
 
@@ -160,7 +174,9 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (dashboard.meta.publicDashboardEnabled) {
-      buttons.push(<Tag name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>);
+      buttons.push(
+        <Tag key="public-dashboard" name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>
+      );
     }
 
     if (dashboard.uid && config.featureToggles.dashboardComments) {
@@ -227,7 +243,7 @@ export const DashNav = React.memo<Props>((props) => {
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
-    const tvButton = (
+    const tvButton = config.featureToggles.topnav ? null : (
       <ToolbarButton
         tooltip={t({ id: 'dashboard.toolbar.tv-button', message: 'Cycle view mode' })}
         icon="monitor"
@@ -311,18 +327,17 @@ export const DashNav = React.memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   const location = useLocation();
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
-  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
+  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', query: 'folder:current' });
   const onGoBack = isFullscreen ? onClose : undefined;
 
   if (config.featureToggles.topnav) {
     return (
       <AppChromeUpdate
-        pageNav={{ text: title }}
         actions={
           <>
             {renderLeftActions()}
             <NavToolbarSeparator leftActionsSeparator />
-            {renderRightActions()}
+            <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
           </>
         }
       />

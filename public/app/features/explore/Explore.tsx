@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { get } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -6,12 +7,22 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { compose } from 'redux';
 import { Unsubscribable } from 'rxjs';
 
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  DataQuery,
+  GrafanaTheme2,
+  LoadingState,
+  QueryFixAction,
+  RawTimeRange,
+  SplitOpenOptions,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
@@ -158,8 +169,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onClickAddQueryRowButton = () => {
-    const { exploreId, queryKeys, datasourceInstance } = this.props;
-    this.props.addQueryRow(exploreId, queryKeys.length, datasourceInstance);
+    const { exploreId, queryKeys } = this.props;
+    this.props.addQueryRow(exploreId, queryKeys.length);
   };
 
   onMakeAbsoluteTime = () => {
@@ -167,10 +178,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     makeAbsoluteTime();
   };
 
-  onModifyQueries = (action: any, index?: number) => {
+  onModifyQueries = (action: QueryFixAction, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance?.modifyQuery) {
-      const modifier = (queries: DataQuery, modification: any) =>
+      const modifier = (queries: DataQuery, modification: QueryFixAction) =>
         datasourceInstance.modifyQuery!(queries, modification);
       this.props.modifyQueries(this.props.exploreId, action, modifier, index);
     }
@@ -215,6 +226,27 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     });
   };
 
+  onSplitOpen = (panelType: string) => {
+    return async (options?: SplitOpenOptions<DataQuery>) => {
+      this.props.splitOpen(options);
+      if (options && this.props.datasourceInstance) {
+        const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
+        const source =
+          this.props.datasourceInstance.uid === MIXED_DATASOURCE_NAME
+            ? get(this.props.queries, '0.datasource.type')
+            : this.props.datasourceInstance.type;
+        const tracking = {
+          origin: 'panel',
+          panelType,
+          source,
+          target,
+          exploreId: this.props.exploreId,
+        };
+        reportInteraction('grafana_explore_split_view_opened', tracking);
+      }
+    };
+  };
+
   renderEmptyState(exploreContainerStyles: string) {
     return (
       <div className={cx(exploreContainerStyles)}>
@@ -228,7 +260,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme, graphStyle } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, loading, theme, graphStyle } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={this.onChangeGraphStyle} />;
     return (
@@ -242,7 +274,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           onChangeTime={this.onUpdateTimeRange}
           timeZone={timeZone}
           annotations={queryResponse.annotations}
-          splitOpenFn={splitOpen}
+          splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
         />
       </Collapse>
@@ -258,6 +290,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         exploreId={exploreId}
         onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
         timeZone={timeZone}
+        splitOpenFn={this.onSplitOpen('table')}
       />
     );
   }
@@ -275,6 +308,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
+        splitOpenFn={this.onSplitOpen('logs')}
       />
     );
   }
@@ -289,6 +323,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         exploreId={exploreId}
         withTraceView={showTrace}
         datasourceType={datasourceType}
+        splitOpenFn={this.onSplitOpen('nodeGraph')}
       />
     );
   }
@@ -296,7 +331,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   renderTraceViewPanel() {
-    const { queryResponse, splitOpen, exploreId } = this.props;
+    const { queryResponse, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
     return (
@@ -305,7 +340,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <TraceViewContainer
           exploreId={exploreId}
           dataFrames={dataFrames}
-          splitOpenFn={splitOpen}
+          splitOpenFn={this.onSplitOpen('traceView')}
           scrollElement={this.scrollElement}
           queryResponse={queryResponse}
           topOfViewRef={this.topOfViewRef}
@@ -429,6 +464,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceInstance,
     datasourceMissing,
     queryKeys,
+    queries,
     isLive,
     graphResult,
     logsResult,
@@ -447,6 +483,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceInstance,
     datasourceMissing,
     queryKeys,
+    queries,
     isLive,
     graphResult,
     logsResult: logsResult ?? undefined,

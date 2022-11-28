@@ -9,7 +9,7 @@ weight: 100
 
 # Configure Grafana Enterprise
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "/" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../" >}}) for more information about available configuration options.
 
 ## [enterprise]
 
@@ -375,7 +375,7 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../enterprise/query-caching/#enable-and-configure-query-caching" >}}).
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [Query caching]({{< relref "../../../administration/data-source-management/#enable-and-configure-query-caching" >}}).
 
 ### ttl
 
@@ -474,7 +474,7 @@ The default is `"grafana"`.
 
 ## [caching.memcached]
 
-### memcached_servers
+### servers
 
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 

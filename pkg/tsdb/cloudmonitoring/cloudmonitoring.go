@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
@@ -597,7 +596,12 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	case bucketOptions.ExplicitBuckets != nil:
-		bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		if n < len(bucketOptions.ExplicitBuckets.Bounds) {
+			bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
+		} else {
+			lastBound := bucketOptions.ExplicitBuckets.Bounds[len(bucketOptions.ExplicitBuckets.Bounds)-1]
+			bucketBound = fmt.Sprintf("%g+", lastBound)
+		}
 	}
 	return bucketBound
 }
@@ -633,7 +637,7 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 }
 
 func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -659,7 +663,7 @@ func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period string) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -675,6 +679,15 @@ func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
 		if len(unit) > 0 {
 			if val, ok := cloudMonitoringUnitMappings[unit]; ok {
 				frames[i].Fields[1].Config.Unit = val
+			}
+		}
+		if frames[i].Fields[0].Config == nil {
+			frames[i].Fields[0].Config = &data.FieldConfig{}
+		}
+		if period != "" {
+			err := addInterval(period, frames[i].Fields[0])
+			if err != nil {
+				slog.Error("Failed to add interval", "error", err)
 			}
 		}
 	}

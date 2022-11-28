@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { of, throwError } from 'rxjs';
+import { lastValueFrom, of, throwError } from 'rxjs';
 
 import {
   CoreApp,
@@ -98,6 +98,57 @@ describe('PrometheusDatasource', () => {
       await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard }))).toEmitValuesWith((response) => {
         expect(response[0].data.length).not.toBe(0);
         expect(response[0].state).toBe(LoadingState.Done);
+      });
+    });
+
+    it('throws if using direct access', async () => {
+      const instanceSettings = {
+        url: 'proxied',
+        directUrl: 'direct',
+        user: 'test',
+        password: 'mupp',
+        access: 'direct',
+        jsonData: {
+          customQueryParameters: '',
+        } as any,
+      } as unknown as DataSourceInstanceSettings<PromOptions>;
+      const range = { from: time({ seconds: 63 }), to: time({ seconds: 183 }) };
+      const directDs = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+
+      await expect(
+        lastValueFrom(directDs.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard })))
+      ).rejects.toMatchObject({ message: expect.stringMatching('Browser access') });
+
+      // Cannot test because some other tests need "./metric_find_query" to be mocked and that prevents this to be
+      // tested. Checked manually that this ends up with throwing
+      // await expect(directDs.metricFindQuery('label_names(foo)')).rejects.toBeDefined();
+
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      await expect(directDs.testDatasource()).resolves.toMatchObject({
+        message: expect.stringMatching('Browser access'),
+        status: 'error',
+      });
+      await expect(
+        directDs.annotationQuery({
+          range: { ...range, raw: range },
+          rangeRaw: range,
+          // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
+          dashboard: {},
+          annotation: {
+            expr: 'metric',
+            name: 'test',
+            enable: true,
+            iconColor: '',
+          },
+        })
+      ).rejects.toMatchObject({
+        message: expect.stringMatching('Browser access'),
+      });
+      await expect(directDs.getTagKeys()).rejects.toMatchObject({
+        message: expect.stringMatching('Browser access'),
+      });
+      await expect(directDs.getTagValues()).rejects.toMatchObject({
+        message: expect.stringMatching('Browser access'),
       });
     });
   });
@@ -571,6 +622,18 @@ describe('PrometheusDatasource', () => {
       expect(templateSrvStub.replace).toBeCalledTimes(2);
       expect(queries[0].interval).toBe(interval);
     });
+
+    it('should call enhanceExprWithAdHocFilters', () => {
+      ds.enhanceExprWithAdHocFilters = jest.fn();
+      const queries = [
+        {
+          refId: 'A',
+          expr: 'rate({bar="baz", job="foo"} [5m]',
+        },
+      ];
+      ds.interpolateVariablesInQueries(queries, {});
+      expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalled();
+    });
   });
 
   describe('applyTemplateVariables', () => {
@@ -683,9 +746,10 @@ const HOUR = 60 * MINUTE;
 
 const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
-describe('PrometheusDatasource', () => {
+describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
+    id: 1,
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -848,7 +912,9 @@ describe('PrometheusDatasource', () => {
 
   describe('When querying prometheus with one target and instant = true', () => {
     let results: any;
-    const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123`;
+    const urlExpected = `/api/datasources/1/resources/api/v1/query?query=${encodeURIComponent(
+      'test{job="testjob"}'
+    )}&time=123`;
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
       targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
@@ -1790,16 +1856,17 @@ describe('PrometheusDatasource for POST', () => {
     });
   });
 
-  describe('When querying prometheus via check headers X-Dashboard-Id and X-Panel-Id', () => {
-    const options = { dashboardId: 1, panelId: 2 };
+  describe('When querying prometheus via check headers X-Dashboard-Id X-Panel-Id and X-Dashboard-UID', () => {
+    const options = { dashboardId: 1, panelId: 2, dashboardUID: 'WFlOM-jM1' };
     const httpOptions = {
       headers: {} as { [key: string]: number | undefined },
     };
 
     it('with proxy access tracing headers should be added', () => {
       ds._addTracingHeaders(httpOptions as any, options as any);
-      expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
-      expect(httpOptions.headers['X-Panel-Id']).toBe(2);
+      expect(httpOptions.headers['X-Dashboard-Id']).toBe(options.dashboardId);
+      expect(httpOptions.headers['X-Panel-Id']).toBe(options.panelId);
+      expect(httpOptions.headers['X-Dashboard-UID']).toBe(options.dashboardUID);
     });
 
     it('with direct access tracing headers should not be added', () => {
@@ -1811,6 +1878,7 @@ describe('PrometheusDatasource for POST', () => {
       mockDs._addTracingHeaders(httpOptions as any, options as any);
       expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
       expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+      expect(httpOptions.headers['X-Dashboard-UID']).toBe(undefined);
     });
   });
 });
@@ -1877,6 +1945,7 @@ describe('prepareTargets', () => {
         expr: 'up',
         headers: {
           'X-Dashboard-Id': undefined,
+          'X-Dashboard-UID': undefined,
           'X-Panel-Id': panelId,
         },
         hinting: undefined,
@@ -2038,6 +2107,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           headers: {
             'X-Dashboard-Id': undefined,
+            'X-Dashboard-UID': undefined,
             'X-Panel-Id': panelId,
           },
           hinting: undefined,
@@ -2059,6 +2129,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           headers: {
             'X-Dashboard-Id': undefined,
+            'X-Dashboard-UID': undefined,
             'X-Panel-Id': panelId,
           },
           hinting: undefined,
@@ -2099,6 +2170,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           headers: {
             'X-Dashboard-Id': undefined,
+            'X-Dashboard-UID': undefined,
             'X-Panel-Id': panelId,
           },
           hinting: undefined,
@@ -2135,6 +2207,7 @@ describe('prepareTargets', () => {
         expr: 'up',
         headers: {
           'X-Dashboard-Id': undefined,
+          'X-Dashboard-UID': undefined,
           'X-Panel-Id': panelId,
         },
         hinting: undefined,

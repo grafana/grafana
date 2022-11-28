@@ -130,6 +130,10 @@ func getAuthHeadersForCallResource(headers map[string][]string) map[string]strin
 		data["Cookie"] = cookie
 	}
 
+	if idToken := arrayHeaderFirstValue(headers["X-ID-Token"]); idToken != "" {
+		data["X-ID-Token"] = idToken
+	}
+
 	return data
 }
 
@@ -173,24 +177,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return queryData(ctx, req, dsInfo, s.plog, s.tracer)
 }
 
-func getAuthHeadersForQueryData(headers map[string]string) map[string]string {
-	data := make(map[string]string)
-
-	if auth := headers["Authorization"]; auth != "" {
-		data["Authorization"] = auth
-	}
-
-	if cookie := headers["Cookie"]; cookie != "" {
-		data["Cookie"] = cookie
-	}
-
-	return data
-}
-
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getAuthHeadersForQueryData(req.Headers))
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, req.Headers)
 
 	queries, err := parseQuery(req)
 	if err != nil {

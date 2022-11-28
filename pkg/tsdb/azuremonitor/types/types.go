@@ -115,6 +115,7 @@ type AzureMonitorJSONQuery struct {
 		ResourceURI string `json:"resourceUri"`
 		// These are used to reconstruct a resource URI
 		MetricNamespace string `json:"metricNamespace"`
+		CustomNamespace string `json:"customNamespace"`
 		MetricName      string `json:"metricName"`
 		ResourceGroup   string `json:"resourceGroup"`
 		ResourceName    string `json:"resourceName"`

@@ -36,7 +36,7 @@ interface Props {
   placeholderEmpty?: ReactNode;
 }
 
-export const TimeRangeList: React.FC<Props> = (props) => {
+export const TimeRangeList = (props: Props) => {
   const styles = getStyles();
   const { title, options, placeholderEmpty } = props;
 
@@ -60,7 +60,7 @@ export const TimeRangeList: React.FC<Props> = (props) => {
   );
 };
 
-const Options: React.FC<Props> = ({ options, value, onChange, title }) => {
+const Options = ({ options, value, onChange, title }: Props) => {
   const styles = getOptionsStyles();
 
   return (

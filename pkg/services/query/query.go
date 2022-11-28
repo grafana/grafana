@@ -16,9 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	publicDashboards "github.com/grafana/grafana/pkg/services/publicdashboards/queries"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -66,7 +69,7 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 // QueryData can process queries and return query responses.
-func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
 	if err != nil {
 		return nil, err
@@ -78,14 +81,16 @@ func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skip
 }
 
 // QueryData can process queries and return query responses.
-func (s *Service) QueryDataMultipleSources(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
-	byDataSource := models.GroupQueriesByDataSource(reqDTO.Queries)
+func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
+	byDataSource := publicDashboards.GroupQueriesByDataSource(reqDTO.Queries)
 
-	if len(byDataSource) == 1 {
+	// The expression service will handle mixed datasources, so we don't need to group them when an expression is present.
+	if publicDashboards.HasExpressionQuery(reqDTO.Queries) || len(byDataSource) == 1 {
 		return s.QueryData(ctx, user, skipCache, reqDTO, handleExpressions)
 	} else {
 		resp := backend.NewQueryDataResponse()
 
+		// create new reqDTO with only the queries for that datasource
 		for _, queries := range byDataSource {
 			subDTO := reqDTO.CloneWithQueries(queries)
 
@@ -105,15 +110,19 @@ func (s *Service) QueryDataMultipleSources(ctx context.Context, user *models.Sig
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
-func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
-		OrgId:   user.OrgId,
+		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 	}
 
 	for _, pq := range parsedReq.parsedQueries {
 		if pq.datasource == nil {
-			return nil, NewErrBadQuery(fmt.Sprintf("query mising datasource info: %s", pq.query.RefID))
+			return nil, ErrMissingDataSourceInfo.Build(errutil.TemplateData{
+				Public: map[string]interface{}{
+					"RefId": pq.query.RefID,
+				},
+			})
 		}
 
 		exprReq.Queries = append(exprReq.Queries, expr.Query{
@@ -137,7 +146,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUs
 	return qdr, nil
 }
 
-func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	ds := parsedReq.parsedQueries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
@@ -162,7 +171,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 	middlewares := []httpclient.Middleware{}
 	if parsedReq.httpRequest != nil {
 		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
 		)
 	}
 
@@ -179,7 +188,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 	}
 
 	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies())
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}
@@ -205,9 +214,9 @@ type parsedRequest struct {
 	httpRequest   *http.Request
 }
 
-func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
-		return nil, NewErrBadQuery("no queries found")
+		return nil, ErrNoQueriesFound
 	}
 
 	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
@@ -224,7 +233,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 			return nil, err
 		}
 		if ds == nil {
-			return nil, NewErrBadQuery("invalid data source ID")
+			return nil, ErrInvalidDatasourceID
 		}
 
 		datasourcesByUid[ds.Uid] = ds
@@ -258,7 +267,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 	if !req.hasExpression {
 		if len(datasourcesByUid) > 1 {
 			// We do not (yet) support mixed query type
-			return nil, NewErrBadQuery("all queries must use the same datasource")
+			return nil, ErrMultipleDatasources
 		}
 	}
 
@@ -269,7 +278,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 	return req, nil
 }
 
-func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
+func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -289,7 +298,7 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 	}
 
 	if uid == grafanads.DatasourceUID {
-		return grafanads.DataSourceModel(user.OrgId), nil
+		return grafanads.DataSourceModel(user.OrgID), nil
 	}
 
 	// use datasourceId if it exists
@@ -310,7 +319,7 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 		return ds, nil
 	}
 
-	return nil, NewErrBadQuery("missing data source ID/UID")
+	return nil, ErrInvalidDatasourceID
 }
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {

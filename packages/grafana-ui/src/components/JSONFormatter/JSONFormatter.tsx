@@ -1,11 +1,11 @@
 import React, { PureComponent, createRef } from 'react';
 
-import { JsonExplorer } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
+import { JsonExplorer, JsonExplorerConfig } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
 
 interface Props {
   className?: string;
   json: {};
-  config?: any;
+  config?: JsonExplorerConfig;
   open?: number;
   onDidRender?: (formattedJson: any) => void;
 }

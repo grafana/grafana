@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -315,7 +315,7 @@ func TestTeamsNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			body, err := ioutil.ReadAll(clientStub.lastRequest.Body)
+			body, err := io.ReadAll(clientStub.lastRequest.Body)
 			require.NoError(t, err)
 			require.JSONEq(t, string(expBody), string(body))
 		})
@@ -358,6 +358,6 @@ func newMockClient(resp *mockResponse) *mockClient {
 func makeResponse(status int, body string) *http.Response {
 	return &http.Response{
 		StatusCode: status,
-		Body:       ioutil.NopCloser(strings.NewReader(body)),
+		Body:       io.NopCloser(strings.NewReader(body)),
 	}
 }

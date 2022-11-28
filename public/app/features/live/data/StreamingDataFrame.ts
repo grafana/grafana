@@ -312,7 +312,7 @@ export class StreamingDataFrame implements DataFrame {
         this.fields = values.map((vals, idx) => {
           let name = `Field ${idx}`;
           let type = guessFieldTypeFromValue(vals[0]);
-          const isTime = idx === 0 && type === FieldType.number && vals[0] > 1600016688632;
+          const isTime = idx === 0 && type === FieldType.number && (vals as number[])[0] > 1600016688632;
           if (isTime) {
             type = FieldType.time;
             name = 'Time';

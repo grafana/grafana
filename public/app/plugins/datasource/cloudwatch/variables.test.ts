@@ -1,3 +1,5 @@
+import { toOption } from '@grafana/data';
+
 import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
@@ -14,18 +16,18 @@ const defaultQuery: VariableQuery = {
   refId: '',
 };
 
-const ds = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable] });
-ds.datasource.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
-ds.datasource.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
-ds.datasource.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
-ds.datasource.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
-ds.datasource.describeLogGroups = jest.fn().mockResolvedValue(['a', 'b']);
+const mock = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable] });
+mock.datasource.api.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
+mock.datasource.api.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
+mock.datasource.api.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
+mock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
+mock.datasource.api.describeAllLogGroups = jest.fn().mockResolvedValue(['a', 'b'].map(toOption));
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
 const getResourceARNs = jest.fn().mockResolvedValue([{ label: 'h', value: 'h' }]);
 
-const variables = new CloudWatchVariableSupport(ds.datasource);
+const variables = new CloudWatchVariableSupport(mock.datasource.api);
 
 describe('variables', () => {
   it('should run regions', async () => {
@@ -57,7 +59,7 @@ describe('variables', () => {
       dimensionFilters: { a: 'b' },
     };
     beforeEach(() => {
-      ds.datasource.getDimensionValues = getDimensionValues;
+      mock.datasource.api.getDimensionValues = getDimensionValues;
       getDimensionValues.mockClear();
     });
 
@@ -87,7 +89,7 @@ describe('variables', () => {
 
   describe('EBS volume ids', () => {
     beforeEach(() => {
-      ds.datasource.getEbsVolumeIds = getEbsVolumeIds;
+      mock.datasource.api.getEbsVolumeIds = getEbsVolumeIds;
       getEbsVolumeIds.mockClear();
     });
 
@@ -116,7 +118,7 @@ describe('variables', () => {
       ec2Filters: { a: ['b'] },
     };
     beforeEach(() => {
-      ds.datasource.getEc2InstanceAttribute = getEc2InstanceAttribute;
+      mock.datasource.api.getEc2InstanceAttribute = getEc2InstanceAttribute;
       getEc2InstanceAttribute.mockClear();
     });
 
@@ -141,7 +143,7 @@ describe('variables', () => {
       tags: { a: ['b'] },
     };
     beforeEach(() => {
-      ds.datasource.getResourceARNs = getResourceARNs;
+      mock.datasource.api.getResourceARNs = getResourceARNs;
       getResourceARNs.mockClear();
     });
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/expr"
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -53,25 +54,25 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 		if rand.Int63()%2 == 0 {
 			d := util.GenerateShortUID()
 			dashUID = &d
-			p := rand.Int63()
+			p := rand.Int63n(1 << 30)
 			panelID = &p
 		}
 
 		rule := &AlertRule{
-			ID:              rand.Int63(),
-			OrgID:           rand.Int63(),
+			ID:              rand.Int63n(1 << 30),
+			OrgID:           rand.Int63n(1 << 30),
 			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
 			Condition:       "A",
 			Data:            []AlertQuery{GenerateAlertQuery()},
 			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
 			IntervalSeconds: rand.Int63n(60) + 1,
-			Version:         rand.Int63(),
+			Version:         rand.Int63n(1 << 30),
 			UID:             util.GenerateShortUID(),
 			NamespaceUID:    util.GenerateShortUID(),
 			DashboardUID:    dashUID,
 			PanelID:         panelID,
 			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
-			RuleGroupIndex:  rand.Int(),
+			RuleGroupIndex:  rand.Intn(1 << 30),
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
@@ -95,7 +96,7 @@ func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
 		for {
-			id := rand.Int63()
+			id := rand.Int63n(1 << 30)
 			if _, ok := usedID[id]; !ok {
 				usedID[id] = struct{}{}
 				rule.ID = id
@@ -115,7 +116,7 @@ func WithUniqueGroupIndex() AlertRuleMutator {
 	usedIdx := make(map[int]struct{})
 	return func(rule *AlertRule) {
 		for {
-			idx := rand.Int()
+			idx := rand.Intn(1 << 30)
 			if _, ok := usedIdx[idx]; !ok {
 				usedIdx[idx] = struct{}{}
 				rule.RuleGroupIndex = idx
@@ -275,4 +276,46 @@ func CopyRule(r *AlertRule) *AlertRule {
 	}
 
 	return &result
+}
+
+func CreateClassicConditionExpression(refID string, inputRefID string, reducer string, operation string, threshold int) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.OldDatasourceUID,
+		// the format corresponds to model `ClassicConditionJSON` in /pkg/expr/classic/classic.go
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "hide": false,
+            "type": "classic_conditions",
+            "datasource": {
+                "uid": "%[6]s",
+                "type": "%[7]s"
+            },
+            "conditions": [
+                {
+                    "type": "query",
+                    "evaluator": {
+                        "params": [
+                            %[4]d
+                        ],
+                        "type": "%[3]s"
+                    },
+                    "operator": {
+                        "type": "and"
+                    },
+                    "query": {
+                        "params": [
+                            "%[2]s"
+                        ]
+                    },
+                    "reducer": {
+                        "params": [],
+                        "type": "%[5]s"
+                    }
+                }
+            ]
+		}`, refID, inputRefID, operation, threshold, reducer, expr.OldDatasourceUID, expr.DatasourceType)),
+	}
 }

@@ -297,7 +297,7 @@ For more information about roles and permissions in Grafana, refer to [Roles and
 
 Example configuration:
 
-```bash
+```ini
 [auth.saml]
 assertion_attribute_role = role
 role_values_editor = editor, developer
@@ -306,6 +306,17 @@ role_values_grafana_admin = superadmin
 ```
 
 **Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
+
+> **Note:** Available in Grafana version 9.2 and later.
+
+If you don't want user organizations and roles to be synchronized with the IdP, you can use the `skip_org_role_sync` configuration option.
+
+Example configuration:
+
+```ini
+[auth.saml]
+skip_org_role_sync = true
+```
 
 ### Configure organization mapping
 
@@ -329,9 +340,16 @@ You can specify multiple organizations both for the IdP and Grafana:
 - `org_mapping = Engineering:2, Sales:2` to map users from `Engineering` and `Sales` to `2` in Grafana.
 - `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
 
-You can use `*` as an Organization if you want all your users to be in some organizations with a default role:
+You can use `*` as the SAML Organization if you want all your users to be in some Grafana organizations with a default role:
 
 - `org_mapping = *:2:Editor` to map all users to `2` in Grafana as Editors.
+
+> **Note:** Available in Grafana version 9.2 and later.
+
+You can use `*` as the Grafana organization in the mapping if you want all users from a given SAML Organization to be added to all existing Grafana organizations.
+
+- `org_mapping = Engineering:*` to map users from `Engineering` to all existing Grafana organizations.
+- `org_mapping = Administration:*:Admin` to map users from `Administration` to all existing Grafana organizations as Admins.
 
 ### Configure allowed organizations
 
@@ -372,7 +390,9 @@ To troubleshoot and get more log information, enable SAML debug logging in the c
 filters = saml.auth:debug
 ```
 
-## Known issues
+## Troubleshooting
+
+Following are common issues found in configuring SAML authentication in Grafana and how to resolve them.
 
 ### SAML authentication fails with error:
 
@@ -427,3 +447,31 @@ csrf_trusted_origins = https://grafana.example.com
 csrf_additional_headers = X-Forwarded-Host
 ...
 ```
+
+### SAML login attempts fail with request response "login session has expired"
+
+Accessing the Grafana login page from a URL that is not the root URL of the
+Grafana server can cause the instance to return the following error: "login session has expired".
+
+If you are accessing grafana through a proxy server, ensure that cookies are correctly
+rewritten to the root URL of Grafana.
+Cookies must be set on the same url as the `root_url` of Grafana. This is normally the reverse proxy's domain/address.
+
+Review the cookie settings in your proxy server configuration to ensure that cookies are
+not being discarded
+
+Review the following settings in your grafana config:
+
+```ini
+[security]
+cookie_samesite = none
+```
+
+This setting should be set to none to allow grafana session cookies to work correctly with redirects.
+
+```ini
+[security]
+cookie_secure = true
+```
+
+Ensure cookie_secure is set to true to ensure that cookies are only sent over HTTPS.

@@ -306,13 +306,16 @@ describe('influxdb response parser', () => {
 
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
+    const annotation = {
+      fromAnnotations: true,
+      name: 'Anno',
+      query: 'select * from logs where time >= now() - 15m and time <= now()',
+      textColumn: 'textColumn',
+      tagsColumn: 'host,path',
+    };
+
     const queryOptions: any = {
-      annotation: {
-        name: 'Anno',
-        query: 'select * from logs where time >= now() - 15m and time <= now()',
-        textColumn: 'textColumn',
-        tagsColumn: 'host,path',
-      },
+      targets: [annotation],
       range: {
         from: '2018-01-01T00:00:00Z',
         to: '2018-01-02T00:00:00Z',
@@ -424,7 +427,7 @@ describe('influxdb response parser', () => {
       ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
       ctx.ds.access = 'proxy';
       config.featureToggles.influxdbBackendMigration = true;
-      response = await ctx.ds.annotationQuery(queryOptions);
+      response = await ctx.ds.annotationEvents(queryOptions, annotation);
     });
 
     it('should return annotation list', () => {

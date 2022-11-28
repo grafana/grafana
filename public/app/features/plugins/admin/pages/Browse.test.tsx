@@ -4,7 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
-import { PluginType } from '@grafana/data';
+import { PluginType, escapeStringForRegex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
@@ -193,6 +193,18 @@ describe('Browse list of plugins', () => {
 
       await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
 
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+    });
+
+    it('should handle escaped regex characters in the search query (e.g. "(" )', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=' + escapeStringForRegex('graph (old)'), [
+        getCatalogPluginMock({ id: 'graph', name: 'Graph (old)' }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
+      ]);
+      await waitFor(() => expect(queryByText('Graph (old)')).toBeInTheDocument());
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();

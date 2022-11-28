@@ -1,11 +1,11 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PieChartLabels, PieChartOptions, PieChartType } from './types';
+import { PieChartLabels, PanelOptions, PieChartType } from './models.gen';
 
 export class PieChartSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = builder.getListAppender<PieChartOptions, {}>({
+    const list = builder.getListAppender<PanelOptions, {}>({
       name: SuggestionName.PieChart,
       pluginId: 'piechart',
       options: {

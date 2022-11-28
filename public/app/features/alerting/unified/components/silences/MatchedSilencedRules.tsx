@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import { useDebounce } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 import { Alert, AlertingRule } from 'app/types/unified-alerting';
 
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';

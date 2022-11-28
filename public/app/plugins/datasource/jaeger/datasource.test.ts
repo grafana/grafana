@@ -113,7 +113,7 @@ describe('JaegerDatasource', () => {
         targets: [{ queryType: 'upload', refId: 'A' }],
       } as any)
     );
-    expect(response.error?.message).toBeDefined();
+    expect(response.error?.message).toBe('The JSON file uploaded is not in a valid Jaeger format');
     expect(response.data.length).toBe(0);
   });
 
@@ -133,6 +133,17 @@ describe('JaegerDatasource', () => {
     // Make sure that traceID field has data link configured
     expect(response.data[0].fields[0].config.links).toHaveLength(1);
     expect(response.data[0].fields[0].name).toBe('traceID');
+  });
+
+  it('should show the correct error message if no service name is selected', async () => {
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const response = await lastValueFrom(
+      ds.query({
+        ...defaultQuery,
+        targets: [{ queryType: 'search', refId: 'a', service: undefined, operation: '/api/services' }],
+      })
+    );
+    expect(response.error?.message).toBe('You must select a service.');
   });
 
   it('should remove operation from the query when all is selected', async () => {
@@ -334,6 +345,7 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
       enabled: true,
     },
   },
+  readOnly: false,
 };
 
 const defaultQuery: DataQueryRequest<JaegerQuery> = {

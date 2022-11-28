@@ -1,8 +1,7 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { FC, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
-import { ExploreId } from 'app/types';
+import { ExploreId, useDispatch, useSelector } from 'app/types';
 
 import { splitOpen, splitClose } from './state/main';
 import { runQueries } from './state/query';

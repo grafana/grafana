@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -54,7 +56,7 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 			return err
 		}
 
-		err = InstallPlugin(p.ID, "", c)
+		err = installPlugin(context.Background(), p.ID, "", c)
 		if err != nil {
 			return err
 		}

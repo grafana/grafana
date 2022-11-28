@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, InputControl, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesAction } from '../../state/actions';

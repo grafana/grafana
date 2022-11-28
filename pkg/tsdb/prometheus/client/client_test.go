@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -49,7 +49,7 @@ func TestClient(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, doer.Req)
 			require.Equal(t, http.MethodPost, doer.Req.Method)
-			body, err := ioutil.ReadAll(doer.Req.Body)
+			body, err := io.ReadAll(doer.Req.Body)
 			require.NoError(t, err)
 			require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
 			require.Equal(t, "http://localhost:9090/api/v1/series", doer.Req.URL.String())
@@ -74,7 +74,7 @@ func TestClient(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, doer.Req)
 			require.Equal(t, http.MethodGet, doer.Req.Method)
-			body, err := ioutil.ReadAll(doer.Req.Body)
+			body, err := io.ReadAll(doer.Req.Body)
 			require.NoError(t, err)
 			require.Equal(t, []byte{}, body)
 			require.Equal(t, "http://localhost:9090/api/v1/series?match%5B%5D=ALERTS&start=1655272558&end=1655294158", doer.Req.URL.String())

@@ -3,7 +3,7 @@ import React, { FC, useState } from 'react';
 
 import { PanelMenuItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, IconName, useTheme } from '@grafana/ui';
+import { Icon, toIconName, useTheme } from '@grafana/ui';
 
 interface Props {
   children?: any;
@@ -27,16 +27,20 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = (props) => {
     color: ${theme.colors.textWeak};
   `;
 
+  const icon = props.iconClassName ? toIconName(props.iconClassName) : undefined;
+
   return isDivider ? (
     <li className="divider" />
   ) : (
     <li className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined} ref={setRef}>
       <a onClick={props.onClick} href={props.href}>
-        {props.iconClassName && <Icon name={props.iconClassName as IconName} className={menuIconClassName} />}
+        {icon && <Icon name={icon} className={menuIconClassName} />}
+
         <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
           {props.text}
           {isSubMenu && <Icon name="angle-right" className={shortcutIconClassName} />}
         </span>
+
         {props.shortcut && (
           <span className="dropdown-menu-item-shortcut">
             <Icon name="keyboard" className={menuIconClassName} /> {props.shortcut}

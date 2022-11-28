@@ -13,12 +13,15 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -26,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -38,18 +42,19 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		AccessControl: acmock.New(),
 	}
 
-	mockResult := models.SearchUserQueryResult{
-		Users: []*models.UserSearchHitDTO{
+	mockResult := user.SearchUserQueryResult{
+		Users: []*user.UserSearchHitDTO{
 			{Name: "user1"},
 			{Name: "user2"},
 		},
 		TotalCount: 2,
 	}
 	mock := mockstore.NewSQLStoreMock()
+	userMock := usertest.NewUserServiceFake()
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService)
+		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService, userMock)
 		srv := authinfoservice.ProvideAuthInfoService(
 			&authinfoservice.OSSUserProtectionImpl{},
 			authInfoStore,
@@ -123,21 +128,23 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByLoginOrEmail
+
+		userMock := usertest.NewUserServiceFake()
+		userMock.ExpectedUser = &user.User{ID: 2}
+		sc.userService = userMock
+		hs.userService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
 		var resp models.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		require.Equal(t, "admin", resp.Login)
-		require.Equal(t, "admin@test.com", resp.Email)
-		require.True(t, resp.IsGrafanaAdmin)
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -148,9 +155,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -161,9 +168,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -177,9 +184,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		mock.ExpectedSearchUsers = mockResult
+		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(mock, filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -189,4 +196,118 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 2, respJSON.Get("page").MustInt())
 		assert.Equal(t, 10, respJSON.Get("perPage").MustInt())
 	}, mock)
+}
+
+func TestHTTPServer_UpdateUser(t *testing.T) {
+	settings := setting.NewCfg()
+	sqlStore := sqlstore.InitTestDB(t)
+
+	hs := &HTTPServer{
+		Cfg:           settings,
+		SQLStore:      sqlStore,
+		AccessControl: acmock.New(),
+	}
+
+	updateUserCommand := user.UpdateUserCommand{
+		Email:  fmt.Sprint("admin", "@test.com"),
+		Name:   "admin",
+		Login:  "admin",
+		UserID: 1,
+	}
+
+	updateUserScenario(t, updateUserContext{
+		desc:         "Should return 403 when the current User is an external user",
+		url:          "/api/users/1",
+		routePattern: "/api/users/:id",
+		cmd:          updateUserCommand,
+		fn: func(sc *scenarioContext) {
+			sc.authInfoService.ExpectedUserAuth = &models.UserAuth{}
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+			assert.Equal(t, 403, sc.resp.Code)
+		},
+	}, hs)
+}
+
+type updateUserContext struct {
+	desc         string
+	url          string
+	routePattern string
+	cmd          user.UpdateUserCommand
+	fn           scenarioFunc
+}
+
+func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
+	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
+		sc := setupScenarioContext(t, ctx.url)
+
+		sc.authInfoService = &logintest.AuthInfoServiceFake{}
+		hs.authInfoService = sc.authInfoService
+
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(ctx.cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
+			sc.context = c
+			sc.context.OrgID = testOrgID
+			sc.context.UserID = testUserID
+
+			return hs.UpdateUser(c)
+		})
+
+		sc.m.Put(ctx.routePattern, sc.defaultHandler)
+
+		ctx.fn(sc)
+	})
+}
+
+func TestHTTPServer_UpdateSignedInUser(t *testing.T) {
+	settings := setting.NewCfg()
+	sqlStore := sqlstore.InitTestDB(t)
+
+	hs := &HTTPServer{
+		Cfg:           settings,
+		SQLStore:      sqlStore,
+		AccessControl: acmock.New(),
+	}
+
+	updateUserCommand := user.UpdateUserCommand{
+		Email:  fmt.Sprint("admin", "@test.com"),
+		Name:   "admin",
+		Login:  "admin",
+		UserID: 1,
+	}
+
+	updateSignedInUserScenario(t, updateUserContext{
+		desc:         "Should return 403 when the current User is an external user",
+		url:          "/api/users/",
+		routePattern: "/api/users/",
+		cmd:          updateUserCommand,
+		fn: func(sc *scenarioContext) {
+			sc.authInfoService.ExpectedUserAuth = &models.UserAuth{}
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+			assert.Equal(t, 403, sc.resp.Code)
+		},
+	}, hs)
+}
+
+func updateSignedInUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
+	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
+		sc := setupScenarioContext(t, ctx.url)
+
+		sc.authInfoService = &logintest.AuthInfoServiceFake{}
+		hs.authInfoService = sc.authInfoService
+
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(ctx.cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
+			sc.context = c
+			sc.context.OrgID = testOrgID
+			sc.context.UserID = testUserID
+
+			return hs.UpdateSignedInUser(c)
+		})
+
+		sc.m.Put(ctx.routePattern, sc.defaultHandler)
+
+		ctx.fn(sc)
+	})
 }

@@ -6,10 +6,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // AlertTest makes a test alert.
-func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
+func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *user.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
 	dashInfo := DashAlertInfo{
 		User:  user,
@@ -25,14 +27,14 @@ func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID
 		if alert.PanelId != panelID {
 			continue
 		}
-		rule, err := NewRuleFromDBAlert(context.Background(), e.sqlStore, alert, true)
+		rule, err := NewRuleFromDBAlert(context.Background(), e.AlertStore, alert, true)
 		if err != nil {
 			return nil, err
 		}
 
 		handler := NewEvalHandler(e.DataService)
 
-		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.sqlStore, nil)
+		context := NewEvalContext(context.Background(), rule, fakeRequestValidator{}, e.AlertStore, nil, e.datasourceService, annotationstest.NewFakeAnnotationsRepo())
 		context.IsTestRun = true
 		context.IsDebug = true
 

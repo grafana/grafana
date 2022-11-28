@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -8,6 +7,7 @@ import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { expireSilenceAction } from '../../state/actions';
 import { getInstancesPermissions } from '../../utils/access-control';

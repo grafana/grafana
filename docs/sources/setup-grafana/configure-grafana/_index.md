@@ -71,6 +71,9 @@ client_secret = 0ldS3cretKey
 
 [plugin.grafana-image-renderer]
 rendering_ignore_https_errors = true
+
+[feature_toggles]
+enable = newNavigation
 ```
 
 You can override them on Linux machines with:
@@ -80,6 +83,7 @@ export GF_DEFAULT_INSTANCE_NAME=my-instance
 export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
+export GF_FEATURE_TOGGLES_ENABLE=newNavigation
 ```
 
 ## Variable expansion
@@ -124,7 +128,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
 
-> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr />
 
@@ -369,7 +373,7 @@ Defaults to `private`.
 
 ## [remote_cache]
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../enterprise/query-caching/" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management/#query-caching" >}}).
 
 ### type
 
@@ -474,6 +478,10 @@ Set to false disables checking for new versions of installed plugins from https:
 If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
 
+### google_analytics_4_id
+
+If you want to track Grafana usage via Google Analytics 4 specify _your_ GA4 ID here. By default this feature is disabled.
+
 ### google_tag_manager_id
 
 Google Tag Manager ID, only enabled if you enter an ID here.
@@ -529,6 +537,10 @@ Default is `admin`.
 ### admin_password
 
 The password of the default Grafana Admin. Set once on first-run. Default is `admin`.
+
+# admin_email
+
+The email of the default Grafana Admin, created on startup. Default is `admin@localhost`.
 
 ### secret_key
 
@@ -792,8 +804,13 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### oauth_skip_org_role_update_sync
 
 Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
-Use this setting to distribute users with external login to multiple organizations.
-Otherwise, the users' organization would get reset on every new login, for example, via AzureAD.
+Use this setting to allow users with external login to be manually assigned to multiple organizations.
+
+By default, the users' organization and role is reset on every new login.
+
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
+> With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
+> reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref ".#auto_assign_org_role" >}}).
 
 ### api_key_max_seconds_to_live
 
@@ -1378,6 +1395,10 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
 
+### tags_length
+
+Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
+
 ## [annotations.dashboard]
 
 Dashboard annotations means that annotations are associated with the dashboard they are created on.
@@ -1563,6 +1584,18 @@ Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 Default value is `false`.
 
 Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
+<hr>
+
+## [tracing.opentelemetry]
+
+Configure general parameters shared between OpenTelemetry providers.
+
+### custom_attributes
+
+Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
+
+Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
 
 <hr>
 
@@ -1926,7 +1959,7 @@ Change the listening port of the gRPC server. Default port is `0` and will autom
 
 ## [enterprise]
 
-For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr>
 
@@ -2029,7 +2062,7 @@ Maximum duration of a single crawl. Default is 1h.
 
 Minimum interval between two subsequent scheduler runs. Default is 12h.
 
-Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) documentation for detailed instructions.
+Refer to the [dashboards previews]({{< relref "../../search/dashboard-previews/" >}}) documentation for detailed instructions.
 
 ## [rbac]
 

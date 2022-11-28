@@ -26,16 +26,21 @@
 // service using the NewBase constructor with a CoreStatus and a unique
 // static message ID that identifies the general structure of the public
 // message attached to the specific error.
-//  var errNotFound = errutil.NewBase(errutil.StatusNotFound, "service.not-found")
+//
+//	var errNotFound = errutil.NewBase(errutil.StatusNotFound, "service.not-found")
+//
 // This Base can now be used to construct a regular Go error with the
 // Base.Errorf method using the same structure as fmt.Errorf:
-//  return errNotFound.Errorf("looked for thing with ID %d, but it wasn't there: %w", id, err)
+//
+//	return errNotFound.Errorf("looked for thing with ID %d, but it wasn't there: %w", id, err)
 //
 // By default, the end user will be sent the static message ID and a
 // message which is the string representation of the CoreStatus. It is
 // possible to override the message sent to the end user by using
 // the WithPublicMessage functional option when creating a new Base
-//  var errNotFound = errutil.NewBase(errutil.StatusNotFound "service.not-found", WithPublicMessage("The thing is missing."))
+//
+//	var errNotFound = errutil.NewBase(errutil.StatusNotFound "service.not-found", WithPublicMessage("The thing is missing."))
+//
 // If a dynamic message is needed, the Template type extends Base with a
 // Go template using text/template from the standard library, refer to
 // the documentation related to the Template type for usage examples.

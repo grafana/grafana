@@ -31,12 +31,11 @@ export function createNavModel(title: string, ...tabs: string[]): NavModel {
     breadcrumbs: [],
   };
 
-  const children = [];
+  const children: NavModelItem[] = [];
 
   for (const tab of tabs) {
     children.push({
       id: tab,
-      icon: 'icon',
       subTitle: 'subTitle',
       url: title,
       text: title,

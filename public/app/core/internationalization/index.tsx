@@ -6,16 +6,16 @@ import config from 'app/core/config';
 
 import { messages as fallbackMessages } from '../../../locales/en-US/messages';
 
-import { DEFAULT_LOCALE, FRENCH_FRANCE, SPANISH_SPAIN, VALID_LOCALES } from './constants';
+import { DEFAULT_LOCALE, VALID_LOCALES } from './constants';
 
 let i18nInstance: I18n;
 
-export async function getI18n(localInput = DEFAULT_LOCALE) {
-  if (i18nInstance) {
+export async function initI18n(localInput: string = DEFAULT_LOCALE) {
+  const validatedLocale = VALID_LOCALES.includes(localInput) ? localInput : DEFAULT_LOCALE;
+
+  if (i18nInstance && i18nInstance.locale === validatedLocale) {
     return i18nInstance;
   }
-
-  const validatedLocale = VALID_LOCALES.includes(localInput) ? localInput : DEFAULT_LOCALE;
 
   // Dynamically load the messages for the user's locale
   const imp =
@@ -53,23 +53,9 @@ interface I18nProviderProps {
 }
 export function I18nProvider({ children }: I18nProviderProps) {
   useEffect(() => {
-    let loc;
-    if (config.featureToggles.internationalization) {
-      // TODO: Use locale preference instead of weekStart
-      switch (config.bootData.user.weekStart) {
-        case 'saturday':
-          loc = SPANISH_SPAIN;
-          break;
-        case 'sunday':
-          loc = FRENCH_FRANCE;
-          break;
-        default:
-          loc = DEFAULT_LOCALE;
-          break;
-      }
-    }
+    const locale = config.featureToggles.internationalization ? config.bootData.user.locale : DEFAULT_LOCALE;
 
-    getI18n(loc);
+    initI18n(locale);
   }, []);
 
   return (
@@ -80,7 +66,7 @@ export function I18nProvider({ children }: I18nProviderProps) {
 }
 
 // This is only really used for ModalManager, as that creates a new react root we need to make sure is localisable.
-export function provideI18n<P>(WrappedWithI18N: React.ComponentType<P>) {
+export function provideI18n<P extends {}>(WrappedWithI18N: React.ComponentType<P>) {
   const I18nProviderWrapper = (props: P) => {
     return (
       <I18nProvider>

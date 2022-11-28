@@ -38,3 +38,21 @@ func TestCanGetRouteNameFromContext(t *testing.T) {
 		assert.Equal(t, tc.expected, handler)
 	}
 }
+
+func TestOperationNameCanOnlyBeSetOnce(t *testing.T) {
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://grafana.com", nil)
+
+	// set the the initial operation name
+	req = addRouteNameToContext(req, "first")
+
+	// check that the operation name is set correctly
+	value, exists := routeOperationName(req)
+	assert.True(t, exists, "route name should exist")
+	assert.Equal(t, "first", value)
+
+	// check that it cannot be overwritten
+	req = addRouteNameToContext(req, "second")
+	value, exists = routeOperationName(req)
+	assert.True(t, exists, "route name should exist")
+	assert.Equal(t, "first", value)
+}

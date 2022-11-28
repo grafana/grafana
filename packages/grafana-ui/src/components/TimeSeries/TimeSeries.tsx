@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
 
-import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 import { withTheme2 } from '../../themes/ThemeContext';
-import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
+import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -15,7 +14,7 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
-export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
+export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 

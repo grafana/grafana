@@ -1,23 +1,17 @@
 import React, { FC } from 'react';
-import { useSelector } from 'react-redux';
 
+import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types/store';
 
 interface Props {
   pageId: string;
   isLoading?: boolean;
+  pageNav?: NavModelItem;
 }
 
-export const AlertingPageWrapper: FC<Props> = ({ children, pageId, isLoading }) => {
-  const navModel = getNavModel(
-    useSelector((state: StoreState) => state.navIndex),
-    pageId
-  );
-
+export const AlertingPageWrapper: FC<Props> = ({ children, pageId, pageNav, isLoading }) => {
   return (
-    <Page navModel={navModel}>
+    <Page pageNav={pageNav} navId={pageId}>
       <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
     </Page>
   );

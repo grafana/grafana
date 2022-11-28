@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sort"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -113,9 +115,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		IsDisabled:       args.IsDisabled,
 		OrgID:            orgID,
 		EmailVerified:    args.EmailVerified,
-		Created:          time.Now(),
-		Updated:          time.Now(),
-		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		Created:          TimeNow(),
+		Updated:          TimeNow(),
+		LastSeenAt:       TimeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: args.IsServiceAccount,
 	}
 
@@ -157,16 +159,16 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
 			UserId:  usr.ID,
-			Role:    models.ROLE_ADMIN,
-			Created: time.Now(),
-			Updated: time.Now(),
+			Role:    org.RoleAdmin,
+			Created: TimeNow(),
+			Updated: TimeNow(),
 		}
 
 		if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
 			if len(args.DefaultOrgRole) > 0 {
-				orgUser.Role = models.RoleType(args.DefaultOrgRole)
+				orgUser.Role = org.RoleType(args.DefaultOrgRole)
 			} else {
-				orgUser.Role = models.RoleType(ss.Cfg.AutoAssignOrgRole)
+				orgUser.Role = org.RoleType(ss.Cfg.AutoAssignOrgRole)
 			}
 		}
 
@@ -178,7 +180,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	return usr, nil
 }
 
-//  deprecated method, use only for tests
+// deprecated method, use only for tests
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	var user user.User
 	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
@@ -226,28 +228,33 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 			return user.ErrUserNotFound
 		}
 
-		// Try and find the user by login first.
-		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+		var where string
+		var has bool
+		var err error
+
+		// Since username can be an email address, attempt login with email address
+		// first if the login field has the "@" symbol.
 		usr := &user.User{}
-		where := "login=?"
-		if ss.Cfg.CaseInsensitiveLogin {
-			where = "LOWER(login)=LOWER(?)"
-		}
 
-		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
-		if err != nil {
-			return err
-		}
-
-		if !has && strings.Contains(query.LoginOrEmail, "@") {
-			// If the user wasn't found, and it contains an "@" fallback to finding the
-			// user by email.
-
+		if strings.Contains(query.LoginOrEmail, "@") {
 			where = "email=?"
 			if ss.Cfg.CaseInsensitiveLogin {
 				where = "LOWER(email)=LOWER(?)"
 			}
+			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		// Look for the login field instead of email
+		if !has {
 			usr = &user.User{}
+			where = "login=?"
+			if ss.Cfg.CaseInsensitiveLogin {
+				where = "LOWER(login)=LOWER(?)"
+			}
 			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(usr)
 		}
 
@@ -313,7 +320,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 			Email:   cmd.Email,
 			Login:   cmd.Login,
 			Theme:   cmd.Theme,
-			Updated: time.Now(),
+			Updated: TimeNow(),
 		}
 
 		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
@@ -342,7 +349,7 @@ func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUs
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			Password: cmd.NewPassword,
-			Updated:  time.Now(),
+			Updated:  TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user)
@@ -354,7 +361,7 @@ func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.Update
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			ID:         cmd.UserId,
-			LastSeenAt: time.Now(),
+			LastSeenAt: TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Update(&user)
@@ -475,7 +482,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
-		cachedUser := cached.(models.SignedInUser)
+		cachedUser := cached.(user.SignedInUser)
 		query.Result = &cachedUser
 		return nil
 	}
@@ -485,7 +492,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 		return err
 	}
 
-	cacheKey = newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
+	cacheKey = newSignedInUserCacheKey(query.Result.OrgID, query.UserId)
 	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
 	return nil
 }
@@ -511,7 +518,8 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		user_auth.auth_id     as external_auth_id,
 		org.name              as org_name,
 		org_user.role         as org_role,
-		org.id                as org_id
+		org.id                as org_id,
+		u.is_service_account  as is_service_account
 		FROM ` + dialect.Quote("user") + ` as u
 		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
@@ -536,7 +544,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 			}
 		}
 
-		var usr models.SignedInUser
+		var usr user.SignedInUser
 		has, err := sess.Get(&usr)
 		if err != nil {
 			return err
@@ -545,26 +553,26 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		}
 
 		if usr.OrgRole == "" {
-			usr.OrgId = -1
+			usr.OrgID = -1
 			usr.OrgName = "Org missing"
 		}
 
 		if usr.ExternalAuthModule != "oauth_grafana_com" {
-			usr.ExternalAuthId = ""
+			usr.ExternalAuthID = ""
 		}
 
 		// tempUser is used to retrieve the teams for the signed in user for internal use.
-		tempUser := &models.SignedInUser{
-			OrgId: usr.OrgId,
+		tempUser := &user.SignedInUser{
+			OrgID: usr.OrgID,
 			Permissions: map[int64]map[string][]string{
-				usr.OrgId: {
+				usr.OrgID: {
 					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
 				},
 			},
 		}
 		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
-			OrgId:        usr.OrgId,
-			UserId:       usr.UserId,
+			OrgId:        usr.OrgID,
+			UserId:       usr.UserID,
 			SignedInUser: tempUser,
 		}
 		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
@@ -580,6 +588,56 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		query.Result = &usr
 		return err
 	})
+}
+
+// GetTeamsByUser is used by the Guardian when checking a users' permissions
+// TODO: use team.Service after user service is split
+func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		query.Result = make([]*models.TeamDTO, 0)
+
+		var sql bytes.Buffer
+		var params []interface{}
+		params = append(params, query.OrgId, query.UserId)
+
+		sql.WriteString(getTeamSelectSQLBase([]string{}))
+		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
+
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
+			if err != nil {
+				return err
+			}
+			sql.WriteString(` and` + acFilter.Where)
+			params = append(params, acFilter.Args...)
+		}
+
+		err := sess.SQL(sql.String(), params...).Find(&query.Result)
+		return err
+	})
+}
+
+func getTeamMemberCount(filteredUsers []string) string {
+	if len(filteredUsers) > 0 {
+		return `(SELECT COUNT(*) FROM team_member
+			INNER JOIN ` + dialect.Quote("user") + ` ON team_member.user_id = ` + dialect.Quote("user") + `.id
+			WHERE team_member.team_id = team.id AND ` + dialect.Quote("user") + `.login NOT IN (?` +
+			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
+			`) AS member_count `
+	}
+
+	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
+}
+
+func getTeamSelectSQLBase(filteredUsers []string) string {
+	return `SELECT
+		team.id as id,
+		team.org_id,
+		team.name as name,
+		team.email as email, ` +
+		getTeamMemberCount(filteredUsers) +
+		` FROM team as team `
 }
 
 func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
@@ -847,8 +905,8 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			ID:         cmd.UserId,
-			HelpFlags1: user.HelpFlags1(cmd.HelpFlags1),
-			Updated:    time.Now(),
+			HelpFlags1: cmd.HelpFlags1,
+			Updated:    TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)

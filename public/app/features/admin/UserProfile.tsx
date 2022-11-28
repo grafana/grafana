@@ -203,7 +203,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     value: this.props.value || '',
   };
 
-  setInputElem = (elem: any) => {
+  setInputElem = (elem: HTMLInputElement) => {
     this.inputElem = elem;
   };
 
@@ -225,7 +225,9 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
       return;
     }
 
-    this.setState({ value: event.target.value });
+    this.setState({
+      value: event.target.value,
+    });
   };
 
   onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
@@ -233,7 +235,9 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
       return;
     }
 
-    this.setState({ value: event.target.value });
+    this.setState({
+      value: event.target.value,
+    });
   };
 
   focusInput = () => {

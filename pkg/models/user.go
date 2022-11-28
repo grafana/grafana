@@ -70,7 +70,7 @@ type GetSignedInUserQuery struct {
 	Login  string
 	Email  string
 	OrgId  int64
-	Result *SignedInUser
+	Result *user.SignedInUser
 }
 
 type GetUserProfileQuery struct {
@@ -79,13 +79,13 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	OrgId        int64
 	Query        string
 	Page         int
 	Limit        int
 	AuthModule   string
-	Filters      []Filter
+	Filters      []user.Filter
 
 	IsDisabled *bool
 
@@ -104,67 +104,8 @@ type GetUserOrgListQuery struct {
 	Result []*UserOrgDTO
 }
 
-// ------------------------
-// DTO & Projections
-
-type SignedInUser struct {
-	UserId             int64
-	OrgId              int64
-	OrgName            string
-	OrgRole            RoleType
-	ExternalAuthModule string
-	ExternalAuthId     string
-	Login              string
-	Name               string
-	Email              string
-	ApiKeyId           int64
-	OrgCount           int
-	IsGrafanaAdmin     bool
-	IsAnonymous        bool
-	IsDisabled         bool
-	HelpFlags1         HelpFlags1
-	LastSeenAt         time.Time
-	Teams              []int64
-	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string `json:"-"`
-}
-
-func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
-	return u.UserId > 0 && time.Since(u.LastSeenAt) > time.Minute*5
-}
-
-func (u *SignedInUser) NameOrFallback() string {
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
-}
-
-func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
-	return &UserDisplayDTO{
-		Id:    u.UserId,
-		Login: u.Login,
-		Name:  u.Name,
-	}
-}
-
 type UpdateUserLastSeenAtCommand struct {
 	UserId int64
-}
-
-func (u *SignedInUser) HasRole(role RoleType) bool {
-	if u.IsGrafanaAdmin {
-		return true
-	}
-
-	return u.OrgRole.Includes(role)
-}
-
-func (u *SignedInUser) IsRealUser() bool {
-	return u.UserId != 0
 }
 
 type UserProfileDTO struct {
@@ -196,13 +137,6 @@ type UserSearchHitDTO struct {
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
-}
-
-type UserDisplayDTO struct {
-	Id        int64  `json:"id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Login     string `json:"login,omitempty"`
-	AvatarUrl string `json:"avatarUrl"`
 }
 
 type UserIdDTO struct {

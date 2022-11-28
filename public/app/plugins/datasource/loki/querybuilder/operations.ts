@@ -1,19 +1,21 @@
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
-  getPromAndLokiOperationDisplayName,
 } from '../../prometheus/querybuilder/shared/operationUtils';
-import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
-  VisualQueryModeller,
-} from '../../prometheus/querybuilder/shared/types';
-import { FUNCTIONS } from '../syntax';
+import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
-import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
+import {
+  addLokiOperation,
+  addNestedQueryHandler,
+  createRangeOperation,
+  createRangeOperationWithGrouping,
+  getLineFilterRenderer,
+  labelFilterRenderer,
+  pipelineRenderer,
+} from './operationUtils';
+import { LokiOperationId, LokiOperationOrder, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const aggregations = [
@@ -45,23 +47,31 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     );
   });
 
-  const list: QueryBuilderOperationDef[] = [
+  const rangeOperations = [
     createRangeOperation(LokiOperationId.Rate),
     createRangeOperation(LokiOperationId.CountOverTime),
     createRangeOperation(LokiOperationId.SumOverTime),
     createRangeOperation(LokiOperationId.BytesRate),
     createRangeOperation(LokiOperationId.BytesOverTime),
     createRangeOperation(LokiOperationId.AbsentOverTime),
-    createRangeOperation(LokiOperationId.AvgOverTime),
-    createRangeOperation(LokiOperationId.MaxOverTime),
-    createRangeOperation(LokiOperationId.MinOverTime),
-    createRangeOperation(LokiOperationId.FirstOverTime),
-    createRangeOperation(LokiOperationId.LastOverTime),
-    createRangeOperation(LokiOperationId.StdvarOverTime),
-    createRangeOperation(LokiOperationId.StddevOverTime),
-    createRangeOperation(LokiOperationId.QuantileOverTime),
+  ];
+
+  const rangeOperationsWithGrouping = [
+    ...createRangeOperationWithGrouping(LokiOperationId.AvgOverTime),
+    ...createRangeOperationWithGrouping(LokiOperationId.MaxOverTime),
+    ...createRangeOperationWithGrouping(LokiOperationId.MinOverTime),
+    ...createRangeOperationWithGrouping(LokiOperationId.FirstOverTime),
+    ...createRangeOperationWithGrouping(LokiOperationId.LastOverTime),
+    ...createRangeOperationWithGrouping(LokiOperationId.StdvarOverTime),
+    ...createRangeOperationWithGrouping(LokiOperationId.StddevOverTime),
+    ...createRangeOperationWithGrouping(LokiOperationId.QuantileOverTime),
+  ];
+
+  const list: QueryBuilderOperationDef[] = [
     ...aggregations,
     ...aggregationsWithParam,
+    ...rangeOperations,
+    ...rangeOperationsWithGrouping,
     {
       id: LokiOperationId.Json,
       name: 'Json',
@@ -178,9 +188,9 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: () =>
         `This will replace log line using a specified template. The template can refer to stream labels and extracted labels.
 
-        Example: \`{{.status_code}} - {{.message}}\`
+Example: \`{{.status_code}} - {{.message}}\`
 
-        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
+[Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#line-format-expression) for more.
         `,
     },
     {
@@ -199,9 +209,9 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: () =>
         `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level".
 
-        Example: error_level=\`level\`
+Example: \`\`error_level=\`level\` \`\`
 
-        [Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
+[Read the docs](https://grafana.com/docs/loki/latest/logql/log_queries/#labels-format-expression) for more.
         `,
     },
 
@@ -408,182 +418,4 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   ];
 
   return list;
-}
-
-function createRangeOperation(name: string): QueryBuilderOperationDef {
-  const params = [getRangeVectorParamDef()];
-  const defaultParams = ['$__interval'];
-  let renderer = operationWithRangeVectorRenderer;
-
-  if (name === LokiOperationId.QuantileOverTime) {
-    defaultParams.push('0.95');
-    params.push({
-      name: 'Quantile',
-      type: 'number',
-    });
-    renderer = operationWithRangeVectorRendererAndParam;
-  }
-
-  return {
-    id: name,
-    name: getPromAndLokiOperationDisplayName(name),
-    params,
-    defaultParams,
-    alternativesKey: 'range function',
-    category: LokiVisualQueryOperationCategory.RangeFunctions,
-    orderRank: LokiOperationOrder.RangeVectorFunction,
-    renderer,
-    addOperationHandler: addLokiOperation,
-    explainHandler: (op, def) => {
-      let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
-
-      if (op.params[0] === '$__interval') {
-        return `${opDocs} \`$__interval\` is variable that will be replaced with a calculated interval based on **Max data points**,  **Min interval** and query time range. You find these options you find under **Query options** at the right of the data source select dropdown.`;
-      } else {
-        return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
-      }
-    },
-  };
-}
-
-function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
-  return {
-    name: 'Range',
-    type: 'string',
-    options: ['$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
-  };
-}
-
-function operationWithRangeVectorRenderer(
-  model: QueryBuilderOperation,
-  def: QueryBuilderOperationDef,
-  innerExpr: string
-) {
-  let rangeVector = (model.params ?? [])[0] ?? '$__interval';
-  return `${def.id}(${innerExpr} [${rangeVector}])`;
-}
-
-function operationWithRangeVectorRendererAndParam(
-  model: QueryBuilderOperation,
-  def: QueryBuilderOperationDef,
-  innerExpr: string
-) {
-  const params = model.params ?? [];
-  const rangeVector = params[0] ?? '$__interval';
-  const param = params[1];
-  return `${def.id}(${param}, ${innerExpr} [${rangeVector}])`;
-}
-
-function getLineFilterRenderer(operation: string) {
-  return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    return `${innerExpr} ${operation} \`${model.params[0]}\``;
-  };
-}
-
-function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  if (model.params[0] === '') {
-    return innerExpr;
-  }
-
-  if (model.params[1] === '<' || model.params[1] === '>') {
-    return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
-  }
-
-  return `${innerExpr} | ${model.params[0]} ${model.params[1]} \`${model.params[2]}\``;
-}
-
-function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  return `${innerExpr} | ${model.id}`;
-}
-
-function isRangeVectorFunction(def: QueryBuilderOperationDef) {
-  return def.category === LokiVisualQueryOperationCategory.RangeFunctions;
-}
-
-function getIndexOfOrLast(
-  operations: QueryBuilderOperation[],
-  queryModeller: VisualQueryModeller,
-  condition: (def: QueryBuilderOperationDef) => boolean
-) {
-  const index = operations.findIndex((x) => {
-    const opDef = queryModeller.getOperationDef(x.id);
-    if (!opDef) {
-      return false;
-    }
-    return condition(opDef);
-  });
-
-  return index === -1 ? operations.length : index;
-}
-
-export function addLokiOperation(
-  def: QueryBuilderOperationDef,
-  query: LokiVisualQuery,
-  modeller: VisualQueryModeller
-): LokiVisualQuery {
-  const newOperation: QueryBuilderOperation = {
-    id: def.id,
-    params: def.defaultParams,
-  };
-
-  const operations = [...query.operations];
-
-  const existingRangeVectorFunction = operations.find((x) => {
-    const opDef = modeller.getOperationDef(x.id);
-    if (!opDef) {
-      return false;
-    }
-    return isRangeVectorFunction(opDef);
-  });
-
-  switch (def.category) {
-    case LokiVisualQueryOperationCategory.Aggregations:
-    case LokiVisualQueryOperationCategory.Functions:
-      // If we are adding a function but we have not range vector function yet add one
-      if (!existingRangeVectorFunction) {
-        const placeToInsert = getIndexOfOrLast(
-          operations,
-          modeller,
-          (def) => def.category === LokiVisualQueryOperationCategory.Functions
-        );
-        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['$__interval'] });
-      }
-      operations.push(newOperation);
-      break;
-    case LokiVisualQueryOperationCategory.RangeFunctions:
-      // If adding a range function and range function is already added replace it
-      if (existingRangeVectorFunction) {
-        const index = operations.indexOf(existingRangeVectorFunction);
-        operations[index] = newOperation;
-        break;
-      }
-
-    // Add range functions after any formats, line filters and label filters
-    default:
-      const placeToInsert = getIndexOfOrLast(
-        operations,
-        modeller,
-        (x) => (def.orderRank ?? 100) < (x.orderRank ?? 100)
-      );
-      operations.splice(placeToInsert, 0, newOperation);
-      break;
-  }
-
-  return {
-    ...query,
-    operations,
-  };
-}
-
-function addNestedQueryHandler(def: QueryBuilderOperationDef, query: LokiVisualQuery): LokiVisualQuery {
-  return {
-    ...query,
-    binaryQueries: [
-      ...(query.binaryQueries ?? []),
-      {
-        operator: '/',
-        query,
-      },
-    ],
-  };
 }

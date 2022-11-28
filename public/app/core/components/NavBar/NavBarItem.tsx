@@ -5,7 +5,7 @@ import React from 'react';
 
 import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { IconName, useTheme2 } from '@grafana/ui';
+import { toIconName, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemMenu } from './NavBarItemMenu';
 import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
@@ -78,7 +78,8 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
             const translationKey = item.id && menuItemTranslations[item.id];
             const itemText = translationKey ? i18n._(translationKey) : item.text;
             const isSection = item.menuItemType === NavMenuItemType.Section;
-            const icon = item.showIconInNavbar && !isSection ? (item.icon as IconName) : undefined;
+            const iconName = item.icon ? toIconName(item.icon) : undefined;
+            const icon = item.showIconInNavbar && !isSection ? iconName : undefined;
 
             return (
               <Item key={getNavModelItemKey(item)} textValue={item.text}>

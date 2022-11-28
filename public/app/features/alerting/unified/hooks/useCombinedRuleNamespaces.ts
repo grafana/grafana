@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useMemo, useRef } from 'react';
 
 import {
@@ -129,18 +130,29 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
 }
 
 function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
+  const existingGroupsByName = new Map<string, CombinedRuleGroup>();
+  namespace.groups.forEach((group) => existingGroupsByName.set(group.name, group));
+
   groups.forEach((group) => {
-    let combinedGroup = namespace.groups.find((g) => g.name === group.name);
+    let combinedGroup = existingGroupsByName.get(group.name);
     if (!combinedGroup) {
       combinedGroup = {
         name: group.name,
         rules: [],
       };
       namespace.groups.push(combinedGroup);
+      existingGroupsByName.set(group.name, combinedGroup);
     }
 
+    const combinedRulesByName = new Map<string, CombinedRule[]>();
+    combinedGroup!.rules.forEach((r) => {
+      // Prometheus rules do not have to be unique by name
+      const existingRule = combinedRulesByName.get(r.name);
+      existingRule ? existingRule.push(r) : combinedRulesByName.set(r.name, [r]);
+    });
+
     (group.rules ?? []).forEach((rule) => {
-      const existingRule = getExistingRuleInGroup(rule, combinedGroup!, namespace.rulesSource);
+      const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
       } else {
@@ -201,39 +213,47 @@ function rulerRuleToCombinedRule(
 // find existing rule in group that matches the given prom rule
 function getExistingRuleInGroup(
   rule: Rule,
-  group: CombinedRuleGroup,
+  existingCombinedRulesMap: Map<string, CombinedRule[]>,
   rulesSource: RulesSource
 ): CombinedRule | undefined {
+  // Using Map of name-based rules is important performance optimization for the code below
+  // Otherwise we would perform find method multiple times on (possibly) thousands of rules
+
+  const nameMatchingRules = existingCombinedRulesMap.get(rule.name);
+  if (!nameMatchingRules) {
+    return undefined;
+  }
+
   if (isGrafanaRulesSource(rulesSource)) {
     // assume grafana groups have only the one rule. check name anyway because paranoid
-    return group!.rules.find((existingRule) => existingRule.name === rule.name);
+    return nameMatchingRules[0];
   }
-  return (
-    // try finding a rule that matches name, labels, annotations and query
-    group!.rules.find(
-      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)
-    ) ??
-    // if that fails, try finding a rule that only matches name, labels and annotations.
-    // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
-    group!.rules.find(
-      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)
-    )
+
+  // try finding a rule that matches name, labels, annotations and query
+  const strictlyMatchingRule = nameMatchingRules.find(
+    (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, true)
   );
+  if (strictlyMatchingRule) {
+    return strictlyMatchingRule;
+  }
+
+  // if that fails, try finding a rule that only matches name, labels and annotations.
+  // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
+  const looselyMatchingRule = nameMatchingRules.find(
+    (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, false)
+  );
+  if (looselyMatchingRule) {
+    return looselyMatchingRule;
+  }
+
+  return undefined;
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, checkQuery = true): boolean {
   if (combinedRule.name === rule.name) {
-    return (
-      JSON.stringify([
-        checkQuery ? hashQuery(combinedRule.query) : '',
-        combinedRule.labels,
-        combinedRule.annotations,
-      ]) ===
-      JSON.stringify([
-        checkQuery ? hashQuery(rule.query) : '',
-        rule.labels || {},
-        isAlertingRule(rule) ? rule.annotations || {} : {},
-      ])
+    return isEqual(
+      [checkQuery ? hashQuery(combinedRule.query) : '', combinedRule.labels, combinedRule.annotations],
+      [checkQuery ? hashQuery(rule.query) : '', rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}]
     );
   }
   return false;

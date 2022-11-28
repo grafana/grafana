@@ -3,7 +3,10 @@ import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+
+import { LogMessageAnsi } from '../logs/components/LogMessageAnsi';
+import { getLogRowStyles } from '../logs/components/getLogRowStyles';
 
 import { ElapsedTime } from './ElapsedTime';
 

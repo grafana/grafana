@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -73,7 +73,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	request, err := s.createRequest(ctx, dsInfo, model.TraceID)
+	request, err := s.createRequest(ctx, dsInfo, model.TraceID, req.Queries[0].TimeRange.From.Unix(), req.Queries[0].TimeRange.To.Unix())
 	if err != nil {
 		return result, err
 	}
@@ -89,7 +89,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -117,8 +117,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return result, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, traceID string) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.URL+"/api/traces/"+traceID, nil)
+func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, traceID string, start int64, end int64) (*http.Request, error) {
+	var tempoQuery string
+	if start == 0 || end == 0 {
+		tempoQuery = fmt.Sprintf("%s/api/traces/%s", dsInfo.URL, traceID)
+	} else {
+		tempoQuery = fmt.Sprintf("%s/api/traces/%s?start=%d&end=%d", dsInfo.URL, traceID, start, end)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", tempoQuery, nil)
 	if err != nil {
 		return nil, err
 	}

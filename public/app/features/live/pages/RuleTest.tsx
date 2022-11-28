@@ -11,7 +11,7 @@ interface Props {
   rule: Rule;
 }
 
-export const RuleTest: React.FC<Props> = (props) => {
+export const RuleTest = (props: Props) => {
   const [response, setResponse] = useState<ChannelFrame[]>();
   const [data, setData] = useState<string>();
   const styles = useStyles(getStyles);

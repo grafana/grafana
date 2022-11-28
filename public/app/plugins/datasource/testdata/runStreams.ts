@@ -211,7 +211,7 @@ export function runFetchStream(
       },
     });
 
-    const processChunk = (value: ReadableStreamDefaultReadResult<Uint8Array>): any => {
+    const processChunk = (value: ReadableStreamReadResult<Uint8Array>): any => {
       if (value.value) {
         const text = new TextDecoder().decode(value.value);
         csv.readCSV(text);

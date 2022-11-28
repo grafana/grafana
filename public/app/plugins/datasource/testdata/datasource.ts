@@ -234,7 +234,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     options: DataQueryRequest<TestDataQuery>
   ): Observable<DataQueryResponse> | null {
     const { errorType } = target;
-    console.log("we're here!", target);
 
     if (errorType === 'server_panic') {
       return null;

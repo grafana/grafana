@@ -3,6 +3,7 @@ load(
     'identify_runner_step',
     'download_grabpl_step',
     'lint_drone_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -14,6 +15,7 @@ def verify_drone(trigger, ver_mode):
     steps = [
         identify_runner_step(),
         download_grabpl_step(),
+        compile_build_cmd(),
         lint_drone_step(),
     ]
     return pipeline(

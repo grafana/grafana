@@ -135,6 +135,13 @@ func Test_stateToPostableAlert(t *testing.T) {
 				})
 			})
 
+			t.Run("should add state reason annotation if not empty", func(t *testing.T) {
+				alertState := randomState(tc.state)
+				alertState.StateReason = "TEST_STATE_REASON"
+				result := stateToPostableAlert(alertState, appURL)
+				require.Equal(t, alertState.StateReason, result.Annotations[ngModels.StateReasonAnnotation])
+			})
+
 			switch tc.state {
 			case eval.NoData:
 				t.Run("should keep existing labels and change name", func(t *testing.T) {

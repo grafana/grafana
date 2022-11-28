@@ -73,4 +73,4 @@ const firstResult = new MutableDataFrame({
 });
 ```
 
-For possible options, refer to [PreferredVisualisationType](https://grafana.com/docs/grafana/latest/packages_api/data/preferredvisualisationtype/).
+For possible options, refer to [PreferredVisualisationType](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L25).

@@ -5,10 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/require"
 )
@@ -89,5 +91,183 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 		password, ok = psService.DecryptedValues(&ps)["password"]
 		require.Empty(t, password)
 		require.True(t, ok)
+	})
+}
+
+func TestIntegrationPluginSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	db := sqlstore.InitTestDB(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	psService := ProvideService(db, secretsService)
+
+	t.Run("Existing plugin settings", func(t *testing.T) {
+		secureJsonData, err := secretsService.EncryptJsonData(context.Background(), map[string]string{"secureKey": "secureValue"}, secrets.WithoutScope())
+		require.NoError(t, err)
+
+		existing := models.PluginSetting{
+			OrgId:    1,
+			PluginId: "existing",
+			Enabled:  false,
+			Pinned:   false,
+			JsonData: map[string]interface{}{
+				"key": "value",
+			},
+			SecureJsonData: secureJsonData,
+			PluginVersion:  "1.0.0",
+			Created:        time.Now(),
+			Updated:        time.Now(),
+		}
+
+		err = db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			affectedRows, innerErr := sess.Insert(&existing)
+			require.Equal(t, int64(1), affectedRows)
+			return innerErr
+		})
+
+		require.NoError(t, err)
+		require.Greater(t, existing.Id, int64(0))
+
+		t.Run("GetPluginSettings with orgID=0 should return all existing plugin settings", func(t *testing.T) {
+			pluginSettings, err := psService.GetPluginSettings(context.Background(), &pluginsettings.GetArgs{OrgID: 0})
+			require.NoError(t, err)
+			require.Len(t, pluginSettings, 1)
+			ps := pluginSettings[0]
+			require.Equal(t, existing.OrgId, ps.OrgID)
+			require.Equal(t, existing.PluginId, ps.PluginID)
+			require.False(t, ps.Enabled)
+		})
+
+		t.Run("GetPluginSettings with orgID=1 should return all existing plugin settings", func(t *testing.T) {
+			pluginSettings, err := psService.GetPluginSettings(context.Background(), &pluginsettings.GetArgs{OrgID: 1})
+			require.NoError(t, err)
+			require.Len(t, pluginSettings, 1)
+			ps := pluginSettings[0]
+			require.Equal(t, existing.OrgId, ps.OrgID)
+			require.Equal(t, existing.PluginId, ps.PluginID)
+			require.False(t, ps.Enabled)
+		})
+
+		t.Run("GetPluginSettingById should return existing plugin settings", func(t *testing.T) {
+			query := &pluginsettings.GetByPluginIDArgs{
+				OrgID:    existing.OrgId,
+				PluginID: existing.PluginId,
+			}
+			ps, err := psService.GetPluginSettingByPluginID(context.Background(), query)
+			require.NoError(t, err)
+			require.NotNil(t, ps)
+			require.Equal(t, existing.OrgId, ps.OrgID)
+			require.Equal(t, existing.PluginId, ps.PluginID)
+			require.False(t, ps.Enabled)
+			require.NotNil(t, ps.JSONData)
+			require.Equal(t, existing.JsonData, ps.JSONData)
+			require.NotNil(t, ps.SecureJSONData)
+			require.Equal(t, existing.SecureJsonData, ps.SecureJSONData)
+		})
+
+		t.Run("UpdatePluginSetting should update existing plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
+			var pluginStateChangedEvent *models.PluginStateChangedEvent
+			db.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+				pluginStateChangedEvent = evt
+				return nil
+			})
+
+			cmd := &pluginsettings.UpdateArgs{
+				OrgID:         existing.OrgId,
+				PluginID:      existing.PluginId,
+				Enabled:       true,
+				PluginVersion: "1.0.1",
+				JSONData: map[string]interface{}{
+					"key2": "value2",
+				},
+				SecureJSONData: map[string]string{
+					"secureKey":  "secureValue",
+					"secureKey2": "secureValue2",
+				},
+				Pinned: true,
+			}
+			err := psService.UpdatePluginSetting(context.Background(), cmd)
+
+			require.NoError(t, err)
+			require.NotNil(t, pluginStateChangedEvent)
+			require.Equal(t, existing.OrgId, pluginStateChangedEvent.OrgId)
+			require.Equal(t, existing.PluginId, pluginStateChangedEvent.PluginId)
+			require.True(t, pluginStateChangedEvent.Enabled)
+
+			err = psService.UpdatePluginSettingPluginVersion(context.Background(), &pluginsettings.UpdatePluginVersionArgs{
+				OrgID:         cmd.OrgID,
+				PluginID:      cmd.PluginID,
+				PluginVersion: "1.0.2",
+			})
+			require.NoError(t, err)
+
+			t.Run("GetPluginSettingById should return updated plugin settings", func(t *testing.T) {
+				query := &pluginsettings.GetByPluginIDArgs{
+					OrgID:    existing.OrgId,
+					PluginID: existing.PluginId,
+				}
+				ps, err := psService.GetPluginSettingByPluginID(context.Background(), query)
+				require.NoError(t, err)
+				require.NotNil(t, ps)
+				require.Equal(t, existing.OrgId, ps.OrgID)
+				require.Equal(t, existing.PluginId, ps.PluginID)
+				require.True(t, ps.Enabled)
+				require.NotNil(t, ps.JSONData)
+				require.Equal(t, cmd.JSONData, ps.JSONData)
+				require.NotNil(t, ps.SecureJSONData)
+				require.Equal(t, cmd.SecureJSONData, psService.DecryptedValues(ps))
+				require.Equal(t, "1.0.2", ps.PluginVersion)
+				require.True(t, ps.Pinned)
+			})
+		})
+	})
+
+	t.Run("Non-existing plugin settings", func(t *testing.T) {
+		t.Run("UpdatePluginSetting should insert plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
+			var pluginStateChangedEvent *models.PluginStateChangedEvent
+			db.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+				pluginStateChangedEvent = evt
+				return nil
+			})
+
+			cmd := &pluginsettings.UpdateArgs{
+				PluginID:      "test",
+				Enabled:       true,
+				OrgID:         1,
+				PluginVersion: "1.0.0",
+				JSONData: map[string]interface{}{
+					"key": "value",
+				},
+				SecureJSONData: map[string]string{
+					"secureKey": "secureValue",
+				},
+			}
+			err := psService.UpdatePluginSetting(context.Background(), cmd)
+
+			require.NoError(t, err)
+			require.NotNil(t, pluginStateChangedEvent)
+			require.Equal(t, cmd.OrgID, pluginStateChangedEvent.OrgId)
+			require.Equal(t, cmd.PluginID, pluginStateChangedEvent.PluginId)
+			require.True(t, pluginStateChangedEvent.Enabled)
+
+			t.Run("GetPluginSettingById should return inserted plugin settings", func(t *testing.T) {
+				query := &pluginsettings.GetByPluginIDArgs{
+					OrgID:    cmd.OrgID,
+					PluginID: cmd.PluginID,
+				}
+				ps, err := psService.GetPluginSettingByPluginID(context.Background(), query)
+				require.NoError(t, err)
+				require.NotNil(t, ps)
+				require.Equal(t, cmd.OrgID, ps.OrgID)
+				require.Equal(t, cmd.PluginID, ps.PluginID)
+				require.True(t, ps.Enabled)
+				require.NotNil(t, ps.JSONData)
+				require.Equal(t, cmd.JSONData, ps.JSONData)
+				require.NotNil(t, ps.SecureJSONData)
+				require.Equal(t, cmd.PluginVersion, ps.PluginVersion)
+				require.False(t, ps.Pinned)
+			})
+		})
 	})
 }

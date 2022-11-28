@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var sqlIDAcceptList = map[string]struct{}{
@@ -33,18 +33,18 @@ type SQLFilter struct {
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes that exists for all actions will be parsed and compared against the supplied sqlID
 // Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")
-func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
+func Filter(user *user.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}
-	if user == nil || user.Permissions == nil || user.Permissions[user.OrgId] == nil {
+	if user == nil || user.Permissions == nil || user.Permissions[user.OrgID] == nil {
 		return denyQuery, errors.New("missing permissions")
 	}
 
 	wildcards := 0
 	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgId][a])
+		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgID][a])
 		if hasWildcard {
 			wildcards += 1
 			continue
@@ -88,33 +88,19 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 func ParseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
 	ids = make(map[interface{}]struct{})
 
-	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
-	if !ok {
-		return nil, false
-	}
-
 	parser := parseStringAttribute
 	if strings.HasSuffix(prefix, ":id:") {
 		parser = parseIntAttribute
 	}
 
-	allScope := rootPrefix + "*"
-	allAttributeScope := attributePrefix + "*"
+	wildcards := WildcardsFromPrefix(prefix)
 
 	for _, scope := range scopes {
-		if scope == "*" {
+		if wildcards.Contains(scope) {
 			return nil, true
 		}
 
-		if strings.HasPrefix(scope, rootPrefix) {
-			if scope == allScope || scope == allAttributeScope {
-				return nil, true
-			}
-
-			if !strings.HasPrefix(scope, prefix) {
-				continue
-			}
-
+		if strings.HasPrefix(scope, prefix) {
 			if id, err := parser(scope); err == nil {
 				ids[id] = struct{}{}
 			}

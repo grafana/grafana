@@ -13,7 +13,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
     return <>mocked-tag-filter</>;
   },
@@ -32,7 +32,7 @@ async function getTestContext({ name, interval, items, uid }: Partial<Playlist> 
   getMock.mockResolvedValue({
     name: 'Test Playlist',
     interval: '5s',
-    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
     uid: 'foo',
   });
   const { rerender } = render(
@@ -51,7 +51,7 @@ describe('PlaylistEditPage', () => {
       expect(screen.getByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /playlist name/i })).toHaveValue('Test Playlist');
       expect(screen.getByRole('textbox', { name: /playlist interval/i })).toHaveValue('5s');
-      expect(screen.getAllByRole('row', { name: /playlist item row/i })).toHaveLength(1);
+      expect(screen.getAllByRole('row')).toHaveLength(1);
     });
   });
 
@@ -69,7 +69,7 @@ describe('PlaylistEditPage', () => {
       expect(putMock).toHaveBeenCalledWith('/api/playlists/foo', {
         name: 'A Name',
         interval: '10s',
-        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+        items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
       });
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });

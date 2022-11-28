@@ -9,6 +9,19 @@ import {
   PageviewEchoEvent,
 } from '@grafana/runtime';
 
+interface ApplicationInsights {
+  trackPageView: () => void;
+  trackEvent: (event: { name: string; properties?: Record<string, any> }) => void;
+}
+
+declare global {
+  interface Window {
+    // We say all methods are undefined because we can't be sure they're there
+    // and we should be extra cautious
+    applicationInsights?: Partial<ApplicationInsights>;
+  }
+}
+
 export interface ApplicationInsightsBackendOptions {
   connectionString: string;
   endpointUrl?: string;
@@ -23,28 +36,29 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
       dataType: 'script',
       cache: true,
     }).done(function () {
-      var applicationInsightsOpts = {
+      const applicationInsightsOpts = {
         config: {
           connectionString: options.connectionString,
           endpointUrl: options.endpointUrl,
         },
       };
-      var init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
+
+      const init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
       (window as any).applicationInsights = init.loadAppInsights();
     });
   }
 
   addEvent = (e: PageviewEchoEvent | InteractionEchoEvent) => {
-    if (!(window as any).applicationInsights) {
+    if (!window.applicationInsights) {
       return;
     }
 
     if (isPageviewEvent(e)) {
-      (window as any).applicationInsights.trackPageView();
+      window.applicationInsights.trackPageView?.();
     }
 
     if (isInteractionEvent(e)) {
-      (window as any).applicationInsights.trackEvent({
+      window.applicationInsights.trackEvent?.({
         name: e.payload.interactionName,
         properties: e.payload.properties,
       });

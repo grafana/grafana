@@ -3,13 +3,13 @@ package correlations
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -30,12 +30,12 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	}
 
 	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       editorUser.password,
 		Login:          editorUser.username,
 	})
 	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       adminUser.password,
 		Login:          adminUser.username,
 	})
@@ -65,7 +65,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -85,7 +85,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -105,7 +105,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -128,7 +128,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -149,7 +149,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -177,7 +177,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -196,7 +196,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 
-		responseBody, err = ioutil.ReadAll(res.Body)
+		responseBody, err = io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(responseBody, &response)
@@ -217,7 +217,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 
-		responseBody, err = ioutil.ReadAll(res.Body)
+		responseBody, err = io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(responseBody, &response)
@@ -245,7 +245,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response correlations.UpdateCorrelationResponseBody
@@ -277,7 +277,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response correlations.UpdateCorrelationResponseBody
@@ -299,7 +299,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err = ioutil.ReadAll(res.Body)
+		responseBody, err = io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(responseBody, &response)
@@ -320,7 +320,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err = ioutil.ReadAll(res.Body)
+		responseBody, err = io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(responseBody, &response)
@@ -342,7 +342,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err = ioutil.ReadAll(res.Body)
+		responseBody, err = io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(responseBody, &response)

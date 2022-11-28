@@ -44,7 +44,7 @@ interface Props {
 }
 
 interface State {
-  /** The string is seriesToColumns transformation. Otherwise it is a dataframe index */
+  /** The string is joinByField transformation. Otherwise it is a dataframe index */
   selectedDataFrame: number | DataTransformerID;
   transformId: DataTransformerID;
   dataFrameIndex: number;
@@ -197,7 +197,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
       transformId:
-        item.value === DataTransformerID.seriesToColumns ? DataTransformerID.seriesToColumns : DataTransformerID.noop,
+        item.value === DataTransformerID.joinByField ? DataTransformerID.joinByField : DataTransformerID.noop,
       dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
       selectedDataFrame: item.value!,
     });
@@ -349,14 +349,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
 function buildTransformationOptions() {
   const transformations: Array<SelectableValue<DataTransformerID>> = [
     {
-      value: DataTransformerID.seriesToColumns,
+      value: DataTransformerID.joinByField,
       label: t({
         id: 'dashboard.inspect-data.transformation',
         message: 'Series joined by time',
       }),
       transformer: {
-        id: DataTransformerID.seriesToColumns,
-        options: { byField: 'Time' },
+        id: DataTransformerID.joinByField,
+        options: { byField: undefined }, // defaults to time field
       },
     },
   ];

@@ -147,7 +147,7 @@ There are two types of LogQL queries:
 
 ### Log queries
 
-Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
+Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore/" >}}), and with the [logs panel]({{< relref "../panels-visualizations/visualizations/logs/" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/).
 
 #### Log context
 
@@ -208,18 +208,19 @@ LogQL supports wrapping a log query with functions that allow for creating metri
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Query variable
 
 Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
-provides the following functions you can use in the `Query` input field.
+provides a form to select the type of values that can be expected for a given variable.
+The form has these options:
 
-| Name                                       | Description                                                                            |
-| ------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `label_names()`                            | Returns a list of label names.                                                         |
-| `label_values(label)`                      | Returns a list of label values for the `label`.                                        |
-| `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`. |
+| Query Type   | Label        | Stream Selector       | Description                                                                            |
+| ------------ | ------------ | --------------------- | -------------------------------------------------------------------------------------- |
+| Label names  | Not required | Not required          | Returns a list of label names.                                                         |
+| Label values | `label`      |                       | Returns a list of label values for the `label`.                                        |
+| Label values | `label`      | `log stream selector` | Returns a list of label values for the `label` in the specified `log stream selector`. |
 
 ### Ad hoc filters variable
 
@@ -227,11 +228,11 @@ Loki supports the special ad hoc filters variable type. It allows you to specify
 
 ### Using interval and range variables
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}).
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../dashboards/variables/add-template-variables/#global-variables/" >}}).
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations/" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/build-dashboards/annotate-visualizations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 ## Configure the data source with provisioning
 

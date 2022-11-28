@@ -72,7 +72,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Dashboard settings page title',
+        title: 'Tab General',
       },
       Annotations: {
         List: {
@@ -181,7 +181,7 @@ export const Pages = {
   ShareDashboardModal: {
     shareButton: 'Share dashboard or panel',
     PublicDashboard: {
-      Tab: 'Tab Public Dashboard',
+      Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
@@ -218,11 +218,6 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemRow: 'Playlist item row',
-    itemIdType: 'Playlist item dashboard by ID type',
-    itemTagType: 'Playlist item dashboard by Tag type',
-    itemMoveUp: 'Move playlist item order up',
-    itemMoveDown: 'Move playlist item order down',
     itemDelete: 'Delete playlist item',
   },
 };

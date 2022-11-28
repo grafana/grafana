@@ -19,7 +19,7 @@ import {
   SortOrder,
 } from '@grafana/schema';
 
-import { BarChartFieldConfig } from './models.gen';
+import { PanelFieldConfig } from './models.gen';
 import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 function mockDataFrame() {
@@ -33,7 +33,7 @@ function mockDataFrame() {
     fields: [{ name: 'ts', type: FieldType.time, values: [1, 2, 4] }],
   });
 
-  const f1Config: FieldConfig<BarChartFieldConfig> = {
+  const f1Config: FieldConfig<PanelFieldConfig> = {
     displayName: 'Metric 1',
     decimals: 2,
     unit: 'm/s',
@@ -44,7 +44,7 @@ function mockDataFrame() {
     },
   };
 
-  const f2Config: FieldConfig<BarChartFieldConfig> = {
+  const f2Config: FieldConfig<PanelFieldConfig> = {
     displayName: 'Metric 2',
     decimals: 2,
     unit: 'kWh',

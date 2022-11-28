@@ -30,7 +30,7 @@ seqs: [
 				// Timezone of dashboard,
 				timezone?: *"browser" | "utc" | "" @reviewme()
 				// Whether a dashboard is editable or not.
-				editable: bool | *true
+				editable:     bool | *true
 				graphTooltip: #DashboardCursorSync @reviewme()
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
@@ -49,9 +49,11 @@ seqs: [
 					hidden: bool | *false
 					// Selectable intervals for auto-refresh.
 					refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+					// TODO docs
+					time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 				} @reviewme()
 				// TODO docs
-				fiscalYearStartMonth?: uint8 & >0 & <13 @reviewme()
+				fiscalYearStartMonth?: uint8 & <13 @reviewme()
 				// TODO docs
 				liveNow?: bool @reviewme()
 				// TODO docs
@@ -67,9 +69,13 @@ seqs: [
 				version?: uint32 @reviewme()
 				panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @reviewme()
 				// TODO docs
-				templating?: list: [...#VariableModel] @reviewme()
+				templating?: {
+					list: [...#VariableModel] @reviewme()
+				}
 				// TODO docs
-				annotations?: list: [...#AnnotationQuery] @reviewme()
+				annotations?: {
+					list: [...#AnnotationQuery] @reviewme()
+				}
 				// TODO docs
 				links?: [...#DashboardLink] @reviewme()
 
@@ -88,17 +94,17 @@ seqs: [
 					// Whether annotation is enabled.
 					enable: bool | *true @reviewme()
 					// Name of annotation.
-					name?: string @reviewme()
+					name?:   string     @reviewme()
 					builtIn: uint8 | *0 @reviewme() // TODO should this be persisted at all?
 					// Whether to hide annotation.
 					hide?: bool | *false @reviewme()
 					// Annotation icon color.
-					iconColor?: string @reviewme()
-					type:  string | *"dashboard" @reviewme()
+					iconColor?: string                @reviewme()
+					type:       string | *"dashboard" @reviewme()
 					// Query for annotation data.
-					rawQuery?: string @reviewme()
+					rawQuery?: string     @reviewme()
 					showIn:    uint8 | *0 @reviewme()
-					target?: #Target @reviewme() // TODO currently a generic in AnnotationQuery
+					target?:   #Target    @reviewme() // TODO currently a generic in AnnotationQuery
 				} @cuetsy(kind="interface")
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
@@ -106,8 +112,8 @@ seqs: [
 				// TODO what about what's in public/app/features/types.ts?
 				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 				#VariableModel: {
-					type: #VariableType
-					name: string
+					type:   #VariableType
+					name:   string
 					label?: string
 					...
 				} @cuetsy(kind="interface") @reviewme()
@@ -115,16 +121,16 @@ seqs: [
 				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 				// TODO docs
 				#DashboardLink: {
-					title: string @reviewme()
-					type: #DashboardLinkType @reviewme()
-					icon?: string @reviewme()
-					tooltip?: string @reviewme()
-					url?: string @reviewme()
+					title:    string             @reviewme()
+					type:     #DashboardLinkType @reviewme()
+					icon?:    string             @reviewme()
+					tooltip?: string             @reviewme()
+					url?:     string             @reviewme()
 					tags: [...string] @reviewme()
-					asDropdown: bool | *false @reviewme()
+					asDropdown:  bool | *false @reviewme()
 					targetBlank: bool | *false @reviewme()
 					includeVars: bool | *false @reviewme()
-					keepTime: bool | *false @reviewme()
+					keepTime:    bool | *false @reviewme()
 				} @cuetsy(kind="interface")
 
 				// TODO docs
@@ -151,18 +157,18 @@ seqs: [
 					seriesBy?: #FieldColorSeriesByMode
 				} @cuetsy(kind="interface") @reviewme()
 
-        #GridPos: {
-          // Panel
-          h: uint32 & >0 | *9 @reviewme()
-          // Panel
-          w: uint32 & >0 & <=24 | *12 @reviewme()
-          // Panel x
-          x: uint32 & >=0 & <24 | *0 @reviewme()
-          // Panel y
-          y: uint32 & >=0 | *0 @reviewme()
-          // true if fixed
-          static?: bool @reviewme()
-        } @cuetsy(kind="interface")
+				#GridPos: {
+					// Panel
+					h: uint32 & >0 | *9 @reviewme()
+					// Panel
+					w: uint32 & >0 & <=24 | *12 @reviewme()
+					// Panel x
+					x: uint32 & >=0 & <24 | *0 @reviewme()
+					// Panel y
+					y: uint32 & >=0 | *0 @reviewme()
+					// true if fixed
+					static?: bool @reviewme()
+				} @cuetsy(kind="interface")
 
 				// TODO docs
 				#Threshold: {
@@ -343,11 +349,11 @@ seqs: [
 						overrides: [...{
 							matcher: {
 								id:       string | *"" @reviewme()
-								options?: _ @reviewme()
+								options?: _            @reviewme()
 							}
 							properties: [...{
 								id:     string | *"" @reviewme()
-								value?: _ @reviewme()
+								value?: _            @reviewme()
 							}]
 						}] @reviewme()
 					}
@@ -355,9 +361,9 @@ seqs: [
 
 				// Row panel
 				#RowPanel: {
-					type:      "row" @reviewme()
+					type:      "row"         @reviewme()
 					collapsed: bool | *false @reviewme()
-					title?:    string @reviewme()
+					title?:    string        @reviewme()
 
 					// Name of default datasource.
 					datasource?: {
@@ -366,7 +372,7 @@ seqs: [
 					} @reviewme()
 
 					gridPos?: #GridPos
-					id: uint32 @reviewme()
+					id:       uint32 @reviewme()
 					panels: [...(#Panel | #GraphPanel | #HeatmapPanel)] @reviewme()
 					// Name of template variable to repeat for.
 					repeat?: string @reviewme()

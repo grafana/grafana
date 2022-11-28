@@ -6,6 +6,7 @@ import {
   DataFrame,
   dataFrameToJSON,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -17,9 +18,7 @@ import config from 'app/core/config';
 
 import {
   DEFAULT_LIMIT,
-  TempoJsonData,
   TempoDatasource,
-  TempoQuery,
   buildExpr,
   buildLinkExpr,
   getRateAlignedValues,
@@ -29,18 +28,17 @@ import {
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
+import { TempoJsonData, TempoQuery } from './types';
 
+let mockObservable: () => Observable<any>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
-  };
-});
-
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    reportInteraction: jest.fn(),
+    getBackendSrv: () => ({
+      fetch: mockObservable,
+      _request: mockObservable,
+    }),
   };
 });
 
@@ -349,6 +347,82 @@ describe('Tempo data source', () => {
     });
     const lokiDS4 = ds4.getLokiSearchDS();
     expect(lokiDS4).toBe(undefined);
+  });
+
+  describe('test the testDatasource function', () => {
+    it('should return a success msg if response.ok is true', async () => {
+      mockObservable = () => of({ ok: true });
+      const ds = new TempoDatasource(defaultSettings);
+      const response = await ds.testDatasource();
+      expect(response.status).toBe('success');
+    });
+  });
+
+  describe('test the metadataRequest function', () => {
+    it('should return the last value from the observed stream', async () => {
+      mockObservable = () => of('321', '123', '456');
+      const ds = new TempoDatasource(defaultSettings);
+      const response = await ds.metadataRequest('/api/search/tags');
+      expect(response).toBe('456');
+    });
+  });
+
+  it('should include time shift when querying for traceID', () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: { traceQuery: { timeShiftEnabled: true, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
+    });
+
+    const request = ds.traceIdQueryRequest(
+      {
+        requestId: 'test',
+        interval: '',
+        intervalMs: 5,
+        scopedVars: {},
+        targets: [],
+        timezone: '',
+        app: '',
+        startTime: 0,
+        range: {
+          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+          raw: { from: '15m', to: 'now' },
+        },
+      },
+      [{ refId: 'refid1', queryType: 'traceId', query: '' } as TempoQuery]
+    );
+
+    expect(request.range.from.unix()).toBe(dateTime(new Date(2022, 8, 13, 15, 58, 0, 0)).unix());
+    expect(request.range.to.unix()).toBe(dateTime(new Date(2022, 8, 13, 16, 19, 0, 0)).unix());
+  });
+
+  it('should not include time shift when querying for traceID and time shift config is off', () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: { traceQuery: { timeShiftEnabled: false, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
+    });
+
+    const request = ds.traceIdQueryRequest(
+      {
+        requestId: 'test',
+        interval: '',
+        intervalMs: 5,
+        scopedVars: {},
+        targets: [],
+        timezone: '',
+        app: '',
+        startTime: 0,
+        range: {
+          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+          raw: { from: '15m', to: 'now' },
+        },
+      },
+      [{ refId: 'refid1', queryType: 'traceId', query: '' } as TempoQuery]
+    );
+
+    expect(request.range.from.unix()).toBe(dateTime(0).unix());
+    expect(request.range.to.unix()).toBe(dateTime(0).unix());
   });
 });
 
@@ -698,6 +772,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
       enabled: true,
     },
   },
+  readOnly: false,
 };
 
 const rateMetric = new MutableDataFrame({

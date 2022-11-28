@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
@@ -84,8 +85,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	ss := InitTestDB(t)
-	usr := &models.SignedInUser{
-		OrgId:       1,
+	usr := &user.SignedInUser{
+		OrgID:       1,
 		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
 	}
 
@@ -163,6 +164,45 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 			ss.Cfg.CaseInsensitiveLogin = false
 		})
+	})
+
+	t.Run("Get User by login - user_2 uses user_1.email as login", func(t *testing.T) {
+		ss = InitTestDB(t)
+
+		// create user_1
+		cmd := user.CreateUserCommand{
+			Email:      "user_1@mail.com",
+			Name:       "user_1",
+			Login:      "user_1",
+			Password:   "user_1_password",
+			IsDisabled: true,
+		}
+		user_1, err := ss.CreateUser(context.Background(), cmd)
+		require.Nil(t, err)
+
+		// create user_2
+		cmd = user.CreateUserCommand{
+			Email:      "user_2@mail.com",
+			Name:       "user_2",
+			Login:      "user_1@mail.com",
+			Password:   "user_2_password",
+			IsDisabled: true,
+		}
+		user_2, err := ss.CreateUser(context.Background(), cmd)
+		require.Nil(t, err)
+
+		// query user database for user_1 email
+		query := models.GetUserByLoginQuery{LoginOrEmail: "user_1@mail.com"}
+		err = ss.GetUserByLogin(context.Background(), &query)
+		require.Nil(t, err)
+
+		// expect user_1 as result
+		require.Equal(t, user_1.Email, query.Result.Email)
+		require.Equal(t, user_1.Login, query.Result.Login)
+		require.Equal(t, user_1.Name, query.Result.Name)
+		require.NotEqual(t, user_2.Email, query.Result.Email)
+		require.NotEqual(t, user_2.Login, query.Result.Login)
+		require.NotEqual(t, user_2.Name, query.Result.Name)
 	})
 
 	t.Run("Testing DB - creates and loads disabled user", func(t *testing.T) {
@@ -352,7 +392,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
 			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
@@ -391,7 +431,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
 			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
@@ -415,9 +455,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
 		require.Nil(t, err)
 		require.NotNil(t, query4.Result)
-		require.Equal(t, query4.Result.OrgId, users[0].OrgID)
+		require.Equal(t, query4.Result.OrgID, users[0].OrgID)
 
-		cacheKey := newSignedInUserCacheKey(query4.Result.OrgId, query4.UserId)
+		cacheKey := newSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
 		_, found := ss.CacheService.Get(cacheKey)
 		require.True(t, found)
 
@@ -464,8 +504,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		testUser := &models.SignedInUser{
-			OrgId:       1,
+		testUser := &user.SignedInUser{
+			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}
 		query := models.SearchUsersQuery{SignedInUser: testUser}

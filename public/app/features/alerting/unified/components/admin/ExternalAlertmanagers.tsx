@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -18,6 +17,7 @@ import {
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { loadDataSources } from 'app/features/datasources/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch, useSelector } from 'app/types';
 import { StoreState } from 'app/types/store';
 
 import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from '../../hooks/useExternalAmSelector';
@@ -136,8 +136,6 @@ export const ExternalAlertmanagers = () => {
   };
 
   const noAlertmanagers = externalAlertManagers?.length === 0;
-  const noDsAlertmanagers = externalDsAlertManagers?.length === 0;
-  const hasExternalAlertmanagers = !(noAlertmanagers && noDsAlertmanagers);
 
   return (
     <div>
@@ -155,20 +153,18 @@ export const ExternalAlertmanagers = () => {
         inactive={alertmanagersChoice === AlertmanagerChoice.Internal}
       />
 
-      {hasExternalAlertmanagers && (
-        <div className={styles.amChoice}>
-          <Field
-            label="Send alerts to"
-            description="Configures how the Grafana alert rule evaluation engine Alertmanager handles your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
-          >
-            <RadioButtonGroup
-              options={alertmanagerChoices}
-              value={alertmanagersChoice}
-              onChange={(value) => onChangeAlertmanagerChoice(value!)}
-            />
-          </Field>
-        </div>
-      )}
+      <div className={styles.amChoice}>
+        <Field
+          label="Send alerts to"
+          description="Configures how the Grafana alert rule evaluation engine Alertmanager handles your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured above), or both."
+        >
+          <RadioButtonGroup
+            options={alertmanagerChoices}
+            value={alertmanagersChoice}
+            onChange={(value) => onChangeAlertmanagerChoice(value!)}
+          />
+        </Field>
+      </div>
 
       <h5>Alertmanagers by URL</h5>
       <Alert severity="warning" title="Deprecation Notice">

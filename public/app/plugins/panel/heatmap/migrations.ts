@@ -145,6 +145,12 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   options.color.min = color.min;
   options.color.max = color.max;
 
+  if (typeof color.min === 'number' && typeof color.max === 'number' && color.min > color.max) {
+    options.color.min = color.max;
+    options.color.max = color.min;
+    options.color.reverse = true;
+  }
+
   return { fieldConfig, options };
 }
 

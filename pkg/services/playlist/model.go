@@ -13,11 +13,11 @@ var (
 
 // Playlist model
 type Playlist struct {
-	Id       int64  `json:"id"`
-	UID      string `json:"uid" xorm:"uid"`
-	Name     string `json:"name"`
-	Interval string `json:"interval"`
-	OrgId    int64  `json:"-"`
+	Id       int64  `json:"id,omitempty" db:"id"`
+	UID      string `json:"uid" xorm:"uid" db:"uid"`
+	Name     string `json:"name" db:"name"`
+	Interval string `json:"interval" db:"interval"`
+	OrgId    int64  `json:"-" db:"org_id"`
 }
 
 type PlaylistDTO struct {
@@ -39,12 +39,12 @@ type PlaylistItemDTO struct {
 }
 
 type PlaylistItem struct {
-	Id         int64
-	PlaylistId int64
-	Type       string
-	Value      string
-	Order      int
-	Title      string
+	Id         int64  `db:"id"`
+	PlaylistId int64  `db:"playlist_id"`
+	Type       string `db:"type"`
+	Value      string `db:"value"`
+	Order      int    `db:"order"`
+	Title      string `db:"title"`
 }
 
 type Playlists []*Playlist
@@ -65,8 +65,7 @@ type CreatePlaylistCommand struct {
 	Name     string            `json:"name" binding:"Required"`
 	Interval string            `json:"interval"`
 	Items    []PlaylistItemDTO `json:"items"`
-
-	OrgId int64 `json:"-"`
+	OrgId    int64             `json:"-"`
 }
 
 type DeletePlaylistCommand struct {

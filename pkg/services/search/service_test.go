@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestSearch_SortedResults(t *testing.T) {
@@ -29,7 +30,7 @@ func TestSearch_SortedResults(t *testing.T) {
 			&models.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
 		}
 	}).Return(nil)
-	ms.ExpectedSignedInUser = &models.SignedInUser{IsGrafanaAdmin: true}
+	ms.ExpectedSignedInUser = &user.SignedInUser{IsGrafanaAdmin: true}
 	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{10: true, 12: true}}
 	svc := &SearchService{
 		sqlstore:         ms,
@@ -39,7 +40,7 @@ func TestSearch_SortedResults(t *testing.T) {
 
 	query := &Query{
 		Limit: 2000,
-		SignedInUser: &models.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			IsGrafanaAdmin: true,
 		},
 	}

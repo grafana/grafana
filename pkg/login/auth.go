@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -32,21 +33,23 @@ type Authenticator interface {
 }
 
 type AuthenticatorService struct {
-	store        sqlstore.Store
-	loginService login.Service
+	loginService        login.Service
+	loginAttemptService loginattempt.Service
+	userService         user.Service
 }
 
-func ProvideService(store sqlstore.Store, loginService login.Service) *AuthenticatorService {
+func ProvideService(store sqlstore.Store, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
 	a := &AuthenticatorService{
-		store:        store,
-		loginService: loginService,
+		loginService:        loginService,
+		loginAttemptService: loginAttemptService,
+		userService:         userService,
 	}
 	return a
 }
 
 // AuthenticateUser authenticates the user via username & password
 func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(ctx, query, a.store); err != nil {
+	if err := validateLoginAttempts(ctx, query, a.loginAttemptService); err != nil {
 		return err
 	}
 
@@ -54,7 +57,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 		return err
 	}
 
-	err := loginUsingGrafanaDB(ctx, query, a.store)
+	err := loginUsingGrafanaDB(ctx, query, a.userService)
 	if err == nil || (!errors.Is(err, user.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
 		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
@@ -63,7 +66,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 
 	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, a.loginService)
 	if ldapEnabled {
-		query.AuthModule = models.AuthModuleLDAP
+		query.AuthModule = login.LDAPAuthModule
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			return ldapErr
 		}
@@ -74,7 +77,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
-		if err := saveInvalidLoginAttempt(ctx, query, a.store); err != nil {
+		if err := saveInvalidLoginAttempt(ctx, query, a.loginAttemptService); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 

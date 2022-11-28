@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,12 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
-var errInvalidRecipientFormat = errors.New("invalid recipient (datasource) identifier format. Only integer is expected")
-var NotImplementedResp = ErrResp(http.StatusNotImplemented, errors.New("endpoint not implemented"), "")
 
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
@@ -36,20 +34,25 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
+func getDatasourceByUID(ctx *models.ReqContext, cache datasources.CacheService, expectedType apimodels.Backend) (*datasources.DataSource, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
-	if err == nil {
-		switch ds.Type {
-		case "loki", "prometheus":
-			return apimodels.LoTexRulerBackend, nil
-		case "alertmanager":
-			return apimodels.AlertmanagerBackend, nil
-		default:
-			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
-		}
+	if err != nil {
+		return nil, err
 	}
-	return 0, errors.New("no datasource was found matching the given UID")
+	switch expectedType {
+	case apimodels.AlertmanagerBackend:
+		if ds.Type != "alertmanager" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "alertmanager")
+		}
+	case apimodels.LoTexRulerBackend:
+		if ds.Type != "loki" && ds.Type != "prometheus" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus")
+		}
+	default:
+		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())
+	}
+	return ds, nil
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
@@ -82,9 +85,9 @@ func (p *AlertingProxy) createProxyContext(ctx *models.ReqContext, request *http
 	// Some data sources require legacy Editor role in order to perform mutating operations. In this case, we elevate permissions for the context that we
 	// will provide downstream.
 	// TODO (yuri) remove this after RBAC for plugins is implemented
-	if !p.ac.IsDisabled() && !ctx.SignedInUser.HasRole(models.ROLE_EDITOR) {
+	if !p.ac.IsDisabled() && !ctx.SignedInUser.HasRole(org.RoleEditor) {
 		newUser := *ctx.SignedInUser
-		newUser.OrgRole = models.ROLE_EDITOR
+		newUser.OrgRole = org.RoleEditor
 		cpy.SignedInUser = &newUser
 	}
 	return &cpy
@@ -119,7 +122,7 @@ func (p *AlertingProxy) withReq(
 	if datasourceID != "" {
 		recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
 		if err != nil {
-			return ErrResp(http.StatusBadRequest, errInvalidRecipientFormat, "")
+			return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
 		}
 		p.DataProxy.ProxyDatasourceRequestWithID(proxyContext, recipient)
 	} else {
@@ -198,63 +201,6 @@ func jsonExtractor(v interface{}) func(*response.NormalResponse) (interface{}, e
 
 func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
-}
-
-func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
-	if len(c.Data) == 0 {
-		return nil
-	}
-
-	refIDs, err := validateQueriesAndExpressions(ctx, c.Data, user, skipCache, datasourceCache)
-	if err != nil {
-		return err
-	}
-
-	t := make([]string, 0, len(refIDs))
-	for refID := range refIDs {
-		t = append(t, refID)
-	}
-	if _, ok := refIDs[c.Condition]; !ok {
-		return fmt.Errorf("condition %s not found in any query or expression: it should be one of: [%s]", c.Condition, strings.Join(t, ","))
-	}
-	return nil
-}
-
-// conditionValidator returns a curried validateCondition that accepts only condition
-func conditionValidator(c *models.ReqContext, cache datasources.CacheService) func(ngmodels.Condition) error {
-	return func(condition ngmodels.Condition) error {
-		return validateCondition(c.Req.Context(), condition, c.SignedInUser, c.SkipCache, cache)
-	}
-}
-
-func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
-	refIDs := make(map[string]struct{})
-	if len(data) == 0 {
-		return nil, nil
-	}
-
-	for _, query := range data {
-		datasourceUID, err := query.GetDatasource()
-		if err != nil {
-			return nil, err
-		}
-
-		isExpression, err := query.IsExpression()
-		if err != nil {
-			return nil, err
-		}
-		if isExpression {
-			refIDs[query.RefID] = struct{}{}
-			continue
-		}
-
-		_, err = datasourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
-		if err != nil {
-			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
-		}
-		refIDs[query.RefID] = struct{}{}
-	}
-	return refIDs, nil
 }
 
 // ErrorResp creates a response with a visible error

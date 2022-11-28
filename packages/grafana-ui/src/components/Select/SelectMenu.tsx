@@ -1,10 +1,9 @@
 import { cx } from '@emotion/css';
 import React, { FC, RefCallback } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toIconName } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
-import { IconName } from '../../types';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../Icon/Icon';
 
@@ -35,7 +34,7 @@ interface SelectMenuOptionProps<T> {
   isDisabled: boolean;
   isFocused: boolean;
   isSelected: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
   innerRef: RefCallback<HTMLDivElement>;
   renderOptionLabel?: (value: SelectableValue<T>) => JSX.Element;
   data: SelectableValue<T>;
@@ -52,6 +51,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
 }) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+  const icon = data.icon ? toIconName(data.icon) : undefined;
 
   return (
     <div
@@ -69,7 +69,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
       data-testid={`${data.label ? data.label + '-' : ''}select-option`}
       title={data.title}
     >
-      {data.icon && <Icon name={data.icon as IconName} className={styles.optionIcon} />}
+      {icon && <Icon name={icon} className={styles.optionIcon} />}
       {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || data.value} />}
       <div className={styles.optionBody}>
         <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>

@@ -156,9 +156,9 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		}
 	}
 
-	if rs.pluginAvailable() {
+	if rs.pluginAvailable(ctx) {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = rs.RendererPluginManager.Renderer()
+		rs.pluginInfo = rs.RendererPluginManager.Renderer(ctx)
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -191,16 +191,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RenderingService) pluginAvailable() bool {
-	return rs.RendererPluginManager.Renderer() != nil
+func (rs *RenderingService) pluginAvailable(ctx context.Context) bool {
+	return rs.RendererPluginManager.Renderer(ctx) != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
 	return rs.Cfg.RendererUrl != ""
 }
 
-func (rs *RenderingService) IsAvailable() bool {
-	return rs.remoteAvailable() || rs.pluginAvailable()
+func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
+	return rs.remoteAvailable() || rs.pluginAvailable(ctx)
 }
 
 func (rs *RenderingService) Version() string {
@@ -271,7 +271,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 		}, nil
 	}
 
-	if !rs.IsAvailable() {
+	if !rs.IsAvailable(ctx) {
 		rs.log.Warn("Could not render image, no image renderer found/installed. " +
 			"For image rendering support please install the grafana-image-renderer plugin. " +
 			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
@@ -316,7 +316,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 }
 
 func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	capability, err := rs.HasCapability(SvgSanitization)
+	capability, err := rs.HasCapability(ctx, SvgSanitization)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 		return nil, ErrConcurrentLimitReached
 	}
 
-	if !rs.IsAvailable() {
+	if !rs.IsAvailable(ctx) {
 		return nil, ErrRenderUnavailable
 	}
 

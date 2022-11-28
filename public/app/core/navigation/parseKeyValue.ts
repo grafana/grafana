@@ -15,7 +15,7 @@ export function isArray(arr: any) {
 }
 
 export function isError(value: any) {
-  var tag = toString.call(value);
+  const tag = toString.call(value);
   switch (tag) {
     case '[object Error]':
       return true;
@@ -65,7 +65,7 @@ export function isArrayLike(obj: any) {
 
   // Support: iOS 8.2 (not reproducible in simulator)
   // "length" in obj used to prevent JIT error (gh-11508)
-  var length = 'length' in Object(obj) && obj.length;
+  const length = 'length' in Object(obj) && obj.length;
 
   // NodeList objects (with `item` method) and
   // other objects with suitable length characteristics are array-like
@@ -76,7 +76,7 @@ export function isFunction(value: any) {
 }
 
 export function forEach(obj: any, iterator: any, context?: any) {
-  var key, length;
+  let key, length;
   if (obj) {
     if (isFunction(obj)) {
       for (key in obj) {
@@ -85,7 +85,7 @@ export function forEach(obj: any, iterator: any, context?: any) {
         }
       }
     } else if (isArray(obj) || isArrayLike(obj)) {
-      var isPrimitive = typeof obj !== 'object';
+      const isPrimitive = typeof obj !== 'object';
       for (key = 0, length = obj.length; key < length; key++) {
         if (isPrimitive || key in obj) {
           iterator.call(context, obj[key], key, obj);
@@ -126,9 +126,9 @@ export function tryDecodeURIComponent(value: string): string {
 }
 
 function parseKeyValue(keyValue: string | null) {
-  var obj = {};
+  const obj = {};
   forEach((keyValue || '').split('&'), function (keyValue: string) {
-    var splitPoint, key, val;
+    let splitPoint, key, val;
     if (keyValue) {
       key = keyValue = keyValue.replace(/\+/g, '%20');
       splitPoint = keyValue.indexOf('=');

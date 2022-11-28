@@ -4,6 +4,7 @@ import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { contextSrv } from 'app/core/core';
 import * as api from 'app/features/manage-dashboards/state/actions';
 
 import { DashboardSearchHit } from '../../../features/search/types';
@@ -73,6 +74,69 @@ describe('FolderPicker', () => {
     await waitFor(() => {
       expect(screen.getByText(newFolder.title)).toBeInTheDocument();
     });
+  });
+
+  it('should show the General folder by default for editors', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
+        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+      ]);
+
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+
+    const onChangeFn = jest.fn();
+    render(<FolderPicker onChange={onChangeFn} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions[0]).toHaveTextContent('General');
+  });
+
+  it('should not show the General folder by default if showRoot is false', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
+        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+      ]);
+
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+
+    const onChangeFn = jest.fn();
+    render(<FolderPicker onChange={onChangeFn} showRoot={false} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions[0]).not.toHaveTextContent('General');
+  });
+
+  it('should not show the General folder by default for not editors', async () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
+        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+      ]);
+
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+
+    const onChangeFn = jest.fn();
+    render(<FolderPicker onChange={onChangeFn} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    selectEvent.openMenu(pickerContainer);
+
+    const pickerOptions = await screen.findAllByLabelText('Select option');
+
+    expect(pickerOptions[0]).not.toHaveTextContent('General');
   });
 });
 

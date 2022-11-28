@@ -28,7 +28,7 @@ function getCurrentThresholds(editor: ThresholdsEditor) {
 }
 
 describe('ThresholdsEditor', () => {
-  let restoreThemeContext: any;
+  let restoreThemeContext: () => void;
 
   beforeAll(() => {
     restoreThemeContext = mockThemeContext(createTheme());

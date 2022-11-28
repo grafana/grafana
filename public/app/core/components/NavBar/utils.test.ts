@@ -69,7 +69,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = false;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
@@ -78,7 +78,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.isSignedIn = true;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
     expect(signInNode).toBeDefined();
   });
@@ -87,7 +87,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.orgCount = 1;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
     expect(profileNode!.children).toBeUndefined();
   });
@@ -96,7 +96,7 @@ describe('enrichConfigItems', () => {
     const contextSrv = new ContextSrv();
     contextSrv.user.orgCount = 2;
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const profileNode = enrichedConfigItems.find((item) => item.id === 'profile');
     expect(profileNode!.children).toContainEqual(
       expect.objectContaining({
@@ -108,7 +108,7 @@ describe('enrichConfigItems', () => {
   it('enhances the help node with extra child links', () => {
     const contextSrv = new ContextSrv();
     setContextSrv(contextSrv);
-    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation, jest.fn());
+    const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
     const helpNode = enrichedConfigItems.find((item) => item.id === 'help');
     expect(helpNode!.children).toContainEqual(
       expect.objectContaining({

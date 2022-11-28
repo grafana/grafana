@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Field, PanelProps } from '@grafana/data';
+import { Field, PanelProps, getLinksSupplier } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, KeyboardPlugin } from '@grafana/ui';
@@ -65,12 +65,23 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       options={options}
     >
       {(config, alignedDataFrame) => {
+        alignedDataFrame.fields.forEach((field) => {
+          field.getLinks = getLinksSupplier(
+            alignedDataFrame,
+            field,
+            field.state!.scopedVars!,
+            replaceVariables,
+            timeZone
+          );
+        });
+
         return (
           <>
             <KeyboardPlugin config={config} />
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
+                frames={frames}
                 data={alignedDataFrame}
                 config={config}
                 mode={options.tooltip.mode}
@@ -117,6 +128,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             ) : (
               <ContextMenuPlugin
                 data={alignedDataFrame}
+                frames={frames}
                 config={config}
                 timeZone={timeZone}
                 replaceVariables={replaceVariables}

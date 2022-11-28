@@ -15,12 +15,13 @@ import {
 } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
-import { escapeLabelValueInSelector } from '../../language_utils';
+import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
@@ -30,6 +31,7 @@ export interface Props {
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
 }
+export const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 
 export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, showExplain }) => {
   const [sampleData, setSampleData] = useState<PanelData>();
@@ -54,7 +56,14 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
     const series = await datasource.languageProvider.fetchSeriesLabels(expr);
-    return Object.keys(series).sort();
+    const labelsNamesToConsider = labelsToConsider.map((l) => l.label);
+
+    const labelNames = Object.keys(series)
+      // Filter out label names that are already selected
+      .filter((name) => !labelsNamesToConsider.includes(name))
+      .sort();
+
+    return labelNames;
   };
 
   const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
@@ -82,7 +91,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
       if (op.length === 1 && op[0].id === LokiOperationId.LineContains && op[0].params[0] === '') {
         return undefined;
       }
-      return 'You need to specify at least 1 label filter (stream selector)';
+      return MISSING_LABEL_FILTER_ERROR_MESSAGE;
     }
     return undefined;
   }, [query]);
@@ -119,7 +128,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           stepNumber={1}
           title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
         >
-          Fetch all log lines matching label filters.
+          {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
       )}
       <OperationsEditorRow>

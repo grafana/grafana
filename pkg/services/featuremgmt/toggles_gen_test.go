@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,7 +59,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
 	// nolint:gosec
 	// We can ignore the gosec G304 warning since this is a test and the function is only called explicitly above
-	body, err := ioutil.ReadFile(fpath)
+	body, err := os.ReadFile(fpath)
 	if err == nil {
 		if diff := cmp.Diff(gen, string(body)); diff != "" {
 			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)

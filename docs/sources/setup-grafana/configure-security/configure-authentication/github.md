@@ -60,6 +60,8 @@ You may allow users to sign-up via GitHub authentication by setting the
 user successfully authenticating via GitHub authentication will be
 automatically signed up.
 
+You can also use [variable expansion]({{< relref "../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
+
 ### team_ids
 
 Require an active team membership for at least one of the given teams on
@@ -109,6 +111,20 @@ For the path lookup, Grafana uses JSON obtained from querying GitHub's API [`/ap
 
 The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+> enable the `oauth_skip_org_role_update_sync` option.
+> See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+
+On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
+specified by [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+It denies user access if no role or an invalid role is returned.
+
+> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+> then the user is assigned the role specified by
+> [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+
 An example Query could look like the following:
 
 ```bash
@@ -129,6 +145,27 @@ role_attribute_path = contains(groups[*], '@github/example-group') && 'Editor' |
 ```
 
 Note: If a match is found in other fields, teams will be ignored.
+
+#### Map server administrator privileges
+
+> Available in Grafana v9.2 and later versions.
+
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
+This is useful if you want to grant server administrator privileges to a subset of users.  
+Grafana also assigns the user the `Admin` role of the default organization.
+
+The setting `allow_assign_grafana_admin` under `[auth.github]` must be set to `true` for this to work.  
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
+
+```ini
+allow_assign_grafana_admin = true
+```
+
+Example:
+
+```ini
+role_attribute_path = [login==octocat] && 'GrafanaAdmin' || 'Viewer'
+```
 
 ### Team Sync (Enterprise only)
 

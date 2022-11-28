@@ -25,8 +25,6 @@ interface Props {
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
     disableLoginForm: boolean;
-    ldapEnabled: boolean;
-    authProxyEnabled: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
     loginHint: string;
@@ -79,7 +77,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
         .then(() => {
           this.toGrafana();
         })
-        .catch((err: any) => console.error(err));
+        .catch((err) => console.error(err));
     }
   };
 
@@ -90,7 +88,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
     getBackendSrv()
       .post('/login', formModel)
-      .then((result: any) => {
+      .then((result) => {
         this.result = result;
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
           this.toGrafana();
@@ -129,7 +127,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     const { children } = this.props;
     const { isLoggingIn, isChangingPassword } = this.state;
     const { login, toGrafana, changePassword } = this;
-    const { loginHint, passwordHint, disableLoginForm, ldapEnabled, authProxyEnabled, disableUserSignUp } = config;
+    const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
 
     return (
       <>
@@ -138,8 +136,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
           loginHint,
           passwordHint,
           disableLoginForm,
-          ldapEnabled,
-          authProxyEnabled,
           disableUserSignUp,
           login,
           isLoggingIn,

@@ -1,4 +1,4 @@
-import { Matcher, render, waitFor, screen } from '@testing-library/react';
+import { Matcher, render, waitFor, screen, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -7,7 +7,9 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
@@ -78,6 +80,7 @@ const ui = {
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId('datasource-picker'),
     folder: byTestId('folder-picker'),
+    folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),
     group: byTestId('group-picker'),
     annotationKey: (idx: number) => byTestId(`annotation-key-${idx}`),
@@ -99,7 +102,7 @@ const ui = {
 
 describe('RuleEditor', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
   });
@@ -143,7 +146,7 @@ describe('RuleEditor', () => {
     mocks.searchFolders.mockResolvedValue([]);
 
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -241,6 +244,10 @@ describe('RuleEditor', () => {
         title: 'Folder B',
         id: 2,
       },
+      {
+        title: 'Folder / with slash',
+        id: 2,
+      },
     ] as DashboardSearchHit[]);
 
     mocks.api.discoverFeatures.mockResolvedValue({
@@ -291,7 +298,7 @@ describe('RuleEditor', () => {
             grafana_alert: {
               condition: 'B',
               data: getDefaultQueries(),
-              exec_err_state: 'Alerting',
+              exec_err_state: GrafanaAlertStateDecision.Error,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },
@@ -338,7 +345,7 @@ describe('RuleEditor', () => {
     mocks.searchFolders.mockResolvedValue([]);
 
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -408,12 +415,21 @@ describe('RuleEditor', () => {
       id: 1,
     };
 
+    const slashedFolder = {
+      title: 'Folder with /',
+      uid: 'abcde',
+      id: 2,
+    };
+
     const dataSources = {
-      default: mockDataSource({
-        type: 'prometheus',
-        name: 'Prom',
-        isDefault: true,
-      }),
+      default: mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom',
+          isDefault: true,
+        },
+        { alerting: true }
+      ),
     };
 
     jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
@@ -444,7 +460,7 @@ describe('RuleEditor', () => {
                 namespace_id: 1,
                 condition: 'B',
                 data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Alerting,
+                exec_err_state: GrafanaAlertStateDecision.Error,
                 no_data_state: GrafanaAlertStateDecision.NoData,
                 title: 'my great new rule',
               },
@@ -453,7 +469,7 @@ describe('RuleEditor', () => {
         },
       ],
     });
-    mocks.searchFolders.mockResolvedValue([folder] as DashboardSearchHit[]);
+    mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
 
     await renderRuleEditor(uid);
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
@@ -463,9 +479,22 @@ describe('RuleEditor', () => {
     // check that it's filled in
     const nameInput = await ui.inputs.name.find();
     expect(nameInput).toHaveValue('my great new rule');
+    //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
     expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
     expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
+
+    //check that slashed folders are not in the list
+    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
+    expect(ui.inputs.folder.get()).not.toHaveTextContent(new RegExp(slashedFolder.title));
+
+    //check that slashes warning is only shown once user search slashes
+    const folderInput = await ui.inputs.folderContainer.find();
+    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
+    await userEvent.type(within(folderInput).getByRole('combobox'), 'new slashed //');
+    expect(within(folderInput).getByText("Folders with '/' character are not allowed.")).toBeInTheDocument();
+    await userEvent.keyboard('{backspace} {backspace}{backspace}');
+    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
     await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
@@ -479,6 +508,13 @@ describe('RuleEditor', () => {
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
+
+    //check that '+ Add new' option is in folders drop down even if we don't have values
+    const emptyFolderInput = await ui.inputs.folderContainer.find();
+    mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
+    await renderRuleEditor(uid);
+    await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
+    expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
@@ -495,7 +531,7 @@ describe('RuleEditor', () => {
               uid,
               condition: 'B',
               data: getDefaultQueries(),
-              exec_err_state: 'Alerting',
+              exec_err_state: GrafanaAlertStateDecision.Error,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },
@@ -562,7 +598,7 @@ describe('RuleEditor', () => {
     mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return {
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
             alertManagerConfigApi: false,
@@ -573,7 +609,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'loki with local rule store') {
         return {
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,
@@ -584,7 +620,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'cortex without ruler api') {
         return {
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,

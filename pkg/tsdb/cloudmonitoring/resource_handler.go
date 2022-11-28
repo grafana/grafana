@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -216,7 +215,7 @@ func decode(encoding string, original io.ReadCloser) ([]byte, error) {
 		return nil, fmt.Errorf("unexpected encoding type %v", err)
 	}
 
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

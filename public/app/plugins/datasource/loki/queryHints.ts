@@ -1,6 +1,6 @@
 import { DataFrame, QueryHint } from '@grafana/data';
 
-import { isQueryPipelineErrorFiltering, isQueryWithLabelFormat, isQueryWithParser } from './query_utils';
+import { isQueryPipelineErrorFiltering, isQueryWithLabelFormat, isQueryWithParser } from './queryUtils';
 import {
   dataFrameHasLevelLabel,
   extractHasErrorLabelFromDataFrame,

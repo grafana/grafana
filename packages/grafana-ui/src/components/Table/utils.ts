@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
 import { Row } from 'react-table';
 
@@ -9,6 +10,11 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   SelectableValue,
+  fieldReducers,
+  getDisplayProcessor,
+  reduceField,
+  GrafanaTheme2,
+  ArrayVector,
 } from '@grafana/data';
 
 import { BarGaugeCell } from './BarGaugeCell';
@@ -17,7 +23,14 @@ import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
-import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem, GrafanaTableColumn } from './types';
+import {
+  CellComponent,
+  TableCellDisplayMode,
+  TableFieldOptions,
+  FooterItem,
+  GrafanaTableColumn,
+  TableFooterCalc,
+} from './types';
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -255,4 +268,57 @@ function toNumber(value: any): number {
   }
 
   return Number(value);
+}
+
+export function getFooterItems(
+  filterFields: Array<{ field: Field }>,
+  values: any[number],
+  options: TableFooterCalc,
+  theme2: GrafanaTheme2
+): FooterItem[] {
+  return filterFields.map((data, i) => {
+    if (data.field.type !== FieldType.number) {
+      // show the reducer in the first column
+      if (i === 0 && options.reducer && options.reducer.length > 0) {
+        const reducer = fieldReducers.get(options.reducer[0]);
+        return reducer.name;
+      }
+      return undefined;
+    }
+    let newField = clone(data.field);
+    newField.values = new ArrayVector(values[i]);
+    newField.state = undefined;
+
+    data.field = newField;
+    if (options.fields && options.fields.length > 0) {
+      const f = options.fields.find((f) => f === data.field.name);
+      if (f) {
+        return getFormattedValue(data.field, options.reducer, theme2);
+      }
+      return undefined;
+    }
+    return getFormattedValue(data.field, options.reducer || [], theme2);
+  });
+}
+
+function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
+  const fmt = field.display ?? getDisplayProcessor({ field, theme });
+  const calc = reducer[0];
+  const v = reduceField({ field, reducers: reducer })[calc];
+  return formattedValueToString(fmt(v));
+}
+
+export function createFooterCalculationValues(rows: Row[]): any[number] {
+  const values: any[number] = [];
+
+  for (const key in rows) {
+    for (const [valKey, val] of Object.entries(rows[key].values)) {
+      if (values[valKey] === undefined) {
+        values[valKey] = [];
+      }
+      values[valKey].push(val);
+    }
+  }
+
+  return values;
 }

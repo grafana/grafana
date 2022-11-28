@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 	loginAttemptsWindow           = time.Minute * 5
 )
 
-var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) error {
+var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQuery, loginAttemptService loginattempt.Service) error {
 	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
@@ -23,7 +23,7 @@ var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQue
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
-	if err := store.GetUserLoginAttemptCount(ctx, &loginAttemptCountQuery); err != nil {
+	if err := loginAttemptService.GetUserLoginAttemptCount(ctx, &loginAttemptCountQuery); err != nil {
 		return err
 	}
 
@@ -34,7 +34,7 @@ var validateLoginAttempts = func(ctx context.Context, query *models.LoginUserQue
 	return nil
 }
 
-var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery, store sqlstore.Store) error {
+var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery, loginAttemptService loginattempt.Service) error {
 	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
@@ -44,5 +44,5 @@ var saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQ
 		IpAddress: query.IpAddress,
 	}
 
-	return store.CreateLoginAttempt(ctx, &loginAttemptCommand)
+	return loginAttemptService.CreateLoginAttempt(ctx, &loginAttemptCommand)
 }

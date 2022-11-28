@@ -18,7 +18,6 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 
 import PageLoader from '../../core/components/PageLoader/PageLoader';
-import { getNavModel } from '../../core/selectors/navModel';
 import { AccessControlAction, StoreState, Unit, UserDTO, UserFilter } from '../../types';
 
 import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actions';
@@ -41,7 +40,6 @@ const mapDispatchToProps = {
 };
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'global-users'),
   users: state.userListAdmin.users,
   query: state.userListAdmin.query,
   showPaging: state.userListAdmin.showPaging,
@@ -57,9 +55,8 @@ interface OwnProps {}
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const UserListAdminPageUnConnected: React.FC<Props> = ({
+const UserListAdminPageUnConnected = ({
   fetchUsers,
-  navModel,
   query,
   changeQuery,
   users,
@@ -70,7 +67,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   changeFilter,
   filters,
   isLoading,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -80,7 +77,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="global-users">
       <Page.Contents>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">

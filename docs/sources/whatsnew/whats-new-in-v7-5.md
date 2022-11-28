@@ -29,7 +29,7 @@ Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
 ![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
-For more information, refer to [Pie chart panel]({{< relref "../visualizations/pie-chart-panel/" >}}).
+For more information, refer to [Pie chart panel]({{< relref "../panels-visualizations/visualizations/pie-chart/" >}}).
 
 ### Alerting for Loki
 
@@ -123,7 +123,7 @@ Query caching advantages:
 
 Caching currently works for all backend data sources. You can enable the cache globally or per data source, and you can configure the cache duration per data source. The cache is currently in-memory.
 
-For more information, refer to [Query caching]({{< relref "../enterprise/query-caching/" >}}).
+For more information, refer to [Query caching]({{< relref "../administration/data-source-management/#query-caching" >}}).
 
 ### Use template variable in reports
 
@@ -131,7 +131,7 @@ If you have created dashboards with template variables, then you can choose whic
 
 Enable this feature in configuration settings using the `templateVariables` flag.
 
-For more information, refer to [Reporting]({{< relref "../share-dashboards-panels/#choose-template-variables" >}}).
+For more information, refer to [Reporting]({{< relref "../dashboards/share-dashboards-panels/#choose-template-variables" >}}).
 
 ### Active user limits
 

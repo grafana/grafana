@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { RefObject, useCallback, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import {
   DataFrame,
@@ -29,8 +28,8 @@ import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSett
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { TempoQuery } from 'app/plugins/datasource/tempo/datasource';
-import { StoreState } from 'app/types';
+import { TempoQuery } from 'app/plugins/datasource/tempo/types';
+import { useDispatch, useSelector } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
@@ -138,7 +137,7 @@ export function TraceView(props: Props) {
     [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
-  const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
+  const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
 
   return (
@@ -218,7 +217,7 @@ function useFocusSpanLink(options: {
   refId?: string;
   datasource?: DataSourceApi;
 }): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
-  const panelState = useSelector((state: StoreState) => state.explore[options.exploreId]?.panelsState.trace);
+  const panelState = useSelector((state) => state.explore[options.exploreId]?.panelsState.trace);
   const focusedSpanId = panelState?.spanId;
 
   const dispatch = useDispatch();
@@ -230,7 +229,7 @@ function useFocusSpanLink(options: {
       })
     );
 
-  const query = useSelector((state: StoreState) =>
+  const query = useSelector((state) =>
     state.explore[options.exploreId]?.queries.find((query) => query.refId === options.refId)
   );
 

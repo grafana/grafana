@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -41,6 +42,14 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 
 	if alertState.Image != nil {
 		nA[ngModels.ImageTokenAnnotation] = alertState.Image.Token
+	}
+
+	if alertState.StateReason != "" {
+		nA[ngModels.StateReasonAnnotation] = alertState.StateReason
+	}
+
+	if alertState.OrgID != 0 {
+		nA[ngModels.OrgIDAnnotation] = strconv.FormatInt(alertState.OrgID, 10)
 	}
 
 	var urlStr string
@@ -124,6 +133,9 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 		}
 		alert := stateToPostableAlert(alertState, appURL)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
+		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
+			continue
+		}
 		alertState.LastSentAt = ts
 		sentAlerts = append(sentAlerts, alertState)
 	}

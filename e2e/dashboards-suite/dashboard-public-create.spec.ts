@@ -16,7 +16,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
+    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e().wait('@query-public-config');
 
     // Saving button should be disabled
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
@@ -26,13 +28,16 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('be.enabled').click({ force: true });
     e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('be.enabled').click({ force: true });
 
+    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
+
     // Switch on enabling toggle
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().click({ force: true });
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
+    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
 
     // Save configuration
+    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
-
-    // e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().click();
+    e2e().wait('@save');
 
     // Checkboxes should be disabled after saving configuration
     e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('be.disabled');
@@ -63,7 +68,11 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
+    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e().wait('@query-public-config');
+
+    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
 
     // Make a request to public dashboards api endpoint without authentication
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput()
@@ -95,7 +104,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
+    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
+    e2e().wait('@query-public-config');
 
     // All checkboxes should be disabled
     e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('be.disabled');
@@ -111,10 +122,12 @@ e2e.scenario({
       .then((text) => e2e().wrap(text).as('url'));
 
     // Switch off enabling toggle
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().click({ force: true });
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
 
     // Save configuration
+    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
+    e2e().wait('@save');
 
     // Url should be hidden
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('not.exist');

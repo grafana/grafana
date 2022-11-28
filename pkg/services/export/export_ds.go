@@ -12,7 +12,7 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 	cmd := &datasources.GetDataSourcesQuery{
 		OrgId: helper.orgID,
 	}
-	err := job.sql.GetDataSources(helper.ctx, cmd)
+	err := job.datasourceService.GetDataSources(helper.ctx, cmd)
 	if err != nil {
 		return nil
 	}

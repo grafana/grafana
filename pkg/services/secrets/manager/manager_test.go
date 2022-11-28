@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -175,8 +176,14 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		encryptionService := ossencryption.ProvideService()
 		settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+		encProvider := encryptionprovider.Provider{}
+		usageStats := &usagestats.UsageStatsMock{}
+
+		encryptionService, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+		require.NoError(t, err)
+
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, settings, features))
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))

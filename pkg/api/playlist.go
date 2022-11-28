@@ -13,7 +13,7 @@ import (
 
 func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
 	uid := web.Params(c.Req)[":uid"]
-	query := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgId}
+	query := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 	p, err := hs.playlistService.Get(c.Req.Context(), &query)
 
 	if err != nil {
@@ -26,7 +26,7 @@ func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
 		return
 	}
 
-	if p.OrgId != c.OrgId {
+	if p.OrgId != c.OrgID {
 		c.JsonApiErr(403, "You are not allowed to edit/view playlist", nil)
 		return
 	}
@@ -50,7 +50,7 @@ func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
 	searchQuery := playlist.GetPlaylistsQuery{
 		Name:  query,
 		Limit: limit,
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 	}
 
 	playlists, err := hs.playlistService.Search(c.Req.Context(), &searchQuery)
@@ -73,14 +73,14 @@ func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
 // 500: internalServerError
 func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgId}
+	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 
 	p, err := hs.playlistService.Get(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(500, "Playlist not found", err)
 	}
 
-	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgId)
+	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgID)
 
 	dto := &playlist.PlaylistDTO{
 		Id:       p.Id,
@@ -140,7 +140,7 @@ func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, uid string, orgId i
 func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
-	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgId)
+	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgID)
 
 	if err != nil {
 		return response.Error(500, "Could not load playlist items", err)
@@ -162,7 +162,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Response {
 	playlistUID := web.Params(c.Req)[":uid"]
 
-	playlists, err := hs.LoadPlaylistDashboards(c.Req.Context(), c.OrgId, c.SignedInUser, playlistUID)
+	playlists, err := hs.LoadPlaylistDashboards(c.Req.Context(), c.OrgID, c.SignedInUser, playlistUID)
 	if err != nil {
 		return response.Error(500, "Could not load dashboards", err)
 	}
@@ -183,7 +183,7 @@ func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Respo
 func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
-	cmd := playlist.DeletePlaylistCommand{UID: uid, OrgId: c.OrgId}
+	cmd := playlist.DeletePlaylistCommand{UID: uid, OrgId: c.OrgID}
 	if err := hs.playlistService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
@@ -206,7 +206,7 @@ func (hs *HTTPServer) CreatePlaylist(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	p, err := hs.playlistService.Create(c.Req.Context(), &cmd)
 	if err != nil {
@@ -231,7 +231,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.UID = web.Params(c.Req)[":uid"]
 
 	p, err := hs.playlistService.Update(c.Req.Context(), &cmd)
@@ -239,7 +239,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to save playlist", err)
 	}
 
-	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.UID, c.OrgId)
+	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.UID, c.OrgID)
 	if err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}

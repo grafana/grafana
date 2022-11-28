@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,8 +27,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 
@@ -69,7 +70,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything).Return(result)
+			evaluator.EXPECT().Validate(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
@@ -84,7 +86,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, response.Status())
 
-			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "Validate", mock.Anything, mock.Anything, mock.Anything)
 		})
 	})
 
@@ -94,8 +97,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			IsSignedIn: false,
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 		ac := acMock.New().WithDisabled()
@@ -109,7 +112,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			evaluator := &eval.FakeEvaluator{}
 			var result []eval.Result
-			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything).Return(result)
+			evaluator.EXPECT().Validate(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			evaluator.EXPECT().ConditionEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
@@ -123,7 +127,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			})
 
 			require.Equal(t, http.StatusUnauthorized, response.Status())
-			evaluator.AssertNotCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertNotCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertNotCalled(t, "Validate", mock.Anything, mock.Anything, mock.Anything)
 
 			rc.IsSignedIn = true
 
@@ -138,7 +143,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, response.Status())
 
-			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "ConditionEval", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			evaluator.AssertCalled(t, "Validate", mock.Anything, mock.Anything, mock.Anything)
 		})
 	})
 }
@@ -149,8 +155,8 @@ func TestRouteEvalQueries(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 
@@ -197,7 +203,7 @@ func TestRouteEvalQueries(t *testing.T) {
 					},
 				},
 			}
-			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 
@@ -218,8 +224,8 @@ func TestRouteEvalQueries(t *testing.T) {
 				Req: &http.Request{},
 			},
 			IsSignedIn: false,
-			SignedInUser: &models2.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 		ac := acMock.New().WithDisabled()
@@ -240,7 +246,7 @@ func TestRouteEvalQueries(t *testing.T) {
 					},
 				},
 			}
-			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
+			evaluator.EXPECT().QueriesAndExpressionsEval(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 
 			srv := createTestingApiSrv(ds, ac, evaluator)
 

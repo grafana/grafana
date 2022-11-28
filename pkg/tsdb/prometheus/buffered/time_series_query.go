@@ -3,6 +3,7 @@ package buffered
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -13,10 +14,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -24,7 +27,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-//Internal interval and range variables
+// Internal interval and range variables
 const (
 	varInterval     = "$__interval"
 	varIntervalMs   = "$__interval_ms"
@@ -34,8 +37,8 @@ const (
 	varRateInterval = "$__rate_interval"
 )
 
-//Internal interval and range variables with {} syntax
-//Repetitive code, we should have functionality to unify these
+// Internal interval and range variables with {} syntax
+// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt     = "${__interval}"
 	varIntervalMsAlt   = "${__interval_ms}"
@@ -60,6 +63,11 @@ type Buffered struct {
 	ID                 int64
 	URL                string
 	TimeInterval       string
+}
+
+type bufferedResponse struct {
+	Response interface{}
+	Warnings apiv1.Warnings
 }
 
 // New creates and object capable of executing and parsing a Prometheus queries. It's "buffered" because there is
@@ -92,6 +100,17 @@ func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend
 }
 
 func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// Add headers from the request to context so they are added later on by a context middleware. This is because
+	// prom client does not allow us to do this directly.
+
+	addHeaders := make(map[string]string)
+
+	if req.Headers["FromAlert"] == "true" {
+		addHeaders["FromAlert"] = "true"
+	}
+
+	ctxWithHeaders := sdkHTTPClient.WithContextualMiddleware(ctx, middleware.ReqHeadersMiddleware(addHeaders))
+
 	queries, err := b.parseTimeSeriesQuery(req)
 	if err != nil {
 		result := backend.QueryDataResponse{
@@ -100,7 +119,7 @@ func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Quer
 		return &result, fmt.Errorf("error parsing time series query: %v", err)
 	}
 
-	return b.runQueries(ctx, queries)
+	return b.runQueries(ctxWithHeaders, queries)
 }
 
 func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
@@ -118,7 +137,7 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		})
 		defer endSpan()
 
-		response := make(map[TimeSeriesQueryType]interface{})
+		response := make(map[TimeSeriesQueryType]bufferedResponse)
 
 		timeRange := apiv1.Range{
 			Step: query.Step,
@@ -128,23 +147,42 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		}
 
 		if query.RangeQuery {
-			rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
+			rangeResponse, warnings, err := b.client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				b.log.Error("Range query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				var promErr *apiv1.Error
+				if errors.As(err, &promErr) {
+					b.log.Error("Range query failed", "query", query.Expr, "error", err, "detail", promErr.Detail)
+					result.Responses[query.RefId] = backend.DataResponse{Error: fmt.Errorf("%w: details: %s", err, promErr.Detail)}
+				} else {
+					b.log.Error("Range query failed", "query", query.Expr, "err", err)
+					result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				}
+
 				continue
 			}
-			response[RangeQueryType] = rangeResponse
+			response[RangeQueryType] = bufferedResponse{
+				Response: rangeResponse,
+				Warnings: warnings,
+			}
 		}
 
 		if query.InstantQuery {
-			instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
+			instantResponse, warnings, err := b.client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				b.log.Error("Instant query failed", "query", query.Expr, "err", err)
-				result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				var promErr *apiv1.Error
+				if errors.As(err, &promErr) {
+					b.log.Error("Instant query failed", "query", query.Expr, "error", err, "detail", promErr.Detail)
+					result.Responses[query.RefId] = backend.DataResponse{Error: fmt.Errorf("%w: details: %s", err, promErr.Detail)}
+				} else {
+					b.log.Error("Instant query failed", "query", query.Expr, "err", err)
+					result.Responses[query.RefId] = backend.DataResponse{Error: err}
+				}
 				continue
 			}
-			response[InstantQueryType] = instantResponse
+			response[InstantQueryType] = bufferedResponse{
+				Response: instantResponse,
+				Warnings: warnings,
+			}
 		}
 
 		// This is a special case
@@ -154,7 +192,10 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 			if err != nil {
 				b.log.Error("Exemplar query failed", "query", query.Expr, "err", err)
 			} else {
-				response[ExemplarQueryType] = exemplarResponse
+				response[ExemplarQueryType] = bufferedResponse{
+					Response: exemplarResponse,
+					Warnings: nil,
+				}
 			}
 		}
 
@@ -213,7 +254,7 @@ func (b *Buffered) parseTimeSeriesQuery(req *backend.QueryDataRequest) ([]*Prome
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling query model: %v", err)
 		}
-		//Final interval value
+		// Final interval value
 		interval, err := calculatePrometheusInterval(model, b.TimeInterval, query, b.intervalCalculator)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating interval: %v", err)
@@ -250,17 +291,17 @@ func (b *Buffered) parseTimeSeriesQuery(req *backend.QueryDataRequest) ([]*Prome
 	return qs, nil
 }
 
-func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
+func parseTimeSeriesResponse(value map[TimeSeriesQueryType]bufferedResponse, query *PrometheusQuery) (data.Frames, error) {
 	var (
 		frames     = data.Frames{}
 		nextFrames = data.Frames{}
 	)
 
-	for _, value := range value {
+	for _, val := range value {
 		// Zero out the slice to prevent data corruption.
 		nextFrames = nextFrames[:0]
 
-		switch v := value.(type) {
+		switch v := val.Response.(type) {
 		case model.Matrix:
 			nextFrames = matrixToDataFrames(v, query, nextFrames)
 		case model.Vector:
@@ -273,16 +314,39 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 			return nil, fmt.Errorf("unexpected result type: %s query: %s", v, query.Expr)
 		}
 
+		if len(val.Warnings) > 0 {
+			for _, frame := range nextFrames {
+				if frame.Meta == nil {
+					frame.Meta = &data.FrameMeta{}
+				}
+				frame.Meta.Notices = readWarnings(val.Warnings)
+			}
+		}
+
 		frames = append(frames, nextFrames...)
 	}
 
 	return frames, nil
 }
 
+func readWarnings(warnings apiv1.Warnings) []data.Notice {
+	notices := []data.Notice{}
+
+	for _, w := range warnings {
+		notice := data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     w,
+		}
+		notices = append(notices, notice)
+	}
+
+	return notices
+}
+
 func calculatePrometheusInterval(model *QueryModel, timeInterval string, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
 	queryInterval := model.Interval
 
-	//If we are using variable for interval/step, we will replace it with calculated interval
+	// If we are using variable for interval/step, we will replace it with calculated interval
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
 	}
@@ -555,6 +619,10 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		}
 	}
 
+	sort.SliceStable(sampleExemplars, func(i, j int) bool {
+		return sampleExemplars[i].Time.Before(sampleExemplars[j].Time)
+	})
+
 	// Create DF from sampled exemplars
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(sampleExemplars))
 	timeField.Name = "Time"
@@ -584,7 +652,11 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
-	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+	newFrame := newDataFrame("exemplar", "exemplar", dataFields...)
+	// unset on exemplars (ugly but this client will be deprecated soon)
+	newFrame.Meta.Type = ""
+
+	return append(frames, newFrame)
 }
 
 func sortedLabels(labelsVector map[string][]string) []string {
@@ -633,7 +705,7 @@ func isVariableInterval(interval string) bool {
 	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
 		return true
 	}
-	//Repetitive code, we should have functionality to unify these
+	// Repetitive code, we should have functionality to unify these
 	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
 		return true
 	}

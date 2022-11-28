@@ -1,18 +1,18 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
-import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
+import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DataSourceJsonData,
+  dateTime,
   FieldType,
   isValidGoDuration,
   LoadingState,
+  rangeUtil,
   ScopedVars,
 } from '@grafana/data';
 import {
@@ -30,7 +30,7 @@ import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsS
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { LokiOptions, LokiQuery } from '../loki/types';
+import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
@@ -45,55 +45,16 @@ import {
   errorRateMetric,
   defaultTableFilter,
 } from './graphTransform';
+import TempoLanguageProvider from './language_provider';
 import {
   transformTrace,
   transformTraceList,
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
+  createTableFrameFromTraceQlQuery,
 } from './resultTransformer';
-
-// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
-
-export interface TempoJsonData extends DataSourceJsonData {
-  tracesToLogs?: TraceToLogsOptions;
-  serviceMap?: {
-    datasourceUid?: string;
-  };
-  search?: {
-    hide?: boolean;
-  };
-  nodeGraph?: NodeGraphOptions;
-  lokiSearch?: {
-    datasourceUid?: string;
-  };
-  spanBar?: {
-    tag: string;
-  };
-}
-
-export interface TempoQuery extends DataQuery {
-  query: string;
-  // Query to find list of traces, e.g., via Loki
-  linkedQuery?: LokiQuery;
-  search: string;
-  queryType: TempoQueryType;
-  serviceName?: string;
-  spanName?: string;
-  minDuration?: string;
-  maxDuration?: string;
-  limit?: number;
-  serviceMapQuery?: string;
-}
-
-interface SearchQueryParams {
-  minDuration?: string;
-  maxDuration?: string;
-  limit?: number;
-  tags: string;
-  start?: number;
-  end?: number;
-}
+import { mockedSearchResponse } from './traceql/mockedSearchResponse';
+import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 
 export const DEFAULT_LIMIT = 20;
 
@@ -109,8 +70,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   lokiSearch?: {
     datasourceUid?: string;
   };
+  traceQuery?: {
+    timeShiftEnabled?: boolean;
+    spanStartTimeShift?: string;
+    spanEndTimeShift?: string;
+  };
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
+  languageProvider: TempoLanguageProvider;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -122,6 +89,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
+    this.traceQuery = instanceSettings.jsonData.traceQuery;
+    this.languageProvider = new TempoLanguageProvider(this);
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -200,6 +169,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               return of({ error: { message: error.data.message }, data: [] });
             })
           )
+        );
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
+    if (targets.traceql?.length) {
+      try {
+        reportInteraction('grafana_traces_traceql_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+        });
+
+        subQueries.push(
+          of({
+            data: [createTableFrameFromTraceQlQuery(mockedSearchResponse().traces, this.instanceSettings)],
+          })
         );
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
@@ -312,16 +297,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @param targets
    * @private
    */
-  private handleTraceIdQuery(
-    options: DataQueryRequest<TempoQuery>,
-    targets: TempoQuery[]
-  ): Observable<DataQueryResponse> {
+  handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
     const validTargets = targets.filter((t) => t.query).map((t) => ({ ...t, query: t.query.trim() }));
     if (!validTargets.length) {
       return EMPTY;
     }
 
-    const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
+    const traceRequest = this.traceIdQueryRequest(options, validTargets);
+
     return super.query(traceRequest).pipe(
       map((response) => {
         if (response.error) {
@@ -332,8 +315,30 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
   }
 
+  traceIdQueryRequest(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): DataQueryRequest<TempoQuery> {
+    const request = {
+      ...options,
+      targets,
+    };
+
+    if (this.traceQuery?.timeShiftEnabled) {
+      request.range = options.range && {
+        ...options.range,
+        from: options.range.from.subtract(
+          rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
+          'milliseconds'
+        ),
+        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
+      };
+    } else {
+      request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
+    }
+
+    return request;
+  }
+
   async metadataRequest(url: string, params = {}) {
-    return await this._request(url, params, { method: 'GET', hideFromInspector: true }).toPromise();
+    return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -350,7 +355,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await getBackendSrv().fetch<any>(options).toPromise();
+    const response = await lastValueFrom(getBackendSrv().fetch<any>(options));
 
     if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
@@ -419,16 +424,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return searchQuery;
   }
 
-  async getServiceGraphLabels() {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagKeys!();
-  }
-
-  async getServiceGraphLabelValues(key: string) {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagValues!({ key });
-  }
-
   // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
   getLokiSearchDS = (): string | undefined => {
     const legacyLogsDatasourceUid =
@@ -460,6 +455,12 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+
+      // No handling of multiple targets assume just one. NodeGraph does not support it anyway, but still should be
+      // fixed at some point.
+      nodes.refId = request.targets[0].refId;
+      edges.refId = request.targets[0].refId;
+
       nodes.fields[0].config = getFieldConfig(
         datasourceUid,
         tempoDatasourceUid,
@@ -640,6 +641,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
     ...options,
     targets: serviceMapMetrics.map((metric) => {
       return {
+        format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway

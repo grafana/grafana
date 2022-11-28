@@ -1,12 +1,12 @@
 import { Trans, t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
+import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import config from 'app/core/config';
 
+import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl } from './utils';
 
@@ -104,30 +104,6 @@ export class ShareLink extends PureComponent<Props, State> {
       message: `Link URL`,
     });
 
-    const themeOptions: Array<SelectableValue<string>> = [
-      {
-        label: t({
-          id: 'share-modal.link.theme-current',
-          message: `Current`,
-        }),
-        value: 'current',
-      },
-      {
-        label: t({
-          id: 'share-modal.link.theme-dark',
-          message: `Dark`,
-        }),
-        value: 'dark',
-      },
-      {
-        label: t({
-          id: 'share-modal.link.theme-light',
-          message: `Light`,
-        }),
-        value: 'light',
-      },
-    ];
-
     return (
       <>
         <p className="share-modal-info-text">
@@ -143,14 +119,8 @@ export class ShareLink extends PureComponent<Props, State> {
               onChange={this.onUseCurrentTimeRangeChange}
             />
           </Field>
-          <Field
-            label={t({
-              id: 'share-modal.link.theme',
-              message: `Theme`,
-            })}
-          >
-            <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-          </Field>
+          <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
+          {/* @PERCONA */}
           {differentLocalhostDomains && (
             <Alert title="PMM: URL mismatch" severity="warning">
               <p>

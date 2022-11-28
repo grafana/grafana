@@ -181,7 +181,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     `,
 
     input: cx(
-      getFocusStyle(theme.v1),
+      getFocusStyle(theme),
       sharedInputStyle(theme, invalid),
       css`
         label: input-input;

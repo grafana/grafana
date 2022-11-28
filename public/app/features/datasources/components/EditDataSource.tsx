@@ -1,10 +1,10 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import React from 'react';
-import { useDispatch } from 'react-redux';
 
 import { DataSourcePluginMeta, DataSourceSettings as DataSourceSettingsType } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { DataSourceSettingsState, ThunkResult } from 'app/types';
+import { DataSourceSettingsState, useDispatch } from 'app/types';
 
 import {
   dataSourceLoaded,
@@ -85,8 +85,8 @@ export type ViewProps = {
   onDefaultChange: (isDefault: boolean) => AnyAction;
   onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
-  onTest: () => ThunkResult<void>;
-  onUpdate: (dataSource: DataSourceSettingsType) => ThunkResult<void>;
+  onTest: () => void;
+  onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
 };
 
 export function EditDataSourceView({
@@ -107,9 +107,14 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
 
+  const ds = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
+
+  const hasAlertingEnabled = Boolean(ds?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = ds?.type === 'alertmanager';
+  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     await onUpdate({ ...dataSource });
 
     onTest();
@@ -145,6 +150,7 @@ export function EditDataSourceView({
         isDefault={dataSource.isDefault}
         onDefaultChange={onDefaultChange}
         onNameChange={onNameChange}
+        alertingSupported={alertingSupported}
       />
 
       {plugin && (

@@ -46,7 +46,7 @@ describe('getNavModel', () => {
     const navModel = getNavModel(navIndex, 'apps/subapp/child1');
     expect(navModel.main.id).toBe('apps');
     expect(navModel.node.id).toBe('apps/subapp/child1');
-    expect(navModel.main.children![2].active).toBe(true);
+    expect(navModel.main.children![2].active).toBe(undefined);
     expect(navModel.main.children![2].children![0].active).toBe(true);
   });
 });

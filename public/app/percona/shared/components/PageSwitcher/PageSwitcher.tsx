@@ -8,7 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 import { getStyles } from './PageSwitcher.styles';
 import { PageSwitcherProps } from './PageSwitcher.types';
 
-export const PageSwitcher: FC<PageSwitcherProps> = ({ values, className }) => {
+export const PageSwitcher = <T,>({ values, className }: PageSwitcherProps<T>): ReturnType<FC> => {
   const styles = useStyles2(getStyles);
 
   return (

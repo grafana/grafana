@@ -22,11 +22,11 @@ import {
   LoadingState,
   SplitOpen,
   DataQueryResponse,
+  CoreApp,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   RadioButtonGroup,
-  LogRows,
   Button,
   InlineField,
   InlineFieldRow,
@@ -34,10 +34,12 @@ import {
   withTheme2,
   Themeable2,
 } from '@grafana/ui';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExploreId } from 'app/types/explore';
+
+import { RowContextOptions } from '../logs/components/LogRowContextProvider';
+import { LogRows } from '../logs/components/LogRows';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
@@ -454,6 +456,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               showDetectedFields={showDetectedFields}
               onClickShowDetectedField={this.showDetectedField}
               onClickHideDetectedField={this.hideDetectedField}
+              app={CoreApp.Explore}
             />
           </div>
           <LogsNavigation

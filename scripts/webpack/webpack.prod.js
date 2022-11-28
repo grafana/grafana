@@ -5,7 +5,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
-const { DefinePlugin } = require('webpack');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
 
 const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
@@ -82,6 +82,10 @@ module.exports = (env = {}) =>
         chunksSortMode: 'none',
       }),
       new HTMLWebpackCSSChunks(),
+      new WebpackManifestPlugin({
+        fileName: path.join(process.cwd(), 'manifest.json'),
+        filter: (file) => !file.name.endsWith('.map'),
+      }),
       function () {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {

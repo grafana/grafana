@@ -1,6 +1,6 @@
 // Libraries
 import classNames from 'classnames';
-import { cloneDeep, filter, has, uniqBy } from 'lodash';
+import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { PureComponent, ReactNode } from 'react';
 
@@ -57,6 +57,9 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -230,7 +233,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
@@ -248,6 +251,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             datasource={datasource}
             onChange={onChange}
             onRunQuery={onRunQuery}
+            onAddQuery={onAddQuery}
             data={data}
             range={getTimeSrv().timeRange()}
             queries={queries}
@@ -273,18 +277,32 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    this.props.onRemoveQuery(this.props.query);
+    const { onRemoveQuery, query, onQueryRemoved } = this.props;
+    onRemoveQuery(query);
+
+    if (onQueryRemoved) {
+      onQueryRemoved();
+    }
   };
 
   onCopyQuery = () => {
-    const copy = cloneDeep(this.props.query);
-    this.props.onAddQuery(copy);
+    const { query, onAddQuery, onQueryCopied } = this.props;
+    const copy = cloneDeep(query);
+    onAddQuery(copy);
+
+    if (onQueryCopied) {
+      onQueryCopied();
+    }
   };
 
   onDisableQuery = () => {
-    const { query } = this.props;
-    this.props.onChange({ ...query, hide: !query.hide });
-    this.props.onRunQuery();
+    const { query, onChange, onRunQuery, onQueryToggled } = this.props;
+    onChange({ ...query, hide: !query.hide });
+    onRunQuery();
+
+    if (onQueryToggled) {
+      onQueryToggled(query.hide);
+    }
   };
 
   onToggleHelp = () => {
@@ -434,6 +452,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, id, index, visualization } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
+    const generatedUniqueId = uniqueId(id + '_');
 
     const rowClasses = classNames('query-editor-row', {
       'query-editor-row--disabled': isDisabled,
@@ -450,14 +469,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
-          id={id}
+          id={generatedUniqueId}
           draggable={true}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >
-          <div className={rowClasses}>
+          <div className={rowClasses} id={generatedUniqueId}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
                 <OperationRowHelp>
@@ -515,8 +534,8 @@ export interface AngularQueryComponentScope<TQuery extends DataQuery> {
 export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
   const series = data.series.filter((series) => series.refId === refId);
 
-  // If there was an error with no data, pass it to the QueryEditors
-  if (data.error && !data.series.length) {
+  // If there was an error with no data and the panel is not in a loading state, pass it to the QueryEditors
+  if (data.state !== LoadingState.Loading && data.error && !data.series.length) {
     return {
       ...data,
       state: LoadingState.Error,

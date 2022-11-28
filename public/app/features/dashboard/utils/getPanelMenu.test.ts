@@ -46,12 +46,6 @@ describe('getPanelMenu', () => {
           "text": "Explore",
         },
         Object {
-          "iconClassName": "exchange-alt",
-          "onClick": [Function],
-          "shortcut": "p l",
-          "text": "Show legend",
-        },
-        Object {
           "iconClassName": "info-circle",
           "onClick": [Function],
           "shortcut": "i",
@@ -134,12 +128,6 @@ describe('getPanelMenu', () => {
             "onClick": [Function],
             "shortcut": "x",
             "text": "Explore",
-          },
-          Object {
-            "iconClassName": "exchange-alt",
-            "onClick": [Function],
-            "shortcut": "p l",
-            "text": "Show legend",
           },
           Object {
             "iconClassName": "info-circle",

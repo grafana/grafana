@@ -199,7 +199,6 @@ describe('AddToDashboardButton', () => {
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([
             {
-              id: 1,
               uid: 'someUid',
               isStarred: false,
               items: [],
@@ -242,7 +241,6 @@ describe('AddToDashboardButton', () => {
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([
             {
-              id: 1,
               uid: 'someUid',
               isStarred: false,
               items: [],
@@ -359,7 +357,6 @@ describe('AddToDashboardButton', () => {
       jest.spyOn(backendSrv, 'getDashboardByUid').mockRejectedValue('SOME ERROR');
       jest.spyOn(backendSrv, 'search').mockResolvedValue([
         {
-          id: 1,
           uid: 'someUid',
           isStarred: false,
           items: [],

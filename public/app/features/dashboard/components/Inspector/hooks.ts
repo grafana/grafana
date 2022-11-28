@@ -65,7 +65,7 @@ export const useInspectTabs = (
     // This is a quick internal hack to allow custom actions in inspect
     // For 8.1, something like this should be exposed through grafana/runtime
     const supplier = (window as any).grafanaPanelInspectActionSupplier as PanelInspectActionSupplier;
-    if (supplier && supplier.getActions(panel)) {
+    if (supplier && supplier.getActions(panel)?.length) {
       tabs.push({
         label: t({ id: 'dashboard.inspect.actions-tab', message: 'Actions' }),
         value: InspectTab.Actions,

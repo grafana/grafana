@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 import { useAsync } from 'react-use';
 
+import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 

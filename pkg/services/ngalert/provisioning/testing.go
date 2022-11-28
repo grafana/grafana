@@ -160,6 +160,15 @@ func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter 
 	return m
 }
 
+func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.SaveAlertmanagerConfigurationCmd) *MockAMConfigStore_Expecter {
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Return(nil).
+		Run(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) {
+			*intercepted = *cmd
+		})
+	return m
+}
+
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	return m

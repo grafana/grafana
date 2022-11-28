@@ -46,7 +46,9 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
+  /** @deprecate */
   dashboardId?: number;
+  dashboardUID?: string;
   publicDashboardAccessToken?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
@@ -203,6 +205,7 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardId,
+      dashboardUID,
       publicDashboardAccessToken,
       timeRange,
       timeInfo,
@@ -213,7 +216,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options), panelId);
+      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId);
       return;
     }
 
@@ -223,6 +226,7 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardId,
+      dashboardUID,
       publicDashboardAccessToken,
       range: timeRange,
       timeInfo,
@@ -347,6 +351,11 @@ export class PanelQueryRunner {
     }
   }
 
+  /** Useful from tests */
+  setLastResult(data: PanelData) {
+    this.lastResult = data;
+  }
+
   getLastResult(): PanelData | undefined {
     return this.lastResult;
   }
@@ -361,13 +370,15 @@ async function getDataSource(
   scopedVars: ScopedVars,
   publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
+  if (!publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+    return datasource;
+  }
+
+  // TODO: Retrieve datasource to pass as argument to PublicDashboardDataSource
+  // const ds = await getDatasourceSrv().get(datasource, scopedVars);
   if (publicDashboardAccessToken) {
     return new PublicDashboardDataSource(datasource);
   }
 
-  if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
-  }
-
-  return await getDatasourceSrv().get(datasource as string, scopedVars);
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }

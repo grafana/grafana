@@ -1,0 +1,58 @@
+{{ template "autogen_header.tmpl" .Header }}
+package registry
+
+import (
+	"fmt"
+	"sync"
+
+	"github.com/google/wire"
+	{{range .Coremodels }}
+	"{{ .PkgPath }}"{{end}}
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
+	"github.com/grafana/thema"
+)
+
+// Base is a registry of coremodel.Interface. It provides two modes for accessing
+// coremodels: individually via literal named methods, or as a slice returned from All().
+//
+// Prefer the individual named methods for use cases where the particular coremodel(s) that
+// are needed are known to the caller. For example, a dashboard linter can know that it
+// specifically wants the dashboard coremodel.
+//
+// Prefer All() when performing operations generically across all coremodels. For example,
+// a validation HTTP middleware for any coremodel-schematized object type.
+type Base struct {
+	all []coremodel.Interface
+	{{- range .Coremodels }}
+	{{ .Name }} *{{ .Name }}.Coremodel{{end}}
+}
+
+// type guards
+var (
+{{- range .Coremodels }}
+	_ coremodel.Interface = &{{ .Name }}.Coremodel{}{{end}}
+)
+
+{{range .Coremodels }}
+// {{ .TitleName }} returns the {{ .Name }} coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (b *Base) {{ .TitleName }}() *{{ .Name }}.Coremodel {
+	return b.{{ .Name }}
+}
+{{end}}
+
+func doProvideBase(lib thema.Library) *Base {
+	var err error
+	reg := &Base{}
+
+{{range .Coremodels }}
+	reg.{{ .Name }}, err = {{ .Name }}.New(lib)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing {{ .Name }} coremodel: %s", err))
+	}
+    reg.all = append(reg.all, reg.{{ .Name }})
+{{end}}
+
+	return reg
+}

@@ -33,10 +33,14 @@ export const SEARCH_FILTER_VARIABLE = '__searchFilter';
 export const containsSearchFilter = (query: string | unknown): boolean =>
   query && typeof query === 'string' ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
 
+export interface SearchFilterOptions {
+  searchFilter?: string;
+}
+
 export const getSearchFilterScopedVar = (args: {
   query: string;
   wildcardChar: string;
-  options: { searchFilter?: string };
+  options?: SearchFilterOptions;
 }): ScopedVars => {
   const { query, wildcardChar } = args;
   if (!containsSearchFilter(query)) {
@@ -296,9 +300,7 @@ export function toVariablePayload<T extends any = undefined>(
   identifier: VariableIdentifier,
   data?: T
 ): VariablePayload<T>;
-// eslint-disable-next-line
 export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
-// eslint-disable-next-line
 export function toVariablePayload<T extends any = undefined>(
   obj: VariableIdentifier | VariableModel,
   data?: T

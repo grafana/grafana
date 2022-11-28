@@ -1,5 +1,4 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { LoadingPlaceholder } from '@grafana/ui';
 import {
@@ -8,6 +7,7 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {

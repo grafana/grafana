@@ -12,7 +12,7 @@ import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 
 import { deleteTeam, loadTeams } from './state/actions';
-import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import { initialTeamsState, setSearchQuery, setTeamsSearchPage } from './state/reducers';
 import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
@@ -241,4 +241,8 @@ const mapDispatchToProps = {
   setTeamsSearchPage,
 };
 
-export default connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList);
+export default connectWithCleanUp(
+  mapStateToProps,
+  mapDispatchToProps,
+  (state) => (state.teams = initialTeamsState)
+)(TeamList);

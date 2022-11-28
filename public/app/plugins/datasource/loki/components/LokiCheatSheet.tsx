@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import { QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import LokiLanguageProvider from '../language_provider';
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
@@ -16,7 +16,7 @@ const LOGQL_EXAMPLES = [
     title: 'Log pipeline',
     expression: '{job="mysql"} |= "metrics" | logfmt | duration > 10s',
     label:
-      'This query targets the MySQL job, filters out logs that don’t contain the word "metrics" and parses each log line to extract more labels and filters with them.',
+      'This query targets the MySQL job, keeps logs that contain the substring "metrics", and then parses and filters the logs further.',
   },
   {
     title: 'Count over time',
@@ -37,7 +37,7 @@ const LOGQL_EXAMPLES = [
 ];
 
 export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<LokiQuery>, { userExamples: string[] }> {
-  declare userLabelTimer: NodeJS.Timeout;
+  declare userLabelTimer: ReturnType<typeof setTimeout>;
   state = {
     userExamples: [],
   };

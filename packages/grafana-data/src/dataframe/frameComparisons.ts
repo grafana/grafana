@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { DataFrame } from '../types/dataFrame';
 
 /**
@@ -8,10 +10,6 @@ import { DataFrame } from '../types/dataFrame';
  * ```
  * compareArrayValues(a, b, framesHaveSameStructure);
  * ```
- * NOTE: this does a shallow check on the FieldConfig properties, when using the query
- * editor, this should be sufficient, however if applications are mutating properties
- * deep in the FieldConfig this will not recognize a change
- *
  * @beta
  */
 export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfig?: boolean): boolean {
@@ -63,11 +61,9 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
       if (key === 'interval') {
         continue;
       }
-      if (key === 'custom') {
-        if (!shallowCompare(cfgA[key], cfgB[key])) {
-          return false;
-        }
-      } else if (cfgA[key] !== cfgB[key]) {
+
+      // Deep comparison on all object properties
+      if (!isEqual(cfgA[key], cfgB[key])) {
         return false;
       }
     }
@@ -96,7 +92,7 @@ export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boole
   return true;
 }
 
-type Cmp = (valA: any, valB: any) => boolean;
+type Cmp = (valA: unknown, valB: unknown) => boolean;
 
 const defaultCmp: Cmp = (a, b) => a === b;
 

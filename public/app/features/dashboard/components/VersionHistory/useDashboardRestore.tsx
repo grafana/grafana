@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { StoreState } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { DashboardModel } from '../../state';
 
@@ -16,7 +15,7 @@ const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
 };
 
 export const useDashboardRestore = (version: number) => {
-  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
+  const dashboard = useSelector((state) => state.dashboard.getModel());
   const [state, onRestoreDashboard] = useAsyncFn(async () => await restoreDashboard(version, dashboard!), []);
   const notifyApp = useAppNotification();
 

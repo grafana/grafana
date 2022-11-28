@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest } from 'src/services';
+import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
 
 import {
   DataSourceJsonData,
@@ -19,7 +19,7 @@ class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> 
   }
 }
 
-const mockDatasourceRequest = jest.fn();
+const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
 
 const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
@@ -39,28 +39,15 @@ jest.mock('../services', () => ({
 
 describe('DataSourceWithBackend', () => {
   test('check the executed queries', () => {
-    const settings = {
-      name: 'test',
-      id: 1234,
-      uid: 'abc',
-      type: 'dummy',
-      jsonData: {},
-    } as DataSourceInstanceSettings<DataSourceJsonData>;
-
-    mockDatasourceRequest.mockReset();
-    mockDatasourceRequest.mockReturnValue(Promise.resolve({}));
-    const ds = new MyDataSource(settings);
-
-    ds.query({
+    const mock = runQueryAndReturnFetchMock({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
     } as DataQueryRequest);
 
-    const mock = mockDatasourceRequest.mock;
-    expect(mock.calls.length).toBe(1);
-
     const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
     expect(args).toMatchInlineSnapshot(`
       Object {
         "data": Object {
@@ -87,6 +74,52 @@ describe('DataSourceWithBackend', () => {
             },
           ],
         },
+        "hideFromInspector": false,
+        "method": "POST",
+        "requestId": undefined,
+        "url": "/api/ds/query",
+      }
+    `);
+  });
+
+  test('check that the executed queries is hidden from inspector', () => {
+    const mock = runQueryAndReturnFetchMock({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      hideFromInspector: true,
+    } as DataQueryRequest);
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchInlineSnapshot(`
+      Object {
+        "data": Object {
+          "queries": Array [
+            Object {
+              "datasource": Object {
+                "type": "dummy",
+                "uid": "abc",
+              },
+              "datasourceId": 1234,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "refId": "A",
+            },
+            Object {
+              "datasource": Object {
+                "type": "sample",
+                "uid": "?",
+              },
+              "datasourceId": undefined,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "refId": "B",
+            },
+          ],
+        },
+        "hideFromInspector": true,
         "method": "POST",
         "requestId": undefined,
         "url": "/api/ds/query",
@@ -116,3 +149,23 @@ describe('DataSourceWithBackend', () => {
     expect(obs).toBeDefined();
   });
 });
+
+function runQueryAndReturnFetchMock(
+  request: DataQueryRequest
+): jest.MockContext<Promise<FetchResponse>, BackendSrvRequest[]> {
+  const settings = {
+    name: 'test',
+    id: 1234,
+    uid: 'abc',
+    type: 'dummy',
+    jsonData: {},
+  } as DataSourceInstanceSettings<DataSourceJsonData>;
+
+  mockDatasourceRequest.mockReset();
+  mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
+
+  const ds = new MyDataSource(settings);
+  ds.query(request);
+
+  return mockDatasourceRequest.mock;
+}

@@ -22,8 +22,7 @@ import { LogDetailsRow } from './LogDetailsRow';
 import { getLogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
-//Components
-
+/** @deprecated will be removed in the next major version */
 export interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
@@ -176,5 +175,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogDetails = withTheme2(UnThemedLogDetails);
 LogDetails.displayName = 'LogDetails';

@@ -147,8 +147,10 @@ const optionsPickerSlice = createSlice({
           } else {
             state.selectedValues = [];
           }
+
           return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
         }
+
         if (forceSelect || selected) {
           state.selectedValues.push({ ...option, selected: true });
           return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);

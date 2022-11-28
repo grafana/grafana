@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,21 +16,23 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
 var update = true
 
-func TestMatrixResponses(t *testing.T) {
+func TestRangeResponses(t *testing.T) {
 	tt := []struct {
 		name     string
 		filepath string
 	}{
 		{name: "parse a simple matrix response", filepath: "range_simple"},
 		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
-		{name: "parse a response with Infinity", filepath: "range_infinity"},
-		{name: "parse a response with NaN", filepath: "range_nan"},
+		{name: "parse a matrix response with Infinity", filepath: "range_infinity"},
+		{name: "parse a matrix response with NaN", filepath: "range_nan"},
+		{name: "parse a response with legendFormat __auto", filepath: "range_auto"},
 	}
 
 	for _, test := range tt {
@@ -45,11 +47,32 @@ func TestMatrixResponses(t *testing.T) {
 	}
 }
 
+func TestExemplarResponses(t *testing.T) {
+	tt := []struct {
+		name     string
+		filepath string
+	}{
+		{name: "parse an exemplar response", filepath: "exemplar"},
+	}
+
+	for _, test := range tt {
+		enableWideSeries := false
+		queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
+		responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
+		goldenFileName := test.filepath + ".result.golden"
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+		enableWideSeries = true
+		goldenFileName = test.filepath + ".result.streaming-wide.golden"
+		t.Run(test.name, goldenScenario(test.name, queryFileName, responseFileName, goldenFileName, enableWideSeries))
+	}
+}
+
 func goldenScenario(name, queryFileName, responseFileName, goldenFileName string, wide bool) func(t *testing.T) {
 	return func(t *testing.T) {
 		query, err := loadStoredQuery(queryFileName)
 		require.NoError(t, err)
 
+		//nolint:gosec
 		responseBytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
@@ -69,15 +92,18 @@ func goldenScenario(name, queryFileName, responseFileName, goldenFileName string
 // struct here, because it has `time.time` and `time.duration` fields that
 // cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
-	RefId      string
-	RangeQuery bool
-	Start      int64
-	End        int64
-	Step       int64
-	Expr       string
+	RefId         string
+	RangeQuery    bool
+	ExemplarQuery bool
+	Start         int64
+	End           int64
+	Step          int64
+	Expr          string
+	LegendFormat  string
 }
 
 func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
+	//nolint:gosec
 	bytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
@@ -91,10 +117,12 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}
 
 	qm := models.QueryModel{
-		RangeQuery: sq.RangeQuery,
-		Expr:       sq.Expr,
-		Interval:   fmt.Sprintf("%ds", sq.Step),
-		IntervalMS: sq.Step * 1000,
+		RangeQuery:    sq.RangeQuery,
+		ExemplarQuery: sq.ExemplarQuery,
+		Expr:          sq.Expr,
+		Interval:      fmt.Sprintf("%ds", sq.Step),
+		IntervalMS:    sq.Step * 1000,
+		LegendFormat:  sq.LegendFormat,
 	}
 
 	data, err := json.Marshal(&qm)
@@ -124,7 +152,7 @@ func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend
 	}
 	res := &http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(response)),
+		Body:       io.NopCloser(bytes.NewReader(response)),
 	}
 	tCtx.httpProvider.setResponse(res)
 	return tCtx.queryData.Execute(context.Background(), q)

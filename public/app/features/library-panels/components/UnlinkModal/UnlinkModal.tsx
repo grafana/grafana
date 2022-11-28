@@ -8,7 +8,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-export const UnlinkModal: React.FC<Props> = ({ isOpen, onConfirm, onDismiss }) => {
+export const UnlinkModal = ({ isOpen, onConfirm, onDismiss }: Props) => {
   return (
     <ConfirmModal
       title="Do you really want to unlink this panel?"

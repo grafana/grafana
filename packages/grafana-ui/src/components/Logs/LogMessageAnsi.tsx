@@ -1,6 +1,5 @@
 import ansicolor from 'ansicolor';
 import React, { PureComponent } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
@@ -50,6 +49,7 @@ interface State {
   prevValue: string;
 }
 
+/** @deprecated will be removed in the next major version */
 export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
   state: State = {
     chunks: [],
@@ -102,5 +102,6 @@ export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogMessageAnsi = withTheme2(UnThemedLogMessageAnsi);
 LogMessageAnsi.displayName = 'LogMessageAnsi';

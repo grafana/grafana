@@ -112,12 +112,6 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
     icon: css({
       height: '100%',
       width: '100%',
-
-      img: {
-        borderRadius: '50%',
-        height: theme.spacing(3),
-        width: theme.spacing(3),
-      },
     }),
   };
 }

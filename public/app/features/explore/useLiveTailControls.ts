@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { RefreshPicker } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { ExploreId } from '../../types';
 

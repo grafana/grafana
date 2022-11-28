@@ -1,39 +1,51 @@
 import React, { useState } from 'react';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { NavModelItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { Page } from 'app/core/components/PageNew/Page';
+
 import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
 import { newLink } from '../LinksSettings/LinkSettingsEdit';
 
-import { DashboardSettingsHeader } from './DashboardSettingsHeader';
-interface Props {
-  dashboard: DashboardModel;
-}
+import { SettingsPageProps } from './types';
 
 export type LinkSettingsMode = 'list' | 'new' | 'edit';
 
-export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
-  const [editIdx, setEditIdx] = useState<number | null>(null);
+export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPageProps) {
+  const [isNew, setIsNew] = useState<boolean>(false);
 
   const onGoBack = () => {
-    setEditIdx(null);
+    setIsNew(false);
+    locationService.partial({ editIndex: undefined });
   };
 
   const onNew = () => {
     dashboard.links = [...dashboard.links, { ...newLink }];
-    setEditIdx(dashboard.links.length - 1);
+    setIsNew(true);
+    locationService.partial({ editIndex: dashboard.links.length - 1 });
   };
 
   const onEdit = (idx: number) => {
-    setEditIdx(idx);
+    setIsNew(false);
+    locationService.partial({ editIndex: idx });
   };
 
-  const isEditing = editIdx !== null;
+  const isEditing = editIndex !== undefined;
+
+  let pageNav: NavModelItem | undefined;
+  if (isEditing) {
+    const title = isNew ? 'New link' : 'Edit link';
+    const description = isNew ? 'Create a new link on your dashboard' : 'Edit a specific link of your dashboard';
+    pageNav = {
+      text: title,
+      subTitle: description,
+    };
+  }
 
   return (
-    <>
-      <DashboardSettingsHeader onGoBack={onGoBack} title="Dashboard links" isEditing={isEditing} />
+    <Page navModel={sectionNav} pageNav={pageNav}>
       {!isEditing && <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
-      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIdx!} onGoBack={onGoBack} />}
-    </>
+      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIndex} onGoBack={onGoBack} />}
+    </Page>
   );
-};
+}

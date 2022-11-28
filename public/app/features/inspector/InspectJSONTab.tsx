@@ -1,14 +1,19 @@
 import { t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { firstValueFrom } from 'rxjs';
 
-import { AppEvents, DataFrameJSON, dataFrameToJSON, DataTopic, PanelData, SelectableValue } from '@grafana/data';
+import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
+
+import { InspectTab } from './types';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -34,8 +39,11 @@ const options: Array<SelectableValue<ShowContent>> = [
     value: ShowContent.PanelData,
   },
   {
-    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON' }),
-    description: t({ id: 'dashboard.inspect-json.dataframe-description', message: 'JSON formatted DataFrames' }),
+    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON (from Query)' }),
+    description: t({
+      id: 'dashboard.inspect-json.dataframe-description',
+      message: 'Raw data without transformations and field config applied. ',
+    }),
     value: ShowContent.DataFrames,
   },
 ];
@@ -65,8 +73,8 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     };
   }
 
-  onSelectChanged = (item: SelectableValue<ShowContent>) => {
-    const show = this.getJSONObject(item.value!);
+  onSelectChanged = async (item: SelectableValue<ShowContent>) => {
+    const show = await this.getJSONObject(item.value!);
     const text = getPrettyJSON(show);
     this.setState({ text, show: item.value! });
   };
@@ -76,14 +84,25 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.setState({ text });
   };
 
-  getJSONObject(show: ShowContent) {
+  async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
       return data;
     }
 
     if (show === ShowContent.DataFrames) {
-      return getPanelDataFrames(data);
+      let d = data;
+
+      // do not include transforms and
+      if (panel && data?.state === LoadingState.Done) {
+        d = await firstValueFrom(
+          panel.getQueryRunner().getData({
+            withFieldConfig: false,
+            withTransforms: false,
+          })
+        );
+      }
+      return getPanelDataFrames(d);
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
@@ -115,6 +134,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
   };
 
+  onShowHelpWizard = () => {
+    const queryParms = locationService.getSearch();
+    queryParms.set('inspectTab', InspectTab.Help.toString());
+    locationService.push('?' + queryParms.toString());
+  };
+
   render() {
     const { dashboard } = this.props;
     const { show, text } = this.state;
@@ -143,6 +168,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
               Apply
             </Button>
           )}
+          {show === ShowContent.DataFrames && (
+            <Button className={styles.toolbarItem} onClick={this.onShowHelpWizard}>
+              Support
+            </Button>
+          )}
         </div>
         <div className={styles.content}>
           <AutoSizer disableWidth>
@@ -165,26 +195,19 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   }
 }
 
-function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
-  const frames: DataFrameJSON[] = [];
-  if (data?.series) {
-    for (const f of data.series) {
-      frames.push(dataFrameToJSON(f));
-    }
-  }
-  if (data?.annotations) {
-    for (const f of data.annotations) {
-      const json = dataFrameToJSON(f);
-      if (!json.schema?.meta) {
-        json.schema!.meta = {};
-      }
-      json.schema!.meta.dataTopic = DataTopic.Annotations;
-      frames.push(json);
-    }
-  }
-  return frames;
-}
-
 function getPrettyJSON(obj: any): string {
-  return JSON.stringify(obj, null, 2);
+  let r = '';
+  try {
+    r = JSON.stringify(obj, null, 2);
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      (e.toString().includes('RangeError') || e.toString().includes('allocation size overflow'))
+    ) {
+      appEvents.emit(AppEvents.alertError, [e.toString(), 'Cannot display JSON, the object is too big.']);
+    } else {
+      appEvents.emit(AppEvents.alertError, [e instanceof Error ? e.toString() : e]);
+    }
+  }
+  return r;
 }

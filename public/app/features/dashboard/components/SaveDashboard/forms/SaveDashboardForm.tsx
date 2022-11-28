@@ -16,7 +16,7 @@ export type SaveProps = {
   saveModel: SaveDashboardData; // already cloned
   onCancel: () => void;
   onSuccess: () => void;
-  onSubmit?: (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  onSubmit?: (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
   options: SaveDashboardOptions;
   onOptionsChange: (opts: SaveDashboardOptions) => void;
 };

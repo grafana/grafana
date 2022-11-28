@@ -1,6 +1,6 @@
-import { shallow } from 'enzyme';
+import { mount, shallow } from 'enzyme';
 import React from 'react';
-import { Editor } from 'slate';
+import { Editor } from 'slate-react';
 
 import { createTheme } from '@grafana/data';
 
@@ -30,7 +30,7 @@ describe('<QueryField />', () => {
 
   it('should execute query on blur', () => {
     const onRun = jest.fn();
-    const wrapper = shallow(
+    const wrapper = mount(
       <UnThemedQueryField
         theme={createTheme()}
         query="my query"
@@ -40,8 +40,9 @@ describe('<QueryField />', () => {
       />
     );
     const field = wrapper.instance() as UnThemedQueryField;
+    const ed = wrapper.find(Editor).instance() as Editor;
     expect(onRun.mock.calls.length).toBe(0);
-    field.handleBlur(new Event('bogus'), new Editor({}), () => {});
+    field.handleBlur(undefined, ed, () => {});
     expect(onRun.mock.calls.length).toBe(1);
   });
 
@@ -65,7 +66,7 @@ describe('<QueryField />', () => {
   it('should run custom on blur, but not necessarily execute query', () => {
     const onBlur = jest.fn();
     const onRun = jest.fn();
-    const wrapper = shallow(
+    const wrapper = mount(
       <UnThemedQueryField
         theme={createTheme()}
         query="my query"
@@ -76,9 +77,10 @@ describe('<QueryField />', () => {
       />
     );
     const field = wrapper.instance() as UnThemedQueryField;
+    const ed = wrapper.find(Editor).instance() as Editor;
     expect(onBlur.mock.calls.length).toBe(0);
     expect(onRun.mock.calls.length).toBe(0);
-    field.handleBlur(new Event('bogus'), new Editor({}), () => {});
+    field.handleBlur(undefined, ed, () => {});
     expect(onBlur.mock.calls.length).toBe(1);
     expect(onRun.mock.calls.length).toBe(0);
   });

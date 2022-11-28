@@ -6,7 +6,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +25,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 	setup := func(t *testing.T) {
 		sqlStore = sqlstore.InitTestDB(t)
-		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles)
+		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 		currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		childDash = insertTestDashboard(t, dashboardStore, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
@@ -48,10 +51,10 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 		require.Equal(t, 2, len(query.Result))
 		defaultPermissionsId := int64(-1)
 		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
-		require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+		require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 		require.False(t, query.Result[0].Inherited)
 		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
-		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+		require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 		require.False(t, query.Result[1].Inherited)
 	})
 
@@ -65,10 +68,10 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 		require.Equal(t, 2, len(query.Result))
 		defaultPermissionsId := int64(-1)
 		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
-		require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+		require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 		require.True(t, query.Result[0].Inherited)
 		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
-		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+		require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 		require.True(t, query.Result[1].Inherited)
 	})
 
@@ -147,10 +150,10 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			defaultPermissionsId := int64(-1)
 			require.Equal(t, 3, len(query.Result))
 			require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
-			require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+			require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 			require.True(t, query.Result[0].Inherited)
 			require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
-			require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+			require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 			require.True(t, query.Result[1].Inherited)
 			require.Equal(t, childDash.Id, query.Result[2].DashboardId)
 			require.False(t, query.Result[2].Inherited)
@@ -188,7 +191,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 		t.Run("Should be able to add a user permission for a team", func(t *testing.T) {
 			setup(t)
-			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			teamSvc := teamimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 
 			err = updateDashboardACL(t, dashboardStore, savedFolder.Id, models.DashboardACL{
@@ -209,7 +213,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 		t.Run("Should be able to update an existing permission for a team", func(t *testing.T) {
 			setup(t)
-			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			teamSvc := teamimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 			err = updateDashboardACL(t, dashboardStore, savedFolder.Id, models.DashboardACL{
 				OrgID:       1,
@@ -242,10 +247,10 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 		require.Equal(t, 2, len(query.Result))
 		defaultPermissionsId := int64(-1)
 		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
-		require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
+		require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 		require.False(t, query.Result[0].Inherited)
 		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
-		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
+		require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 		require.False(t, query.Result[1].Inherited)
 	})
 
@@ -267,6 +272,6 @@ func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role str
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
 	err = sqlStore.GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
-	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
+	require.Equal(t, org.RoleType(role), q1.Result[0].Role)
 	return *currentUser
 }

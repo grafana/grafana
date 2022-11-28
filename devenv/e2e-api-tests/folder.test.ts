@@ -2,10 +2,8 @@ import client from './client';
 import * as setup from './setup';
 
 describe('/api/folders', () => {
-  let state: any = {};
-
   beforeAll(async () => {
-    state = await setup.ensureState({
+    await setup.ensureState({
       orgName: 'api-test-org',
       users: [
         { user: setup.admin, role: 'Admin' },

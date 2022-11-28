@@ -49,6 +49,9 @@ export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
     });
   }
 
+  const xField = alignedData.fields[0];
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
+
   const dataFrameFieldIndex = field.state?.origin;
   const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
   const value = field.values.get(datapointIdx!);
@@ -64,9 +67,10 @@ export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
   return (
     <div>
       <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
-        {fieldDisplayName}
+        <strong>{xFieldFmt(xField.values.get(datapointIdx)).text}</strong>
         <br />
         <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
+        {fieldDisplayName}
       </div>
       {links.length > 0 && (
         <div

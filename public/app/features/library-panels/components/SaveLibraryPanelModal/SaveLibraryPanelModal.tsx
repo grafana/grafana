@@ -17,14 +17,7 @@ interface Props {
   onDiscard: () => void;
 }
 
-export const SaveLibraryPanelModal: React.FC<Props> = ({
-  panel,
-  folderId,
-  isUnsavedPrompt,
-  onDismiss,
-  onConfirm,
-  onDiscard,
-}) => {
+export const SaveLibraryPanelModal = ({ panel, folderId, isUnsavedPrompt, onDismiss, onConfirm, onDiscard }: Props) => {
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);

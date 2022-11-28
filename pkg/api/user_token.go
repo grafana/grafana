@@ -27,7 +27,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response {
-	return hs.getUserAuthTokensInternal(c, c.UserId)
+	return hs.getUserAuthTokensInternal(c, c.UserID)
 }
 
 // swagger:route POST /user/revoke-auth-token signed_in_user revokeUserAuthToken
@@ -47,20 +47,21 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext) response.Respons
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.revokeUserAuthTokenInternal(c, c.UserId, cmd)
+	return hs.revokeUserAuthTokenInternal(c, c.UserID, cmd)
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {
-	userQuery := models.GetUserByIdQuery{Id: userID}
+	userQuery := user.GetUserByIDQuery{ID: userID}
 
-	if err := hs.SQLStore.GetUserById(ctx, &userQuery); err != nil {
+	_, err := hs.userService.GetByID(ctx, &userQuery)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
 		}
 		return response.Error(500, "Could not read user from database", err)
 	}
 
-	err := hs.AuthTokenService.RevokeAllUserTokens(ctx, userID)
+	err = hs.AuthTokenService.RevokeAllUserTokens(ctx, userID)
 	if err != nil {
 		return response.Error(500, "Failed to logout user", err)
 	}
@@ -80,9 +81,10 @@ func (hs *HTTPServer) GetUserOAuthToken(c *models.ReqContext) response.Response 
 }
 
 func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int64) response.Response {
-	userQuery := models.GetUserByIdQuery{Id: userID}
+	userQuery := user.GetUserByIDQuery{ID: userID}
 
-	if err := hs.SQLStore.GetUserById(c.Req.Context(), &userQuery); err != nil {
+	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, "User not found", err)
 		} else if errors.Is(err, user.ErrCaseInsensitive) {
@@ -151,8 +153,9 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 }
 
 func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID int64, cmd models.RevokeAuthTokenCmd) response.Response {
-	userQuery := models.GetUserByIdQuery{Id: userID}
-	if err := hs.SQLStore.GetUserById(c.Req.Context(), &userQuery); err != nil {
+	userQuery := user.GetUserByIDQuery{ID: userID}
+	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
 		}

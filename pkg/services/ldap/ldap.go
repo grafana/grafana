@@ -5,9 +5,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +17,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -99,7 +101,7 @@ func (server *Server) Dial() error {
 		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
 			// nolint:gosec
 			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
-			pem, err := ioutil.ReadFile(caCertFile)
+			pem, err := os.ReadFile(caCertFile)
 			if err != nil {
 				return err
 			}
@@ -361,7 +363,8 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
-	if len(server.Config.Groups) > 0 && (len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
+	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
+		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Error(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
@@ -429,7 +432,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	attrs := server.Config.Attr
 	extUser := &models.ExternalUserInfo{
-		AuthModule: models.AuthModuleLDAP,
+		AuthModule: login.LDAPAuthModule,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
 			fmt.Sprintf(
@@ -441,7 +444,13 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		Login:    getAttribute(attrs.Username, user),
 		Email:    getAttribute(attrs.Email, user),
 		Groups:   memberOf,
-		OrgRoles: map[int64]models.RoleType{},
+		OrgRoles: map[int64]org.RoleType{},
+	}
+
+	// Skipping org role sync
+	if SkipOrgRoleSync() {
+		server.log.Debug("skipping organization role mapping.")
+		return extUser, nil
 	}
 
 	for _, group := range server.Config.Groups {

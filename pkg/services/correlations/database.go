@@ -132,6 +132,70 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 	return correlation, nil
 }
 
+func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
+	correlation := Correlation{
+		UID:       cmd.UID,
+		SourceUID: cmd.SourceUID,
+	}
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		query := &datasources.GetDataSourceQuery{
+			OrgId: cmd.OrgId,
+			Uid:   cmd.SourceUID,
+		}
+		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+			return ErrSourceDataSourceDoesNotExists
+		}
+
+		found, err := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.uid = ? AND correlation.source_uid = ?", correlation.UID, correlation.SourceUID).Get(&correlation)
+		if !found {
+			return ErrCorrelationNotFound
+		}
+		return err
+	})
+
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	return correlation, nil
+}
+
+func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
+	correlations := make([]Correlation, 0)
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		query := &datasources.GetDataSourceQuery{
+			OrgId: cmd.OrgId,
+			Uid:   cmd.SourceUID,
+		}
+		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+			return ErrSourceDataSourceDoesNotExists
+		}
+
+		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.source_uid = ?", cmd.SourceUID).Find(&correlations)
+	})
+
+	if err != nil {
+		return []Correlation{}, err
+	}
+
+	return correlations, nil
+}
+
+func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
+	correlations := make([]Correlation, 0)
+
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Find(&correlations)
+	})
+	if err != nil {
+		return []Correlation{}, err
+	}
+
+	return correlations, nil
+}
+
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})

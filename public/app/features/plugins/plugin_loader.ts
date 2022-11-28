@@ -1,4 +1,5 @@
 import * as emotion from '@emotion/css';
+import * as emotionReact from '@emotion/react';
 import * as d3 from 'd3';
 import jquery from 'jquery';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
@@ -6,23 +7,23 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import prismjs from 'prismjs';
 import react from 'react';
 import reactDom from 'react-dom';
-import * as reactRedux from 'react-redux';
+import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
 import * as reactRouter from 'react-router-dom';
 import * as redux from 'redux';
 import * as rxjs from 'rxjs';
 import * as rxjsOperators from 'rxjs/operators';
 import slate from 'slate';
 import slatePlain from 'slate-plain-serializer';
+import slateReact from 'slate-react';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
-import slateReact from '@grafana/slate-react';
 import * as grafanaUIraw from '@grafana/ui';
+import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import TableModel from 'app/core/table_model';
 import TimeSeries from 'app/core/time_series2';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
@@ -85,7 +86,8 @@ exposeToPlugin('react-router-dom', reactRouter);
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('@grafana/slate-react', slateReact);
+exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
@@ -93,6 +95,7 @@ exposeToPlugin('react-redux', reactRedux);
 exposeToPlugin('redux', redux);
 exposeToPlugin('emotion', emotion);
 exposeToPlugin('@emotion/css', emotion);
+exposeToPlugin('@emotion/react', emotionReact);
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,

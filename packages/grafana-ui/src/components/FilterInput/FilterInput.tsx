@@ -9,10 +9,11 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
   value: string | undefined;
   width?: number;
   onChange: (value: string) => void;
+  escapeRegex?: boolean;
 }
 
 export const FilterInput = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, width, onChange, ...restProps }, ref) => {
+  ({ value, width, onChange, escapeRegex = true, ...restProps }, ref) => {
     const innerRef = React.useRef<HTMLInputElement>(null);
     const combinedRef = useCombinedRefs(ref, innerRef) as React.Ref<HTMLInputElement>;
 
@@ -38,8 +39,10 @@ export const FilterInput = React.forwardRef<HTMLInputElement, Props>(
         suffix={suffix}
         width={width}
         type="text"
-        value={value ? unEscapeStringFromRegex(value) : ''}
-        onChange={(event) => onChange(escapeStringForRegex(event.currentTarget.value))}
+        value={escapeRegex ? unEscapeStringFromRegex(value ?? '') : value}
+        onChange={(event) =>
+          onChange(escapeRegex ? escapeStringForRegex(event.currentTarget.value) : event.currentTarget.value)
+        }
         {...restProps}
         ref={combinedRef}
       />

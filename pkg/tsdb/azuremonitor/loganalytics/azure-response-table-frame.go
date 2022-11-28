@@ -43,7 +43,16 @@ func apiErrorToNotice(err *AzureLogAnalyticsAPIError) data.Notice {
 }
 
 // ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
-func ResponseTableToFrame(table *types.AzureResponseTable, res AzureLogAnalyticsResponse) (*data.Frame, error) {
+func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string) (*data.Frame, error) {
+	if len(table.Rows) == 0 {
+		return &data.Frame{
+			RefID: refID,
+			Meta: &data.FrameMeta{
+				ExecutedQueryString: executedQuery,
+			},
+		}, nil
+	}
+
 	converterFrame, err := converterFrameForTable(table)
 	if err != nil {
 		return nil, err
@@ -55,10 +64,6 @@ func ResponseTableToFrame(table *types.AzureResponseTable, res AzureLogAnalytics
 				return nil, err
 			}
 		}
-	}
-
-	if res.Error != nil {
-		converterFrame.Frame.AppendNotices(apiErrorToNotice(res.Error))
 	}
 
 	return converterFrame.Frame, nil

@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -22,7 +22,7 @@ func main() {
 	}
 
 	//nolint
-	b, err := ioutil.ReadFile(input)
+	b, err := os.ReadFile(input)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = ioutil.WriteFile(output, out, 0644)
+	err = os.WriteFile(output, out, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}

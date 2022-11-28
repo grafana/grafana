@@ -2,26 +2,26 @@ package authinfoservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
-	secretstore "github.com/grafana/grafana/pkg/services/secrets/database"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, secretstore.ProvideSecretsStore(sqlStore))
-	authInfoStore := database.ProvideAuthInfoStore(sqlStore, secretsService)
+	authInfoStore := newFakeAuthInfoStore()
 	srv := ProvideAuthInfoService(
 		&OSSUserProtectionImpl{},
 		authInfoStore,
@@ -42,7 +42,11 @@ func TestUserAuth(t *testing.T) {
 		t.Run("Can find existing user", func(t *testing.T) {
 			// By Login
 			login := "loginuser0"
-
+			authInfoStore.ExpectedUser = &user.User{
+				Login: "loginuser0",
+				ID:    1,
+				Email: "user1@test.com",
+			}
 			query := &models.GetUserByAuthInfoQuery{UserLookupParams: models.UserLookupParams{Login: &login}}
 			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
@@ -69,6 +73,7 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, usr.Email, email)
 
+			authInfoStore.ExpectedUser = nil
 			// Don't find nonexistent user
 			email = "nonexistent@test.com"
 
@@ -82,6 +87,8 @@ func TestUserAuth(t *testing.T) {
 
 		t.Run("Can set & locate by AuthModule and AuthId", func(t *testing.T) {
 			// get nonexistent user_auth entry
+			authInfoStore.ExpectedUser = &user.User{}
+			authInfoStore.ExpectedError = user.ErrUserNotFound
 			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
 			usr, err := srv.LookupAndUpdate(context.Background(), query)
 
@@ -90,7 +97,9 @@ func TestUserAuth(t *testing.T) {
 
 			// create user_auth entry
 			login := "loginuser0"
-
+			authInfoStore.ExpectedUser = &user.User{Login: "loginuser0", ID: 1, Email: ""}
+			authInfoStore.ExpectedError = nil
+			authInfoStore.ExpectedOAuth = &models.UserAuth{Id: 1}
 			query.UserLookupParams.Login = &login
 			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
@@ -107,6 +116,7 @@ func TestUserAuth(t *testing.T) {
 			// get with non-matching id
 			idPlusOne := usr.ID + 1
 
+			authInfoStore.ExpectedUser.Login = "loginuser1"
 			query.UserLookupParams.UserID = &idPlusOne
 			usr, err = srv.LookupAndUpdate(context.Background(), query)
 
@@ -127,6 +137,8 @@ func TestUserAuth(t *testing.T) {
 			})
 			require.NoError(t, err)
 
+			authInfoStore.ExpectedUser = nil
+			authInfoStore.ExpectedError = user.ErrUserNotFound
 			// get via user_auth for deleted user
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
 			usr, err = srv.LookupAndUpdate(context.Background(), query)
@@ -147,7 +159,16 @@ func TestUserAuth(t *testing.T) {
 
 			// Find a user to set tokens on
 			login := "loginuser0"
-
+			authInfoStore.ExpectedUser = &user.User{Login: "loginuser0", ID: 1, Email: ""}
+			authInfoStore.ExpectedError = nil
+			authInfoStore.ExpectedOAuth = &models.UserAuth{
+				Id:                1,
+				OAuthAccessToken:  token.AccessToken,
+				OAuthRefreshToken: token.RefreshToken,
+				OAuthTokenType:    token.TokenType,
+				OAuthIdToken:      idToken,
+				OAuthExpiry:       token.Expiry,
+			}
 			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
 			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{
 				Login: &login,
@@ -220,7 +241,7 @@ func TestUserAuth(t *testing.T) {
 
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
-
+			authInfoStore.ExpectedOAuth.AuthModule = "test2"
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery := &models.GetAuthInfoQuery{
 				UserId: user.ID,
@@ -236,7 +257,7 @@ func TestUserAuth(t *testing.T) {
 			err = authInfoStore.UpdateAuthInfo(context.Background(), updateAuthCmd)
 
 			require.Nil(t, err)
-
+			authInfoStore.ExpectedOAuth.AuthModule = "test1"
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery = &models.GetAuthInfoQuery{
 				UserId: user.ID,
@@ -292,6 +313,7 @@ func TestUserAuth(t *testing.T) {
 			getAuthQuery := &models.GetAuthInfoQuery{
 				UserId: user.ID,
 			}
+			authInfoStore.ExpectedOAuth.AuthModule = "test2"
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
@@ -314,7 +336,8 @@ func TestUserAuth(t *testing.T) {
 
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
-
+			authInfoStore.ExpectedOAuth.AuthModule = "test1"
+			authInfoStore.ExpectedOAuth.OAuthAccessToken = "access_token"
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
 			require.Nil(t, err)
@@ -327,6 +350,7 @@ func TestUserAuth(t *testing.T) {
 			user, err = srv.LookupAndUpdate(context.Background(), queryTwo)
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
+			authInfoStore.ExpectedOAuth.AuthModule = "test2"
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 			require.Nil(t, err)
@@ -337,10 +361,11 @@ func TestUserAuth(t *testing.T) {
 				UserId:     user.ID,
 				AuthModule: "test1",
 			}
+			authInfoStore.ExpectedOAuth.AuthModule = "test1"
+
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQueryUnchanged)
 			require.Nil(t, err)
 			require.Equal(t, "test1", getAuthQueryUnchanged.Result.AuthModule)
-			require.Less(t, getAuthQueryUnchanged.Result.Created, getAuthQuery.Result.Created)
 		})
 
 		t.Run("Can set & locate by generic oauth auth module and user id", func(t *testing.T) {
@@ -364,11 +389,14 @@ func TestUserAuth(t *testing.T) {
 			query = &models.GetUserByAuthInfoQuery{AuthModule: genericOAuthModule, AuthId: "", UserLookupParams: models.UserLookupParams{
 				Login: &otherLoginUser,
 			}}
+			authInfoStore.ExpectedError = errors.New("some error")
+
 			user, err = srv.LookupAndUpdate(context.Background(), query)
 			database.GetTime = time.Now
 
 			require.NotNil(t, err)
 			require.Nil(t, user)
+			authInfoStore.ExpectedError = nil
 		})
 
 		t.Run("should be able to run loginstats query in all dbs", func(t *testing.T) {
@@ -426,8 +454,18 @@ func TestUserAuth(t *testing.T) {
 				}
 				_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 				require.NoError(t, err)
-
-				// require stats to populate
+				authInfoStore.ExpectedUser = &user.User{
+					Email: "userduplicatetest1@test.com",
+					Name:  "user name 1",
+					Login: "user_duplicate_test_1_login",
+				}
+				authInfoStore.ExpectedDuplicateUserEntries = 2
+				authInfoStore.ExpectedHasDuplicateUserEntries = 1
+				authInfoStore.ExpectedLoginStats = login.LoginStats{
+					DuplicateUserEntries: 2,
+					MixedCasedUsers:      1,
+				}
+				// require metrics and statistics to be 2
 				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
 				require.NoError(t, err)
 				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
@@ -437,4 +475,68 @@ func TestUserAuth(t *testing.T) {
 			}
 		})
 	})
+}
+
+type FakeAuthInfoStore struct {
+	ExpectedError                   error
+	ExpectedUser                    *user.User
+	ExpectedOAuth                   *models.UserAuth
+	ExpectedDuplicateUserEntries    int
+	ExpectedHasDuplicateUserEntries int
+	ExpectedLoginStats              login.LoginStats
+}
+
+func newFakeAuthInfoStore() *FakeAuthInfoStore {
+	return &FakeAuthInfoStore{}
+}
+
+func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+	return f.ExpectedError
+}
+func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+	query.Result = f.ExpectedOAuth
+	return f.ExpectedError
+}
+func (f *FakeAuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+	return f.ExpectedError
+}
+func (f *FakeAuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models.UserAuth) error {
+	return f.ExpectedError
+}
+func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	return f.ExpectedError
+}
+func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
+	return f.ExpectedError
+}
+func (f *FakeAuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeAuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeAuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]interface{}, error) {
+	var res = make(map[string]interface{})
+	res["stats.users.duplicate_user_entries"] = f.ExpectedDuplicateUserEntries
+	res["stats.users.has_duplicate_user_entries"] = f.ExpectedHasDuplicateUserEntries
+	res["stats.users.duplicate_user_entries_by_login"] = 0
+	res["stats.users.has_duplicate_user_entries_by_login"] = 0
+	res["stats.users.duplicate_user_entries_by_email"] = 0
+	res["stats.users.has_duplicate_user_entries_by_email"] = 0
+	res["stats.users.mixed_cased_users"] = f.ExpectedLoginStats.MixedCasedUsers
+	return res, f.ExpectedError
+}
+
+func (f *FakeAuthInfoStore) RunMetricsCollection(ctx context.Context) error {
+	return f.ExpectedError
+}
+
+func (f *FakeAuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
+	return f.ExpectedLoginStats, f.ExpectedError
 }

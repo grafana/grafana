@@ -10,7 +10,7 @@ import { LokiQuery, LokiOptions } from '../types';
 import { LokiOptionFields } from './LokiOptionFields';
 import { LokiQueryField } from './LokiQueryField';
 
-type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions>;
+export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions>;
 
 export const LokiExploreQueryEditor = memo((props: Props) => {
   const { query, data, datasource, history, onChange, onRunQuery, range } = props;

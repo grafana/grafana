@@ -10,13 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // swagger:route POST /org/users org addOrgUserToCurrentOrg
 //
-// Add a new user to the current organization
+// Add a new user to the current organization.
 //
 // Adds a global user to the current organization.
 //
@@ -29,17 +32,17 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Response {
-	cmd := models.AddOrgUserCommand{}
+	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgID = c.OrgID
 	return hs.addOrgUserHelper(c, cmd)
 }
 
 // swagger:route POST /orgs/{org_id}/users orgs addOrgUser
 //
-// Add a new user to the current organization
+// Add a new user to the current organization.
 //
 // Adds a global user to the current organization.
 //
@@ -52,20 +55,20 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
-	cmd := models.AddOrgUserCommand{}
+	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
 	var err error
-	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 	return hs.addOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
@@ -73,21 +76,19 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
-	err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery)
+	userQuery := user.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
+	userToAdd, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(404, "User not found", nil)
 	}
 
-	userToAdd := userQuery.Result
+	cmd.UserID = userToAdd.ID
 
-	cmd.UserId = userToAdd.ID
-
-	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &cmd); err != nil {
+	if err := hs.orgService.AddOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
-				"userId":  cmd.UserId,
+				"userId":  cmd.UserID,
 			})
 		}
 		return response.Error(500, "Could not add user to organization", err)
@@ -95,7 +96,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User added to organization",
-		"userId":  cmd.UserId,
+		"userId":  cmd.UserID,
 	})
 }
 
@@ -113,8 +114,8 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId: c.OrgId,
+	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+		OrgID: c.OrgID,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
@@ -142,8 +143,8 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId:                    c.OrgId,
+	orgUsers, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
@@ -158,9 +159,9 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 
 	for _, u := range orgUsers {
 		result = append(result, &dtos.UserLookupDTO{
-			UserID:    u.UserId,
+			UserID:    u.UserID,
 			Login:     u.Login,
-			AvatarURL: u.AvatarUrl,
+			AvatarURL: u.AvatarURL,
 		})
 	}
 
@@ -188,8 +189,8 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 
-	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId: orgId,
+	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+		OrgID: orgId,
 		Query: "",
 		Limit: 0,
 		User:  c.SignedInUser,
@@ -202,28 +203,29 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
-	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*org.OrgUserDTO, error) {
+	result, err := hs.orgService.GetOrgUsers(c.Req.Context(), query)
+	if err != nil {
 		return nil, err
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
+	filteredUsers := make([]*org.OrgUserDTO, 0, len(result))
 	userIDs := map[string]bool{}
-	for _, user := range query.Result {
+	for _, user := range result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 
-		userIDs[fmt.Sprint(user.UserId)] = true
+		userIDs[fmt.Sprint(user.UserID)] = true
 		filteredUsers = append(filteredUsers, user)
 	}
 
 	// Get accesscontrol metadata for users in the target org
-	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgId, "users:id:", userIDs)
+	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
 	if len(accessControlMetadata) > 0 {
 		for i := range filteredUsers {
-			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserId)]
+			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		}
 	}
 
@@ -245,7 +247,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	}
 
 	query := &models.SearchOrgUsersQuery{
-		OrgID: c.OrgId,
+		OrgID: c.OrgID,
 		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
@@ -275,7 +277,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
 //
-// Updates the given user
+// Updates the given user.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users.role:update` with scope `users:*`.
@@ -287,13 +289,13 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.Response {
-	cmd := models.UpdateOrgUserCommand{}
+	cmd := org.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgID = c.OrgID
 	var err error
-	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
@@ -314,30 +316,30 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
-	cmd := models.UpdateOrgUserCommand{}
+	cmd := org.UpdateOrgUserCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
 	return hs.updateOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd org.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
 	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
-	if err := hs.SQLStore.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
+	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
@@ -349,7 +351,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd models.Updat
 
 // swagger:route DELETE /org/users/{user_id} org removeOrgUserForCurrentOrg
 //
-// Delete user in current organization
+// Delete user in current organization.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users:remove` with scope `users:*`.
@@ -368,14 +370,14 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.
 
 	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
 		UserId:                   userId,
-		OrgId:                    c.OrgId,
+		OrgId:                    c.OrgID,
 		ShouldDeleteOrphanedUser: true,
 	})
 }
 
 // swagger:route DELETE /orgs/{org_id}/users/{user_id} orgs removeOrgUser
 //
-// Delete user in current organization
+// Delete user in current organization.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `org.users:remove` with scope `users:*`.
@@ -410,7 +412,16 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.Remov
 	}
 
 	if cmd.UserWasDeleted {
+		// This should be called from appropriate service when moved
+		if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserId); err != nil {
+			hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", accesscontrol.GlobalOrgID, "err", err)
+		}
 		return response.Success("User deleted")
+	}
+
+	// This should be called from appropriate service when moved
+	if err := hs.accesscontrolService.DeleteUserPermissions(ctx, cmd.OrgId, cmd.UserId); err != nil {
+		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", cmd.OrgId, "err", err)
 	}
 
 	return response.Success("User removed from organization")

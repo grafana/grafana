@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"xorm.io/xorm"
 )
 
@@ -103,7 +104,7 @@ func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error
 }
 
 func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, engine *xorm.Engine) (models.Org, error) {
-	org := models.Org{
+	orga := models.Org{
 		Name:    name,
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -115,14 +116,14 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 			return models.ErrOrgNameTaken
 		}
 
-		if _, err := sess.Insert(&org); err != nil {
+		if _, err := sess.Insert(&orga); err != nil {
 			return err
 		}
 
 		user := models.OrgUser{
-			OrgId:   org.Id,
+			OrgId:   orga.Id,
 			UserId:  userID,
-			Role:    models.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
@@ -130,17 +131,17 @@ func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, en
 		_, err := sess.Insert(&user)
 
 		sess.publishAfterCommit(&events.OrgCreated{
-			Timestamp: org.Created,
-			Id:        org.Id,
-			Name:      org.Name,
+			Timestamp: orga.Created,
+			Id:        orga.Id,
+			Name:      orga.Name,
 		})
 
 		return err
 	}, 0); err != nil {
-		return org, err
+		return orga, err
 	}
 
-	return org, nil
+	return orga, nil
 }
 
 // CreateOrgWithMember creates an organization with a certain name and a certain user as member.
@@ -156,39 +157,6 @@ func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand)
 
 	cmd.Result = org
 	return nil
-}
-
-func (ss *SQLStore) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
-			return err
-		} else if isNameTaken {
-			return models.ErrOrgNameTaken
-		}
-
-		org := models.Org{
-			Name:    cmd.Name,
-			Updated: time.Now(),
-		}
-
-		affectedRows, err := sess.ID(cmd.OrgId).Update(&org)
-
-		if err != nil {
-			return err
-		}
-
-		if affectedRows == 0 {
-			return models.ErrOrgNotFound
-		}
-
-		sess.publishAfterCommit(&events.OrgUpdated{
-			Timestamp: org.Updated,
-			Id:        org.Id,
-			Name:      org.Name,
-		})
-
-		return nil
-	})
 }
 
 func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {

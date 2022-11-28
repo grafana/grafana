@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
 import {
   createMockResourceGroupsBySubscription,
@@ -23,7 +24,11 @@ const singleResourceSelectionURI =
 
 const noop: any = () => {};
 function createMockResourcePickerData() {
-  const mockResourcePicker = new ResourcePickerData(createMockInstanceSetttings());
+  const mockDatasource = createMockDatasource();
+  const mockResourcePicker = new ResourcePickerData(
+    createMockInstanceSetttings(),
+    mockDatasource.azureMonitorDatasource
+  );
 
   mockResourcePicker.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
   mockResourcePicker.getResourceGroupsBySubscriptionId = jest

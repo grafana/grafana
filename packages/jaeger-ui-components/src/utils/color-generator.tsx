@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import memoizeOne from 'memoize-one';
+import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { colors } from '@grafana/ui';
@@ -33,9 +34,10 @@ class ColorGenerator {
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
 
-  constructor(colorsHex: string[]) {
-    this.colorsHex = colorsHex;
-    this.colorsRgb = colorsHex.map(strToRgb);
+  constructor(colorsHex: string[], theme: GrafanaTheme2) {
+    const filteredColors = getFilteredColors(colorsHex, theme);
+    this.colorsHex = filteredColors;
+    this.colorsRgb = filteredColors.map(strToRgb);
     this.cache = new Map();
   }
 
@@ -44,7 +46,6 @@ class ColorGenerator {
     if (i == null) {
       const hash = this.hashCode(key.toLowerCase());
       const hashIndex = Math.abs(hash % this.colorsHex.length);
-      // colors[4] is red (which we want to disallow as a span color because it looks like an error)
       i = hashIndex === 4 ? hashIndex + 1 : hashIndex;
       this.cache.set(key, i);
     }
@@ -52,7 +53,7 @@ class ColorGenerator {
   }
 
   hashCode(key: string) {
-    var hash = 0,
+    let hash = 0,
       i,
       chr;
     for (i = 0; i < key.length; i++) {
@@ -87,18 +88,36 @@ class ColorGenerator {
   }
 }
 
-const getGenerator = memoizeOne((colors: string[]) => {
-  return new ColorGenerator(colors);
+const getGenerator = memoizeOne((colors: string[], theme: GrafanaTheme2) => {
+  return new ColorGenerator(colors, theme);
 });
 
-export function clear() {
-  getGenerator([]);
+export function clear(theme: GrafanaTheme2) {
+  getGenerator([], theme);
 }
 
 export function getColorByKey(key: string, theme: GrafanaTheme2) {
-  return getGenerator(colors).getColorByKey(key);
+  return getGenerator(colors, theme).getColorByKey(key);
 }
 
 export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
-  return getGenerator(colors).getRgbColorByKey(key);
+  return getGenerator(colors, theme).getRgbColorByKey(key);
+}
+
+export function getFilteredColors(colorsHex: string[], theme: GrafanaTheme2) {
+  // Remove red as a span color because it looks like an error
+  const redIndex = colorsHex.indexOf('#E24D42');
+  if (redIndex > -1) {
+    colorsHex.splice(redIndex, 1);
+  }
+
+  // Only add colors that have a contrast ratio >= 3 for the current theme
+  let filteredColors = [];
+  for (const color of colorsHex) {
+    if (tinycolor.readability(theme.colors.background.primary, color) >= 3) {
+      filteredColors.push(color);
+    }
+  }
+
+  return filteredColors;
 }

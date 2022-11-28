@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "9.1.2",
+  "version": "9.2.5",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
@@ -18,30 +18,42 @@
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "config",
+    "src",
+    "sass",
+    "./README.md",
+    "./CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
-    "clean": "rimraf ./dist ./compiled",
-    "precommit": "npm run lint & npm run typecheck",
+    "clean": "rimraf ./dist ./compiled ./sass ./package.tgz",
+    "prepack": "mv ./src ./src_bak && cp -r ./dist/src ./src",
+    "postpack": "rimraf ./src && mv ./src_bak ./src",
     "typecheck": "tsc --noEmit"
   },
   "main": "src/index.ts",
   "dependencies": {
-    "@babel/core": "^7.18.9",
+    "@babel/core": "7.18.9",
     "@babel/plugin-proposal-class-properties": "7.18.6",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.18.6",
     "@babel/plugin-proposal-object-rest-spread": "7.18.9",
     "@babel/plugin-proposal-optional-chaining": "7.18.9",
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
     "@babel/plugin-transform-react-constant-elements": "7.18.9",
-    "@babel/plugin-transform-runtime": "7.18.9",
-    "@babel/plugin-transform-typescript": "7.18.8",
-    "@babel/preset-env": "^7.18.9",
-    "@babel/preset-react": "^7.18.6",
-    "@babel/preset-typescript": "^7.18.6",
-    "@grafana/data": "9.1.2",
-    "@grafana/eslint-config": "^4.0.0",
+    "@babel/plugin-transform-runtime": "7.18.10",
+    "@babel/plugin-transform-typescript": "7.19.0",
+    "@babel/preset-env": "7.18.9",
+    "@babel/preset-react": "7.18.6",
+    "@babel/preset-typescript": "7.18.6",
+    "@grafana/data": "9.2.5",
+    "@grafana/eslint-config": "5.0.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
-    "@grafana/ui": "9.1.2",
+    "@grafana/ui": "9.2.5",
     "@jest/core": "27.5.1",
     "@types/command-exists": "^1.2.0",
     "@types/eslint": "8.4.1",
@@ -55,8 +67,8 @@
     "@types/rimraf": "3.0.2",
     "@types/semver": "7.3.9",
     "@types/tmp": "0.2.3",
-    "@typescript-eslint/eslint-plugin": "5.16.0",
-    "@typescript-eslint/parser": "5.16.0",
+    "@typescript-eslint/eslint-plugin": "5.36.2",
+    "@typescript-eslint/parser": "5.36.2",
     "axios": "^0.26.1",
     "babel-jest": "27.5.1",
     "babel-loader": "^8.2.5",
@@ -73,7 +85,6 @@
     "eslint-plugin-react": "7.29.4",
     "eslint-plugin-react-hooks": "4.6.0",
     "execa": "^5.1.1",
-    "file-loader": "^6.2.0",
     "fork-ts-checker-webpack-plugin": "^7.2.1",
     "fs-extra": "^10.0.0",
     "globby": "^11.0.4",
@@ -109,8 +120,7 @@
     "ts-loader": "^9.3.1",
     "ts-node": "^9.1.0",
     "tslib": "2.4.0",
-    "typescript": "4.7.4",
-    "url-loader": "^4.1.1",
+    "typescript": "4.8.2",
     "webpack": "^5.72.0"
   }
 }

@@ -3,12 +3,12 @@ on:
   workflow_dispatch:
     inputs:
       version:
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
         required: true
-        default: '7.x.x'
   workflow_call:
     inputs:
       version_call:
-        description: Needs to match, exactly, the name of a version
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
         required: true
         type: string
     secrets:

@@ -44,16 +44,18 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 		lbs[key] = val
 	}
 	for key, val := range ruleLabels {
-		_, ok := lbs[key]
+		ruleVal, ok := lbs[key]
 		// if duplicate labels exist, reserved label will take precedence
 		if ok {
-			dupes[key] = val
+			if ruleVal != val {
+				dupes[key] = val
+			}
 		} else {
 			lbs[key] = val
 		}
 	}
 	if len(dupes) > 0 {
-		c.log.Warn("rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+		c.log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
 	for key, val := range result.Instance {
@@ -72,7 +74,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		c.log.Error("error getting cacheId for entry", "err", err.Error())
+		c.log.Error("error getting cacheID for entry", "err", err.Error())
 	}
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
@@ -104,7 +106,7 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheId:            id,
+		CacheID:            id,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
@@ -146,7 +148,7 @@ func (c *cache) set(entry *State) {
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
 		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*State)
 	}
-	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheId] = entry
+	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheID] = entry
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
@@ -180,11 +182,20 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	return ruleStates
 }
 
-// removeByRuleUID deletes all entries in the state cache that match the given UID.
-func (c *cache) removeByRuleUID(orgID int64, uid string) {
+// removeByRuleUID deletes all entries in the state cache that match the given UID. Returns removed states
+func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+	statesMap := c.states[orgID][uid]
 	delete(c.states[orgID], uid)
+	if statesMap == nil {
+		return nil
+	}
+	states := make([]*State, 0, len(statesMap))
+	for _, state := range statesMap {
+		states = append(states, state)
+	}
+	return states
 }
 
 func (c *cache) reset() {

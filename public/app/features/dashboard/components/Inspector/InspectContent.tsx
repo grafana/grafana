@@ -31,7 +31,7 @@ interface Props {
   onClose: () => void;
 }
 
-export const InspectContent: React.FC<Props> = ({
+export const InspectContent = ({
   panel,
   plugin,
   dashboard,
@@ -43,7 +43,7 @@ export const InspectContent: React.FC<Props> = ({
   defaultTab,
   onDataOptionsChange,
   onClose,
-}) => {
+}: Props) => {
   const [currentTab, setCurrentTab] = useState(defaultTab ?? InspectTab.Data);
 
   if (!plugin) {

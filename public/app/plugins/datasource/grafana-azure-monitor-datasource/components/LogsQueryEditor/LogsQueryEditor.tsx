@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';

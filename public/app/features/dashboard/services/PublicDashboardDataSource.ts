@@ -5,6 +5,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
 } from '@grafana/data';
@@ -13,8 +14,9 @@ import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@
 import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
+export const DEFAULT_INTERVAL = '1min';
 
-export class PublicDashboardDataSource extends DataSourceApi<any> {
+export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
   constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
     let meta = {} as DataSourcePluginMeta;
     if (PublicDashboardDataSource.isMixedDatasource(datasource)) {
@@ -29,9 +31,10 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       uid: PublicDashboardDataSource.resolveUid(datasource),
       jsonData: {},
       access: 'proxy',
+      readOnly: true,
     });
 
-    this.interval = '1min';
+    this.interval = PublicDashboardDataSource.resolveInterval(datasource);
   }
 
   /**
@@ -53,34 +56,29 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
     return datasource?.uid === MIXED_DATASOURCE_NAME;
   }
 
+  private static resolveInterval(datasource: DataSourceRef | string | DataSourceApi | null): string {
+    if (typeof datasource === 'string' || datasource === null) {
+      return DEFAULT_INTERVAL;
+    }
+
+    const interval = 'interval' in datasource ? datasource.interval : undefined;
+
+    return interval ?? DEFAULT_INTERVAL;
+  }
+
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest<any>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, publicDashboardAccessToken, panelId } = request;
-    let targets = request.targets;
-
-    const queries = targets.map((q) => {
-      return {
-        ...q,
-        publicDashboardAccessToken,
-        intervalMs,
-        maxDataPoints,
-      };
-    });
+  query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+    const { intervalMs, maxDataPoints, requestId, publicDashboardAccessToken, panelId } = request;
+    let queries: DataQuery[];
 
     // Return early if no queries exist
-    if (!queries.length) {
+    if (!request.targets.length) {
       return of({ data: [] });
     }
 
-    const body: any = { queries, publicDashboardAccessToken, panelId };
-
-    if (range) {
-      body.range = range;
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
+    const body: any = { intervalMs, maxDataPoints };
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
@@ -91,7 +89,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       })
       .pipe(
         switchMap((raw) => {
-          return of(toDataQueryResponse(raw, queries as DataQuery[]));
+          return of(toDataQueryResponse(raw, queries));
         }),
         catchError((err) => {
           return of(toDataQueryResponse(err));

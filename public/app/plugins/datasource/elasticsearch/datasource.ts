@@ -1,7 +1,6 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
-import { gte, lt, satisfies } from 'semver';
 
 import {
   DataFrame,
@@ -28,10 +27,15 @@ import {
   QueryFixAction,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logsModel';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+
+import { IndexPattern } from './IndexPattern';
+import LanguageProvider from './LanguageProvider';
+import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
   BucketAggregation,
@@ -45,10 +49,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { ElasticResponse } from './elastic_response';
-import { IndexPattern } from './index_pattern';
-import LanguageProvider from './language_provider';
-import { ElasticQueryBuilder } from './query_builder';
-import { defaultBucketAgg, hasMetricOfType } from './query_def';
+import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 
@@ -91,6 +92,7 @@ export class ElasticDatasource
   languageProvider: LanguageProvider;
   includeFrozen: boolean;
   isProxyAccess: boolean;
+  timeSrv: TimeSrv;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -113,7 +115,6 @@ export class ElasticDatasource
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
-      esVersion: this.esVersion,
     });
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
@@ -131,6 +132,7 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
+    this.timeSrv = getTimeSrv();
   }
 
   private request(
@@ -297,11 +299,6 @@ export class ElasticDatasource
       size: 10000,
     };
 
-    // fields field not supported on ES 5.x
-    if (lt(this.esVersion, '5.0.0')) {
-      data['fields'] = [timeField, '_source'];
-    }
-
     const header: any = {
       search_type: 'query_then_fetch',
       ignore_unavailable: true,
@@ -461,10 +458,6 @@ export class ElasticDatasource
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
 
-    if (satisfies(this.esVersion, '>=5.6.0 <7.0.0')) {
-      queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
-    }
-
     return JSON.stringify(queryHeader);
   }
 
@@ -519,13 +512,8 @@ export class ElasticDatasource
     return text;
   }
 
-  /**
-   * This method checks to ensure the user is running a 5.0+ cluster. This is
-   * necessary bacause the query being used for the getLogRowContext relies on the
-   * search_after feature.
-   */
   showContextToggle(): boolean {
-    return gte(this.esVersion, '5.0.0');
+    return true;
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
@@ -687,7 +675,7 @@ export class ElasticDatasource
 
       const esQuery = JSON.stringify(queryObj);
 
-      const searchType = queryObj.size === 0 && lt(this.esVersion, '5.0.0') ? 'count' : 'query_then_fetch';
+      const searchType = 'query_then_fetch';
       const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
       payload += header + '\n';
 
@@ -804,15 +792,8 @@ export class ElasticDatasource
           if (index && index.mappings) {
             const mappings = index.mappings;
 
-            if (lt(this.esVersion, '7.0.0')) {
-              for (const typeName in mappings) {
-                const properties = mappings[typeName].properties;
-                getFieldsRecursively(properties);
-              }
-            } else {
-              const properties = mappings.properties;
-              getFieldsRecursively(properties);
-            }
+            const properties = mappings.properties;
+            getFieldsRecursively(properties);
           }
         }
 
@@ -825,7 +806,7 @@ export class ElasticDatasource
   }
 
   getTerms(queryDef: TermsQuery, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
-    const searchType = gte(this.esVersion, '5.0.0') ? 'query_then_fetch' : 'count';
+    const searchType = 'query_then_fetch';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
 
@@ -855,11 +836,11 @@ export class ElasticDatasource
   getMultiSearchUrl() {
     const searchParams = new URLSearchParams();
 
-    if (gte(this.esVersion, '7.0.0') && this.maxConcurrentShardRequests) {
+    if (this.maxConcurrentShardRequests) {
       searchParams.append('max_concurrent_shard_requests', `${this.maxConcurrentShardRequests}`);
     }
 
-    if (gte(this.esVersion, '6.6.0') && this.xpack && this.includeFrozen) {
+    if (this.xpack && this.includeFrozen) {
       searchParams.append('ignore_throttled', 'false');
     }
 
@@ -890,7 +871,8 @@ export class ElasticDatasource
   }
 
   getTagValues(options: any) {
-    return lastValueFrom(this.getTerms({ field: options.key }));
+    const range = this.timeSrv.timeRange();
+    return lastValueFrom(this.getTerms({ field: options.key }, range));
   }
 
   targetContainsTemplate(target: any) {

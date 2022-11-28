@@ -16,20 +16,19 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
 
   handleSassThemeChange(theme);
 
+  const css = `#root {
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    min-height: 100%;
+    background: ${theme.colors.background.primary};
+  }`;
+
   return (
     <ThemeContext.Provider value={theme}>
-      <div
-        style={{
-          width: '100%',
-          padding: '20px',
-          display: 'flex',
-          minHeight: '100%',
-          background: `${theme.colors.background.primary}`,
-        }}
-      >
-        <GlobalStyles />
-        {children}
-      </div>
+      <GlobalStyles />
+      <style>{css}</style>
+      {children}
     </ThemeContext.Provider>
   );
 };

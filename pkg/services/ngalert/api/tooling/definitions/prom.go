@@ -19,6 +19,7 @@ import (
 //
 //     Responses:
 //       200: RuleResponse
+//       404: NotFound
 
 // swagger:route GET /api/prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
 //
@@ -33,6 +34,7 @@ import (
 //
 //     Responses:
 //       200: AlertResponse
+//       404: NotFound
 
 // swagger:model
 type RuleResponse struct {

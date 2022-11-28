@@ -175,6 +175,7 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 			resp.Status)
 	}
 
+	//nolint:gosec
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err

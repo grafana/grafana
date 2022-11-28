@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -188,7 +188,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, loganalytics.AzureLogAnalyticsResponse{})
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -238,7 +238,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 }
 
 func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (AzureResourceGraphResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return AzureResourceGraphResponse{}, err
 	}

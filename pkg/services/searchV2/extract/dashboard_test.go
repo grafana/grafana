@@ -8,9 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 )
 
 func dsLookup() dslookup.DatasourceLookup {
@@ -98,6 +99,7 @@ func TestReadDashboard(t *testing.T) {
 
 		update := false
 		savedPath := filepath.Join("testdata/", input+"-info.json")
+		//nolint:gosec
 		saved, err := os.ReadFile(savedPath)
 		if err != nil {
 			update = true

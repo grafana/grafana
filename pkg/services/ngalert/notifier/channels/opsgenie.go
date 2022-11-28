@@ -205,7 +205,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 			"%s\n%s\n\n%s",
 			tmpl(DefaultMessageTitleEmbed),
 			ruleURL,
-			tmpl(`{{ template "default.message" . }}`),
+			tmpl(DefaultMessageEmbed),
 		)
 	}
 

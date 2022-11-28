@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,15 +17,15 @@ func TestUpdateTeam(t *testing.T) {
 	teamGuardianService := ProvideService(store)
 
 	t.Run("Updating a team", func(t *testing.T) {
-		admin := models.SignedInUser{
-			UserId:  1,
-			OrgId:   1,
-			OrgRole: models.ROLE_ADMIN,
+		admin := user.SignedInUser{
+			UserID:  1,
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
 		}
-		editor := models.SignedInUser{
-			UserId:  2,
-			OrgId:   1,
-			OrgRole: models.ROLE_EDITOR,
+		editor := user.SignedInUser{
+			UserID:  2,
+			OrgID:   1,
+			OrgRole: org.RoleEditor,
 		}
 		testTeam := models.Team{
 			Id:    1,
@@ -46,7 +48,7 @@ func TestUpdateTeam(t *testing.T) {
 				result := []*models.TeamMemberDTO{{
 					OrgId:      testTeam.OrgId,
 					TeamId:     testTeam.Id,
-					UserId:     editor.UserId,
+					UserId:     editor.UserID,
 					Permission: models.PERMISSION_ADMIN,
 				}}
 
@@ -68,7 +70,7 @@ func TestUpdateTeam(t *testing.T) {
 				result := []*models.TeamMemberDTO{{
 					OrgId:      testTeamOtherOrg.OrgId,
 					TeamId:     testTeamOtherOrg.Id,
-					UserId:     editor.UserId,
+					UserId:     editor.UserID,
 					Permission: models.PERMISSION_ADMIN,
 				}}
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { EditorRow, EditorFieldGroup, EditorField } from '@grafana/experimental';
 
 import { RawQuery } from '../../../prometheus/querybuilder/shared/RawQuery';
 import { lokiGrammar } from '../../syntax';

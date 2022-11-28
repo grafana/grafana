@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "9.1.2",
+  "version": "9.2.5",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
@@ -16,39 +16,52 @@
     "directory": "packages/grafana-e2e"
   },
   "main": "src/index.ts",
+  "types": "src/index.ts",
   "bin": {
     "grafana-e2e": "bin/grafana-e2e.js"
   },
+  "publishConfig": {
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "cypress",
+    "dist",
+    "cli.js",
+    "cypress.json",
+    "./README.md",
+    "./CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
   "scripts": {
-    "build": "grafana-toolkit package:build --scope=e2e",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
-    "clean": "rimraf ./dist ./compiled",
-    "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
     "open": "cypress open",
     "start": "cypress run --browser=chrome",
     "start-benchmark": "CYPRESS_NO_COMMAND_LOG=1 yarn start",
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "22.0.1",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@types/chrome-remote-interface": "0.31.4",
     "@types/lodash": "4.14.182",
     "@types/node": "16.11.45",
     "@types/uuid": "8.3.4",
+    "esbuild": "0.15.7",
     "rollup": "2.77.2",
-    "rollup-plugin-copy": "3.4.0",
-    "rollup-plugin-sourcemaps": "0.6.3",
-    "rollup-plugin-terser": "7.0.2",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-esbuild": "^4.9.1",
+    "rollup-plugin-node-externals": "^4.1.0",
     "webpack": "5.74.0"
   },
-  "types": "src/index.ts",
   "dependencies": {
-    "@babel/core": "7.18.9",
-    "@babel/preset-env": "7.18.9",
+    "@babel/core": "7.19.0",
+    "@babel/preset-env": "7.19.0",
     "@cypress/webpack-preprocessor": "5.12.0",
-    "@grafana/e2e-selectors": "9.1.2",
+    "@grafana/e2e-selectors": "9.2.5",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "8.2.5",
@@ -64,9 +77,9 @@
     "resolve-as-bin": "2.1.0",
     "rimraf": "3.0.2",
     "tracelib": "1.0.1",
-    "ts-loader": "6.2.2",
+    "ts-loader": "8.4.0",
     "tslib": "2.4.0",
-    "typescript": "4.7.4",
+    "typescript": "4.8.2",
     "uuid": "8.3.2",
     "yaml": "^2.0.0"
   }

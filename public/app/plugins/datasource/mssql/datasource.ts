@@ -1,191 +1,114 @@
-import { map as _map } from 'lodash';
-import { lastValueFrom, of } from 'rxjs';
-import { catchError, map, mapTo } from 'rxjs/operators';
+import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
+import { AGGREGATE_FNS } from 'app/features/plugins/sql/constants';
+import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
+import {
+  DB,
+  LanguageCompletionProvider,
+  ResponseParser,
+  SQLQuery,
+  SQLSelectableValue,
+} from 'app/features/plugins/sql/types';
 
-import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
-import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getSchema, showDatabases, getSchemaAndName } from './MSSqlMetaQuery';
+import { MSSqlQueryModel } from './MSSqlQueryModel';
+import { MSSqlResponseParser } from './response_parser';
+import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
+import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
+import { MssqlOptions } from './types';
 
-import ResponseParser from './response_parser';
-import { MssqlOptions, MssqlQuery, MssqlQueryForInterpolation } from './types';
-
-export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOptions> {
-  id: any;
-  name: any;
-  responseParser: ResponseParser;
-  interval: string;
-
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<MssqlOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
-  ) {
+export class MssqlDatasource extends SqlDatasource {
+  completionProvider: LanguageCompletionProvider | undefined = undefined;
+  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>) {
     super(instanceSettings);
-    this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
-    this.responseParser = new ResponseParser();
-    const settingsData = instanceSettings.jsonData || ({} as MssqlOptions);
-    this.interval = settingsData.timeInterval || '1m';
   }
 
-  interpolateVariable(value: any, variable: any) {
-    if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
-        return "'" + value.replace(/'/g, `''`) + "'";
-      } else {
-        return value;
-      }
+  getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MSSqlQueryModel {
+    return new MSSqlQueryModel(target, templateSrv, scopedVars);
+  }
+
+  getResponseParser(): ResponseParser {
+    return new MSSqlResponseParser();
+  }
+
+  async fetchDatasets(): Promise<string[]> {
+    const datasets = await this.runSql<{ name: string[] }>(showDatabases(), { refId: 'datasets' });
+    return datasets.fields.name.values.toArray().flat();
+  }
+
+  async fetchTables(dataset?: string): Promise<string[]> {
+    // We get back the table name with the schema as well. like dbo.table
+    const tables = await this.runSql<{ schemaAndName: string[] }>(getSchemaAndName(dataset), { refId: 'tables' });
+    return tables.fields.schemaAndName.values.toArray().flat();
+  }
+
+  async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
+    if (!query.table) {
+      return [];
     }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    const quotedValues = _map(value, (val) => {
-      if (typeof value === 'number') {
-        return value;
-      }
-
-      return "'" + val.replace(/'/g, `''`) + "'";
+    const [_, table] = query.table.split('.');
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.dataset, table), {
+      refId: 'columns',
     });
-    return quotedValues.join(',');
-  }
-
-  interpolateVariablesInQueries(
-    queries: MssqlQueryForInterpolation[],
-    scopedVars: ScopedVars
-  ): MssqlQueryForInterpolation[] {
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
-        const expandedQuery = {
-          ...query,
-          datasource: this.getRef(),
-          rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
-          rawQuery: true,
-        };
-        return expandedQuery;
-      });
+    const result: SQLSelectableValue[] = [];
+    for (let i = 0; i < schema.length; i++) {
+      const column = schema.fields.column.values.get(i);
+      const type = schema.fields.type.values.get(i);
+      result.push({ label: column, value: column, type, icon: getIcon(type), raqbFieldType: getRAQBType(type) });
     }
-    return expandedQueries;
+    return result;
   }
 
-  applyTemplateVariables(target: MssqlQuery, scopedVars: ScopedVars): Record<string, any> {
+  getSqlCompletionProvider(db: DB): LanguageCompletionProvider {
+    if (this.completionProvider !== undefined) {
+      return this.completionProvider;
+    }
+    const args = {
+      getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
+      getTables: { current: (dataset?: string) => fetchTables(db, dataset) },
+    };
+    this.completionProvider = getSqlCompletionProvider(args);
+    return this.completionProvider;
+  }
+
+  getDB(): DB {
+    if (this.db !== undefined) {
+      return this.db;
+    }
     return {
-      refId: target.refId,
-      datasource: this.getRef(),
-      rawSql: this.templateSrv.replace(target.rawSql, scopedVars, this.interpolateVariable),
-      format: target.format,
+      init: () => Promise.resolve(true),
+      datasets: () => this.fetchDatasets(),
+      tables: (dataset?: string) => this.fetchTables(dataset),
+      getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
+      fields: async (query: SQLQuery) => {
+        if (!query?.dataset || !query?.table) {
+          return [];
+        }
+        return this.fetchFields(query);
+      },
+      validateQuery: (query) =>
+        Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
+      dsID: () => this.id,
+      dispose: (dsID?: string) => {},
+      toRawSql,
+      lookup: async (path?: string) => {
+        if (!path) {
+          const datasets = await this.fetchDatasets();
+          return datasets.map((d) => ({ name: d, completion: d }));
+        } else {
+          const parts = path.split('.').filter((s: string) => s);
+          if (parts.length > 2) {
+            return [];
+          }
+          if (parts.length === 1) {
+            const tables = await this.fetchTables(parts[0]);
+            return tables.map((t) => ({ name: t, completion: t }));
+          } else {
+            return [];
+          }
+        }
+      },
+      functions: async () => AGGREGATE_FNS,
     };
-  }
-
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    if (!options.annotation.rawQuery) {
-      return Promise.reject({ message: 'Query missing in annotation definition' });
-    }
-
-    const query = {
-      refId: options.annotation.name,
-      datasource: this.getRef(),
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
-      format: 'table',
-    };
-
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries: [query],
-          },
-          requestId: options.annotation.name,
-        })
-        .pipe(
-          map(
-            async (res: FetchResponse<BackendDataSourceResponse>) =>
-              await this.responseParser.transformAnnotationResponse(options, res.data)
-          )
-        )
-    );
-  }
-
-  filterQuery(query: MssqlQuery): boolean {
-    return !query.hide;
-  }
-
-  metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
-    let refId = 'tempvar';
-    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-      refId = optionalOptions.variable.name;
-    }
-
-    const range = optionalOptions?.range as TimeRange;
-
-    const interpolatedQuery = {
-      refId: refId,
-      datasource: this.getRef(),
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
-      format: 'table',
-    };
-
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: range?.from?.valueOf()?.toString(),
-            to: range?.to?.valueOf()?.toString(),
-            queries: [interpolatedQuery],
-          },
-          requestId: refId,
-        })
-        .pipe(
-          map((rsp) => {
-            return this.responseParser.transformMetricFindResponse(rsp);
-          }),
-          catchError((err) => {
-            return of([]);
-          })
-        )
-    );
-  }
-
-  testDatasource(): Promise<any> {
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: '5m',
-            to: 'now',
-            queries: [
-              {
-                refId: 'A',
-                intervalMs: 1,
-                maxDataPoints: 1,
-                datasource: this.getRef(),
-                rawSql: 'SELECT 1',
-                format: 'table',
-              },
-            ],
-          },
-        })
-        .pipe(
-          mapTo({ status: 'success', message: 'Database Connection OK' }),
-          catchError((err) => {
-            return of(toTestingStatus(err));
-          })
-        )
-    );
-  }
-
-  targetContainsTemplate(query: MssqlQuery): boolean {
-    const rawSql = query.rawSql.replace('$__', '');
-    return this.templateSrv.containsTemplate(rawSql);
   }
 }

@@ -7,12 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	pluginDashboardsManager "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 )
 
-func ProvideService(pluginDashboardStore plugins.DashboardFileStore, dashboardPluginService dashboards.PluginService) *Service {
+func ProvideService(pluginDashboardStore pluginDashboardsManager.FileStore, dashboardPluginService dashboards.PluginService) *Service {
 	return &Service{
 		pluginDashboardStore:   pluginDashboardStore,
 		dashboardPluginService: dashboardPluginService,
@@ -21,7 +21,7 @@ func ProvideService(pluginDashboardStore plugins.DashboardFileStore, dashboardPl
 }
 
 type Service struct {
-	pluginDashboardStore   plugins.DashboardFileStore
+	pluginDashboardStore   pluginDashboardsManager.FileStore
 	dashboardPluginService dashboards.PluginService
 	logger                 log.Logger
 }
@@ -31,7 +31,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 		return nil, fmt.Errorf("req cannot be nil")
 	}
 
-	listArgs := &plugins.ListPluginDashboardFilesArgs{
+	listArgs := &pluginDashboardsManager.ListPluginDashboardFilesArgs{
 		PluginID: req.PluginID,
 	}
 	listResp, err := s.pluginDashboardStore.ListPluginDashboardFiles(ctx, listArgs)
@@ -106,7 +106,7 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 		return nil, fmt.Errorf("req cannot be nil")
 	}
 
-	args := &plugins.GetPluginDashboardFileContentsArgs{
+	args := &pluginDashboardsManager.GetPluginDashboardFileContentsArgs{
 		PluginID:      req.PluginID,
 		FileReference: req.Reference,
 	}

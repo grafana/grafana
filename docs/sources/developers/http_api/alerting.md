@@ -15,7 +15,11 @@ title: 'Alerting HTTP API '
 
 # Alerting API
 
-> **Note:** This topic is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only.
+> **Note:** Starting with v9.0, the Alerting HTTP API is deprecated. It will be removed in a future release.
+
+This topic is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only.
+
+If you are using Grafana Alerting, refer to [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/)
 
 You can find Grafana Alerting API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json). Also, refer to [Grafana Alerting alerts documentation]({{< relref "../../alerting/" >}}) for details on how to create and manage new alerts.
 

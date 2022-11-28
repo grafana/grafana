@@ -60,7 +60,7 @@ export const DerivedField = (props: Props) => {
   };
 
   return (
-    <div className={className}>
+    <div className={className} data-testid="derived-field">
       <div className={styles.row}>
         <FormField
           className={styles.nameField}

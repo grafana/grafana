@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { FC, useMemo } from 'react';
+import { Editor } from 'slate-react';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Editor } from '@grafana/slate-react';
 import { makeValue, SlatePrism, useStyles } from '@grafana/ui';
 import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
 import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';

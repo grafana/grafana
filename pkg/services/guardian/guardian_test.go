@@ -12,7 +12,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,13 +32,13 @@ const (
 )
 
 var (
-	adminRole  = models.ROLE_ADMIN
-	editorRole = models.ROLE_EDITOR
-	viewerRole = models.ROLE_VIEWER
+	adminRole  = org.RoleAdmin
+	editorRole = org.RoleEditor
+	viewerRole = org.RoleViewer
 )
 
 func TestGuardianAdmin(t *testing.T) {
-	orgRoleScenario("Given user has admin org role", t, models.ROLE_ADMIN, func(sc *scenarioContext) {
+	orgRoleScenario("Given user has admin org role", t, org.RoleAdmin, func(sc *scenarioContext) {
 		// dashboard has default permissions
 		sc.defaultPermissionScenario(USER, FULL_ACCESS)
 
@@ -82,7 +85,7 @@ func TestGuardianAdmin(t *testing.T) {
 }
 
 func TestGuardianEditor(t *testing.T) {
-	orgRoleScenario("Given user has editor org role", t, models.ROLE_EDITOR, func(sc *scenarioContext) {
+	orgRoleScenario("Given user has editor org role", t, org.RoleEditor, func(sc *scenarioContext) {
 		// dashboard has default permissions
 		sc.defaultPermissionScenario(USER, EDITOR_ACCESS)
 
@@ -129,7 +132,7 @@ func TestGuardianEditor(t *testing.T) {
 }
 
 func TestGuardianViewer(t *testing.T) {
-	orgRoleScenario("Given user has viewer org role", t, models.ROLE_VIEWER, func(sc *scenarioContext) {
+	orgRoleScenario("Given user has viewer org role", t, org.RoleViewer, func(sc *scenarioContext) {
 		// dashboard has default permissions
 		sc.defaultPermissionScenario(USER, VIEWER_ACCESS)
 
@@ -174,7 +177,7 @@ func TestGuardianViewer(t *testing.T) {
 		sc.parentFolderPermissionScenario(VIEWER, models.PERMISSION_VIEW, VIEWER_ACCESS)
 	})
 
-	apiKeyScenario("Given api key with viewer role", t, models.ROLE_VIEWER, func(sc *scenarioContext) {
+	apiKeyScenario("Given api key with viewer role", t, org.RoleViewer, func(sc *scenarioContext) {
 		// dashboard has default permissions
 		sc.defaultPermissionScenario(VIEWER, VIEWER_ACCESS)
 	})
@@ -699,12 +702,12 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 		cfg.HiddenUsers = map[string]struct{}{"user2": {}}
 
 		t.Run("Should get hidden acl", func(t *testing.T) {
-			user := &models.SignedInUser{
-				OrgId:  orgID,
-				UserId: 1,
+			user := &user.SignedInUser{
+				OrgID:  orgID,
+				UserID: 1,
 				Login:  "user1",
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc)
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -714,13 +717,13 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 		})
 
 		t.Run("Grafana admin should not get hidden acl", func(t *testing.T) {
-			user := &models.SignedInUser{
-				OrgId:          orgID,
-				UserId:         1,
+			user := &user.SignedInUser{
+				OrgID:          orgID,
+				UserID:         1,
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -749,12 +752,12 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 		}).Return(nil)
 
 		t.Run("Should get acl without duplicates", func(t *testing.T) {
-			user := &models.SignedInUser{
-				OrgId:  orgID,
-				UserId: 1,
+			user := &user.SignedInUser{
+				OrgID:  orgID,
+				UserID: 1,
 				Login:  "user1",
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc)
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 
 			acl, err := g.GetACLWithoutDuplicates()
 			require.NoError(t, err)

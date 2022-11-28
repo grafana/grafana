@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -26,7 +26,7 @@ func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*Al
 	var alertFiles []*AlertingFile
 	cr.log.Debug("looking for alerting provisioning files", "path", path)
 
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		cr.log.Error("can't read alerting provisioning files from directory", "path", path, "error", err)
 		return alertFiles, nil
@@ -35,7 +35,8 @@ func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*Al
 	for _, file := range files {
 		cr.log.Debug("parsing alerting provisioning file", "path", path, "file.Name", file.Name())
 		if !cr.isYAML(file.Name()) && !cr.isJSON(file.Name()) {
-			return nil, fmt.Errorf("file has invalid suffix '%s' (.yaml,.yml,.json accepted)", file.Name())
+			cr.log.Warn(fmt.Sprintf("file has invalid suffix '%s' (.yaml,.yml,.json accepted), skipping", file.Name()))
+			continue
 		}
 		alertFileV1, err := cr.parseConfig(path, file)
 		if err != nil {
@@ -61,11 +62,11 @@ func (cr *rulesConfigReader) isJSON(file string) bool {
 	return strings.HasSuffix(file, ".json")
 }
 
-func (cr *rulesConfigReader) parseConfig(path string, file fs.FileInfo) (*AlertingFileV1, error) {
+func (cr *rulesConfigReader) parseConfig(path string, file fs.DirEntry) (*AlertingFileV1, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

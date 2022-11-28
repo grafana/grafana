@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { CSSProperties } from 'react';
-import { ReplaySubject, Subject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
@@ -67,6 +67,9 @@ export class Scene {
 
   inlineEditingCallback?: () => void;
 
+  readonly editModeEnabled = new BehaviorSubject<boolean>(false);
+  subscription: Subscription;
+
   constructor(
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
@@ -74,6 +77,13 @@ export class Scene {
     public onSave: (cfg: CanvasFrameOptions) => void
   ) {
     this.root = this.load(cfg, enableEditing, showAdvancedTypes);
+
+    this.subscription = this.editModeEnabled.subscribe((open) => {
+      if (!this.moveable || !this.isEditingEnabled) {
+        return;
+      }
+      this.moveable.draggable = !open;
+    });
   }
 
   getNextElementName = (isFrame = false) => {
@@ -284,6 +294,7 @@ export class Scene {
     if (this.selecto) {
       this.selecto.setSelectedTargets(selection.targets);
       this.updateSelection(selection);
+      this.editModeEnabled.next(false);
     }
   };
 
@@ -339,7 +350,7 @@ export class Scene {
     });
 
     this.moveable = new Moveable(this.div!, {
-      draggable: allowChanges,
+      draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
       ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
@@ -350,6 +361,17 @@ export class Scene {
       origin: false,
       className: this.styles.selected,
     })
+      .on('click', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        let elementSupportsEditing = false;
+        if (targetedElement) {
+          elementSupportsEditing = targetedElement.item.hasEditMode ?? false;
+        }
+
+        if (event.isDouble && allowChanges && !this.editModeEnabled.getValue() && elementSupportsEditing) {
+          this.editModeEnabled.next(true);
+        }
+      })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
@@ -441,28 +463,40 @@ export class Scene {
         .includes(selectedTarget.parentElement.parentElement);
 
       // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
-      if (this.isEditingEnabled && isTargetMoveableElement && this.selecto?.getSelectedTargets().length) {
+      if (
+        this.isEditingEnabled &&
+        !this.editModeEnabled.getValue() &&
+        isTargetMoveableElement &&
+        this.selecto?.getSelectedTargets().length
+      ) {
         this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
       }
 
-      if (isTargetMoveableElement || isTargetAlreadySelected) {
+      if (isTargetMoveableElement || isTargetAlreadySelected || !this.isEditingEnabled) {
         // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }
-    }).on('selectEnd', (event) => {
-      targets = event.selected;
-      this.updateSelection({ targets });
+    })
+      .on('select', () => {
+        this.editModeEnabled.next(false);
+      })
+      .on('selectEnd', (event) => {
+        targets = event.selected;
+        this.updateSelection({ targets });
 
-      if (event.isDragStart) {
-        if (this.isEditingEnabled && this.selecto?.getSelectedTargets().length) {
-          this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+        if (event.isDragStart) {
+          if (this.isEditingEnabled && !this.editModeEnabled.getValue() && this.selecto?.getSelectedTargets().length) {
+            this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+          }
+          event.inputEvent.preventDefault();
+          event.data.timer = setTimeout(() => {
+            this.moveable!.dragStart(event.inputEvent);
+          });
         }
-        event.inputEvent.preventDefault();
-        setTimeout(() => {
-          this.moveable!.dragStart(event.inputEvent);
-        });
-      }
-    });
+      })
+      .on('dragEnd', (event) => {
+        clearTimeout(event.data.timer);
+      });
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {

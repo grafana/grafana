@@ -20,7 +20,7 @@ import (
 )
 
 func Test_subscribeToFolderChanges(t *testing.T) {
-	orgID := rand.Int63()
+	orgID := rand.Int63n(30)
 	folder := &models2.Folder{
 		Id:    0,
 		Uid:   util.GenerateShortUID(),

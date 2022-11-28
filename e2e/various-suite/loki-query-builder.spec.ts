@@ -1,5 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
+const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 const dataSourceName = 'LokiBuilder';
 const addDataSource = () => {
   e2e.flows.addDataSource({
@@ -56,7 +57,7 @@ describe('Loki query builder', () => {
     e2e().contains('rate({} | logfmt | __error__=`` [$__interval]').should('be.visible');
 
     // Check for expected error
-    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('be.visible');
+    e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('be.visible');
 
     // Add labels to remove error
     e2e.components.QueryBuilder.labelSelect().should('be.visible').click().type('instance{enter}');
@@ -66,7 +67,7 @@ describe('Loki query builder', () => {
       .click()
       .type('instance1{enter}')
       .type('instance2{enter}');
-    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('not.exist');
+    e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 
     // Switch to code editor and check if query was parsed

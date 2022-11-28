@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -248,6 +248,27 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			require.Equal(t, expected, actual)
 		})
 	}
+}
+
+func TestCustomNamespace(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+
+	t.Run("it should set the metricNamespace to a customNamespace value if customNamespace is present as a parameter", func(t *testing.T) {
+		q := []backend.DataQuery{
+			{
+				JSON: []byte(`{
+							"azureMonitor": {
+								"customNamespace": "custom/namespace"						
+							}
+						}`),
+			},
+		}
+
+		result, err := datasource.buildQueries(q, types.DatasourceInfo{})
+		require.NoError(t, err)
+		expected := "custom/namespace"
+		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
+	})
 }
 
 func makeDates(startDate time.Time, count int, interval time.Duration) (times []time.Time) {
@@ -651,7 +672,7 @@ func loadTestFile(t *testing.T, name string) types.AzureMonitorResponse {
 	path := filepath.Join("../testdata", name)
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
-	jsonBody, err := ioutil.ReadFile(path)
+	jsonBody, err := os.ReadFile(path)
 	require.NoError(t, err)
 
 	var azData types.AzureMonitorResponse

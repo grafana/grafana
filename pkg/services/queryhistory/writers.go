@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
@@ -22,8 +22,8 @@ func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore *sqlstore.SQLStor
 	}
 }
 
-func writeFiltersSQL(query SearchInQueryHistoryQuery, user *models.SignedInUser, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
-	params := []interface{}{user.OrgId, user.UserId, query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
+func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+	params := []interface{}{user.OrgID, user.UserID, query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
 	var sql bytes.Buffer
 	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.Dialect.LikeStr() + " ? OR query_history.comment " + sqlStore.Dialect.LikeStr() + " ?) ")
 

@@ -1,6 +1,6 @@
 import { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
-import { CartesianCoords2D } from '@grafana/data';
+import { CartesianCoords2D, DashboardCursorSync } from '@grafana/data';
 
 import { positionTooltip } from '../plugins/TooltipPlugin';
 
@@ -21,6 +21,9 @@ type SetupConfigParams = {
   setCoords: Dispatch<SetStateAction<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>>;
   setHover: Dispatch<SetStateAction<HoverEvent | undefined>>;
   isToolTipOpen: MutableRefObject<boolean>;
+  isActive: boolean;
+  setIsActive: Dispatch<SetStateAction<boolean>>;
+  sync?: (() => DashboardCursorSync) | undefined;
 };
 
 // This applies config hooks to setup tooltip listener. Ideally this could happen in the same `prepConfig` function
@@ -33,13 +36,26 @@ export const addTooltipSupport = ({
   setCoords,
   setHover,
   isToolTipOpen,
+  isActive,
+  setIsActive,
+  sync,
 }: SetupConfigParams): UPlotConfigBuilder => {
   // Ensure tooltip is closed on config changes
   isToolTipOpen.current = false;
 
+  const onMouseEnter = () => {
+    if (setIsActive) {
+      setIsActive(true);
+    }
+  };
+
   const onMouseLeave = () => {
     if (!isToolTipOpen.current) {
       setCoords(null);
+
+      if (setIsActive) {
+        setIsActive(false);
+      }
     }
   };
 
@@ -50,6 +66,11 @@ export const addTooltipSupport = ({
     ref_over = u.over;
     ref_parent?.addEventListener('click', onUPlotClick);
     ref_over.addEventListener('mouseleave', onMouseLeave);
+    ref_over.addEventListener('mouseenter', onMouseEnter);
+
+    if (sync && sync() === DashboardCursorSync.Crosshair) {
+      u.root.classList.add('shared-crosshair');
+    }
   });
 
   const clearPopupIfOpened = () => {
@@ -64,6 +85,7 @@ export const addTooltipSupport = ({
   config.addHook('destroy', () => {
     ref_parent?.removeEventListener('click', onUPlotClick);
     ref_over?.removeEventListener('mouseleave', onMouseLeave);
+    ref_over?.removeEventListener('mouseenter', onMouseEnter);
     clearPopupIfOpened();
   });
 
@@ -76,11 +98,15 @@ export const addTooltipSupport = ({
   const tooltipInterpolator = config.getTooltipInterpolator();
   if (tooltipInterpolator) {
     config.addHook('setCursor', (u) => {
+      if (isToolTipOpen.current) {
+        return;
+      }
+
       tooltipInterpolator(
         setFocusedSeriesIdx,
         setFocusedPointIdx,
         (clear) => {
-          if (clear && !isToolTipOpen.current) {
+          if (clear && isActive) {
             setCoords(null);
             return;
           }
@@ -90,7 +116,7 @@ export const addTooltipSupport = ({
           }
 
           const { x, y } = positionTooltip(u, rect);
-          if (x !== undefined && y !== undefined && !isToolTipOpen.current) {
+          if (x !== undefined && y !== undefined) {
             setCoords({ canvas: { x: u.cursor.left!, y: u.cursor.top! }, viewport: { x, y } });
           }
         },
@@ -100,7 +126,7 @@ export const addTooltipSupport = ({
   }
 
   config.addHook('setLegend', (u) => {
-    if (!isToolTipOpen.current) {
+    if (!isToolTipOpen.current && !tooltipInterpolator) {
       setFocusedPointIdx(u.legend.idx!);
     }
     if (u.cursor.idxs != null) {

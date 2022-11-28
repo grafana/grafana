@@ -67,6 +67,8 @@ export enum LokiOperationId {
   LabelFilterNoErrors = '__label_filter_no_errors',
   LabelFilterIpMatches = '__label_filter_ip_marches',
   Unwrap = 'unwrap',
+  SumBy = '__sum_by',
+  SumWithout = '__sum_without',
   // Binary ops
   Addition = '__addition',
   Subtraction = '__subtraction',

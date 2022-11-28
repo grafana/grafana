@@ -492,6 +492,7 @@ describe('PanelModel', () => {
           run: jest.fn(),
         });
         const dashboardId = 123;
+        const dashboardUID = 'ggHbN42mk';
         const dashboardTimezone = 'browser';
         const width = 860;
         const timeData = {
@@ -506,7 +507,7 @@ describe('PanelModel', () => {
           } as TimeRange,
         } as TimeOverrideResult;
 
-        model.runAllPanelQueries(dashboardId, dashboardTimezone, timeData, width);
+        model.runAllPanelQueries({ dashboardId, dashboardUID, dashboardTimezone, timeData, width });
 
         expect(model.getQueryRunner).toBeCalled();
       });

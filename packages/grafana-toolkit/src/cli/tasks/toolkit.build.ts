@@ -22,42 +22,15 @@ const compile = () =>
     }
   });
 
-const savePackage = ({ path, pkg }: { path: string; pkg: {} }) =>
-  useSpinner('Updating package.json', async () => {
-    new Promise<void>((resolve, reject) => {
-      fs.writeFile(path, JSON.stringify(pkg, null, 2), (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve();
-      });
-    });
-  });
-
-const preparePackage = async (pkg: any) => {
-  pkg.bin = {
-    'grafana-toolkit': './bin/grafana-toolkit.js',
-  };
-
-  await savePackage({
-    path: `${cwd}/dist/package.json`,
-    pkg,
-  });
-};
-
 const copyFiles = () => {
   const files = [
-    'README.md',
-    'CHANGELOG.md',
-    'config/circleci/config.yml',
-    'bin/grafana-toolkit.js',
     'src/config/prettier.plugin.config.json',
     'src/config/prettier.plugin.rc.js',
     'src/config/tsconfig.plugin.json',
     'src/config/tsconfig.plugin.local.json',
     'src/config/eslint.plugin.js',
     'src/config/styles.mock.js',
+    'src/config/jest.babel.config.js',
     'src/config/jest.plugin.config.local.js',
     'src/config/matchMedia.js',
     'src/config/react-inlinesvg.tsx',
@@ -86,12 +59,16 @@ const copyFiles = () => {
 
 const copySassFiles = () => {
   const files = ['_variables.generated.scss', '_variables.dark.generated.scss', '_variables.light.generated.scss'];
+  const exportDir = `${cwd}/sass`;
   return useSpinner(`Copy scss files ${files.join(', ')} files`, async () => {
     const sassDir = path.resolve(cwd, '../../public/sass/');
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir);
+    }
     const promises = files.map((file) => {
       return new Promise<void>((resolve, reject) => {
         const name = file.replace('.generated', '');
-        fs.copyFile(`${sassDir}/${file}`, `${distDir}/sass/${name}`, (err) => {
+        fs.copyFile(`${sassDir}/${file}`, `${exportDir}/${name}`, (err) => {
           if (err) {
             reject(err);
             return;
@@ -115,9 +92,6 @@ const toolkitBuildTaskRunner: TaskRunner<ToolkitBuildOptions> = async () => {
 
   await clean();
   await compile();
-  await preparePackage(pkg);
-  fs.mkdirSync('./dist/bin');
-  fs.mkdirSync('./dist/sass');
   await copyFiles();
   await copySassFiles();
 };

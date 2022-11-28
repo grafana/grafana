@@ -1,7 +1,7 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import"],
+  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y"],
   "settings": {
     "import/internal-regex": "^(app/)|(@grafana)",
     "import/external-module-folders": ["node_modules", ".yarn"]
@@ -18,7 +18,82 @@
         "newlines-between": "always",
         "alphabetize": { "order": "asc" }
       }
-    ]
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "paths": [
+          {
+            "name": "react-redux",
+            "importNames": ["useDispatch", "useSelector"],
+            "message": "Please import from app/types instead."
+          }
+        ]
+      }
+    ],
+
+    // Use typescript's no-redeclare for compatibility with overrides
+    "no-redeclare": "off",
+    "@typescript-eslint/no-redeclare": ["error"],
+
+
+    // these are all the rules listed in the strict preset
+    // we should fix them one by one and mark them as errors
+    // once they're all fixed, we can remove them all and instead extend the strict preset
+    // with "extends": ["plugin:jsx-a11y/strict"]
+    "jsx-a11y/alt-text": "off",
+    "jsx-a11y/anchor-has-content": "error",
+    "jsx-a11y/anchor-is-valid": "off",
+    "jsx-a11y/aria-activedescendant-has-tabindex": "error",
+    "jsx-a11y/aria-props": "error",
+    "jsx-a11y/aria-proptypes": "error",
+    "jsx-a11y/aria-role": "off",
+    "jsx-a11y/aria-unsupported-elements": "error",
+    "jsx-a11y/autocomplete-valid": "error",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "jsx-a11y/heading-has-content": "error",
+    "jsx-a11y/html-has-lang": "error",
+    "jsx-a11y/iframe-has-title": "off",
+    "jsx-a11y/img-redundant-alt": "off",
+    "jsx-a11y/interactive-supports-focus": [
+      "off",
+      {
+        "tabbable": [
+          "button",
+          "checkbox",
+          "link",
+          "progressbar",
+          "searchbox",
+          "slider",
+          "spinbutton",
+          "switch",
+          "textbox"
+        ]
+      }
+    ],
+    "jsx-a11y/label-has-associated-control": "off",
+    "jsx-a11y/media-has-caption": "error",
+    "jsx-a11y/mouse-events-have-key-events": "off",
+    "jsx-a11y/no-access-key": "error",
+    "jsx-a11y/no-autofocus": "off",
+    "jsx-a11y/no-distracting-elements": "error",
+    "jsx-a11y/no-interactive-element-to-noninteractive-role": "error",
+    "jsx-a11y/no-noninteractive-element-interactions": [
+      "off",
+      {
+        "body": ["onError", "onLoad"],
+        "iframe": ["onError", "onLoad"],
+        "img": ["onError", "onLoad"]
+      }
+    ],
+    "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
+    "jsx-a11y/no-noninteractive-tabindex": "off",
+    "jsx-a11y/no-redundant-roles": "error",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "jsx-a11y/role-has-required-aria-props": "off",
+    "jsx-a11y/role-supports-aria-props": "off",
+    "jsx-a11y/scope": "error",
+    "jsx-a11y/tabindex-no-positive": "off"
   },
   "overrides": [
     {
@@ -34,6 +109,13 @@
         "@emotion/jsx-import": "off",
         "react/jsx-uses-react": "off",
         "react/react-in-jsx-scope": "off"
+      }
+    },
+    {
+      "files": ["public/dashboards/scripted*.js"],
+      "rules": {
+        "no-redeclare": "error",
+        "@typescript-eslint/no-redeclare": "off"
       }
     }
   ]

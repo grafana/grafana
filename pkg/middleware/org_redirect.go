@@ -29,11 +29,11 @@ func OrgRedirect(cfg *setting.Cfg, store sqlstore.Store) web.Handler {
 			return
 		}
 
-		if orgId == ctx.OrgId {
+		if orgId == ctx.OrgID {
 			return
 		}
 
-		cmd := models.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
+		cmd := models.SetUsingOrgCommand{UserId: ctx.UserID, OrgId: orgId}
 		if err := store.SetUsingOrg(ctx.Req.Context(), &cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)

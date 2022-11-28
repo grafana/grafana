@@ -69,7 +69,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Get the scene editor */
   getSceneEditor(): SceneEditor;
 
-  /** Returns a deep clone this object and all it's children */
+  /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;
 
   /** A React component to use for rendering the object */

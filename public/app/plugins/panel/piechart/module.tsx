@@ -5,10 +5,10 @@ import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
+import { PanelOptions, PanelFieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './models.gen';
 import { PieChartSuggestionsSupplier } from './suggestions';
-import { PieChartOptions, PieChartType, PieChartLabels, PieChartLegendValues } from './types';
 
-export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
   .useFieldConfig({
     disableStandardOptions: [FieldConfigProperty.Thresholds],

@@ -31,6 +31,10 @@ interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -54,6 +58,10 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {
     const { queries, onQueriesChange } = this.props;
+
+    if (this.props.onDatasourceChange) {
+      this.props.onDatasourceChange(dataSource, queries[index]);
+    }
 
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -129,7 +137,19 @@ export class QueryEditorRows extends PureComponent<Props> {
   };
 
   render() {
-    const { dsSettings, data, queries, app, history, eventBus } = this.props;
+    const {
+      dsSettings,
+      data,
+      queries,
+      app,
+      history,
+      eventBus,
+      onAddQuery,
+      onRunQueries,
+      onQueryCopied,
+      onQueryRemoved,
+      onQueryToggled,
+    } = this.props;
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
@@ -154,8 +174,11 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onAddQuery}
-                      onRunQuery={this.props.onRunQueries}
+                      onAddQuery={onAddQuery}
+                      onRunQuery={onRunQueries}
+                      onQueryCopied={onQueryCopied}
+                      onQueryRemoved={onQueryRemoved}
+                      onQueryToggled={onQueryToggled}
                       queries={queries}
                       app={app}
                       history={history}

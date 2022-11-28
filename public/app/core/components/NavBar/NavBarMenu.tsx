@@ -23,6 +23,7 @@ import { updateMenuTree } from 'app/core/reducers/navBarTree';
 
 import { Branding } from '../Branding/Branding';
 
+import { NavBarItemIcon } from './NavBarItemIcon';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
@@ -46,6 +47,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
   const ANIMATION_DURATION = theme.transitions.duration.standard;
   const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
+  const backdropRef = useRef(null);
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -60,6 +62,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
     <OverlayContainer>
       <FocusScope contain restoreFocus autoFocus>
         <CSSTransition
+          nodeRef={ref}
           onEnter={() => setMenuAnimationInProgress(true)}
           onExited={() => setMenuAnimationInProgress(false)}
           appear={isOpen}
@@ -98,8 +101,14 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
           </div>
         </CSSTransition>
       </FocusScope>
-      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.backdrop} timeout={ANIMATION_DURATION}>
-        <div className={styles.backdrop} {...underlayProps} />
+      <CSSTransition
+        nodeRef={backdropRef}
+        appear={isOpen}
+        in={isOpen}
+        classNames={animStyles.backdrop}
+        timeout={ANIMATION_DURATION}
+      >
+        <div className={styles.backdrop} {...underlayProps} ref={backdropRef} />
       </CSSTransition>
     </OverlayContainer>
   );
@@ -311,7 +320,9 @@ export function NavItem({
         >
           <div className={styles.itemWithoutMenuContent}>
             <div className={styles.iconContainer}>
-              <FeatureHighlightWrapper>{getLinkIcon(link)}</FeatureHighlightWrapper>
+              <FeatureHighlightWrapper>
+                <NavBarItemIcon link={link} />
+              </FeatureHighlightWrapper>
             </div>
             <span className={styles.linkText}>{link.text}</span>
           </div>

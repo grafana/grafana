@@ -155,7 +155,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.Unwrap, params: ['latency'] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.QuantileOverTime, params: [0.5, '$__interval'] },
+          { id: LokiOperationId.QuantileOverTime, params: ['$__interval', 0.5] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },

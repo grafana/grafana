@@ -36,13 +36,13 @@ export function MarkersLegend(props: MarkersLegendProps) {
     }
 
     const props = hoverEvent.getProperties();
-    const frame = props.frame as DataFrame;
+    const frame = props.frame as DataFrame; // eslint-disable-line
 
     if (!frame) {
       return undefined;
     }
 
-    const rowIndex = props.rowIndex as number;
+    const rowIndex = props.rowIndex as number; // eslint-disable-line
     return colorField.values.get(rowIndex);
   }, [hoverEvent, colorField]);
 

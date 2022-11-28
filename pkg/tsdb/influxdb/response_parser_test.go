@@ -3,7 +3,6 @@ package influxdb
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -17,7 +16,7 @@ import (
 )
 
 func prepare(text string) io.ReadCloser {
-	return ioutil.NopCloser(strings.NewReader(text))
+	return io.NopCloser(strings.NewReader(text))
 }
 
 func addQueryToQueries(query Query) []Query {

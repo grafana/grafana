@@ -5,9 +5,22 @@ type VersionMode string
 
 const (
 	MainMode          VersionMode = "main"
-	ReleaseMode       VersionMode = "release"
-	BetaReleaseMode   VersionMode = "beta"
-	TestReleaseMode   VersionMode = "test"
+	TagMode           VersionMode = "release"
 	ReleaseBranchMode VersionMode = "branch"
 	PullRequestMode   VersionMode = "pull_request"
+	CustomMode        VersionMode = "custom"
+	CronjobMode       VersionMode = "cron"
+)
+
+const (
+	Tag         = "tag"
+	PullRequest = "pull_request"
+	Push        = "push"
+	Custom      = "custom"
+	Promote     = "promote"
+	Cronjob     = "cron"
+)
+
+const (
+	MainBranch = "main"
 )

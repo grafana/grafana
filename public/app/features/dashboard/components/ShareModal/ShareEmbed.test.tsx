@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { BootData } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
@@ -48,7 +49,7 @@ function mockLocationHref(href: string) {
 }
 
 describe('ShareEmbed', () => {
-  let originalBootData: any;
+  let originalBootData: BootData;
 
   beforeAll(() => {
     setEchoSrv(new Echo());

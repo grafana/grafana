@@ -55,6 +55,7 @@ describe('Heatmap Migrations', () => {
             "max": 100,
             "min": 5,
             "mode": "scheme",
+            "reverse": true,
             "scale": "exponential",
             "scheme": "BuGn",
             "steps": 128,
@@ -155,8 +156,8 @@ const oldHeatmap = {
     colorScale: 'sqrt',
     exponent: 0.5,
     colorScheme: 'interpolateBuGn',
-    min: 5,
-    max: 100,
+    min: 100,
+    max: 5,
   },
   legend: {
     show: true,

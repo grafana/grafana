@@ -122,7 +122,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	if alertRule.Condition == "" {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
 	}
-	alertRule.Annotations = rule.Annotations.Value()
+	alertRule.Annotations = rule.Annotations.Raw
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
 		query, err := queryV1.mapToModel()

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 import { GrafanaTheme2, monacoLanguageRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,7 +14,7 @@ import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOption
 
 type Props = CodeEditorProps & Themeable2;
 
-class UnthemedCodeEditor extends React.PureComponent<Props> {
+class UnthemedCodeEditor extends PureComponent<Props> {
   completionCancel?: monacoType.IDisposable;
   monaco?: Monaco;
 

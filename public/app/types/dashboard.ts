@@ -42,7 +42,9 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardAccessToken?: string;
+  publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
+  dashboardNotFound?: boolean;
 }
 
 export interface AnnotationActions {
@@ -63,9 +65,6 @@ export interface DashboardDataDTO {
     list: VariableModel[];
   };
   panels?: any[];
-
-  /** @deprecated -- components should key on uid rather than id */
-  id?: number;
 }
 
 export enum DashboardRoutes {
@@ -91,7 +90,6 @@ export interface DashboardInitError {
 }
 
 export enum KioskMode {
-  Off = 'off',
   TV = 'tv',
   Full = 'full',
 }

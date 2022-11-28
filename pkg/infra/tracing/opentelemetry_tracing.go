@@ -2,7 +2,9 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-kit/log/level"
@@ -48,10 +50,11 @@ type Span interface {
 }
 
 type Opentelemetry struct {
-	enabled     string
-	address     string
-	propagation string
-	log         log.Logger
+	enabled       string
+	address       string
+	propagation   string
+	customAttribs []attribute.KeyValue
+	log           log.Logger
 
 	tracerProvider tracerProvider
 	tracer         trace.Tracer
@@ -89,7 +92,17 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 }
 
 func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
-	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
+	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry")
+	if err != nil {
+		return err
+	}
+
+	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(""))
+	if err != nil {
+		return err
+	}
+
+	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
 	if err != nil {
 		return err
 	}
@@ -115,6 +128,22 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	return nil
 }
 
+func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
+	res := []attribute.KeyValue{}
+
+	attribs := strings.Split(s, ",")
+	for _, v := range attribs {
+		parts := strings.SplitN(v, ":", 2)
+		if len(parts) > 1 {
+			res = append(res, attribute.String(parts[0], parts[1]))
+		} else if v != "" {
+			return nil, fmt.Errorf("custom attribute malformed - must be in 'key:value' form: %q", v)
+		}
+	}
+
+	return res, nil
+}
+
 func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
@@ -122,13 +151,23 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 		return nil, err
 	}
 
-	tp := tracesdk.NewTracerProvider(
-		tracesdk.WithBatcher(exp),
-		tracesdk.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			// TODO: why are these attributes different from ones added to the
+			// OTLP provider?
 			semconv.ServiceNameKey.String("grafana"),
 			attribute.String("environment", "production"),
-		)),
+		),
+		resource.WithAttributes(ots.customAttribs...),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tp := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exp),
+		tracesdk.WithResource(res),
 	)
 
 	return tp, nil
@@ -147,6 +186,7 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 			semconv.ServiceNameKey.String("grafana"),
 			semconv.ServiceVersionKey.String(version.Version),
 		),
+		resource.WithAttributes(ots.customAttribs...),
 		resource.WithProcessRuntimeDescription(),
 		resource.WithTelemetrySDK(),
 	)
@@ -238,7 +278,11 @@ func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...tr
 	opentelemetrySpan := OpentelemetrySpan{
 		span: span,
 	}
-	ctx = context.WithValue(ctx, traceKey{}, traceValue{span.SpanContext().TraceID().String(), span.SpanContext().IsSampled()})
+
+	if traceID := span.SpanContext().TraceID(); traceID.IsValid() {
+		ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), span.SpanContext().IsSampled()})
+	}
+
 	return ctx, opentelemetrySpan
 }
 
@@ -263,17 +307,15 @@ func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
 }
 
 func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
-	for _, o := range options {
-		s.span.RecordError(err, o)
-	}
+	s.span.RecordError(err, options...)
 }
 
 func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 	for i, v := range values {
-		if v.Num != 0 {
+		if v.Str != "" {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).String(v.Str)))
 		}
-		if v.Str != "" {
+		if v.Num != 0 {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).Int64(v.Num)))
 		}
 	}

@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
+import { DataQuery, ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -101,7 +101,7 @@ export const lastSavedUrl: UrlQueryMap = {};
  * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
  * the URL.
  */
-export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
+export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOptions<T>): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
     const leftUrlState = getUrlStateFromPaneState(leftState);

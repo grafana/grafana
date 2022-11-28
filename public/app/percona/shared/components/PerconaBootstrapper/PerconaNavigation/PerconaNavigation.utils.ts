@@ -82,7 +82,7 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[]): NavModelIt
       },
     ],
   };
-  const settingsLink = {
+  const settingsLink: NavModelItem = {
     id: 'settings',
     icon: 'percona-setting',
     text: 'PMM Settings',

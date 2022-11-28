@@ -28,7 +28,7 @@ This means that you should be able to configure LDAP integration using any compl
 In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../../configure-grafana/" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
-```bash
+```ini
 [auth.ldap]
 # Set to `true` to enable LDAP integration (default: `false`)
 enabled = true
@@ -36,9 +36,30 @@ enabled = true
 # Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 config_file = /etc/grafana/ldap.toml
 
-# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if LDAP authentication is ok). If set to
-# false only pre-existing Grafana users will be able to login (if LDAP authentication is ok).
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
 allow_sign_up = true
+```
+
+## Disable org role synchronization
+
+If you use LDAP to authenticate users but don't use role mapping, and prefer to manually assign organizations
+and roles, you can use the `skip_org_role_sync` configuration option.
+
+```ini
+[auth.ldap]
+# Set to `true` to enable LDAP integration (default: `false`)
+enabled = true
+
+# Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
+config_file = /etc/grafana/ldap.toml
+
+# Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
+# If set to `false` only already existing Grafana users will be able to login.
+allow_sign_up = true
+
+# Prevent synchronizing ldap users organization roles
+skip_org_role_sync = true
 ```
 
 ## Grafana LDAP Configuration
@@ -51,11 +72,11 @@ See [configuration examples](#configuration-examples) for more information.
 ```bash
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)
-host = "127.0.0.1"
+host = "ldap.my_secure_remote_server.org"
 # Default port is 389 or 636 if use_ssl = true
-port = 389
+port = 636
 # Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)
-use_ssl = false
+use_ssl = true
 # If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
 # set to true if you want to skip SSL cert validation
@@ -117,6 +138,10 @@ To use the debug view:
 1.  If the user is found within any of your LDAP instances, the mapping information is displayed
 
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+
+[Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "enhanced_ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
+
+{{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 ### Bind
 
@@ -190,7 +215,7 @@ org_role = "Viewer"
 | Setting         | Required | Description                                                                                                                                                              | Default              |
 | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
 | `group_dn`      | Yes      | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`)                                               |
-| `org_role`      | Yes      | Assign users of `group_dn` the organization role `"Admin"`, `"Editor"` or `"Viewer"`                                                                                     |
+| `org_role`      | Yes      | Assign users of `group_dn` the organization role `Admin`, `Editor`, or `Viewer`. The organization role name is case sensitive.                                           |
 | `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs                    | `1` (default org id) |
 | `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`              |
 

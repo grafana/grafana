@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -31,12 +32,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -45,7 +50,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
 	httpReq.Header.Add("Content-Type", "application/json")
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	req := &models.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 	prefService := preftest.NewPreferenceServiceFake()
@@ -57,8 +62,8 @@ func TestGetHomeDashboard(t *testing.T) {
 		SQLStore:                mockstore.NewSQLStoreMock(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
+		Coremodels:              registry.NewBase(),
 	}
-	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 	tests := []struct {
 		name                  string
@@ -75,7 +80,7 @@ func TestGetHomeDashboard(t *testing.T) {
 			dash.Meta.IsHome = true
 			dash.Meta.FolderTitle = "General"
 
-			homeDashJSON, err := ioutil.ReadFile(tc.expectedDashboardPath)
+			homeDashJSON, err := os.ReadFile(tc.expectedDashboardPath)
 			require.NoError(t, err, "must be able to read expected dashboard file")
 			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
 			bytes, err := simplejson.NewJson(homeDashJSON)
@@ -107,7 +112,7 @@ func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features, accesscontrolmock.New(), &dashboards.FakeDashboardService{})
+		features, accesscontrolmock.New(), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
 	require.NoError(t, err)
 	return gLive
 }
@@ -126,6 +131,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.HasACL = false
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersion{}
+		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardQuery)
@@ -141,12 +147,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Features:                featuremgmt.WithFeatures(),
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		setUp := func() {
-			viewerRole := models.ROLE_VIEWER
-			editorRole := models.ROLE_EDITOR
+			viewerRole := org.RoleViewer
+			editorRole := org.RoleEditor
 			dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 				q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 				q.Result = []*models.DashboardACLInfoDTO{
@@ -154,7 +160,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 				}
 			}).Return(nil)
-			guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
+			guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 		}
 
 		// This tests two scenarios:
@@ -162,7 +168,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 2. user is an org editor
 
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -194,7 +200,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Editor", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+			role := org.RoleEditor
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -232,6 +238,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.HasACL = true
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersion{}
+		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardQuery)
@@ -262,8 +269,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		setUp := func() {
 			origCanEdit := setting.ViewersCanEdit
@@ -271,7 +278,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				setting.ViewersCanEdit = origCanEdit
 			})
 			setting.ViewersCanEdit = false
-			guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
+			guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 		}
 
 		// This tests six scenarios:
@@ -283,7 +290,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 6. user is an org editor AND has been granted a view permission
 
 		t.Run("When user is an Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -322,7 +329,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Editor and has no permissions for this dashboard", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+			role := org.RoleEditor
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -359,7 +366,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Viewer but has an edit permission", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -375,7 +382,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 						{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_EDIT},
 					}
 				}).Return(nil)
-				guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
@@ -421,7 +428,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Viewer and viewers can edit", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -437,7 +444,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 						{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 					}
 				}).Return(nil)
-				guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -461,7 +468,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Viewer but has an admin permission", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -477,7 +484,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 						{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_ADMIN},
 					}
 				}).Return(nil)
-				guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -520,7 +527,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Editor but has a view permission", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+			role := org.RoleEditor
 
 			setUpInner := func() {
 				dashboardService := dashboards.NewFakeDashboardService(t)
@@ -530,7 +537,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 						{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 					}
 				}).Return(nil)
-				guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
+				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -740,9 +747,10 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 		sqlmock := mockstore.SQLStoreMock{}
 		setUp := func() {
+			teamSvc := &teamtest.FakeService{}
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
-			guardian.InitLegacyGuardian(&sqlmock, dashSvc)
+			guardian.InitLegacyGuardian(&sqlmock, dashSvc, teamSvc)
 		}
 
 		cmd := dtos.CalculateDiffOptions{
@@ -758,7 +766,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 
 		t.Run("when user does not have permission", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				setUp()
 
@@ -768,7 +776,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("when user does have permission", func(t *testing.T) {
-			role := models.ROLE_ADMIN
+			role := org.RoleAdmin
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				// This test shouldn't hit GetDashboardACLInfoList, so no setup needed
 				sc.dashboardVersionService = fakeDashboardVersionService
@@ -858,6 +866,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		dashboardStore := dashboards.NewFakeDashboardStore(t)
 		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
 
+		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 
 		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
@@ -870,9 +879,9 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = []*models.DashboardACLInfoDTO{{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT}}
 		}).Return(nil)
-		guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
+		guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
@@ -883,7 +892,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			assert.Equal(t, "../../../dashboard1.json", dash.Meta.ProvisionedExternalId, mockSQLStore)
 		}, mockSQLStore)
 
-		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.RoleEditor, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
@@ -903,8 +912,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
+				Coremodels:                   registry.NewBase(),
 			}
-			hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 			hs.callGetDashboard(sc)
 
 			assert.Equal(t, 200, sc.resp.Code)
@@ -927,7 +936,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	if dashboardStore == nil {
 		sql := sqlstore.InitTestDB(t)
-		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
+		dashboardStore = database.ProvideDashboardStore(sql, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
@@ -958,8 +967,8 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),
+		Coremodels:       registry.NewBase(),
 	}
-	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 	hs.callGetDashboard(sc)
 
@@ -1024,15 +1033,15 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
+			Coremodels:            registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgId, UserID: cmd.UserId}
 
 			return hs.PostDashboard(c)
 		})
@@ -1044,7 +1053,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 }
 
 func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions,
-	role models.RoleType, fn scenarioFunc, sqlmock sqlstore.Store, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
+	role org.RoleType, fn scenarioFunc, sqlmock sqlstore.Store, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
@@ -1057,17 +1066,17 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{
-				OrgId:  testOrgID,
-				UserId: testUserID,
+			sc.context.SignedInUser = &user.SignedInUser{
+				OrgID:  testOrgID,
+				UserID: testUserID,
 			}
 			sc.context.OrgRole = role
 
@@ -1096,8 +1105,8 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
+			Coremodels:              registry.NewBase(),
 		}
-		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
@@ -1106,11 +1115,11 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{
-				OrgId:  testOrgID,
-				UserId: testUserID,
+			sc.context.SignedInUser = &user.SignedInUser{
+				OrgID:  testOrgID,
+				UserID: testUserID,
 			}
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.RestoreDashboardVersion(c)
 		})
@@ -1119,16 +1128,6 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 		fn(sc)
 	})
-}
-
-func setupDashboardCoremodel(t *testing.T) (*registry.Static, *registry.Generic) {
-	// TODO abstract and generalize this further for wider reuse
-	t.Helper()
-	sreg, err := registry.ProvideStatic()
-	require.NoError(t, err)
-	greg, err := registry.ProvideGeneric()
-	require.NoError(t, err)
-	return sreg, greg
 }
 
 func (sc *scenarioContext) ToJSON() *simplejson.Json {
@@ -1142,7 +1141,7 @@ type mockDashboardProvisioningService struct {
 	dashboards.DashboardProvisioningService
 }
 
-func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (
+func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (
 	*models.DashboardProvisioning, error) {
 	return nil, nil
 }
@@ -1158,23 +1157,23 @@ func (m *mockLibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Da
 	return nil
 }
 
-func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	return nil
 }
 
 type mockLibraryElementService struct {
 }
 
-func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser *models.SignedInUser, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser *user.SignedInUser, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 
 // GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *models.SignedInUser, UID string) (libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 
@@ -1184,7 +1183,7 @@ func (l *mockLibraryElementService) GetElementsForDashboard(c context.Context, d
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *models.SignedInUser, elementUIDs []string, dashboardID int64) error {
+func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
 	return nil
 }
 
@@ -1194,6 +1193,6 @@ func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Co
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *models.SignedInUser, folderUID string) error {
+func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
 	return nil
 }

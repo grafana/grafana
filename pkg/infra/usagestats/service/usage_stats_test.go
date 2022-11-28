@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -84,7 +84,7 @@ func TestMetrics(t *testing.T) {
 		ch := make(chan httpResp)
 		ticker := time.NewTicker(2 * time.Second)
 		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			buf, err := ioutil.ReadAll(r.Body)
+			buf, err := io.ReadAll(r.Body)
 			if err != nil {
 				t.Logf("Fake HTTP handler received an error: %s", err.Error())
 				ch <- httpResp{
