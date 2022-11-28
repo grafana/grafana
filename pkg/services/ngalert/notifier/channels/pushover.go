@@ -284,7 +284,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 func (pn *PushoverNotifier) writeImageParts(ctx context.Context, w *multipart.Writer, as ...*types.Alert) {
 	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
 	// If the image is larger than pushoverMaxFileSize then return an error.
-	err := withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
+	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
 		f, err := os.Open(image.Path)
 		if err != nil {
 			return fmt.Errorf("Failed to open the image: %w", err)
@@ -315,7 +315,4 @@ func (pn *PushoverNotifier) writeImageParts(ctx context.Context, w *multipart.Wr
 
 		return ErrImagesDone
 	}, as...)
-	if err != nil {
-		pn.log.Warn("Failed to attach image, skipping", "error", err)
-	}
 }
