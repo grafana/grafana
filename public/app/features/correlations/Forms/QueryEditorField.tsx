@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { DataQuery, getDefaultTimeRange } from '@grafana/data';
+import { DataQuery, getDefaultTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { createQueryRunner, getDataSourceSrv } from '@grafana/runtime';
 import {
   Field,
@@ -12,8 +12,8 @@ import {
   Button,
   HorizontalGroup,
   Icon,
-  useTheme2,
   FieldValidationMessage,
+  useStyles2,
 } from '@grafana/ui';
 
 interface Props {
@@ -23,19 +23,20 @@ interface Props {
   error?: string;
 }
 
+function getStyle(theme: GrafanaTheme2) {
+  return {
+    valid: css`
+      color: ${theme.colors.success.text};
+    `,
+  };
+}
+
 export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   const [isValidQuery, setIsValidQuery] = useState<boolean | undefined>(undefined);
-  const theme = useTheme2();
 
-  const runner = useMemo(() => createQueryRunner(), []);
+  const style = useStyles2(getStyle);
 
-  const styles = useMemo(() => {
-    return {
-      valid: css`
-        color: ${theme.colors.success.text};
-      `,
-    };
-  }, [theme]);
+  const runner = useMemo(createQueryRunner, []);
 
   const {
     value: datasource,
@@ -49,7 +50,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   }, [dsUid]);
   const QueryEditor = datasource?.components?.QueryEditor;
 
-  const handleValidation = async (value: DataQuery) => {
+  const handleValidation = (value: DataQuery) => {
     if (datasource) {
       runner.run({
         datasource: datasource,
@@ -60,7 +61,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
         minInterval: null,
       });
 
-      await runner.get().subscribe((panelData) => {
+      runner.get().subscribe((panelData) => {
         if (!panelData || panelData.state === 'Error') {
           setIsValidQuery(false);
         } else if (panelData.state === 'Done') {
@@ -112,14 +113,12 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
               />
               <HorizontalGroup justify="flex-end">
                 {isValidQuery ? (
-                  <div className={styles.valid}>
+                  <div className={style.valid}>
                     <Icon name="check" /> This query is valid.
                   </div>
                 ) : isValidQuery === false ? (
                   <FieldValidationMessage>This query is not valid.</FieldValidationMessage>
-                ) : (
-                  <div />
-                )}
+                ) : null}
                 <Button variant="primary" icon={'check'} type="button" onClick={() => handleValidation(value)}>
                   Validate query
                 </Button>
