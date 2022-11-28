@@ -12,20 +12,26 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var _ plugins.RoleRegistry = &Service{}
 
 const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(store), cache)
+func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	features *featuremgmt.FeatureManager) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
 
 	if !accesscontrol.IsDisabled(cfg) {
 		api.NewAccessControlAPI(routeRegister, service).RegisterAPIEndpoints()
@@ -37,13 +43,14 @@ func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRe
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager) *Service {
 	s := &Service{
-		cfg:   cfg,
-		store: store,
-		log:   log.New("accesscontrol.service"),
-		cache: cache,
-		roles: accesscontrol.BuildBasicRoleDefinitions(),
+		cfg:      cfg,
+		store:    store,
+		log:      log.New("accesscontrol.service"),
+		cache:    cache,
+		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		features: features,
 	}
 
 	return s
@@ -62,6 +69,7 @@ type Service struct {
 	cache         *localcache.CacheService
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
+	features      *featuremgmt.FeatureManager
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
@@ -139,6 +147,14 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.Signe
 	return permissions, nil
 }
 
+func (s *Service) ClearUserPermissionCache(user *user.SignedInUser) {
+	key, err := permissionCacheKey(user)
+	if err != nil {
+		return
+	}
+	s.cache.Delete(key)
+}
+
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
 }
@@ -197,4 +213,34 @@ func permissionCacheKey(user *user.SignedInUser) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("rbac-permissions-%s", key), nil
+}
+
+// DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
+// to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []plugins.RoleRegistration) error {
+	// If accesscontrol is disabled no need to register roles
+	if accesscontrol.IsDisabled(s.cfg) {
+		return nil
+	}
+
+	// Protect behind feature toggle
+	if !s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+		return nil
+	}
+
+	acRegs := pluginutils.ToRegistrations(ID, name, regs)
+	for _, r := range acRegs {
+		if err := pluginutils.ValidatePluginRole(ID, r.Role); err != nil {
+			return err
+		}
+
+		if err := accesscontrol.ValidateBuiltInRoles(r.Grants); err != nil {
+			return err
+		}
+
+		s.log.Debug("Registering plugin role", "role", r.Role.Name)
+		s.registrations.Append(r)
+	}
+
+	return nil
 }

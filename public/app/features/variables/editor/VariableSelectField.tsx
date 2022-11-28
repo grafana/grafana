@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { PropsWithChildren, ReactElement } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Field, Select, useStyles } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, Select, useStyles2 } from '@grafana/ui';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 interface VariableSelectFieldProps<T> {
@@ -24,7 +24,7 @@ export function VariableSelectField({
   testId,
   width,
 }: PropsWithChildren<VariableSelectFieldProps<any>>): ReactElement {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const uniqueId = useUniqueId();
   const inputId = `variable-select-input-${name}-${uniqueId}`;
 
@@ -44,10 +44,10 @@ export function VariableSelectField({
   );
 }
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     selectContainer: css`
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
     `,
   };
 }

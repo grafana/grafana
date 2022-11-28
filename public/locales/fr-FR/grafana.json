@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Par défaut"
@@ -59,12 +64,6 @@
       "rows": "Nombre total de lignes",
       "table-title": "Statistiques"
     },
-    "refresh-picker": {
-      "off-arialabel": "Désactiver l'actualisation automatique",
-      "off-description": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
-      "off-label": "Désactivé",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Ajouter un panneau",
       "comments-show": "Afficher les commentaires du tableau de bord",
@@ -104,6 +103,15 @@
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
+    },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
@@ -190,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "Gérer et créer des utilisateurs sur l'ensemble du serveur Grafana",
-      "title": "Utilisateurs"
+      "title": "",
+      "titleBeforeTopnav": "Utilisateurs"
     },
     "help": {
       "title": "Aide"
@@ -233,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "Préférences"
+      "title": "",
+      "titleBeforeTopnav": "Préférences"
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -258,6 +268,9 @@
     },
     "search": {
       "placeholder": "Rechercher dans Grafana"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
@@ -305,14 +318,37 @@
   "news": {
     "title": "Dernières nouvelles sur le blog"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
       "share": "Partager",
+      "show-legend": "",
       "view": "Afficher"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "Désactiver l'actualisation automatique",
+      "label": "Désactivé"
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
@@ -370,7 +406,8 @@
       "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
-      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps."
+      "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Intégrer",
@@ -384,6 +421,9 @@
       "dark": "Sombre",
       "field-name": "Thème",
       "light": "Clair"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -411,6 +451,48 @@
     "absolute": {
       "recent-title": "Périodes absolues récemment utilisées",
       "title": "Période temporelle absolue"
+    },
+    "calendar": {
+      "apply-button": "",
+      "cancel-button": "Annuler",
+      "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -439,5 +521,14 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

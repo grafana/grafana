@@ -13,7 +13,6 @@ import {
   TypeaheadInput,
   BracesPlugin,
   DOMUtil,
-  Icon,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
@@ -22,20 +21,9 @@ import { LokiDatasource } from '../datasource';
 import { escapeLabelValueInSelector, shouldRefreshLabels } from '../languageUtils';
 import { LokiQuery, LokiOptions } from '../types';
 
-import { LokiLabelBrowser } from './LokiLabelBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
-
-function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
-  if (!hasSyntax) {
-    return 'Loading labels...';
-  }
-  if (!hasLogLabels) {
-    return '(No logs found)';
-  }
-  return 'Log browser';
-}
 
 function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
   // Modify suggestion based on context
@@ -191,11 +179,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
       onBlur,
     } = this.props;
 
-    const { labelsLoaded, labelBrowserVisible } = this.state;
-    const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
-    const chooserText = getChooserText(labelsLoaded, hasLogLabels);
-    const buttonDisabled = !(labelsLoaded && hasLogLabels);
-
     return (
       <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
         {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
@@ -205,14 +188,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                 className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
                 data-testid={this.props['data-testid']}
               >
-                <button
-                  className="gf-form-label query-keyword pointer"
-                  onClick={this.onClickChooserButton}
-                  disabled={buttonDisabled}
-                >
-                  {chooserText}
-                  <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
-                </button>
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
                   {config.featureToggles.lokiMonacoEditor ? (
                     <MonacoQueryFieldWrapper
@@ -239,19 +214,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   )}
                 </div>
               </div>
-              {labelBrowserVisible && (
-                <div className="gf-form">
-                  <LokiLabelBrowser
-                    languageProvider={datasource.languageProvider}
-                    onChange={this.onChangeLabelBrowser}
-                    lastUsedLabels={lastUsedLabels || []}
-                    storeLastUsedLabels={onLastUsedLabelsSave}
-                    deleteLastUsedLabels={onLastUsedLabelsDelete}
-                    app={app}
-                  />
-                </div>
-              )}
-
               {ExtraFieldElement}
             </>
           );

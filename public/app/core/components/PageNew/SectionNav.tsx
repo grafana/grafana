@@ -72,6 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
       transition: theme.transitions.create(['width', 'max-height']),
       maxHeight: 0,
+      visibility: 'hidden',
       [theme.breakpoints.up('md')]: {
         width: 0,
         maxHeight: 'unset',
@@ -79,6 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     navExpanded: css({
       maxHeight: '50vh',
+      visibility: 'visible',
       [theme.breakpoints.up('md')]: {
         width: '250px',
         maxHeight: 'unset',

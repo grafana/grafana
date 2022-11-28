@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -26,7 +27,7 @@ type Service struct {
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
-	eslog.Debug("initializing")
+	eslog.Debug("Initializing")
 
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),

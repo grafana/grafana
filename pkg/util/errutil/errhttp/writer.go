@@ -8,12 +8,11 @@ import (
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrNonGrafanaError = errutil.NewBase(errutil.StatusInternal, "core.MalformedError")
-var defaultLogger = log.New("request-errors")
+var defaultLogger = log.New("requestErrors")
 
 // ErrorOptions is a container for functional options passed to [Write].
 type ErrorOptions struct {
@@ -23,9 +22,9 @@ type ErrorOptions struct {
 
 // Write writes an error to the provided [http.ResponseWriter] with the
 // appropriate HTTP status and JSON payload from [errutil.Error].
-// Write also logs the provided error to either the contextlogger,
-// the "request-errors" logger, or the logger provided as a functional
-// option using [WithLogger].
+// Write also logs the provided error to either the "request-errors"
+// logger, or the logger provided as a functional option using
+// [WithLogger].
 // When passing errors that are not [errors.As] compatible with
 // [errutil.Error], [ErrNonGrafanaError] will be used to create a
 // generic 500 Internal Server Error payload by default, this is
@@ -45,8 +44,8 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	logError(ctx, gErr, opt)
 
 	pub := gErr.Public()
-	w.WriteHeader(pub.StatusCode)
 	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(pub.StatusCode)
 	err = json.NewEncoder(w).Encode(pub)
 	if err != nil {
 		defaultLogger.FromContext(ctx).Error("error while writing error", "error", err)
@@ -68,9 +67,6 @@ func WithLogger(opt ErrorOptions, logger log.Logger) ErrorOptions {
 
 func logError(ctx context.Context, e errutil.Error, opt ErrorOptions) {
 	var logger log.Logger = defaultLogger
-	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Logger != nil {
-		logger = reqCtx.Logger
-	}
 	if opt.logger != nil {
 		logger = opt.logger
 	}

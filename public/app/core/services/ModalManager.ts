@@ -51,6 +51,7 @@ export class ModalManager {
     const {
       confirmText,
       onConfirm = () => undefined,
+      onDismiss,
       text2,
       altActionText,
       onAltAction,
@@ -60,9 +61,11 @@ export class ModalManager {
       yesText = 'Yes',
       icon,
       title = 'Confirm',
+      yesButtonVariant,
     } = payload;
     const props: ConfirmModalProps = {
       confirmText: yesText,
+      confirmButtonVariant: yesButtonVariant,
       confirmationText: confirmText,
       icon,
       title,
@@ -74,7 +77,10 @@ export class ModalManager {
         onConfirm();
         this.onReactModalDismiss();
       },
-      onDismiss: this.onReactModalDismiss,
+      onDismiss: () => {
+        onDismiss?.();
+        this.onReactModalDismiss();
+      },
       onAlternative: onAltAction
         ? () => {
             onAltAction();

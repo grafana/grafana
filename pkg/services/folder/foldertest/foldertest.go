@@ -10,8 +10,12 @@ import (
 
 type FakeService struct {
 	ExpectedFolders []*models.Folder
-	ExpectedFolder  *models.Folder
+	ExpectedFolder  *folder.Folder
 	ExpectedError   error
+}
+
+func NewFakeService() *FakeService {
+	return &FakeService{}
 }
 
 var _ folder.Service = (*FakeService)(nil)
@@ -19,27 +23,26 @@ var _ folder.Service = (*FakeService)(nil)
 func (s *FakeService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }
-func (s *FakeService) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
+
+func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
+func (s *FakeService) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
+func (s *FakeService) Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
+	cmd.Result = s.ExpectedFolder.ToLegacyModel()
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
-func (s *FakeService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
-	cmd.Result = s.ExpectedFolder
+func (s *FakeService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	return s.ExpectedError
-}
-func (s *FakeService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
 	return s.ExpectedError
+}
+
+func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	return s.ExpectedFolder, s.ExpectedError
 }
 
 func (s *FakeService) GetParents(ctx context.Context, orgID int64, folderUID string) ([]*folder.Folder, error) {
@@ -67,7 +70,7 @@ func modelsToFolders(m []*models.Folder) []*folder.Folder {
 			Description: "", // model.Folder does not have a description
 			Created:     f.Created,
 			Updated:     f.Updated,
-			UpdatedBy:   f.UpdatedBy,
+			//UpdatedBy:   f.UpdatedBy,
 		}
 	}
 	return ret

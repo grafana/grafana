@@ -11,6 +11,10 @@ const (
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
 
+	// FlagPromQueryBuilder
+	// Show prometheus query builder
+	FlagPromQueryBuilder = "promQueryBuilder"
+
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -119,10 +123,6 @@ const (
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 
-	// FlagExplore2Dashboard
-	// Experimental Explore to Dashboard workflow
-	FlagExplore2Dashboard = "explore2Dashboard"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -151,13 +151,9 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagPrometheusStreamingJSONParser
-	// Enable streaming JSON parser for Prometheus datasource
-	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
-
-	// FlagPrometheusStreamingJSONParserTest
-	// Run both old and streaming requests and log differences
-	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+	// FlagPrometheusBufferedClient
+	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
+	FlagPrometheusBufferedClient = "prometheusBufferedClient"
 
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
@@ -183,10 +179,6 @@ const (
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
 
-	// FlagUseLegacyHeatmapPanel
-	// Continue to use the angular/flot based heatmap panel
-	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -200,7 +192,7 @@ const (
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
-	// Enables work-in-progress internationalization
+	// Enables internationalization
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
@@ -255,6 +247,10 @@ const (
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
+	// FlagDatasourceLogger
+	// Logs all datasource requests
+	FlagDatasourceLogger = "datasourceLogger"
+
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
@@ -262,4 +258,12 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
+
+	// FlagAccessTokenExpirationCheck
+	// Enable OAuth access_token expiration check and token refresh using the refresh_token
+	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
+
+	// FlagElasticsearchBackendMigration
+	// Use Elasticsearch as backend data source
+	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 )

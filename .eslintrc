@@ -8,6 +8,8 @@
   },
   "rules": {
     "react/prop-types": "off",
+    // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
+    "react/no-unknown-property": ["error", { "ignore": ["css"] }],
     "@emotion/jsx-import": "error",
     "lodash/import-scope": [2, "member"],
     "jest/no-focused-tests": "error",
@@ -43,6 +45,12 @@
   },
   "overrides": [
     {
+      "files": ["public/app/features/scenes/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "explicit" }]
+      }
+    },
+    {
       "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
@@ -73,15 +81,17 @@
         // we should remove the corresponding line and fix them one by one
         // any marked "error" contain specific overrides we'll need to keep
         "jsx-a11y/click-events-have-key-events": "off",
-        "jsx-a11y/mouse-events-have-key-events": "off",
         "jsx-a11y/no-autofocus": [
           "error",
           {
             "ignoreNonDOM": true
           }
         ],
-        "jsx-a11y/no-noninteractive-element-interactions": "off",
-        "jsx-a11y/no-static-element-interactions": "off"
+        "jsx-a11y/no-static-element-interactions": "off",
+        "jsx-a11y/label-has-associated-control": [ "error", {
+          "controlComponents": ["NumberInput"],
+          "depth": 2
+        }]
       }
     }
   ]

@@ -54,8 +54,6 @@ async function getTestContext(overrides: Partial<Props> = {}, subUrl = '', isMen
           }}
         >
           <NavBarItem {...props} />
-          {/* need something else to move focus to when we press tab */}
-          <div tabIndex={0} />
         </NavBarContext.Provider>
       </BrowserRouter>
     </TestProvider>
@@ -192,15 +190,17 @@ describe('NavBarItem', () => {
         await userEvent.tab();
         await userEvent.keyboard('{ArrowRight}');
         expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
-        expect(screen.getAllByRole('menuitem')[0]).toHaveFocus();
+        expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+        expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '0');
+        expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
+        expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
 
         await userEvent.keyboard('{ArrowLeft}');
         expect(screen.getAllByRole('link')[0]).toHaveFocus();
-        expect(screen.getAllByRole('menuitem')[0]).not.toHaveFocus();
-
-        await userEvent.tab();
-        expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
-        expect(screen.getAllByRole('menuitem')[0]).not.toHaveFocus();
+        expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+        expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '-1');
+        expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
+        expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
       });
     });
 

@@ -7,6 +7,9 @@ import (
 )
 
 func TestIntegrationXormSavingTags(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testIntegrationSavingTags(t, func(ss db.DB) store {
 		return &sqlStore{db: ss}
 	})

@@ -19,7 +19,7 @@ export interface GetLibraryPanelsOptions {
   excludeUid?: string;
   sortDirection?: string;
   typeFilter?: string[];
-  folderFilter?: string[];
+  folderFilterUIDs?: string[];
 }
 
 export async function getLibraryPanels({
@@ -29,13 +29,13 @@ export async function getLibraryPanels({
   excludeUid = '',
   sortDirection = '',
   typeFilter = [],
-  folderFilter = [],
+  folderFilterUIDs = [],
 }: GetLibraryPanelsOptions = {}): Promise<LibraryElementsSearchResult> {
   const params = new URLSearchParams();
   params.append('searchString', searchString);
   params.append('sortDirection', sortDirection);
   params.append('typeFilter', typeFilter.join(','));
-  params.append('folderFilter', folderFilter.join(','));
+  params.append('folderFilterUIDs', folderFilterUIDs.join(','));
   params.append('excludeUid', excludeUid);
   params.append('perPage', perPage.toString(10));
   params.append('page', page.toString(10));
@@ -77,10 +77,10 @@ export async function getLibraryPanelByName(name: string): Promise<LibraryElemen
 
 export async function addLibraryPanel(
   panelSaveModel: PanelModelWithLibraryPanel,
-  folderId: number
+  folderUid: string
 ): Promise<LibraryElementDTO> {
   const { result } = await getBackendSrv().post(`/api/library-elements`, {
-    folderId,
+    folderUid,
     name: panelSaveModel.libraryPanel.name,
     model: panelSaveModel,
     kind: LibraryElementKind.Panel,
@@ -90,9 +90,10 @@ export async function addLibraryPanel(
 
 export async function updateLibraryPanel(panelSaveModel: PanelModelWithLibraryPanel): Promise<LibraryElementDTO> {
   const { libraryPanel, ...model } = panelSaveModel;
-  const { uid, name, version } = libraryPanel;
+  const { uid, name, version, folderUid } = libraryPanel;
   const kind = LibraryElementKind.Panel;
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    folderUid,
     name,
     model,
     version,

@@ -8,9 +8,9 @@ import { Observable } from 'rxjs';
 import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { initialState } from '../../reducers/searchQueryReducer';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
-import { DashboardQuery, DashboardSearchItemType, SearchLayout } from '../../types';
+import { getSearchStateManager, initialState } from '../../state/SearchStateManager';
+import { DashboardSearchItemType, SearchLayout, SearchState } from '../../types';
 
 import { SearchView, SearchViewProps } from './SearchView';
 
@@ -19,26 +19,23 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...originalModule,
     reportInteraction: jest.fn(),
-    config: {
-      ...originalModule.config,
-      featureToggles: {
-        panelTitleSearch: false,
-      },
-    },
   };
 });
 
-const setup = (propOverrides?: Partial<SearchViewProps>, storeOverrides?: Partial<DashboardQuery>) => {
+const stateManager = getSearchStateManager();
+
+const setup = (propOverrides?: Partial<SearchViewProps>, stateOverrides?: Partial<SearchState>) => {
   const props: SearchViewProps = {
     showManage: false,
-    includePanels: false,
-    setIncludePanels: jest.fn(),
     keyboardEvents: {} as Observable<React.KeyboardEvent>,
     ...propOverrides,
   };
 
+  stateManager.setState({ ...initialState, ...stateOverrides });
+
   const mockStore = configureMockStore();
-  const store = mockStore({ searchQuery: { ...initialState, ...storeOverrides } });
+  const store = mockStore({ searchQuery: { ...initialState } });
+
   render(
     <Provider store={store}>
       <SearchView {...props} />
@@ -61,6 +58,7 @@ describe('SearchView', () => {
     ],
     length: 1,
   };
+
   const mockSearchResult: QueryResponse = {
     isItemLoaded: jest.fn(),
     loadMoreItems: jest.fn(),
@@ -77,18 +75,18 @@ describe('SearchView', () => {
   });
 
   it('does not show checkboxes or manage actions if showManage is false', async () => {
-    setup({}, { layout: SearchLayout.Folders });
+    setup();
     await waitFor(() => expect(screen.queryAllByRole('checkbox')).toHaveLength(0));
     expect(screen.queryByTestId('manage-actions')).not.toBeInTheDocument();
   });
 
   it('shows checkboxes if showManage is true', async () => {
-    setup({ showManage: true }, { layout: SearchLayout.Folders });
+    setup({ showManage: true });
     await waitFor(() => expect(screen.queryAllByRole('checkbox')).toHaveLength(2));
   });
 
   it('shows the manage actions if show manage is true and the user clicked a checkbox', async () => {
-    setup({ showManage: true }, { layout: SearchLayout.Folders });
+    setup({ showManage: true });
     await waitFor(() => userEvent.click(screen.getAllByRole('checkbox')[0]));
 
     expect(screen.queryByTestId('manage-actions')).toBeInTheDocument();
@@ -100,10 +98,9 @@ describe('SearchView', () => {
       totalRows: 0,
       view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
     });
-    setup(undefined, {
-      query: 'asdfasdfasdf',
-      layout: SearchLayout.Folders,
-    });
+
+    setup(undefined, { query: 'asdfasdfasdf' });
+
     await waitFor(() => expect(screen.queryByText('No results found for your query.')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
   });
