@@ -66,7 +66,6 @@ function attachReferences(spans: TraceSpanData[], depth: number, spansPerLevel: 
       break;
     }
 
-    // numbers.filter(number => num % 2 === 0)
     const newLevel = chance.pickset(remainingSpans, spansPerLevel || chance.integer({ min: 4, max: 8 })).map(getSpanId);
     levels.push(newLevel);
   }
