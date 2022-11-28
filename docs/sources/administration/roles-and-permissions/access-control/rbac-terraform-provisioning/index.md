@@ -10,7 +10,7 @@ weight: 60
 
 # Provisioning RBAC with Terraform
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 You can create, change or remove [Custom roles](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and create or remove [basic and custom role assignments](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment), by using [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
@@ -148,4 +148,4 @@ Similarly, you can look up and use `id`s of users, teams and service accounts th
 
 [RBAC setup with Grafana provisioning]({{< relref "./rbac-grafana-provisioning">}})
 
-[Grafana Cloud Terraform provisioning](https://grafana.com/docs/grafana-cloud/infrastructure-as-code/terraform/)
+[Grafana Cloud Terraform provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
