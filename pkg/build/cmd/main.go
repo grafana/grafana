@@ -37,6 +37,12 @@ func main() {
 			},
 		},
 		{
+			Name:      "docs-target",
+			Usage:     "Determine docs version from git reference",
+			ArgsUsage: "<reference>",
+			Action:    DocsTarget,
+		},
+		{
 			Name:   "e2e-tests",
 			Usage:  "Run Grafana e2e tests",
 			Action: EndToEndTests,
