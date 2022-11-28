@@ -489,6 +489,38 @@ describe('VariableSupport', () => {
     });
   });
 
+  it('passes on the query error for a log query', (done) => {
+    const variableSupport = new VariableSupport(
+      createMockDatasource({
+        query: () =>
+          from(
+            Promise.resolve({
+              data: [],
+              error: {
+                message: 'boom',
+              },
+            })
+          ),
+      })
+    );
+    const mockRequest = {
+      targets: [
+        {
+          queryType: AzureQueryType.LogAnalytics,
+          azureLogAnalytics: {
+            query: 'some log thing',
+          },
+        } as AzureMonitorQuery,
+      ],
+    } as DataQueryRequest<AzureMonitorQuery>;
+    const observables = variableSupport.query(mockRequest);
+    observables.subscribe((result: DataQueryResponseData) => {
+      expect(result.data).toEqual([]);
+      expect(result.error.message).toEqual('boom');
+      done();
+    });
+  });
+
   it('should handle http error', (done) => {
     const error = invalidSubscriptionError();
     const variableSupport = new VariableSupport(

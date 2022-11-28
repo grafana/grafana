@@ -20,7 +20,7 @@ type Preference struct {
 	Version         int                 `db:"version"`
 	HomeDashboardID int64               `xorm:"home_dashboard_id" db:"home_dashboard_id"`
 	Timezone        string              `db:"timezone"`
-	WeekStart       string              `db:"week_start"`
+	WeekStart       *string             `db:"week_start"`
 	Theme           string              `db:"theme"`
 	Created         time.Time           `db:"created"`
 	Updated         time.Time           `db:"updated"`
@@ -49,7 +49,7 @@ type SavePreferenceCommand struct {
 	Timezone         string                  `json:"timezone,omitempty"`
 	WeekStart        string                  `json:"weekStart,omitempty"`
 	Theme            string                  `json:"theme,omitempty"`
-	Locale           string                  `json:"locale,omitempty"`
+	Language         string                  `json:"language,omitempty"`
 	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
@@ -64,7 +64,7 @@ type PatchPreferenceCommand struct {
 	Timezone         *string                 `json:"timezone,omitempty"`
 	WeekStart        *string                 `json:"weekStart,omitempty"`
 	Theme            *string                 `json:"theme,omitempty"`
-	Locale           *string                 `json:"locale,omitempty"`
+	Language         *string                 `json:"language,omitempty"`
 	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
@@ -81,7 +81,7 @@ type NavbarPreference struct {
 }
 
 type PreferenceJSONData struct {
-	Locale       string                 `json:"locale"`
+	Language     string                 `json:"language"`
 	Navbar       NavbarPreference       `json:"navbar"`
 	QueryHistory QueryHistoryPreference `json:"queryHistory"`
 }

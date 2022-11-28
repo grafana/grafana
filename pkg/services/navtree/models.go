@@ -206,7 +206,7 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("serviceaccounts"))
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("apikeys"))
-		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("plugin-page-grafana-auth-app")) // Cloud Access Policies
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
 
 		generalNode := &NavLink{
 			Text:     "General",
