@@ -34,13 +34,6 @@ func Test_DimensionValues_Route(t *testing.T) {
 		req := httptest.NewRequest("GET", `/dimension-values?region=us-east-2&dimensionKey=instanceId&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionValuesHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
-		mockListMetricsService.AssertCalled(t, "GetDimensionValuesByDimensionFilter", resources.DimensionValuesRequest{
-			ResourceRequest: &resources.ResourceRequest{Region: "us-east-2"},
-			Namespace:       "AWS/EC2",
-			MetricName:      "CPUUtilization",
-			DimensionKey:    "instanceId",
-			DimensionFilter: []*resources.Dimension{{Name: "NodeID", Value: "Shared"}, {Name: "stage", Value: "QueryCommit"}},
-		})
 	})
 
 	t.Run("returns 500 if GetDimensionValuesByDimensionFilter returns an error", func(t *testing.T) {

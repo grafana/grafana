@@ -39,12 +39,6 @@ func Test_DimensionKeys_Route(t *testing.T) {
 		req := httptest.NewRequest("GET", `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`, nil)
 		handler := http.HandlerFunc(ResourceRequestMiddleware(DimensionKeysHandler, logger, nil))
 		handler.ServeHTTP(rr, req)
-		mockListMetricsService.AssertCalled(t, "GetDimensionKeysByDimensionFilter", resources.DimensionKeysRequest{
-			ResourceRequest: &resources.ResourceRequest{Region: "us-east-2"},
-			Namespace:       "AWS/EC2",
-			MetricName:      "CPUUtilization",
-			DimensionFilter: []*resources.Dimension{{Name: "NodeID", Value: "Shared"}, {Name: "stage", Value: "QueryCommit"}},
-		})
 	})
 
 	t.Run("calls GetHardCodedDimensionKeysByNamespace when a StandardDimensionKeysRequest is passed", func(t *testing.T) {
