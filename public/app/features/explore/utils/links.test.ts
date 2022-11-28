@@ -34,7 +34,12 @@ describe('getFieldLinksForExplore', () => {
       title: 'external',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
+    const links = getFieldLinksForExplore({
+      field,
+      rowIndex: ROW_WITH_TEXT_VALUE.index,
+      splitOpenFn: jest.fn(),
+      range,
+    });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('external');
@@ -45,7 +50,12 @@ describe('getFieldLinksForExplore', () => {
       title: '',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
+    const links = getFieldLinksForExplore({
+      field,
+      rowIndex: ROW_WITH_TEXT_VALUE.index,
+      splitOpenFn: jest.fn(),
+      range,
+    });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('regionalhost');
@@ -67,7 +77,7 @@ describe('getFieldLinksForExplore', () => {
       },
     });
     const splitfn = jest.fn();
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: splitfn, range });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, splitOpenFn: splitfn, range });
 
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
@@ -100,7 +110,7 @@ describe('getFieldLinksForExplore', () => {
       },
       false
     );
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('external');
@@ -119,7 +129,7 @@ describe('getFieldLinksForExplore', () => {
       },
       false
     );
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
     expect(links).toHaveLength(0);
   });
 
@@ -133,7 +143,7 @@ describe('getFieldLinksForExplore', () => {
         datasourceName: 'test_ds',
       },
     });
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(1);
   });
 
@@ -147,13 +157,13 @@ describe('getFieldLinksForExplore', () => {
         datasourceName: 'test_ds',
       },
     });
-    const links = getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_NULL_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(0);
   });
 });
 
-const ROW_0_TEXT_VALUE = 'foo';
-const ROW_1_NULL_VALUE = null;
+const ROW_WITH_TEXT_VALUE = { value: 'foo', index: 0 };
+const ROW_WITH_NULL_VALUE = { value: null, index: 1 };
 
 function setup(link: DataLink, hasAccess = true) {
   setLinkSrv({
@@ -180,7 +190,7 @@ function setup(link: DataLink, hasAccess = true) {
   const field: Field<string | null> = {
     name: 'flux-dimensions',
     type: FieldType.string,
-    values: new ArrayVector([ROW_0_TEXT_VALUE, ROW_1_NULL_VALUE]),
+    values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
     config: {
       links: [link],
     },

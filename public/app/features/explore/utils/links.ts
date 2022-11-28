@@ -24,24 +24,26 @@ const dataLinkHasRequiredPermissions = (link: DataLink) => {
 };
 
 const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
-  let hasAllRequiredVarsAvailable = true;
+  let hasAllRequiredVarDefined = true;
 
   if (link.internal) {
     let stringifiedQuery = '';
     try {
       stringifiedQuery = JSON.stringify(link.internal.query || {});
+      // Hook into format function to verify if all values are non-empty
+      // Format function is run on all existing field values allowing us to check it's value is non-empty
       getTemplateSrv().replace(stringifiedQuery, scopedVars, (f: string) => {
-        hasAllRequiredVarsAvailable = hasAllRequiredVarsAvailable && !!f;
+        hasAllRequiredVarDefined = hasAllRequiredVarDefined && !!f;
         return '';
       });
     } catch (err) {}
   }
 
-  return hasAllRequiredVarsAvailable;
+  return hasAllRequiredVarDefined;
 };
 
 /**
- * Fixed list of filters used in Explore. DataLinks that do not pass all the filters will no
+ * Fixed list of filters used in Explore. DataLinks that do not pass all the filters will not
  * be passed back to the visualization.
  */
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasAllVariablesDefined, dataLinkHasRequiredPermissions];
