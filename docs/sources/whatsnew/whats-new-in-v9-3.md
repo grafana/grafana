@@ -104,7 +104,7 @@ Because dashboards appear on a screen and reports are PDFs, it can be challengin
 
 The zoom feature is located in the **Format Report** section of your reporting configuration. To learn more about reporting, refer to [Create and manage reports]({{< relref "../dashboards/create-reports/">}}).
 
-{{< figure src="/static/img/docs/enterprise/reports/report-zoom.png" max-width="750px" caption="Report zoom feature with PDF dcuments at three different zoom levels" >}}
+{{< figure src="/static/img/docs/enterprise/reports/report-zoom.png" max-width="750px" caption="Report zoom feature with PDF documents at three different zoom levels" >}}
 
 ## Authentication - OAuth token handling improvements
 
