@@ -40,7 +40,7 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
-interface CanvasConnection {
+export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;

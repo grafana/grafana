@@ -669,7 +669,18 @@ export class Scene {
 
   // TODO: Figure out why this is still glitchy
   handleMouseEnter = (event: React.MouseEvent) => {
-    const element = event.target as HTMLElement;
+    const element = (event.target as HTMLElement).parentElement?.parentElement;
+    if (!element) {
+      console.log('no element');
+      return;
+    }
+
+    this.connectionSource = this.findElementByTarget(element);
+    if (!this.connectionSource) {
+      console.log('no connection source');
+      return;
+    }
+
     const elementBoundingRect = element!.getBoundingClientRect();
     const parentBoundingRect = this.div?.getBoundingClientRect();
     let parentBorderWidth = parseFloat(getComputedStyle(this.div!).borderWidth);
@@ -682,8 +693,6 @@ export class Scene {
     this.arrowAnchorDiv!.style.left = `${relativeLeft}px`;
     this.arrowAnchorDiv!.style.height = `${elementBoundingRect.height}px`;
     this.arrowAnchorDiv!.style.width = `${elementBoundingRect.width}px`;
-
-    this.connectionSource = this.findElementByTarget(element);
   };
 
   handleMouseLeave = (event: React.MouseEvent) => {
@@ -697,7 +706,7 @@ export class Scene {
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         <ArrowAnchors setRef={this.setArrowAnchorRef} />
-        <ArrowSVG setSVGRef={this.setArrowSVGRef} setLineRef={this.setArrowLineRef} />
+        <ArrowSVG setSVGRef={this.setArrowSVGRef} setLineRef={this.setArrowLineRef} scene={this} />
         {this.root.render()}
         {canShowContextMenu && (
           <Portal>
