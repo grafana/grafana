@@ -50,7 +50,7 @@ We have added 4 new languages to Grafana: Spanish, French, German and Simplified
 
 With millions of users across the globe, Grafana has a global footprint. In order to make it accessible to a wider audience, we have taken the first steps in localizing key workflows. You can now set Grafana’s language for the navigation, viewing dashboards, and a handful of settings. This will cover the main activities a Viewer would perform within Grafana.
 
-To Read more about configuring the [default language for your organization](https://grafana.com/docs/grafana/latest/administration/organization-preferences/) and [updating your profile](https://grafana.com/docs/grafana/latest/administration/user-management/user-preferences/) in our documentation.
+Read more about configuring the [default language for your organization](https://grafana.com/docs/grafana/latest/administration/organization-preferences/) and [updating your profile](https://grafana.com/docs/grafana/latest/administration/user-management/user-preferences/) in our documentation.
 
 ## Geomap panel
 
@@ -92,11 +92,13 @@ Note that since Public Dashboards is an experimental feature, you need to enable
 
 Learn more about Public Dashboards in our [documentation]({{< relref "../dashboards/dashboard-public/" >}}).
 
-## Transformations - Partition by values
+## New transformation: Partition by values
 
 Available in **experimental** in all editions of Grafana
 
-This new transformation can help eliminate the need for multiple queries to the same datasource with different WHERE clauses when graphing multiple series. Consider a metrics SQL table with the following data:
+This new transformation can help eliminate the need for multiple queries to the same datasource with different WHERE clauses when graphing multiple series. 
+
+Consider a metrics SQL table with the following data:
 
 | Time                | Region | Value |
 | ------------------- | ------ | ----- |
@@ -105,7 +107,7 @@ This new transformation can help eliminate the need for multiple queries to the 
 | 2022-10-20 01:00:00 | US     | 1327  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
-Prior to v9.3. if you wanted to plot a red trendline for US and a blue one for EU in the same TimeSeries panel, you would likely have to split this into two queries:
+Prior to v9.3, if you wanted to plot a red trendline for US and a blue one for EU in the same TimeSeries panel, you would likely have to split this into two queries:
 
 ```
    SELECT Time, Value FROM metrics WHERE Time > ‘2022-10-20’ AND Region=’US’
@@ -140,21 +142,23 @@ The zoom feature is located in the **Format Report** section of your reporting c
 
 {{< figure src="/static/img/docs/enterprise/reports/report-zoom.png" max-width="750px" caption="Report zoom feature with PDF documents at three different zoom levels" >}}
 
-## Authentication - OAuth token handling improvements
+## Users and access
 
-Generally available in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced.
+### OAuth: token handling improvements
 
-As part of our efforts to improve the security of Grafana, we are introducing a long-awaited feature which enhances Grafana's OAuth 2.0 compatibility. When a user logs in using an OAuth provider, on each request Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the refresh token provided (if any exists) to obtain a new access token.
+Generally available in all editions of Grafana
 
-This feature introduces a breaking change, thus it is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default. Enabling this functionality without configuring refresh tokens for the specific OAuth provider would get users logged out after their access token has expired and they would need to log in again.
+As part of our efforts to improve the security of Grafana, we are introducing a long-awaited feature which enhances Grafana's OAuth 2.0 compatibility. When a user logs in using an OAuth provider, Grafana verifies on each request that the user's access token has not expired. When an access token expires, Grafana uses the refresh token provided (if any exists) to obtain a new access token.
+
+This feature introduces a breaking change, thus it is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default. Enabling this functionality without configuring refresh tokens for the specific OAuth provider will sign users out after their access token has expired, and they would need to sign in again every time.
 
 Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}), in the instructions for your Oauth identity provider.
 
-## Grafana CLI tool user management of conflicts
+### Resolve user conflicts in Grafana's CLI
 
-This new CLI command allows you to resolve user identity conflicts of users within Grafana. The email or login field are case sensitive which can cause two or more accounts created for the same user which we call a user identity conflict. You can now resolve these accounts using this CLI tool.
+In older version of Grafana, usernames were case sensitive. This created conflicts, where a user might sign in using two differnt methods (like SAML and oauth) and have two accounts created, like `elastigirl@incredibles.com` and `ElastiGirl@incredibles.com`. Users in this situations might think they have lost their preferences and permissions. If this has occurred in your Grafana instance, you can use a new Grafana CLI command to resolve user identity conflicts between users within Grafana.
 
-> Note “As a Grafana Cloud user, there are no user identity conflicts, or if you are running a Grafana instance with MySQL.”
+> Note: If you use Grafana Cloud or you run Grafana with MySQL as your database, you will not experience any user identity conflicts and you do not need to use this tool.
 
 ```bash
 # lists all the conflicting users
@@ -170,12 +174,12 @@ $ grafana-cli user-manager conflicts validate-file <filepath>
 $ grafana-cli user-manager conflicts ingest-file <filepath>
 ```
 
-## LDAP - Role mapping improvements
+### LDAP: Role mapping improvements
 
 Generally available in all editions of Grafana
 
 If you use an LDAP directory to authenticate to Grafana but prefer to assign organizations and roles in the Grafana UI
-or via API, you can now enable a configuration option to skip user organization roles synchronization with your LDAP
+or via API, you can now skip user organization role synchronization with your LDAP
 directory.
 
 Use the [`skip_org_role_sync` LDAP authentication configuration option]({{< relref
@@ -183,18 +187,18 @@ Use the [`skip_org_role_sync` LDAP authentication configuration option]({{< relr
 when configuring LDAP authentication to prevent the synchronization between your LDAP groups and organization roles
 and make user roles editable manually.
 
-## Azure AD OAuth2 - New option to always fetch groups from the Graph API
+### Azure AD OAuth2: New option to always fetch groups from the Graph API
 
 Generally available in all editions of Grafana
 
 If you use Azure AD OAuth2 authentication and use `SecurityEnabled` groups that you don't want Azure to embed in the
-authentication token, you can force Grafana to use Microsoft's Graph API instead.
+authentication token, you can configure Grafana to use Microsoft's Graph API instead.
 
 Use the [`force_use_graph_api` configuration option]({{< relref
 "../setup-grafana/configure-security/configure-authentication/azuread/#force-fetching-groups-from-microsoft-graph-api" >}})
 when configuring Azure AD authentication to force Grafana to fetch groups using Graph API.
 
-## RBAC - List token's permissions
+### RBAC: List token's permissions
 
 Generally available in Grafana Enterprise and Cloud Advanced
 
@@ -205,7 +209,7 @@ full list of RBAC permissions associated with their token.
 For more details, see the related service accounts [documentation]({{< relref
 "../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
 
-## RBAC with Terraform - Extended support for provisioning permissions
+### RBAC with Terraform: Extended support for provisioning permissions
 
 Generally available in Grafana Enterprise and Cloud Advanced
 
@@ -219,23 +223,19 @@ Finally, we have fixed several access control related bugs to ensure a smoother 
 
 ## Alerting
 
+All of these new alerting features are generally available in all editions of Grafana.
+
 ### Email templating
 
-Generally available in all editions of Grafana
-
-Improves the design and functionality of email templates to make template creation much easier and customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
+We've improved the design and functionality of email templates to make template creation much easier and more customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
 
 ### Support for Webex Teams
 
-Generally available in all editions of Grafana
-
-Adds Cisco Webex Teams as a contact point type to enable users of Webex Temas to notify alerts into a Webex Teams channel.
+You can now use Cisco Webex Teams as a contact point, to send alerts to a Webex Teams channel.
 
 ### Edit alert rules created using the provisioning API
 
-Available in Grafana Open Source.
-
-Enables you to edit API-provisioned alert rules from the Grafana UI. Add the x-disable-provenance header to the following requests when creating or editing your alert rules in the API:
+Edit API-provisioned alert rules from the Grafana UI. To make a provisioned alert editable, add the `x-disable-provenance` header to the following requests when creating or editing your alert rules in the API:
 
 POST /api/v1/provisioning/alert-rules
 
@@ -243,24 +243,12 @@ PUT /api/v1/provisioning/alert-rules/{UID}
 
 ### Support values in notification templates
 
-Available in Grafana Open Source.
-
-Supports values in notification templates, so that you can create a single template that prints the annotations, labels, and values for your alerts in a format of your choice.
-
-### Evaluation intervals
-
-Available in Grafana Open Source.
-
-Makes it easier to set up or update evaluation intervals for alert groups by improving the Alert Rule form.
+Add alert values to notification templates, so that you can create a single template that prints the annotations, labels, and values for your alerts in a format of your choice.
 
 ### View notification errors
 
-Available in Grafana Open Source.
-
-Allows you to easily see when something is wrong with your contact point(s) and the reason for the error. The Receivers API contains information on the error, including a time stamp, duration of the attempt, and the error. On the UI, you can view the errors for each contact point.
+When an alert fails to fire, see when something is wrong with your contact point(s) and the reason for the error. The Receivers API contains information on the error, including a time stamp, duration of the attempt, and the error. You can also view the errors for each contact point in the UI.
 
 ### Redesign of the expressions pipeline
 
-Available in Grafana Open Source.
-
-Introduces a new redesigned expressions pipeline editor that combines both the expressions editor and the preview into a single view.
+We've redesigned the expressions pipeline editor to combine the expressions editor and the preview into a single view.
