@@ -9,7 +9,7 @@ lineage: seqs: [
 			// v0.0
 			{
 				// The ID of an organisation the team belongs to.
-				orgId?: int64 @grafanamaturity(MaybeRemove)
+				orgId?: int64 @grafanamaturity(ToMetadata="sys")
 				// Name of the team.
 				name: string
 				// Email of the team.
