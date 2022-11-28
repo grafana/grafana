@@ -21874,7 +21874,6 @@ __metadata:
     jquery: 3.6.0
     js-yaml: ^4.1.0
     json-source-map: 0.6.1
-    jsonpath-plus: ^7.2.0
     jsurl: ^0.1.5
     kbar: 0.1.0-beta.36
     lerna: 5.5.4
@@ -25785,13 +25784,6 @@ __metadata:
   version: 1.3.1
   resolution: "jsonparse@npm:1.3.1"
   checksum: 6514a7be4674ebf407afca0eda3ba284b69b07f9958a8d3113ef1005f7ec610860c312be067e450c569aab8b89635e332cee3696789c750692bb60daba627f4d
-  languageName: node
-  linkType: hard
-
-"jsonpath-plus@npm:^7.2.0":
-  version: 7.2.0
-  resolution: "jsonpath-plus@npm:7.2.0"
-  checksum: 05f447339d29be861e307d6e812aec1b9b88a3ba6bba286966a4e8bed3e752bee3d715eabfc21dce968be85ccb48bf79d2c1af78da7b9b74cd1b446d4d5d02f5
   languageName: node
   linkType: hard
 

@@ -329,7 +329,6 @@
     "jquery": "3.6.0",
     "js-yaml": "^4.1.0",
     "json-source-map": "0.6.1",
-    "jsonpath-plus": "^7.2.0",
     "jsurl": "^0.1.5",
     "kbar": "0.1.0-beta.36",
     "lodash": "4.17.21",
