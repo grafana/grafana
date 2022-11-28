@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/samber/lo"
 )
@@ -79,17 +80,27 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 			strings.Join(keys, ","),
 			strings.Join(lo.RepeatBy(len(m), func(index int) string { return "?" }), ","))
 		sqlOrArgs = append([]interface{}{sql}, values...)
+
+		var lastInsertId int64
+		if ss.db.GetDBType() == migrator.Postgres {
+			sql = fmt.Sprintf("%s RETURNING id", sql)
+			if _, err := sess.SQL(sql, sqlOrArgs[1:]...).Get(&lastInsertId); err != nil {
+				return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
+			}
+		} else {
 		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
 		}
-		id, err := res.LastInsertId()
+			lastInsertId, err = res.LastInsertId()
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get last inserted id: %w", err)
 		}
+		}
 
+		var err error
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
-			ID: &id,
+			ID: &lastInsertId,
 		})
 		if err != nil {
 			return err

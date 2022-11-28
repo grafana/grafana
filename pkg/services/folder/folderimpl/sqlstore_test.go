@@ -3,7 +3,6 @@ package folderimpl
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -51,7 +50,7 @@ func TestIntegrationCreate(t *testing.T) {
 	})
 
 	t.Run("creating a folder with a given ID shoule succeed", func(t *testing.T) {
-		ID := rand.Int63()
+		ID := int64(42)
 		uid := util.GenerateShortUID()
 		f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 			Title: "folder1",
