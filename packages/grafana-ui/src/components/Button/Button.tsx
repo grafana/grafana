@@ -318,6 +318,8 @@ export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
     color: ${theme.colors.text.primary};
     border: none;
     padding: 0;
+    font-size: inherit;
+    font-weight: inherit;
     &:hover {
       background: transparent;
     }
