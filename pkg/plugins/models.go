@@ -194,13 +194,10 @@ func (s SignatureType) IsValid() bool {
 	return false
 }
 
-type PluginFiles map[string]struct{}
-
 type Signature struct {
 	Status     SignatureStatus
 	Type       SignatureType
 	SigningOrg string
-	Files      PluginFiles
 }
 
 type PluginMetaDTO struct {

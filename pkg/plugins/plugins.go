@@ -39,7 +39,6 @@ type Plugin struct {
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
@@ -69,7 +68,6 @@ type PluginDTO struct {
 	Signature      SignatureStatus
 	SignatureType  SignatureType
 	SignatureOrg   string
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
@@ -98,23 +96,6 @@ func (p PluginDTO) IsExternalPlugin() bool {
 
 func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
-}
-
-func (p PluginDTO) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
-	}
-
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
-	}
-
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
-	}
-	return true
 }
 
 type File interface {
@@ -400,7 +381,6 @@ func (p *Plugin) ToDTO() PluginDTO {
 		Signature:       p.Signature,
 		SignatureType:   p.SignatureType,
 		SignatureOrg:    p.SignatureOrg,
-		SignedFiles:     p.SignedFiles,
 		SignatureError:  p.SignatureError,
 		Module:          p.Module,
 		BaseURL:         p.BaseURL,

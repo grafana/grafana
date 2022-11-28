@@ -327,7 +327,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 	defer func() {
 		if err = f.Close(); err != nil {
-			hs.log.Warn("Failed to close plugin file", "err", err)
+			hs.log.Error("Failed to close plugin file", "err", err)
 		}
 	}()
 
@@ -489,7 +489,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	}
 	defer func() {
 		if err = md.Close(); err != nil {
-			hs.log.Warn("Failed to close plugin markdown file", "err", err)
+			hs.log.Error("Failed to close plugin markdown file", "err", err)
 		}
 	}()
 
