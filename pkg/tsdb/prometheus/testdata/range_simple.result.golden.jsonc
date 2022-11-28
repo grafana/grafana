@@ -48,7 +48,7 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-multi",
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -102,7 +102,7 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-multi",
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },

@@ -39,7 +39,7 @@
       "schema": {
         "name": "{level=\"error\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-multi",
+          "type": "timeseries-many",
           "executedQueryString": "Expr: query1"
         },
         "fields": [
@@ -81,7 +81,7 @@
       "schema": {
         "name": "{level=\"info\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-multi",
+          "type": "timeseries-many",
           "executedQueryString": "Expr: query1"
         },
         "fields": [

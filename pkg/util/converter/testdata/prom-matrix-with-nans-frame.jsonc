@@ -25,7 +25,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi",
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           }

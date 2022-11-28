@@ -28,7 +28,7 @@
       "schema": {
         "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-multi",
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },

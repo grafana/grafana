@@ -28,7 +28,7 @@
       "schema": {
         "name": "1 / 0",
         "meta": {
-          "type": "timeseries-multi",
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
