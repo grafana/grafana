@@ -17,31 +17,26 @@ const cellDisplayModeOptions = [
 
 interface Props {
   value: TableCellOptions;
+  onChange: (v: TableCellOptions) => void;
 }
 
 export const TableCellOptionEditor: React.FC<Props> = (props) => {
-  const value = props.value;
+  const { value } = props;
+
   // Do processing with the values here
   let editor: ReactNode | null = null;
-  // const [value, setValue] = useState<SelectableValue<string>>();
 
   if (true) {
     editor = <BarGaugeCellOptions {...props} />;
   }
 
-  console.log(props);
+  const onDisplayModeChange = (v) => {};
 
   // Setup and inject editor
   return (
     <>
       <Field label="Cell display mode" description="Color text, background, show as gauge, etc.">
-        <Select
-          options={cellDisplayModeOptions}
-          value={value.displayMode}
-          onChange={(v) => {
-            // setValue(v);
-          }}
-        />
+        <Select options={cellDisplayModeOptions} value={value.displayMode} onChange={onDisplayModeChange} />
       </Field>
 
       {editor}
