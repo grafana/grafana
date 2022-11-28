@@ -74,7 +74,7 @@ func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) respon
 	}
 
 	// Validate inputs
-	if (searchOptions.ActionPrefix == "") && (searchOptions.Action == "") {
+	if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
 		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
 	}
 
