@@ -75,7 +75,9 @@ content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-in
 ```
 
 ## Additional security hardening
+
 The Grafana server has several built-in security features that you can opt-in to enhance security. This section describes additional techniques you can use to harden security.
+
 ### Hide the version number
 
 If set to `true`, the Grafana server hides the running version number for unauthenticated users. Version numbers might reveal if you are running an outdated and vulnerable version of Grafana.
