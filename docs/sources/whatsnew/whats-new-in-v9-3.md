@@ -16,7 +16,7 @@ weight: -33
 
 # What’s new in Grafana v9.3 (Beta)
 
-Welcome to Grafana v9.3. If you’d prefer to dig into the details, check out the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+Welcome to Grafana 9.3. Read What's New to learn all about the latest release. For more detail, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## What's New feature template
 
