@@ -54,7 +54,7 @@ export function TraceQLEditor(props: Props) {
         setupAutocompleteFn(editor, monaco);
         setupActions(editor, monaco, onRunQuery);
         setupPlaceholder(editor, monaco, styles);
-        setupAutoHeight(editor);
+        setupAutoSize(editor);
       }}
     />
   );
@@ -101,7 +101,7 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
   });
 }
 
-function setupAutoHeight(editor: monacoTypes.editor.IStandaloneCodeEditor) {
+function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
   const container = editor.getDomNode();
   const updateHeight = () => {
     if (container) {
