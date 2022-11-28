@@ -18,15 +18,6 @@ weight: -33
 
 Welcome to Grafana 9.3. Read What's New to learn all about the latest release. For more detail, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-## What's New feature template
-
-Use this template to add your what's new section.
-
-[Generally available | Available in experimental/beta] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
-
-Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
-
-Add a screenshot to the [website/static/static/img/docs](https://github.com/grafana/website/tree/master/static/static/img/docs) folder and link to it here.
 
 ## New navigation
 
