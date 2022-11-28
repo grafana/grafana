@@ -116,9 +116,24 @@ use_pkce = true
 
 Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
 
+### Configure refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+
+Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
+
+To configure Generic OAuth to use a refresh token, perform one or both of the following tasks, if required:
+
+- Extend the `[auth.generic_oauth]` section with additional scopes
+- Enable the refresh token on the provider
+
 ## Set up OAuth2 with Auth0
 
-1. Create a new Client in Auth0
+1. Use the following parameters to create a client in Auth0:
 
    - Name: Grafana
    - Type: Regular Web Application
@@ -138,7 +153,7 @@ Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (ba
    name = Auth0
    client_id = <client id>
    client_secret = <client secret>
-   scopes = openid profile email
+   scopes = openid profile email offline_access
    auth_url = https://<domain>/authorize
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
@@ -163,6 +178,8 @@ team_ids_attribute_path = values[*].workspace.slug
 team_ids =
 allowed_organizations =
 ```
+
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with Centrify
 
@@ -194,6 +211,8 @@ allowed_organizations =
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
    ```
+
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with OneLogin
 

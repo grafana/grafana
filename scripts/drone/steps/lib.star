@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.16'
-build_image = 'grafana/build-container:1.6.5'
+grabpl_version = 'v3.0.17'
+build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
@@ -15,13 +15,6 @@ trigger_oss = {
     'repo': [
         'grafana/grafana',
     ]
-}
-trigger_storybook = {
-    'paths': {
-        'include': [
-            'packages/grafana-ui/**',
-        ],
-    }
 }
 
 
@@ -259,7 +252,7 @@ def build_storybook_step(edition, ver_mode):
             'yarn storybook:build',
             './bin/grabpl verify-storybook',
         ],
-        'when': trigger_storybook,
+        'when': get_trigger_storybook(ver_mode),
     }
 
 
@@ -281,13 +274,13 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     step = {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(edition),
+        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': commands,
-        'when': trigger_storybook,
+        'when': get_trigger_storybook(ver_mode),
     }
     if trigger and ver_mode in ("release-branch", "main"):
         # no dict merge operation available, https://github.com/harness/drone-cli/pull/220
@@ -361,7 +354,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {}'.format(edition),
+            './bin/build upload-cdn --edition {}'.format(edition),
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
@@ -629,15 +622,10 @@ def codespell_step():
 def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     deps = [
         'build-plugins',
-        'build-backend',
+        'build-backend' + enterprise2_suffix(edition),
         'build-frontend',
         'build-frontend-packages',
     ]
-    if include_enterprise2:
-        sfx = '-enterprise2'
-        deps.extend([
-            'build-backend' + sfx,
-        ])
 
     variants_str = ''
     if variants:
@@ -780,12 +768,12 @@ def build_docs_website_step():
     }
 
 
-def copy_packages_for_docker_step():
+def copy_packages_for_docker_step(edition=None):
     return {
         'name': 'copy-packages-for-docker',
         'image': build_image,
         'depends_on': [
-            'package',
+            'package' + enterprise2_suffix(edition),
         ],
         'commands': [
             'ls dist/*.tar.gz*',
@@ -807,6 +795,13 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     if archs:
         cmd += ' -archs {}'.format(','.join(archs))
 
+    environment = {
+        'GCP_KEY': from_secret('gcp_key'),
+    }
+
+    if edition == 'enterprise2':
+        environment.update({'DOCKER_ENTERPRISE2_REPO': from_secret('docker_enterprise2_repo')})
+
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
         'image': 'google/cloud-sdk',
@@ -821,9 +816,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
             'name': 'docker',
             'path': '/var/run/docker.sock'
         }],
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-        },
+        'environment': environment
     }
 
 def fetch_images_step(edition):
@@ -834,6 +827,7 @@ def fetch_images_step(edition):
             'GCP_KEY': from_secret('gcp_key'),
             'DOCKER_USER': from_secret('docker_username'),
             'DOCKER_PASSWORD': from_secret('docker_password'),
+            'DOCKER_ENTERPRISE2_REPO': from_secret('docker_enterprise2_repo'),
         },
         'commands': ['./bin/build artifacts docker fetch --edition {}'.format(edition)],
         'depends_on': ['compile-build-cmd'],
@@ -845,28 +839,37 @@ def fetch_images_step(edition):
 
 
 def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
+    name = docker_repo
+    docker_repo = 'grafana/{}'.format(docker_repo)
     if mode == 'security':
         mode = '--{} '.format(mode)
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(
-        mode, docker_repo)
+    environment = {
+        'GCP_KEY': from_secret('gcp_key'),
+        'DOCKER_USER': from_secret('docker_username'),
+        'DOCKER_PASSWORD': from_secret('docker_password'),
+    }
+
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(mode, docker_repo)
 
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
-        cmd += ' --version-tag ${TAG}'
+        cmd += ' --version-tag ${DRONE_TAG}'
     else:
         deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
+    if edition == 'enterprise2':
+        name = edition
+        docker_repo = '$${DOCKER_ENTERPRISE2_REPO}'
+        environment.update({'GCP_KEY': from_secret('gcp_key_hg'), 'DOCKER_ENTERPRISE2_REPO': from_secret('docker_enterprise2_repo')})
+        cmd = './bin/build artifacts docker publish-enterprise2 --dockerhub-repo {}'.format(docker_repo)
+
     step = {
-        'name': 'publish-images-{}'.format(docker_repo),
+        'name': 'publish-images-{}'.format(name),
         'image': 'google/cloud-sdk',
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-            'DOCKER_USER': from_secret('docker_username'),
-            'DOCKER_PASSWORD': from_secret('docker_password'),
-        },
+        'environment': environment,
         'commands': [cmd],
         'depends_on': deps,
         'volumes': [{
@@ -963,7 +966,7 @@ def release_canary_npm_packages_step(edition, trigger=None):
     step = {
         'name': 'release-canary-npm-packages',
         'image': build_image,
-        'depends_on': end_to_end_tests_deps(edition),
+        'depends_on': end_to_end_tests_deps(),
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -987,12 +990,12 @@ def upload_packages_step(edition, ver_mode, trigger=None):
         return None
 
     deps = []
-    if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
+    if edition in 'enterprise2' or not end_to_end_tests_deps():
         deps.extend([
             'package' + enterprise2_suffix(edition),
         ])
     else:
-        deps.extend(end_to_end_tests_deps(edition))
+        deps.extend(end_to_end_tests_deps())
 
     step = {
         'name': 'upload-packages' + enterprise2_suffix(edition),
@@ -1002,7 +1005,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': ['./bin/grabpl upload-packages --edition {}'.format(edition),],
+        'commands': ['./bin/build upload-packages --edition {}'.format(edition),],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when=trigger)
@@ -1257,14 +1260,14 @@ def artifacts_page_step():
         ],
     }
 
-def end_to_end_tests_deps(edition):
+def end_to_end_tests_deps():
     if disable_tests:
         return []
     return [
-        'end-to-end-tests-dashboards-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-panels-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
-        'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
+        'end-to-end-tests-dashboards-suite',
+        'end-to-end-tests-panels-suite',
+        'end-to-end-tests-smoke-tests-suite',
+        'end-to-end-tests-various-suite',
     ]
 
 def compile_build_cmd(edition='oss'):
@@ -1282,3 +1285,19 @@ def compile_build_cmd(edition='oss'):
             'CGO_ENABLED': 0,
     },
 }
+
+def get_trigger_storybook(ver_mode):
+    trigger_storybook = ''
+    if ver_mode == 'release':
+        trigger_storybook = {
+            'event': ['tag']
+        }
+    else:
+        trigger_storybook = {
+            'paths': {
+                'include': [
+                    'packages/grafana-ui/**',
+                ],
+            }
+        }
+    return trigger_storybook

@@ -54,6 +54,7 @@ type JsonData struct {
 	MaxOpenConns        int    `json:"maxOpenConns"`
 	MaxIdleConns        int    `json:"maxIdleConns"`
 	ConnMaxLifetime     int    `json:"connMaxLifetime"`
+	ConnectionTimeout   int    `json:"connectionTimeout"`
 	Timescaledb         bool   `json:"timescaledb"`
 	Mode                string `json:"sslmode"`
 	ConfigurationMethod string `json:"tlsConfigurationMethod"`
@@ -296,7 +297,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{frame}
+		queryResult.dataResponse.Frames = data.Frames{}
 		ch <- queryResult
 		return
 	}
