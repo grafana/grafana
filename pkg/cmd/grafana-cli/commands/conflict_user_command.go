@@ -62,7 +62,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
-	acService, err := acimpl.ProvideService(nil, s, nil, nil, nil)
+	acService, err := acimpl.ProvideService(cfg, s, nil, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}
