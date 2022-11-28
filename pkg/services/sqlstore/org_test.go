@@ -100,37 +100,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					require.Equal(t, len(query.Result), 2)
 				})
 
-				// t.Run("Can set using org", func(t *testing.T) {
-				// 	cmd := models.SetUsingOrgCommand{UserId: ac2.ID, OrgId: ac1.OrgID}
-				// 	err := sqlStore.SetUsingOrg(context.Background(), &cmd)
-				// 	require.NoError(t, err)
-
-				// 	t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
-				// 		query := models.GetSignedInUserQuery{UserId: ac2.ID}
-				// 		err := sqlStore.GetSignedInUser(context.Background(), &query)
-
-				// 		require.NoError(t, err)
-				// 		require.Equal(t, query.Result.OrgID, ac1.OrgID)
-				// 		require.Equal(t, query.Result.Email, "ac2@test.com")
-				// 		require.Equal(t, query.Result.Name, "ac2 name")
-				// 		require.Equal(t, query.Result.Login, "ac2")
-				// 		require.Equal(t, query.Result.OrgName, "ac1@test.com")
-				// 	})
-
-				// 	// TODO: This test should be moved to user store
-				// 	// t.Run("Should set last org as current when removing user from current", func(t *testing.T) {
-				// 	// 	remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID}
-				// 	// 	err := sqlStore.RemoveOrgUser(context.Background(), &remCmd)
-				// 	// 	require.NoError(t, err)
-
-				// 	// 	query := models.GetSignedInUserQuery{UserId: ac2.ID}
-				// 	// 	err = sqlStore.GetSignedInUser(context.Background(), &query)
-
-				// 	// 	require.NoError(t, err)
-				// 	// 	require.Equal(t, query.Result.OrgID, ac2.OrgID)
-				// 	// })
-				// })
-
 				t.Run("Given an org user with dashboard permissions", func(t *testing.T) {
 					ac3cmd := user.CreateUserCommand{Login: "ac3", Email: "ac3@test.com", Name: "ac3 name", IsAdmin: false}
 					ac3, err := sqlStore.CreateUser(context.Background(), ac3cmd)
