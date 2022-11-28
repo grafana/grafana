@@ -157,33 +157,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						DashboardID: dash2.Id, OrgID: ac3.OrgID, UserID: ac3.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
-
-					// TODO: should be moved to dashboard service
-					// t.Run("When org user is deleted", func(t *testing.T) {
-					// 	cmdRemove := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac3.ID}
-					// 	err := sqlStore.RemoveOrgUser(context.Background(), &cmdRemove)
-					// 	require.NoError(t, err)
-
-					// 	t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-					// 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash1.Id, OrgID: ac1.OrgID}
-
-					// 		err = getDashboardACLInfoList(sqlStore, permQuery)
-					// 		require.NoError(t, err)
-
-					// 		require.Equal(t, len(permQuery.Result), 0)
-					// 	})
-
-					// 	t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
-					// 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash2.Id, OrgID: ac3.OrgID}
-
-					// 		err = getDashboardACLInfoList(sqlStore, permQuery)
-					// 		require.NoError(t, err)
-
-					// 		require.Equal(t, len(permQuery.Result), 1)
-					// 		require.Equal(t, permQuery.Result[0].OrgId, ac3.OrgID)
-					// 		require.Equal(t, permQuery.Result[0].UserId, ac3.ID)
-					// 	})
-					// })
 				})
 			})
 		})
