@@ -28,9 +28,33 @@ Description. Include an overview of the feature and problem it solves, and where
 
 Add a screenshot to the [website/static/static/img/docs](https://github.com/grafana/website/tree/master/static/static/img/docs) folder and link to it here.
 
+## New navigation
+
+Available in **beta** in all editions of Grafana
+
+Use Grafana’s redesigned navigation to get full visibility into the health of your systems, by quickly jumping between features as part of your incident response workflow.
+
+As Grafana has grown from a visualization tool to an observability solution, we’ve added many tools along the way. This has resulted in pages that are visually inconsistent or hard to find. This nav update gives Grafana a new look and feel, and makes page layouts and navigation patterns more consistent.
+
+We’ve revamped the navigation menu and grouped related tools together, making it easier to find what you need. Pages in Grafana now leverage new layouts that include breadcrumbs and a sidebar, allowing you to quickly jump between pages. We’ve also introduced a header that appears on all pages in Grafana, making dashboard search accessible from any page.
+
+To try out Grafana’s new navigation, enable the `topnav` feature toggle. If you are a Cloud Advanced customer, open a ticket with our support team and we will enable it for you.
+
+**Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
+
+## View dashboards in Spanish, French, German, and Simplified Chinese
+
+Generally available in all editions of Grafana
+
+We have added 4 new languages to Grafana: Spanish, French, German and Simplified Chinese.
+
+With millions of users across the globe, Grafana has a global footprint. In order to make it accessible to a wider audience, we have taken the first steps in localizing key workflows. You can now set Grafana’s language for the navigation, viewing dashboards, and a handful of settings. This will cover the main activities a Viewer would perform within Grafana.
+
+To Read more about configuring the [default language for your organization](https://grafana.com/docs/grafana/latest/administration/organization-preferences/) and [updating your profile](https://grafana.com/docs/grafana/latest/administration/user-management/user-preferences/) in our documentation.
+
 ## Geomap panel
 
-Generally available in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced
+Generally available in all editions of Grafana
 
 We have added a new alpha layer type in Geomap called photo layer. This layer enables you to render a photo at each data point. To learn more about the photo layer and the geomap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/geomap/#photos-layer-alpha" >}}).
 
@@ -38,29 +62,39 @@ We have added a new alpha layer type in Geomap called photo layer. This layer en
 
 ## Canvas panel
 
-Available in beta in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced
+Available in **beta** in all editions of Grafana
 
-We have added icon value mapping support. This enables you to dynamically set which icon to display based on your data. To learn more about the Canvas panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+Canvas is a new panel that combines the power of Grafana with the flexibility of custom elements. Canvas visualizations are extensible form-built panels that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren’t possible with standard Grafana panels, all within Grafana’s UI. If you’ve used popular UI and web design tools, then designing Canvas panels will feel very familiar.
+
+In Grafana v9.3 We have added icon value mapping support to the Canvas panel. This enables you to dynamically set which icon to display based on your data. To learn more about the Canvas panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-icon-value-mapping-support-9-3-0.mp4" max-width="750px" caption="Canvas panel icon value mapping support" >}}
 
-## Public Dashboards - Audit Table
+## Public dashboards improvements
 
-Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud Advanced
+### Manage all of your public dashboards in one place
 
-We have a new feature as part of our Public Dashboard efforts. We have introduced a new menu item under Dashboards → Public Dashboards. This new view is a list of all of the public dashboards in your Grafana instance. From here you can navigate to the underlying dashboard, see if it is enabled, get a quick link out to the public version of the dashboard, or get quick access to the configuration. You will be able to see a dashboard if you have view access, you will be able to navigate to the configuration if you have public dashboard privileges (RBAC “Dashboard Public” or ADMIN basic).
+Available in **experimental** in Grafana Open Source, Enterprise, and Cloud Advanced
+
+You can use Public Dashboards to make a given dashboard available to anyone on the internet with no need to sign in. In Grafana v9.3 we have introduced a new screen where you can manage all of your public dashboards. From here, you can view is a list of all of the public dashboards in your Grafana instance, navigate to the underlying dashboard, see if it is enabled, link out to the public version of the dashboard, or update the public dashboard's configuration. You can see a public dashboard's configuration if you have view access to the dashboard itself, and you can edit its configuration if you have the Admin or Server Admin role, or the "Public Dashboard writer" role if you are using RBAC in Grafana Enterprise or Cloud Advanced.
+
+To check out this new screen and configure your public dashboards, navigate to Dashboards → Public Dashboards. 
 
 [image public-dashboard-audit-table.png]
 
-## Public Dashboards - Annotations
+### Choose to display annotations in public dashboards
 
-Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud Advanced
+Available in **experimental** in Grafana Open Source, Enterprise, and Cloud Advanced
 
-Annotations are now supported in public dashboards, with the exception of query annotations. They are turned off by default, but can be turned on in the public dashboard settings modal.
+Annotations are now supported in public dashboards, with the exception of query annotations. They are turned off by default, but can be turned on in your public dashboard settings.
+
+Note that since Public Dashboards is an experimental feature, you need to enable it in Grafana using the `publicDashboards` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}), or open a support ticket requesting public dashboards if you are a Cloud Advanced customer.
+
+Learn more about Public Dashboards in our [documentation]({{< relref "../dashboards/dashboard-public/" >}}).
 
 ## Transformations - Partition by values
 
-Available in experimental in Grafana Open Source, Enterprise, Cloud Pro, Cloud Advanced
+Available in **experimental** in all editions of Grafana
 
 This new transformation can help eliminate the need for multiple queries to the same datasource with different WHERE clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
@@ -98,7 +132,7 @@ With the Partition by values transformer, you can now issue a single query and s
 
 ## Reporting: Zoom in and out to fit your data better into a PDF
 
-This feature is available in Grafana Enterprise, Cloud Pro, and Cloud Advanced.
+Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced.
 
 Because dashboards appear on a screen and reports are PDFs, it can be challenging to render data just the way you want to. Sometimes the report doesn't show enough columns in a table, or the titles appear too small. Now you can adjust the scale of your report to zoom in and make each text field and panel larger or zoom out to show more data.
 
@@ -108,7 +142,7 @@ The zoom feature is located in the **Format Report** section of your reporting c
 
 ## Authentication - OAuth token handling improvements
 
-This feature is generally available in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced.
+Generally available in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced.
 
 As part of our efforts to improve the security of Grafana, we are introducing a long-awaited feature which enhances Grafana's OAuth 2.0 compatibility. When a user logs in using an OAuth provider, on each request Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the refresh token provided (if any exists) to obtain a new access token.
 
@@ -138,6 +172,8 @@ $ grafana-cli user-manager conflicts ingest-file <filepath>
 
 ## LDAP - Role mapping improvements
 
+Generally available in all editions of Grafana
+
 If you use an LDAP directory to authenticate to Grafana but prefer to assign organizations and roles in the Grafana UI
 or via API, you can now enable a configuration option to skip user organization roles synchronization with your LDAP
 directory.
@@ -149,6 +185,8 @@ and make user roles editable manually.
 
 ## Azure AD OAuth2 - New option to always fetch groups from the Graph API
 
+Generally available in all editions of Grafana
+
 If you use Azure AD OAuth2 authentication and use `SecurityEnabled` groups that you don't want Azure to embed in the
 authentication token, you can force Grafana to use Microsoft's Graph API instead.
 
@@ -158,6 +196,8 @@ when configuring Azure AD authentication to force Grafana to fetch groups using 
 
 ## RBAC - List token's permissions
 
+Generally available in Grafana Enterprise and Cloud Advanced
+
 We added a new endpoint to help users diagnose permissions-related issues with user and token authorization.
 [This endpoint]({{< relref "../developers/http_api/access_control/#list-your-permissions" >}}) allows users to get the
 full list of RBAC permissions associated with their token.
@@ -165,7 +205,9 @@ full list of RBAC permissions associated with their token.
 For more details, see the related service accounts [documentation]({{< relref
 "../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
 
-## Terraform - Extended support for provisioning permissions
+## RBAC with Terraform - Extended support for provisioning permissions
+
+Generally available in Grafana Enterprise and Cloud Advanced
 
 All Grafana users can now use the latest release of [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) (version 1.31.1+) to provision [user and team access to service accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/#manage-users-and-teams-permissions-for-a-service-account-in-grafana). This allows full management of service accounts through Terraform - from creating a service account and allowing users to access it to assigning roles to the service account and generating service account tokens.
 
@@ -175,19 +217,21 @@ We have also added [documentation on provisioning RBAC roles and role assignment
 
 Finally, we have fixed several access control related bugs to ensure a smoother provisioning experience.
 
-## Alerting - Email templating
+## Alerting
 
-Available in Grafana Open Source.
+### Email templating
+
+Generally available in all editions of Grafana
 
 Improves the design and functionality of email templates to make template creation much easier and customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
 
-## Alerting - Support for Webex Teams
+### Support for Webex Teams
 
-Available in Grafana Open Source.
+Generally available in all editions of Grafana
 
 Adds Cisco Webex Teams as a contact point type to enable users of Webex Temas to notify alerts into a Webex Teams channel.
 
-## Alerting - Edit alert rules created using the provisioning API
+### Edit alert rules created using the provisioning API
 
 Available in Grafana Open Source.
 
@@ -197,50 +241,26 @@ POST /api/v1/provisioning/alert-rules
 
 PUT /api/v1/provisioning/alert-rules/{UID}
 
-## Alerting - Support values in notification templates
+### Support values in notification templates
 
 Available in Grafana Open Source.
 
 Supports values in notification templates, so that you can create a single template that prints the annotations, labels, and values for your alerts in a format of your choice.
 
-## Alerting - Evaluation intervals
+### Evaluation intervals
 
 Available in Grafana Open Source.
 
 Makes it easier to set up or update evaluation intervals for alert groups by improving the Alert Rule form.
 
-## Alerting - View notification errors
+### View notification errors
 
 Available in Grafana Open Source.
 
 Allows you to easily see when something is wrong with your contact point(s) and the reason for the error. The Receivers API contains information on the error, including a time stamp, duration of the attempt, and the error. On the UI, you can view the errors for each contact point.
 
-## Alerting - Redesign of the expressions pipeline
+### Redesign of the expressions pipeline
 
 Available in Grafana Open Source.
 
 Introduces a new redesigned expressions pipeline editor that combines both the expressions editor and the preview into a single view.
-
-## New navigation
-
-_Available in beta in all editions._
-
-Use Grafana’s redesigned navigation to get full visibility into the health of your systems, by quickly jumping between features as part of your incident response workflow.
-
-As Grafana has grown from a visualization tool to an observability solution, we’ve added many tools along the way. This often resulted in pages that were visually inconsistent or hard to find. This update gives Grafana a new look and feel, and makes page layouts and navigation patterns more consistent.
-
-We’ve revamped the navigation menu and grouped related tools together, making it easier to find what you need. Pages in Grafana now leverage new layouts that include breadcrumbs and a sidebar, allowing you to quickly jump between pages. We’ve also introduced a header that appears on all pages in Grafana, making dashboard search accessible from any page.
-
-Use the `topnav` feature toggle to try out Grafana’s new navigation.
-
-**Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
-
-## New languages
-
-_Generally available in all editions._
-
-We have added 4 new languages to Grafana: Spanish, French, German and Simplified Chinese.
-
-With millions of users across the globe, Grafana has a global footprint. In order to make it accessible to a wider audience, we have taken the first steps in localizing key workflows. You can now set Grafana’s language for the navigation, viewing dashboards, and a handful of settings.
-
-Read more about configuring the [default language for your organization](https://grafana.com/docs/grafana/latest/administration/organization-preferences/) and [updating your profile](https://grafana.com/docs/grafana/latest/administration/user-management/user-preferences/).
