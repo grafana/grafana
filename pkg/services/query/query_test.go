@@ -355,7 +355,7 @@ func TestParseMetricRequest(t *testing.T) {
 
 		t.Run("createDataSourceQueryEnrichers should return 2 enrichers", func(t *testing.T) {
 			parsedReq.httpRequest = &http.Request{}
-			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, nil, []string{})
+			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{})
 			require.Len(t, enrichers, 2)
 			require.NotNil(t, enrichers["gIEkMvIVz"])
 			require.NotNil(t, enrichers["sEx6ZvSVk"])
