@@ -18,7 +18,6 @@ weight: -33
 
 Welcome to Grafana 9.3. Read What's New to learn all about the latest release. For more detail, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-
 ## New navigation
 
 Available in **beta** in all editions of Grafana
