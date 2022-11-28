@@ -399,6 +399,121 @@ describe('Table', () => {
     });
   });
 
+  describe('on table footer enabled and count calculation selected', () => {
+    it('should show count of non-null values', async () => {
+      getTestContext({
+        footerOptions: { show: true, reducer: ['count'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('4');
+    });
+
+    it('should show count of rows when `count rows` is selected', async () => {
+      getTestContext({
+        footerOptions: { show: true, reducer: ['count'], countRows: true },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number1',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count:'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
+    });
+
+    it('should show correct counts when turning `count rows` on and off', async () => {
+      const { rerender } = getTestContext({
+        footerOptions: { show: true, reducer: ['count'], countRows: true },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number1',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count:'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
+
+      const onSortByChange = jest.fn();
+      const onCellFilterAdded = jest.fn();
+      const onColumnResize = jest.fn();
+      const props: Props = {
+        ariaLabel: 'aria-label',
+        data: getDefaultDataFrame(),
+        height: 600,
+        width: 800,
+        onSortByChange,
+        onCellFilterAdded,
+        onColumnResize,
+      };
+
+      const propOverrides = {
+        footerOptions: { show: true, reducer: ['count'], countRows: false },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      Object.assign(props, propOverrides);
+
+      rerender(<Table {...props} />);
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('4');
+    });
+  });
+
   describe('when mounted with data and sub-data', () => {
     it('then correct rows should be rendered and new table is rendered when expander is clicked', () => {
       getTestContext({
