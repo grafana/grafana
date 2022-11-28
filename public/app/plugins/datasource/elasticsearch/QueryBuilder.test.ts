@@ -192,6 +192,7 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.terms.min_doc_count).toBe(1);
   });
 
+  // Next to migrate:
   it('with term agg and variable as min_doc_count', () => {
     const query = builder.build({
       refId: 'A',

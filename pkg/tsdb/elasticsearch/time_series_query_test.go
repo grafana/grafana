@@ -22,8 +22,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With defaults", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
+				"refId": "A",
 				"timeField": "@timestamp",
-				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
+				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "1" }],
 				"metrics": [{"type": "count", "id": "0" }]
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
@@ -33,11 +34,29 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, rangeFilter.Lte, toMs)
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
-			require.Equal(t, sr.Aggs[0].Key, "2")
+			require.Equal(t, sr.Aggs[0].Key, "1")
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 			require.Equal(t, dateHistogramAgg.Field, "@timestamp")
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromMs)
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toMs)
+		})
+
+		// Copied from frontend tests
+		t.Run("Should clean settings from null values", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"refId": "A",
+				"timeField": "@timestamp",
+				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "1" }],
+				"metrics": [{"type": "avg", "id": "0", "settings": {"missing": "null", "script": "1" } }]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			firstLevel := sr.Aggs[0]
+			secondLevel := firstLevel.Aggregation.Aggs[0]
+			require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings["script"], "1")
+			// FIXME: This is a bug in implementation, missing is set to "null" instead of being removed
+			// require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings["missing"], nil)
 		})
 
 		t.Run("With multiple bucket aggs", func(t *testing.T) {
@@ -82,6 +101,30 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Field, "@value")
 		})
 
+		t.Run("With term agg and order by term", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "_term"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Aggregation.Aggregation.(*es.TermsAggregation).Order["_key"], "asc")
+		})
+
 		t.Run("With term agg and order by metric agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
@@ -106,10 +149,12 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			avgAggOrderBy := sr.Aggs[0].Aggregation.Aggs[0]
 			require.Equal(t, avgAggOrderBy.Key, "5")
 			require.Equal(t, avgAggOrderBy.Aggregation.Type, "avg")
+			require.Equal(t, avgAggOrderBy.Aggregation.Aggregation.(*es.MetricAggregation).Field, "@value")
 
 			avgAgg := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggs[0]
 			require.Equal(t, avgAgg.Key, "5")
 			require.Equal(t, avgAgg.Aggregation.Type, "avg")
+			require.Equal(t, avgAgg.Aggregation.Aggregation.(*es.MetricAggregation).Field, "@value")
 		})
 
 		t.Run("With term agg and order by count metric agg", func(t *testing.T) {
@@ -136,6 +181,33 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, termsAgg.Order["_count"], "asc")
 		})
 
+		t.Run("With term agg and order by count agg", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				],
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "1"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			firstLevel := sr.Aggs[0]
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+
+			require.Equal(t, termsAgg.Order["_count"], "asc")
+			require.NotEqual(t, firstLevel.Aggregation.Aggs[0].Key, "1")
+		})
+
 		t.Run("With term agg and order by percentiles agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
@@ -157,8 +229,12 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 
 			orderByAgg := sr.Aggs[0].Aggregation.Aggs[0]
+			secondLevel := orderByAgg.Aggregation.Aggregation
+
 			require.Equal(t, orderByAgg.Key, "1")
 			require.Equal(t, orderByAgg.Aggregation.Type, "percentiles")
+			require.Equal(t, orderByAgg.Aggregation.Aggregation.(*es.MetricAggregation).Field, "@value")
+			require.Equal(t, secondLevel.(*es.MetricAggregation).Field, "@value")
 		})
 
 		t.Run("With term agg and order by extended stats agg", func(t *testing.T) {
@@ -181,9 +257,14 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
-			orderByAgg := sr.Aggs[0].Aggregation.Aggs[0]
+			firstLevel := sr.Aggs[0]
+			orderByAgg := firstLevel.Aggregation.Aggs[0]
+			secondLevel := orderByAgg.Aggregation.Aggregation
+
 			require.Equal(t, orderByAgg.Key, "1")
 			require.Equal(t, orderByAgg.Aggregation.Type, "extended_stats")
+			require.Equal(t, orderByAgg.Aggregation.Aggregation.(*es.MetricAggregation).Field, "@value")
+			require.Equal(t, secondLevel.(*es.MetricAggregation).Field, "@value")
 		})
 
 		t.Run("With term agg and order by term", func(t *testing.T) {
@@ -211,6 +292,32 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Key, "2")
 			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
 			require.Equal(t, termsAgg.Order["_key"], "asc")
+		})
+
+		t.Run("With term agg and valid min_doc_count", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "min_doc_count": "1" }
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "2")
+			// FIXME: This is a bug in the current implementation. The min_doc_count is not set.
+			// termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			// require.Equal(t, termsAgg.MinDocCount, "1")
 		})
 
 		t.Run("With metric percentiles", func(t *testing.T) {
