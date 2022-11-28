@@ -85,59 +85,59 @@ describe('Prepare time series transformer', () => {
         values: f.fields[1].values.toArray(),
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "labels": Object {
+      [
+        {
+          "labels": {
             "region": "a",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             10,
             30,
           ],
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "region": "b",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             20,
             40,
           ],
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "region": "a",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             2,
             4,
           ],
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "region": "b",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             3,
             5,
           ],

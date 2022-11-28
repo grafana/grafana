@@ -20,37 +20,37 @@ describe('getPanelMenu', () => {
 
     const menuItems = getPanelMenu(dashboard, panel);
     expect(menuItems).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "iconClassName": "eye",
           "onClick": [Function],
           "shortcut": "v",
           "text": "View",
         },
-        Object {
+        {
           "iconClassName": "edit",
           "onClick": [Function],
           "shortcut": "e",
           "text": "Edit",
         },
-        Object {
+        {
           "iconClassName": "share-alt",
           "onClick": [Function],
           "shortcut": "p s",
           "text": "Share",
         },
-        Object {
+        {
           "iconClassName": "compass",
           "onClick": [Function],
           "shortcut": "x",
           "text": "Explore",
         },
-        Object {
+        {
           "iconClassName": "info-circle",
           "onClick": [Function],
           "shortcut": "i",
-          "subMenu": Array [
-            Object {
+          "subMenu": [
+            {
               "onClick": [Function],
               "text": "Panel JSON",
             },
@@ -58,20 +58,20 @@ describe('getPanelMenu', () => {
           "text": "Inspect",
           "type": "submenu",
         },
-        Object {
+        {
           "iconClassName": "cube",
           "onClick": [Function],
-          "subMenu": Array [
-            Object {
+          "subMenu": [
+            {
               "onClick": [Function],
               "shortcut": "p d",
               "text": "Duplicate",
             },
-            Object {
+            {
               "onClick": [Function],
               "text": "Copy",
             },
-            Object {
+            {
               "onClick": [Function],
               "text": "Create library panel",
             },
@@ -79,11 +79,11 @@ describe('getPanelMenu', () => {
           "text": "More...",
           "type": "submenu",
         },
-        Object {
+        {
           "text": "",
           "type": "divider",
         },
-        Object {
+        {
           "iconClassName": "trash-alt",
           "onClick": [Function],
           "shortcut": "p r",
@@ -104,37 +104,37 @@ describe('getPanelMenu', () => {
 
       const menuItems = getPanelMenu(dashboard, panel, angularComponent);
       expect(menuItems).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "iconClassName": "eye",
             "onClick": [Function],
             "shortcut": "v",
             "text": "View",
           },
-          Object {
+          {
             "iconClassName": "edit",
             "onClick": [Function],
             "shortcut": "e",
             "text": "Edit",
           },
-          Object {
+          {
             "iconClassName": "share-alt",
             "onClick": [Function],
             "shortcut": "p s",
             "text": "Share",
           },
-          Object {
+          {
             "iconClassName": "compass",
             "onClick": [Function],
             "shortcut": "x",
             "text": "Explore",
           },
-          Object {
+          {
             "iconClassName": "info-circle",
             "onClick": [Function],
             "shortcut": "i",
-            "subMenu": Array [
-              Object {
+            "subMenu": [
+              {
                 "onClick": [Function],
                 "text": "Panel JSON",
               },
@@ -142,11 +142,11 @@ describe('getPanelMenu', () => {
             "text": "Inspect",
             "type": "submenu",
           },
-          Object {
+          {
             "iconClassName": "cube",
             "onClick": [Function],
-            "subMenu": Array [
-              Object {
+            "subMenu": [
+              {
                 "href": undefined,
                 "onClick": [Function],
                 "shortcut": "p l",

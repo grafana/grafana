@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -60,8 +61,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 		store.Cfg.AutoAssignOrg = autoAssignOrg
 	}()
 
-	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-	err = store.CreateOrg(context.Background(), orgCmd)
+	orgCmd := &org.CreateOrgCommand{Name: "Some Test Org"}
+	_, err = orgService.CreateWithMember(context.Background(), orgCmd)
 	require.Nil(t, err)
 
 	type testCreateSATestCase struct {
@@ -296,8 +297,9 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
 		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
 	require.NoError(t, err)
+	acService := actest.FakeService{}
 
-	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
+	a := NewServiceAccountsAPI(cfg, svc, acmock, acService, routerRegister, saStore, saPermissionService)
 	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration

@@ -28,20 +28,20 @@ describe('Labels as Columns', () => {
     await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
       const data = received[0];
       expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
-        Object {
-          "Value": Array [
+        {
+          "Value": [
             1,
             2,
           ],
-          "feelsLike": Array [
+          "feelsLike": [
             "ok",
             "ok",
           ],
-          "location": Array [
+          "location": [
             "inside",
             "inside",
           ],
-          "time": Array [
+          "time": [
             1000,
             2000,
           ],
@@ -119,27 +119,27 @@ describe('Labels as Columns', () => {
       expect(data.length).toEqual(2);
 
       expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
-        Object {
-          "location": Array [
+        {
+          "location": [
             "inside",
           ],
-          "temp": Array [
+          "temp": [
             1,
           ],
-          "time": Array [
+          "time": [
             1000,
           ],
         }
       `);
       expect(toSimpleObject(data[1])).toMatchInlineSnapshot(`
-        Object {
-          "location": Array [
+        {
+          "location": [
             "outside",
           ],
-          "temp": Array [
+          "temp": [
             -1,
           ],
-          "time": Array [
+          "time": [
             2000,
           ],
         }
@@ -196,33 +196,33 @@ describe('Labels as Columns', () => {
 
     await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
       expect(received[0][0].fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "time": Array [
+        [
+          {
+            "time": [
               1000,
               2000,
             ],
           },
-          Object {
-            "a": Array [
+          {
+            "a": [
               1,
               3,
             ],
           },
-          Object {
-            "b": Array [
+          {
+            "b": [
               2,
               4,
             ],
           },
-          Object {
-            "foo": Array [
+          {
+            "foo": [
               "thing",
               "thing",
             ],
           },
-          Object {
-            "bar": Array [
+          {
+            "bar": [
               "thing",
               "thing",
             ],
@@ -285,42 +285,42 @@ describe('Labels as Columns', () => {
       expect(
         received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values.toArray() })) }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+        [
+          {
+            "fields": [
+              {
+                "label": [
                   "foo",
                   "bar",
                   "zaz",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   "thing",
                   "a",
                   "xyz",
                 ],
               },
             ],
-            "name": "a {bar=\\"a\\", foo=\\"thing\\", zaz=\\"xyz\\"}",
+            "name": "a {bar="a", foo="thing", zaz="xyz"}",
           },
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+          {
+            "fields": [
+              {
+                "label": [
                   "foo",
                   "bar",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   "thing",
                   "b",
                 ],
               },
             ],
-            "name": "b {bar=\\"b\\", foo=\\"thing\\"}",
+            "name": "b {bar="b", foo="thing"}",
           },
         ]
       `);
@@ -349,40 +349,40 @@ describe('Labels as Columns', () => {
       expect(
         received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values.toArray() })) }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+        [
+          {
+            "fields": [
+              {
+                "label": [
                   "zaz",
                   "bar",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   "xyz",
                   "a",
                 ],
               },
             ],
-            "name": "a {bar=\\"a\\", foo=\\"thing\\", zaz=\\"xyz\\"}",
+            "name": "a {bar="a", foo="thing", zaz="xyz"}",
           },
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+          {
+            "fields": [
+              {
+                "label": [
                   "zaz",
                   "bar",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   undefined,
                   "b",
                 ],
               },
             ],
-            "name": "b {bar=\\"b\\", foo=\\"thing\\"}",
+            "name": "b {bar="b", foo="thing"}",
           },
         ]
       `);
