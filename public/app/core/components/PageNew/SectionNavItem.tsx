@@ -66,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover,
       &:focus {
         text-decoration: underline;
+        z-index: 1;
       }
     `,
     activeStyle: css`

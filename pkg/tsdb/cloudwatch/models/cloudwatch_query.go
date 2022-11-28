@@ -290,7 +290,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		suffix := refId
 		if !validMetricDataID.MatchString(suffix) {
 			newUUID := uuid.NewString()
-			suffix = strings.Replace(newUUID, "-", "", -1)
+			suffix = strings.ReplaceAll(newUUID, "-", "")
 		}
 		q.Id = fmt.Sprintf("query%s", suffix)
 	}
@@ -436,8 +436,8 @@ func parseDimensions(dimensions map[string]interface{}) (map[string][]string, er
 }
 
 func sortDimensions(dimensions map[string][]string) map[string][]string {
-	sortedDimensions := make(map[string][]string)
-	var keys []string
+	sortedDimensions := make(map[string][]string, len(dimensions))
+	keys := make([]string, 0, len(dimensions))
 	for k := range dimensions {
 		keys = append(keys, k)
 	}

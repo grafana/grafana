@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -39,15 +40,16 @@ import (
 )
 
 var wireExtsBasicSet = wire.NewSet(
-	auth.ProvideUserAuthTokenService,
-	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
-	wire.Bind(new(models.UserTokenBackgroundService), new(*auth.UserAuthTokenService)),
+	authimpl.ProvideUserAuthTokenService,
+	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
+	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
 	licensing.ProvideService,
 	wire.Bind(new(models.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	acimpl.ProvideService,
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
+	wire.Bind(new(plugins.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	thumbs.ProvideCrawlerAuthSetupService,
 	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),

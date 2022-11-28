@@ -6,6 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { Alert, InlineField, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
 import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import useLastError from '../../utils/useLastError';
@@ -201,7 +202,11 @@ const VariableEditor = (props: Props) => {
 
   return (
     <>
-      <InlineField label="Select query type" labelWidth={20}>
+      <InlineField
+        label="Select query type"
+        labelWidth={20}
+        data-testid={selectors.components.variableEditor.queryType.input}
+      >
         <Select
           aria-label="select query type"
           onChange={onQueryTypeChange}
@@ -235,7 +240,11 @@ const VariableEditor = (props: Props) => {
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
       {requireSubscription && (
-        <InlineField label="Select subscription" labelWidth={20}>
+        <InlineField
+          label="Select subscription"
+          labelWidth={20}
+          data-testid={selectors.components.variableEditor.subscription.input}
+        >
           <Select
             aria-label="select subscription"
             onChange={onChangeSubscription}
@@ -246,7 +255,11 @@ const VariableEditor = (props: Props) => {
         </InlineField>
       )}
       {(requireResourceGroup || hasResourceGroup) && (
-        <InlineField label="Select resource group" labelWidth={20}>
+        <InlineField
+          label="Select resource group"
+          labelWidth={20}
+          data-testid={selectors.components.variableEditor.resourceGroup.input}
+        >
           <Select
             aria-label="select resource group"
             onChange={onChangeResourceGroup}
@@ -262,7 +275,11 @@ const VariableEditor = (props: Props) => {
         </InlineField>
       )}
       {(requireNamespace || hasNamespace) && (
-        <InlineField label="Select namespace" labelWidth={20}>
+        <InlineField
+          label="Select namespace"
+          labelWidth={20}
+          data-testid={selectors.components.variableEditor.namespace.input}
+        >
           <Select
             aria-label="select namespace"
             onChange={onChangeNamespace}
@@ -278,7 +295,11 @@ const VariableEditor = (props: Props) => {
         </InlineField>
       )}
       {requireResource && (
-        <InlineField label="Select resource" labelWidth={20}>
+        <InlineField
+          label="Select resource"
+          labelWidth={20}
+          data-testid={selectors.components.variableEditor.resource.input}
+        >
           <Select
             aria-label="select resource"
             onChange={onChangeResource}

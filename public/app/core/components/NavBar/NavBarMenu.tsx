@@ -256,7 +256,7 @@ export function NavItem({
                   }}
                   styleOverrides={styles.item}
                   target={childLink.target}
-                  text={childLink.text}
+                  text={getNavTitle(childLink.id) ?? childLink.text}
                   url={childLink.url}
                   isMobile={true}
                 />
@@ -297,7 +297,7 @@ export function NavItem({
                 <NavBarItemIcon link={link} />
               </FeatureHighlightWrapper>
             </div>
-            <span className={styles.linkText}>{link.text}</span>
+            <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
       </li>
@@ -398,7 +398,7 @@ function CollapsibleNavItem({
           contentClassName={styles.collapseContent}
           label={
             <div className={cx(styles.labelWrapper, { [styles.primary]: isActive })}>
-              <span className={styles.linkText}>{link.text}</span>
+              <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
             </div>
           }
         >

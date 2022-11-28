@@ -60,7 +60,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 
 	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
-		ctx.ImagePublicURL = "https://grafana.com/assets/img/blog/mixed_styles.png"
+		ctx.ImagePublicURL = "https://grafana.com/static/assets/img/blog/mixed_styles.png"
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true

@@ -1,4 +1,4 @@
-import { SceneVariableSet } from '../variables/SceneVariableSet';
+import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 
 import { SceneDataNode } from './SceneDataNode';
 import { SceneObjectBase } from './SceneObjectBase';
@@ -74,6 +74,20 @@ describe('SceneObject', () => {
 
     const clone = scene.clone({ name: 'new name' });
     expect(clone.state.name).toBe('new name');
+  });
+
+  it('Cannot modify state', () => {
+    const scene = new TestScene({ name: 'name' });
+    expect(() => {
+      scene.state.name = 'new name';
+    }).toThrow();
+
+    scene.setState({ name: 'new name' });
+    expect(scene.state.name).toBe('new name');
+
+    expect(() => {
+      scene.state.name = 'other name';
+    }).toThrow();
   });
 
   describe('When activated', () => {

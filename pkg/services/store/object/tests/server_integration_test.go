@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
@@ -58,12 +59,12 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		}
 	}
 
-	if len(m.createdRange) == 2 && !timestampInRange(obj.Created, m.createdRange) {
-		mismatches += fmt.Sprintf("expected Created range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.UnixMilli(obj.Created))
+	if len(m.createdRange) == 2 && !timestampInRange(obj.CreatedAt, m.createdRange) {
+		mismatches += fmt.Sprintf("expected Created range: [from %s to %s], actual created: %s\n", m.createdRange[0], m.createdRange[1], time.UnixMilli(obj.CreatedAt))
 	}
 
-	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
-		mismatches += fmt.Sprintf("expected Updated range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.UnixMilli(obj.Updated))
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.UpdatedAt, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected Updated range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.UnixMilli(obj.UpdatedAt))
 	}
 
 	if m.createdBy != "" && m.createdBy != obj.CreatedBy {
@@ -97,8 +98,8 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 		mismatches += fmt.Sprintf("expected etag: %s, actual etag: %s\n", *m.etag, obj.ETag)
 	}
 
-	if len(m.updatedRange) == 2 && !timestampInRange(obj.Updated, m.updatedRange) {
-		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.UnixMilli(obj.Updated))
+	if len(m.updatedRange) == 2 && !timestampInRange(obj.UpdatedAt, m.updatedRange) {
+		mismatches += fmt.Sprintf("expected updatedRange range: [from %s to %s], actual updated: %s\n", m.updatedRange[0], m.updatedRange[1], time.UnixMilli(obj.UpdatedAt))
 	}
 
 	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
@@ -112,7 +113,7 @@ func requireVersionMatch(t *testing.T, obj *object.ObjectVersionInfo, m objectVe
 	require.True(t, len(mismatches) == 0, mismatches)
 }
 
-func TestObjectServer(t *testing.T) {
+func TestIntegrationObjectServer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -120,7 +121,7 @@ func TestObjectServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
-	fakeUser := fmt.Sprintf("user:%d:%s", testCtx.user.UserID, testCtx.user.Login)
+	fakeUser := store.GetUserIDString(testCtx.user)
 	firstVersion := "1"
 	kind := models.StandardKindJSONObj
 	grn := &object.GRN{

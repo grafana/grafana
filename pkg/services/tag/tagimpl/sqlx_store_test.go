@@ -7,6 +7,9 @@ import (
 )
 
 func TestIntegrationSQLxSavingTags(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testIntegrationSavingTags(t, func(ss db.DB) store {
 		return &sqlxStore{sess: ss.GetSqlxSession()}
 	})

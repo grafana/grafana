@@ -1,10 +1,9 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { AGGREGATE_FNS } from 'app/features/plugins/sql/constants';
+import { LanguageDefinition } from '@grafana/experimental';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, LanguageCompletionProvider, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
+import { DB, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
+import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-
-import { FUNCTIONS } from '../mysql/functions';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
@@ -13,7 +12,7 @@ import { getFieldConfig, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
 
 export class PostgresDatasource extends SqlDatasource {
-  completionProvider: LanguageCompletionProvider | undefined = undefined;
+  sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
@@ -40,19 +39,21 @@ export class PostgresDatasource extends SqlDatasource {
     return tables.fields.table.values.toArray().flat();
   }
 
-  getSqlCompletionProvider(db: DB): LanguageCompletionProvider {
-    if (this.completionProvider !== undefined) {
-      return this.completionProvider;
+  getSqlLanguageDefinition(db: DB): LanguageDefinition {
+    if (this.sqlLanguageDefinition !== undefined) {
+      return this.sqlLanguageDefinition;
     }
 
     const args = {
       getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
       getTables: { current: () => fetchTables(db) },
-      //TODO: Add aggregate functions
-      getFunctions: { current: () => [...AGGREGATE_FNS, ...FUNCTIONS] },
     };
-    this.completionProvider = getSqlCompletionProvider(args);
-    return this.completionProvider;
+    this.sqlLanguageDefinition = {
+      id: 'pgsql',
+      completionProvider: getSqlCompletionProvider(args),
+      formatter: formatSQL,
+    };
+    return this.sqlLanguageDefinition;
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
@@ -67,11 +68,14 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   getDB(): DB {
+    if (this.db !== undefined) {
+      return this.db;
+    }
     return {
       init: () => Promise.resolve(true),
       datasets: () => Promise.resolve([]),
       tables: () => this.fetchTables(),
-      getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
+      getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(this.db),
       fields: async (query: SQLQuery) => {
         if (!query?.table) {
           return [];
@@ -86,7 +90,6 @@ export class PostgresDatasource extends SqlDatasource {
         const tables = await this.fetchTables();
         return tables.map((t) => ({ name: t, completion: t }));
       },
-      functions: async () => AGGREGATE_FNS,
     };
   }
 }

@@ -66,6 +66,8 @@ export enum LokiOperationId {
   BottomK = 'bottomk',
   LineContains = '__line_contains',
   LineContainsNot = '__line_contains_not',
+  LineContainsCaseInsensitive = '__line_contains_case_insensitive',
+  LineContainsNotCaseInsensitive = '__line_contains_not_case_insensitive',
   LineMatchesRegex = '__line_matches_regex',
   LineMatchesRegexNot = '__line_matches_regex_not',
   LineFilterIpMatches = '__line_filter_ip_matches',

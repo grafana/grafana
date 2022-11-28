@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { stylesFactory, useTheme, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -22,19 +22,25 @@ export interface RichHistorySettingsProps {
   deleteRichHistory: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.bodySmall.fontSize};
     `,
     spaceBetween: css`
-      margin-bottom: ${theme.spacing.lg};
+      margin-bottom: ${theme.spacing(3)};
     `,
     input: css`
       max-width: 200px;
     `,
+    bold: css`
+      font-weight: ${theme.typography.fontWeightBold};
+    `,
+    bottomMargin: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
   };
-});
+};
 
 const retentionPeriodOptions = [
   { value: 2, label: '2 days' },
@@ -53,8 +59,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
     toggleactiveDatasourceOnly,
     deleteRichHistory,
   } = props;
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
 
   const onDelete = () => {
@@ -112,20 +117,8 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
       )}
       {supportedFeatures().clearHistory && (
         <div>
-          <div
-            className={css`
-              font-weight: ${theme.typography.weight.bold};
-            `}
-          >
-            Clear query history
-          </div>
-          <div
-            className={css`
-              margin-bottom: ${theme.spacing.sm};
-            `}
-          >
-            Delete all of your query history, permanently.
-          </div>
+          <div className={styles.bold}>Clear query history</div>
+          <div className={styles.bottomMargin}>Delete all of your query history, permanently.</div>
           <Button variant="destructive" onClick={onDelete}>
             Clear query history
           </Button>

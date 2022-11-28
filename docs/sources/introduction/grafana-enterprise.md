@@ -61,7 +61,7 @@ Grafana Enterprise adds the following features:
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../dashboards/assess-dashboard-usage/" >}}) to understand how your Grafana instance is used.
 - [Recorded queries]({{< relref "../administration/recorded-queries" >}}) to see trends over time for your data sources.
-- [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/" >}}) to manage your configuration or provisioning secrets with Vault.
+- [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/#encrypting-your-database-with-a-key-from-a-key-management-service-kms" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security/" >}}) makes it possible to restrict outgoing requests from the Grafana server.
 - [Settings updates at runtime]({{< relref "../setup-grafana/configure-grafana/settings-updates-at-runtime" >}}) allows you to update Grafana settings at runtime without requiring a restart.

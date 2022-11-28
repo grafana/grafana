@@ -4,6 +4,7 @@ import React, { FormEvent, useCallback, useState } from 'react';
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { Trans, t } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
@@ -111,7 +112,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
             <div className={styles.body}>
               <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
                 <TimeRangeList
-                  title="Example time ranges"
+                  title={t('time-picker.time-range.example-title', 'Example time ranges')}
                   options={validOptions}
                   onChange={onChangeTimeOption}
                   value={timeOption}
@@ -122,7 +123,9 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                   <TimePickerTitle>
                     <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
                       <div>
-                        Specify time range <Icon name="info-circle" />
+                        <Trans i18nKey="time-picker.time-range.specify">
+                          Specify time range <Icon name="info-circle" />
+                        </Trans>
                       </div>
                     </Tooltip>
                   </TimePickerTitle>

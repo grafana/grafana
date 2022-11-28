@@ -13,6 +13,7 @@ import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
+import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
 import { PluginTabIds } from '../types';
 
@@ -27,6 +28,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
   const { navModel, activePageId } = usePluginDetailsTabs(plugin, queryParams.page as PluginTabIds);
+  const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
@@ -51,7 +53,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   }
 
   return (
-    <Page navId="plugins" pageNav={navModel}>
+    <Page navId="plugins" pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
       <Page.Contents>
         <TabContent className={styles.tabContent}>
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
@@ -67,6 +69,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     alert: css`
       margin-bottom: ${theme.spacing(2)};
+    `,
+    subtitle: css`
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
     `,
     // Needed due to block formatting context
     tabContent: css`
