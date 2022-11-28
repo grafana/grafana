@@ -123,7 +123,7 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
+	sc.hs.orgService, err = orgimpl.ProvideService(sc.db, sc.cfg, sc.hs.QuotaService)
 	require.NoError(t, err)
 
 	_, err = sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: sc.initCtx.UserID})
