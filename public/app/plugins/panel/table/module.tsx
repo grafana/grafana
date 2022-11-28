@@ -7,11 +7,11 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions, BackgroundDisplayMode, BarGaugeDisplayMode } from '@grafana/schema';
+import { TableFieldOptions } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 
 import { PaginationEditor } from './PaginationEditor';
-import { TableCellSubOptionEditor } from './TableCellSubOptionEditor';
+import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
@@ -63,31 +63,33 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           },
           defaultValue: defaultPanelFieldConfig.align,
         })
-        .addSelect({
-          path: 'cellOptions.displayMode',
-          name: 'Cell display mode',
-          description: 'Color text, background, show as gauge, etc',
-          settings: {
-            options: [
-              { value: TableCellDisplayMode.Auto, label: 'Auto' },
-              { value: TableCellDisplayMode.ColorText, label: 'Colored text' },
-              { value: TableCellDisplayMode.ColorBackground, label: 'Colored background' },
-              { value: TableCellDisplayMode.Gauge, label: 'Gauge' },
-              { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
-              { value: TableCellDisplayMode.Image, label: 'Image' },
-            ],
-          },
+        // .addSelect({
+        //   path: 'cellOptions.displayMode',
+        //   name: 'Cell display mode',
+        //   description: 'Color text, background, show as gauge, etc',
+        //   settings: {
+        //     options: [
+        //       { value: TableCellDisplayMode.Auto, label: 'Auto' },
+        //       { value: TableCellDisplayMode.ColorText, label: 'Colored text' },
+        //       { value: TableCellDisplayMode.ColorBackground, label: 'Colored background' },
+        //       { value: TableCellDisplayMode.Gauge, label: 'Gauge' },
+        //       { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
+        //       { value: TableCellDisplayMode.Image, label: 'Image' },
+        //     ],
+        //   },
 
-          defaultValue: defaultPanelFieldConfig.cellOptions.displayMode,
-          category: cellCategory,
-        })
+        //   defaultValue: defaultPanelFieldConfig.cellOptions.displayMode,
+        //   category: cellCategory,
+        // })
         .addCustomEditor<void, object>({
-          id: 'cellSubOptions',
-          path: 'cellSuboptions',
+          id: 'cellOptions',
+          path: 'cellOptions',
           name: 'Cell Options',
-          editor: TableCellSubOptionEditor,
-          override: TableCellSubOptionEditor,
-          defaultValue: {},
+          editor: TableCellOptionEditor,
+          override: TableCellOptionEditor,
+          defaultValue: {
+            displayMode: defaultPanelFieldConfig.cellOptions.displayMode,
+          },
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: (f) => true,
@@ -96,33 +98,33 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             return true;
           },
         })
-        .addSelect({
-          path: 'cellOptions.gaugeDisplayMode',
-          name: 'Display type',
-          description: 'The type background or gauge (gradient, retro, etc.) to display',
-          defaultValue: BarGaugeDisplayMode.Basic,
-          settings: {
-            options: [
-              { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
-              { value: BarGaugeDisplayMode.Gradient, label: 'Gradient' },
-              { value: BarGaugeDisplayMode.Lcd, label: 'Retro LCD' },
-            ],
-          },
-          showIf: (cfg) => cfg.cellOptions.displayMode === TableCellDisplayMode.Gauge,
-        })
-        .addSelect({
-          path: 'cellOptions.backgroundDisplayMode',
-          name: 'Background Type',
-          description: 'The type of background to display',
-          defaultValue: BackgroundDisplayMode.Basic,
-          settings: {
-            options: [
-              { value: BackgroundDisplayMode.Basic, label: 'Basic' },
-              { value: BackgroundDisplayMode.Gradient, label: 'Gradient' },
-            ],
-          },
-          showIf: (cfg) => cfg.cellOptions.displayMode === TableCellDisplayMode.ColorBackground,
-        })
+        // .addSelect({
+        //   path: 'cellOptions.gaugeDisplayMode',
+        //   name: 'Display type',
+        //   description: 'The type background or gauge (gradient, retro, etc.) to display',
+        //   defaultValue: BarGaugeDisplayMode.Basic,
+        //   settings: {
+        //     options: [
+        //       { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
+        //       { value: BarGaugeDisplayMode.Gradient, label: 'Gradient' },
+        //       { value: BarGaugeDisplayMode.Lcd, label: 'Retro LCD' },
+        //     ],
+        //   },
+        //   showIf: (cfg) => cfg.cellOptions.displayMode === TableCellDisplayMode.Gauge,
+        // })
+        // .addSelect({
+        //   path: 'cellOptions.backgroundDisplayMode',
+        //   name: 'Background Type',
+        //   description: 'The type of background to display',
+        //   defaultValue: BackgroundDisplayMode.Basic,
+        //   settings: {
+        //     options: [
+        //       { value: BackgroundDisplayMode.Basic, label: 'Basic' },
+        //       { value: BackgroundDisplayMode.Gradient, label: 'Gradient' },
+        //     ],
+        //   },
+        //   showIf: (cfg) => cfg.cellOptions.displayMode === TableCellDisplayMode.ColorBackground,
+        // })
         .addBooleanSwitch({
           path: 'inspect',
           name: 'Cell value inspect',
