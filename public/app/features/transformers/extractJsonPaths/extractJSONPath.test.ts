@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, Field } from '@grafana/data';
+import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
 
 import { extractJSONPathTransformer } from './extractJSONPath';
 import { ExtractJSONPathOptions } from './types';
@@ -130,6 +130,7 @@ describe('JSON Paths from value', () => {
       Object {
         "fields": Array [
           Object {
+            "config": Object {},
             "name": "Time",
             "state": Object {
               "displayName": "Time",
@@ -210,20 +211,23 @@ describe('JSON Paths from value', () => {
 });
 
 const testFieldTime: Field = {
+  config: {},
   name: 'Time',
-  type: 'time',
+  type: FieldType.time,
   values: new ArrayVector([1669638911691]),
 };
 
 const testFieldString: Field = {
+  config: {},
   name: 'String',
-  type: 'string',
+  type: FieldType.string,
   values: new ArrayVector(['Hallo World']),
 };
 
 const testFieldJSON: Field = {
+  config: {},
   name: 'JSON',
-  type: 'string',
+  type: FieldType.string,
   values: new ArrayVector([
     JSON.stringify({
       object: {
