@@ -7,7 +7,7 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions } from '@grafana/schema';
+import { TableFieldOptions, TableCellOptions } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 
 import { PaginationEditor } from './PaginationEditor';
@@ -81,7 +81,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         //   defaultValue: defaultPanelFieldConfig.cellOptions.displayMode,
         //   category: cellCategory,
         // })
-        .addCustomEditor<void, object>({
+        .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
           name: 'Cell Options',
@@ -89,12 +89,12 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           override: TableCellOptionEditor,
           defaultValue: {
             displayMode: defaultPanelFieldConfig.cellOptions.displayMode,
+            subOptions: {},
           },
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: (f) => true,
           showIf: (cfg) => {
-            console.log(cfg);
             return true;
           },
         })

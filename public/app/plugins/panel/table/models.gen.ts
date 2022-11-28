@@ -33,6 +33,7 @@ export const defaultPanelOptions: PanelOptions = {
 export const defaultPanelFieldConfig: TableFieldOptions = {
   cellOptions: {
     displayMode: TableCellDisplayMode.Auto,
+    subOptions: {}
   },
   align: 'auto',
   inspect: false,

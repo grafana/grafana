@@ -1,6 +1,7 @@
-import React, { useState, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
-import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
+//import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
+import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptions } from './cells/BarGaugeCellOptions';
@@ -14,14 +15,15 @@ const cellDisplayModeOptions = [
   { value: TableCellDisplayMode.Image, label: 'Image' },
 ];
 
-// interface TableCellSubOptionEditorProps {
-//   editor: ReactNode; // Each cell type will provide it's own editor
-// }
+interface Props {
+  value: TableCellOptions;
+}
 
-export const TableCellOptionEditor: React.FC<FieldOverrideEditorProps<string, object>> = (props: object) => {
+export const TableCellOptionEditor: React.FC<Props> = (props) => {
+  const value = props.value;
   // Do processing with the values here
   let editor: ReactNode | null = null;
-  const [value, setValue] = useState<SelectableValue<string>>();
+  // const [value, setValue] = useState<SelectableValue<string>>();
 
   if (true) {
     editor = <BarGaugeCellOptions {...props} />;
@@ -35,9 +37,9 @@ export const TableCellOptionEditor: React.FC<FieldOverrideEditorProps<string, ob
       <Field label="Cell display mode" description="Color text, background, show as gauge, etc.">
         <Select
           options={cellDisplayModeOptions}
-          value={value}
+          value={value.displayMode}
           onChange={(v) => {
-            setValue(v);
+            // setValue(v);
           }}
         />
       </Field>

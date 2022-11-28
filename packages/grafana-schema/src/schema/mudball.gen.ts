@@ -483,9 +483,8 @@ export enum BarGaugeDisplayMode {
  * TODO docs
  */
 export interface TableCellOptions {
-  backgroundDisplayMode?: BackgroundDisplayMode;
   displayMode: TableCellDisplayMode;
-  gaugeDisplayMode?: BarGaugeDisplayMode;
+  subOptions: object;
 }
 
 export const defaultTableCellOptions: Partial<TableCellOptions> = {
