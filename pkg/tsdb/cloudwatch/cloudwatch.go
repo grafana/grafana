@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/oam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -122,8 +121,11 @@ func (e *cloudWatchExecutor) getRequestContext(pluginCtx backend.PluginContext, 
 		return models.RequestContext{}, err
 	}
 	return models.RequestContext{
+		OAMClientProvider:     NewOAMAPI(sess),
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
+		LogsAPIProvider:       NewLogsAPI(sess),
 		Settings:              instance.Settings,
+		Features:              e.features,
 	}, nil
 }
 
@@ -178,11 +180,12 @@ func (e *cloudWatchExecutor) checkHealthMetrics(pluginCtx backend.PluginContext)
 }
 
 func (e *cloudWatchExecutor) checkHealthLogs(pluginCtx backend.PluginContext) error {
-	parameters := url.Values{
-		"limit": []string{"1"},
+	session, err := e.newSession(pluginCtx, defaultRegion)
+	if err != nil {
+		return err
 	}
-
-	_, err := e.handleGetLogGroups(pluginCtx, parameters)
+	logsClient := NewLogsAPI(session)
+	_, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
 	return err
 }
 
@@ -421,6 +424,20 @@ func isTerminated(queryStatus string) bool {
 // Stubbable by tests.
 var NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 	return cloudwatch.New(sess)
+}
+
+// NewLogsAPI is a CloudWatch logs api factory.
+//
+// Stubbable by tests.
+var NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
+	return cloudwatchlogs.New(sess)
+}
+
+// NewOAMAPI is a CloudWatch OAM api factory.
+//
+// Stubbable by tests.
+var NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
+	return oam.New(sess)
 }
 
 // NewCWClient is a CloudWatch client factory.
