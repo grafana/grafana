@@ -193,16 +193,16 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "color": "transparent",
             "value": -Infinity,
           },
-          Object {
+          {
             "color": "orange",
             "value": 50,
           },
-          Object {
+          {
             "color": "red",
             "value": 80,
           },
@@ -238,16 +238,16 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "color": "orange",
             "value": -Infinity,
           },
-          Object {
+          {
             "color": "transparent",
             "value": 40,
           },
-          Object {
+          {
             "color": "red",
             "value": 80,
           },
@@ -275,12 +275,12 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "color": "orange",
             "value": -Infinity,
           },
-          Object {
+          {
             "color": "transparent",
             "value": 40,
           },
