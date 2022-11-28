@@ -266,7 +266,6 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 					basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
 				}
 			}
-
 		}
 	}
 
