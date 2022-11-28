@@ -63,7 +63,6 @@ type queryDataTestQueryJSON struct {
 // we take an array of json-bytes, that define the elastic queries,
 // and create full backend.DataQuery objects from them
 func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
-
 	timeRange := backend.TimeRange{
 		From: time.UnixMilli(1668422437218),
 		To:   time.UnixMilli(1668422625668),
@@ -93,13 +92,10 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 			MaxDataPoints: jsonInfo.MaxDataPoints,
 			Interval:      time.Duration(jsonInfo.IntervalMs) * time.Millisecond,
 			TimeRange:     timeRange,
-			JSON:          json.RawMessage(jsonBytes),
+			JSON:          jsonBytes,
 		}
-
 		queries = append(queries, query)
-
 	}
-
 	return queries, nil
 }
 
@@ -118,11 +114,18 @@ func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResu
 	var requestBytes []byte
 
 	dsInfo := newFlowTestDsInfo(responseBytes, func(req *http.Request) error {
-		defer req.Body.Close()
 		requestBytes, err = io.ReadAll(req.Body)
+
+		bodyCloseError := req.Body.Close()
+
 		if err != nil {
 			return err
 		}
+
+		if bodyCloseError != nil {
+			return bodyCloseError
+		}
+
 		requestBytesStored = true
 		return nil
 	})
@@ -140,5 +143,4 @@ func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResu
 		response:     result,
 		requestBytes: requestBytes,
 	}, nil
-
 }

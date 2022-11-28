@@ -67,7 +67,6 @@ func findResponseSnapshotCounts(t *testing.T, folder string) map[string]int {
 }
 
 func TestRequestSnapshots(t *testing.T) {
-
 	tt := []struct {
 		name string
 		path string
@@ -88,18 +87,17 @@ func TestRequestSnapshots(t *testing.T) {
 	requestSnapshots := findRequestSnapshots(t, "testdata_request")
 
 	for _, test := range tt {
-
 		t.Run(test.name, func(t *testing.T) {
 			responseBytes := []byte(`{"responses":[]}`)
 
 			queriesFileName := filepath.Join("testdata_request", test.path+".queries.json")
-			queriesBytes, err := os.ReadFile(queriesFileName)
+			queriesBytes, err := os.ReadFile(filepath.Clean(queriesFileName))
 			require.NoError(t, err)
 
 			var requestLines [][]byte
 
 			for _, fileName := range requestSnapshots[test.path] {
-				bytes, err := os.ReadFile(fileName)
+				bytes, err := os.ReadFile(filepath.Clean(fileName))
 				require.NoError(t, err)
 				requestLines = append(requestLines, bytes)
 			}
@@ -115,16 +113,14 @@ func TestRequestSnapshots(t *testing.T) {
 			for i, expectedRequestLine := range requestLines {
 				actualRequestHeaderLine := reqLines[2*i]
 				actualRequestLine := reqLines[2*i+1]
-				require.JSONEq(t, string(queryHeader), string(actualRequestHeaderLine), fmt.Sprintf("invalid request-header at index: %v", i))
-				require.JSONEq(t, string(expectedRequestLine), string(actualRequestLine), fmt.Sprintf("invalid request at index: %v", i))
+				require.JSONEq(t, string(queryHeader), actualRequestHeaderLine, fmt.Sprintf("invalid request-header at index: %v", i))
+				require.JSONEq(t, string(expectedRequestLine), actualRequestLine, fmt.Sprintf("invalid request at index: %v", i))
 			}
 		})
 	}
-
 }
 
 func TestResponseSnapshots(t *testing.T) {
-
 	tt := []struct {
 		name string
 		path string
@@ -137,14 +133,13 @@ func TestResponseSnapshots(t *testing.T) {
 	snapshotCount := findResponseSnapshotCounts(t, "testdata_response")
 
 	for _, test := range tt {
-
 		t.Run(test.name, func(t *testing.T) {
 			responseFileName := filepath.Join("testdata_response", test.path+".response.json")
-			responseBytes, err := os.ReadFile(responseFileName)
+			responseBytes, err := os.ReadFile(filepath.Clean(responseFileName))
 			require.NoError(t, err)
 
 			queriesFileName := filepath.Join("testdata_response", test.path+".queries.json")
-			queriesBytes, err := os.ReadFile(queriesFileName)
+			queriesBytes, err := os.ReadFile(filepath.Clean(queriesFileName))
 			require.NoError(t, err)
 
 			result, err := queryDataTest(queriesBytes, responseBytes)
@@ -162,10 +157,11 @@ func TestResponseSnapshots(t *testing.T) {
 
 			for refId, dataRes := range result.response.Responses {
 				goldenFileName := fmt.Sprintf("%v.%v.golden", test.path, refId)
-				experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataRes, false)
-
+				// we make a copy of the variable to avoid this linter-warning:
+				// "G601: Implicit memory aliasing in for loop."
+				dataResCopy := dataRes
+				experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataResCopy, false)
 			}
 		})
 	}
-
 }
