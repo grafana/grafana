@@ -22,6 +22,7 @@ func (l *LoginServiceFake) DisableExternalUser(ctx context.Context, username str
 func (l *LoginServiceFake) SetTeamSyncFunc(login.TeamSyncFunc) {}
 
 type AuthInfoServiceFake struct {
+	login.AuthInfoService
 	LatestUserID         int64
 	ExpectedUserAuth     *models.UserAuth
 	ExpectedUser         *user.User
@@ -42,6 +43,10 @@ func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *models.Get
 	a.LatestUserID = query.UserId
 	query.Result = a.ExpectedUserAuth
 	return a.ExpectedError
+}
+
+func (a *AuthInfoServiceFake) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
+	return map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)}, nil
 }
 
 func (a *AuthInfoServiceFake) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
