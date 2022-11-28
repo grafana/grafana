@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceResponse } from '../types/trace';
+
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
 
 describe('orderTags()', () => {
@@ -136,7 +138,7 @@ describe('transformTraceData()', () => {
       traceID: undefined,
       processes,
       spans,
-    };
+    } as unknown as TraceResponse;
 
     expect(transformTraceData(traceData)).toEqual(null);
   });
@@ -146,9 +148,9 @@ describe('transformTraceData()', () => {
       traceID,
       processes,
       spans: [...spans, rootSpanWithMissingRef],
-    };
+    } as unknown as TraceResponse;
 
-    expect(transformTraceData(traceData).traceName).toEqual(`${serviceName}: ${rootOperationName}`);
+    expect(transformTraceData(traceData)!.traceName).toEqual(`${serviceName}: ${rootOperationName}`);
   });
 
   it('should return trace data with correct traceName based on root span without any refs', () => {
@@ -156,8 +158,8 @@ describe('transformTraceData()', () => {
       traceID,
       processes,
       spans: [...spans, rootSpanWithoutRefs],
-    };
+    } as unknown as TraceResponse;
 
-    expect(transformTraceData(traceData).traceName).toEqual(`${serviceName}: ${rootOperationName}`);
+    expect(transformTraceData(traceData)!.traceName).toEqual(`${serviceName}: ${rootOperationName}`);
   });
 });

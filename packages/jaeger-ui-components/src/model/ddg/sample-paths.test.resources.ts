@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const simplePayloadElemMaker = (label) => ({
+export const simplePayloadElemMaker = (label: string) => ({
   operation: `${label}Operation`,
   service: `${label}Service`,
 });
@@ -24,9 +24,9 @@ const sameFocalServicePayloadElem = {
   service: focalPayloadElem.service,
 };
 
-const pathLengthener = (path) => {
-  const prequels = [];
-  const sequels = [];
+const pathLengthener = (path: Array<{ operation: string; service: string }>) => {
+  const prequels: Array<{ operation: string; service: string }> = [];
+  const sequels: Array<{ operation: string; service: string }> = [];
   path.forEach(({ operation, service }) => {
     if (operation !== focalPayloadElem.operation && service !== focalPayloadElem.service) {
       prequels.push({
@@ -115,7 +115,3 @@ export const generationPaths = [
   ],
   [generationPayloadElems.target, generationPayloadElems.beforeFocalMid, focalPayloadElem],
 ];
-
-export const wrap = (paths) => ({
-  dependencies: paths.map((path) => ({ path, attributes: [] })),
-});
