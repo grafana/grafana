@@ -76,7 +76,7 @@ class ColorGenerator {
 
   getNextIndex(i: number) {
     // get next index or go back to 0
-    return (i = i + 1 < this.colorsHex.length ? i + 1 : 0);
+    return i + 1 < this.colorsHex.length ? i + 1 : 0;
   }
 
   hashCode(key: string) {
