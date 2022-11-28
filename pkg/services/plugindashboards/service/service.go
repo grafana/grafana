@@ -115,6 +115,12 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 		return nil, err
 	}
 
+	defer func() {
+		if err = resp.Content.Close(); err != nil {
+			s.logger.Warn("Failed to close plugin dashboard file", "reference", req.Reference, "err", err)
+		}
+	}()
+
 	data, err := simplejson.NewFromReader(resp.Content)
 	if err != nil {
 		return nil, err

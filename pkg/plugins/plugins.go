@@ -1,16 +1,15 @@
 package plugins
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -118,16 +117,21 @@ func (p PluginDTO) IncludedInSignature(file string) bool {
 	return true
 }
 
-func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
+type File interface {
+	fs.File
+	io.Seeker
+}
+
+func (p PluginDTO) File(name string) (File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
 		// CleanRelativePath should clean and make the path relative so this is not expected to fail
-		return nil, time.Time{}, err
+		return nil, err
 	}
 
 	absPluginDir, err := filepath.Abs(p.pluginDir)
 	if err != nil {
-		return nil, time.Time{}, err
+		return nil, err
 	}
 
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
@@ -136,28 +140,11 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	f, err := os.Open(filepath.Join(absPluginDir, cleanPath))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, time.Time{}, ErrFileNotExist
+			return nil, ErrFileNotExist
 		}
-		return nil, time.Time{}, err
+		return nil, err
 	}
-
-	fi, err := f.Stat()
-	if err != nil {
-		return nil, time.Time{}, err
-	}
-	modTime := fi.ModTime()
-
-	d, err := io.ReadAll(f)
-	if err != nil {
-		return nil, time.Time{}, err
-	}
-
-	if err = f.Close(); err != nil {
-		p.logger.Warn("Could not close plugin file", "file", name)
-		return nil, time.Time{}, err
-	}
-
-	return bytes.NewReader(d), modTime, nil
+	return f, nil
 }
 
 // JSONData represents the plugin's plugin.json

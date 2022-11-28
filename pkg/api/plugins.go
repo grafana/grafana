@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -308,21 +309,31 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	// prepend slash for cleaning relative paths
-	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
-	rel, err := filepath.Rel("/", requestedFile)
+	requestedFile, err := util.CleanRelativePath(web.Params(c.Req)["*"])
 	if err != nil {
 		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to get the relative path", err)
+		c.JsonApiErr(500, "Failed to clean relative file path", err)
 		return
 	}
 
-	f, mod, err := plugin.File(rel)
+	f, err := plugin.File(requestedFile)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
 			return
 		}
 		c.JsonApiErr(500, "Could not open plugin file", err)
+		return
+	}
+	defer func() {
+		if err = f.Close(); err != nil {
+			hs.log.Warn("Failed to close plugin file", "err", err)
+		}
+	}()
+
+	fi, err := f.Stat()
+	if err != nil {
+		c.JsonApiErr(500, "Plugin file exists but could not open", err)
 		return
 	}
 
@@ -332,7 +343,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(c.Resp, c.Req, rel, mod, f)
+	http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.
@@ -468,14 +479,19 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	var md io.ReadSeeker
-	md, _, err := plugin.File(mdFilepath(strings.ToUpper(name)))
+	var md io.ReadCloser
+	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
 	if err != nil {
-		md, _, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
 		if err != nil {
 			return make([]byte, 0), nil
 		}
 	}
+	defer func() {
+		if err = md.Close(); err != nil {
+			hs.log.Warn("Failed to close plugin markdown file", "err", err)
+		}
+	}()
 
 	d, err := io.ReadAll(md)
 	if err != nil {

@@ -1,9 +1,9 @@
 package dashboards
 
 import (
-	"bytes"
 	"context"
 	"io"
+	"io/fs"
 	"testing"
 	"testing/fstest"
 
@@ -131,14 +131,10 @@ func TestDashboardFileStore(t *testing.T) {
 					Data: []byte("dash2"),
 				},
 			}
-			openDashboardFile = func(p plugins.PluginDTO, name string) (io.ReadSeeker, error) {
+			openDashboardFile = func(p plugins.PluginDTO, name string) (fs.File, error) {
 				f, err := mapFs.Open(name)
 				require.NoError(t, err)
-
-				data, err := io.ReadAll(f)
-				require.NoError(t, err)
-
-				return bytes.NewReader(data), nil
+				return f, nil
 			}
 			t.Cleanup(func() {
 				openDashboardFile = origOpenDashboardFile
