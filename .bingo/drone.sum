@@ -256,6 +256,8 @@ github.com/drone/drone-cli v1.5.0 h1:dAoU2YBs7c0XjuDs2ql0W7x0+dOvJ/KLh5UrxUuaOnk
 github.com/drone/drone-cli v1.5.0/go.mod h1:682hzP+pG/nS7Xu6YJy064tUrbG7jTpB3gdy0kdxIOM=
 github.com/drone/drone-cli v1.6.1 h1:Beh0opEGR5XYezOyOmiqWzTMBGHkGDrh2tIG1cY/5GY=
 github.com/drone/drone-cli v1.6.1/go.mod h1://HC780Gua3Nhob/I2VPL3nTqmleEE/HIhGhTcJb2ds=
+github.com/drone/drone-cli v1.6.2 h1:LilC9ie7PzLEgaQtMNxwzyMTxbuxUpYuZXlUIKwSrLw=
+github.com/drone/drone-cli v1.6.2/go.mod h1://HC780Gua3Nhob/I2VPL3nTqmleEE/HIhGhTcJb2ds=
 github.com/drone/drone-go v1.6.2 h1:QT7o6Bfe5UCUea4ZU74JfzgkwFYbBNduuSQZTr1fQJE=
 github.com/drone/drone-go v1.6.2/go.mod h1:fxCf9jAnXDZV1yDr0ckTuWd1intvcQwfJmTRpTZ1mXg=
 github.com/drone/drone-go v1.7.0 h1:oEFWVcagBmAkVuFBpBq9lImZX1caDM+zRsmC4O1vXgQ=
