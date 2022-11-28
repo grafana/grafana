@@ -53,7 +53,7 @@ For details on a specific data source's unique query editor features, refer to i
 - For data sources installed as plugins, refer to its own documentation.
   - Data source plugins in Grafana's [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
     For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
-  - For links to [Grafana Enterprise]({{< relref "../../enterprise/" >}}) data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
+  - For links to Grafana Enterprise data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
 
 ### Query syntax
 
