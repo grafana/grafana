@@ -22,29 +22,29 @@ describe('JSON Paths from value', () => {
     const frames = extractJSONPathTransformer.transformer(cfg)([testDataFrame]);
     expect(frames.length).toEqual(1);
     expect(frames[0]).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "name": "object.nestedArray[0]",
             "type": "number",
-            "values": Array [
+            "values": [
               1,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "object.nestedArray[1]",
             "type": "number",
-            "values": Array [
+            "values": [
               2,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "object.nestedString",
             "type": "string",
-            "values": Array [
+            "values": [
               "Hallo World",
             ],
           },
@@ -76,29 +76,29 @@ describe('JSON Paths from value', () => {
     const frames = extractJSONPathTransformer.transformer(cfg)([testDataFrame]);
     expect(frames.length).toEqual(1);
     expect(frames[0]).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "name": "AliasJSON",
             "type": "string",
-            "values": Array [
-              "{\\"object\\":{\\"nestedArray\\":[1,2,3,4],\\"nestedString\\":\\"Hallo World\\"}}",
+            "values": [
+              "{"object":{"nestedArray":[1,2,3,4],"nestedString":"Hallo World"}}",
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "AliasTime",
             "type": "number",
-            "values": Array [
+            "values": [
               1669638911691,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "AliasString",
             "type": "string",
-            "values": Array [
+            "values": [
               "Hallo World",
             ],
           },
@@ -127,41 +127,41 @@ describe('JSON Paths from value', () => {
     const frames = extractJSONPathTransformer.transformer(cfg)([testDataFrame]);
     expect(frames.length).toEqual(1);
     expect(frames[0]).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "name": "Time",
-            "state": Object {
+            "state": {
               "displayName": "Time",
               "multipleFrames": false,
             },
             "type": "time",
-            "values": Array [
+            "values": [
               1669638911691,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "object.nestedArray[2]",
             "type": "number",
-            "values": Array [
+            "values": [
               3,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "object.nestedArray[3]",
             "type": "number",
-            "values": Array [
+            "values": [
               4,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "object.nestedString",
             "type": "string",
-            "values": Array [
+            "values": [
               "Hallo World",
             ],
           },
@@ -185,21 +185,21 @@ describe('JSON Paths from value', () => {
     const frames = extractJSONPathTransformer.transformer(cfg)([testDataFrame]);
     expect(frames.length).toEqual(1);
     expect(frames[0]).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "name": "object.nestedString",
             "type": "string",
-            "values": Array [
+            "values": [
               "Hallo World",
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "invalid.path",
             "type": "string",
-            "values": Array [
+            "values": [
               "Not Found",
             ],
           },
