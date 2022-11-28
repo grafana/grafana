@@ -356,3 +356,16 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getRefID() string {
 	return timeSeriesQuery.refID
 }
+
+func (timeSeriesFilter *cloudMonitoringTimeSeriesQuery) getAliasBy() string {
+	return timeSeriesFilter.aliasBy
+}
+
+func (timeSeriesFilter *cloudMonitoringTimeSeriesQuery) getParameter(i string) string {
+	switch i {
+	case "project":
+		return timeSeriesFilter.parameters.ProjectName
+	default:
+		return ""
+	}
+}
