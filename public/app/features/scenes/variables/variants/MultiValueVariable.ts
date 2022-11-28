@@ -12,6 +12,7 @@ import {
   ValidateAndUpdateResult,
   VariableValue,
   VariableValueOption,
+  VariableValueSingle,
 } from '../types';
 
 export interface MultiValueVariableState extends SceneVariableState {
@@ -131,9 +132,31 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
    */
   public changeValueTo(value: VariableValue, text?: VariableValue) {
     if (value !== this.state.value || text !== this.state.text) {
+      if (!text) {
+        if (Array.isArray(value)) {
+          text = value.map((v) => this.findLabelTextForValue(v));
+        } else {
+          text = this.findLabelTextForValue(value);
+        }
+      }
+
       this.setStateHelper({ value, text, loading: false });
       this.publishEvent(new SceneVariableValueChangedEvent(this), true);
     }
+  }
+
+  private findLabelTextForValue(value: VariableValueSingle): VariableValueSingle {
+    const option = this.state.options.find((x) => x.value === value);
+    if (option) {
+      return option.label;
+    }
+
+    const optionByLabel = this.state.options.find((x) => x.label === value);
+    if (optionByLabel) {
+      return optionByLabel.label;
+    }
+
+    return value;
   }
 
   /**
@@ -160,7 +183,7 @@ export class MultiValueUrlSyncHandler<TState extends MultiValueVariableState = M
 
   public getUrlState(state: TState): SceneObjectUrlValues {
     let urlValue: string | string[] | null = null;
-    let value = this._sceneObject.state.value;
+    let value = state.value;
 
     if (Array.isArray(value)) {
       urlValue = value.map(String);
