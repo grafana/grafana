@@ -10,9 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
@@ -30,6 +31,9 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+
 	// editor from main organisation requests configuration
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
@@ -41,10 +45,9 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	})
 
 	// create another organisation
-	cmd := &models.CreateOrgCommand{Name: "another org", UserId: userID}
-	err := store.CreateOrg(context.Background(), cmd)
+	newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "another org", UserID: userID})
 	require.NoError(t, err)
-	orgID := cmd.Result.Id
+	orgID := newOrg.ID
 
 	// create user under different organisation
 	createUser(t, store, user.CreateUserCommand{
