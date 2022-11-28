@@ -4354,7 +4354,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.22
+    uplot: "leeoniya/uPlot#d2b126f00a4b57e6894e0475d806e6a57006070b"
     xss: 1.0.14
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
@@ -4819,7 +4819,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.22
+    uplot: "leeoniya/uPlot#d2b126f00a4b57e6894e0475d806e6a57006070b"
     uuid: 9.0.0
     webpack: 5.74.0
   peerDependencies:
@@ -21781,7 +21781,7 @@ __metadata:
     ts-node: 10.9.1
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.22
+    uplot: "leeoniya/uPlot#d2b126f00a4b57e6894e0475d806e6a57006070b"
     uuid: 9.0.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -37875,10 +37875,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.22":
+"uplot@leeoniya/uPlot#d2b126f00a4b57e6894e0475d806e6a57006070b":
   version: 1.6.22
-  resolution: "uplot@npm:1.6.22"
-  checksum: 4a73835b93fcbd0f62d99c062aac75d0d9d2e3f383fcc77b022abbecd936cd989188ed60da756e45d4306353c6d0e38baaac73b372a674d9e2f47bff7f7d11a6
+  resolution: "uplot@https://github.com/leeoniya/uPlot.git#commit=d2b126f00a4b57e6894e0475d806e6a57006070b"
+  checksum: 095ea12b492c7ad4db23386cdfbb609fc6e2a2bf5c51db262accaabdfeb9a63442330813806cc38246c7ac8de3688611909357dae3ba4053759428f1e09c81d6
   languageName: node
   linkType: hard
 
