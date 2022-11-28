@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"io"
 	"net/http"
 	"os"
@@ -330,48 +331,12 @@ func (nopCloserReadSeeker) Close() error {
 	return nil
 }
 
-// errorCoder is an interface that expands error with a Code() and Message() method.
-type errorMessageCoder interface {
-	// Original error.
-	error
+var (
+	errAssetNotFound = errutil.NewBase(errutil.StatusNotFound, "plugins.assetNotFound")
 
-	// Message returns a human-readable message, with no sensitive information.
-	Message() string
-
-	// Code returns the error code associated to the error.
-	Code() int
-
-	// Unwrap returns the inner error that the errorMessageCoder is wrapping.
-	Unwrap() error
-}
-
-// errorWithCode is an implementation of errorCoder.
-type errorWithCode struct {
-	error
-	code    int
-	message string
-}
-
-func (err errorWithCode) Code() int {
-	return err.code
-}
-
-func (err errorWithCode) Message() string {
-	return err.message
-}
-
-func (err errorWithCode) Unwrap() error {
-	return err.error
-}
-
-// newErrorWithCode returns a new *errorWithCode with the specified error and code.
-func newErrorWithCode(code int, message string, err error) *errorWithCode {
-	return &errorWithCode{
-		code:    code,
-		message: message,
-		error:   err,
-	}
-}
+	errLocalAssetLoad  = errutil.NewBase(errutil.StatusInternal, "plugins.localAssetLoad")
+	errRemoteAssetLoad = errutil.NewBase(errutil.StatusInternal, "plugins.remoteAssetLoad")
+)
 
 // getLocalPluginAssets returns a pluginAsset for a locally stored plugin.
 // If err != nil, the file is opened and then caller should
@@ -382,7 +347,7 @@ func newErrorWithCode(code int, message string, err error) *errorWithCode {
 func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
 	absPluginDir, err := filepath.Abs(plugin.PluginDir)
 	if err != nil {
-		return pluginAsset{}, newErrorWithCode(500, "Failed to get plugin absolute path", nil)
+		return pluginAsset{}, errLocalAssetLoad.Errorf("failed to get plugin absolute path: %w", err)
 	}
 
 	pluginFilePath := filepath.Join(absPluginDir, path)
@@ -393,16 +358,16 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return pluginAsset{}, newErrorWithCode(404, "Plugin file not found", err)
+			return pluginAsset{}, errAssetNotFound.Errorf("plugin file not found")
 		}
-		return pluginAsset{}, newErrorWithCode(500, "Could not open plugin file", err)
+		return pluginAsset{}, errLocalAssetLoad.Errorf("could not open plugin file: %w", err)
 	}
 
 	// f.Close() should be called by caller by calling pluginAsset.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
-		return pluginAsset{}, newErrorWithCode(500, "Plugin file exists but could not open", err)
+		return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file exists but could not open: %w", err)
 	}
 	return pluginAsset{
 		readSeekCloser: f,
@@ -430,17 +395,11 @@ func (hs *HTTPServer) proxyCDNPluginAsset(c *models.ReqContext, plugin plugins.P
 	remoteURL := hs.getCDNPluginAssetRemoteURL(plugin, path)
 	req, err := http.NewRequestWithContext(c.Req.Context(), http.MethodGet, remoteURL, nil)
 	if err != nil {
-		return pluginAsset{}, newErrorWithCode(
-			http.StatusInternalServerError, "Remote NewRequest error",
-			fmt.Errorf("get %s: %w", remoteURL, err),
-		)
+		return pluginAsset{}, errRemoteAssetLoad.Errorf("get %s: %w", remoteURL, err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return pluginAsset{}, newErrorWithCode(
-			http.StatusInternalServerError, "Remote request error",
-			fmt.Errorf("do request %s: %w", remoteURL, err),
-		)
+		return pluginAsset{}, errRemoteAssetLoad.Errorf("do request %s: %w", remoteURL, err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -451,18 +410,14 @@ func (hs *HTTPServer) proxyCDNPluginAsset(c *models.ReqContext, plugin plugins.P
 	case http.StatusOK:
 		break
 	case http.StatusNotFound:
-		return pluginAsset{}, newErrorWithCode(http.StatusNotFound, "Remote CDN returned 404", nil)
+		return pluginAsset{}, errAssetNotFound.Errorf("remote cdn returned 404")
 	default:
-		return pluginAsset{}, newErrorWithCode(
-			http.StatusInternalServerError, fmt.Sprintf("Remote CDN returned %d", resp.StatusCode), nil,
-		)
+		return pluginAsset{}, errRemoteAssetLoad.Errorf("remote cdn returned %d", resp.StatusCode)
 	}
 	// resp.Body is a reader, but we need an io.ReadSeekerCloser, so read it all in-memory and use that buffer instead.
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return pluginAsset{}, newErrorWithCode(
-			http.StatusInternalServerError, "Response read error", fmt.Errorf("readall: %w", err),
-		)
+		return pluginAsset{}, errRemoteAssetLoad.Errorf("readall: %w", err)
 	}
 	hs.log.Debug("remote downloaded", "url", remoteURL)
 	return pluginAsset{
@@ -523,11 +478,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		asset, err = hs.getLocalPluginAssets(c, plugin, rel)
 	}
 	if err != nil {
-		if err, ok := err.(errorMessageCoder); ok {
-			c.JsonApiErr(err.Code(), err.Message(), err.Unwrap())
-			return
-		}
-		c.JsonApiErr(500, err.Error(), err)
+		response.Err(err)
 		return
 	}
 	defer func() {
