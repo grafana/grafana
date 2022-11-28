@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
+import { Stack } from '@grafana/experimental';
 import { Icon, LinkButton, useStyles2, useTheme2 } from '@grafana/ui/src';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -14,11 +15,42 @@ export default function Home() {
     <AlertingPageWrapper pageId="alert-home">
       <div className={styles.grid}>
         <WelcomeHeader className={styles.ctaContainer} />
-        <ContentBox className={styles.flowBlock}>
-          <img
-            src={`public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}
-            alt="Alerting flow chart"
-          />
+        {/*<ContentBox className={styles.flowBlock}>*/}
+        {/*  <img*/}
+        {/*    src={`public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}*/}
+        {/*    alt="Alerting flow chart"*/}
+        {/*  />*/}
+        {/*</ContentBox>*/}
+        <ContentBox title="How it works at glance" className={styles.howItWorks}>
+          <ul>
+            <li>
+              Grafana alerting periodically queries your data sources and evaluates the alerting condition you define
+            </li>
+            <li>If the condition is true longer than the specified time period, the alert rule starts firing</li>
+            <li>The alert rule takes the labels you defined and labels defined in the data source to produce alerts</li>
+            <li>Alerts are sent to the Alertmanager (by default to the built-in Grafana Alertmanager)</li>
+            <li>
+              Alertmanager keeps the configuration of what to do with the incoming alerts. It groups them and send to
+              appropriate contact points (e.g. Slack, email etc.)
+            </li>
+          </ul>
+        </ContentBox>
+        <ContentBox title="Getting started" className={styles.gettingStartedBlock}>
+          <Stack direction="column" alignItems="space-between">
+            <ul>
+              <li>Create alert rules for your data sources</li>
+              <li>Assign labels to your alerts to give them context and meaning</li>
+              <li>Configure where to send your alerts based on assigned labels</li>
+              <li>Send notifications to tools, such as Slack, MS Teams, PagerDuty, OpsGenie and more</li>
+            </ul>
+            <div>
+              <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
+              <ArrowLink
+                href="https://university.grafana.com//lms/index.php?r=coursepath/deeplink&id_path=42&hash=caa235c6321f80e03df017ae9ec6eed5c79da9ec"
+                title="Learn more in the Grafana University course"
+              />
+            </div>
+          </Stack>
         </ContentBox>
         <ContentBox className={styles.videoBlock}>
           <iframe
@@ -30,22 +62,6 @@ export default function Home() {
             allowFullScreen
           ></iframe>
         </ContentBox>
-        <ContentBox title="Getting started" className={styles.gettingStartedBlock}>
-          <ul>
-            <li>Create alert rules for your data sources</li>
-            <li>Assign labels to your alerts to give them context and meaning</li>
-            <li>Configure where to send your alerts based on assigned labels</li>
-            <li>Send notifications to tools, such as Slack, MS Teams, PagerDuty, OpsGenie and more</li>
-          </ul>
-          <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Alerting Docs" />
-        </ContentBox>
-        <ContentBox title="Deep dive" className={styles.universityBlock}>
-          To find out more you can enroll to our Alerting Grafana University course
-          <ArrowLink
-            href="https://university.grafana.com//lms/index.php?r=coursepath/deeplink&id_path=42&hash=caa235c6321f80e03df017ae9ec6eed5c79da9ec"
-            title="Learn more in Grafana University course"
-          />
-        </ContentBox>
       </div>
     </AlertingPageWrapper>
   );
@@ -55,7 +71,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   grid: css`
     display: grid;
     grid-template-rows: min-content auto auto;
-    grid-template-columns: 1.25fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     gap: ${theme.spacing(2)};
   `,
   ctaContainer: css`
@@ -71,10 +87,10 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   videoBlock: css`
-    grid-column: 2 / span 4;
+    grid-column: 3 / span 3;
+    grid-row: 2 / span 2;
     position: relative;
     padding-bottom: 56.25%; /* 16:9 */
-    height: 0;
 
     iframe {
       position: absolute;
@@ -86,11 +102,19 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   gettingStartedBlock: css`
-    grid-column: span 2;
-    list-style-position: inside;
+    grid-column: 1 / span 2;
+    justify-content: space-between;
+
+    ul {
+      margin-left: ${theme.spacing(2)};
+    }
   `,
-  universityBlock: css`
-    grid-column: span 2;
+  howItWorks: css`
+    grid-column: 1 / span 2;
+
+    ul {
+      margin-left: ${theme.spacing(2)};
+    }
   `,
 });
 
@@ -108,21 +132,21 @@ function WelcomeHeader({ className }: { className?: string }) {
           description="Manage your alert rules. Combine data from multiple data sources"
           icon="list-ul"
           href="/alerting/new"
-          hrefText="Create alert rule"
-        />
-        <WelcomeCTABox
-          title="Notification policies"
-          description="Configure the flow of your alerts and route them to contact points"
-          icon="sitemap"
-          href="/alerting/routes"
-          hrefText="Configure notification policy"
+          hrefText="Create alert rules"
         />
         <WelcomeCTABox
           title="Contact points"
           description="Configure who and how receives notifications"
           icon="comment-alt-share"
           href="/alerting/notifications"
-          hrefText="Configure contact point"
+          hrefText="Manage contact points"
+        />
+        <WelcomeCTABox
+          title="Notification policies"
+          description="Configure the flow of your alerts and route them to contact points"
+          icon="sitemap"
+          href="/alerting/routes"
+          hrefText="Manage notification policies"
         />
       </div>
     </div>
@@ -226,6 +250,7 @@ const getContentBoxStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
     background-color: ${theme.colors.background.secondary};
     border-radius: 3px;
+    outline: 1px solid ${theme.colors.border.strong};
   `,
 });
 
@@ -233,7 +258,7 @@ function ArrowLink({ href, title }: { href: string; title: string }) {
   const styles = useStyles2(getArrowLinkStyles);
 
   return (
-    <a href={href} className={styles.link}>
+    <a href={href} className={styles.link} rel="noreferrer">
       {title} <Icon name="angle-right" size="xl" className={styles.arrow} />
     </a>
   );
