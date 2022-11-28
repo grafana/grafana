@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 import { useAsync } from 'react-use';
 
@@ -57,7 +57,7 @@ export function DatasourceOnboarding({
         <h1 className={styles.title}>Welcome to Grafana dashboards!</h1>
         <div className={styles.description}>
           <h4 className={styles.explanation}>{"To visualize your data, you'll need to connect it first."}</h4>
-          <a href="#more" className={cx(styles.link, styles.secondary)}>
+          <a href="#more" className={styles.link}>
             Learn more
           </a>
         </div>
@@ -81,7 +81,7 @@ export function DatasourceOnboarding({
             ))}
             <li>
               <a href="/datasources/new" className={styles.viewAll}>
-                <span className={styles.link}>View all</span>
+                <span>View all</span>
                 <Icon name="arrow-right" size="lg" />
               </a>
             </li>
@@ -99,60 +99,64 @@ export function DatasourceOnboarding({
 function getStyles(theme: GrafanaTheme2) {
   return {
     createNew: css({
-      fontSize: theme.typography.h6.fontSize,
-      padding: theme.spacing(0),
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
       margin: '0px',
       marginTop: theme.spacing(8),
-      color: theme.colors.text.secondary,
-      display: 'flex',
-      gap: theme.spacing(1),
-      alignItems: 'center',
-      background: 'inherit',
+      padding: theme.spacing(0),
       border: 'none',
+      background: 'inherit',
+      fontSize: theme.typography.h6.fontSize,
+      color: theme.colors.text.secondary,
     }),
     datasources: css({
       display: 'grid',
-      gridTemplateRows: 'repeat(3, 1fr)',
-      gridTemplateColumns: 'repeat(3, 1fr)',
+      gridTemplateColumns: `repeat(auto-fit, minmax(${theme.spacing(28)}, 1fr))`,
       gap: theme.spacing(2),
       listStyle: 'none',
+      width: '100%',
+      maxWidth: theme.spacing(88),
+
       '> li': {
         display: 'flex',
         alignItems: 'center',
         '> button': {
-          height: '100%',
-          fontSize: theme.typography.h5.fontSize,
-          border: `1px solid ${theme.colors.border.weak}`,
-          padding: theme.spacing(2),
-          margin: '0px',
-          color: 'inherit',
-          background: theme.colors.background.primary,
-
-          width: '100%',
           display: 'flex',
-          gap: theme.spacing(1),
           alignItems: 'center',
+          width: '100%',
+          height: theme.spacing(7),
+          gap: theme.spacing(2),
+          margin: '0px',
+          padding: `calc(${theme.spacing(2)} - 1px)`,
+          lineHeight: theme.spacing(3),
+          border: `1px solid ${theme.colors.border.weak}`,
+          borderRadius: theme.shape.borderRadius(1),
+          background: theme.colors.background.primary,
+          fontSize: theme.typography.pxToRem(19),
+          color: 'inherit',
         },
       },
     }),
     description: css({
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing(8),
       display: 'flex',
-      alignItems: 'center',
       flexDirection: 'column',
+      alignItems: 'center',
       gap: theme.spacing(1),
       maxWidth: '50vw',
+      marginBottom: theme.spacing(8),
+      color: theme.colors.text.secondary,
     }),
     explanation: css({
-      fontSize: theme.typography.pxToRem(19),
-      textAlign: 'center',
       marginBottom: '0px',
+      textAlign: 'center',
+      fontSize: theme.typography.pxToRem(19),
     }),
     link: css({
       textDecoration: 'underline',
       textUnderlinePosition: 'under',
       fontSize: theme.typography.h5.fontSize,
+      color: theme.colors.text.secondary,
     }),
     logo: css({
       width: theme.spacing(2),
@@ -160,9 +164,9 @@ function getStyles(theme: GrafanaTheme2) {
       objectFit: 'contain',
     }),
     preferredDataSource: css({
-      fontWeight: theme.typography.fontWeightRegular,
-      fontSize: theme.typography.pxToRem(19),
       marginBottom: theme.spacing(3),
+      fontSize: theme.typography.pxToRem(19),
+      fontWeight: theme.typography.fontWeightRegular,
     }),
     secondary: css({
       color: theme.colors.text.secondary,
@@ -171,24 +175,28 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.link,
     }),
     title: css({
-      fontWeight: theme.typography.fontWeightBold,
+      textAlign: 'center',
       fontSize: theme.typography.pxToRem(32),
+      fontWeight: theme.typography.fontWeightBold,
     }),
     viewAll: css({
-      fontSize: theme.typography.h5.fontSize,
-      flexGrow: 1,
-      padding: theme.spacing(2),
-      alignItems: 'center',
-      color: theme.colors.text.link,
       display: 'flex',
+      flexGrow: 1,
+      alignItems: 'center',
       justifyContent: 'center',
+      padding: theme.spacing(2),
+      lineHeight: theme.spacing(3),
+      fontSize: theme.typography.pxToRem(19),
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+      textUnderlinePosition: 'under',
     }),
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
+      flexGrow: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      flexGrow: 1,
     }),
   };
 }
