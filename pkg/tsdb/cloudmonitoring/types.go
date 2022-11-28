@@ -42,7 +42,6 @@ type (
 		View               string   `json:"view"`
 		// Not part of the GCM API
 		// TODO: Use API fields instead
-		MetricType   string `json:"metricType"`
 		Preprocessor string `json:"preprocessor"`
 	}
 	// TODO: sloQuery can be specified as timeSeriesList parameters

@@ -206,6 +206,22 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) []string {
+	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
+	filters := []string{}
+	if prevFilters != nil {
+		filtersIface := prevFilters.([]interface{})
+		for _, f := range filtersIface {
+			filters = append(filters, f.(string))
+		}
+		metricTypeFilterArray = append([]string{"AND"}, metricTypeFilterArray...)
+		filters = append(filters, metricTypeFilterArray...)
+	} else {
+		filters = metricTypeFilterArray
+	}
+	return filters
+}
+
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
 		var rawQuery map[string]interface{}
@@ -227,6 +243,10 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			}
 			if rawQuery["aliasBy"] != nil {
 				gq.AliasBy = rawQuery["aliasBy"].(string)
+			}
+			if rawQuery["metricType"] != nil {
+				// metricType should be a filter
+				gq.TimeSeriesList.Filters = migrateMetricTypeFilter(rawQuery["metricType"].(string), rawQuery["filters"])
 			}
 
 			b, err := json.Marshal(gq)
@@ -256,6 +276,10 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				}
 			} else {
 				rawQuery["timeSeriesList"] = metricQuery
+				if metricQuery["metricType"] != nil {
+					// metricType should be a filter
+					metricQuery["filters"] = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
+				}
 			}
 			if metricQuery["aliasBy"] != nil {
 				rawQuery["aliasBy"] = metricQuery["aliasBy"]
@@ -399,7 +423,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 					q.TimeSeriesList.View = "FULL"
 				}
 				cmtsf.parameters = q.TimeSeriesList
-				params.Add("filter", buildFilterString(q.TimeSeriesList.MetricType, q.TimeSeriesList.Filters))
+				params.Add("filter", buildFilterString(q.TimeSeriesList.Filters))
 				params.Add("view", q.TimeSeriesList.View)
 				setMetricAggParams(&params, q.TimeSeriesList, durationSeconds, query.Interval.Milliseconds())
 				queryInterface = cmtsf
@@ -452,7 +476,7 @@ func interpolateFilterWildcards(value string) string {
 	return value
 }
 
-func buildFilterString(metricType string, filterParts []string) string {
+func buildFilterString(filterParts []string) string {
 	filterString := ""
 	for i, part := range filterParts {
 		mod := i % 4
@@ -475,7 +499,7 @@ func buildFilterString(metricType string, filterParts []string) string {
 		}
 	}
 
-	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
+	return strings.Trim(filterString, " ")
 }
 
 func buildSLOFilterExpression(projectName string, q *sloQuery) string {

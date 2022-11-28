@@ -132,7 +132,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			queries := getCloudMonitoringListFromInterface(t, qes)
 			assert.Equal(t, 1, len(queries))
-			assert.Equal(t, `metric.type="a/metric/type" key="value" key2="value2" resource.type="another/resource/type"`, queries[0].params["filter"][0])
+			assert.Equal(t, `key="value" key2="value2" resource.type="another/resource/type" metric.type="a/metric/type"`, queries[0].params["filter"][0])
 
 			// assign a resource type to query parameters
 			// in the actual workflow this information comes from the response of the Monitoring API
@@ -146,7 +146,7 @@ func TestCloudMonitoring(t *testing.T) {
 				"end":       "2018-03-15T13:34:00Z",
 			}
 			expectedTimeSeriesFilter := map[string]interface{}{
-				"filter": `metric.type="a/metric/type" key="value" key2="value2" resource.type="another/resource/type"`,
+				"filter": `key="value" key2="value2" resource.type="another/resource/type" metric.type="a/metric/type"`,
 			}
 			verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
 		})
@@ -773,21 +773,21 @@ func TestCloudMonitoring(t *testing.T) {
 	t.Run("when building filter string", func(t *testing.T) {
 		t.Run("and there's no regex operator", func(t *testing.T) {
 			t.Run("and there are wildcards in a filter value", func(t *testing.T) {
-				filterParts := []string{"zone", "=", "*-central1*"}
-				value := buildFilterString("somemetrictype", filterParts)
+				filterParts := []string{"metric.type", "=", "somemetrictype", "AND", "zone", "=", "*-central1*"}
+				value := buildFilterString(filterParts)
 				assert.Equal(t, `metric.type="somemetrictype" zone=has_substring("-central1")`, value)
 			})
 
 			t.Run("and there are no wildcards in any filter value", func(t *testing.T) {
-				filterParts := []string{"zone", "!=", "us-central1-a"}
-				value := buildFilterString("somemetrictype", filterParts)
+				filterParts := []string{"metric.type", "=", "somemetrictype", "AND", "zone", "!=", "us-central1-a"}
+				value := buildFilterString(filterParts)
 				assert.Equal(t, `metric.type="somemetrictype" zone!="us-central1-a"`, value)
 			})
 		})
 
 		t.Run("and there is a regex operator", func(t *testing.T) {
-			filterParts := []string{"zone", "=~", "us-central1-a~"}
-			value := buildFilterString("somemetrictype", filterParts)
+			filterParts := []string{"metric.type", "=", "somemetrictype", "AND", "zone", "=~", "us-central1-a~"}
+			value := buildFilterString(filterParts)
 			assert.NotContains(t, value, `=~`)
 			assert.Contains(t, value, `zone=`)
 
@@ -1091,7 +1091,7 @@ func baseTimeSeriesList() *backend.QueryDataRequest {
 				QueryType: "metrics",
 				JSON: json.RawMessage(`{
 					"timeSeriesList": {
-						"metricType": "a/metric/type",
+						"filters": ["metric.type=\"a/metric/type\""],
 						"view":       "FULL"
 					},
 					"aliasBy":    "testalias"
