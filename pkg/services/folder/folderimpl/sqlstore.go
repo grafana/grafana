@@ -261,5 +261,5 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 		}
 		return nil
 	})
-	return folders, err
+	return util.Reverse(folders), err
 }
