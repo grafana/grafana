@@ -26,7 +26,7 @@ Use this template to add your what's new section.
 
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 
-Add a screenshot to this enablement material folder and link to it here.
+Add a screenshot to the [website/static/static/img/docs](https://github.com/grafana/website/tree/master/static/static/img/docs) folder and link to it here.
 
 ## Geomap panel
 
