@@ -26,8 +26,7 @@ export interface Props {
   trapFocus?: boolean;
 
   isOpen?: boolean;
-  onDismiss?: () => void;
-  reportClose?: (method: string) => void;
+  onDismiss?: (method: string) => void;
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
@@ -43,7 +42,6 @@ export function Modal(props: PropsWithChildren<Props>) {
     className,
     contentClassName,
     onDismiss,
-    reportClose,
     onClickBackdrop,
     trapFocus = true,
   } = props;
@@ -58,10 +56,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     {
       isKeyboardDismissDisabled: !closeOnEscape,
       isOpen,
-      onClose: () => {
-        onDismiss?.();
-        reportClose?.('modalEscPressed');
-      },
+      onClose: () => onDismiss?.('modalEscPressed'),
     },
     ref
   );
@@ -79,15 +74,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     <OverlayContainer>
       <div
         className={styles.modalBackdrop}
-        onClick={
-          onClickBackdrop ||
-          (closeOnBackdropClick
-            ? () => {
-                onDismiss?.();
-                reportClose?.('modalBackdropClick');
-              }
-            : undefined)
-        }
+        onClick={onClickBackdrop || (closeOnBackdropClick ? () => onDismiss?.('modalBackdropClicked') : undefined)}
         {...underlayProps}
       />
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
@@ -104,10 +91,7 @@ export function Modal(props: PropsWithChildren<Props>) {
                 aria-label="Close dialogue"
                 name="times"
                 size="xl"
-                onClick={() => {
-                  onDismiss?.();
-                  reportClose?.('modalCloseClick');
-                }}
+                onClick={() => onDismiss?.('modalCloseClicked')}
               />
             </div>
           </div>

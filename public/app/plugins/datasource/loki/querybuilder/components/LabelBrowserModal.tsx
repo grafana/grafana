@@ -37,15 +37,16 @@ export const LabelBrowserModal = (props: Props) => {
     onClose();
   };
 
-  const reportClose = (method: string) => {
+  const reportInteractionAndClose = (method: string) => {
     reportInteraction('grafana_loki_label_browser_closed', {
       app: app,
       method: method,
     });
+    onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose} reportClose={reportClose}>
+    <Modal isOpen={isOpen} title="Label browser" onDismiss={reportInteractionAndClose}>
       <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
         {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
           return (
