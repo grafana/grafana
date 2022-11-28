@@ -319,7 +319,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
       className={styles.modal}
       isOpen={true}
       title={folderAndGroupReadOnly ? 'Edit evaluation group' : `Edit ${nameSpaceLabel} or evaluation group`}
-      onDismiss={onClose}
+      onDismiss={() => onClose()} // "() =>" is required to avoid passing the modal close method argument to onClose
       onClickBackdrop={onClose}
     >
       <FormProvider {...formAPI}>
