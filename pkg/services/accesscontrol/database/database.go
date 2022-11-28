@@ -102,13 +102,13 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			q += `AND action LIKE ?`
 			params = append(params, options.ActionPrefix+"%")
 		}
-		if options.Permission.Action != "" {
+		if options.Action != "" {
 			q += `AND action = ?`
-			params = append(params, options.Permission.Action)
+			params = append(params, options.Action)
 		}
-		if options.Permission.Scope != "" {
+		if options.Scope != "" {
 			q += `AND scope = ?`
-			params = append(params, options.Permission.Scope)
+			params = append(params, options.Scope)
 		}
 
 		return sess.SQL(q, params...).

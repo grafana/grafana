@@ -256,9 +256,17 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 	basicPermissions := map[string][]accesscontrol.Permission{}
 	for role, basicRole := range s.roles {
 		for i := range basicRole.Permissions {
-			if strings.HasPrefix(basicRole.Permissions[i].Action, options.ActionPrefix) {
-				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
+			if options.ActionPrefix != "" {
+				if strings.HasPrefix(basicRole.Permissions[i].Action, options.ActionPrefix) {
+					basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
+				}
 			}
+			if options.Action != "" {
+				if basicRole.Permissions[i].Action == options.Action {
+					basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
+				}
+			}
+
 		}
 	}
 

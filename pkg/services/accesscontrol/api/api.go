@@ -67,12 +67,15 @@ func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.R
 
 // GET /api/access-control/users/permissions
 func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) response.Response {
-	searchOptions := ac.SearchOptions{ActionPrefix: c.Query("actionPrefix")}
-	// TODO add permission search options
+	searchOptions := ac.SearchOptions{
+		ActionPrefix: c.Query("actionPrefix"),
+		Action:       c.Query("action"),
+		Scope:        c.Query("scope"),
+	}
 
-	// Validate request
-	if searchOptions.ActionPrefix == "" {
-		return response.JSON(http.StatusBadRequest, "missing action prefix")
+	// Validate inputs
+	if (searchOptions.ActionPrefix != "") != (searchOptions.Action != "") {
+		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
 	}
 
 	// Compute metadata
