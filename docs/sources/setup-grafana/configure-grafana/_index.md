@@ -762,7 +762,7 @@ Set the default UI theme: `dark` or `light`. Default is `dark`.
 
 ### default_language
 
-Set the default UI language. Must be a supported IETF language tag, such as en-US
+This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
 
 ### home_page
 
