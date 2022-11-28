@@ -101,7 +101,7 @@ Here is an example of the light theme.
 
 ### Change server UI theme
 
-Grafana server administrators can change the default Grafana UI theme for all users on the server by setting the [default_theme]({{< relref "../../setup-grafana/configure-grafana/#default-theme" >}}) option in the Grafana configuration file.
+As a Grafana server administrator, you can change the default Grafana UI theme for all users who are on the server by setting the [default_theme]({{< relref "../../setup-grafana/configure-grafana/#default-theme" >}}) option in the Grafana configuration file.
 
 To see what the current settings are, refer to [View server settings]({{< relref "../stats-and-license#view-server-settings" >}}).
 
