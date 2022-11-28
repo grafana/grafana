@@ -1,7 +1,9 @@
 import { cx } from '@emotion/css';
 import React, { FC } from 'react';
 
+import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
+import { clearLinkButtonStyles, LinkButton } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps } from './types';
@@ -12,6 +14,7 @@ export const ImageCell: FC<TableCellProps> = (props) => {
   const displayValue = field.display!(cell.value);
 
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
@@ -20,9 +23,12 @@ export const ImageCell: FC<TableCellProps> = (props) => {
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             return (
-              <div onClick={api.openMenu} className={cx(tableStyles.imageCellLink, api.targetClassName)}>
+              <LinkButton
+                onClick={api.openMenu}
+                className={cx(tableStyles.imageCellLink, api.targetClassName, clearButtonStyle)}
+              >
                 <img src={displayValue.text} className={tableStyles.imageCell} alt="" />
-              </div>
+              </LinkButton>
             );
           }}
         </DataLinksContextMenu>

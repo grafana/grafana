@@ -4,7 +4,9 @@ import tinycolor from 'tinycolor2';
 
 import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
 
+import { useStyles2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
+import { clearLinkButtonStyles, LinkButton } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
@@ -27,6 +29,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   const showFilters = field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
@@ -38,9 +41,12 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             return (
-              <div onClick={api.openMenu} className={cx(tableStyles.cellLink, api.targetClassName)}>
+              <LinkButton
+                onClick={api.openMenu}
+                className={cx(tableStyles.cellLink, api.targetClassName, clearButtonStyle)}
+              >
                 {value}
-              </div>
+              </LinkButton>
             );
           }}
         </DataLinksContextMenu>
