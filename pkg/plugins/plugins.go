@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var ErrFileNotExist = fmt.Errorf("file does not exist")
@@ -108,7 +108,7 @@ func (p PluginDTO) IncludedInSignature(file string) bool {
 	}
 
 	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil { //TODO only accept unsigned if it is part of authorizer
+	if p.SignedFiles == nil {
 		return true
 	}
 
@@ -118,44 +118,10 @@ func (p PluginDTO) IncludedInSignature(file string) bool {
 	return true
 }
 
-func (p PluginDTO) Markdown(name string) []byte {
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	path := filepath.Join(p.pluginDir, mdFilepath(strings.ToUpper(name)))
-	exists, err := fs.Exists(path)
-	if err != nil {
-		return make([]byte, 0)
-	}
-	if !exists {
-		path = filepath.Join(p.pluginDir, mdFilepath(strings.ToLower(name)))
-	}
-
-	exists, err = fs.Exists(path)
-	if err != nil || !exists {
-		return make([]byte, 0)
-	}
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return make([]byte, 0)
-	}
-	return data
-}
-
 func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
-	if !p.IncludedInSignature(name) {
-		p.logger.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
-			"is not included in the plugin signature", "file", name)
-	}
-
-	// prepend slash for cleaning relative paths
-	requestedFile := filepath.Clean(filepath.Join("/", name))
-	rel, err := filepath.Rel("/", requestedFile)
+	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
 		return nil, time.Time{}, err
 	}
 
@@ -167,7 +133,7 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	// nolint:gosec
-	f, err := os.Open(filepath.Join(absPluginDir, rel))
+	f, err := os.Open(filepath.Join(absPluginDir, cleanPath))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, time.Time{}, ErrFileNotExist
@@ -192,10 +158,6 @@ func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
 	}
 
 	return bytes.NewReader(d), modTime, nil
-}
-
-func mdFilepath(mdFilename string) string {
-	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
 }
 
 // JSONData represents the plugin's plugin.json
@@ -500,9 +462,6 @@ func (p *Plugin) IsExternalPlugin() bool {
 }
 
 func (p *Plugin) Manifest() []byte {
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
-	// on plugin the folder structure on disk and not user input.
 	d, err := os.ReadFile(filepath.Join(p.PluginDir, "MANIFEST.txt"))
 	if err != nil {
 		return []byte{}

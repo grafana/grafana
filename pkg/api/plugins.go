@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -465,5 +468,22 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	return plugin.Markdown(name), nil
+	var md io.ReadSeeker
+	md, _, err := plugin.File(mdFilepath(strings.ToUpper(name)))
+	if err != nil {
+		md, _, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		if err != nil {
+			return make([]byte, 0), nil
+		}
+	}
+
+	d, err := io.ReadAll(md)
+	if err != nil {
+		return make([]byte, 0), nil
+	}
+	return d, nil
+}
+
+func mdFilepath(mdFilename string) string {
+	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
 }
