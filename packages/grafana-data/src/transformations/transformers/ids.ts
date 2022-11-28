@@ -36,5 +36,5 @@ export enum DataTransformerID {
   groupingToMatrix = 'groupingToMatrix',
   limit = 'limit',
   partitionByValues = 'partitionByValues',
-  jsonQuery = 'jsonQuery',
+  extractJSONPath = 'extractJSONPath',
 }
