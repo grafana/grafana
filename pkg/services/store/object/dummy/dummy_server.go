@@ -35,6 +35,10 @@ var (
 	rawObjectVersion = 9
 )
 
+// Make sure we implement both store + admin
+var _ object.ObjectStoreServer = &dummyObjectServer{}
+var _ object.ObjectStoreAdminServer = &dummyObjectServer{}
+
 func ProvideDummyObjectServer(cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry) object.ObjectStoreServer {
 	objectServer := &dummyObjectServer{
 		collection: persistentcollection.NewLocalFSPersistentCollection[*RawObjectWithHistory]("raw-object", cfg.DataPath, rawObjectVersion),
@@ -149,7 +153,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) update(ctx context.Context, r *object.AdminWriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	builder := i.kinds.GetSummaryBuilder(r.GRN.Kind)
 	if builder == nil {
 		return nil, fmt.Errorf("unsupported kind: " + r.GRN.Kind)
@@ -222,7 +226,7 @@ func (i *dummyObjectServer) update(ctx context.Context, r *object.WriteObjectReq
 	return rsp, nil
 }
 
-func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
+func (i *dummyObjectServer) insert(ctx context.Context, r *object.AdminWriteObjectRequest, namespace string) (*object.WriteObjectResponse, error) {
 	modifier := store.GetUserIDString(store.UserFromContext(ctx))
 	rawObj := &object.RawObject{
 		GRN:       r.GRN,
@@ -266,6 +270,15 @@ func (i *dummyObjectServer) insert(ctx context.Context, r *object.WriteObjectReq
 }
 
 func (i *dummyObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
+	return i.doWrite(ctx, object.ToAdminWriteObjectRequest(r))
+}
+
+func (i *dummyObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
+	// Check permissions?
+	return i.doWrite(ctx, r)
+}
+
+func (i *dummyObjectServer) doWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
 	grn := getFullGRN(ctx, r.GRN)
 	namespace := namespaceFromUID(grn)
 	obj, err := i.collection.FindFirst(ctx, namespace, func(i *RawObjectWithHistory) (bool, error) {

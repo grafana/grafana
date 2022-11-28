@@ -94,14 +94,7 @@ describe('LokiQueryEditorSelector', () => {
     });
   });
 
-  it('Can enable raw query', async () => {
-    renderWithMode(QueryEditorMode.Builder);
-    expect(await screen.findByLabelText('selector')).toBeInTheDocument();
-    screen.getByLabelText('Raw query').click();
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-  });
-
-  it('Should show raw query by default', async () => {
+  it('Should show the query by default', async () => {
     renderWithProps({
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
@@ -156,6 +149,11 @@ describe('LokiQueryEditorSelector', () => {
     expect(screen.getByText('Rate')).toBeInTheDocument();
     expect(screen.getByText('$__interval')).toBeInTheDocument();
   });
+
+  it('renders the label browser button', async () => {
+    renderWithMode(QueryEditorMode.Code);
+    expect(await screen.findByTestId('label-browser-button')).toBeInTheDocument();
+  });
 });
 
 function renderWithMode(mode: QueryEditorMode) {
@@ -171,7 +169,7 @@ function renderWithProps(overrides?: Partial<LokiQuery>) {
 }
 
 async function expectCodeEditor() {
-  // Log browser shows this until log labels are loaded.
+  // Label browser shows this until log labels are loaded.
   expect(await screen.findByText('Loading...')).toBeInTheDocument();
 }
 

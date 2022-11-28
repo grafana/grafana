@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -132,28 +133,6 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.Equal(t, "folder desc", ff.Description)
 		assert.Equal(t, parentUID, ff.ParentUID)
 	})
-
-	/*
-		t.Run("creating a nested folder with the maximum nested folder depth should fail", func(t *testing.T) {
-			ancestorUIDs := createSubTree(t, folderStore, orgID, accesscontrol.GeneralFolderUID, folder.MaxNestedFolderDepth, "")
-
-			t.Cleanup(func() {
-				for _, uid := range ancestorUIDs[1:] {
-					err := folderStore.Delete(context.Background(), uid, orgID)
-					require.NoError(t, err)
-				}
-			})
-
-			title := fmt.Sprintf("folder-%d", len(ancestorUIDs))
-			_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-				Title:     "folder1",
-				OrgID:     orgID,
-				ParentUID: ancestorUIDs[len(ancestorUIDs)-1],
-				UID:       util.GenerateShortUID(),
-			})
-			assert.Error(t, err)
-		})
-	*/
 }
 
 func TestIntegrationDelete(t *testing.T) {
@@ -418,6 +397,11 @@ func TestIntegrationGetParents(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("get parents of unknown folder should return an error", func(t *testing.T) {
+		_, err := folderStore.GetParents(context.Background(), folder.GetParentsQuery{})
+		require.ErrorIs(t, err, folder.ErrFolderNotFound)
+	})
+
 	t.Run("get parents of 1-st level folder should be empty", func(t *testing.T) {
 		parents, err := folderStore.GetParents(context.Background(), folder.GetParentsQuery{
 			UID:   f.UID,
@@ -584,7 +568,8 @@ func TestIntegrationGetChildren(t *testing.T) {
 func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
-	orgService := orgimpl.ProvideService(db, db.Cfg)
+	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
 	t.Cleanup(func() {

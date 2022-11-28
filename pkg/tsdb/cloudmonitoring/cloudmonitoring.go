@@ -59,9 +59,9 @@ var (
 const (
 	gceAuthentication         = "gce"
 	jwtAuthentication         = "jwt"
+	annotationQueryType       = "annotation"
 	metricQueryType           = "metrics"
 	sloQueryType              = "slo"
-	mqlEditorMode             = "mql"
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
@@ -137,10 +137,6 @@ type Service struct {
 	gceDefaultProjectGetter func(ctx context.Context) (string, error)
 }
 
-type QueryModel struct {
-	Type string `json:"type"`
-}
-
 type datasourceInfo struct {
 	id                 int64
 	updated            time.Time
@@ -154,6 +150,13 @@ type datasourceInfo struct {
 	decryptedSecureJSONData map[string]string
 }
 
+type datasourceJSONData struct {
+	AuthenticationType string `json:"authenticationType"`
+	DefaultProject     string `json:"defaultProject"`
+	ClientEmail        string `json:"clientEmail"`
+	TokenURI           string `json:"tokenUri"`
+}
+
 type datasourceService struct {
 	url    string
 	client *http.Client
@@ -161,40 +164,24 @@ type datasourceService struct {
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
+		var jsonData datasourceJSONData
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		authType := jwtAuthentication
-		if authTypeOverride, ok := jsonData["authenticationType"].(string); ok && authTypeOverride != "" {
-			authType = authTypeOverride
-		}
-
-		var defaultProject string
-		if jsonData["defaultProject"] != nil {
-			defaultProject = jsonData["defaultProject"].(string)
-		}
-
-		var clientEmail string
-		if jsonData["clientEmail"] != nil {
-			clientEmail = jsonData["clientEmail"].(string)
-		}
-
-		var tokenUri string
-		if jsonData["tokenUri"] != nil {
-			tokenUri = jsonData["tokenUri"].(string)
+		if jsonData.AuthenticationType == "" {
+			jsonData.AuthenticationType = jwtAuthentication
 		}
 
 		dsInfo := &datasourceInfo{
 			id:                      settings.ID,
 			updated:                 settings.Updated,
 			url:                     settings.URL,
-			authenticationType:      authType,
-			defaultProject:          defaultProject,
-			clientEmail:             clientEmail,
-			tokenUri:                tokenUri,
+			authenticationType:      jsonData.AuthenticationType,
+			defaultProject:          jsonData.DefaultProject,
+			clientEmail:             jsonData.ClientEmail,
+			tokenUri:                jsonData.TokenURI,
 			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			services:                map[string]datasourceService{},
 		}
@@ -219,19 +206,114 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+func migrateRequest(req *backend.QueryDataRequest) error {
+	for i, q := range req.Queries {
+		var rawQuery map[string]interface{}
+		err := json.Unmarshal(q.JSON, &rawQuery)
+		if err != nil {
+			return err
+		}
+
+		if rawQuery["metricQuery"] == nil {
+			// migrate legacy query
+			var mq timeSeriesList
+			err = json.Unmarshal(q.JSON, &mq)
+			if err != nil {
+				return err
+			}
+			q.QueryType = metricQueryType
+			gq := grafanaQuery{
+				TimeSeriesList: &mq,
+			}
+			if rawQuery["aliasBy"] != nil {
+				gq.AliasBy = rawQuery["aliasBy"].(string)
+			}
+
+			b, err := json.Marshal(gq)
+			if err != nil {
+				return err
+			}
+			q.JSON = b
+		}
+
+		// Migrate type to queryType, which is only used for annotations
+		if rawQuery["type"] != nil && rawQuery["type"].(string) == "annotationQuery" {
+			q.QueryType = annotationQueryType
+		}
+		if rawQuery["queryType"] != nil {
+			q.QueryType = rawQuery["queryType"].(string)
+		}
+
+		// Metric query was divided between timeSeriesList and timeSeriesQuery API calls
+		if rawQuery["metricQuery"] != nil {
+			metricQuery := rawQuery["metricQuery"].(map[string]interface{})
+
+			if metricQuery["editorMode"] != nil && toString(metricQuery["editorMode"]) == "mql" {
+				rawQuery["timeSeriesQuery"] = &timeSeriesQuery{
+					ProjectName: toString(metricQuery["projectName"]),
+					Query:       toString(metricQuery["query"]),
+					GraphPeriod: toString(metricQuery["graphPeriod"]),
+				}
+			} else {
+				rawQuery["timeSeriesList"] = metricQuery
+			}
+			if metricQuery["aliasBy"] != nil {
+				rawQuery["aliasBy"] = metricQuery["aliasBy"]
+			}
+			b, err := json.Marshal(rawQuery)
+			if err != nil {
+				return err
+			}
+			if q.QueryType == "" {
+				q.QueryType = metricQueryType
+			}
+			q.JSON = b
+		}
+
+		// SloQuery was merged into timeSeriesList
+		if rawQuery["sloQuery"] != nil {
+			if rawQuery["timeSeriesList"] == nil {
+				rawQuery["timeSeriesList"] = map[string]interface{}{}
+			}
+			tsl := rawQuery["timeSeriesList"].(map[string]interface{})
+			sloq := rawQuery["sloQuery"].(map[string]interface{})
+			if sloq["projectName"] != nil {
+				tsl["projectName"] = sloq["projectName"]
+			}
+			if sloq["alignmentPeriod"] != nil {
+				tsl["alignmentPeriod"] = sloq["alignmentPeriod"]
+			}
+			if sloq["perSeriesAligner"] != nil {
+				tsl["perSeriesAligner"] = sloq["perSeriesAligner"]
+			}
+			rawQuery["timeSeriesList"] = tsl
+			b, err := json.Marshal(rawQuery)
+			if err != nil {
+				return err
+			}
+			if q.QueryType == "" {
+				q.QueryType = sloQueryType
+			}
+			q.JSON = b
+		}
+
+		req.Queries[i] = q
+	}
+
+	return nil
+}
+
 // QueryData takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := slog.FromContext(ctx)
-	resp := backend.NewQueryDataResponse()
 	if len(req.Queries) == 0 {
-		return resp, fmt.Errorf("query contains no queries")
+		return nil, fmt.Errorf("query contains no queries")
 	}
 
-	model := &QueryModel{}
-	err := json.Unmarshal(req.Queries[0].JSON, model)
+	err := migrateRequest(req)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
@@ -239,27 +321,23 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	switch model.Type {
-	case "annotationQuery":
-		resp, err = s.executeAnnotationQuery(ctx, logger, req, *dsInfo)
-	case "timeSeriesQuery":
-		fallthrough
-	default:
-		resp, err = s.executeTimeSeriesQuery(ctx, logger, req, *dsInfo)
+	queries, err := s.buildQueryExecutors(logger, req)
+	if err != nil {
+		return nil, err
 	}
 
-	return resp, err
+	switch req.Queries[0].QueryType {
+	case annotationQueryType:
+		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries)
+	default:
+		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries)
+	}
 }
 
-func (s *Service) executeTimeSeriesQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, queries []cloudMonitoringQueryExecutor) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	queryExecutors, err := s.buildQueryExecutors(logger, req)
-	if err != nil {
-		return resp, err
-	}
-
-	for _, queryExecutor := range queryExecutors {
+	for _, queryExecutor := range queries {
 		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, s.tracer)
 		if err != nil {
 			return resp, err
@@ -276,32 +354,11 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, logger log.Logger,
 }
 
 func queryModel(query backend.DataQuery) (grafanaQuery, error) {
-	var rawQuery map[string]interface{}
-	err := json.Unmarshal(query.JSON, &rawQuery)
-	if err != nil {
-		return grafanaQuery{}, err
-	}
-
-	if rawQuery["metricQuery"] == nil {
-		// migrate legacy query
-		var mq metricQuery
-		err = json.Unmarshal(query.JSON, &mq)
-		if err != nil {
-			return grafanaQuery{}, err
-		}
-
-		return grafanaQuery{
-			QueryType:   metricQueryType,
-			MetricQuery: mq,
-		}, nil
-	}
-
 	var q grafanaQuery
-	err = json.Unmarshal(query.JSON, &q)
+	err := json.Unmarshal(query.JSON, &q)
 	if err != nil {
 		return grafanaQuery{}, err
 	}
-
 	return q, nil
 }
 
@@ -317,58 +374,49 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
 
-		q.MetricQuery.PreprocessorType = toPreprocessorType(q.MetricQuery.Preprocessor)
-		var target string
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
 		var queryInterface cloudMonitoringQueryExecutor
-		cmtsf := &cloudMonitoringTimeSeriesFilter{
-			RefID:    query.RefID,
-			GroupBys: []string{},
-			logger:   logger,
+		cmtsf := &cloudMonitoringTimeSeriesList{
+			refID:   query.RefID,
+			logger:  logger,
+			aliasBy: q.AliasBy,
 		}
-		switch q.QueryType {
-		case metricQueryType:
-			if q.MetricQuery.EditorMode == mqlEditorMode {
+		switch query.QueryType {
+		case metricQueryType, annotationQueryType:
+			if q.TimeSeriesQuery != nil {
 				queryInterface = &cloudMonitoringTimeSeriesQuery{
-					RefID:       query.RefID,
-					ProjectName: q.MetricQuery.ProjectName,
-					Query:       q.MetricQuery.Query,
-					IntervalMS:  query.Interval.Milliseconds(),
-					AliasBy:     q.MetricQuery.AliasBy,
-					timeRange:   req.Queries[0].TimeRange,
-					GraphPeriod: q.MetricQuery.GraphPeriod,
+					refID:      query.RefID,
+					aliasBy:    q.AliasBy,
+					parameters: q.TimeSeriesQuery,
+					IntervalMS: query.Interval.Milliseconds(),
+					timeRange:  req.Queries[0].TimeRange,
 				}
-			} else {
-				cmtsf.AliasBy = q.MetricQuery.AliasBy
-				cmtsf.ProjectName = q.MetricQuery.ProjectName
-				cmtsf.GroupBys = append(cmtsf.GroupBys, q.MetricQuery.GroupBys...)
-				if q.MetricQuery.View == "" {
-					q.MetricQuery.View = "FULL"
+			} else if q.TimeSeriesList != nil {
+				if q.TimeSeriesList.View == "" {
+					q.TimeSeriesList.View = "FULL"
 				}
-				params.Add("filter", buildFilterString(q.MetricQuery.MetricType, q.MetricQuery.Filters))
-				params.Add("view", q.MetricQuery.View)
-				setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.Interval.Milliseconds())
+				cmtsf.parameters = q.TimeSeriesList
+				params.Add("filter", buildFilterString(q.TimeSeriesList.MetricType, q.TimeSeriesList.Filters))
+				params.Add("view", q.TimeSeriesList.View)
+				setMetricAggParams(&params, q.TimeSeriesList, durationSeconds, query.Interval.Milliseconds())
 				queryInterface = cmtsf
+			} else {
+				return nil, fmt.Errorf("missing query info")
 			}
 		case sloQueryType:
-			cmtsf.AliasBy = q.SloQuery.AliasBy
-			cmtsf.ProjectName = q.SloQuery.ProjectName
-			cmtsf.Selector = q.SloQuery.SelectorName
-			cmtsf.Service = q.SloQuery.ServiceId
-			cmtsf.Slo = q.SloQuery.SloId
-			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
-			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.Interval.Milliseconds())
+			cmtsf.sloQ = q.SloQuery
+			cmtsf.parameters = q.TimeSeriesList
+			params.Add("filter", buildSLOFilterExpression(q.TimeSeriesList.ProjectName, q.SloQuery))
+			setSloAggParams(&params, q.SloQuery, q.TimeSeriesList.AlignmentPeriod, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
 		default:
-			panic(fmt.Sprintf("Unrecognized query type %q", q.QueryType))
+			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
 		}
 
-		target = params.Encode()
-		cmtsf.Target = target
-		cmtsf.Params = params
+		cmtsf.params = params
 
 		if setting.Env == setting.Dev {
 			logger.Debug("CloudMonitoring request", "params", params)
@@ -430,8 +478,8 @@ func buildFilterString(metricType string, filterParts []string) string {
 	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
 }
 
-func buildSLOFilterExpression(q sloQuery) string {
-	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", q.ProjectName, q.ServiceId, q.SloId)
+func buildSLOFilterExpression(projectName string, q *sloQuery) string {
+	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", projectName, q.ServiceId, q.SloId)
 
 	if q.SelectorName == "select_slo_burn_rate" {
 		return fmt.Sprintf(`%s("%s", "%s")`, q.SelectorName, sloName, q.LookbackPeriod)
@@ -440,7 +488,7 @@ func buildSLOFilterExpression(q sloQuery) string {
 	}
 }
 
-func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
+func setMetricAggParams(params *url.Values, query *timeSeriesList, durationSeconds int, intervalMs int64) {
 	if query.CrossSeriesReducer == "" {
 		query.CrossSeriesReducer = crossSeriesReducerDefault
 	}
@@ -454,7 +502,8 @@ func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds 
 	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
 	// and the aggregation that is specified in the UI becomes the secondary aggregation
 	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	if query.PreprocessorType != PreprocessorTypeNone {
+	t := toPreprocessorType(query.Preprocessor)
+	if t != PreprocessorTypeNone {
 		params.Add("secondaryAggregation.alignmentPeriod", alignmentPeriod)
 		params.Add("secondaryAggregation.crossSeriesReducer", query.CrossSeriesReducer)
 		params.Add("secondaryAggregation.perSeriesAligner", query.PerSeriesAligner)
@@ -466,7 +515,7 @@ func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds 
 		params.Add("aggregation.crossSeriesReducer", primaryCrossSeriesReducer)
 
 		aligner := "ALIGN_RATE"
-		if query.PreprocessorType == PreprocessorTypeDelta {
+		if t == PreprocessorTypeDelta {
 			aligner = "ALIGN_DELTA"
 		}
 		params.Add("aggregation.perSeriesAligner", aligner)
@@ -486,8 +535,8 @@ func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds 
 	}
 }
 
-func setSloAggParams(params *url.Values, query *sloQuery, durationSeconds int, intervalMs int64) {
-	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds))
+func setSloAggParams(params *url.Values, query *sloQuery, alignmentPeriod string, durationSeconds int, intervalMs int64) {
+	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(alignmentPeriod, intervalMs, durationSeconds))
 	if query.SelectorName == "select_slo_health" {
 		params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
 	} else {
@@ -517,12 +566,12 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 }
 
 func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
-	additionalLabels map[string]string, query *cloudMonitoringTimeSeriesFilter) string {
-	if query.AliasBy == "" {
+	additionalLabels map[string]string, query *cloudMonitoringTimeSeriesList) string {
+	if query.aliasBy == "" {
 		return defaultMetricName
 	}
 
-	result := legendKeyFormat.ReplaceAllFunc([]byte(query.AliasBy), func(in []byte) []byte {
+	result := legendKeyFormat.ReplaceAllFunc([]byte(query.aliasBy), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
 		metaPartName = strings.TrimSpace(metaPartName)
@@ -545,20 +594,20 @@ func formatLegendKeys(metricType string, defaultMetricName string, labels map[st
 			return []byte(val)
 		}
 
-		if metaPartName == "project" && query.ProjectName != "" {
-			return []byte(query.ProjectName)
+		if metaPartName == "project" && query.parameters.ProjectName != "" {
+			return []byte(query.parameters.ProjectName)
 		}
 
-		if metaPartName == "service" && query.Service != "" {
-			return []byte(query.Service)
+		if metaPartName == "service" && query.sloQ.ServiceId != "" {
+			return []byte(query.sloQ.ServiceId)
 		}
 
-		if metaPartName == "slo" && query.Slo != "" {
-			return []byte(query.Slo)
+		if metaPartName == "slo" && query.sloQ.SloId != "" {
+			return []byte(query.sloQ.SloId)
 		}
 
-		if metaPartName == "selector" && query.Selector != "" {
-			return []byte(query.Selector)
+		if metaPartName == "selector" && query.sloQ.SelectorName != "" {
+			return []byte(query.sloQ.SelectorName)
 		}
 
 		return in

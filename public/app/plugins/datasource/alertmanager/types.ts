@@ -286,7 +286,6 @@ export enum AlertmanagerChoice {
 }
 
 export interface ExternalAlertmanagerConfig {
-  alertmanagers: string[];
   alertmanagersChoice: AlertmanagerChoice;
 }
 

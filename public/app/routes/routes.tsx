@@ -38,6 +38,18 @@ export function getAppRoutes(): RouteDescriptor[] {
           path: '/monitoring',
           component: () => <NavLandingPage navId="monitoring" />,
         },
+        {
+          path: '/admin/general',
+          component: () => <NavLandingPage navId="admin/general" />,
+        },
+        {
+          path: '/admin/plugins',
+          component: () => <NavLandingPage navId="admin/plugins" />,
+        },
+        {
+          path: '/admin/access',
+          component: () => <NavLandingPage navId="admin/access" />,
+        },
       ]
     : [];
 
@@ -71,6 +83,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
@@ -107,6 +120,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/import',
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
       ),
@@ -156,6 +170,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/folder/new',
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.FoldersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),
@@ -294,9 +309,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
     },
     {
-      path: '/admin/server',
+      path: '/admin/access',
       component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin" /> : <Redirect to="/admin/users" />,
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/access" /> : <Redirect to="/admin/users" />,
+    },
+    {
+      path: '/admin/config',
+      component: () =>
+        config.featureToggles.topnav ? <NavLandingPage navId="admin/config" /> : <Redirect to="/admin/org" />,
     },
     {
       path: '/admin/settings',
@@ -528,6 +548,12 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
+    },
+    {
+      path: '/scenes/dashboard/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/dashboard/DashboardScenePage')
+      ),
     },
     {
       path: '/scenes/:name',

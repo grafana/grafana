@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -29,6 +30,11 @@ type DashboardSearchProjection struct {
 	FolderTitle string
 	SortMeta    int64
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "dashboard"
+	QuotaTarget    quota.Target    = "dashboard"
+)
 
 type CountDashboardsInFolderQuery struct {
 	FolderUID string
