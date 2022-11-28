@@ -184,7 +184,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
     case 'global-users':
-      return t('nav.global-users.subtitle', 'Manage and create users across the whole Grafana server');
+      return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':
       return t('nav.global-orgs.subtitle', 'Isolated instances of Grafana running on the same server');
     case 'server-settings':
