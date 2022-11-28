@@ -210,3 +210,27 @@ Allows you to easily see when something is wrong with your contact point(s) and 
 Available in Grafana Open Source.
 
 Introduces a new redesigned expressions pipeline editor that combines both the expressions editor and the preview into a single view.
+
+## New navigation
+
+_Available in beta in all editions._
+
+Use Grafana’s redesigned navigation to get full visibility into the health of your systems, by quickly jumping between features as part of your incident response workflow.
+
+As Grafana has grown from a visualization tool to an observability solution, we’ve added many tools along the way. This often resulted in pages that were visually inconsistent or hard to find. This update gives Grafana a new look and feel, and makes page layouts and navigation patterns more consistent.
+
+We’ve revamped the navigation menu and grouped related tools together, making it easier to find what you need. Pages in Grafana now leverage new layouts that include breadcrumbs and a sidebar, allowing you to quickly jump between pages. We’ve also introduced a header that appears on all pages in Grafana, making dashboard search accessible from any page.
+
+Use the `topnav` feature toggle to try out Grafana’s new navigation.
+
+**Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
+
+## New languages
+
+_Generally available in all editions._
+
+We have added 4 new languages to Grafana: Spanish, French, German and Simplified Chinese.
+
+With millions of users across the globe, Grafana has a global footprint. In order to make it accessible to a wider audience, we have taken the first steps in localizing key workflows. You can now set Grafana’s language for the navigation, viewing dashboards, and a handful of settings.
+
+Read more about configuring the [default language for your organization](https://grafana.com/docs/grafana/latest/administration/organization-preferences/) and [updating your profile](https://grafana.com/docs/grafana/latest/administration/user-management/user-preferences/).
