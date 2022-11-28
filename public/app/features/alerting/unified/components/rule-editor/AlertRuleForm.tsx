@@ -27,7 +27,6 @@ import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
-import { checkForPathSeparator } from './util';
 
 const recordingRuleNameValidationPattern = {
   message:
@@ -58,16 +57,6 @@ const AlertRuleNameInput = () => {
           {...register('name', {
             required: { value: true, message: 'Must enter an alert name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
-            validate: {
-              pathSeparator: (value: string) => {
-                // we use the alert rule name as the "groupname" for Grafana managed alerts, so we can't allow path separators
-                if (ruleFormType === RuleFormType.grafana) {
-                  return checkForPathSeparator(value);
-                }
-
-                return true;
-              },
-            },
           })}
           placeholder="Give your alert rule a name."
         />
@@ -75,6 +64,8 @@ const AlertRuleNameInput = () => {
     </RuleEditorSection>
   );
 };
+
+export const MINUTE = '1m';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -86,6 +77,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
+  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -100,8 +92,9 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
       type: RuleFormType.grafana,
+      evaluateEvery: evaluateEvery,
     };
-  }, [existing, queryParams]);
+  }, [existing, queryParams, evaluateEvery]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -136,6 +129,8 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         },
         existing,
         redirectOnSave: exitOnSave ? returnTo : undefined,
+        initialAlertRuleName: defaultValues.name,
+        evaluateEvery: evaluateEvery,
       })
     );
   };
@@ -213,8 +208,16 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               <QueryAndExpressionsStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
-                  {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
-                  <DetailsStep initialFolder={defaultValues.folder} />
+                  {type === RuleFormType.grafana ? (
+                    <GrafanaEvaluationBehavior
+                      initialFolder={defaultValues.folder}
+                      evaluateEvery={evaluateEvery}
+                      setEvaluateEvery={setEvaluateEvery}
+                    />
+                  ) : (
+                    <CloudEvaluationBehavior />
+                  )}
+                  <DetailsStep />
                   <NotificationsStep />
                 </>
               )}

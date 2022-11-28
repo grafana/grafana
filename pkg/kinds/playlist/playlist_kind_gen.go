@@ -99,6 +99,7 @@ func (k *Kind) Maturity() kindsys.Maturity {
 }
 
 // TODO standard generated docs
-func (k *Kind) Meta() kindsys.CoreStructuredMeta {
-	return k.decl.Meta
+func (k *Kind) Decl() *kindsys.Decl[kindsys.CoreStructuredMeta] {
+	d := k.decl
+	return &d
 }

@@ -62,7 +62,7 @@ describe('prepare timeline graph', () => {
 
     const field = out.fields.find((f) => f.name === 'b');
     expect(field?.values.toArray()).toMatchInlineSnapshot(`
-      Array [
+      [
         1,
         1,
         undefined,

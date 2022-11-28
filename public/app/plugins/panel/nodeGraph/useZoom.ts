@@ -28,7 +28,7 @@ interface Options {
  * used to zoom in/out with mouse wheel.
  */
 export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLElement | null>(null);
   const [scale, setScale] = useState(1);
 
   const onStepUp = useCallback(() => {

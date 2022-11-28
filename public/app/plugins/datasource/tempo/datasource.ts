@@ -184,12 +184,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           this._request('/api/search', {
             q: targets.traceql[0].query,
             limit: options.targets[0].limit,
-            start: 0, // Currently the API doesn't return traces when using the 'From' time selected in Explore
+            start: options.range.from.unix(),
             end: options.range.to.unix(),
           }).pipe(
             map((response) => {
               return {
-                data: [createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings)],
+                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
               };
             }),
             catchError((error) => {
@@ -366,7 +366,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await lastValueFrom(getBackendSrv().fetch<any>(options));
+    const response = await lastValueFrom(getBackendSrv().fetch(options));
 
     if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };

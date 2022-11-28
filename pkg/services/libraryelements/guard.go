@@ -40,7 +40,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return dashboards.ErrFolderAccessDenied
 	}
-	folder, err := l.folderService.Get(ctx, &folder.GetFolderQuery{ID: &folderID, OrgID: user.OrgID})
+	folder, err := l.folderService.Get(ctx, &folder.GetFolderQuery{ID: &folderID, OrgID: user.OrgID, SignedInUser: user})
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 		return nil
 	}
 
-	folder, err := l.folderService.Get(ctx, &folder.GetFolderQuery{ID: &folderID, OrgID: user.OrgID})
+	folder, err := l.folderService.Get(ctx, &folder.GetFolderQuery{ID: &folderID, OrgID: user.OrgID, SignedInUser: user})
 	if err != nil {
 		return err
 	}

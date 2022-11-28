@@ -1,14 +1,14 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
 import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
+import { CustomVariable } from '../variables/variants/CustomVariable';
+import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { TestVariable } from '../variables/variants/TestVariable';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
@@ -44,6 +44,14 @@ export function getVariablesDemo(): Scene {
           text: '',
           options: [],
         }),
+        new CustomVariable({
+          name: 'custom',
+          query: 'A : 10,B : 20',
+        }),
+        new DataSourceVariable({
+          name: 'ds',
+          query: 'testdata',
+        }),
       ],
     }),
     layout: new SceneFlexLayout({
@@ -68,7 +76,7 @@ export function getVariablesDemo(): Scene {
         }),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({})],
