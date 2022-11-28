@@ -23,7 +23,7 @@ interface TweenState {
 
 type TTweenCallback = (state: TweenState) => void;
 
-type TTweenOptions = {
+export type TTweenOptions = {
   delay?: number;
   duration: number;
   from: number;
