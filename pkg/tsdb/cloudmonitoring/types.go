@@ -47,7 +47,7 @@ type (
 		SecondaryGroupBys           []string `json:"secondaryGroupBys"`
 	}
 
-	// sloQuery is an internal convention to generate a but the API is the same as timeSeriesList
+	// sloQuery is an internal convention but the API is the same as timeSeriesList
 	sloQuery struct {
 		ProjectName     string `json:"projectName"`
 		SelectorName    string `json:"selectorName"`
