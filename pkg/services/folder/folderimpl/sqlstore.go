@@ -216,7 +216,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
+		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY id"))
 
 		if q.Limit != 0 {
 			var offset int64 = 1
