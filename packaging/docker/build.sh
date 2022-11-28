@@ -28,7 +28,7 @@ done
 _grafana_tag=${1:-}
 _docker_repo=${2:-grafana/grafana}
 
-# If the tag starts with v, treat this as a official release
+# If the tag starts with v, treat this as an official release
 if echo "$_grafana_tag" | grep -q "^v"; then
   _grafana_version=$(echo "${_grafana_tag}" | cut -d "v" -f 2)
 else
@@ -59,15 +59,13 @@ docker_build () {
   esac
   if [ $UBUNTU_BASE = "0" ]; then
     libc="-musl"
-    dockerfile="Dockerfile"
     base_image="${base_arch}alpine:3.15"
   else
     libc=""
-    dockerfile="ubuntu.Dockerfile"
     base_image="${base_arch}ubuntu:20.04"
   fi
 
-  grafana_tgz="grafana-latest.linux-${arch}${libc}.tar.gz"
+  grafana_tgz=${GRAFANA_TGZ:-"grafana-latest.linux-${arch}${libc}.tar.gz"}
   tag="${_docker_repo}${repo_arch}:${_grafana_version}${TAG_SUFFIX}"
 
   docker build \
@@ -75,7 +73,6 @@ docker_build () {
     --build-arg GRAFANA_TGZ=${grafana_tgz} \
     --tag "${tag}" \
     --no-cache=true \
-    -f "${dockerfile}" \
     .
 }
 

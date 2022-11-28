@@ -70,12 +70,10 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	}
 
 	libc := "-musl"
-	dockerfile := "Dockerfile"
 	baseImage := fmt.Sprintf("%salpine:3.15", baseArch)
 	tagSuffix := ""
 	if useUbuntu {
 		libc = ""
-		dockerfile = "ubuntu.Dockerfile"
 		baseImage = fmt.Sprintf("%subuntu:20.04", baseArch)
 		tagSuffix = "-ubuntu"
 	}
@@ -120,7 +118,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	args := []string{
 		"build", "--build-arg", fmt.Sprintf("BASE_IMAGE=%s", baseImage),
 		"--build-arg", fmt.Sprintf("GRAFANA_TGZ=%s", archive), "--tag", tag, "--no-cache",
-		"-f", dockerfile, ".",
+		".",
 	}
 
 	log.Printf("Running Docker: docker %s", strings.Join(args, " "))
