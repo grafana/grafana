@@ -9,7 +9,6 @@ const Search = ({ searchFn }: { searchFn: (searchPhrase: string) => void }) => {
   const [searchFilter, setSearchFilter] = useState('');
 
   const debouncedSearch = useMemo(() => debounce(searchFn, 600), [searchFn]);
-
   useEffect(() => {
     return () => {
       // Stop the invocation of the debounced function after unmounting
