@@ -375,7 +375,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 				if !exists {
 					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
 				}
-				// // delete the user
+				//  delete the user
 				delErr := r.userService.Delete(ctx, &user.DeleteUserCommand{UserID: fromUserId})
 				if delErr != nil {
 					return fmt.Errorf("error during deletion of user: %w", delErr)
@@ -389,13 +389,13 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 			if commitErr != nil {
 				return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
 			}
-			userStore := userimpl.ProvideStore(r.Store, setting.NewCfg())
+
 			updateMainCommand := &user.UpdateUserCommand{
 				UserID: intoUser.ID,
 				Login:  strings.ToLower(intoUser.Login),
 				Email:  strings.ToLower(intoUser.Email),
 			}
-			updateErr := userStore.Update(ctx, updateMainCommand)
+			updateErr := r.userService.Update(ctx, updateMainCommand)
 			if updateErr != nil {
 				return fmt.Errorf("could not update user: %w", updateErr)
 			}
