@@ -17,7 +17,7 @@ lineage: seqs: [
 				// Team avatar URL.
 				avatarUrl: string @grafanamaturity(MaybeRemove)
 				// Number of the team members.
-				memberCount: int64 @grafanamaturity(MaybeRemove)
+				memberCount: int64 @grafanamaturity(ToMetadata="kind")
 				// TODO - check if it's used in the code
 				permission: #Permission @grafanamaturity(MaybeRemove)
 				// TODO: probably needs a better description
