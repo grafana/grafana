@@ -19,7 +19,7 @@ lineage: seqs: [
 				// Number of the team members.
 				memberCount: int64 @grafanamaturity(ToMetadata="kind")
 				// TODO - check if it's used in the code
-				permission: #Permission @grafanamaturity(MaybeRemove)
+				permission: #Permission @grafanamaturity(ToMetadata="kind")
 				// TODO: probably needs a better description
 				// Accesscontrol metadata associated with a given resource
 				accessControl: [string]: bool @grafanamaturity(MaybeRemove)
