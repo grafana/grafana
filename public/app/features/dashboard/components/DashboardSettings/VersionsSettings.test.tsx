@@ -2,11 +2,13 @@ import { within } from '@testing-library/dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
+import { configureStore } from '../../../../store/configureStore';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { historySrv } from '../VersionHistory/HistorySrv';
 
@@ -27,6 +29,7 @@ const queryByFullText = (text: string) =>
   });
 
 function setup() {
+  const store = configureStore();
   const dashboard = createDashboardModelFixture({
     id: 74,
     version: 11,
@@ -43,9 +46,11 @@ function setup() {
 
   return render(
     <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <BrowserRouter>
-        <VersionsSettings sectionNav={sectionNav} dashboard={dashboard} />
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <VersionsSettings sectionNav={sectionNav} dashboard={dashboard} />
+        </BrowserRouter>
+      </Provider>
     </GrafanaContext.Provider>
   );
 }

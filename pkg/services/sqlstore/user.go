@@ -160,28 +160,6 @@ func NotServiceAccountFilter(ss *SQLStore) string {
 		ss.Dialect.BooleanStr(false))
 }
 
-// deprecated method, use only for tests
-func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
-	if err := ss.GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
-		return err
-	}
-
-	valid := false
-	for _, other := range getOrgsForUserCmd.Result {
-		if other.OrgId == cmd.OrgId {
-			valid = true
-		}
-	}
-	if !valid {
-		return fmt.Errorf("user does not belong to org")
-	}
-
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
-	})
-}
-
 func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error {
 	user := user.User{
 		ID:    userID,
@@ -392,12 +370,6 @@ func getTeamSelectSQLBase(filteredUsers []string) string {
 		team.email as email, ` +
 		getTeamMemberCount(filteredUsers) +
 		` FROM team as team `
-}
-
-func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		return deleteUserInTransaction(ss, sess, cmd)
-	})
 }
 
 func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {

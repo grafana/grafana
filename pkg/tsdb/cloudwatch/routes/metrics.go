@@ -7,12 +7,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/request"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
 func MetricsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
-	metricsRequest, err := request.GetMetricsRequest(parameters)
+	metricsRequest, err := resources.GetMetricsRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusBadRequest, err)
 	}
@@ -22,20 +22,20 @@ func MetricsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Reques
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}
 
-	var metrics []models.Metric
+	var response []resources.ResourceResponse[resources.Metric]
 	switch metricsRequest.Type() {
-	case request.AllMetricsRequestType:
-		metrics = services.GetAllHardCodedMetrics()
-	case request.MetricsByNamespaceRequestType:
-		metrics, err = services.GetHardCodedMetricsByNamespace(metricsRequest.Namespace)
-	case request.CustomNamespaceRequestType:
-		metrics, err = service.GetMetricsByNamespace(metricsRequest.Namespace)
+	case resources.AllMetricsRequestType:
+		response = services.GetAllHardCodedMetrics()
+	case resources.MetricsByNamespaceRequestType:
+		response, err = services.GetHardCodedMetricsByNamespace(metricsRequest.Namespace)
+	case resources.CustomNamespaceRequestType:
+		response, err = service.GetMetricsByNamespace(metricsRequest)
 	}
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}
 
-	metricsResponse, err := json.Marshal(metrics)
+	metricsResponse, err := json.Marshal(response)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}

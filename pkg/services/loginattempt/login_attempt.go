@@ -10,6 +10,8 @@ type Service interface {
 	// Validate checks if username has to many login attempts inside a window.
 	// Will return true if provided username do not have too many attempts.
 	Validate(ctx context.Context, username string) (bool, error)
+	// Reset resets all login attempts attached to username
+	Reset(ctx context.Context, username string) error
 }
 
 type LoginAttempt struct {

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -10,6 +11,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
+import { configureStore } from '../../../../store/configureStore';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
@@ -19,6 +21,7 @@ setBackendSrv({
 } as unknown as BackendSrv);
 
 const setupTestContext = (options: Partial<Props>) => {
+  const store = configureStore();
   const defaults: Props = {
     dashboard: createDashboardModelFixture(
       {
@@ -52,9 +55,11 @@ const setupTestContext = (options: Partial<Props>) => {
 
   const { rerender } = render(
     <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <BrowserRouter>
-        <GeneralSettings {...props} />
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <GeneralSettings {...props} />
+        </BrowserRouter>
+      </Provider>
     </GrafanaContext.Provider>
   );
 

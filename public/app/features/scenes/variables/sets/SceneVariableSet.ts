@@ -60,6 +60,11 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
         throw new Error('Variable added to variablesToUpdate but does not have validateAndUpdate');
       }
 
+      // Ignore it if it's already started
+      if (this.updating.has(variable)) {
+        continue;
+      }
+
       // Wait for variables that has dependencies that also needs updates
       if (this.hasDependendencyInUpdateQueue(variable)) {
         continue;

@@ -320,7 +320,7 @@ var allowedTSVeneers = map[string]bool{
 }
 
 func allowedTSVeneersString() string {
-	var list []string
+	list := make([]string, 0, len(allowedTSVeneers))
 	for tgt := range allowedTSVeneers {
 		list = append(list, tgt)
 	}

@@ -1,8 +1,8 @@
-import {PanelModel} from '@grafana/data';
+import { PanelModel } from '@grafana/data';
+import { FieldColorModeId, ThresholdsMode } from '@grafana/schema/src';
 
-import {DashboardModel} from '../state/DashboardModel';
-import {createDashboardModelFixture, createPanelJSONFixture} from "../state/__fixtures__/dashboardFixtures";
-import {FieldColorModeId, ThresholdsMode} from "@grafana/schema/src";
+import { DashboardModel } from '../state/DashboardModel';
+import { createDashboardModelFixture, createPanelJSONFixture } from '../state/__fixtures__/dashboardFixtures';
 
 describe('Merge dashbaord panels', () => {
   describe('simple changes', () => {
@@ -51,16 +51,16 @@ describe('Merge dashbaord panels', () => {
       const info = dashboard.updatePanels(rawPanels);
       expect(info.changed).toBeFalsy();
       expect(info.actions).toMatchInlineSnapshot(`
-        Object {
-          "add": Array [],
-          "noop": Array [
+        {
+          "add": [],
+          "noop": [
             1,
             2,
             3,
           ],
-          "remove": Array [],
-          "replace": Array [],
-          "update": Array [],
+          "remove": [],
+          "replace": [],
+          "update": [],
         }
       `);
     });
@@ -117,17 +117,17 @@ describe('Merge dashbaord panels', () => {
       const info = dashboard.updatePanels(rawPanels);
       expect(info.changed).toBeTruthy();
       expect(info.actions).toMatchInlineSnapshot(`
-        Object {
-          "add": Array [],
-          "noop": Array [
+        {
+          "add": [],
+          "noop": [
             1,
             3,
           ],
-          "remove": Array [],
-          "replace": Array [
+          "remove": [],
+          "replace": [
             2,
           ],
-          "update": Array [],
+          "update": [],
         }
       `);
     });

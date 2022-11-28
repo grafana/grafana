@@ -9,7 +9,7 @@ import { VariableValue } from '../types';
 import { getSceneVariableForScopedVar } from './ScopedVarsVariable';
 import { formatRegistry, FormatRegistryID, FormatVariable } from './formatRegistry';
 
-type CustomFormatterFn = (
+export type CustomFormatterFn = (
   value: unknown,
   legacyVariableModel: VariableModel,
   legacyDefaultFormatter: CustomFormatterFn

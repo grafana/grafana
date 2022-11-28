@@ -7,6 +7,8 @@ import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
+import { CustomVariable } from '../variables/variants/CustomVariable';
+import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { TestVariable } from '../variables/variants/TestVariable';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
@@ -41,6 +43,14 @@ export function getVariablesDemo(): Scene {
           //isMulti: true,
           text: '',
           options: [],
+        }),
+        new CustomVariable({
+          name: 'custom',
+          query: 'A : 10,B : 20',
+        }),
+        new DataSourceVariable({
+          name: 'ds',
+          query: 'testdata',
         }),
       ],
     }),
