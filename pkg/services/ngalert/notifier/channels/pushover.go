@@ -287,30 +287,30 @@ func (pn *PushoverNotifier) writeImageParts(ctx context.Context, w *multipart.Wr
 	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
 		f, err := os.Open(image.Path)
 		if err != nil {
-			return fmt.Errorf("Failed to open the image: %w", err)
+			return fmt.Errorf("failed to open the image: %w", err)
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				pn.log.Error("Failed to close the image", "file", image.Path)
+				pn.log.Error("failed to close the image", "file", image.Path)
 			}
 		}()
 
 		fileInfo, err := f.Stat()
 		if err != nil {
-			return fmt.Errorf("Failed to stat the image: %w", err)
+			return fmt.Errorf("failed to stat the image: %w", err)
 		}
 
 		if fileInfo.Size() > pushoverMaxFileSize {
-			return fmt.Errorf("Image would exceeded maximum file size: %d", fileInfo.Size())
+			return fmt.Errorf("image would exceeded maximum file size: %d", fileInfo.Size())
 		}
 
 		fw, err := w.CreateFormFile("attachment", image.Path)
 		if err != nil {
-			return fmt.Errorf("Failed to create form file for the image: %w", err)
+			return fmt.Errorf("failed to create form file for the image: %w", err)
 		}
 
 		if _, err = io.Copy(fw, f); err != nil {
-			return fmt.Errorf("Failed to copy the image to the form file: %w", err)
+			return fmt.Errorf("failed to copy the image to the form file: %w", err)
 		}
 
 		return ErrImagesDone
