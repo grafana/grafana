@@ -88,14 +88,14 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 				return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
 			}
 		} else {
-		res, err := sess.Exec(sqlOrArgs...)
-		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
-		}
+			res, err := sess.Exec(sqlOrArgs...)
+			if err != nil {
+				return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
+			}
 			lastInsertId, err = res.LastInsertId()
-		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to get last inserted id: %w", err)
-		}
+			if err != nil {
+				return folder.ErrDatabaseError.Errorf("failed to get last inserted id: %w", err)
+			}
 		}
 
 		var err error
