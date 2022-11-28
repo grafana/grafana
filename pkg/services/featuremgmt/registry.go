@@ -249,11 +249,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "useLegacyHeatmapPanel",
-			Description: "Continue to use the angular/flot based heatmap panel",
-			State:       FeatureStateStable,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,

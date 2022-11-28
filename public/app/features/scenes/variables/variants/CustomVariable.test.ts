@@ -21,26 +21,7 @@ describe('CustomVariable', () => {
     });
   });
 
-  describe('When invalid query is provided', () => {
-    it('Should default to empty options', async () => {
-      const variable = new CustomVariable({
-        name: 'test',
-        options: [],
-        value: '',
-        text: '',
-        query: 'A - B',
-      });
-
-      // TODO: Be able to triggger the state update to get the options
-      await lastValueFrom(variable.getValueOptions({}));
-
-      expect(variable.state.value).toEqual('');
-      expect(variable.state.text).toEqual('');
-      expect(variable.state.options).toEqual([]);
-    });
-  });
-
-  describe('When valid query is provided', () => {
+  describe('When query is provided', () => {
     it('Should generate correctly the options for only value queries', async () => {
       const variable = new CustomVariable({
         name: 'test',
