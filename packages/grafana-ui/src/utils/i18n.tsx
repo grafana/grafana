@@ -28,7 +28,7 @@ export const Trans: typeof I18NextTrans = (props) => {
   return <I18NextTrans {...props} />;
 };
 
-export const t = (id: string, defaultMessage: string) => {
+export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   initI18n();
-  return i18next.t(id, defaultMessage);
+  return i18next.t(id, defaultMessage, values);
 };
