@@ -22,7 +22,7 @@ lineage: seqs: [
 				permission: #Permission @grafanamaturity(ToMetadata="kind")
 				// TODO: probably needs a better description
 				// Accesscontrol metadata associated with a given resource
-				accessControl: [string]: bool @grafanamaturity(MaybeRemove)
+				accessControl: [string]: bool @grafanamaturity(ToMetadata="sys")
 
 				#Permission: 1 | 2 | 4 @cuetsy(kind="enum",memberNames="viewer|editor|admin")
 			},
