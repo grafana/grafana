@@ -220,7 +220,9 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
       return;
     }
 
-    this.setState({ value: event.target.value });
+    this.setState({
+      value: event.target.value,
+    });
   };
 
   onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => {
@@ -228,7 +230,9 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
       return;
     }
 
-    this.setState({ value: event.target.value });
+    this.setState({
+      value: event.target.value,
+    });
   };
 
   focusInput = () => {
@@ -295,7 +299,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
 
 interface LockedRowProps {
   label: string;
-  value?: any;
+  value?: string;
   lockMessage?: string;
 }
 

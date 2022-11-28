@@ -799,10 +799,9 @@ func TestDeleteFolderWithRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := io.ReadAll(resp.Body)
+		_, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
-		require.JSONEq(t, `{"id":1,"message":"Folder default deleted","title":"default"}`, string(b))
 	}
 
 	// Finally, we ensure the rules were deleted.
@@ -1878,6 +1877,8 @@ func TestQuota(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
+		// needs permission to update org quota
+		IsAdmin:        true,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1918,30 +1919,10 @@ func TestQuota(t *testing.T) {
 	// check quota limits
 	t.Run("when quota limit exceed creating new rule should fail", func(t *testing.T) {
 		// get existing org quota
-		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
-		err = store.GetOrgQuotaByTarget(context.Background(), &query)
-		require.NoError(t, err)
-		used := query.Result.Used
-		limit := query.Result.Limit
-
-		// set org quota limit to equal used
-		orgCmd := models.UpdateOrgQuotaCmd{
-			OrgId:  1,
-			Target: "alert_rule",
-			Limit:  used,
-		}
-		err := store.UpdateOrgQuota(context.Background(), &orgCmd)
-		require.NoError(t, err)
-
+		limit, used := apiClient.GetOrgQuotaLimits(t, 1)
+		apiClient.UpdateAlertRuleOrgQuota(t, 1, used)
 		t.Cleanup(func() {
-			// reset org quota to original value
-			orgCmd := models.UpdateOrgQuotaCmd{
-				OrgId:  1,
-				Target: "alert_rule",
-				Limit:  limit,
-			}
-			err := store.UpdateOrgQuota(context.Background(), &orgCmd)
-			require.NoError(t, err)
+			apiClient.UpdateAlertRuleOrgQuota(t, 1, limit)
 		})
 
 		// try to create an alert rule
@@ -2560,8 +2541,10 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 }
 
 func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {
-	org, err := store.CreateOrgWithMember(name, userID)
+	cmd := &models.CreateOrgCommand{Name: name, UserId: userID}
+	err := store.CreateOrg(context.Background(), cmd)
 	require.NoError(t, err)
+	org := cmd.Result
 	return org.Id
 }
 

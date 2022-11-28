@@ -60,6 +60,7 @@ type CloudWatchQuery struct {
 	TimezoneUTCOffset string
 	MetricQueryType   MetricQueryType
 	MetricEditorMode  MetricEditorMode
+	AccountId         *string
 }
 
 func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
@@ -93,6 +94,10 @@ func (q *CloudWatchQuery) IsUserDefinedSearchExpression() bool {
 func (q *CloudWatchQuery) IsInferredSearchExpression() bool {
 	if q.MetricQueryType != MetricQueryTypeSearch || q.MetricEditorMode != MetricEditorModeBuilder {
 		return false
+	}
+
+	if q.AccountId != nil && *q.AccountId == "all" {
+		return true
 	}
 
 	if len(q.Dimensions) == 0 {
@@ -167,6 +172,9 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time, 
 		if dynamicLabelEnabled {
 			metricStatMeta.Label = q.Label
 		}
+		if q.AccountId != nil {
+			metricStatMeta.AccountId = *q.AccountId
+		}
 		metricStat = append(metricStat, metricStatMeta)
 		link.Metrics = []interface{}{metricStat}
 	}
@@ -214,11 +222,13 @@ type metricsDataQuery struct {
 	QueryType         string                 `json:"type"`
 	Hide              *bool                  `json:"hide"`
 	Alias             string                 `json:"alias"`
+	AccountId         *string                `json:"accountId"`
 }
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled bool) ([]*CloudWatchQuery, error) {
+func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled,
+	crossAccountQueryingEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, query := range dataQueries {
 		var metricsDataQuery metricsDataQuery
@@ -250,7 +260,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			Expression:        mdq.Expression,
 		}
 
-		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime); err != nil {
+		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, crossAccountQueryingEnabled); err != nil {
 			return nil, &QueryError{Err: err, RefID: refId}
 		}
 
@@ -267,7 +277,8 @@ func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery, dynamicLabe
 	q.Label = getLabel(query, dynamicLabelsEnabled)
 }
 
-func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time) error {
+func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
+	crossAccountQueryingEnabled bool) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
 		return fmt.Errorf("query must have either statistic or statistics field")
 	}
@@ -283,6 +294,10 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		return fmt.Errorf("failed to parse dimensions: %v", err)
 	}
 
+	if crossAccountQueryingEnabled {
+		q.AccountId = metricsDataQuery.AccountId
+	}
+
 	if metricsDataQuery.Id == "" {
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
 		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
@@ -290,7 +305,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		suffix := refId
 		if !validMetricDataID.MatchString(suffix) {
 			newUUID := uuid.NewString()
-			suffix = strings.Replace(newUUID, "-", "", -1)
+			suffix = strings.ReplaceAll(newUUID, "-", "")
 		}
 		q.Id = fmt.Sprintf("query%s", suffix)
 	}
@@ -436,8 +451,8 @@ func parseDimensions(dimensions map[string]interface{}) (map[string][]string, er
 }
 
 func sortDimensions(dimensions map[string][]string) map[string][]string {
-	sortedDimensions := make(map[string][]string)
-	var keys []string
+	sortedDimensions := make(map[string][]string, len(dimensions))
+	keys := make([]string, 0, len(dimensions))
 	for k := range dimensions {
 		keys = append(keys, k)
 	}
