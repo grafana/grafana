@@ -219,6 +219,10 @@ const (
 	// Show the flame graph
 	FlagFlameGraph = "flameGraph"
 
+	// FlagCloudWatchCrossAccountQuerying
+	// Use cross-account querying in CloudWatch datasource
+	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
+
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
 	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
