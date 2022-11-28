@@ -81,6 +81,8 @@ lineage: seqs: [
 				// TODO docs
 				links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)
 
+				snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
+
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
@@ -275,6 +277,43 @@ lineage: seqs: [
 				// When working directly from CUE, importers can extend this
 				// type directly to achieve the same effect.
 				#Target: {...} @grafanamaturity(NeedsExpertReview)
+
+				// TODO docs
+				#Snapshot: {
+					
+					// TODO docs
+					created: string @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					expires: string @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					external: bool @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					externalUrl: string @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					id: uint32 @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					key: string @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					name: string @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					orgId: uint32 @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					updated: string @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					url?: string @grafanamaturity(NeedsExpertReview)
+					
+					// TODO docs
+					userId: uint32 @grafanamaturity(NeedsExpertReview)
+				} @grafanamaturity(NeedsExpertReview)
 
 				// Dashboard panels. Panels are canonically defined inline
 				// because they share a version timeline with the dashboard

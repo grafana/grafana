@@ -240,6 +240,9 @@ type Dashboard struct {
 	// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
 	SchemaVersion int `json:"schemaVersion"`
 
+	// TODO docs
+	Snapshot *Snapshot `json:"snapshot,omitempty"`
+
 	// Theme of dashboard.
 	Style Style `json:"style"`
 
@@ -753,6 +756,42 @@ type RowPanel struct {
 
 // RowPanelType defines model for RowPanel.Type.
 type RowPanelType string
+
+// TODO docs
+type Snapshot struct {
+	// TODO docs
+	Created string `json:"created"`
+
+	// TODO docs
+	Expires string `json:"expires"`
+
+	// TODO docs
+	External bool `json:"external"`
+
+	// TODO docs
+	ExternalUrl string `json:"externalUrl"`
+
+	// TODO docs
+	Id int `json:"id"`
+
+	// TODO docs
+	Key string `json:"key"`
+
+	// TODO docs
+	Name string `json:"name"`
+
+	// TODO docs
+	OrgId int `json:"orgId"`
+
+	// TODO docs
+	Updated string `json:"updated"`
+
+	// TODO docs
+	Url *string `json:"url,omitempty"`
+
+	// TODO docs
+	UserId int `json:"userId"`
+}
 
 // TODO docs
 type SpecialValueMap struct {

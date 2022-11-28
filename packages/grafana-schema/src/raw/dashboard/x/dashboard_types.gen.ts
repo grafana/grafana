@@ -631,6 +631,52 @@ export interface Dashboard {
    * TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
    */
   schemaVersion: number;
+  snapshot?: {
+    /**
+     * TODO docs
+     */
+    created: string;
+    /**
+     * TODO docs
+     */
+    expires: string;
+    /**
+     * TODO docs
+     */
+    external: boolean;
+    /**
+     * TODO docs
+     */
+    externalUrl: string;
+    /**
+     * TODO docs
+     */
+    id: number;
+    /**
+     * TODO docs
+     */
+    key: string;
+    /**
+     * TODO docs
+     */
+    name: string;
+    /**
+     * TODO docs
+     */
+    orgId: number;
+    /**
+     * TODO docs
+     */
+    updated: string;
+    /**
+     * TODO docs
+     */
+    url?: string;
+    /**
+     * TODO docs
+     */
+    userId: number;
+  };
   /**
    * Theme of dashboard.
    */
