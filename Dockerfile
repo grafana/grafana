@@ -1,15 +1,11 @@
-######################## IMPORTANT ########################
-#
-# There are 2 Dockerfiles which must be kept in sync:
-#
-# - Dockerfile
-# - packaging/docker/Dockerfile
-#
-###########################################################
+# syntax=docker/dockerfile:1
 
 ARG BASE_IMAGE=alpine:3.15
 ARG JS_IMAGE=node:16-alpine3.15
 ARG GO_IMAGE=golang:1.19.3-alpine3.15
+
+ARG GO_SRC=go-builder
+ARG JS_SRC=js-builder
 
 FROM ${JS_IMAGE} as js-builder
 
@@ -56,8 +52,24 @@ COPY public/app/plugins public/app/plugins
 COPY public/api-spec.json public/api-spec.json
 COPY pkg pkg
 COPY scripts scripts
+COPY conf conf
 
 RUN make build-go
+
+FROM ${BASE_IMAGE} as tgz-builder
+
+WORKDIR /tmp/grafana
+
+ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
+
+COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
+
+# add -v to make tar print every file it extracts
+RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+
+# helpers for COPY --from
+FROM ${GO_SRC} as go-src
+FROM ${JS_SRC} as js-src
 
 # Final stage
 FROM ${BASE_IMAGE}
@@ -106,7 +118,7 @@ RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
       rm -f /etc/ld.so.cache; \
     fi
 
-COPY conf ./conf
+COPY --from=go-src /tmp/grafana/conf ./conf
 
 RUN if [ ! $(getent group "$GF_GID") ]; then \
       if grep -i -q alpine /etc/issue; then \
@@ -136,12 +148,14 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=go-builder /tmp/grafana/bin/*/grafana-server /tmp/grafana/bin/*/grafana-cli /tmp/grafana/bin/*/grafana ./bin/
-COPY --from=js-builder /tmp/grafana/public ./public
+COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+COPY --from=js-src /tmp/grafana/public ./public
 
 EXPOSE 3000
 
-COPY ./packaging/docker/run.sh /run.sh
+ARG RUN_SH=./packaging/docker/run.sh
+
+COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
