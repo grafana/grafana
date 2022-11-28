@@ -42,7 +42,13 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 
   const streamSelectorPositions = getStreamSelectorPositions(query);
-  const hasStreamSelectorMatchers = getMatcherInStreamPositions(query).length > 0;
+  const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
+    hasStreamSelectorMatchers.some(
+      (matcherPosition) =>
+        matcherPosition.from >= streamSelectorPosition.from && matcherPosition.to <= streamSelectorPosition.to
+    )
+  );
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   if (!streamSelectorPositions.length) {
@@ -51,7 +57,8 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
 
   const filter = toLabelFilter(key, value, operator);
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
-  if (hasStreamSelectorMatchers && (labelFilterPositions.length || parserPositions.length)) {
+  // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
+  if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else {

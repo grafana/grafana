@@ -160,3 +160,15 @@ Columns with filters applied have a blue funnel displayed next to the title.
 {{< figure src="/static/img/docs/tables/filtered-column.png" max-width="500px" caption="Filtered column" class="docs-image--no-shadow" >}}
 
 To remove the filter, click the blue funnel icon and then click **Clear filter**.
+
+## Table footer
+
+You can use the table footer to show [calculations]({{< relref "../../calculation-types/" >}}) on fields.
+
+After enabling the table footer, you can select your **Calculation** and select the **Fields** that should be calculated. Not selecting any field apply the calculation to all numeric fields.
+
+### Count rows
+
+On selecting the **Count** calculation, you will see the **Count rows** switch.
+
+By enabling this option the footer will show the number of rows in the dataset instead of the number of values in the selected fields.

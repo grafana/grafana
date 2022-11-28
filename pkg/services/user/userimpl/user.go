@@ -232,11 +232,15 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	var signedInUser *user.SignedInUser
-	cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
-	if cached, found := s.cacheService.Get(cacheKey); found {
-		cachedUser := cached.(user.SignedInUser)
-		signedInUser = &cachedUser
-		return signedInUser, nil
+
+	// only check cache if we have a user ID and an org ID in query
+	if query.OrgID > 0 && query.UserID > 0 {
+		cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+		if cached, found := s.cacheService.Get(cacheKey); found {
+			cachedUser := cached.(user.SignedInUser)
+			signedInUser = &cachedUser
+			return signedInUser, nil
+		}
 	}
 
 	result, err := s.GetSignedInUser(ctx, query)
@@ -244,7 +248,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 		return nil, err
 	}
 
-	cacheKey = newSignedInUserCacheKey(result.OrgID, query.UserID)
+	cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
 	s.cacheService.Set(cacheKey, *result, time.Second*5)
 	return result, nil
 }

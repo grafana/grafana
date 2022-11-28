@@ -208,12 +208,12 @@ describe('calculateField transformer w/ timeseries', () => {
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();
       expect(rows).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "E * 1": 1,
             "TheTime": 1000,
           },
-          Object {
+          {
             "E * 1": 0,
             "TheTime": 2000,
           },
@@ -267,12 +267,12 @@ describe('calculateField transformer w/ timeseries', () => {
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();
       expect(rows).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "Test": 6,
             "TheTime": 1000,
           },
-          Object {
+          {
             "Test": 105,
             "TheTime": 2000,
           },
