@@ -20,7 +20,7 @@ describe('LabelBrowserModal', () => {
 
     props = {
       isOpen: true,
-      languageProvider: datasource.languageProvider,
+      datasource: datasource,
       query: {} as LokiQuery,
       onClose: jest.fn(),
       onChange: jest.fn(),
