@@ -1,18 +1,18 @@
-package query_test
+package query
 
 import (
 	"context"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -20,14 +20,242 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
+
+func TestParseMetricRequest(t *testing.T) {
+	t.Run("Test a simple single datasource query", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{
+			"keepCookies": [ "cookie1", "cookie3", "login" ]
+		}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.dsByUid = func(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+			if datasourceUID == "gIEkMvIVz" {
+				return &datasources.DataSource{
+					Uid:      "gIEkMvIVz",
+					JsonData: json,
+				}, nil
+			}
+
+			return nil, nil
+		}
+
+		token := &oauth2.Token{
+			TokenType:   "bearer",
+			AccessToken: "access-token",
+		}
+		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
+
+		tc.oauthTokenService.passThruEnabled = true
+		tc.oauthTokenService.token = token
+
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.False(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 2)
+		assert.Equal(t, "gIEkMvIVz", parsedReq.parsedQueries[0].datasource.Uid)
+		assert.Equal(t, "gIEkMvIVz", parsedReq.parsedQueries[1].datasource.Uid)
+
+		t.Run("createDataSourceQueryEnrichers should return 0 enrichers when no HTTP request", func(t *testing.T) {
+			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{})
+			require.Empty(t, enrichers)
+		})
+
+		t.Run("createDataSourceQueryEnrichers should return 1 enricher", func(t *testing.T) {
+			parsedReq.httpRequest = httptest.NewRequest(http.MethodGet, "/", nil)
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie1"})
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie2"})
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie3"})
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "login"})
+
+			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{"login"})
+			require.Len(t, enrichers, 1)
+			require.NotNil(t, enrichers["gIEkMvIVz"])
+			req := &backend.QueryDataRequest{}
+			ctx := enrichers["gIEkMvIVz"](context.Background(), req)
+			require.Len(t, req.Headers, 3)
+			require.Equal(t, "Bearer access-token", req.Headers["Authorization"])
+			require.Equal(t, "id-token", req.Headers["X-ID-Token"])
+			require.Equal(t, "cookie1=; cookie3=", req.Headers["Cookie"])
+			middlewares := httpclient.ContextualMiddlewareFromContext(ctx)
+			require.Len(t, middlewares, 2)
+			require.Equal(t, httpclientprovider.ForwardedCookiesMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[1].(httpclient.MiddlewareName).MiddlewareName())
+		})
+	})
+
+	t.Run("Test a single datasource query with expressions", func(t *testing.T) {
+		tc := setup(t)
+		json, err := simplejson.NewJson([]byte(`{
+			"keepCookies": [ "cookie1", "cookie3", "login" ]
+		}`))
+		require.NoError(t, err)
+		tc.dataSourceCache.dsByUid = func(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+			if datasourceUID == "gIEkMvIVz" {
+				return &datasources.DataSource{
+					Uid:      "gIEkMvIVz",
+					JsonData: json,
+				}, nil
+			}
+
+			return nil, nil
+		}
+
+		token := &oauth2.Token{
+			TokenType:   "bearer",
+			AccessToken: "access-token",
+		}
+		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
+
+		tc.oauthTokenService.passThruEnabled = true
+		tc.oauthTokenService.token = token
+
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"type": "math",
+			"expression": "$A - 50"
+		}`)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.True(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 2)
+		assert.Equal(t, "gIEkMvIVz", parsedReq.parsedQueries[0].datasource.Uid)
+		assert.Equal(t, expr.DatasourceUID, parsedReq.parsedQueries[1].datasource.Uid)
+
+		// Make sure we end up with something valid
+		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
+		assert.NoError(t, err)
+
+		t.Run("createDataSourceQueryEnrichers should return 1 enricher", func(t *testing.T) {
+			parsedReq.httpRequest = httptest.NewRequest(http.MethodGet, "/", nil)
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie1"})
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie2"})
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie3"})
+			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "login"})
+
+			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{"login"})
+			require.Len(t, enrichers, 1)
+			require.NotNil(t, enrichers["gIEkMvIVz"])
+
+			req := &backend.QueryDataRequest{}
+			ctx := enrichers["gIEkMvIVz"](context.Background(), req)
+			require.Len(t, req.Headers, 3)
+			require.Equal(t, "Bearer access-token", req.Headers["Authorization"])
+			require.Equal(t, "id-token", req.Headers["X-ID-Token"])
+			require.Equal(t, "cookie1=; cookie3=", req.Headers["Cookie"])
+			middlewares := httpclient.ContextualMiddlewareFromContext(ctx)
+			require.Len(t, middlewares, 2)
+			require.Equal(t, httpclientprovider.ForwardedCookiesMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[1].(httpclient.MiddlewareName).MiddlewareName())
+		})
+	})
+
+	t.Run("Test a mixed datasource query with expressions", func(t *testing.T) {
+		tc := setup(t)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "sEx6ZvSVk",
+				"type": "testdata"
+			}
+		}`, `{
+			"refId": "A_resample",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"expression": "A",
+			"type": "resample",
+			"downsampler": "mean",
+			"upsampler": "fillna",
+			"window": "10s"
+		}`, `{
+			"refId": "B_resample",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"expression": "B",
+			"type": "resample",
+			"downsampler": "mean",
+			"upsampler": "fillna",
+			"window": "10s"
+		}`, `{
+			"refId": "C",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"type": "math",
+			"expression": "$A_resample + $B_resample"
+		}`)
+		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.NoError(t, err)
+		require.NotNil(t, parsedReq)
+		assert.True(t, parsedReq.hasExpression)
+		assert.Len(t, parsedReq.parsedQueries, 5)
+		assert.Equal(t, "gIEkMvIVz", parsedReq.parsedQueries[0].datasource.Uid)
+		assert.Equal(t, "sEx6ZvSVk", parsedReq.parsedQueries[1].datasource.Uid)
+		assert.Equal(t, expr.DatasourceUID, parsedReq.parsedQueries[2].datasource.Uid)
+		assert.Equal(t, expr.DatasourceUID, parsedReq.parsedQueries[3].datasource.Uid)
+		assert.Equal(t, expr.DatasourceUID, parsedReq.parsedQueries[4].datasource.Uid)
+		// Make sure we end up with something valid
+		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
+		assert.NoError(t, err)
+
+		t.Run("createDataSourceQueryEnrichers should return 2 enrichers", func(t *testing.T) {
+			parsedReq.httpRequest = &http.Request{}
+			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{})
+			require.Len(t, enrichers, 2)
+			require.NotNil(t, enrichers["gIEkMvIVz"])
+			require.NotNil(t, enrichers["sEx6ZvSVk"])
+		})
+	})
+}
 
 func TestQueryDataMultipleSources(t *testing.T) {
 	t.Run("can query multiple datasources", func(t *testing.T) {
@@ -127,7 +355,12 @@ func TestQueryData(t *testing.T) {
 		tc.oauthTokenService.passThruEnabled = true
 		tc.oauthTokenService.token = token
 
-		_, err := tc.queryService.QueryData(context.Background(), nil, true, metricRequest(), false)
+		metricReq := metricRequest()
+		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		metricReq.HTTPRequest = httpReq
+
+		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq, false)
 		require.Nil(t, err)
 
 		expected := map[string]string{
@@ -190,7 +423,9 @@ func setup(t *testing.T) *testContext {
 		DataSources:           nil,
 		SimulatePluginFailure: false,
 	}
-	exprService := expr.ProvideService(nil, pc, fakeDatasourceService)
+	cfg := setting.NewCfg()
+	cfg.ExpressionsEnabled = true
+	exprService := expr.ProvideService(cfg, pc, fakeDatasourceService)
 
 	return &testContext{
 		pluginContext:          pc,
@@ -198,7 +433,8 @@ func setup(t *testing.T) *testContext {
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, tc),
+		queryService:           ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, tc),
+		signedInUser:           &user.SignedInUser{OrgID: 1},
 	}
 }
 
@@ -208,7 +444,8 @@ type testContext struct {
 	dataSourceCache        *fakeDataSourceCache
 	oauthTokenService      *fakeOAuthTokenService
 	pluginRequestValidator *fakePluginRequestValidator
-	queryService           *query.Service
+	queryService           *Service
+	signedInUser           *user.SignedInUser
 }
 
 func metricRequest() dtos.MetricRequest {
@@ -217,6 +454,22 @@ func metricRequest() dtos.MetricRequest {
 		From:    "",
 		To:      "",
 		Queries: []*simplejson.Json{q},
+		Debug:   false,
+	}
+}
+
+func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
+	t.Helper()
+	queries := make([]*simplejson.Json, 0)
+	for _, q := range rawQueries {
+		json, err := simplejson.NewJson([]byte(q))
+		require.NoError(t, err)
+		queries = append(queries, json)
+	}
+	return dtos.MetricRequest{
+		From:    "now-1h",
+		To:      "now",
+		Queries: queries,
 		Debug:   false,
 	}
 }
@@ -243,7 +496,8 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 }
 
 type fakeDataSourceCache struct {
-	ds *datasources.DataSource
+	ds      *datasources.DataSource
+	dsByUid func(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error)
 }
 
 func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
@@ -251,7 +505,13 @@ func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID in
 }
 
 func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-	return c.ds, nil
+	if c.dsByUid != nil {
+		return c.dsByUid(ctx, datasourceUID, user, skipCache)
+	}
+
+	return &datasources.DataSource{
+		Uid: datasourceUID,
+	}, nil
 }
 
 type fakePluginClient struct {

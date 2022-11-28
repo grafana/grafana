@@ -132,7 +132,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	return query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		cs,
 		nil,
 		&fakePluginRequestValidator{},
