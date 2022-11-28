@@ -14,12 +14,13 @@
 
 import PathElem from './PathElem';
 import { simplePath } from './sample-paths.test.resources';
+import { TDdgOperation, TDdgPath, TDdgService } from './types';
 
 describe('PathElem', () => {
   const getPath = () => {
     const path = {
       focalIdx: 2,
-    };
+    } as TDdgPath;
     const members = simplePath.map(
       ({ operation, service }, i) =>
         new PathElem({
@@ -28,8 +29,8 @@ describe('PathElem', () => {
             name: operation,
             service: {
               name: service,
-            },
-          },
+            } as TDdgService,
+          } as TDdgOperation,
           path,
         })
     );
@@ -42,13 +43,13 @@ describe('PathElem', () => {
     return path;
   };
   const testMemberIdx = 3;
-  const testOperation = {};
+  const testOperation = {} as TDdgOperation;
   const testPath = {
     focalIdx: 4,
     members: ['member0', 'member1', 'member2', 'member3', 'member4', 'member5'],
-  };
+  } as unknown as TDdgPath;
   const testVisibilityIdx = 105;
-  let pathElem;
+  let pathElem: PathElem;
 
   beforeEach(() => {
     pathElem = new PathElem({ path: testPath, operation: testOperation, memberIdx: testMemberIdx });

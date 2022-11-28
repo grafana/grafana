@@ -25,28 +25,28 @@ describe('Concat Transformer', () => {
     const frame = concatenateFields([simpleABC, simpleXYZ], { frameNameMode: ConcatenateFrameNameMode.Drop });
     expect(frame.length).toBe(3);
     expect(frame.fields.map((f) => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "labels": undefined,
           "name": "A",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "B",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "C",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "X",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "Y",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "Z",
         },
@@ -58,28 +58,28 @@ describe('Concat Transformer', () => {
     const frame = concatenateFields([simpleABC, simpleXYZ], { frameNameMode: ConcatenateFrameNameMode.FieldName });
     expect(frame.length).toBe(3);
     expect(frame.fields.map((f) => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "labels": undefined,
           "name": "ABC · A",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "ABC · B",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "ABC · C",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "XYZ · X",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "XYZ · Y",
         },
-        Object {
+        {
           "labels": undefined,
           "name": "XYZ · Z",
         },
@@ -94,39 +94,39 @@ describe('Concat Transformer', () => {
     });
     expect(frame.length).toBe(3);
     expect(frame.fields.map((f) => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "labels": Object {
+      [
+        {
+          "labels": {
             "sensor": "ABC",
           },
           "name": "A",
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "sensor": "ABC",
           },
           "name": "B",
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "sensor": "ABC",
           },
           "name": "C",
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "sensor": "XYZ",
           },
           "name": "X",
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "sensor": "XYZ",
           },
           "name": "Y",
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "sensor": "XYZ",
           },
           "name": "Z",

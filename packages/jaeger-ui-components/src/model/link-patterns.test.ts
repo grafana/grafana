@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Trace, TraceLink, TraceSpan } from '../types/trace';
+
 import {
   processTemplate,
   createTestFunction,
   getParameterInArray,
   getParameterInAncestor,
   processLinkPattern,
+  ProcessedLinkPattern,
   computeLinks,
   createGetLinks,
   computeTraceLink,
@@ -64,7 +67,8 @@ describe('processTemplate()', () => {
     expect(() =>
       processTemplate(
         {
-          template: (data) => `a${data.b}c`,
+          /* eslint-disable @typescript-eslint/no-explicit-any */
+          template: (data: { [key: string]: any }) => `a${data.b}c`,
         },
         (a) => a
       )
@@ -243,21 +247,28 @@ describe('getParameterInAncestor()', () => {
       },
       tags: [{ key: 'a', value: 'a0' }],
     },
-  ];
+  ] as TraceSpan[];
+
   spans[1].references = [
     {
+      spanID: 's1',
+      traceID: 't2',
       refType: 'CHILD_OF',
       span: spans[0],
     },
   ];
   spans[2].references = [
     {
+      spanID: 's1',
+      traceID: 't2',
       refType: 'CHILD_OF',
       span: spans[0],
     },
   ];
   spans[3].references = [
     {
+      spanID: 's1',
+      traceID: 't2',
       refType: 'CHILD_OF',
       span: spans[2],
     },
@@ -311,7 +322,7 @@ describe('getParameterInAncestor()', () => {
         depth: 0,
         process: {},
       },
-    ];
+    ] as TraceSpan[];
     expect(getParameterInAncestor('a', spansWithUndefinedTags[0])).toBeUndefined();
   });
 });
@@ -328,7 +339,7 @@ describe('computeTraceLink()', () => {
       url: 'http://example.com/?myKey=#{traceID}&myKey=#{myKey}',
       text: 'second link (#{myKey})',
     },
-  ].map(processLinkPattern);
+  ].map(processLinkPattern) as ProcessedLinkPattern[];
 
   const trace = {
     processes: [],
@@ -338,7 +349,7 @@ describe('computeTraceLink()', () => {
     endTime: 2000,
     duration: 1000,
     services: [],
-  };
+  } as unknown as Trace;
 
   it('correctly computes links', () => {
     expect(computeTraceLink(linkPatterns, trace)).toEqual([
@@ -363,14 +374,16 @@ describe('computeLinks()', () => {
       url: 'http://example.com/?myKey=#{myOtherKey}&myKey=#{myKey}',
       text: 'second link (#{myOtherKey})',
     },
-  ].map(processLinkPattern);
+  ].map(processLinkPattern) as ProcessedLinkPattern[];
 
   const spans = [
     { depth: 0, process: {}, tags: [{ key: 'myKey', value: 'valueOfMyKey' }] },
     { depth: 1, process: {}, logs: [{ fields: [{ key: 'myOtherKey', value: 'valueOfMy+Other+Key' }] }] },
-  ];
+  ] as unknown as TraceSpan[];
   spans[1].references = [
     {
+      spanID: 's1',
+      traceID: 't2',
       refType: 'CHILD_OF',
       span: spans[0],
     },
@@ -399,12 +412,13 @@ describe('getLinks()', () => {
       url: 'http://example.com/?mySpecialKey=#{mySpecialKey}',
       text: 'special key link (#{mySpecialKey})',
     },
-  ].map(processLinkPattern);
-  const template = jest.spyOn(linkPatterns[0].url, 'template');
+  ].map(processLinkPattern) as ProcessedLinkPattern[];
+  const template = jest.spyOn(linkPatterns[0]!.url, 'template');
 
-  const span = { depth: 0, process: {}, tags: [{ key: 'mySpecialKey', value: 'valueOfMyKey' }] };
+  const span = { depth: 0, process: {}, tags: [{ key: 'mySpecialKey', value: 'valueOfMyKey' }] } as TraceSpan;
 
-  let cache;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  let cache: WeakMap<object, any>;
 
   beforeEach(() => {
     cache = new WeakMap();
@@ -419,7 +433,7 @@ describe('getLinks()', () => {
   });
 
   it('returns the result from the cache', () => {
-    const result = [];
+    const result: TraceLink[] = [];
     cache.set(span.tags[0], result);
     const getLinks = createGetLinks(linkPatterns, cache);
     expect(getLinks(span, span.tags, 0)).toBe(result);

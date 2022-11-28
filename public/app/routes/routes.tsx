@@ -85,7 +85,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
-      roles: () => ['Editor', 'Admin'],
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
@@ -122,7 +122,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/import',
-      roles: () => ['Editor', 'Admin'],
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
       ),
@@ -172,7 +172,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/folder/new',
-      roles: () => ['Editor', 'Admin'],
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.FoldersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),

@@ -397,6 +397,11 @@ func TestIntegrationGetParents(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("get parents of unknown folder should return an error", func(t *testing.T) {
+		_, err := folderStore.GetParents(context.Background(), folder.GetParentsQuery{})
+		require.ErrorIs(t, err, folder.ErrFolderNotFound)
+	})
+
 	t.Run("get parents of 1-st level folder should be empty", func(t *testing.T) {
 		parents, err := folderStore.GetParents(context.Background(), folder.GetParentsQuery{
 			UID:   f.UID,
