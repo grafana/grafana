@@ -30,7 +30,6 @@ Panel: thema.#Lineage & {
 						showHeader:    bool | *true
 						showTypeIcons: bool | *false
 						sortBy?: [...ui.TableSortByFieldState]
-						footerOptions?: [...ui.TableFooterCalc]
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
 				},
