@@ -240,10 +240,8 @@ platform:
     os: linux
 steps:
 - commands:
-  - TODO
-  image: alpine:3.15.6
-  name: await-upload
-- commands:
+  - while ! gsutil ls gs://grafana-prerelease/${DRONE_COMMIT}/docs.tar.gz; do sleep
+    1; done
   - printenv SERVICE_ACCOUNT_KEY > /tmp/service_account_key.json
   - gcloud auth activate-service-account --key-file=/tmp/service_account_key.json
   - gsutil -m cp gs://grafana-prerelease/${DRONE_COMMIT}/docs.tar.gz .
@@ -257,29 +255,27 @@ steps:
   - tar -xzf ./docs.tar.gz -C docs/sources
   image: alpine:3.15.6
   name: unarchive
-- image: TODO
-  name: determine-version
 - commands:
   - curl -LO https://raw.githubusercontent.com/grafana/website-sync/master/entrypoint.sh?token=$${GITHUB_TOKEN}
   - |
     echo "$${ENTRYPOINT_SHA256}  entrypoint.sh" | sha256sum --check --strict --status \
       || printf "wanted: %s\n   got: %s\n" \
            $${ENTRYPOINT_SHA256} \
-           $(sha256sum entrypoint.sh | cut -d" " -f1)
+           $(sha256sum entrypoint.sh | cut -d' ' -f1)
   - |
     ./entrypoint.sh \
-      grafana/website \        # INPUT_REPOSITORY
-      master \                 # INPUT_BRANCH
-      github.com \             # INPUT_GIT_HOST
-      $${GITHUB_TOKEN}' \      # INPUT_GITHUB_TOKEN
-      '' \                     # INPUT_GITHUB_PAT
-      docs/sources \           # INPUT_SOURCE_FOLDER
-      TODO \                   # INPUT_TARGET_FOLDER
-      ${DRONE_COMMIT_AUTHOR} \ # INPUT_COMMIT_AUTHOR
-      '' \                     # INPUT_COMMIT_MESSAGE
-      true \                   # INPUT_DRYRUN
-      '' \                     # INPUT_WORKDIR
-      true \                   # INPUT_ALLOW_NO_CHANGES
+      grafana/website \                                              # INPUT_REPOSITORY
+      master \                                                       # INPUT_BRANCH
+      github.com \                                                   # INPUT_GIT_HOST
+      $${GITHUB_TOKEN}' \                                            # INPUT_GITHUB_TOKEN
+      '' \                                                           # INPUT_GITHUB_PAT
+      docs/sources \                                                 # INPUT_SOURCE_FOLDER
+      content/docs/grafana/$(./bin/build docs-target ${DRONE_TAG}) \ # INPUT_TARGET_FOLDER
+      ${DRONE_COMMIT_AUTHOR} \                                       # INPUT_COMMIT_AUTHOR
+      '' \                                                           # INPUT_COMMIT_MESSAGE
+      true \                                                         # INPUT_DRYRUN
+      '' \                                                           # INPUT_WORKDIR
+      true \                                                         # INPUT_ALLOW_NO_CHANGES
   environment:
     ENTRYPOINT_SHA256: 2ddbb0d27ebe3859c1794008726b1b00d1fdea3491a8a59049d76654e9eebb3a
     GITHUB_TOKEN:
@@ -6476,6 +6472,6 @@ volumes:
     medium: memory
 ---
 kind: signature
-hmac: 417a37aac15fce8809b5c4c35ea3154c1f55c5b7fece916b7bb3dffc6b4c167e
+hmac: 665405cff250ee2c7dfa26c58212c69cc65ec29fdb456b035f7972f3c0c79041
 
 ...

@@ -106,16 +106,10 @@ docs_release_pipeline = _linux_pipeline | {
     "clone": {"disable": True},
     "steps": [
         {
-            "name": "await-upload",
-            "image": alpine_image,
-            "commands": [
-                "TODO",
-            ],
-        },
-        {
             "name": "download",
             "image": google_sdk_image,
             "commands": [
+                "while ! gsutil ls gs://grafana-prerelease/{}; do sleep 1; done".format(_object_path),
                 "printenv SERVICE_ACCOUNT_KEY > /tmp/service_account_key.json",
                 "gcloud auth activate-service-account --key-file=/tmp/service_account_key.json",
                 "gsutil -m cp gs://grafana-prerelease/{} .".format(_object_path, _archive_path),
