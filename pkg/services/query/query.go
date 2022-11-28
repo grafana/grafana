@@ -3,8 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -133,9 +131,16 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
-		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 	}
+
+	if user != nil { // for passthrough authentication, SSE does not authenticate
+		exprReq.User = adapters.BackendUserFromSignedInUser(user)
+		exprReq.OrgId = user.OrgID
+	}
+
+	disallowedCookies := []string{s.cfg.LoginCookieName}
+	queryEnrichers := parsedReq.createDataSourceQueryEnrichers(ctx, user, s.oAuthTokenService, disallowedCookies)
 
 	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
@@ -157,6 +162,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
 			},
+			QueryEnricher: queryEnrichers[pq.datasource.Uid],
 		})
 	}
 
@@ -198,10 +204,11 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		Queries: []backend.DataQuery{},
 	}
 
+	disallowedCookies := []string{s.cfg.LoginCookieName}
 	middlewares := []httpclient.Middleware{}
 	if parsedReq.httpRequest != nil {
 		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), disallowedCookies),
 		)
 	}
 
@@ -218,7 +225,7 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 	}
 
 	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), disallowedCookies)
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}
@@ -231,82 +238,6 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 	ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
 
 	return s.pluginClient.QueryData(ctx, req)
-}
-
-type parsedQuery struct {
-	datasource *datasources.DataSource
-	query      backend.DataQuery
-	rawQuery   *simplejson.Json
-}
-
-type parsedRequest struct {
-	hasExpression bool
-	parsedQueries map[string][]parsedQuery
-	dsTypes       map[string]bool
-	httpRequest   *http.Request
-}
-
-func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
-	queries := make([]parsedQuery, 0)
-	for _, pq := range pr.parsedQueries {
-		queries = append(queries, pq...)
-	}
-	return queries
-}
-
-func (pr parsedRequest) validateRequest() error {
-	if pr.httpRequest == nil {
-		return nil
-	}
-
-	if pr.hasExpression {
-		hasExpr := pr.httpRequest.URL.Query().Get("expression")
-		if hasExpr == "" || hasExpr == "true" {
-			return nil
-		}
-		return ErrQueryParamMismatch
-	}
-
-	vals := splitHeaders(pr.httpRequest.Header.Values(HeaderDatasourceUID))
-	count := len(vals)
-	if count > 0 { // header exists
-		if count != len(pr.parsedQueries) {
-			return ErrQueryParamMismatch
-		}
-		for _, t := range vals {
-			if pr.parsedQueries[t] == nil {
-				return ErrQueryParamMismatch
-			}
-		}
-	}
-
-	vals = splitHeaders(pr.httpRequest.Header.Values(HeaderPluginID))
-	count = len(vals)
-	if count > 0 { // header exists
-		if count != len(pr.dsTypes) {
-			return ErrQueryParamMismatch
-		}
-		for _, t := range vals {
-			if !pr.dsTypes[t] {
-				return ErrQueryParamMismatch
-			}
-		}
-	}
-	return nil
-}
-
-func splitHeaders(headers []string) []string {
-	out := []string{}
-	for _, v := range headers {
-		if strings.Contains(v, ",") {
-			for _, sub := range strings.Split(v, ",") {
-				out = append(out, strings.TrimSpace(sub))
-			}
-		} else {
-			out = append(out, v)
-		}
-	}
-	return out
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid

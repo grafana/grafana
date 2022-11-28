@@ -38,13 +38,9 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 
 	var foldr *folder.Folder
 	/*
-		user, err := appcontext.User(ctx)
-		if err != nil {
-			return nil, err
-		}
 		version := 1
-		updatedBy := user.UserID
-		createdBy := user.UserID
+		updatedBy := cmd.SignedInUser.UserID
+		createdBy := cmd.SignedInUser.UserID
 	*/
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sqlOrArgs []interface{}
@@ -205,6 +201,13 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 		}
 		return nil, err
 	}
+
+	if len(folders) < 1 {
+		// the query is expected to return at least the same folder
+		// if it's empty it means that the folder does not exist
+		return nil, folder.ErrFolderNotFound
+	}
+
 	return util.Reverse(folders[1:]), nil
 }
 

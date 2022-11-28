@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { FeatureState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
@@ -26,15 +26,11 @@ import { UserPreferencesDTO } from 'app/types';
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
+  preferenceType: 'org' | 'team' | 'user';
+  onConfirm?: () => Promise<boolean>;
 }
 
 export type State = UserPreferencesDTO;
-
-const themes: SelectableValue[] = [
-  { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
-  { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
-  { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
-];
 
 function getLanguageOptions(): Array<SelectableValue<string>> {
   const languageOptions = LANGUAGES.map((v) => ({
@@ -57,6 +53,7 @@ const i18nFlag = Boolean(config.featureToggles.internationalization);
 
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
+  themeOptions: SelectableValue[];
 
   constructor(props: Props) {
     super(props);
@@ -69,6 +66,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
       language: '',
       queryHistory: { homeTab: '' },
     };
+
+    this.themeOptions = [
+      { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
+      { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
+      { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
+    ];
   }
 
   async componentDidMount() {
@@ -85,9 +88,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
-    await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
-    window.location.reload();
+    const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
+
+    if (confirmationResult) {
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
+      window.location.reload();
+    }
   };
 
   onThemeChanged = (value: string) => {
@@ -111,6 +118,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onLanguageChanged = (language: string) => {
     this.setState({ language });
+
+    reportInteraction('grafana_preferences_language_changed', {
+      toLanguage: language,
+      preferenceType: this.props.preferenceType,
+    });
   };
 
   render() {
@@ -126,8 +138,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
             <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
               <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
                 <RadioButtonGroup
-                  options={themes}
-                  value={themes.find((item) => item.value === theme)?.value}
+                  options={this.themeOptions}
+                  value={this.themeOptions.find((item) => item.value === theme)?.value}
                   onChange={this.onThemeChanged}
                 />
               </Field>
@@ -182,7 +194,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                       <span className={styles.labelText}>
                         <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
                       </span>
-                      <FeatureBadge featureState={FeatureState.alpha} />
+                      <FeatureBadge featureState={FeatureState.beta} />
                     </Label>
                   }
                   data-testid="User preferences language drop down"
