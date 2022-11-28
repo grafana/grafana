@@ -151,7 +151,7 @@ export default chance.mixin({
     traceEndTime = 0,
     operations = OPERATIONS_LIST,
   }) {
-    // Set the remaining defaults for time start and end
+    // Set default values for trace start/end time.
     traceStartTime = traceStartTime || chance.timestamp() * 1000 * 1000;
     traceEndTime = traceEndTime || traceStartTime + 100000;
 
