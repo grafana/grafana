@@ -80,6 +80,34 @@ func TestCloudMonitoring(t *testing.T) {
 		assert.Equal(t, "testalias", queries[0].aliasBy)
 	})
 
+	t.Run("parses a time series list with secondary inputs", func(t *testing.T) {
+		req := baseTimeSeriesList()
+		req.Queries[0].JSON = json.RawMessage(`{
+			"timeSeriesList": {
+				"filters": ["metric.type=\"a/metric/type\""],
+				"view":       "FULL",
+				"secondaryAlignmentPeriod": "60s",
+				"secondaryCrossSeriesReducer": "REDUCE_NONE",
+				"secondaryPerSeriesAligner": "ALIGN_MEAN",
+				"secondaryGroupBys": ["metric.label.group"]
+			},
+			"aliasBy":    "testalias"
+		}`)
+
+		qes, err := service.buildQueryExecutors(slog, req)
+		require.NoError(t, err)
+		queries := getCloudMonitoringListFromInterface(t, qes)
+
+		require.Len(t, queries, 1)
+		assert.Equal(t, "A", queries[0].refID)
+		assert.Equal(t, "+60s", queries[0].params["secondaryAggregation.alignmentPeriod"][0])
+		assert.Equal(t, "REDUCE_NONE", queries[0].params["secondaryAggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "ALIGN_MEAN", queries[0].params["secondaryAggregation.perSeriesAligner"][0])
+		assert.Equal(t, "metric.label.group", queries[0].params["secondaryAggregation.groupByFields"][0])
+		assert.Equal(t, "FULL", queries[0].params["view"][0])
+		assert.Equal(t, "testalias", queries[0].aliasBy)
+	})
+
 	t.Run("Parse migrated queries from frontend and build Google Cloud Monitoring API queries", func(t *testing.T) {
 		t.Run("and query has no aggregation set", func(t *testing.T) {
 			req := deprecatedReq()

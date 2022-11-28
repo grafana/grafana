@@ -33,16 +33,17 @@ type (
 	// These should reflect GCM APIs
 	// timeSeries.list https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list
 	timeSeriesList struct {
-		ProjectName        string   `json:"projectName"`
-		CrossSeriesReducer string   `json:"crossSeriesReducer"`
-		AlignmentPeriod    string   `json:"alignmentPeriod"`
-		PerSeriesAligner   string   `json:"perSeriesAligner"`
-		GroupBys           []string `json:"groupBys"`
-		Filters            []string `json:"filters"`
-		View               string   `json:"view"`
-		// Not part of the GCM API
-		// TODO: Use API fields instead
-		Preprocessor string `json:"preprocessor"`
+		ProjectName                 string   `json:"projectName"`
+		CrossSeriesReducer          string   `json:"crossSeriesReducer"`
+		AlignmentPeriod             string   `json:"alignmentPeriod"`
+		PerSeriesAligner            string   `json:"perSeriesAligner"`
+		GroupBys                    []string `json:"groupBys"`
+		Filters                     []string `json:"filters"`
+		View                        string   `json:"view"`
+		SecondaryAlignmentPeriod    string   `json:"secondaryAlignmentPeriod"`
+		SecondaryCrossSeriesReducer string   `json:"secondaryCrossSeriesReducer"`
+		SecondaryPerSeriesAligner   string   `json:"secondaryPerSeriesAligner"`
+		SecondaryGroupBys           []string `json:"secondaryGroupBys"`
 	}
 	// TODO: sloQuery can be specified as timeSeriesList parameters
 	sloQuery struct {
