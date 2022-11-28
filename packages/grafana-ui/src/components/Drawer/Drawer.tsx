@@ -92,14 +92,19 @@ export function Drawer({
         motionAppear: true,
         motionName: drawerStyles.maskMotion,
       }}
-      aria-label={
-        typeof title === 'string'
-          ? selectors.components.Drawer.General.title(title)
-          : selectors.components.Drawer.General.title('no title')
-      }
     >
       <FocusScope restoreFocus contain autoFocus>
-        <div className={drawerStyles.container} {...overlayProps} {...dialogProps} ref={overlayRef}>
+        <div
+          aria-label={
+            typeof title === 'string'
+              ? selectors.components.Drawer.General.title(title)
+              : selectors.components.Drawer.General.title('no title')
+          }
+          className={drawerStyles.container}
+          {...overlayProps}
+          {...dialogProps}
+          ref={overlayRef}
+        >
           {typeof title === 'string' && (
             <div className={drawerStyles.header}>
               <div className={drawerStyles.actions}>
