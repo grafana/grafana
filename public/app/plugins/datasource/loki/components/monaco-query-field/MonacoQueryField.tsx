@@ -12,6 +12,7 @@ import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
+import { validate } from './monaco-completion-provider/query-validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -122,6 +123,28 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
           editor.onDidBlurEditorWidget(() => {
             isEditorFocused.set(false);
             onBlurRef.current(editor.getValue());
+          });
+          editor.onDidChangeModelContent((e) => {
+            const model = editor.getModel();
+            if (!model) {
+              return;
+            }
+
+            const errors = validate(model);
+            if (!errors) {
+              monaco.editor.setModelMarkers(model, 'owner', []);
+              return;
+            }
+
+            const markers = errors.map((error) => ({
+              message: 'Parser error',
+              severity: monaco.MarkerSeverity.Error,
+              startLineNumber: error.startLineNumber,
+              startColumn: error.startColumn,
+              endLineNumber: error.endLineNumber,
+              endColumn: error.endColumn,
+            }));
+            monaco.editor.setModelMarkers(model, 'owner', markers);
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef.current);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
