@@ -1,12 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/create-contact-point/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/delete-contact-point/
-  - /docs/grafana/latest/alerting/contact-points/edit-contact-point/
-  - /docs/grafana/latest/alerting/contact-points/test-contact-point/
+  - ../contact-points/create-contact-point/
+  - ../contact-points/message-templating/
+  - ../message-templating/
+  - ../unified-alerting/message-templating/
+  - ../contact-points/delete-contact-point/
+  - ../contact-points/edit-contact-point/
+  - ../contact-points/test-contact-point/
   - /docs/grafana/latest/alerting/manage-notifications/create-contact-point/
 keywords:
   - grafana

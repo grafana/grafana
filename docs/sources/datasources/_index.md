@@ -1,8 +1,8 @@
 ---
 aliases:
   - /docs/grafana/latest/datasources/
-  - /docs/grafana/latest/datasources/overview/
-  - /docs/grafana/latest/data-sources/
+  - overview/
+  - data-sources/
 title: Data sources
 weight: 60
 ---

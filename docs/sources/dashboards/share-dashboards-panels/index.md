@@ -1,23 +1,20 @@
 ---
 aliases:
-  - /docs/grafana/latest/sharing/
-  - /docs/grafana/latest/dashboards/share-dashboard/
-  - /docs/grafana/latest/reference/share_dashboard/
-  - /docs/grafana/latest/sharing/share-dashboard/
-  - /docs/grafana/latest/dashboards/share-dashboard/
-  - /docs/grafana/latest/reference/share_panel/
-  - /docs/grafana/latest/sharing/share-panel/
-  - /docs/grafana/latest/sharing/playlists/
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/enterprise/reporting/
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/dashboards/reporting/
-  - /docs/grafana/latest/enterprise/export-pdf/
+  - ../sharing/
+  - share-dashboard/
+  - ../reference/share_dashboard/
+  - ../sharing/share-dashboard/
+  - share-dashboard/
+  - ../reference/share_panel/
+  - ../sharing/share-panel/
+  - ../sharing/playlists/
+  - ../administration/reports/
+  - ../enterprise/reporting/
+  - ../administration/reports/
+  - reporting/
+  - ../enterprise/export-pdf/
   - docs/grafana/latest/dashboards/share-dashboards-panels/
-  - /docs/grafana/latest/share-dashboards-panels/
-title: Share dashboards and panels
-menuTitle: Sharing
-weight: 85
+  - ../share-dashboards-panels/
 keywords:
   - grafana
   - dashboard
@@ -29,6 +26,9 @@ keywords:
   - reporting
   - export
   - pdf
+menuTitle: Sharing
+title: Share dashboards and panels
+weight: 85
 ---
 
 # Share dashboards and panels

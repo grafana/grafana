@@ -1,15 +1,15 @@
 ---
-title: Dashboard URL variables
+aliases:
+  - /docs/grafana/latest/dashboards/build-dashboards/create-dashboard-url-variables/
+  - ../../variables/url-variables/
+  - ../../variables/variable-types/url-variables/
 keywords:
   - grafana
   - url variables
   - documentation
   - variables
   - dashboards
-aliases:
-  - /docs/grafana/latest/dashboards/build-dashboards/create-dashboard-url-variables/
-  - /docs/grafana/latest/variables/url-variables/
-  - /docs/grafana/latest/variables/variable-types/url-variables/
+title: Dashboard URL variables
 weight: 250
 ---
 

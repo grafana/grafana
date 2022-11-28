@@ -1,12 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/cloudwatch/
+  - cloudwatch/
   - /docs/grafana/latest/datasources/aws-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - provision-cloudwatch/
+  - preconfig-cloudwatch-dashboards/
+  - ../data-sources/aws-cloudwatch/
+  - ../data-sources/aws-cloudwatch/provision-cloudwatch/
+  - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
 description: Guide for using AWS CloudWatch in Grafana
 keywords:
   - grafana

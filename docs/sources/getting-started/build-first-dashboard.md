@@ -1,9 +1,9 @@
 ---
 aliases:
   - /docs/grafana/latest/getting-started/build-first-dashboard/
-  - /docs/grafana/latest/getting-started/getting-started/
-  - /docs/grafana/latest/guides/getting_started/
-  - /docs/grafana/latest/guides/gettingstarted/
+  - getting-started/
+  - ../guides/getting_started/
+  - ../guides/gettingstarted/
 description: Learn how to get started with Grafana by adding a preconfigured dashboard.
 title: Build your first dashboard
 weight: 200

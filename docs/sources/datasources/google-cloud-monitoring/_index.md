@@ -1,12 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/stackdriver/
-  - /docs/grafana/latest/features/datasources/cloudmonitoring/
+  - ../features/datasources/stackdriver/
+  - ../features/datasources/cloudmonitoring/
   - /docs/grafana/latest/datasources/google-cloud-monitoring/
-  - /docs/grafana/latest/datasources/cloudmonitoring/
-  - /docs/grafana/latest/datasources/google-cloud-monitoring/preconfig-cloud-monitoring-dashboards/
-  - /docs/grafana/latest/data-sources/google-cloud-monitoring/
-  - /docs/grafana/latest/data-sources/google-cloud-monitoring/preconfig-cloud-monitoring-dashboards/
+  - cloudmonitoring/
+  - preconfig-cloud-monitoring-dashboards/
+  - ../data-sources/google-cloud-monitoring/
+  - ../data-sources/google-cloud-monitoring/preconfig-cloud-monitoring-dashboards/
 description: Guide for using Google Cloud Monitoring in Grafana
 keywords:
   - grafana

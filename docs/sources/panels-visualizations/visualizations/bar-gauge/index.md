@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/bar_gauge/
-  - /docs/grafana/latest/panels/visualizations/bar-gauge-panel/
-  - /docs/grafana/latest/visualizations/bar-gauge-panel/
+  - ../../features/panels/bar_gauge/
+  - ../../panels/visualizations/bar-gauge-panel/
+  - ../../visualizations/bar-gauge-panel/
   - /docs/grafana/latest/panels-visualizations/visualizations/bar-gauge/
 description: Bar gauge panel options
 keywords:

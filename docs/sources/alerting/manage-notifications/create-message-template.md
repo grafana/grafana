@@ -1,21 +1,21 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/create-message-template/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/delete-message-template/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/edit-message-template/
+  - ../contact-points/message-templating/
+  - ../contact-points/message-templating/create-message-template/
+  - ../message-templating/
+  - ../unified-alerting/message-templating/
+  - ../contact-points/message-templating/delete-message-template/
+  - ../contact-points/message-templating/edit-message-template/
   - /docs/grafana/latest/alerting/manage-notifications/create-message-template/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/example-template/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/fundamentals/contact-points/example-template/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/template-data/
-  - /docs/grafana/latest/alerting/message-templating/template-data/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/template-data/
-  - /docs/grafana/latest/alerting/fundamentals/contact-points/template-data/
+  - ../contact-points/message-templating/
+  - ../contact-points/message-templating/example-template/
+  - ../message-templating/
+  - ../unified-alerting/message-templating/
+  - ../fundamentals/contact-points/example-template/
+  - ../contact-points/message-templating/template-data/
+  - ../message-templating/template-data/
+  - ../unified-alerting/message-templating/template-data/
+  - ../fundamentals/contact-points/template-data/
 keywords:
   - grafana
   - alerting
