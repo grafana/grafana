@@ -130,12 +130,14 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
               return;
             }
 
-            const errors = validateQuery(model) || [];
+            const errors = validateQuery(model.getValue(), model.getLinesContent()) || [];
 
-            const markers = errors.map((error) => ({
-              message: 'Parser error',
+            const markers = errors.map(({ error, ...boundary }) => ({
+              message: `${
+                error ? `Error parsing "${error}"` : 'Parse error'
+              }. The query appears to be incorrect and could fail to be executed.`,
               severity: monaco.MarkerSeverity.Error,
-              ...error,
+              ...boundary,
             }));
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });

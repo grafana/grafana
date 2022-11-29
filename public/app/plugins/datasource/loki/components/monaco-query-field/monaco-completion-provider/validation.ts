@@ -9,16 +9,10 @@ interface ParserErrorBoundary {
   startColumn: number;
   endLineNumber: number;
   endColumn: number;
+  error: string;
 }
 
-function isErrorBoundary(boundary: ParserErrorBoundary | null): boundary is ParserErrorBoundary {
-  return boundary !== null;
-}
-
-export function validateQuery(model: monacoTypes.editor.ITextModel): ParserErrorBoundary[] | false {
-  const query = model.getValue();
-  const lines = model.getLinesContent();
-
+export function validateQuery(query: string, queryLines: string[]): ParserErrorBoundary[] | false {
   if (!query) {
     return false;
   }
@@ -38,20 +32,22 @@ export function validateQuery(model: monacoTypes.editor.ITextModel): ParserError
     return false;
   }
 
-  return errorNodes.map((node) => findErrorBoundary(query, lines, node)).filter(isErrorBoundary);
+  return errorNodes.map((node) => findErrorBoundary(query, queryLines, node)).filter(isErrorBoundary);
 }
 
 function findErrorBoundary(query: string, queryLines: string[], node: SyntaxNode): ParserErrorBoundary | null {
+  const errorNode = node.from === node.to && node.parent ? node.parent : node;
+  const error = query.substring(errorNode.from, errorNode.to);
+
   if (queryLines.length === 1) {
     return {
       startLineNumber: 1,
-      startColumn: node.from,
+      startColumn: errorNode.from + 1,
       endLineNumber: 1,
-      endColumn: node.to,
+      endColumn: errorNode.to + 1,
+      error,
     };
   }
-
-  const errorNode = node.from === node.to && node.parent ? node.parent : node;
 
   let startPos = 0,
     endPos = 0;
@@ -68,8 +64,13 @@ function findErrorBoundary(query: string, queryLines: string[], node: SyntaxNode
       startColumn: errorNode.from - startPos + 1,
       endLineNumber: line + 1,
       endColumn: errorNode.to - startPos + 1,
+      error,
     };
   }
 
   return null;
+}
+
+function isErrorBoundary(boundary: ParserErrorBoundary | null): boundary is ParserErrorBoundary {
+  return boundary !== null;
 }
