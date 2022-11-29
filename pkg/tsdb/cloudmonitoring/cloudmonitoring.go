@@ -34,7 +34,6 @@ var (
 	legendKeyFormat             = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 	metricNameFormat            = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
 	wildcardRegexRe             = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
-	alignmentPeriodRe           = regexp.MustCompile("[0-9]+")
 	cloudMonitoringUnitMappings = map[string]string{
 		"bit":     "bits",
 		"By":      "bytes",
@@ -575,6 +574,13 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 		}
 	}
 	return bucketBound
+}
+
+func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, projectName string) (string, error) {
+	if projectName != "" {
+		return projectName, nil
+	}
+	return s.getDefaultProject(ctx, dsInfo)
 }
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
