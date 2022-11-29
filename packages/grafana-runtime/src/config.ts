@@ -189,11 +189,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
 function getThemeCustomizations(config: GrafanaBootConfig) {
   const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
   const themeOptions: NewThemeOptions = {
-    colors: {mode},
+    colors: { mode },
   };
 
   if (config.featureToggles.interFont) {
-    themeOptions.typography = {fontFamily: '"Inter", "Helvetica", "Arial", sans-serif'};
+    themeOptions.typography = { fontFamily: '"Inter", "Helvetica", "Arial", sans-serif' };
   }
 
   return themeOptions;
