@@ -234,12 +234,10 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 
 	// Get accesscontrol metadata and IPD labels for users in the target org
 	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
-	if len(accessControlMetadata) > 0 {
-		for i := range filteredUsers {
-			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
-			if module, ok := modules[filteredUsers[i].UserID]; ok {
-				filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			}
+	for i := range filteredUsers {
+		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
+		if module, ok := modules[filteredUsers[i].UserID]; ok {
+			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
 		}
 	}
 

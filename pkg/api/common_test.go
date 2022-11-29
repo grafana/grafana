@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -352,7 +353,9 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		License:         &licensing.OSSLicensingService{},
 		AccessControl:   acimpl.ProvideAccessControl(cfg),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
-		authInfoService: &logintest.AuthInfoServiceFake{},
+		authInfoService: &logintest.AuthInfoServiceFake{
+			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
+		},
 	}
 }
 
@@ -430,7 +433,9 @@ func setupHTTPServerWithCfgDb(
 		orgService:        orgMock,
 		teamService:       teamService,
 		annotationsRepo:   annotationstest.NewFakeAnnotationsRepo(),
-		authInfoService:   &logintest.AuthInfoServiceFake{},
+		authInfoService: &logintest.AuthInfoServiceFake{
+			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
+		},
 	}
 
 	for _, o := range options {

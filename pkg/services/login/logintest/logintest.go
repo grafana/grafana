@@ -28,6 +28,7 @@ type AuthInfoServiceFake struct {
 	ExpectedUser         *user.User
 	ExpectedExternalUser *models.ExternalUserInfo
 	ExpectedError        error
+	ExpectedLabels       map[int64]string
 }
 
 func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
@@ -46,7 +47,7 @@ func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *models.Get
 }
 
 func (a *AuthInfoServiceFake) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
-	return map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)}, nil
+	return a.ExpectedLabels, a.ExpectedError
 }
 
 func (a *AuthInfoServiceFake) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
