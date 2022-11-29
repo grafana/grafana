@@ -16,9 +16,10 @@ export class FrontendSearcher implements GrafanaSearcher {
     }
 
     // we don't yet support anything except default (relevance)
-    if (query.sort != null) {
-      throw new Error('custom sorting is not supported yet');
-    }
+    // EDIT 2022-11-28: we're now always getting "name_sort" as the default query.sort...so just ignore it for now
+    // if (query.sort != null) {
+    //   throw new Error('custom sorting is not supported yet');
+    // }
 
     // Don't bother... not needed for this exercise
     if (query.tags?.length || query.ds_uid?.length) {
