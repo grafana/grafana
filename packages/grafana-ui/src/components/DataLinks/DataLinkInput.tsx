@@ -143,7 +143,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
         editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}}`);
       } else {
-        editor.insertText(`\${${item.value}:queryparam}`);
+        editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);
