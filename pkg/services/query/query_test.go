@@ -406,7 +406,8 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds1"
-				}
+				},
+				"refId": "A"
 			}
 		`))
 		require.NoError(t, err)
@@ -415,7 +416,8 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds2"
-				}
+				},
+				"refId": "B"
 			}
 		`))
 		require.NoError(t, err)
@@ -436,7 +438,6 @@ func TestQueryDataMultipleSources(t *testing.T) {
 
 	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
 		tc := setup(t)
-		// refId does get set if not included, but better to include it explicitly here
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
@@ -452,7 +453,8 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds2"
-				}
+				},
+				"refId": "B"
 			}
 		`))
 		require.NoError(t, err)
@@ -493,7 +495,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("error is returned when one of the queries fails", func(t *testing.T) {
+	t.Run("error is returned in query when one of the queries fails", func(t *testing.T) {
 		tc := setup(t)
 
 		query1, _ := simplejson.NewJson([]byte(`
@@ -501,7 +503,8 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds1"
-				}
+				},
+				"refId": "A"
 			}
 		`))
 		query2, _ := simplejson.NewJson([]byte(`
@@ -510,6 +513,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 					"type": "prometheus",
 					"uid": "ds2"
 				},
+				"refId": "B",
 				"queryType": "FAIL"
 			}
 		`))
@@ -525,9 +529,12 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			HTTPRequest:                nil,
 		}
 
-		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
-		require.Error(t, err)
+		require.NoError(t, err)
+		require.Error(t, res.Responses["B"].Error)
+		// Responses aren't mocked, so a "healthy" query will just return an empty response
+		require.NotContains(t, res.Responses, "A")
 	})
 }
 
