@@ -367,5 +367,10 @@ var (
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "authnService",
+			Description: "Use new auth service to perform authentication",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
