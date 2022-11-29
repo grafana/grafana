@@ -126,14 +126,7 @@ describe('Plugin details page', () => {
         local: { id },
       });
 
-      const store = configureStore();
-      const { queryByText } = render(
-        <MemoryRouter initialEntries={[`/plugins/${id}`]}>
-          <Provider store={store}>
-            <Route exact path="/plugins/:pluginId" component={PluginDetailsPage} />
-          </Provider>
-        </MemoryRouter>
-      );
+      const { queryByText } = renderPluginDetails({ id });
 
       await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
     });
