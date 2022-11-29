@@ -146,7 +146,7 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 		return nil, err
 	}
 
-	args := []interface{}{grn.ToOID()}
+	args := []interface{}{grn.ToGRNString()}
 	where := "oid=?"
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
@@ -167,7 +167,7 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 	if err != nil {
 		return nil, err
 	}
-	oid := grn.ToOID()
+	oid := grn.ToGRNString()
 
 	fields := []string{
 		"body", "size", "etag",
@@ -244,7 +244,7 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 			return nil, err
 		}
 
-		oid := grn.ToOID()
+		oid := grn.ToGRNString()
 		where := "oid=?"
 		args = append(args, oid)
 		if r.Version != "" {
@@ -283,7 +283,7 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 	if err != nil {
 		return nil, err
 	}
-	oid := grn.ToOID()
+	oid := grn.ToGRNString()
 
 	timestamp := time.Now().UnixMilli()
 	createdAt := r.CreatedAt
@@ -556,7 +556,7 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 
 	rsp := &object.DeleteObjectResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rsp.OK, err = doDelete(ctx, tx, grn.ToOID())
+		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
 		return err
 	})
 	return rsp, err
@@ -584,7 +584,7 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	if err != nil {
 		return nil, err
 	}
-	oid := grn.ToOID()
+	oid := grn.ToGRNString()
 
 	page := ""
 	args := []interface{}{oid}

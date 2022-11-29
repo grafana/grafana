@@ -2,8 +2,6 @@ package object
 
 import (
 	"fmt"
-
-	"github.com/gofrs/uuid"
 )
 
 // Check if the two GRNs reference to the same object
@@ -18,10 +16,6 @@ func (x *GRN) Equals(b *GRN) bool {
 }
 
 // Set an OID based on the GRN
-func (x *GRN) ToOID() string {
-	oid := fmt.Sprintf("%d/%s/%s", x.TenantId, x.Kind, x.UID)
-	if false {
-		return uuid.NewV5(uuid.NamespaceOID, oid).String()
-	}
-	return oid
+func (x *GRN) ToGRNString() string {
+	return fmt.Sprintf("grn:%d/%s/%s", x.TenantId, x.Kind, x.UID)
 }
