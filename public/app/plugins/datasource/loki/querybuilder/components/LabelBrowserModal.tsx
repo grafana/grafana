@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { CoreApp } from '@grafana/data';
-import { Modal } from '@grafana/ui';
+import { LoadingPlaceholder, Modal } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 import { LokiLabelBrowser } from '../../components/LokiLabelBrowser';
@@ -22,6 +22,7 @@ export const LabelBrowserModal = (props: Props) => {
   const { isOpen, onClose, datasource, app } = props;
   const [labelsLoaded, setLabelsLoaded] = useState(false);
   const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
+  const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
 
   useEffect(() => {
     datasource.languageProvider.start().then(() => {
@@ -41,51 +42,26 @@ export const LabelBrowserModal = (props: Props) => {
     onClose();
   };
 
-  const getChooserText = (logLabelsLoaded: boolean, hasLogLabels: boolean) => {
-    if (!logLabelsLoaded) {
-      return 'Loading labels...';
-    }
-    if (!hasLogLabels) {
-      return '(No labels found)';
-    }
-    return 'Label browser';
-  };
-
-  const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
-  const labelBrowserText = getChooserText(labelsLoaded, hasLogLabels);
-
-  if (labelBrowserText === 'Loading labels...') {
-    return (
-      <Modal title="Label browser" isOpen={isOpen} onDismiss={onClose}>
-        <p>Loading labels...</p>
-      </Modal>
-    );
-  }
-
-  if (labelBrowserText === '(No labels found)') {
-    return (
-      <Modal title="Label browser" isOpen={isOpen} onDismiss={onClose}>
-        <p>No labels found.</p>
-      </Modal>
-    );
-  }
-
   return (
     <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose}>
-      <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
-        {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
-          return (
-            <LokiLabelBrowser
-              languageProvider={datasource.languageProvider}
-              onChange={onChange}
-              lastUsedLabels={lastUsedLabels}
-              storeLastUsedLabels={onLastUsedLabelsSave}
-              deleteLastUsedLabels={onLastUsedLabelsDelete}
-              app={app}
-            />
-          );
-        }}
-      </LocalStorageValueProvider>
+      {!labelsLoaded && <LoadingPlaceholder text="Loading labels..." />}
+      {!hasLogLabels && <p>No labels found.</p>}
+      {labelsLoaded && hasLogLabels && (
+        <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
+          {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
+            return (
+              <LokiLabelBrowser
+                languageProvider={datasource.languageProvider}
+                onChange={onChange}
+                lastUsedLabels={lastUsedLabels}
+                storeLastUsedLabels={onLastUsedLabelsSave}
+                deleteLastUsedLabels={onLastUsedLabelsDelete}
+                app={app}
+              />
+            );
+          }}
+        </LocalStorageValueProvider>
+      )}
     </Modal>
   );
 };
