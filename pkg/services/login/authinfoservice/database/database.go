@@ -108,6 +108,30 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 	return nil
 }
 
+func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
+	userAuths := []models.UserAuth{}
+	params := make([]interface{}, 0, len(query.UserIDs))
+	for _, id := range query.UserIDs {
+		params = append(params, id)
+	}
+
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table("user_auth").In("user_id", params).OrderBy("created").Find(&userAuths)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	labelMap := make(map[int64]string, len(userAuths))
+
+	for i := range userAuths {
+		labelMap[userAuths[i].UserId] = userAuths[i].AuthModule
+	}
+
+	return labelMap, nil
+}
+
 func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
 	authUser := &models.UserAuth{
 		UserId:     cmd.UserId,
