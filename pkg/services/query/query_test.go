@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -79,13 +80,23 @@ func TestParseMetricRequest(t *testing.T) {
 		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
 		require.NotNil(t, parsedReq)
-		assert.True(t, parsedReq.hasExpression)
-		assert.Len(t, parsedReq.parsedQueries, 2)
-		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
-		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
+		require.True(t, parsedReq.hasExpression)
+		require.Len(t, parsedReq.parsedQueries, 2)
+		require.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		require.Len(t, parsedReq.getFlattenedQueries(), 2)
 		// Make sure we end up with something valid
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
+		t.Run("Should forward user and org ID to QueryData from expression request", func(t *testing.T) {
+			require.NotNil(t, tc.pluginContext.req)
+			require.NotNil(t, tc.pluginContext.req.PluginContext.User)
+			require.Equal(t, tc.signedInUser.Login, tc.pluginContext.req.PluginContext.User.Login)
+			require.Equal(t, tc.signedInUser.Name, tc.pluginContext.req.PluginContext.User.Name)
+			require.Equal(t, tc.signedInUser.Email, tc.pluginContext.req.PluginContext.User.Email)
+			require.Equal(t, string(tc.signedInUser.OrgRole), tc.pluginContext.req.PluginContext.User.Role)
+			require.Equal(t, tc.signedInUser.OrgID, tc.pluginContext.req.PluginContext.OrgID)
+		})
 	})
 
 	t.Run("Test a simple mixed datasource query", func(t *testing.T) {
@@ -396,7 +407,7 @@ func setup(t *testing.T) *testContext {
 		dataSourceCache:        dc,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: roletype.RoleAdmin},
 	}
 }
 
