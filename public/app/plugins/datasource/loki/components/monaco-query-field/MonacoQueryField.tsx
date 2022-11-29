@@ -12,7 +12,7 @@ import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
-import { validate } from './monaco-completion-provider/query-validation';
+import { validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -130,19 +130,12 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
               return;
             }
 
-            const errors = validate(model);
-            if (!errors) {
-              monaco.editor.setModelMarkers(model, 'owner', []);
-              return;
-            }
+            const errors = validateQuery(model) || [];
 
             const markers = errors.map((error) => ({
               message: 'Parser error',
               severity: monaco.MarkerSeverity.Error,
-              startLineNumber: error.startLineNumber,
-              startColumn: error.startColumn,
-              endLineNumber: error.endLineNumber,
-              endColumn: error.endColumn,
+              ...error,
             }));
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
