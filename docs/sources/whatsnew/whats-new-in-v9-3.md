@@ -14,7 +14,7 @@ title: What's new in Grafana v9.3
 weight: -33
 ---
 
-# What’s new in Grafana v9.3 (Beta)
+# What’s new in Grafana v9.3
 
 Welcome to Grafana 9.3! Read on to learn about our navigation overhaul, support for four new languages, new panels and transformations, several often-requested auth improvements, usability improvements to Alerting, and more. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -75,8 +75,6 @@ Available in **experimental** in Grafana Open Source, Enterprise, and Cloud Adva
 You can use Public Dashboards to make a given dashboard available to anyone on the internet without needing to sign in. In Grafana v9.3, we have introduced a new screen where you can manage all of your public dashboards. From here, you can view a list of all of the public dashboards in your Grafana instance, navigate to the underlying dashboard, see if it is enabled, link out to the public version of the dashboard, or update the public dashboard's configuration. You can see a public dashboard's configuration if you have view access to the dashboard itself, and you can edit its configuration if you have the Admin or Server Admin role or the "Public Dashboard writer" role if you are using RBAC in Grafana Enterprise or Cloud Advanced.
 
 To check out this new screen and configure your public dashboards, navigate to **Dashboards > Public Dashboards**.
-
-[image public-dashboard-audit-table.png]
 
 ### Choose to display annotations in public dashboards
 
@@ -180,7 +178,7 @@ If you use an LDAP directory to authenticate to Grafana but prefer to assign org
 or via API, you can now skip user organization role synchronization with your LDAP
 directory.
 
-Use the [`skip_org_role_sync` LDAP authentication configuration option]({{< relref
+Use the `skip_org_role_sync` [LDAP authentication configuration option]({{< relref
 "../setup-grafana/configure-security/configure-authentication/ldap/#disable-org-role-synchronization" >}})
 when configuring LDAP authentication to prevent the synchronization between your LDAP groups and organization roles
 and make user roles editable manually.
@@ -229,6 +227,8 @@ All of these new alerting features are generally available in all editions of Gr
 
 We've improved the design and functionality of email templates to make template creation much easier and more customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
 
+{{< figure src="/static/img/docs/alerting/alert-templates-whats-new-v9.3.png" max-width="750px" caption="Email template redesign" >}}
+
 ### Support for Webex Teams
 
 You can now use Cisco Webex Teams as a contact point, to send alerts to a Webex Teams channel.
@@ -249,6 +249,10 @@ Add alert values to notification templates, so that you can create a single temp
 
 When an alert fails to fire, see when something is wrong with your contact point(s) and the reason for the error. The Receivers API contains information on the error, including a time stamp, duration of the attempt, and the error. You can also view the errors for each contact point in the UI.
 
+{{< figure src="/static/img/docs/alerting/alert-view-notification-errors-whats-new-v9.3.png" max-width="750px" caption="Alert notification errors" >}}
+
 ### Redesign of the expressions pipeline
 
 We've redesigned the expressions pipeline editor to combine the expressions editor and the preview into a single view.
+
+{{< figure src="/static/img/docs/alerting/alert-expression-pipeline-whats-new-v9.3.png" max-width="750px" caption="Expression pipeline redesign" >}}
