@@ -1,21 +1,17 @@
-import { css } from '@emotion/css';
-import React, { CSSProperties, ReactNode } from 'react';
+import { css, keyframes } from '@emotion/css';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
-import { IconName } from '../../types/icon';
-import { Dropdown } from '../Dropdown/Dropdown';
-import { Icon } from '../Icon/Icon';
-import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
-import { PopoverContent, Tooltip } from '../Tooltip';
+import { useTheme2 } from '../../themes';
 
 /**
  * @internal
  */
 export interface LoadingBarProps {
-  width: number;
-  height: number;
+  containerWidth: number;
+  width?: number;
+  height?: number;
   ariaLabel?: string;
   barColor?: string;
 }
@@ -24,25 +20,41 @@ export interface LoadingBarProps {
  * @internal
  */
 export const LoadingBar: React.FC<LoadingBarProps> = ({
+  containerWidth,
   width,
   height,
   ariaLabel = 'Loading bar',
   barColor = 'blue',
 }) => {
   const theme = useTheme2();
-  const loadingStyles = getLoadingStyes(theme, width, height)
-  return <div class={loadingStyles.loading}></div>;
+  const loadingStyles = getLoadingStyes(theme, containerWidth, width, height, barColor);
+  return <div className={loadingStyles.loading}></div>;
 };
 
-const getLoadingStyes = (theme: GrafanaTheme2, width, height) => {
+const getLoadingStyes = (
+  theme: GrafanaTheme2,
+  containerWidth: number,
+  width?: number,
+  height?: number,
+  barColor?: string
+) => {
+  const loadingWidth = width ?? 128;
+  const loadingAnimation = keyframes({
+    '0%': {
+      transform: 'translateX(0)',
+    },
+    '100%': {
+      transform: `translateX(${containerWidth - loadingWidth}px)`,
+    },
+  });
   return {
-      loading: css ({
-        width: "80px",
-        height: "10px",
-        backgroundColor: "blue";
-        position: "absolute";
-        animation: animate 1s infinite linear;
-        willChange: transform;:w
-        })
-    };
+    loading: css({
+      width: `${loadingWidth}px`,
+      height: `${height ?? 2}px`,
+      background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
+      position: 'absolute',
+      animation: `${loadingAnimation} 2s infinite linear`,
+      willChange: 'transform',
+    }),
+  };
 };
