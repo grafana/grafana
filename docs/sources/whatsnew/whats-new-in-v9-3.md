@@ -36,7 +36,7 @@ To try out Grafana’s new navigation, enable the `topnav` feature toggle. If yo
 
 Generally available in all editions of Grafana
 
-We have added 4 new languages to Grafana: Spanish, French, German and Simplified Chinese.
+We have added four new languages to Grafana: Spanish, French, German, and Simplified Chinese.
 
 With millions of users across the globe, Grafana has a global footprint. In order to make it accessible to a wider audience, we have taken the first steps in localizing key workflows. You can now set Grafana’s language for the navigation, viewing dashboards, and a handful of settings. This will cover the main activities a Viewer would perform within Grafana.
 
