@@ -155,7 +155,19 @@ const MonacoQueryField = (props: Props) => {
 
           const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
 
-          const dataProvider = { getSeries, getHistory, getAllMetricNames, getAllLabelNames, getLabelValues };
+          const getSeriesValues = lpRef.current.fetchSeriesValues;
+
+          // const hasLabelsSupport = lpRef.current.datasource.hasLabelsMatchAPISupport()
+          const getSeriesLabelsMatch = lpRef.current.fetchSeriesLabelsMatch;
+          const dataProvider = {
+            getSeries,
+            getHistory,
+            getAllMetricNames,
+            getAllLabelNames,
+            getLabelValues,
+            getSeriesValues,
+            getSeriesLabelsMatch,
+          };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

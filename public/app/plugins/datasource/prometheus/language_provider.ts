@@ -511,7 +511,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const range = this.datasource.getTimeRangeParams();
     const urlParams = {
       ...range,
-      ...(interpolatedName && { 'match[]': match }),
+      ...(match && { 'match[]': match }),
     };
     return await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
   };
@@ -593,6 +593,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param match
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
+    console.log('HELLLO WORLD? fetchSeries');
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams();
     const params = { ...range, 'match[]': match };
