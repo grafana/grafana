@@ -270,4 +270,8 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagAuthnService
+	// Use new auth service to perform authentication
+	FlagAuthnService = "authnService"
 )
