@@ -99,15 +99,15 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		params := []interface{}{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
 
 		if options.ActionPrefix != "" {
-			q += `AND action LIKE ?`
+			q += ` AND action LIKE ?`
 			params = append(params, options.ActionPrefix+"%")
 		}
 		if options.Action != "" {
-			q += `AND action = ?`
+			q += ` AND action = ?`
 			params = append(params, options.Action)
 		}
 		if options.Scope != "" {
-			q += `AND scope = ?`
+			q += ` AND scope = ?`
 			params = append(params, options.Scope)
 		}
 
