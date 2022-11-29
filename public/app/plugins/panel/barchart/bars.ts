@@ -132,7 +132,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   let hRect: Rect | null;
 
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
-  const xSplits: Axis.Splits | undefined = (u) => u.data[0].map((v, i) => i);
+  const xSplits: Axis.Splits | undefined = (u) => Array.from(u.data[0].map((v, i) => i));
 
   const hFilter: Axis.Filter | undefined =
     xSpacing === 0
@@ -469,9 +469,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         }
 
         return {
-          left: isHovered ? hRect!.x / uPlot.pxRatio : -10,
+          left: isHovered ? (hRect!.x + widthReduce) / uPlot.pxRatio : -10,
           top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
-          width: isHovered ? hRect!.w / uPlot.pxRatio : 0,
+          width: isHovered ? (hRect!.w - widthReduce) / uPlot.pxRatio : 0,
           height: isHovered ? (hRect!.h - heightReduce) / uPlot.pxRatio : 0,
         };
       },
