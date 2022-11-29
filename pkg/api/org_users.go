@@ -223,8 +223,8 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
 		filteredUsers = append(filteredUsers, user)
 	}
-	ccc := c.Req.Context()
-	modules, err := hs.authInfoService.GetUserLabels(ccc, models.GetUserLabelsQuery{
+
+	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
 		UserIDs: authLabelsUserIDs,
 	})
 
@@ -232,17 +232,14 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 		hs.log.Warn("failed to retrieve users IDP label", err)
 	}
 
-	for i := range filteredUsers {
-		if module, ok := modules[filteredUsers[i].UserID]; ok {
-			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-		}
-	}
-
-	// Get accesscontrol metadata for users in the target org
+	// Get accesscontrol metadata and IPD labels for users in the target org
 	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
 	if len(accessControlMetadata) > 0 {
 		for i := range filteredUsers {
 			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
+			if module, ok := modules[filteredUsers[i].UserID]; ok {
+				filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
+			}
 		}
 	}
 
