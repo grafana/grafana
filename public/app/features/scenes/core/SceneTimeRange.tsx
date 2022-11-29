@@ -12,7 +12,7 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> impleme
     const from = state.from ?? 'now-6h';
     const to = state.to ?? 'now';
     const timeZone = state.timeZone ?? getTimeZone();
-    const value = evaluateTimeRange(state.from ?? 'now-6h', state.to ?? 'now', state.timeZone ?? getTimeZone());
+    const value = evaluateTimeRange(from, to, timeZone);
     super({ from, to, timeZone, value, ...state });
   }
 
