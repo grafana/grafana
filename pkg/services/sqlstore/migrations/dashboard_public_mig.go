@@ -75,8 +75,8 @@ func addPublicDashboardMigration(mg *Migrator) {
 		Default:  "0",
 	}))
 
-	mg.AddMigration("add time_range_picker_enabled column", NewAddColumnMigration(dashboardPublicCfgV2, &Column{
-		Name:     "time_range_picker_enabled",
+	mg.AddMigration("add time_selection_enabled column", NewAddColumnMigration(dashboardPublicCfgV2, &Column{
+		Name:     "time_selection_enabled",
 		Type:     DB_Bool,
 		Nullable: false,
 		Default:  "0",

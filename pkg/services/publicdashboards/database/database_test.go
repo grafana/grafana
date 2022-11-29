@@ -400,16 +400,16 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		setup()
 		cmd := SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
-				IsEnabled:              true,
-				AnnotationsEnabled:     true,
-				TimeRangePickerEnabled: true,
-				Uid:                    "pubdash-uid",
-				DashboardUid:           savedDashboard.Uid,
-				OrgId:                  savedDashboard.OrgId,
-				TimeSettings:           DefaultTimeSettings,
-				CreatedAt:              DefaultTime,
-				CreatedBy:              7,
-				AccessToken:            "NOTAREALUUID",
+				IsEnabled:            true,
+				AnnotationsEnabled:   true,
+				TimeSelectionEnabled: true,
+				Uid:                  "pubdash-uid",
+				DashboardUid:         savedDashboard.Uid,
+				OrgId:                savedDashboard.OrgId,
+				TimeSettings:         DefaultTimeSettings,
+				CreatedAt:            DefaultTime,
+				CreatedBy:            7,
+				AccessToken:          "NOTAREALUUID",
 			},
 		}
 		affectedRows, err := publicdashboardStore.Create(context.Background(), cmd)
@@ -421,7 +421,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		assert.Equal(t, pubdash.AccessToken, "NOTAREALUUID")
 		assert.True(t, pubdash.IsEnabled)
 		assert.True(t, pubdash.AnnotationsEnabled)
-		assert.True(t, pubdash.TimeRangePickerEnabled)
+		assert.True(t, pubdash.TimeSelectionEnabled)
 
 		// verify we didn't update all dashboards
 		pubdash2, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard2.OrgId, savedDashboard2.Uid)
@@ -478,15 +478,15 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		pdUid := "asdf1234"
 		cmd := SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
-				Uid:                    pdUid,
-				DashboardUid:           savedDashboard.Uid,
-				OrgId:                  savedDashboard.OrgId,
-				IsEnabled:              false,
-				AnnotationsEnabled:     true,
-				TimeRangePickerEnabled: true,
-				CreatedAt:              DefaultTime,
-				CreatedBy:              7,
-				AccessToken:            "NOTAREALUUID",
+				Uid:                  pdUid,
+				DashboardUid:         savedDashboard.Uid,
+				OrgId:                savedDashboard.OrgId,
+				IsEnabled:            false,
+				AnnotationsEnabled:   true,
+				TimeSelectionEnabled: true,
+				CreatedAt:            DefaultTime,
+				CreatedBy:            7,
+				AccessToken:          "NOTAREALUUID",
 			},
 		}
 		affectedRows, err := publicdashboardStore.Create(context.Background(), cmd)
@@ -497,15 +497,15 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		anotherPdUid := "anotherUid"
 		cmd = SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
-				Uid:                    anotherPdUid,
-				DashboardUid:           anotherSavedDashboard.Uid,
-				OrgId:                  anotherSavedDashboard.OrgId,
-				IsEnabled:              true,
-				AnnotationsEnabled:     false,
-				TimeRangePickerEnabled: false,
-				CreatedAt:              DefaultTime,
-				CreatedBy:              7,
-				AccessToken:            "fakeaccesstoken",
+				Uid:                  anotherPdUid,
+				DashboardUid:         anotherSavedDashboard.Uid,
+				OrgId:                anotherSavedDashboard.OrgId,
+				IsEnabled:            true,
+				AnnotationsEnabled:   false,
+				TimeSelectionEnabled: false,
+				CreatedAt:            DefaultTime,
+				CreatedBy:            7,
+				AccessToken:          "fakeaccesstoken",
 			},
 		}
 
@@ -514,15 +514,15 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		assert.EqualValues(t, affectedRows, 1)
 
 		updatedPublicDashboard := PublicDashboard{
-			Uid:                    pdUid,
-			DashboardUid:           savedDashboard.Uid,
-			OrgId:                  savedDashboard.OrgId,
-			IsEnabled:              false,
-			AnnotationsEnabled:     true,
-			TimeRangePickerEnabled: true,
-			TimeSettings:           &TimeSettings{From: "now-8", To: "now"},
-			UpdatedAt:              time.Now().UTC().Round(time.Second),
-			UpdatedBy:              8,
+			Uid:                  pdUid,
+			DashboardUid:         savedDashboard.Uid,
+			OrgId:                savedDashboard.OrgId,
+			IsEnabled:            false,
+			AnnotationsEnabled:   true,
+			TimeSelectionEnabled: true,
+			TimeSettings:         &TimeSettings{From: "now-8", To: "now"},
+			UpdatedAt:            time.Now().UTC().Round(time.Second),
+			UpdatedBy:            8,
 		}
 
 		// update initial record
@@ -540,7 +540,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		// UseBool with xorm
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
 		assert.Equal(t, updatedPublicDashboard.AnnotationsEnabled, pdRetrieved.AnnotationsEnabled)
-		assert.Equal(t, updatedPublicDashboard.TimeRangePickerEnabled, pdRetrieved.TimeRangePickerEnabled)
+		assert.Equal(t, updatedPublicDashboard.TimeSelectionEnabled, pdRetrieved.TimeSelectionEnabled)
 
 		// not updated dashboard shouldn't have changed
 		pdNotUpdatedRetrieved, err := publicdashboardStore.FindByDashboardUid(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
