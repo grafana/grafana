@@ -7,9 +7,10 @@ package slugify
 
 import (
 	"bytes"
-	"encoding/base64"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/gofrs/uuid"
 )
 
 var (
@@ -20,18 +21,13 @@ var (
 	}
 )
 
-// Slugify creates the slug for a given value
+// Slugify creates a URL safe latin slug for a given value
 func Slugify(value string) string {
 	s := simpleSlugger.Slugify(value)
 	if s == "" {
-		// If the dashboard name is only characters outside of the
-		// sluggable characters, the slug creation will return an
-		// empty string which will mess up URLs. This failsafe picks
-		// that up and creates the slug as a base64 identifier instead.
-		s = base64.RawURLEncoding.EncodeToString([]byte(value))
-		if len(s) > 64 {
-			s = s[:64]
-		}
+		// If the name is only characters outside of the
+		// sluggable characters, use a content hash instead
+		s = uuid.NewV5(uuid.NamespaceOID, value).String()
 	}
 	return s
 }

@@ -8,7 +8,10 @@ func TestSlugify(t *testing.T) {
 	results := make(map[string]string)
 	results["hello-playground"] = "Hello, playground"
 	results["hello-it-s-paradise"] = "😢 😣 😤 😥 😦 😧 😨 😩 😪 😫 😬 Hello, it's paradise"
-	results["8J-YoiDwn5ijIPCfmKQg8J-YpSDwn5imIPCfmKcg8J-YqCDwn5ipIPCfmKog8J-Y"] = "😢 😣 😤 😥 😦 😧 😨 😩 😪 😫 😬"
+	results["61db60b5-f1e7-5853-9b81-0f074fc268ea"] = "😢 😣 😤 😥 😦 😧 😨 😩 😪 😫 😬"
+	results["fd92c774-2cb1-5d7c-9808-14eae3377cde"] = "😢 -"
+	results["a"] = "?,a . \n "
+	results["0a68eb57-c88a-5f34-9e9d-27f85e68af4f"] = "" // empty input has a slug!
 	results["hi-this-is-a-test"] = "方向盤後面 hi this is a test خلف المقو"
 	results["cong-hoa-xa-hoi-chu-nghia-viet-nam"] = "Cộng hòa xã hội chủ nghĩa Việt Nam"
 	results["noi-nang-canh-canh-ben-long-bieng-khuay"] = "Nỗi nàng canh cánh bên lòng biếng khuây" // This line in a poem called Truyen Kieu
