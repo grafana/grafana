@@ -9,7 +9,7 @@ func TestSlugify(t *testing.T) {
 	results["hello-playground"] = "Hello, playground"
 	results["hello-it-s-paradise"] = "😢 😣 😤 😥 😦 😧 😨 😩 😪 😫 😬 Hello, it's paradise"
 	results["61db60b5-f1e7-5853-9b81-0f074fc268ea"] = "😢 😣 😤 😥 😦 😧 😨 😩 😪 😫 😬"
-	results["fd92c774-2cb1-5d7c-9808-14eae3377cde"] = "😢 -"
+	results["8J-YoiAt"] = "😢 -"
 	results["a"] = "?,a . \n "
 	results["0a68eb57-c88a-5f34-9e9d-27f85e68af4f"] = "" // empty input has a slug!
 	results["hi-this-is-a-test"] = "方向盤後面 hi this is a test خلف المقو"

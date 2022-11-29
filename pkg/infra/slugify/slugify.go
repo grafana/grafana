@@ -7,6 +7,7 @@ package slugify
 
 import (
 	"bytes"
+	"encoding/base64"
 	"strings"
 	"unicode/utf8"
 
@@ -25,9 +26,10 @@ var (
 func Slugify(value string) string {
 	s := simpleSlugger.Slugify(value)
 	if s == "" {
-		// If the name is only characters outside of the
-		// sluggable characters, use a content hash instead
-		s = uuid.NewV5(uuid.NamespaceOID, value).String()
+		s = base64.RawURLEncoding.EncodeToString([]byte(value))
+		if len(s) > 50 || s == "" {
+			s = uuid.NewV5(uuid.NamespaceOID, value).String()
+		}
 	}
 	return s
 }
@@ -88,7 +90,7 @@ func getDefaultReplacements() map[rune]string {
 		'à': "a",
 		'á': "a",
 		'â': "a",
-		'ä': "ae",
+		'ä': "a", // or "ae"
 		'å': "a",
 		'æ': "ae",
 		'ç': "c",
@@ -104,7 +106,7 @@ func getDefaultReplacements() map[rune]string {
 		'ó': "o",
 		'ô': "o",
 		'õ': "o",
-		'ö': "oe",
+		'ö': "o", // or "oe"?
 		'ø': "o",
 		'ù': "u",
 		'ú': "u",
