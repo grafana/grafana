@@ -119,8 +119,7 @@ var (
 			},
 			{
 				Action: ActionUsersPermissionsRead,
-				// TODO: Should it be ScopeGlobalUsersAll?
-				Scope: ScopeUsersAll,
+				Scope:  ScopeUsersAll,
 			},
 		},
 	}
