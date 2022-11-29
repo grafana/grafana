@@ -432,3 +432,15 @@ Limit the maximum device scale factor that can be requested. Default is `4`.
   }
 }
 ```
+
+#### Page zoom level
+
+Set a page zoom. Default is `1`, `1.5` equals 150% zoom.
+
+```json
+{
+  "rendering": {
+    "pageZoomLevel": 1
+  }
+}
+```
