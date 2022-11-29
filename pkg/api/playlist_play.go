@@ -95,6 +95,7 @@ func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, s
 			dashboardTagOrder[item.Value] = i
 		case "dashboard_by_uid":
 			return nil, errors.New("dashboard_by_uid not supported by this deprecated API")
+		default:
 		}
 	}
 
