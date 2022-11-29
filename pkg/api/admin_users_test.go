@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -400,11 +399,15 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AdminCreateUserForm, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			Login: loginservice.LoginServiceMock{
-				ExpectedUserForm:    cmd,
-				NoExistingOrgId:     nonExistingOrgID,
-				AlreadyExitingLogin: existingTestLogin,
-				GeneratedUserId:     testUserID,
+			userService: &usertest.FakeUserService{
+				ExpectedUser:             nil,
+				ExpectedSignedInUser:     nil,
+				ExpectedError:            nil,
+				ExpectedSetUsingOrgError: nil,
+				ExpectedSearchUsers:      user.SearchUserQueryResult{},
+				ExpectedUserProfileDTO:   nil,
+				ExpectedUserProfileDTOs:  nil,
+				GetSignedInUserFn:        nil,
 			},
 		}
 
