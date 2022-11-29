@@ -311,23 +311,8 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 	}()
 
 	// Merge stored (DB) and basic role permissions (RAM)
+	// Assumes that all users with stored permissions have org roles
 	res := map[int64][]accesscontrol.Permission{}
-	for userID, perms := range usersPermissions {
-		if !canView(userID) {
-			continue
-		}
-		if roles, ok := usersRoles[userID]; ok {
-			for i := range roles {
-				if basicPermission, ok := basicPermissions[roles[i]]; ok {
-					perms = append(perms, basicPermission...)
-				}
-			}
-			delete(usersRoles, userID)
-		}
-		res[userID] = append(res[userID], perms...)
-	}
-
-	// Handle the remaining users that had no stored permissions
 	for userID, roles := range usersRoles {
 		if !canView(userID) {
 			continue
@@ -340,8 +325,11 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 			}
 			perms = append(perms, basicPermission...)
 		}
+		if dbPerms, ok := usersPermissions[userID]; ok {
+			perms = append(perms, dbPerms...)
+		}
 		if len(perms) > 0 {
-			res[userID] = append(res[userID], perms...)
+			res[userID] = perms
 		}
 	}
 
