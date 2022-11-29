@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	simpleSlugger = &Slugifier{
+	simpleSlugger = &slugger{
 		isValidCharacter: validCharacter,
 		replaceCharacter: '-',
 		replacementMap:   getDefaultReplacements(),
@@ -35,14 +35,14 @@ func validCharacter(c rune) bool {
 }
 
 // Slugifier based on settings
-type Slugifier struct {
+type slugger struct {
 	isValidCharacter func(c rune) bool
 	replaceCharacter rune
 	replacementMap   map[rune]string
 }
 
 // Slugify creates a slug for a string
-func (s Slugifier) Slugify(value string) string {
+func (s slugger) Slugify(value string) string {
 	value = strings.ToLower(value)
 	var buffer bytes.Buffer
 	lastCharacterWasInvalid := false
