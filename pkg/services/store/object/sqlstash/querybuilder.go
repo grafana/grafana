@@ -37,11 +37,6 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 	}
 }
 
-func (q *selectQuery) addWherePrefix(f string, v string) {
-	q.args = append(q.args, v+"%")
-	q.where = append(q.where, f+" LIKE ?")
-}
-
 func (q *selectQuery) toQuery() (string, []interface{}) {
 	args := q.args
 	sb := strings.Builder{}
