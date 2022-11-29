@@ -16,12 +16,6 @@ export interface DashboardResponse {
   meta: DashboardMeta;
 }
 
-export interface Acknowledgements {
-  public: boolean;
-  datasources: boolean;
-  usage: boolean;
-}
-
 // Instance methods
 export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
   return variables.length > 0;

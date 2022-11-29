@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -28,7 +29,6 @@ import { AcknowledgeCheckboxes } from 'app/features/dashboard/components/ShareMo
 import { Configuration } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Configuration';
 import { Description } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/Description';
 import {
-  Acknowledgements,
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   publicDashboardPersisted,
@@ -44,6 +44,18 @@ import { ShareModal } from '../ShareModal';
 
 interface Props extends ShareModalTabProps {}
 
+export type SharePublicDashboardAcknowledgmentInputs = {
+  publicAcknowledgment: boolean;
+  dataSourcesAcknowledgment: boolean;
+  usageAcknowledgment: boolean;
+};
+
+export type SharePublicDashboardInputs = {
+  isAnnotationsEnabled: boolean;
+  enabledSwitch: { isEnabled: boolean; wasTouched: boolean };
+  isTimePickerEnabled: boolean;
+} & SharePublicDashboardAcknowledgmentInputs;
+
 export const SharePublicDashboard = (props: Props) => {
   const forceUpdate = useForceUpdate();
   const styles = useStyles2(getStyles);
@@ -53,6 +65,8 @@ export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const { hasPublicDashboard } = props.dashboard.meta;
+
+  // const onSubmit: SubmitHandler<SharePublicDashboardInputs> = (data) => console.log(data);
 
   const {
     isLoading: isGetLoading,
@@ -64,19 +78,21 @@ export const SharePublicDashboard = (props: Props) => {
     skip: !hasPublicDashboard,
   });
 
+  const { control, getValues, reset } = useForm<SharePublicDashboardInputs>({
+    defaultValues: {
+      publicAcknowledgment: false,
+      dataSourcesAcknowledgment: false,
+      usageAcknowledgment: false,
+      isAnnotationsEnabled: false,
+      enabledSwitch: { isEnabled: false, wasTouched: false },
+      isTimePickerEnabled: false,
+    },
+  });
+
+  console.log(getValues());
+
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
   const [updatePublicDashboard, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-
-  const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
-    public: false,
-    datasources: false,
-    usage: false,
-  });
-  const [enabledSwitch, setEnabledSwitch] = useState({
-    isEnabled: false,
-    wasTouched: false,
-  });
-  const [annotationsEnabled, setAnnotationsEnabled] = useState(false);
 
   useEffect(() => {
     const eventSubs = new Subscription();
@@ -87,21 +103,20 @@ export const SharePublicDashboard = (props: Props) => {
   }, [props.dashboard.events, forceUpdate]);
 
   useEffect(() => {
-    if (publicDashboardPersisted(publicDashboard)) {
-      setAcknowledgements({
-        public: true,
-        datasources: true,
-        usage: true,
-      });
-      setAnnotationsEnabled(!!publicDashboard?.annotationsEnabled);
-    }
-
-    setEnabledSwitch((prevState) => ({ ...prevState, isEnabled: !!publicDashboard?.isEnabled }));
-  }, [publicDashboard]);
+    const isPublicDashboardPersisted = publicDashboardPersisted(publicDashboard);
+    reset({
+      publicAcknowledgment: isPublicDashboardPersisted,
+      dataSourcesAcknowledgment: isPublicDashboardPersisted,
+      usageAcknowledgment: isPublicDashboardPersisted,
+      isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
+      enabledSwitch: { wasTouched: isPublicDashboardPersisted, isEnabled: publicDashboard?.isEnabled },
+    });
+  }, [publicDashboard, reset]);
 
   const isLoading = isGetLoading || isSaveLoading || isUpdateLoading;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
-  const acknowledged = acknowledgements.public && acknowledgements.datasources && acknowledgements.usage;
+  const acknowledged =
+    getValues('publicAcknowledgment') && getValues('dataSourcesAcknowledgment') && getValues('usageAcknowledgment');
   const isSaveDisabled = useMemo(
     () =>
       !hasWritePermissions ||
@@ -110,17 +125,9 @@ export const SharePublicDashboard = (props: Props) => {
       isLoading ||
       isFetching ||
       isGetError ||
-      (!publicDashboardPersisted(publicDashboard) && !enabledSwitch.wasTouched),
-    [
-      hasWritePermissions,
-      acknowledged,
-      props.dashboard,
-      isLoading,
-      isGetError,
-      enabledSwitch,
-      publicDashboard,
-      isFetching,
-    ]
+      //CHEQUAR QUE CAMBIA. SINO USAR FORM
+      (!publicDashboardPersisted(publicDashboard) && !getValues('enabledSwitch').wasTouched),
+    [hasWritePermissions, acknowledged, props.dashboard, isLoading, isGetError, getValues, publicDashboard, isFetching]
   );
   const isDeleteDisabled = isLoading || isFetching || isGetError;
 
@@ -129,15 +136,15 @@ export const SharePublicDashboard = (props: Props) => {
 
     const req = {
       dashboard: props.dashboard,
-      payload: { ...publicDashboard!, isEnabled: enabledSwitch.isEnabled, annotationsEnabled },
+      payload: {
+        ...publicDashboard!,
+        isEnabled: getValues('enabledSwitch').isEnabled,
+        annotationsEnabled: getValues('isAnnotationsEnabled'),
+      },
     };
 
     // create or update based on whether we have existing uid
     hasPublicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
-  };
-
-  const onAcknowledge = (field: string, checked: boolean) => {
-    setAcknowledgements((prevState) => ({ ...prevState, [field]: checked }));
   };
 
   const onDismissDelete = () => {
@@ -176,22 +183,22 @@ export const SharePublicDashboard = (props: Props) => {
             <div className={styles.checkboxes}>
               <AcknowledgeCheckboxes
                 disabled={publicDashboardPersisted(publicDashboard) || !hasWritePermissions || isLoading || isGetError}
-                acknowledgements={acknowledgements}
-                onAcknowledge={onAcknowledge}
+                control={control}
               />
             </div>
             <hr />
             <Configuration
-              isAnnotationsEnabled={annotationsEnabled}
+              control={control}
               dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isGetError}
-              isPubDashEnabled={enabledSwitch.isEnabled}
-              onToggleEnabled={() =>
-                setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
-              }
-              onToggleAnnotations={() => setAnnotationsEnabled((prevState) => !prevState)}
+
+              // onToggleEnabled={() =>
+              //   setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
+              // }
+              // onToggleAnnotations={() => setAnnotationsEnabled((prevState) => !prevState)}
+              // onToggleTimePicker={() => setTimePickerEnabled((prevState) => !prevState)}
             />
-            {publicDashboardPersisted(publicDashboard) && enabledSwitch.isEnabled && (
+            {publicDashboardPersisted(publicDashboard) && getValues('enabledSwitch').isEnabled && (
               <Field label="Link URL" className={styles.publicUrl}>
                 <Input
                   disabled={isLoading}
