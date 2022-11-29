@@ -46,7 +46,7 @@ Read more about configuring the [default language for your organization]({{< rel
 
 Generally available in all editions of Grafana
 
-We have added a new alpha layer type in Geomap called photo layer. This layer enables you to render a photo at each data point. To learn more about the photo layer and the geomap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/geomap/#photos-layer-alpha" >}}).
+We have added a new alpha layer type in Geomap called photo layer. This layer enables you to render a photo at each data point. To learn more about the photo layer and the geomap panel, refer to [Photos layer]({{< relref "../panels-visualizations/visualizations/geomap/#photos-layer-alpha" >}}).
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="750px" caption="Geomap panel photos layer" >}}
 
@@ -56,19 +56,21 @@ Available in **beta** in all editions of Grafana
 
 Canvas is a new panel that combines the power of Grafana with the flexibility of custom elements. Canvas visualizations are extensible form-built panels that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren’t possible with standard Grafana panels, all within Grafana’s UI. If you’ve used popular UI and web design tools, then designing Canvas panels will feel very familiar.
 
-In Grafana v9.3 We have added icon value mapping support to the Canvas panel. This enables you to dynamically set which icon to display based on your data. To learn more about the Canvas panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+In Grafana v9.3, we have added icon value mapping support to the Canvas panel. This enables you to dynamically set which icon to display based on your data. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-icon-value-mapping-support-9-3-0.mp4" max-width="750px" caption="Canvas panel icon value mapping support" >}}
 
 ## Public dashboards improvements
 
+We've made the following improvements to public dashboards.
+
 ### Manage all of your public dashboards in one place
 
 Available in **experimental** in Grafana Open Source, Enterprise, and Cloud Advanced
 
-You can use Public Dashboards to make a given dashboard available to anyone on the internet with no need to sign in. In Grafana v9.3 we have introduced a new screen where you can manage all of your public dashboards. From here, you can view is a list of all of the public dashboards in your Grafana instance, navigate to the underlying dashboard, see if it is enabled, link out to the public version of the dashboard, or update the public dashboard's configuration. You can see a public dashboard's configuration if you have view access to the dashboard itself, and you can edit its configuration if you have the Admin or Server Admin role, or the "Public Dashboard writer" role if you are using RBAC in Grafana Enterprise or Cloud Advanced.
+You can use Public Dashboards to make a given dashboard available to anyone on the internet without needing to sign in. In Grafana v9.3, we have introduced a new screen where you can manage all of your public dashboards. From here, you can view a list of all of the public dashboards in your Grafana instance, navigate to the underlying dashboard, see if it is enabled, link out to the public version of the dashboard, or update the public dashboard's configuration. You can see a public dashboard's configuration if you have view access to the dashboard itself, and you can edit its configuration if you have the Admin or Server Admin role or the "Public Dashboard writer" role if you are using RBAC in Grafana Enterprise or Cloud Advanced.
 
-To check out this new screen and configure your public dashboards, navigate to Dashboards → Public Dashboards. 
+To check out this new screen and configure your public dashboards, navigate to **Dashboards > Public Dashboards**. 
 
 [image public-dashboard-audit-table.png]
 
@@ -78,9 +80,9 @@ Available in **experimental** in Grafana Open Source, Enterprise, and Cloud Adva
 
 Annotations are now supported in public dashboards, with the exception of query annotations. They are turned off by default, but can be turned on in your public dashboard settings.
 
-Note that since Public Dashboards is an experimental feature, you need to enable it in Grafana using the `publicDashboards` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}), or open a support ticket requesting public dashboards if you are a Cloud Advanced customer.
+Note that because Public Dashboards is an experimental feature, you need to enable it in Grafana using the `publicDashboards` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}), or open a support ticket requesting public dashboards if you are a Cloud Advanced customer.
 
-Learn more about Public Dashboards in our [documentation]({{< relref "../dashboards/dashboard-public/" >}}).
+To learn more about public dashboards, refer to [Public dashboards]({{< relref "../dashboards/dashboard-public/" >}}).
 
 ## New transformation: Partition by values
 
@@ -134,19 +136,21 @@ The zoom feature is located in the **Format Report** section of your reporting c
 
 ## Users and access
 
+We've made the following improvements to users and access.
+
 ### OAuth: token handling improvements
 
 Generally available in all editions of Grafana
 
-As part of our efforts to improve the security of Grafana, we are introducing a long-awaited feature which enhances Grafana's OAuth 2.0 compatibility. When a user logs in using an OAuth provider, Grafana verifies on each request that the user's access token has not expired. When an access token expires, Grafana uses the refresh token provided (if any exists) to obtain a new access token.
+As part of our efforts to improve the security of Grafana, we are introducing a long-awaited feature that enhances Grafana's OAuth 2.0 compatibility. When a user logs in using an OAuth provider, Grafana verifies on each request that the user's access token has not expired. Grafana uses the refresh token provided (if any exists) when an access token expires to obtain a new access token.
 
-This feature introduces a breaking change, thus it is behind the `accessTokenExpirationCheck` feature toggle and it is disabled by default. Enabling this functionality without configuring refresh tokens for the specific OAuth provider will sign users out after their access token has expired, and they would need to sign in again every time.
+Because this feature introduces a breaking change, it is behind the `accessTokenExpirationCheck` feature toggle and is disabled by default. Enabling this functionality without configuring refresh tokens for the specific OAuth provider will sign users out after their access token has expired, and they would need to sign in again every time.
 
 Complete documentation on how to configure obtaining a refresh token can be found on the [authentication configuration page]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}), in the instructions for your Oauth identity provider.
 
 ### Resolve user conflicts in Grafana's CLI
 
-In older version of Grafana, usernames were case sensitive. This created conflicts, where a user might sign in using two differnt methods (like SAML and oauth) and have two accounts created, like `elastigirl@incredibles.com` and `ElastiGirl@incredibles.com`. Users in this situations might think they have lost their preferences and permissions. If this has occurred in your Grafana instance, you can use a new Grafana CLI command to resolve user identity conflicts between users within Grafana.
+In the older versions of Grafana, usernames were case-sensitive. This created conflicts, where a user might sign in using two different methods (like SAML and OAuth) and have two accounts created, like `elastigirl@incredibles.com` and `ElastiGirl@incredibles.com`. Users in this situation might think they have lost their preferences and permissions. If this has occurred in your Grafana instance, you can use a new Grafana CLI command to resolve user identity conflicts between users within Grafana.
 
 > Note: If you use Grafana Cloud or you run Grafana with MySQL as your database, you will not experience any user identity conflicts and you do not need to use this tool.
 
@@ -196,18 +200,20 @@ We added a new endpoint to help users diagnose permissions-related issues with u
 [This endpoint]({{< relref "../developers/http_api/access_control/#list-your-permissions" >}}) allows users to get the
 full list of RBAC permissions associated with their token.
 
-For more details, see the related service accounts [documentation]({{< relref
+For more details, refer to [Debug the permissions of a service account token]({{< relref
 "../administration/service-accounts/#debug-the-permissions-of-a-service-account-token" >}}).
 
 ### RBAC with Terraform: Extended support for provisioning permissions
 
 Generally available in Grafana Enterprise and Cloud Advanced
 
-All Grafana users can now use the latest release of [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) (version 1.31.1+) to provision [user and team access to service accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/#manage-users-and-teams-permissions-for-a-service-account-in-grafana). This allows full management of service accounts through Terraform - from creating a service account and allowing users to access it to assigning roles to the service account and generating service account tokens.
+All Grafana users can now use the latest release of [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) (version 1.31.1+) to provision [user and team access to service accounts]({{< relref "../administration/service-accounts/#manage-users-and-teams-permissions-for-a-service-account-in-grafana" >}}).
 
-Grafana Enterprise and Cloud Pro and Advanced users can now provision [access to data sources](https://grafana.com/docs/grafana/latest/administration/data-source-management/#data-source-permissions) for Grafana's `Viewer`, `Editor` and `Admin` basic roles, as well as assign `Edit` permission.
+This allows full management of service accounts through Terraform - from creating a service account and allowing users to access it to assigning roles to the service account and generating service account tokens.
 
-We have also added [documentation on provisioning RBAC roles and role assignments](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/) to guide our Grafana Enterprise and Cloud Pro and Advanced users through this process.
+Grafana Enterprise and Cloud Pro and Advanced users can now provision [access to data sources]({{< relref "../administration/data-source-management/#data-source-permissions" >}}) for Grafana's `Viewer`, `Editor`, and `Admin` basic roles, as well as assign `Edit` permission.
+
+We have also added [documentation on provisioning RBAC roles and role assignments]({{< relref "../administration/roles-and-permissions/access-control/rbac-terraform-provisioning/" >}}) to guide our Grafana Enterprise and Cloud Pro and Advanced users through this process.
 
 Finally, we have fixed several access control related bugs to ensure a smoother provisioning experience.
 
