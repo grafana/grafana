@@ -170,8 +170,8 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		}
 	}
 
-	// mg.AddMigration("ObjectStore init: set path collation in object tables"+suffix, migrator.NewRawSQLMigration("").
-	// 	// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
-	// 	// SQLite uses a `BINARY` collation by default
-	// 	Postgres("ALTER TABLE object_folder ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
+	mg.AddMigration("ObjectStore init: set path collation in object tables"+suffix, migrator.NewRawSQLMigration("").
+		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
+		// SQLite uses a `BINARY` collation by default
+		Postgres("ALTER TABLE object_folder ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
 }
