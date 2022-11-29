@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import Prism from 'prismjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
@@ -18,6 +19,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
 import { AlertQuery } from '../../../types/unified-alerting-dto';
 
+import { GrafanaRuleViewer } from './GrafanaRuleViewer';
 import { AlertLabels } from './components/AlertLabels';
 import { DetailsField } from './components/DetailsField';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
@@ -77,6 +79,10 @@ export function RuleViewer({ match }: RuleViewerProps) {
   useEffect(() => {
     return () => runner.destroy();
   }, [runner]);
+
+  useEffect(() => {
+    Prism.highlightAll();
+  }, []);
 
   const onChangeQuery = useCallback((query: AlertQuery) => {
     setQueries((queries) =>
@@ -158,6 +164,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <RuleState rule={rule} isCreating={false} isDeleting={false} />
           <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
         </div>
+        <div>{isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleViewer rule={rule.rulerRule} />}</div>
         <div className={styles.details}>
           <div className={styles.leftSide}>
             {rule.promRule && (
