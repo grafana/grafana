@@ -17,11 +17,11 @@ export enum Permission {
 export interface Team {
   /**
    * TODO: probably needs a better description
-   * Accesscontrol metadata associated with a given resource
+   * AccessControl metadata associated with a given resource.
    */
   accessControl: Record<string, unknown>;
   /**
-   * Team avatar URL.
+   * AvatarUrl is the team's avatar URL.
    */
   avatarUrl: string;
   /**
@@ -29,7 +29,7 @@ export interface Team {
    */
   email?: string;
   /**
-   * Number of the team members.
+   * MemberCount is the number of the team members.
    */
   memberCount: number;
   /**
@@ -37,7 +37,7 @@ export interface Team {
    */
   name: string;
   /**
-   * The ID of an organisation the team belongs to.
+   * OrgId is the ID of an organisation the team belongs to.
    */
   orgId?: number;
   /**

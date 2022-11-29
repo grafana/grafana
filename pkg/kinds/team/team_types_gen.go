@@ -22,22 +22,22 @@ const (
 // Team defines model for team.
 type Team struct {
 	// TODO: probably needs a better description
-	// Accesscontrol metadata associated with a given resource
+	// AccessControl metadata associated with a given resource.
 	AccessControl map[string]interface{} `json:"accessControl"`
 
-	// Team avatar URL.
+	// AvatarUrl is the team's avatar URL.
 	AvatarUrl string `json:"avatarUrl"`
 
 	// Email of the team.
 	Email *string `json:"email,omitempty"`
 
-	// Number of the team members.
+	// MemberCount is the number of the team members.
 	MemberCount int64 `json:"memberCount"`
 
 	// Name of the team.
 	Name string `json:"name"`
 
-	// The ID of an organisation the team belongs to.
+	// OrgId is the ID of an organisation the team belongs to.
 	OrgId *int64 `json:"orgId,omitempty"`
 
 	// TODO - check if it's used in the code
