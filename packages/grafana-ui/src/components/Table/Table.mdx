@@ -5,6 +5,14 @@ import { Table } from './Table';
 
 Used for displaying tabular data
 
+## Sub-tables
+
+Sub-tables are supported through the usage of the prop `subData` Dataframe array.
+The frames are linked to each row using the following custom properties under `dataframe.meta.custom`
+
+- **parentRowIndex**: number - The index of the parent row in the main dataframe (under the `data` prop of the Table component)
+- **noHeader**: boolean - Sets the noHeader of each sub-table
+
 ## Usage
 
 <Props of={Table} />

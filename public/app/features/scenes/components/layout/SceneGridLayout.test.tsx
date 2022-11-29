@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 
+import { configureStore } from '../../../../store/configureStore';
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';
 import { Scene } from '../Scene';
@@ -21,6 +23,11 @@ class TestObject extends SceneObjectBase<SceneLayoutChildState> {
   };
 }
 
+function renderWithProvider(element: JSX.Element) {
+  const store = configureStore();
+  return render(<Provider store={store}>{element}</Provider>);
+}
+
 describe('SceneGridLayout', () => {
   describe('rendering', () => {
     it('should render all grid children', async () => {
@@ -34,7 +41,7 @@ describe('SceneGridLayout', () => {
         }),
       });
 
-      render(<scene.Component model={scene} />);
+      renderWithProvider(<scene.Component model={scene} />);
 
       expect(screen.queryAllByTestId('test-object')).toHaveLength(2);
     });
@@ -57,7 +64,7 @@ describe('SceneGridLayout', () => {
         }),
       });
 
-      render(<scene.Component model={scene} />);
+      renderWithProvider(<scene.Component model={scene} />);
 
       expect(screen.queryAllByTestId('test-object')).toHaveLength(2);
     });
@@ -80,7 +87,7 @@ describe('SceneGridLayout', () => {
         }),
       });
 
-      render(<scene.Component model={scene} />);
+      renderWithProvider(<scene.Component model={scene} />);
 
       expect(screen.queryAllByTestId('test-object')).toHaveLength(3);
     });

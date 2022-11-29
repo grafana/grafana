@@ -73,9 +73,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 
-	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		treeRoot.AddSection(s.getHomeNode(c, prefs))
-	}
+	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
 		starredItemsLinks, err := s.buildStarredItemsNavLinks(c)
@@ -224,7 +222,7 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		}
 	}
 
-	return &navtree.NavLink{
+	homeNode := &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
 		Url:        homeUrl,
@@ -232,6 +230,10 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		Section:    navtree.NavSectionCore,
 		SortWeight: navtree.WeightHome,
 	}
+	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		homeNode.HideFromMenu = true
+	}
+	return homeNode
 }
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqContext) {

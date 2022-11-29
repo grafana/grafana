@@ -24,6 +24,7 @@ import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
@@ -57,6 +58,7 @@ const mocks = {
     setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
     fetchRulerRules: jest.mocked(fetchRulerRules),
+    fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
 
@@ -226,7 +228,7 @@ describe.skip('RuleEditor', () => {
       rules: [],
     });
     mocks.api.fetchRulerRules.mockResolvedValue({
-      namespace1: [
+      'Folder A': [
         {
           name: 'group1',
           rules: [],
@@ -270,9 +272,9 @@ describe.skip('RuleEditor', () => {
 
     const folderInput = await ui.inputs.folder.find();
     await clickSelectOption(folderInput, 'Folder A');
-
-    const groupInput = screen.getByRole('textbox', { name: /^Group/ });
-    await userEvent.type(groupInput, 'my group');
+    const groupInput = await ui.inputs.group.find();
+    await userEvent.click(byRole('combobox').get(groupInput));
+    await clickSelectOption(groupInput, 'group1 (1m)');
 
     await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
@@ -293,7 +295,7 @@ describe.skip('RuleEditor', () => {
       'Folder A',
       {
         interval: '1m',
-        name: 'my group',
+        name: 'group1',
         rules: [
           {
             annotations: { description: 'some description', summary: 'some summary' },
