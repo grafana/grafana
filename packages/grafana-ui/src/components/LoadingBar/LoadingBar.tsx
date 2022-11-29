@@ -19,25 +19,13 @@ export interface LoadingBarProps {
 /**
  * @internal
  */
-export const LoadingBar: React.FC<LoadingBarProps> = ({
-  containerWidth,
-  width,
-  height,
-  ariaLabel = 'Loading bar',
-  barColor = 'blue',
-}) => {
-  const theme = useTheme2();
-  const loadingStyles = getLoadingStyes(theme, containerWidth, width, height, barColor);
-  return <div className={loadingStyles.loading}></div>;
+export const LoadingBar: React.FC<LoadingBarProps> = ({ containerWidth, width, height, ariaLabel = 'Loading bar' }) => {
+  const loadingStyles = getLoadingStyes(containerWidth, width, height);
+  return <div aria-label={ariaLabel} className={loadingStyles.loading}></div>;
 };
 
-const getLoadingStyes = (
-  theme: GrafanaTheme2,
-  containerWidth: number,
-  width?: number,
-  height?: number,
-  barColor?: string
-) => {
+const getLoadingStyes = (containerWidth: number, width?: number, height?: number) => {
+  const theme = useTheme2();
   const loadingWidth = width ?? 128;
   const loadingAnimation = keyframes({
     '0%': {
@@ -50,8 +38,8 @@ const getLoadingStyes = (
   return {
     loading: css({
       width: `${loadingWidth}px`,
-      height: `${height ?? 2}px`,
-      background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
+      height: `${height ?? 2}ipx`,
+      background: `linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, ${theme.palette.blueLight} 80.75%, rgba(110, 159, 255, 0) 100%)`,
       position: 'absolute',
       animation: `${loadingAnimation} 2s infinite linear`,
       willChange: 'transform',
