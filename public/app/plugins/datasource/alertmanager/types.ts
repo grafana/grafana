@@ -155,6 +155,7 @@ export type AlertmanagerConfig = {
   mute_time_intervals?: MuteTimeInterval[];
   /** { [name]: provenance } */
   muteTimeProvenances?: Record<string, string>;
+  successfully_applied?: boolean;
 };
 
 export type Matcher = {
