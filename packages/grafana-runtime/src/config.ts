@@ -86,7 +86,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       requiredImageRendererPluginVersion: string;
     };
     thumbnailsExist: boolean;
-  } = {systemRequirements: {met: false, requiredImageRendererPluginVersion: ''}, thumbnailsExist: false};
+  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   secretsManagerPluginEnabled = false;
   http2Enabled = false;
