@@ -22,7 +22,6 @@ export const LabelBrowserModal = (props: Props) => {
   const { isOpen, onClose, datasource, app } = props;
   const [labelsLoaded, setLabelsLoaded] = useState(false);
   const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
-  const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
 
   useEffect(() => {
     if (!isOpen) {
@@ -46,10 +45,12 @@ export const LabelBrowserModal = (props: Props) => {
     onClose();
   };
 
+  const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
+
   return (
     <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose}>
       {!labelsLoaded && <LoadingPlaceholder text="Loading labels..." />}
-      {!hasLogLabels && <p>No labels found.</p>}
+      {labelsLoaded && !hasLogLabels && <p>No labels found.</p>}
       {labelsLoaded && hasLogLabels && (
         <LocalStorageValueProvider<string[]> storageKey={LAST_USED_LABELS_KEY} defaultValue={[]}>
           {(lastUsedLabels, onLastUsedLabelsSave, onLastUsedLabelsDelete) => {
