@@ -1,7 +1,6 @@
 import { SyntaxNode } from '@lezer/common';
 
 import { parser } from '@grafana/lezer-logql';
-import { monacoTypes } from '@grafana/ui';
 import { ErrorId } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
 
 interface ParserErrorBoundary {
