@@ -58,7 +58,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     return this._variableDependency;
   }
 
-  /** Returns variable dependency config */
+  /** Returns url sync config */
   public get urlSync(): SceneObjectUrlSyncHandler<TState> | undefined {
     return this._urlSync;
   }
