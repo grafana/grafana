@@ -57,7 +57,7 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 	if r.WithSummary {
 		fields = append(fields, `name`, `description`, `labels`, `fields`)
 	}
-	return "SELECT " + strings.Join(fields, ",") + " FROM object WHERE "
+	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
 
 func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
@@ -147,7 +147,7 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 	}
 
 	args := []interface{}{grn.ToGRNString()}
-	where := "oid=?"
+	where := "grn=?"
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
 	if err != nil {
@@ -176,7 +176,7 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 
 	rows, err := s.sess.Query(ctx,
 		"SELECT "+strings.Join(fields, ",")+
-			" FROM object_history WHERE oid=? AND version=?", oid, r.Version)
+			" FROM entity_history WHERE grn=? AND version=?", oid, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -244,9 +244,8 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 			return nil, err
 		}
 
-		oid := grn.ToGRNString()
-		where := "oid=?"
-		args = append(args, oid)
+		where := "grn=?"
+		args = append(args, grn.ToGRNString())
 		if r.Version != "" {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
 		}
@@ -374,21 +373,21 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 
 		if isUpdate {
 			// Clear the labels+refs
-			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE oid=?", oid); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", oid); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, "DELETE FROM object_ref WHERE oid=?", oid); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", oid); err != nil {
 				return err
 			}
 		}
 
-		// 1. Add the `object_history` values
+		// 1. Add the `entity_history` values
 		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
 		versionInfo.UpdatedAt = updatedAt
 		versionInfo.UpdatedBy = updatedBy
-		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
-			"oid, version, message, "+
+		_, err = tx.Exec(ctx, `INSERT INTO entity_history (`+
+			"grn, version, message, "+
 			"size, body, etag, "+
 			"updated_at, updated_by) "+
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -403,8 +402,8 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		// 2. Add the labels rows
 		for k, v := range summary.model.Labels {
 			_, err = tx.Exec(ctx,
-				`INSERT INTO object_labels `+
-					"(oid, label, value) "+
+				`INSERT INTO entity_labels `+
+					"(grn, label, value) "+
 					`VALUES (?, ?, ?)`,
 				oid, k, v,
 			)
@@ -419,8 +418,8 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			if err != nil {
 				return err
 			}
-			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
-				"oid, kind, type, uid, "+
+			_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
+				"grn, kind, type, uid, "+
 				"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 				oid, ref.Kind, ref.Type, ref.UID,
@@ -435,13 +434,13 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		rsp.Object = versionInfo
 		if isUpdate {
 			rsp.Status = object.WriteObjectResponse_UPDATED
-			_, err = tx.Exec(ctx, "UPDATE object SET "+
+			_, err = tx.Exec(ctx, "UPDATE entity SET "+
 				"body=?, size=?, etag=?, version=?, "+
 				"updated_at=?, updated_by=?,"+
 				"name=?, description=?,"+
 				"labels=?, fields=?, errors=?, "+
 				"origin=?, origin_key=?, origin_ts=? "+
-				"WHERE oid=?",
+				"WHERE grn=?",
 				body, versionInfo.Size, etag, versionInfo.Version,
 				updatedAt, versionInfo.UpdatedBy,
 				summary.model.Name, summary.model.Description,
@@ -459,8 +458,8 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			createdBy = updatedBy
 		}
 
-		_, err = tx.Exec(ctx, "INSERT INTO object ("+
-			"oid, tenant_id, kind, uid, folder, "+
+		_, err = tx.Exec(ctx, "INSERT INTO entity ("+
+			"grn, tenant_id, kind, uid, folder, "+
 			"size, body, etag, version, "+
 			"updated_at, updated_by, created_at, created_by, "+
 			"name, description, slug, "+
@@ -488,7 +487,7 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 	return rsp, err
 }
 
-func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, oid string, createdAt *int64, createdBy *string) error {
+func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, grn string, createdAt *int64, createdBy *string) error {
 	if *createdAt > 1000 {
 		ignore := int64(0)
 		createdAt = &ignore
@@ -498,7 +497,7 @@ func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 		createdBy = &ignore
 	}
 
-	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM object WHERE oid=?", oid)
+	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM entity WHERE grn=?", grn)
 	if err == nil {
 		if rows.Next() {
 			err = rows.Scan(&createdAt, &createdBy)
@@ -510,12 +509,12 @@ func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	return err
 }
 
-func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, oid string) (*object.ObjectVersionInfo, error) {
-	q := "SELECT etag,version,updated_at,size FROM object WHERE oid=?"
+func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*object.ObjectVersionInfo, error) {
+	q := "SELECT etag,version,updated_at,size FROM entity WHERE grn=?"
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
 	}
-	rows, err := tx.Query(ctx, q, oid)
+	rows, err := tx.Query(ctx, q, grn)
 	if err != nil {
 		return nil, err
 	}
@@ -562,8 +561,8 @@ func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequ
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, oid string) (bool, error) {
-	results, err := tx.Exec(ctx, "DELETE FROM object WHERE oid=?", oid)
+func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, error) {
+	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", grn)
 	if err != nil {
 		return false, err
 	}
@@ -573,9 +572,9 @@ func doDelete(ctx context.Context, tx *session.SessionTx, oid string) (bool, err
 	}
 
 	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE oid=?", oid)
-	_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE oid=?", oid)
-	_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE oid=?", oid)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", grn)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
 	return rows > 0, err
 }
 
@@ -595,8 +594,8 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	}
 
 	query := "SELECT version,size,etag,updated_at,updated_by,message \n" +
-		" FROM object_history \n" +
-		" WHERE oid=? " + page + "\n" +
+		" FROM entity_history \n" +
+		" WHERE grn=? " + page + "\n" +
 		" ORDER BY updated_at DESC LIMIT 100"
 
 	rows, err := s.sess.Query(ctx, query, args...)
@@ -629,7 +628,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 	}
 
 	fields := []string{
-		"oid", "tenant_id", "kind", "uid",
+		"grn", "tenant_id", "kind", "uid",
 		"version", "folder", "slug", "errors", // errors are always returned
 		"size", "updated_at", "updated_by",
 		"name", "description", // basic summary
@@ -647,7 +646,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 	selectQuery := selectQuery{
 		fields:   fields,
-		from:     "object", // the table
+		from:     "entity", // the table
 		args:     []interface{}{},
 		limit:    int(r.Limit),
 		oneExtra: true, // request one more than the limit (and show next token if it exists)

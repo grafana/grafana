@@ -19,23 +19,23 @@ func getLatinPathColumn(name string) *migrator.Column {
 }
 
 func addObjectStorageMigrations(mg *migrator.Migrator) {
-	oidLength := 96 // 40 + len(kind) + len(tenant)
+	grnLength := 256 // len(tenant)~8 + len(kind)!16 + len(kind)~128 = 256
 	tables := []migrator.Table{}
 	tables = append(tables, migrator.Table{
-		Name: "object",
+		Name: "entity",
 		Columns: []*migrator.Column{
 			// Object ID (OID) will be unique across all objects/instances
 			// uuid5( tenant_id, kind + uid )
-			{Name: "oid", Type: migrator.DB_NVarchar, Length: oidLength, Nullable: false, IsPrimaryKey: true},
+			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
 
-			// The object identifier
+			// The entity identifier
 			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "slug", Type: migrator.DB_NVarchar, Length: 189, Nullable: false}, // from title
 
-			// The raw object body (any byte array)
+			// The raw entity body (any byte array)
 			{Name: "body", Type: migrator.DB_LongBlob, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
@@ -71,9 +71,9 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 
 	// when saving a folder, keep a path version cached
 	tables = append(tables, migrator.Table{
-		Name: "object_folder",
+		Name: "entity_folder",
 		Columns: []*migrator.Column{
-			{Name: "oid", Type: migrator.DB_NVarchar, Length: oidLength, Nullable: false},
+			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			getLatinPathColumn("path"), // slug/slug/slug/...
 			{Name: "depth", Type: migrator.DB_Int, Nullable: false},
 			{Name: "tree", Type: migrator.DB_Text, Nullable: false}, // JSON array from root
@@ -84,22 +84,22 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	})
 
 	tables = append(tables, migrator.Table{
-		Name: "object_labels",
+		Name: "entity_labels",
 		Columns: []*migrator.Column{
-			{Name: "oid", Type: migrator.DB_NVarchar, Length: oidLength, Nullable: false},
+			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "label", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"oid", "label"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"grn", "label"}, Type: migrator.UniqueIndex},
 		},
 	})
 
 	tables = append(tables, migrator.Table{
-		Name: "object_ref",
+		Name: "entity_ref",
 		Columns: []*migrator.Column{
 			// Source:
-			{Name: "oid", Type: migrator.DB_NVarchar, Length: oidLength, Nullable: false},
+			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 
 			// Address (defined in the body, not resolved, may be invalid and change)
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -113,16 +113,16 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "resolved_time", Type: migrator.DB_DateTime, Nullable: false}, // resolution cache timestamp
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"oid"}, Type: migrator.IndexType},
+			{Cols: []string{"grn"}, Type: migrator.IndexType},
 			{Cols: []string{"kind"}, Type: migrator.IndexType},
 			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
 		},
 	})
 
 	tables = append(tables, migrator.Table{
-		Name: "object_history",
+		Name: "entity_history",
 		Columns: []*migrator.Column{
-			{Name: "oid", Type: migrator.DB_NVarchar, Length: oidLength, Nullable: false},
+			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// Raw bytes
@@ -138,7 +138,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 			{Name: "message", Type: migrator.DB_Text, Nullable: false}, // defaults to empty string
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"oid", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"grn", "version"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"updated_by"}, Type: migrator.IndexType},
 		},
 	})
@@ -154,24 +154,24 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v5)" // change this when we want to wipe and reset the object tables
-	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
-		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
+	suffix := " (v6)" // change this when we want to wipe and reset the object tables
+	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
+		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))
 
 	// Initialize all tables
 	for t := range tables {
-		mg.AddMigration("ObjectStore init: drop "+tables[t].Name+suffix, migrator.NewRawSQLMigration(
+		mg.AddMigration("EntityStore init: drop "+tables[t].Name+suffix, migrator.NewRawSQLMigration(
 			fmt.Sprintf("DROP TABLE IF EXISTS %s", tables[t].Name),
 		))
-		mg.AddMigration("ObjectStore init: table "+tables[t].Name+suffix, migrator.NewAddTableMigration(tables[t]))
+		mg.AddMigration("EntityStore init: table "+tables[t].Name+suffix, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
-			mg.AddMigration(fmt.Sprintf("ObjectStore init: index %s[%d]"+suffix, tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
+			mg.AddMigration(fmt.Sprintf("EntityStore init: index %s[%d]"+suffix, tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
 
-	mg.AddMigration("ObjectStore init: set path collation in object tables"+suffix, migrator.NewRawSQLMigration("").
+	mg.AddMigration("EntityStore init: set path collation in entity tables"+suffix, migrator.NewRawSQLMigration("").
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
-		Postgres("ALTER TABLE object_folder ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
+		Postgres("ALTER TABLE entity_folder ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
 }
