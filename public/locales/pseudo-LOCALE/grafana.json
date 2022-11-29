@@ -20,8 +20,8 @@
       "meta-tab": "Męŧä Đäŧä",
       "query-tab": "Qūęřy",
       "stats-tab": "Ŝŧäŧş",
-      "subtitle": "{{qūęřyCőūŉŧ}} qūęřįęş ŵįŧĥ ŧőŧäľ qūęřy ŧįmę őƒ {{ƒőřmäŧŧęđ}}",
-      "title": "Ĩŉşpęčŧ: {{päŉęľŦįŧľę}}"
+      "subtitle": "{{queryCount}} qūęřįęş ŵįŧĥ ŧőŧäľ qūęřy ŧįmę őƒ {{formatted}}",
+      "title": "Ĩŉşpęčŧ: {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Đäŧä őpŧįőŉş",
@@ -51,7 +51,7 @@
       "panel-json-description": "Ŧĥę mőđęľ şävęđ įŉ ŧĥę đäşĥþőäřđ ĴŜØŃ ŧĥäŧ čőŉƒįģūřęş ĥőŵ ęvęřyŧĥįŉģ ŵőřĸş.",
       "panel-json-label": "Päŉęľ ĴŜØŃ",
       "select-source": "Ŝęľęčŧ şőūřčę",
-      "unknown": "Ůŉĸŉőŵŉ Øþĵęčŧ: {{şĥőŵ}}"
+      "unknown": "Ůŉĸŉőŵŉ Øþĵęčŧ: {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Ńő Męŧäđäŧä Ĩŉşpęčŧőř"
@@ -95,7 +95,7 @@
   },
   "library-panels": {
     "save": {
-      "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{ęřřőřMşģ}}\"",
+      "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{errorMsg}}\"",
       "success": "Ŀįþřäřy päŉęľ şävęđ"
     }
   },
@@ -318,6 +318,10 @@
   "news": {
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
+  "notifications": {
+    "starred-dashboard": "Đäşĥþőäřđ şŧäřřęđ",
+    "unstarred-dashboard": "Đäşĥþőäřđ ūŉşŧäřřęđ"
+  },
   "panel": {
     "header-menu": {
       "hide-legend": "Ħįđę ľęģęŉđ",
@@ -333,7 +337,7 @@
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
-      "duration-selected": "Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ ŵįŧĥ čūřřęŉŧ įŉŧęřväľ {{đūřäŧįőŉÅřįäĿäþęľ}} şęľęčŧęđ"
+      "duration-selected": "Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ ŵįŧĥ čūřřęŉŧ įŉŧęřväľ {{durationAriaLabel}} şęľęčŧęđ"
     },
     "live-option": {
       "aria-label": "Ŧūřŉ őŉ ľįvę şŧřęämįŉģ",
@@ -474,7 +478,7 @@
     },
     "range-picker": {
       "backwards-time-aria-label": "Mővę ŧįmę řäŉģę þäčĸŵäřđş",
-      "current-time-selected": "Ŧįmę řäŉģę şęľęčŧęđ: {{čūřřęŉŧŦįmęŖäŉģę}}",
+      "current-time-selected": "Ŧįmę řäŉģę şęľęčŧęđ: {{currentTimeRange}}",
       "forwards-time-aria-label": "Mővę ŧįmę řäŉģę ƒőřŵäřđş",
       "to": "ŧő",
       "zoom-out-button": "Żőőm őūŧ ŧįmę řäŉģę",

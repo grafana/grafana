@@ -84,7 +84,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           </FieldSet>
         )}
       </Form>
-      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} />
+      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} preferenceType="team" />
     </VerticalGroup>
   );
 };

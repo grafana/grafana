@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import 'whatwg-fetch';
 
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
@@ -17,12 +17,8 @@ import { useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
 const server = setupServer();
 
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
-  getBackendSrv: () => backendSrv,
-}));
-
 beforeAll(() => {
+  setBackendSrv(backendSrv);
   server.listen({ onUnhandledRequest: 'error' });
 });
 
