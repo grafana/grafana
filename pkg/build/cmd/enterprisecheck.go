@@ -18,9 +18,22 @@ type checkOpts struct {
 }
 
 func getCheckOpts(args []string) (*checkOpts, error) {
+	branch, ok := env.Lookup("DRONE_SOURCE_BRANCH", args)
+	if !ok {
+		return nil, cli.Exit("Unable to retrieve build source branch", 1)
+	}
+
+	var (
+		rgx     = git.PRCheckRegexp()
+		matches = rgx.FindStringSubmatch(branch)
+	)
+
 	sha, ok := env.Lookup("SOURCE_COMMIT", args)
 	if !ok {
-		return nil, cli.Exit(`missing environment variable "SOURCE_COMMIT"`, 1)
+		if matches == nil || len(matches) <= 1 {
+			return nil, cli.Exit("Unable to retrieve source commit", 1)
+		}
+		sha = matches[2]
 	}
 
 	url, ok := env.Lookup("DRONE_BUILD_LINK", args)
@@ -28,14 +41,8 @@ func getCheckOpts(args []string) (*checkOpts, error) {
 		return nil, cli.Exit(`missing environment variable "DRONE_BUILD_LINK"`, 1)
 	}
 
-	branch, ok := env.Lookup("DRONE_SOURCE_BRANCH", args)
-	if !ok {
-		return nil, cli.Exit("Unable to retrieve build source branch", 1)
-	}
-
 	prStr, ok := env.Lookup("OSS_PULL_REQUEST", args)
 	if !ok {
-		matches := git.PRCheckRegexp().FindStringSubmatch(branch)
 		if matches == nil || len(matches) <= 1 {
 			return nil, cli.Exit("Unable to retrieve PR number", 1)
 		}

@@ -296,6 +296,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "cloudWatchCrossAccountQuerying",
+			Description: "Use cross-account querying in CloudWatch datasource",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:         "redshiftAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Redshift",
 			State:        FeatureStateAlpha,
@@ -360,6 +365,11 @@ var (
 		{
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "authnService",
+			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
 		},
 	}

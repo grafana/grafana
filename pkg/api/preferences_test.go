@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 )
@@ -51,7 +52,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
 	sc.hs.preferenceService = prefService
 
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -80,7 +81,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
 	sc.hs.preferenceService = prefService
 
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	t.Run("AccessControl allows getting org preferences with correct permissions", func(t *testing.T) {
@@ -105,7 +106,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -127,7 +128,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	input := strings.NewReader(testUpdateOrgPreferencesCmd)
@@ -157,7 +158,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
@@ -190,7 +191,7 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
