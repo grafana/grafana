@@ -385,7 +385,7 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 func TestAPI_Annotations_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
@@ -787,7 +787,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
-	err := sc.db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "TestOrg", UserId: testUserID})
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	type args struct {

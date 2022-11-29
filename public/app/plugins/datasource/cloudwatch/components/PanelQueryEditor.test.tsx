@@ -2,8 +2,16 @@ import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+import {
+  validLogsQuery,
+  validMetricQueryBuilderQuery,
+  validMetricQueryCodeQuery,
+  validMetricSearchBuilderQuery,
+  validMetricSearchCodeQuery,
+} from '../__mocks__/queries';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
 
@@ -128,6 +136,84 @@ describe('PanelQueryEditor should render right editor', () => {
         render(<PanelQueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Metric name')).toBeInTheDocument();
+    });
+  });
+
+  interface MonitoringBadgeScenario {
+    name: string;
+    query: CloudWatchQuery;
+    toggle: boolean;
+  }
+
+  describe('monitoring badge', () => {
+    let originalValue: boolean | undefined;
+    let datasourceMock: ReturnType<typeof setupMockedDataSource>;
+    beforeEach(() => {
+      datasourceMock = setupMockedDataSource();
+      datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+      datasourceMock.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+      datasourceMock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+      originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
+    });
+    afterEach(() => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = originalValue;
+    });
+
+    describe('should be displayed when a monitoring account is returned and', () => {
+      const cases: MonitoringBadgeScenario[] = [
+        { name: 'it is logs query and feature is enabled', query: validLogsQuery, toggle: true },
+        {
+          name: 'it is metric search builder query and feature is enabled',
+          query: validMetricSearchBuilderQuery,
+          toggle: true,
+        },
+        {
+          name: 'it is metric search code query and feature is enabled',
+          query: validMetricSearchCodeQuery,
+          toggle: true,
+        },
+      ];
+
+      test.each(cases)('$name', async ({ query, toggle }) => {
+        config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
+        await act(async () => {
+          render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+        });
+        expect(await screen.getByText('Monitoring account')).toBeInTheDocument();
+      });
+    });
+
+    describe('should not be displayed when a monitoring account is returned and', () => {
+      const cases: MonitoringBadgeScenario[] = [
+        {
+          name: 'it is metric query builder query and toggle is enabled',
+          query: validMetricQueryBuilderQuery,
+          toggle: true,
+        },
+        {
+          name: 'it is metric query code query and toggle is not enabled',
+          query: validMetricQueryCodeQuery,
+          toggle: true,
+        },
+        { name: 'it is logs query and feature is not enabled', query: validLogsQuery, toggle: false },
+        {
+          name: 'it is metric search builder query and feature is not enabled',
+          query: validMetricSearchBuilderQuery,
+          toggle: false,
+        },
+        {
+          name: 'it is metric search code query and feature is not enabled',
+          query: validMetricSearchCodeQuery,
+          toggle: false,
+        },
+      ];
+      test.each(cases)('$name', async ({ query, toggle }) => {
+        config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
+        await act(async () => {
+          render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+        });
+        expect(await screen.queryByText('Monitoring account')).toBeNull();
+      });
     });
   });
 });

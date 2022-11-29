@@ -61,7 +61,12 @@ export class OrgDetailsPage extends PureComponent<Props> {
             <VerticalGroup spacing="lg">
               {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
               {canReadPreferences && (
-                <SharedPreferences resourceUri="org" disabled={!canWritePreferences} onConfirm={this.handleConfirm} />
+                <SharedPreferences
+                  resourceUri="org"
+                  disabled={!canWritePreferences}
+                  preferenceType="org"
+                  onConfirm={this.handleConfirm}
+                />
               )}
             </VerticalGroup>
           )}

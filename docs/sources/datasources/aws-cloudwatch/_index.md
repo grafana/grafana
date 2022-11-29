@@ -168,6 +168,21 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
+**Cross-account observability:**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": ["oam:ListSinks", "oam:ListAttachedLinks"],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
 ### Configure CloudWatch settings
 
 #### Namespaces of Custom Metrics
