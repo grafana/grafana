@@ -121,6 +121,19 @@ func (s *sqlObjectServer) validateGRN(ctx context.Context, grn *object.GRN) (*ob
 	} else if grn.TenantId != user.OrgID {
 		return nil, fmt.Errorf("tenant ID does not match userID")
 	}
+
+	if grn.Kind == "" {
+		return nil, fmt.Errorf("GRN missing kind")
+	}
+	if grn.UID == "" {
+		return nil, fmt.Errorf("GRN missing UID")
+	}
+	if len(grn.UID) > 40 {
+		return nil, fmt.Errorf("GRN UID is too long (>40)")
+	}
+	if strings.ContainsAny(grn.UID, "/#$@?") {
+		return nil, fmt.Errorf("invalid character in GRN")
+	}
 	return grn, nil
 }
 

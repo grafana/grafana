@@ -69,18 +69,19 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 		},
 	})
 
-	// // when saving a folder, keep a path version cached
-	// tables = append(tables, migrator.Table{
-	// 	Name: "object_folder",
-	// 	Columns: []*migrator.Column{
-	// 		{Name: "oid", Type: migrator.DB_NVarchar, Length: oidLength, Nullable: false},
-	// 		getLatinPathColumn("path"),                              // slug/slug/slug/...
-	// 		{Name: "tree", Type: migrator.DB_Text, Nullable: false}, // JSON array from root
-	// 	},
-	// 	Indices: []*migrator.Index{
-	// 		{Cols: []string{"path"}, Type: migrator.UniqueIndex},
-	// 	},
-	// })
+	// when saving a folder, keep a path version cached
+	tables = append(tables, migrator.Table{
+		Name: "object_folder",
+		Columns: []*migrator.Column{
+			{Name: "oid", Type: migrator.DB_NVarchar, Length: oidLength, Nullable: false},
+			getLatinPathColumn("path"), // slug/slug/slug/...
+			{Name: "depth", Type: migrator.DB_Int, Nullable: false},
+			{Name: "tree", Type: migrator.DB_Text, Nullable: false}, // JSON array from root
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"path"}, Type: migrator.UniqueIndex},
+		},
+	})
 
 	tables = append(tables, migrator.Table{
 		Name: "object_labels",
@@ -153,7 +154,7 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v0X)" // change this when we want to wipe and reset the object tables
+	suffix := " (v5)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("ObjectStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
 	`)))
