@@ -46,6 +46,7 @@ import {
   fetchExternalAlertmanagers,
   fetchSilences,
   fetchStatus,
+  fetchValidAlertManagerConfig,
   testReceivers,
   updateAlertManagerConfig,
 } from '../api/alertmanager';
@@ -944,4 +945,9 @@ export const addExternalAlertmanagersAction = createAsyncThunk(
       }
     );
   }
+);
+
+export const fetchValidAlertManagerConfigAction = createAsyncThunk(
+  'unifiedAlerting/fetchValidAlertManagerConfig',
+  (): Promise<AlertManagerCortexConfig[]> => withSerializedError(fetchValidAlertManagerConfig())
 );

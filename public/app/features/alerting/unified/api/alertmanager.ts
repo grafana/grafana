@@ -20,6 +20,8 @@ import {
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
+const limitToSuccessfullyAppliedAMs = 10;
+
 // "grafana" for grafana-managed, otherwise a datasource name
 export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {
   try {
@@ -49,6 +51,20 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
     }
     throw e;
   }
+}
+
+//this is only available for the "grafana" alert manager
+export async function fetchValidAlertManagerConfig(): Promise<AlertManagerCortexConfig[]> {
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<AlertManagerCortexConfig[]>({
+      url: `/api/alertmanager/${getDatasourceAPIUid(
+        GRAFANA_RULES_SOURCE_NAME
+      )}/config/api/v1/alerts/successfully-applied?limit=${limitToSuccessfullyAppliedAMs}`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
+  return result.data;
 }
 
 export async function updateAlertManagerConfig(
