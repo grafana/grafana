@@ -52,7 +52,7 @@ export function PluginDetailsPage({
       <Page
         navId={navId}
         pageNav={{
-          text: 'Loading details...',
+          text: '',
           active: true,
         }}
       >
