@@ -21,6 +21,7 @@ export interface Props {
 export const LabelBrowserModal = (props: Props) => {
   const { isOpen, onClose, datasource, app } = props;
   const [labelsLoaded, setLabelsLoaded] = useState(false);
+  const [hasLogLabels, setHasLogLabels] = useState(false);
   const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export const LabelBrowserModal = (props: Props) => {
 
     datasource.languageProvider.start().then(() => {
       setLabelsLoaded(true);
+      setHasLogLabels(datasource.languageProvider.getLabelKeys().length > 0);
     });
   }, [datasource, isOpen]);
 
@@ -44,8 +46,6 @@ export const LabelBrowserModal = (props: Props) => {
     changeQuery(selector);
     onClose();
   };
-
-  const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
 
   return (
     <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose}>
