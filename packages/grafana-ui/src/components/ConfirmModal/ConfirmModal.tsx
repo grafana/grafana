@@ -95,7 +95,7 @@ export const ConfirmModal = ({
           {dismissText}
         </Button>
         <Button
-          variant={confirmButtonVariant}
+          variant={confirmVariant}
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}
