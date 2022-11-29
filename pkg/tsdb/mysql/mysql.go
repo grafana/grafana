@@ -61,9 +61,9 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		database := settings.Database
+		database := jsonData.Database
 		if database == "" {
-			database = jsonData.Database
+			database = settings.Database
 		}
 
 		dsInfo := sqleng.DataSourceInfo{

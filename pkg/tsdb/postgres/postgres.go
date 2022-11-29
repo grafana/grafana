@@ -67,9 +67,9 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		database := settings.Database
+		database := jsonData.Database
 		if database == "" {
-			database = jsonData.Database
+			database = settings.Database
 		}
 
 		dsInfo := sqleng.DataSourceInfo{
