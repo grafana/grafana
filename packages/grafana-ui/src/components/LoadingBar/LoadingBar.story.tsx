@@ -1,9 +1,11 @@
-import { action } from '@storybook/addon-actions';
+import { css } from '@emotion/css';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
-import React, { CSSProperties, useState, ReactNode } from 'react';
+import React from 'react';
 
-import { LoadingBar, LoadingBarProps } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { LoadingBar, LoadingBarProps, useStyles2 } from '@grafana/ui';
 
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 const meta: ComponentMeta<typeof LoadingBar> = {
@@ -16,23 +18,29 @@ const meta: ComponentMeta<typeof LoadingBar> = {
   },
 };
 
-function getContentStyle(): CSSProperties {
+const getStyles = (theme: GrafanaTheme2) => {
+  const { borderColor } = theme.components.panel;
+
   return {
-    backgroundColor: '#181B1F',
-    width: '400px',
-    height: '200px',
-    border: '1px solid rgba(204, 204, 220, 0.25)',
-    borderRadius: '1px',
+    container: css({
+      label: 'placeholder-container',
+      width: '400px',
+      height: '200px',
+      border: `1px solid ${borderColor}`,
+      borderRadius: '3px',
+    }),
   };
-}
+};
 
 export const Basic: ComponentStory<typeof LoadingBar> = (args: LoadingBarProps) => {
-  const contentStyle = getContentStyle();
+  const styles = useStyles2(getStyles);
 
   return (
-    <div style={contentStyle}>
-      <LoadingBar {...args} />
-    </div>
+    <DashboardStoryCanvas>
+      <div className={styles.container}>
+        <LoadingBar {...args} />
+      </div>
+    </DashboardStoryCanvas>
   );
 };
 
