@@ -389,7 +389,6 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"-p", "dist/",
 		"--name", name,
 		"--vendor", vendor,
-		"--rpm-digest", "sha256",
 		"-a", string(options.packageArch),
 	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
@@ -401,6 +400,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 	switch options.packageType {
 	case packageTypeRpm:
 		args = append(args, "-t", "rpm", "--rpm-posttrans", "packaging/rpm/control/posttrans")
+		args = append(args, "--rpm-digest", "sha256")
 	case packageTypeDeb:
 		args = append(args, "-t", "deb", "--deb-no-default-config-files")
 	default:
