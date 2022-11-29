@@ -214,14 +214,6 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		homeUrl = homePage
 	}
 
-	if prefs.HomeDashboardID != 0 {
-		slugQuery := models.GetDashboardRefByIdQuery{Id: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
-		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
-		}
-	}
-
 	homeNode := &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",

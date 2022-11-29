@@ -528,9 +528,15 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: preference.HomeDashboardID}
 		err := hs.DashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
 		if err == nil {
-			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
-			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
-			return response.JSON(http.StatusOK, &dashRedirect)
+			dq := models.GetDashboardQuery{Uid: slugQuery.Result.Uid, OrgId: c.OrgID}
+			err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+			dash := dtos.DashboardFullWithMeta{}
+			dash.Meta.CanEdit = c.SignedInUser.HasRole(org.RoleEditor)
+			dash.Dashboard = dq.Result.Data
+			if err == nil {
+				return response.JSON(http.StatusOK, dash)
+			}
+			hs.log.Warn("Failed to get home dashboard", "err", err)
 		}
 		hs.log.Warn("Failed to get slug from database", "err", err)
 	}
