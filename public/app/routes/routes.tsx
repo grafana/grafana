@@ -19,8 +19,6 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
-import UserListAdminPage from '../features/admin/UserListAdminPage';
-import { UserListPage } from '../features/admin/UserListPage';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
@@ -332,7 +330,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
-      component: config.featureToggles.topnav ? UserListPage : UserListAdminPage,
+      component: config.featureToggles.topnav
+        ? SafeDynamicImport(() => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage'))
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')
+          ),
     },
     {
       path: '/admin/users/create',

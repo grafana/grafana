@@ -15,7 +15,8 @@ const views = [
   { value: 'admin', label: 'All organisations' },
   { value: 'org', label: 'This organisation' },
 ];
-export function UserListPage() {
+
+export default function UserListPage() {
   const hasAccessToAdminUsers = contextSrv.hasAccess(AccessControlAction.UsersRead, contextSrv.isGrafanaAdmin);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const styles = useStyles2(getStyles);
