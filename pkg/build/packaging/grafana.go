@@ -389,6 +389,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"-p", "dist/",
 		"--name", name,
 		"--vendor", vendor,
+		"--rpm-digest", "sha256",
 		"-a", string(options.packageArch),
 	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
