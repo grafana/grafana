@@ -8,7 +8,6 @@ import { IconName } from '../../types/icon';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
-import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
 /**
@@ -89,7 +88,6 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
 
   return (
     <div className={styles.container} style={containerStyles}>
-      <LoadingBar containerWidth={width} />
       {hasHeader && !hoverHeader && (
         <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
           {title && (
