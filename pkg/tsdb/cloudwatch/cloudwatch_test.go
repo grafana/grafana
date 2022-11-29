@@ -24,7 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -97,16 +99,18 @@ func TestNewInstanceSettings(t *testing.T) {
 func Test_CheckHealth(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewCWLogsClient := NewCWLogsClient
+	origNewLogsAPI := NewLogsAPI
 	t.Cleanup(func() {
 		NewMetricsAPI = origNewMetricsAPI
 		NewCWLogsClient = origNewCWLogsClient
+		NewLogsAPI = origNewLogsAPI
 	})
 
 	var client fakeCheckHealthClient
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 		return client
 	}
-	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return client
 	}
 
@@ -536,16 +540,86 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 	})
 }
 
+func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
+	sender := &mockedCallResourceResponseSenderForOauth{}
+	origNewMetricsAPI := NewMetricsAPI
+	origNewOAMAPI := NewOAMAPI
+	origNewLogsAPI := NewLogsAPI
+	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
+	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
+	t.Cleanup(func() {
+		NewOAMAPI = origNewOAMAPI
+		NewMetricsAPI = origNewMetricsAPI
+		NewLogsAPI = origNewLogsAPI
+	})
+
+	var logsApi mocks.LogsAPI
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
+		return &logsApi
+	}
+
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+	})
+
+	t.Run("maps log group api response to resource response of describe-log-groups", func(t *testing.T) {
+		logsApi = mocks.LogsAPI{}
+		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []*cloudwatchlogs.LogGroup{
+				{Arn: aws.String("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: aws.String("group_a")},
+			},
+		}, nil)
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/describe-log-groups?logGroupPattern=some-pattern&accountId=some-account-id`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchCrossAccountQuerying))
+		err := executor.CallResource(context.Background(), req, sender)
+		assert.NoError(t, err)
+
+		assert.JSONEq(t, `[
+		   {
+			  "accountId":"111",
+			  "value":{
+				 "arn":"arn:aws:logs:us-east-1:111:log-group:group_a",
+				 "name":"group_a"
+			  }
+		   }
+		]`, string(sender.Response.Body))
+
+		logsApi.AssertCalled(t, "DescribeLogGroups",
+			&cloudwatchlogs.DescribeLogGroupsInput{
+				AccountIdentifiers:    []*string{utils.Pointer("some-account-id")},
+				IncludeLinkedAccounts: utils.Pointer(true),
+				Limit:                 utils.Pointer(int64(50)),
+				LogGroupNamePrefix:    utils.Pointer("some-pattern"),
+			})
+	})
+}
+
 func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewMetricsAPI
+	origNewOAMAPI := NewOAMAPI
+	origNewLogsAPI := NewLogsAPI
+	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider { return nil }
 	t.Cleanup(func() {
+		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
+		NewLogsAPI = origNewLogsAPI
 	})
+
 	var api mocks.FakeMetricsAPI
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 		return &api
 	}
+
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
@@ -580,10 +654,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []string{"Value1", "Value2", "Value7"}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "Value1"}, {Value: "Value2"}, {Value: "Value7"}}, res)
 	})
 
 	t.Run("Should handle dimension key filter query and return keys from the api", func(t *testing.T) {
@@ -616,10 +690,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []string{"Test_DimensionName1", "Test_DimensionName2", "Test_DimensionName4", "Test_DimensionName5"}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "Test_DimensionName1"}, {Value: "Test_DimensionName2"}, {Value: "Test_DimensionName4"}, {Value: "Test_DimensionName5"}}, res)
 	})
 
 	t.Run("Should handle standard dimension key query and return hard coded keys", func(t *testing.T) {
@@ -640,10 +714,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []string{"ClientId", "DomainName"}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "ClientId"}, {Value: "DomainName"}}, res)
 	})
 
 	t.Run("Should handle custom namespace dimension key query and return hard coded keys", func(t *testing.T) {
@@ -664,10 +738,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
+		res := []resources.ResourceResponse[string]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []string{"ClientId", "DomainName"}, res)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "ClientId"}, {Value: "DomainName"}}, res)
 	})
 
 	t.Run("Should handle custom namespace metrics query and return metrics from api", func(t *testing.T) {
@@ -700,10 +774,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		sent := sender.Response
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
-		res := []resources.Metric{}
+		res := []resources.ResourceResponse[resources.Metric]{}
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
-		assert.Equal(t, []resources.Metric{{Name: "Test_MetricName1", Namespace: "AWS/EC2"}, {Name: "Test_MetricName2", Namespace: "AWS/EC2"}, {Name: "Test_MetricName3", Namespace: "AWS/ECS"}, {Name: "Test_MetricName10", Namespace: "AWS/ECS"}, {Name: "Test_MetricName4", Namespace: "AWS/ECS"}, {Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}, res)
+		assert.Equal(t, []resources.ResourceResponse[resources.Metric]{{Value: resources.Metric{Name: "Test_MetricName1", Namespace: "AWS/EC2"}}, {Value: resources.Metric{Name: "Test_MetricName2", Namespace: "AWS/EC2"}}, {Value: resources.Metric{Name: "Test_MetricName3", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName10", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName4", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}}, res)
 	})
 }
 

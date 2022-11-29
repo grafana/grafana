@@ -38,19 +38,17 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 
 	var foldr *folder.Folder
 	/*
-		user, err := appcontext.User(ctx)
-		if err != nil {
-			return nil, err
-		}
 		version := 1
-		updatedBy := user.UserID
-		createdBy := user.UserID
+		updatedBy := cmd.SignedInUser.UserID
+		createdBy := cmd.SignedInUser.UserID
 	*/
+	var lastInsertedID int64
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var sqlOrArgs []interface{}
+		var sql string
+		var args []interface{}
 		if cmd.ParentUID == "" {
-			sql := "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
-			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			sql = "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
+			args = []interface{}{cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
 		} else {
 			if cmd.ParentUID != folder.GeneralFolderUID {
 				if _, err := ss.Get(ctx, folder.GetFolderQuery{
@@ -60,20 +58,18 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 					return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
 				}
 			}
-			sql := "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
-			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			sql = "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
+			args = []interface{}{cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
 		}
-		res, err := sess.Exec(sqlOrArgs...)
+
+		var err error
+		lastInsertedID, err = sess.WithReturningID(ss.db.GetDialect().DriverName(), sql, args)
 		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
-		}
-		id, err := res.LastInsertId()
-		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to get last inserted id: %w", err)
+			return err
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
-			ID: &id,
+			ID: &lastInsertedID,
 		})
 		if err != nil {
 			return err
@@ -205,6 +201,13 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 		}
 		return nil, err
 	}
+
+	if len(folders) < 1 {
+		// the query is expected to return at least the same folder
+		// if it's empty it means that the folder does not exist
+		return nil, folder.ErrFolderNotFound
+	}
+
 	return util.Reverse(folders[1:]), nil
 }
 
@@ -213,7 +216,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
+		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY id"))
 
 		if q.Limit != 0 {
 			var offset int64 = 1
@@ -258,5 +261,5 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 		}
 		return nil
 	})
-	return folders, err
+	return util.Reverse(folders), err
 }

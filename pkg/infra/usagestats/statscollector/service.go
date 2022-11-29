@@ -321,6 +321,11 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 		return false
 	}
 
+	if statsQuery.Result == nil {
+		s.log.Error("Cannot retrieve system stats")
+		return false
+	}
+
 	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
 	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
 	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
