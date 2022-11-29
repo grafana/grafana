@@ -1,11 +1,11 @@
 import { cx } from '@emotion/css';
-import { Modal, LoaderButton, RadioButtonGroupField, TextInputField, validators } from '@percona/platform-core';
+import { LoaderButton, Modal, RadioButtonGroupField, TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { DateTime, SelectableValue, toUtc } from '@grafana/data';
 import { Alert, Button, DateTimePicker, HorizontalGroup, useStyles2 } from '@grafana/ui';
-import { BackupMode, DataModel } from 'app/percona/backup/Backup.types';
+import { BackupMode } from 'app/percona/backup/Backup.types';
 import { AsyncSelectField } from 'app/percona/shared/components/Form/AsyncSelectField';
 import { Label } from 'app/percona/shared/components/Form/Label';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
@@ -18,7 +18,7 @@ import { Timeranges } from '../BackupInventory.types';
 import { Messages } from './RestoreBackupModal.messages';
 import { RestoreBackupModalService } from './RestoreBackupModal.service';
 import { getStyles } from './RestoreBackupModal.styles';
-import { RestoreBackupModalProps, RestoreBackupFormProps, ServiceTypeSelect } from './RestoreBackupModal.types';
+import { RestoreBackupFormProps, RestoreBackupModalProps, ServiceTypeSelect } from './RestoreBackupModal.types';
 import {
   getHoursFromDate,
   getMinutesFromDate,
@@ -306,11 +306,6 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
 
                   <TextInputField disabled name="dataModel" label={Messages.dataModel} />
                 </div>
-                {backup?.vendor === Databases.mongodb && backup?.dataModel === DataModel.PHYSICAL && (
-                  <Alert title="" severity="warning">
-                    {Messages.physicalMongoWarning}
-                  </Alert>
-                )}
                 <Alert title="" severity="warning">
                   {Messages.scheduledWarning}
                 </Alert>
