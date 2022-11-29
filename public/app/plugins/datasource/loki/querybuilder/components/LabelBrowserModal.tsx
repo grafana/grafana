@@ -25,10 +25,14 @@ export const LabelBrowserModal = (props: Props) => {
   const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     datasource.languageProvider.start().then(() => {
       setLabelsLoaded(true);
     });
-  }, [datasource]);
+  }, [datasource, isOpen]);
 
   const changeQuery = (value: string) => {
     const { query, onChange, onRunQuery } = props;
