@@ -30,7 +30,7 @@ We’ve revamped the navigation menu and grouped related tools together, making 
 
 To try out Grafana’s new navigation, enable the `topnav` feature toggle. If you are a Cloud Advanced customer, open a ticket with our support team and we will enable it for you.
 
-**Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
+**Note:** The Grafana and Grafana Cloud documentation has not yet been updated to reflect changes to the navigation.
 
 ## View dashboards in Spanish, French, German, and Simplified Chinese
 
