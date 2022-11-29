@@ -2,6 +2,7 @@ import { isNumber } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import {
+  ArrayVector,
   DisplayValueAlignmentFactors,
   FieldDisplay,
   FieldType,
@@ -87,6 +88,18 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
     for (let frame of data.series) {
       for (let field of frame.fields) {
+        const transformedValues = field.values.toArray().slice();
+
+        for (let index = 0; index < transformedValues.length; index++) {
+          const value = transformedValues[index];
+
+          if (value === null) {
+            transformedValues[index] = 69;
+          }
+        }
+
+        field.values = new ArrayVector(transformedValues);
+
         let { config } = field;
         // mostly copied from fieldOverrides, since they are skipped during streaming
         // Set the Min/Max value automatically
