@@ -16,7 +16,7 @@ weight: -33
 
 # What’s new in Grafana v9.3 (Beta)
 
-Welcome to Grafana 9.3. Read What's New to learn all about the latest release. For more detail, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+Welcome to Grafana 9.3! Read on to learn about our navigation overhaul, support for four new languages, new panels and transformations, several often-requested auth improvements, usability improvements to Alerting, and more. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## New navigation
 
