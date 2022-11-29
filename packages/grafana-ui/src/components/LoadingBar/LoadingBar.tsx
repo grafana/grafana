@@ -30,11 +30,19 @@ export const LoadingBar: React.FC<LoadingBarProps> = ({
   barColor = 'blue',
 }) => {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
-
-  return <div style={{ width, height }}></div>;
+  const loadingStyles = getLoadingStyes(theme, width, height)
+  return <div class={loadingStyles.loading}></div>;
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {};
+const getLoadingStyes = (theme: GrafanaTheme2, width, height) => {
+  return {
+      loading: css ({
+        width: "80px",
+        height: "10px",
+        backgroundColor: "blue";
+        position: "absolute";
+        animation: animate 1s infinite linear;
+        willChange: transform;:w
+        })
+    };
 };
