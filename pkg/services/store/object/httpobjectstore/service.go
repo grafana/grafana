@@ -57,7 +57,7 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
 
 	// File upload
-	route.Post("/upload/:scope", reqGrafanaAdmin, routing.Wrap(s.doUpload))
+	route.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
 }
 
 // This function will extract UID+Kind from the requested path "*" in our router
@@ -182,6 +182,7 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 	rsp, err := s.store.Write(c.Req.Context(), &object.WriteObjectRequest{
 		GRN:             grn,
 		Body:            b,
+		Folder:          params["folder"],
 		Comment:         params["comment"],
 		PreviousVersion: params["previousVersion"],
 	})
@@ -233,10 +234,6 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 	if len(fileinfo) < 1 {
 		return response.Error(400, "missing files", nil)
 	}
-	scope := web.Params(c.Req)[":scope"]
-	if scope == "" {
-		return response.Error(400, "invalid scope", nil)
-	}
 
 	var rsp []*object.WriteObjectResponse
 
@@ -278,9 +275,9 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 			}
 
 			grn := &object.GRN{
-				Scope: scope,
-				UID:   uid,
-				Kind:  kind.ID,
+				UID:      uid,
+				Kind:     kind.ID,
+				TenantId: c.OrgID,
 			}
 
 			if !overwriteExistingFile {
@@ -301,6 +298,7 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 				GRN:     grn,
 				Body:    data,
 				Comment: message,
+				Folder:  folder,
 				//	PreviousVersion: params["previousVersion"],
 			})
 

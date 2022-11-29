@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/stretchr/testify/require"
@@ -29,44 +28,39 @@ func TestSimpleRouter(t *testing.T) {
 
 	scenarios := []routeScenario{{
 		Error: "missing TenantId",
-		GRN:   &object.GRN{Scope: "x"},
+		GRN:   &object.GRN{},
 	}, {
 		Error: "unknown Kind: xyz",
 		GRN: &object.GRN{
 			TenantId: 11,
-			Scope:    models.ObjectStoreScopeDrive,
 			UID:      "path/to/file",
 			Kind:     "xyz",
 		},
 	}, {
-		Key: "11/drive/path/to/file-dashboard.json",
+		Key: "11/dashboard/theuid",
 		GRN: &object.GRN{
 			TenantId: 11,
-			Scope:    models.ObjectStoreScopeDrive,
-			UID:      "path/to/file",
+			UID:      "theuid",
 			Kind:     "dashboard",
 		},
 	}, {
-		Key: "11/drive/path/to/folder/__folder.json",
+		Key: "11/folder/xyz",
 		GRN: &object.GRN{
 			TenantId: 11,
-			Scope:    models.ObjectStoreScopeDrive,
-			UID:      "path/to/folder",
+			UID:      "xyz",
 			Kind:     "folder",
 		},
 	}, {
-		Key: "10/drive/path/to/file.png",
+		Key: "10/png/file",
 		GRN: &object.GRN{
 			TenantId: 10,
-			Scope:    models.ObjectStoreScopeDrive,
-			UID:      "path/to/file",
+			UID:      "file",
 			Kind:     "png",
 		},
 	}, {
-		Key: "10/entity/playlist/aaaaa", // ?.json better or not?
+		Key: "10/playlist/aaaaa", // ?.json better or not?
 		GRN: &object.GRN{
 			TenantId: 10,
-			Scope:    models.ObjectStoreScopeEntity,
 			UID:      "aaaaa",
 			Kind:     "playlist",
 		},

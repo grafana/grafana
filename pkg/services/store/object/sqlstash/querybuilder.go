@@ -12,7 +12,7 @@ type selectQuery struct {
 	args  []interface{}
 }
 
-func (q *selectQuery) addWhere(f string, val string) {
+func (q *selectQuery) addWhere(f string, val interface{}) {
 	q.args = append(q.args, val)
 	q.where = append(q.where, f+"=?")
 }
