@@ -52,14 +52,16 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
   );
 }
 
-function generateCopiedRuleTitle(originRuleWithLocation: RuleWithLocation): string {
+export function generateCopiedRuleTitle(originRuleWithLocation: RuleWithLocation): string {
   const originName = getRuleName(originRuleWithLocation.rule);
   const existingRulesNames = originRuleWithLocation.group.rules.map(getRuleName);
 
-  let newName = `${originName} (Copied)`;
+  const nonDuplicateName = originName.replace(/\(copy( [0-9]+)?\)$/, '').trim();
 
-  for (let i = 1; existingRulesNames.includes(newName); i++) {
-    newName = `${originName} (Copied ${i})`;
+  let newName = `${nonDuplicateName} (copy)`;
+
+  for (let i = 2; existingRulesNames.includes(newName); i++) {
+    newName = `${nonDuplicateName} (copy ${i})`;
   }
 
   return newName;
