@@ -357,14 +357,14 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getRefID() string {
 	return timeSeriesQuery.refID
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesQuery) getAliasBy() string {
-	return timeSeriesFilter.aliasBy
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getAliasBy() string {
+	return timeSeriesQuery.aliasBy
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesQuery) getParameter(i string) string {
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getParameter(i string) string {
 	switch i {
 	case "project":
-		return timeSeriesFilter.parameters.ProjectName
+		return timeSeriesQuery.parameters.ProjectName
 	default:
 		return ""
 	}
