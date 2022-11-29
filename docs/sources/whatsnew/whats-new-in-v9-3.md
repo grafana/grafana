@@ -32,7 +32,7 @@ To try out Grafana’s new navigation, enable the `topnav` feature toggle. If yo
 
 **Note:** The Grafana and Grafana Cloud documentation has not yet been updated to reflect changes to the navigation - these changes will roll out when the new navigation becomes generally available.
 
-{{< figure src="/static/static/img/docs/navigation/navigation-9-3.png" max-width="750px" caption="New navigation for Grafana" >}}
+{{< figure src="/static/img/docs/navigation/navigation-9-3.png" max-width="750px" caption="New navigation for Grafana" >}}
 
 ## View dashboards in Spanish, French, German, and Simplified Chinese
 
@@ -44,7 +44,7 @@ With millions of users across the globe, Grafana has a global footprint. In orde
 
 Read more about configuring the [default language for your organization]({{< relref "../administration/organization-preferences/" >}}) and [updating your profile]({{< relref "../administration/user-management/user-preferences/" >}}) in our documentation.
 
-{{< figure src="/static/static/img/docs/internationalization/internationalization-9-3.png" max-width="750px" caption="Grafana available in Spanish, French, German, and Simplified Chinese" >}}
+{{< figure src="/static/img/docs/internationalization/internationalization-9-3.png" max-width="750px" caption="Grafana available in Spanish, French, German, and Simplified Chinese" >}}
 
 ## Geomap panel
 
