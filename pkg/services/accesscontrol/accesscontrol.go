@@ -50,7 +50,7 @@ type Options struct {
 }
 
 type SearchOptions struct {
-	ActionPrefix string
+	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
 	Scope        string
 }

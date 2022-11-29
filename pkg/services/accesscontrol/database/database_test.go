@@ -313,7 +313,7 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	return acstore, permissionStore, userService, teamService, orgService
 }
 
-func TestAccessControlStore_SearchUsersPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	ctx := context.Background()
 	readTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
 		return rs.SetResourcePermissionCommand{
