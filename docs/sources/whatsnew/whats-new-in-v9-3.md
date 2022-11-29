@@ -70,7 +70,7 @@ Available in **experimental** in Grafana Open Source, Enterprise, and Cloud Adva
 
 You can use Public Dashboards to make a given dashboard available to anyone on the internet without needing to sign in. In Grafana v9.3, we have introduced a new screen where you can manage all of your public dashboards. From here, you can view a list of all of the public dashboards in your Grafana instance, navigate to the underlying dashboard, see if it is enabled, link out to the public version of the dashboard, or update the public dashboard's configuration. You can see a public dashboard's configuration if you have view access to the dashboard itself, and you can edit its configuration if you have the Admin or Server Admin role or the "Public Dashboard writer" role if you are using RBAC in Grafana Enterprise or Cloud Advanced.
 
-To check out this new screen and configure your public dashboards, navigate to **Dashboards > Public Dashboards**. 
+To check out this new screen and configure your public dashboards, navigate to **Dashboards > Public Dashboards**.
 
 [image public-dashboard-audit-table.png]
 
@@ -88,7 +88,7 @@ To learn more about public dashboards, refer to [Public dashboards]({{< relref "
 
 Available in **experimental** in all editions of Grafana
 
-This new transformation can help eliminate the need for multiple queries to the same datasource with different WHERE clauses when graphing multiple series. 
+This new transformation can help eliminate the need for multiple queries to the same datasource with different WHERE clauses when graphing multiple series.
 
 Consider a metrics SQL table with the following data:
 
