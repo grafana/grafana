@@ -1,5 +1,5 @@
 import { ElasticQueryBuilder } from './QueryBuilder';
-import { ElasticsearchQuery } from './types';
+import { ElasticsearchQuery, TermsQuery } from './types';
 
 describe('ElasticQueryBuilder', () => {
   const builder = new ElasticQueryBuilder({ timeField: '@timestamp' }); // es2
@@ -192,7 +192,7 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.terms.min_doc_count).toBe(1);
   });
 
-  // Next to migrate:
+  // This wasn't migrated, I don't think it make sense at backend as variables are going to be interpolated before
   it('with term agg and variable as min_doc_count', () => {
     const query = builder.build({
       refId: 'A',
@@ -267,7 +267,7 @@ describe('ElasticQueryBuilder', () => {
       refId: 'A',
       metrics: [{ type: 'raw_document', id: '1', settings: {} }],
       timeField: '@timestamp',
-      bucketAggs: [] as any[],
+      bucketAggs: [],
     };
 
     const query = builder.build(target);
@@ -413,6 +413,7 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.aggs['2'].top_metrics.size).toBe(1);
   });
 
+  // Next to migrate:
   it('with derivative', () => {
     const query = builder.build({
       refId: 'A',
@@ -617,12 +618,17 @@ describe('ElasticQueryBuilder', () => {
   });
 
   describe('getTermsQuery', () => {
-    function testGetTermsQuery(queryDef: any) {
+    function testGetTermsQuery(queryDef: TermsQuery) {
       const query = builder.getTermsQuery(queryDef);
       return query.aggs['1'].terms.order;
     }
 
-    function checkSort(order: any, expected: string) {
+    function checkSort(
+      order: {
+        [key: string]: string;
+      },
+      expected: string
+    ) {
       expect(order._term).toBeUndefined();
       expect(order._key).toBe(expected);
     }
@@ -666,7 +672,9 @@ describe('ElasticQueryBuilder', () => {
       it('should not add query_string filter when query is empty', () => {
         const query = builder.getTermsQuery({ orderBy: 'doc_count', order: 'asc' });
 
-        expect(query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))).toBeFalsy();
+        expect(
+          query.query.bool.filter.find((filter: object) => Object.keys(filter).includes('query_string'))
+        ).toBeFalsy();
       });
     });
   });
@@ -684,7 +692,9 @@ describe('ElasticQueryBuilder', () => {
     it('should not add query_string filter when query is empty', () => {
       const query = builder.build({ refId: 'A' });
 
-      expect(query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))).toBeFalsy();
+      expect(
+        query.query.bool.filter.find((filter: object) => Object.keys(filter).includes('query_string'))
+      ).toBeFalsy();
     });
   });
 
@@ -706,7 +716,7 @@ describe('ElasticQueryBuilder', () => {
         { _doc: { order: 'desc' } },
       ]);
 
-      const expectedAggs: any = {
+      const expectedAggs = {
         // FIXME: It's pretty weak to include this '1' in the test as it's not part of what we are testing here and
         // might change as a cause of unrelated changes
         1: {
@@ -737,7 +747,9 @@ describe('ElasticQueryBuilder', () => {
       it('should not add query_string filter when query is empty', () => {
         const query = builder.getLogsQuery({ refId: 'A' }, 500);
 
-        expect(query.query.bool.filter.find((filter: any) => Object.keys(filter).includes('query_string'))).toBeFalsy();
+        expect(
+          query.query.bool.filter.find((filter: object) => Object.keys(filter).includes('query_string'))
+        ).toBeFalsy();
       });
     });
 

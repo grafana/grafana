@@ -345,6 +345,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, percentilesAgg.Key, "1")
 			require.Equal(t, percentilesAgg.Aggregation.Type, "percentiles")
 			metricAgg := percentilesAgg.Aggregation.Aggregation.(*es.MetricAggregation)
+			require.Equal(t, metricAgg.Field, "@load_time")
 			percents := metricAgg.Settings["percents"].([]interface{})
 			require.Len(t, percents, 4)
 			require.Equal(t, percents[0], "1")
@@ -384,7 +385,38 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, dateHistogramAgg.Aggregation.Aggregation.(*es.DateHistogramAgg).Field, "@timestamp")
 		})
 
-		t.Run("With raw document metric", func(t *testing.T) {
+		t.Run("With filters aggs and empty label", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"id": "2",
+						"type": "filters",
+						"settings": {
+							"filters": [ { "query": "@metric:cpu", "label": "" }, { "query": "@metric:logins.count", "label": "" } ]
+						}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			filtersAgg := sr.Aggs[0]
+			require.Equal(t, filtersAgg.Key, "2")
+			require.Equal(t, filtersAgg.Aggregation.Type, "filters")
+			fAgg := filtersAgg.Aggregation.Aggregation.(*es.FiltersAggregation)
+			require.Equal(t, fAgg.Filters["@metric:cpu"].(*es.QueryStringFilter).Query, "@metric:cpu")
+			require.Equal(t, fAgg.Filters["@metric:logins.count"].(*es.QueryStringFilter).Query, "@metric:logins.count")
+
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggs[0]
+			require.Equal(t, dateHistogramAgg.Key, "4")
+			require.Equal(t, dateHistogramAgg.Aggregation.Aggregation.(*es.DateHistogramAgg).Field, "@timestamp")
+		})
+
+		t.Run("With raw document metric size", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -395,6 +427,19 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 
 			require.Equal(t, sr.Size, 500)
+		})
+
+		t.Run("With raw document metric query", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			// FIXME: { _doc: { order: 'desc' } } is missing
+			// sr := c.multisearchRequests[0].Requests[0]
+			// require.Equal(t, sr, `{"docvalue_fields":["@timestamp"],"query":{"bool":{"filter":{"range":{"@timestamp":{"format":"epoch_millis","gte":1526406600000,"lte":1526406900000}}}}},"script_fields":{},"size":500,"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}, {"_doc": {"order": "desc"}}]}`)
 		})
 
 		t.Run("With raw document metric size set", func(t *testing.T) {
@@ -546,6 +591,45 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{
 						"id": "2",
 						"type": "moving_avg",
+						"field": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "4")
+			// FIXME: Currently this is 1 as movingAvg is completely missing. We have only sum.
+			// require.Equal(t, len(firstLevel.Aggregation.Aggs), 2)
+
+			sumAgg := firstLevel.Aggregation.Aggs[0]
+			require.Equal(t, sumAgg.Key, "3")
+			require.Equal(t, sumAgg.Aggregation.Type, "sum")
+			mAgg := sumAgg.Aggregation.Aggregation.(*es.MetricAggregation)
+			require.Equal(t, mAgg.Field, "@value")
+
+			// FIXME: This is currently fully missing
+			// in the test bellow with pipelineAgg it is working as expected
+			// movingAvgAgg := firstLevel.Aggregation.Aggs[1]
+			// require.Equal(t, movingAvgAgg.Key, "2")
+			// require.Equal(t, movingAvgAgg.Aggregation.Type, "moving_avg")
+			// pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			// require.Equal(t, pl.BucketPath, "3")
+
+		})
+
+		t.Run("With moving average with pipelineAgg", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "sum", "field": "@value" },
+					{
+						"id": "2",
+						"type": "moving_avg",
 						"field": "3",
 						"pipelineAgg": "3"
 					}
@@ -573,6 +657,39 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		t.Run("With moving average doc count", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count"},
+					{
+						"id": "2",
+						"type": "moving_avg",
+						"field": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "4")
+			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
+			// FIXME: Currently, movingAvg is completely missing
+			// in the test bellow with pipelineAgg it is working as expected
+			// require.Len(t, firstLevel.Aggregation.Aggs, 1)
+
+			// movingAvgAgg := firstLevel.Aggregation.Aggs[0]
+			// require.Equal(t, movingAvgAgg.Key, "2")
+			// require.Equal(t, movingAvgAgg.Aggregation.Type, "moving_avg")
+			// pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			// require.Equal(t, pl.BucketPath, "_count")
+		})
+
+		t.Run("With moving average doc count with pipelineAgg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -609,6 +726,44 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "sum", "field": "@value" },
+					{
+						"id": "2",
+						"type": "moving_avg",
+						"field": "3"
+					},
+					{
+						"id": "4",
+						"type": "moving_avg"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "3")
+			// FIXME: Currently, movingAvg is completely missing
+			// in the test bellow with pipelineAgg it is working as expected
+			// require.Len(t, firstLevel.Aggregation.Aggs, 2)
+
+			sumAgg := firstLevel.Aggregation.Aggs[0]
+			require.Equal(t, sumAgg.Key, "3")
+
+			// movingAvgAgg := firstLevel.Aggregation.Aggs[1]
+			// require.Equal(t, movingAvgAgg.Key, "2")
+			// plAgg := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			// require.Equal(t, plAgg.BucketPath, "3")
+		})
+
+		t.Run("With broken moving average with pipelineAgg", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "5" }
 				],
 				"metrics": [
@@ -638,6 +793,30 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, movingAvgAgg.Key, "2")
 			plAgg := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			require.Equal(t, plAgg.BucketPath, "3")
+		})
+
+		t.Run("With top_metrics", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{ "id": "2", "type": "top_metrics", "settings": { "order": "desc", "orderBy": "@timestamp", "metrics": ["@value"]} }
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "3")
+
+			secondLevel := firstLevel.Aggregation.Aggs[0]
+			require.Equal(t, secondLevel.Key, "2")
+			require.Equal(t, secondLevel.Aggregation.Type, "top_metrics")
+
+			topMetricsBytes, _ := json.Marshal(firstLevel.Aggregation.Aggs[0].Aggregation.Aggregation)
+			require.Equal(t, string(topMetricsBytes), `{"metrics":[{"field":"@value"}],"size":"1","sort":[{"@timestamp":"desc"}]}`)
 		})
 
 		t.Run("With cumulative sum", func(t *testing.T) {
