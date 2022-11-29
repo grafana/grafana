@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/textproto"
 	"regexp"
 	"strings"
 	"sync"
@@ -122,22 +123,24 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 func getHeadersForCallResource(headers map[string][]string) map[string]string {
 	data := make(map[string]string)
 
-	if auth := arrayHeaderFirstValue(headers["Authorization"]); auth != "" {
-		data["Authorization"] = auth
-	}
+	for k, values := range headers {
+		k = textproto.CanonicalMIMEHeaderKey(k)
+		firstValue := arrayHeaderFirstValue(values)
 
-	if cookie := arrayHeaderFirstValue(headers["Cookie"]); cookie != "" {
-		data["Cookie"] = cookie
+		if firstValue == "" {
+			continue
+		}
+		switch k {
+		case "Authorization":
+			data["Authorization"] = firstValue
+		case "X-Id-Token":
+			data["X-ID-Token"] = firstValue
+		case "Cookie":
+			data["Cookie"] = firstValue
+		case "Accept-Encoding":
+			data["Accept-Encoding"] = firstValue
+		}
 	}
-
-	if idToken := arrayHeaderFirstValue(headers["X-ID-Token"]); idToken != "" {
-		data["X-ID-Token"] = idToken
-	}
-
-	if encType := arrayHeaderFirstValue(headers["Accept-Encoding"]); encType != "" {
-		data["Accept-Encoding"] = encType
-	}
-
 	return data
 }
 

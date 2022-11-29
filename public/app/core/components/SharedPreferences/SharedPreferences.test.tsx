@@ -102,6 +102,7 @@ jest.mock('app/core/services/PreferencesService', () => ({
 
 const props = {
   resourceUri: '/fake-api/user/1',
+  preferenceType: 'user' as const,
 };
 
 describe('SharedPreferences', () => {

@@ -8,6 +8,7 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { CustomVariable } from '../variables/variants/CustomVariable';
+import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { TestVariable } from '../variables/variants/TestVariable';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
@@ -44,15 +45,12 @@ export function getVariablesDemo(): Scene {
           options: [],
         }),
         new CustomVariable({
-          name: 'Single Custom',
+          name: 'custom',
           query: 'A : 10,B : 20',
-          options: [],
         }),
-        new CustomVariable({
-          name: 'Multi Custom',
-          query: 'A : 10,B : 20',
-          isMulti: true,
-          options: [],
+        new DataSourceVariable({
+          name: 'ds',
+          query: 'testdata',
         }),
       ],
     }),
