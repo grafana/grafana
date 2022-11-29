@@ -23,6 +23,7 @@ export interface CSVConfig {
   encoding?: string; // default: "",
   useExcelHeader?: boolean; // default: false
   headerStyle?: CSVHeaderStyle;
+  dynamicTyping?: boolean;
 }
 
 export interface CSVParseCallbacks {

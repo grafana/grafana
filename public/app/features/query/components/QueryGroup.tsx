@@ -4,22 +4,33 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
+  dataFrameToJSON,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  readCSV,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
-import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
+import {
+  Button,
+  CustomScrollbar,
+  FileDropzone,
+  HorizontalGroup,
+  InlineFormLabel,
+  Modal,
+  stylesFactory,
+} from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
@@ -365,6 +376,19 @@ export class QueryGroup extends PureComponent<Props, State> {
               )}
             </>
           )}
+          <FileDropzone
+            onLoad={(result) => {
+              const dataframeJson = dataFrameToJSON(readCSV(result as any, { config: { dynamicTyping: true } })[0]);
+              this.onAddQuery({
+                datasource: {
+                  type: 'grafana',
+                  uid: 'grafana',
+                },
+                queryType: GrafanaQueryType.Snapshot,
+                snapshot: [dataframeJson],
+              });
+            }}
+          />
         </div>
       </CustomScrollbar>
     );
