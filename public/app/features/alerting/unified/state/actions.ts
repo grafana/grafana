@@ -540,24 +540,32 @@ interface UpdateAlertManagerConfigActionOptions {
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
   refetch?: boolean; // refetch config on success
+  fetchLatestConfig?: boolean; //obtain latest config prior to saving it
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch }, thunkAPI): Promise<void> =>
+  (
+    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch, fetchLatestConfig = true },
+    thunkAPI
+  ): Promise<void> =>
     withAppEvents(
       withSerializedError(
         (async () => {
-          // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
-          const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
+          if (fetchLatestConfig) {
+            // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
+            const latestConfig = await thunkAPI
+              .dispatch(fetchAlertManagerConfigAction(alertManagerSourceName))
+              .unwrap();
 
-          if (
-            !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
-            JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
-          ) {
-            throw new Error(
-              'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
-            );
+            if (
+              !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
+              JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
+            ) {
+              throw new Error(
+                'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
+              );
+            }
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
           if (refetch) {
