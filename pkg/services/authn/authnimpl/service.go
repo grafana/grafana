@@ -45,8 +45,7 @@ func (s *Service) Authenticate(ctx context.Context, clientName string, r *authn.
 	client, ok := s.clients[clientName]
 	if !ok {
 		s.log.FromContext(ctx).Warn("auth client not found", "client", clientName)
-		// TODO: handle error
-		return nil, nil
+		return nil, authn.ErrClientNotFound
 	}
 
 	return client.Authenticate(ctx, r)
