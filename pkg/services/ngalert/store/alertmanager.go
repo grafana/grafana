@@ -9,8 +9,8 @@ import (
 	"xorm.io/builder"
 	"xorm.io/core"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var (
@@ -28,7 +28,7 @@ var (
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
 // It returns ErrNoAlertmanagerConfiguration if no configuration is found.
 func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		c := &models.AlertConfiguration{}
 		// The ID is already an auto incremental column, using the ID as an order should guarantee the latest.
 		ok, err := sess.Desc("id").Where("org_id = ?", query.OrgID).Limit(1).Get(c)
@@ -48,7 +48,7 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(ctx context.Context, query
 // GetAllLatestAlertmanagerConfiguration returns the latest configuration of every organization
 func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([]*models.AlertConfiguration, error) {
 	var result []*models.AlertConfiguration
-	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		condition := builder.In("id", builder.Select("MAX(id)").From("alert_configuration").GroupBy("org_id"))
 		if err := sess.Table("alert_configuration").Where(condition).Find(&result); err != nil {
 			return err
@@ -71,7 +71,7 @@ type SaveCallback func() error
 // SaveAlertmanagerConfigurationWithCallback creates an alertmanager configuration version and then executes a callback.
 // If the callback results in error it rolls back the transaction.
 func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
@@ -83,7 +83,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			return err
 		}
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
-			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 		if err := callback(); err != nil {
 			return err
@@ -94,7 +94,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 }
 
 func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
@@ -125,7 +125,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			return ErrVersionLockedObjectNotFound
 		}
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
-			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 		return err
 	})
@@ -216,7 +216,7 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, lim
 	}
 
 	var affectedRows int64
-	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		highest := &models.AlertConfiguration{}
 		ok, err := sess.Desc("id").Where("org_id = ?", orgID).OrderBy("id").Limit(1, limit-1).Get(highest)
 		if err != nil {

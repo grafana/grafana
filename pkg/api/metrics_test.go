@@ -15,8 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -56,10 +59,22 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 	return ts.passThruEnabled
 }
 
+func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+	return nil, false, nil
+}
+
+func (ts *fakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+	return nil
+}
+
+func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+	return nil
+}
+
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -79,12 +94,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
@@ -108,7 +123,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -127,7 +142,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	)
 	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {
@@ -271,15 +286,15 @@ func TestDataSourceQueryError(t *testing.T) {
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				hs.queryDataService = query.ProvideService(
-					nil,
+					setting.NewCfg(),
 					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
-					pluginClient.ProvideService(r),
+					pluginClient.ProvideService(r, &config.Cfg{}),
 					&fakeOAuthTokenService{},
 				)
-				hs.QuotaService = quotatest.NewQuotaServiceFake()
+				hs.QuotaService = quotatest.New(false, nil)
 			})
 			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(tc.request))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})

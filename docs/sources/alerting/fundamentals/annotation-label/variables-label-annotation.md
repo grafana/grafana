@@ -1,27 +1,23 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
-description: Learn about labels and label matchers in alerting
+description: Learn about templating of labels and annotations
 keywords:
   - grafana
   - alerting
   - guide
   - fundamentals
-title: How to template annotations and labels
+title: Templating labels and annotations
 weight: 117
 ---
 
-# How to template annotations and labels
+# Templating labels and annotations
 
-In Grafana it is possible to template annotations and labels just like you would in Prometheus. Those who have used
-Prometheus before should be familiar with the `$labels` variable which holds the label key/value pairs of the alert
-instance and the `$value` variable which holds the evaluated value of the alert instance.
+In Grafana it is possible to template labels and annotations just like you would in Prometheus. Those who have used Prometheus before should be familiar with the `$labels` variable which holds the label key/value pairs of the alert instance and the `$value` variable which holds the evaluated value of the alert instance.
 
-In Grafana it is possible to use the same variables from Prometheus to template annotations and labels, even if your
-alert does not use a Prometheus datasource.
+In Grafana it is possible to use the same variables from Prometheus to template labels and annotations, even if your alert does not use a Prometheus datasource.
 
-For example, let's suppose we want to create an alert in Grafana that tells us when one of our instances is down for
-more than 5 minutes. Like in Prometheus, we can add a summary annotation to show the instance which is down:
+For example, let's suppose we want to create an alert in Grafana that tells us when one of our instances is down for more than 5 minutes. Like in Prometheus, we can add a summary annotation to show the instance which is down:
 
 ```
 Instance {{ $labels.instance }} has been down for more than 5 minutes
@@ -43,17 +39,13 @@ of the condition at the time the alert fired. For example:
 
 ## Alert rules with two or more queries or expressions
 
-In the case where an alert rule has two or more queries, or uses reduce and math expressions, it is possible to template
-the reduced result of each query and expression with the `$values` variable. This variable holds the labels and value of
-each reduced query, and the results of any math expressions. However, it does not hold the samples for each query.
+In the case where an alert rule has two or more queries, or uses reduce and math expressions, it is possible to template the reduced result of each query and expression with the `$values` variable. This variable holds the labels and value of each reduced query, and the results of any math expressions. However, it does not hold the samples for each query.
 
 For example, suppose you have the following alert rule:
 
 {{< figure src="/static/img/docs/alerting/unified/grafana-alerting-histogram-quantile.png" class="docs-image--no-shadow" caption="An alert rule that uses histogram_quantile to compute 95th percentile" >}}
 
-Should this rule create an alert instance `$values` will hold the result of the reduce expression `B` and the math
-expression `C`. It will not hold the results returned by query `A` because query `A` does not return a single value
-but rather a series of values over time.
+Should this rule create an alert instance `$values` will hold the result of the reduce expression `B` and the math expression `C`. It will not hold the results returned by query `A` because query `A` does not return a single value but rather a series of values over time.
 
 If we were to write a summary annotation such as:
 
@@ -61,15 +53,13 @@ If we were to write a summary annotation such as:
 {{ $labels.instance }} has a 95th percentile request latency above 1s: {{ $value }})
 ```
 
-We would find that because the condition of the alert, the math expression `C` must be a boolean comparison, it must
-return either a `0` or a `1`. What we want instead is the 95th percentile from the reduce expression `B`:
+We would find that because the condition of the alert, the math expression `C` must be a boolean comparison, it must return either a `0` or a `1`. What we want instead is the 95th percentile from the reduce expression `B`:
 
 ```
 {{ $labels.instance }} has a 95th percentile request latency above 1s: {{ $values.B }})
 ```
 
-We can also show the labels of `B`, however since this alert rule has just one query the labels of `B` are equivalent to
-`$labels`:
+We can also show the labels of `B`, however since this alert rule has just one query the labels of `B` are equivalent to `$labels`:
 
 ```
 {{ $values.B.Labels.instance }} has a 95th percentile request latency above 1s: {{ $values.B }})
@@ -78,8 +68,7 @@ We can also show the labels of `B`, however since this alert rule has just one q
 ### No data and execution errors or timeouts
 
 Should query `A` return no data then the reduce expression `B` will also return no data. This means that
-`{{ $values.B }}` will be nil. To ensure that annotations and labels can still be templated even when a query returns
-no data, we can use an if statement to check for `$values.B`:
+`{{ $values.B }}` will be nil. To ensure that labels and annotations can still be templated even when a query returns no data, we can use an if statement to check for `$values.B`:
 
 ```
 {{ if $values.B }}{{ $labels.instance }} has a 95th percentile request latency above 1s: {{ $values.B }}){{ end }}
@@ -87,12 +76,11 @@ no data, we can use an if statement to check for `$values.B`:
 
 ## Classic conditions
 
-If the rule uses a classic condition instead of a reduce and math expression, then `$values` contains the combination
-of the `refID` and position of the condition. For example, `{{ $values.A0 }}` and `{{ $values.A1 }}`.
+If the rule uses a classic condition instead of a reduce and math expression, then `$values` contains the combination of the `refID` and position of the condition. For example, `{{ $values.A0 }}` and `{{ $values.A1 }}`.
 
 ## Variables
 
-The following template variables are available when expanding annotations and labels.
+The following template variables are available when expanding labels and annotations.
 
 | Name    | Description                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

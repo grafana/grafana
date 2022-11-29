@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 const concurrentUserStatsCacheLifetime = time.Hour
@@ -32,7 +32,7 @@ func (s *Service) concurrentUsers(ctx context.Context) (*concurrentUsersStats, e
 	}
 
 	s.concurrentUserStatsCache.stats = &concurrentUsersStats{}
-	err := s.sqlstore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.sqlstore.WithDbSession(ctx, func(sess *db.Session) error {
 		// Retrieves concurrent users stats as a histogram. Buckets are accumulative and upper bound is inclusive.
 		rawSQL := `
 SELECT

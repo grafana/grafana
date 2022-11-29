@@ -12,10 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -60,7 +63,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := setupSimpleHTTPServer(nil)
 	settings := hs.Cfg
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	sqlStore.Cfg = settings
 
 	hs.SQLStore = sqlStore
@@ -122,25 +125,26 @@ func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
 	return user.ID
 }
 
-func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) int64 {
+func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, orgService org.Service, t *testing.T) int64 {
 	teamService := teamimpl.ProvideService(db, setting.NewCfg()) // FIXME
 	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
-	testOrg, err := db.CreateOrgWithMember("TestOrg", user.ID)
+	cmd := &org.CreateOrgCommand{Name: "TestOrg", UserID: user.ID}
+	testOrg, err := orgService.CreateWithMember(context.Background(), cmd)
 	require.NoError(t, err)
 
-	team, err := teamService.CreateTeam("test", "test@test.com", testOrg.Id)
+	team, err := teamService.CreateTeam("test", "test@test.com", testOrg.ID)
 	require.NoError(t, err)
 
 	for i := 0; i < userCount; i++ {
-		userId := createUser(db, testOrg.Id, t)
+		userId := createUser(db, testOrg.ID, t)
 		require.NoError(t, err)
 
-		err = teamService.AddTeamMember(userId, testOrg.Id, team.Id, false, 0)
+		err = teamService.AddTeamMember(userId, testOrg.ID, team.Id, false, 0)
 		require.NoError(t, err)
 	}
 
-	return testOrg.Id
+	return testOrg.ID
 }
 
 var (
@@ -157,11 +161,12 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
 	sc := setupHTTPServerWithCfg(t, true, cfg)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, cfg, quotatest.New(false, nil))
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
-	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	newUserId := createUser(sc.db, testOrgId, t)
@@ -204,11 +209,12 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	// setupTeamTestScenario sets up 3 user (id: 2,3,4) in the team (id: 1)
-	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control allows getting a team members with the right permissions", func(t *testing.T) {
@@ -258,10 +264,11 @@ func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 
 func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
-	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	newUserId := createUser(sc.db, testOrgId, t)
@@ -294,11 +301,12 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
 	sc := setupHTTPServerWithCfg(t, true, cfg)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, cfg, quotatest.New(false, nil))
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
@@ -339,10 +347,11 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
@@ -373,11 +382,12 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
 	sc := setupHTTPServerWithCfg(t, true, cfg)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	t.Run("Organisation admins can remove a team member", func(t *testing.T) {
@@ -414,10 +424,11 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control allows removing a team member with the right permissions", func(t *testing.T) {

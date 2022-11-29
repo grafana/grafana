@@ -33,21 +33,6 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserComm
 	return ss.getOrCreateOrg(sess, orgName)
 }
 
-func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *DBSession, login, email string) error {
-	users := make([]user.User, 0)
-
-	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-		email, login).Find(&users); err != nil {
-		return err
-	}
-
-	if len(users) > 1 {
-		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
-	}
-
-	return nil
-}
-
 // createUser creates a user in the database
 // if autoAssignOrg is enabled then args.OrgID will be used
 // to add to an existing Org with id=args.OrgID
@@ -175,54 +160,6 @@ func NotServiceAccountFilter(ss *SQLStore) string {
 		ss.Dialect.BooleanStr(false))
 }
 
-func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		usr := new(user.User)
-
-		has, err := sess.ID(query.Id).
-			Where(NotServiceAccountFilter(ss)).
-			Get(usr)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		if ss.Cfg.CaseInsensitiveLogin {
-			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, usr.Login, usr.Email); err != nil {
-				return err
-			}
-		}
-
-		query.Result = usr
-
-		return nil
-	})
-}
-
-// deprecated method, use only for tests
-func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
-	if err := ss.GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
-		return err
-	}
-
-	valid := false
-	for _, other := range getOrgsForUserCmd.Result {
-		if other.OrgId == cmd.OrgId {
-			valid = true
-		}
-	}
-	if !valid {
-		return fmt.Errorf("user does not belong to org")
-	}
-
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
-	})
-}
-
 func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error {
 	user := user.User{
 		ID:    userID,
@@ -231,34 +168,6 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 
 	_, err := sess.ID(userID).Update(&user)
 	return err
-}
-
-func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		var usr user.User
-		has, err := sess.ID(query.UserId).Where(NotServiceAccountFilter(ss)).Get(&usr)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		query.Result = models.UserProfileDTO{
-			Id:             usr.ID,
-			Name:           usr.Name,
-			Email:          usr.Email,
-			Login:          usr.Login,
-			Theme:          usr.Theme,
-			IsGrafanaAdmin: usr.IsAdmin,
-			IsDisabled:     usr.IsDisabled,
-			OrgId:          usr.OrgID,
-			UpdatedAt:      usr.Updated,
-			CreatedAt:      usr.Created,
-		}
-
-		return err
-	})
 }
 
 type byOrgName []*models.UserOrgDTO
@@ -461,12 +370,6 @@ func getTeamSelectSQLBase(filteredUsers []string) string {
 		team.email as email, ` +
 		getTeamMemberCount(filteredUsers) +
 		` FROM team as team `
-}
-
-func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		return deleteUserInTransaction(ss, sess, cmd)
-	})
 }
 
 func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {

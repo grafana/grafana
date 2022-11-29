@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -42,7 +42,7 @@ func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFu
 			OrgID:   orgID,
 			OrgRole: role,
 		}
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 
 		sc := &scenarioContext{
@@ -64,7 +64,7 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 			OrgRole:  role,
 			ApiKeyID: 10,
 		}
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
 		sc := &scenarioContext{
 			t:                t,
@@ -81,7 +81,7 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	permissions []*models.DashboardACLInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		teams := []*models.TeamDTO{}
 
 		for _, p := range permissions {

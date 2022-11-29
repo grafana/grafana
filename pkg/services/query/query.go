@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -22,10 +21,17 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"golang.org/x/sync/errgroup"
+)
+
+const (
+	HeaderPluginID      = "X-Plugin-Id"      // can be used for routing
+	HeaderDatasourceUID = "X-Datasource-Uid" // can be used for routing/ load balancing
+	HeaderDashboardUID  = "X-Dashboard-Uid"  // mainly useful for debuging slow queries
+	HeaderPanelID       = "X-Panel-Id"       // mainly useful for debuging slow queries
 )
 
 func ProvideService(
@@ -75,6 +81,7 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	if err != nil {
 		return nil, err
 	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
@@ -84,35 +91,60 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-	byDataSource := parsedReq.parsedQueries
-	resp := backend.NewQueryDataResponse()
+	return s.executeConcurrentQueries(ctx, user, skipCache, reqDTO, parsedReq.parsedQueries)
+}
 
+// executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
+func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
-	results := make([]backend.Responses, len(byDataSource))
+	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
+	rchan := make(chan backend.Responses, len(queriesbyDs))
 
-	for _, queries := range byDataSource {
+	// Create panic recovery function for loop below
+	recoveryFn := func(queries []*simplejson.Json) {
+		if r := recover(); r != nil {
+			var err error
+			s.log.Error("query datasource panic", "error", r, "stack", log.Stack(1))
+			if theErr, ok := r.(error); ok {
+				err = theErr
+			} else if theErrString, ok := r.(string); ok {
+				err = fmt.Errorf(theErrString)
+			} else {
+				err = fmt.Errorf("unexpected error, see the server log for details")
+			}
+			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
+			rchan <- buildErrorResponses(err, queries)
+		}
+	}
+
+	// Query each datasource concurrently
+	for _, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
 		for i := 0; i < len(queries); i++ {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {
 			subDTO := reqDTO.CloneWithQueries(rawQueries)
+			// Handle panics in the datasource qery
+			defer recoveryFn(subDTO.Queries)
 
 			subResp, err := s.QueryData(ctx, user, skipCache, subDTO)
-
 			if err == nil {
-				results = append(results, subResp.Responses)
+				rchan <- subResp.Responses
+			} else {
+				// If there was an error, return an error response for each query for this datasource
+				rchan <- buildErrorResponses(err, subDTO.Queries)
 			}
-
-			return err
+			return nil
 		})
 	}
 
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
-
-	for _, result := range results {
+	close(rchan)
+	resp := backend.NewQueryDataResponse()
+	for result := range rchan {
 		for refId, dataResponse := range result {
 			resp.Responses[refId] = dataResponse
 		}
@@ -121,12 +153,30 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	return resp, nil
 }
 
+// buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
+func buildErrorResponses(err error, queries []*simplejson.Json) backend.Responses {
+	er := backend.Responses{}
+	for _, query := range queries {
+		er[query.Get("refId").MustString("A")] = backend.DataResponse{
+			Error: err,
+		}
+	}
+	return er
+}
+
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
-		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 	}
+
+	if user != nil { // for passthrough authentication, SSE does not authenticate
+		exprReq.User = adapters.BackendUserFromSignedInUser(user)
+		exprReq.OrgId = user.OrgID
+	}
+
+	disallowedCookies := []string{s.cfg.LoginCookieName}
+	queryEnrichers := parsedReq.createDataSourceQueryEnrichers(ctx, user, s.oAuthTokenService, disallowedCookies)
 
 	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
@@ -144,14 +194,15 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 			MaxDataPoints: pq.query.MaxDataPoints,
 			QueryType:     pq.query.QueryType,
 			DataSource:    pq.datasource,
-			TimeRange: expr.TimeRange{
+			TimeRange: expr.AbsoluteTimeRange{
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
 			},
+			QueryEnricher: queryEnrichers[pq.datasource.Uid],
 		})
 	}
 
-	qdr, err := s.expressionService.TransformData(ctx, &exprReq)
+	qdr, err := s.expressionService.TransformData(ctx, time.Now(), &exprReq) // use time now because all queries have absolute time range
 	if err != nil {
 		return nil, fmt.Errorf("expression request error: %w", err)
 	}
@@ -189,10 +240,11 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		Queries: []backend.DataQuery{},
 	}
 
+	disallowedCookies := []string{s.cfg.LoginCookieName}
 	middlewares := []httpclient.Middleware{}
 	if parsedReq.httpRequest != nil {
 		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), disallowedCookies),
 		)
 	}
 
@@ -209,7 +261,7 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 	}
 
 	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies())
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), disallowedCookies)
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}
@@ -224,26 +276,6 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 	return s.pluginClient.QueryData(ctx, req)
 }
 
-type parsedQuery struct {
-	datasource *datasources.DataSource
-	query      backend.DataQuery
-	rawQuery   *simplejson.Json
-}
-
-type parsedRequest struct {
-	hasExpression bool
-	parsedQueries map[string][]parsedQuery
-	httpRequest   *http.Request
-}
-
-func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
-	queries := make([]parsedQuery, 0)
-	for _, pq := range pr.parsedQueries {
-		queries = append(queries, pq...)
-	}
-	return queries
-}
-
 // parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
@@ -254,6 +286,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
+		dsTypes:       make(map[string]bool),
 	}
 
 	// Parse the queries and store them by datasource
@@ -270,6 +303,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		datasourcesByUid[ds.Uid] = ds
 		if expr.IsDataSource(ds.Uid) {
 			req.hasExpression = true
+		} else {
+			req.dsTypes[ds.Type] = true
 		}
 
 		if _, ok := req.parsedQueries[ds.Uid]; !ok {
@@ -304,7 +339,8 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		req.httpRequest = reqDTO.HTTPRequest
 	}
 
-	return req, nil
+	_ = req.validateRequest()
+	return req, nil // TODO req.validateRequest()
 }
 
 func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {

@@ -4,9 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -17,7 +16,7 @@ type sqlStore struct {
 
 func (ss *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
 	var version dashver.DashboardVersion
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardID, query.Version, query.OrgID).
 			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 			Get(&version)
@@ -39,7 +38,7 @@ func (ss *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQ
 
 func (ss *sqlStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]interface{}, error) {
 	var versionIds []interface{}
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		versionIdsToDeleteQuery := `SELECT id
 			FROM dashboard_version, (
 				SELECT dashboard_id, count(version) as count, min(version) as min
@@ -58,7 +57,7 @@ func (ss *sqlStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVers
 
 func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
 	var deleted int64
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		deleteExpiredSQL := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
 		sqlOrArgs := append([]interface{}{deleteExpiredSQL}, versionIdsToDelete...)
 		expiredResponse, err := sess.Exec(sqlOrArgs...)
@@ -74,7 +73,7 @@ func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredV
 
 func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
 	var dashboardVersion []*dashver.DashboardVersionDTO
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Table("dashboard_version").
 			Select(`dashboard_version.id,
 				dashboard_version.dashboard_id,

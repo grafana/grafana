@@ -20,9 +20,12 @@ export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  renderTitle,
+  actions,
   subTitle,
   children,
   className,
+  info,
   layout = PageLayoutType.Standard,
   toolbar,
   scrollTop,
@@ -54,7 +57,15 @@ export const Page: PageType = ({
           <div className={styles.pageContainer}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
-                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
+                {pageHeaderNav && (
+                  <PageHeader
+                    actions={actions}
+                    navItem={pageHeaderNav}
+                    renderTitle={renderTitle}
+                    info={info}
+                    subTitle={subTitle}
+                  />
+                )}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
                 <div className={styles.pageContent}>{children}</div>
               </div>
@@ -81,12 +92,11 @@ export const Page: PageType = ({
   );
 };
 
-const OldNavOnly = () => null;
-OldNavOnly.displayName = 'OldNavOnly';
-
-Page.Header = PageHeader;
 Page.Contents = PageContents;
-Page.OldNavOnly = OldNavOnly;
+
+Page.OldNavOnly = function OldNavOnly() {
+  return null;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark
@@ -124,13 +134,21 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     pageInner: css({
       label: 'page-inner',
-      padding: theme.spacing(3),
+      padding: theme.spacing(2),
       boxShadow: shadow,
       background: theme.colors.background.primary,
-      margin: theme.spacing(2, 2, 2, 1),
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      margin: theme.spacing(0, 0, 0, 0),
+
+      [theme.breakpoints.up('sm')]: {
+        margin: theme.spacing(0, 1, 1, 1),
+      },
+      [theme.breakpoints.up('md')]: {
+        margin: theme.spacing(2, 2, 2, 1),
+        padding: theme.spacing(3),
+      },
     }),
     canvasContent: css({
       label: 'canvas-content',

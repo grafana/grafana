@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store"
 )
 
 func GetObjectKindInfo() models.ObjectKindInfo {
@@ -40,7 +40,7 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 
 		summary := &models.ObjectSummary{
 			Kind: models.StandardKindGeoJSON,
-			Name: guessNameFromUID(uid),
+			Name: store.GuessNameFromUID(uid),
 			UID:  uid,
 			Fields: map[string]interface{}{
 				"type": ftype,
@@ -56,16 +56,4 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 
 		return summary, body, nil
 	}
-}
-
-func guessNameFromUID(uid string) string {
-	sidx := strings.LastIndex(uid, "/") + 1
-	didx := strings.LastIndex(uid, ".")
-	if didx > sidx && didx != sidx {
-		return uid[sidx:didx]
-	}
-	if sidx > 0 {
-		return uid[sidx:]
-	}
-	return uid
 }

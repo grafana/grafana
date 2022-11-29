@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type Storage struct {
@@ -24,7 +24,7 @@ func getLiveMessageCacheKey(orgID int64, channel string) string {
 
 func (s *Storage) SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
 	// Come back to saving into database after evaluating database structure.
-	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	//err := s.store.WithDbSession(context.Background(), func(sess *db.Session) error {
 	//	params := []interface{}{query.OrgId, query.Channel, query.Data, time.Now()}
 	//	upsertSQL := s.store.Dialect.UpsertSQL(
 	//		"live_message",
@@ -48,7 +48,7 @@ func (s *Storage) GetLiveMessage(query *models.GetLiveMessageQuery) (models.Live
 	// Come back to saving into database after evaluating database structure.
 	//var msg models.LiveMessage
 	//var exists bool
-	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	//err := s.store.WithDbSession(context.Background(), func(sess *db.Session) error {
 	//	var err error
 	//	exists, err = sess.Where("org_id=? AND channel=?", query.OrgId, query.Channel).Get(&msg)
 	//	return err

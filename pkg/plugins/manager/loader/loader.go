@@ -42,6 +42,7 @@ type Loader struct {
 	pluginFinder       finder.Finder
 	processManager     process.Service
 	pluginRegistry     registry.Service
+	roleRegistry       plugins.RoleRegistry
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
@@ -51,14 +52,15 @@ type Loader struct {
 }
 
 func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) *Loader {
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+	roleRegistry plugins.RoleRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath))
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
 }
 
 func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	processManager process.Service, pluginStorage storage.Manager) *Loader {
+	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
 		pluginRegistry:     pluginRegistry,
@@ -68,6 +70,7 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 		pluginStorage:      pluginStorage,
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
+		roleRegistry:       roleRegistry,
 	}
 }
 
@@ -183,7 +186,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildOPlugin(plugin.Parent, plugin)
+			configureAppChildPlugin(plugin.Parent, plugin)
 		}
 
 		verifiedPlugins = append(verifiedPlugins, plugin)
@@ -195,6 +198,10 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			return nil, err
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+
+		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
+			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "path", p.PluginDir, "error", errDeclareRoles)
+		}
 	}
 
 	for _, p := range verifiedPlugins {
@@ -358,7 +365,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	}
 }
 
-func configureAppChildOPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}

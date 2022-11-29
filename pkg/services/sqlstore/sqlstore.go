@@ -289,11 +289,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&parseTime=true"
 		}
 
@@ -325,6 +325,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		}
 
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
+
+		if ss.dbCfg.WALEnabled {
+			cnnstr += "&_journal_mode=WAL"
+		}
+
 		cnnstr += ss.buildExtraConnectionString('&')
 	default:
 		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
@@ -453,8 +458,12 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
+
+	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
+	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	return nil
 }
 
@@ -480,6 +489,7 @@ var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
 	featuremgmt.FlagPanelTitleSearch,
+	featuremgmt.FlagObjectStore,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -500,6 +510,11 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
+}
+
+func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+	store := InitTestDB(t, opts...)
+	return store, store.Cfg
 }
 
 func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
@@ -668,7 +683,12 @@ type DatabaseConfig struct {
 	MaxIdleConn                 int
 	ConnMaxLifetime             int
 	CacheMode                   string
+	WALEnabled                  bool
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
 	MigrationLockAttemptTimeout int
+	// SQLite only
+	QueryRetries int
+	// SQLite only
+	TransactionRetries int
 }

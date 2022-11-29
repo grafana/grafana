@@ -1,7 +1,8 @@
 import React, { SyntheticEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
-import { AutoSizeInput, EditorField, EditorRow, EditorSwitch, RadioButtonGroup, Select } from '@grafana/ui';
+import { EditorField, EditorRow, EditorSwitch } from '@grafana/experimental';
+import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';

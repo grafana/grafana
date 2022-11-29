@@ -5,11 +5,11 @@ aliases:
   - /docs/grafana/latest/alerting/unified-alerting/difference-old-new/
   - /docs/grafana/latest/alerting/difference-old-new/
 description: Upgrade Grafana alerts
-title: Upgrade to Grafana Alerting
+title: Upgrade Alerting
 weight: 110
 ---
 
-# Upgrade to Grafana Alerting
+# Upgrade Alerting
 
 Grafana Alerting is enabled by default for new installations or existing installations whether or not legacy alerting is configured.
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -217,21 +218,37 @@ func (hs *HTTPServer) GetInviteInfoByCode(c *models.ReqContext) response.Respons
 
 func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 	completeInvite := dtos.CompleteInviteForm{}
-	if err := web.Bind(c.Req, &completeInvite); err != nil {
+	var err error
+	if err = web.Bind(c.Req, &completeInvite); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
+	completeInvite.Email, err = ValidateAndNormalizeEmail(completeInvite.Email)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid email address provided", nil)
+	}
+
+	completeInvite.Username = strings.TrimSpace(completeInvite.Username)
+
+	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 	if err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrTempUserNotFound) {
-			return response.Error(404, "Invite not found", nil)
+			return response.Error(http.StatusNotFound, "Invite not found", nil)
 		}
-		return response.Error(500, "Failed to get invite", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get invite", err)
 	}
 
 	invite := query.Result
 	if invite.Status != models.TmpUserInvitePending {
-		return response.Error(412, fmt.Sprintf("Invite cannot be used in status %s", invite.Status), nil)
+		return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("Invite cannot be used in status %s", invite.Status), nil)
+	}
+
+	// In case the user is invited by email address
+	if inviteMail, err := ValidateAndNormalizeEmail(invite.Email); err == nil {
+		// Make sure that the email address is not amended
+		if completeInvite.Email != inviteMail {
+			return response.Error(http.StatusBadRequest, "The provided email is different from the address that is found in the invite", nil)
+		}
 	}
 
 	cmd := user.CreateUserCommand{
@@ -242,7 +259,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 		SkipOrgSetup: true,
 	}
 
-	usr, err := hs.Login.CreateUser(cmd)
+	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)

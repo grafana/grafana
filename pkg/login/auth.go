@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -39,7 +39,7 @@ type AuthenticatorService struct {
 	userService         user.Service
 }
 
-func ProvideService(store sqlstore.Store, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
+func ProvideService(store db.DB, loginService login.Service, loginAttemptService loginattempt.Service, userService user.Service) *AuthenticatorService {
 	a := &AuthenticatorService{
 		loginService:        loginService,
 		loginAttemptService: loginAttemptService,
@@ -50,8 +50,12 @@ func ProvideService(store sqlstore.Store, loginService login.Service, loginAttem
 
 // AuthenticateUser authenticates the user via username & password
 func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(ctx, query, a.loginAttemptService); err != nil {
+	ok, err := a.loginAttemptService.Validate(ctx, query.Username)
+	if err != nil {
 		return err
+	}
+	if !ok {
+		return ErrTooManyLoginAttempts
 	}
 
 	if err := validatePasswordSet(query.Password); err != nil {
@@ -59,7 +63,6 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 	}
 
 	isGrafanaLoginEnabled := !query.Cfg.DisableLogin
-	var err error
 
 	if isGrafanaLoginEnabled {
 		err = loginUsingGrafanaDB(ctx, query, a.userService)
@@ -84,7 +87,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 	}
 
 	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
-		if err := saveInvalidLoginAttempt(ctx, query, a.loginAttemptService); err != nil {
+		if err := a.loginAttemptService.Add(ctx, query.Username, query.IpAddress); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 

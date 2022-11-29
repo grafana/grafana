@@ -6,10 +6,10 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -53,7 +53,7 @@ func New(
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
-	var permissions []string
+	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
 		permissions = append(permissions, permission)
@@ -125,13 +125,14 @@ func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, r
 	}
 
 	return s.store.GetResourcePermissions(ctx, user.OrgID, GetResourcePermissionsQuery{
-		User:              user,
-		Actions:           s.actions,
-		Resource:          s.options.Resource,
-		ResourceID:        resourceID,
-		ResourceAttribute: s.options.ResourceAttribute,
-		InheritedScopes:   inheritedScopes,
-		OnlyManaged:       s.options.OnlyManaged,
+		User:                 user,
+		Actions:              s.actions,
+		Resource:             s.options.Resource,
+		ResourceID:           resourceID,
+		ResourceAttribute:    s.options.ResourceAttribute,
+		InheritedScopes:      inheritedScopes,
+		OnlyManaged:          s.options.OnlyManaged,
+		EnforceAccessControl: s.license.FeatureEnabled("accesscontrol.enforcement"),
 	})
 }
 

@@ -9,6 +9,7 @@ import "context"
 const (
 	StandardKindDashboard = "dashboard"
 	StandardKindPlaylist  = "playlist"
+	StandardKindSnapshot  = "snapshot"
 	StandardKindFolder    = "folder"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
@@ -28,6 +29,12 @@ const (
 	// StandardKindGeoJSON represents spatial data
 	StandardKindGeoJSON = "geojson"
 
+	// StandardKindDataFrame data frame
+	StandardKindDataFrame = "frame"
+
+	// StandardKindJSONObj generic json object
+	StandardKindJSONObj = "jsonobj"
+
 	// StandardKindQuery early development on panel query library
 	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
 	StandardKindQuery = "query"
@@ -45,6 +52,12 @@ const (
 	// ExternalEntityReferenceRuntime_Transformer is a "type" under runtime
 	// UIDs include: joinByField, organize, seriesToColumns, etc
 	ExternalEntityReferenceRuntime_Transformer = "transformer"
+
+	// ObjectStoreScopeEntity is organized in: {kind}/{uid}
+	ObjectStoreScopeEntity = "entity"
+
+	// ObjectStoreScopeDrive is organized in: {uid/with/slash}.{kind}
+	ObjectStoreScopeDrive = "drive"
 )
 
 // ObjectKindInfo describes information needed from the object store

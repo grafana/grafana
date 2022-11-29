@@ -10,7 +10,7 @@ import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 
 import CloudWatchLink from './CloudWatchLink';
-import { CloudWatchLogsQueryField } from './LogsQueryField';
+import CloudWatchLogsQueryField from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   query: CloudWatchLogsQuery;

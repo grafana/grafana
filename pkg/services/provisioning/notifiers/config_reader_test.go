@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -13,7 +14,8 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/require"
@@ -34,24 +36,22 @@ var (
 
 func TestNotificationAsConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
-	var orgFake org.Service
+	var orgService org.Service
 	var ns *alerting.AlertNotificationService
 	logger := log.New("fake.log")
-	orgService := orgtest.NewOrgServiceFake()
-	orgService.ExpectedOrg = &org.Org{}
 
 	encryptionService := encryptionservice.SetupTestService(t)
 
 	t.Run("Testing notification as configuration", func(t *testing.T) {
 		setup := func() {
-			sqlStore = sqlstore.InitTestDB(t)
-			orgFake = orgtest.NewOrgServiceFake()
+			sqlStore = db.InitTestDB(t)
+			orgService, _ = orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 			nm := &notifications.NotificationService{}
 			ns = alerting.ProvideService(sqlStore, encryptionService, nm)
 
 			for i := 1; i < 5; i++ {
-				orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
-				err := sqlStore.CreateOrg(context.Background(), &orgCommand)
+				orgCommand := org.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
+				_, err := orgService.CreateWithMember(context.Background(), &orgCommand)
 				require.NoError(t, err)
 			}
 
@@ -72,7 +72,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			setup()
 			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{
-				orgService:        orgFake,
+				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
 			}
@@ -281,7 +281,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Broken yaml should return error", func(t *testing.T) {
 			reader := &configReader{
-				orgService:        orgFake,
+				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
 			}
@@ -292,7 +292,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Skip invalid directory", func(t *testing.T) {
 			cfgProvider := &configReader{
-				orgService:        orgFake,
+				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
 			}
@@ -306,7 +306,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Unknown notifier should return error", func(t *testing.T) {
 			cfgProvider := &configReader{
-				orgService:        orgFake,
+				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
 			}
@@ -317,7 +317,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Read incorrect properties", func(t *testing.T) {
 			cfgProvider := &configReader{
-				orgService:        orgFake,
+				orgService:        orgService,
 				encryptionService: encryptionService,
 				log:               log.New("test logger"),
 			}

@@ -16,7 +16,7 @@ weight: 117
 This topic explains why labels are a fundamental component of alerting.
 
 - The complete set of labels for an alert is what uniquely identifies an alert within Grafana alerts.
-- The Alertmanager uses labels to match alerts for [silences]({{< relref "../../silences/" >}}) and [alert groups]({{< relref "../../alert-groups/" >}}) in [notification policies]({{< relref "../../notifications/" >}}).
+- The Alertmanager uses labels to match alerts for silences and alert groups in notification policies.
 - The alerting UI shows labels for every alert instance generated during evaluation of that rule.
 - Contact points can access labels to dynamically generate notifications that contain information specific to the alert that is resulting in a notification.
 - You can add labels to an [alerting rule]({{< relref "../../alerting-rules/" >}}). Labels are manually configurable, use template functions, and can reference other labels. Labels added to an alerting rule take precedence in the event of a collision between labels (except in the case of [Grafana reserved labels](#grafana-reserved-labels)).

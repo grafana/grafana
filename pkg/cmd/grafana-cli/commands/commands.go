@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
@@ -12,11 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/urfave/cli/v2"
 )
 
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.Runner) error) func(context *cli.Context) error {
@@ -42,7 +43,7 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner runner.
 	}
 }
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 
@@ -58,7 +59,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 
 		bus := bus.ProvideBus(tracer)
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}
@@ -77,7 +78,8 @@ func initCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
 		HomePath: cmd.HomePath(),
-		Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, cmd.Args().Slice()...),
 	})
 
 	if err != nil {
@@ -200,6 +202,30 @@ var adminCommands = []*cli.Command{
 			{
 				Name:  "conflicts",
 				Usage: "runs a conflict resolution to find users with multiple entries",
+				CustomHelpTemplate: `
+This command will find users with multiple entries in the database and try to resolve the conflicts.
+explanation of each field:
+
+explanation of each field:
+* email - the user’s email
+* login - the user’s login/username
+* last_seen_at - the user’s last login
+* auth_module - if the user was created/signed in using an authentication provider
+* conflict_email - a boolean if we consider the email to be a conflict
+* conflict_login - a boolean if we consider the login to be a conflict
+
+# lists all the conflicting users
+grafana-cli user-manager conflicts list
+
+# creates a conflict patch file to edit
+grafana-cli user-manager conflicts generate-file
+
+# reads edited conflict patch file for validation
+grafana-cli user-manager conflicts validate-file <filepath>
+
+# validates and ingests edited patch file
+grafana-cli user-manager conflicts ingest-file <filepath>
+`,
 				Subcommands: []*cli.Command{
 					{
 						Name:   "list",
@@ -218,7 +244,7 @@ var adminCommands = []*cli.Command{
 					},
 					{
 						Name:   "ingest-file",
-						Usage:  "ingests the conflict users file",
+						Usage:  "ingests the conflict users file. > Note: This is irreversible it will change the state of the database.",
 						Action: runIngestConflictUsersFile(),
 					},
 				},

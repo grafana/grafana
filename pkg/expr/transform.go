@@ -35,7 +35,11 @@ type Request struct {
 	Debug   bool
 	OrgId   int64
 	Queries []Query
+	User    *backend.User
 }
+
+// QueryDataRequestEnricher function definition for enriching a backend.QueryDataRequest request.
+type QueryDataRequestEnricher func(ctx context.Context, req *backend.QueryDataRequest) context.Context
 
 // Query is like plugins.DataSubQuery, but with a a time range, and only the UID
 // for the data source. Also interval is a time.Duration.
@@ -43,6 +47,7 @@ type Query struct {
 	RefID         string
 	TimeRange     TimeRange
 	DataSource    *datasources.DataSource `json:"datasource"`
+	QueryEnricher QueryDataRequestEnricher
 	JSON          json.RawMessage
 	Interval      time.Duration
 	QueryType     string
@@ -50,14 +55,38 @@ type Query struct {
 }
 
 // TimeRange is a time.Time based TimeRange.
-type TimeRange struct {
+type TimeRange interface {
+	AbsoluteTime(now time.Time) backend.TimeRange
+}
+
+type AbsoluteTimeRange struct {
 	From time.Time
 	To   time.Time
 }
 
+func (r AbsoluteTimeRange) AbsoluteTime(_ time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: r.From,
+		To:   r.To,
+	}
+}
+
+// RelativeTimeRange is a time range relative to some absolute time.
+type RelativeTimeRange struct {
+	From time.Duration
+	To   time.Duration
+}
+
+func (r RelativeTimeRange) AbsoluteTime(t time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: t.Add(r.From),
+		To:   t.Add(r.To),
+	}
+}
+
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.QueryDataResponse, err error) {
+func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
 		return nil, fmt.Errorf("server side expressions are disabled")
 	}
@@ -83,7 +112,7 @@ func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.Q
 	}
 
 	// Execute the pipeline
-	responses, err := s.ExecutePipeline(ctx, pipeline)
+	responses, err := s.ExecutePipeline(ctx, now, pipeline)
 	if err != nil {
 		return nil, err
 	}

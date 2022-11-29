@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -81,7 +80,7 @@ func syncFieldsWithModel(libraryElement *LibraryElement) error {
 	return nil
 }
 
-func getLibraryElement(dialect migrator.Dialect, session *sqlstore.DBSession, uid string, orgID int64) (LibraryElementWithMeta, error) {
+func getLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (LibraryElementWithMeta, error) {
 	elements := make([]LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
 		", coalesce(dashboard.title, 'General') AS folder_name" +
@@ -139,7 +138,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		return LibraryElementDTO{}, err
 	}
 
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 			return err
 		}
@@ -186,7 +185,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 // deleteLibraryElement deletes a library element.
 func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *user.SignedInUser, uid string) (int64, error) {
 	var elementID int64
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
@@ -229,8 +228,8 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 // getLibraryElements gets a Library Element where param == value
 func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser *user.SignedInUser, params []Pair) ([]LibraryElementDTO, error) {
 	libraryElements := make([]LibraryElementWithMeta, 0)
-	err := store.WithDbSession(c, func(session *sqlstore.DBSession) error {
-		builder := sqlstore.NewSqlBuilder(cfg)
+	err := store.WithDbSession(c, func(session *db.Session) error {
+		builder := db.NewSqlBuilder(cfg)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", 'General' as folder_name ")
 		builder.Write(", '' as folder_uid ")
@@ -333,8 +332,8 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	if folderFilter.parseError != nil {
 		return LibraryElementSearchResult{}, folderFilter.parseError
 	}
-	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
-		builder := sqlstore.NewSqlBuilder(l.Cfg)
+	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+		builder := db.NewSqlBuilder(l.Cfg)
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", 'General' as folder_name ")
@@ -408,8 +407,9 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 
 		var libraryElements []LibraryElement
-		countBuilder := sqlstore.SQLBuilder{}
+		countBuilder := db.SQLBuilder{}
 		countBuilder.Write("SELECT * FROM library_element AS le")
+		countBuilder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id")
 		countBuilder.Write(` WHERE le.org_id=?`, signedInUser.OrgID)
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
@@ -464,7 +464,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		elementInDB, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
@@ -562,13 +562,13 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 // getConnections gets all connections for a Library Element.
 func (l *LibraryElementService) getConnections(c context.Context, signedInUser *user.SignedInUser, uid string) ([]LibraryElementConnectionDTO, error) {
 	connections := make([]LibraryElementConnectionDTO, 0)
-	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
 		}
 		var libraryElementConnections []libraryElementConnectionWithMeta
-		builder := sqlstore.NewSqlBuilder(l.Cfg)
+		builder := db.NewSqlBuilder(l.Cfg)
 		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
 		builder.Write(" FROM " + models.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
@@ -606,7 +606,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 // getElementsForDashboardID gets all elements for a specific dashboard
 func (l *LibraryElementService) getElementsForDashboardID(c context.Context, dashboardID int64) (map[string]LibraryElementDTO, error) {
 	libraryElementMap := make(map[string]LibraryElementDTO)
-	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		var libraryElements []LibraryElementWithMeta
 		sql := selectLibraryElementDTOWithMeta +
 			", coalesce(dashboard.title, 'General') AS folder_name" +
@@ -660,7 +660,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
 func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
@@ -696,7 +696,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 
 // disconnectElementsFromDashboardID deletes connections for all Library Elements in a Dashboard.
 func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Context, dashboardID int64) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
@@ -707,7 +707,7 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		var folderUIDs []struct {
 			ID int64 `xorm:"id"`
 		}

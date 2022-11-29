@@ -1,7 +1,7 @@
 import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import { Units } from 'ol/control/ScaleLine';
 import BaseLayer from 'ol/layer/Base';
-import Units from 'ol/proj/Units';
 import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';

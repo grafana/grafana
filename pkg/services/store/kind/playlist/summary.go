@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -22,7 +22,7 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 }
 
 func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-	obj := &playlist.Model{}
+	obj := &playlist.Playlist{}
 	err := json.Unmarshal(body, obj)
 	if err != nil {
 		return nil, nil, err // unable to read object
@@ -34,8 +34,9 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Objec
 		obj.Items = &temp
 	}
 
+	obj.Uid = uid // make sure they are consistent
 	summary := &models.ObjectSummary{
-		UID:         obj.Uid,
+		UID:         uid,
 		Name:        obj.Name,
 		Description: fmt.Sprintf("%d items, refreshed every %s", len(*obj.Items), obj.Interval),
 	}
@@ -62,6 +63,6 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Objec
 		}
 	}
 
-	out, err := json.Marshal(obj)
+	out, err := json.MarshalIndent(obj, "", "  ")
 	return summary, out, err
 }

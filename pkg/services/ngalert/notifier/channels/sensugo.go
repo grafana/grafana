@@ -19,86 +19,74 @@ import (
 
 type SensuGoNotifier struct {
 	*Base
-	log    log.Logger
-	images ImageStore
-	ns     notifications.WebhookSender
-	tmpl   *template.Template
-
-	URL       string
-	Entity    string
-	Check     string
-	Namespace string
-	Handler   string
-	APIKey    string
-	Message   string
+	log      log.Logger
+	images   ImageStore
+	ns       notifications.WebhookSender
+	tmpl     *template.Template
+	settings sensuGoSettings
 }
 
-type SensuGoConfig struct {
-	*NotificationChannelConfig
-	URL       string
-	Entity    string
-	Check     string
-	Namespace string
-	Handler   string
-	APIKey    string
-	Message   string
+type sensuGoSettings struct {
+	URL       string `json:"url,omitempty" yaml:"url,omitempty"`
+	Entity    string `json:"entity,omitempty" yaml:"entity,omitempty"`
+	Check     string `json:"check,omitempty" yaml:"check,omitempty"`
+	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Handler   string `json:"handler,omitempty" yaml:"handler,omitempty"`
+	APIKey    string `json:"apikey,omitempty" yaml:"apikey,omitempty"`
+	Message   string `json:"message,omitempty" yaml:"message,omitempty"`
+}
+
+func buildSensuGoConfig(fc FactoryConfig) (sensuGoSettings, error) {
+	settings := sensuGoSettings{}
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+	if settings.URL == "" {
+		return settings, errors.New("could not find URL property in settings")
+	}
+	settings.APIKey = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "apikey", settings.APIKey)
+	if settings.APIKey == "" {
+		return settings, errors.New("could not find the API key property in settings")
+	}
+	if settings.Message == "" {
+		settings.Message = DefaultMessageEmbed
+	}
+	return settings, nil
 }
 
 func SensuGoFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewSensuGoConfig(fc.Config, fc.DecryptFunc)
+	notifier, err := NewSensuGoNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewSensuGoNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
-}
-
-func NewSensuGoConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*SensuGoConfig, error) {
-	url := config.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, errors.New("could not find URL property in settings")
-	}
-	apikey := decryptFunc(context.Background(), config.SecureSettings, "apikey", config.Settings.Get("apikey").MustString())
-	if apikey == "" {
-		return nil, errors.New("could not find the API key property in settings")
-	}
-	return &SensuGoConfig{
-		NotificationChannelConfig: config,
-		URL:                       url,
-		Entity:                    config.Settings.Get("entity").MustString(),
-		Check:                     config.Settings.Get("check").MustString(),
-		Namespace:                 config.Settings.Get("namespace").MustString(),
-		Handler:                   config.Settings.Get("handler").MustString(),
-		APIKey:                    apikey,
-		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
-	}, nil
+	return notifier, nil
 }
 
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
-func NewSensuGoNotifier(config *SensuGoConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *SensuGoNotifier {
+func NewSensuGoNotifier(fc FactoryConfig) (*SensuGoNotifier, error) {
+	settings, err := buildSensuGoConfig(fc)
+	if err != nil {
+		return nil, err
+	}
 	return &SensuGoNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-			SecureSettings:        config.SecureSettings,
+			Uid:                   fc.Config.UID,
+			Name:                  fc.Config.Name,
+			Type:                  fc.Config.Type,
+			DisableResolveMessage: fc.Config.DisableResolveMessage,
+			Settings:              fc.Config.Settings,
+			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		URL:       config.URL,
-		Entity:    config.Entity,
-		Check:     config.Check,
-		Namespace: config.Namespace,
-		Handler:   config.Handler,
-		APIKey:    config.APIKey,
-		Message:   config.Message,
-		log:       log.New("alerting.notifier.sensugo"),
-		images:    images,
-		ns:        ns,
-		tmpl:      t,
-	}
+		log:      log.New("alerting.notifier.sensugo"),
+		images:   fc.ImageStore,
+		ns:       fc.NotificationService,
+		tmpl:     fc.Template,
+		settings: settings,
+	}, nil
 }
 
 // Notify sends an alert notification to Sensu Go
@@ -110,12 +98,12 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
-	entity := tmpl(sn.Entity)
+	entity := tmpl(sn.settings.Entity)
 	if entity == "" {
 		entity = "default"
 	}
 
-	check := tmpl(sn.Check)
+	check := tmpl(sn.settings.Check)
 	if check == "" {
 		check = "default"
 	}
@@ -127,14 +115,14 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		status = 2
 	}
 
-	namespace := tmpl(sn.Namespace)
+	namespace := tmpl(sn.settings.Namespace)
 	if namespace == "" {
 		namespace = "default"
 	}
 
 	var handlers []string
-	if sn.Handler != "" {
-		handlers = []string{tmpl(sn.Handler)}
+	if sn.settings.Handler != "" {
+		handlers = []string{tmpl(sn.settings.Handler)}
 	}
 
 	labels := make(map[string]string)
@@ -166,7 +154,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 				"name":   check,
 				"labels": labels,
 			},
-			"output":   tmpl(sn.Message),
+			"output":   tmpl(sn.settings.Message),
 			"issued":   timeNow().Unix(),
 			"interval": 86400,
 			"status":   status,
@@ -176,7 +164,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template sensugo message", "error", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)
@@ -185,16 +173,16 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        fmt.Sprintf("%s/api/core/v2/namespaces/%s/events", strings.TrimSuffix(sn.URL, "/"), namespace),
+		Url:        fmt.Sprintf("%s/api/core/v2/namespaces/%s/events", strings.TrimSuffix(sn.settings.URL, "/"), namespace),
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
 			"Content-Type":  "application/json",
-			"Authorization": fmt.Sprintf("Key %s", sn.APIKey),
+			"Authorization": fmt.Sprintf("Key %s", sn.settings.APIKey),
 		},
 	}
 	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		sn.log.Error("failed to send Sensu Go event", "err", err, "sensugo", sn.Name)
+		sn.log.Error("failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}
 

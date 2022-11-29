@@ -12,7 +12,7 @@ import {
 } from 'app/plugins/datasource/prometheus/language_utils';
 
 import { LokiDatasource } from './datasource';
-import { extractLogParserFromDataFrame } from './responseUtils';
+import { extractLabelKeysFromDataFrame, extractLogParserFromDataFrame } from './responseUtils';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -474,7 +474,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     const { hasLogfmt, hasJSON } = extractLogParserFromDataFrame(series[0]);
 
-    // TODO: figure out extractedLabelKeys
-    return { extractedLabelKeys: [], hasJSON, hasLogfmt };
+    return { extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]), hasJSON, hasLogfmt };
   }
 }

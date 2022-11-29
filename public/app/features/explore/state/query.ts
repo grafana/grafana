@@ -86,20 +86,6 @@ export interface QueriesImportedPayload {
 }
 export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
-/**
- * Action to modify a query given a datasource-specific modifier action.
- * @param exploreId Explore area
- * @param modification Action object with a type, e.g., ADD_FILTER
- * @param index Optional query row index. If omitted, the modification is applied to all query rows.
- * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
- */
-export interface ModifyQueriesPayload {
-  exploreId: ExploreId;
-  modification: QueryFixAction;
-  modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
-}
-export const modifyQueriesAction = createAction<ModifyQueriesPayload>('explore/modifyQueries');
-
 export interface QueryStoreSubscriptionPayload {
   exploreId: ExploreId;
   querySubscription: Unsubscribable;
@@ -155,7 +141,6 @@ export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
- * Use this action for clicks on query examples. Triggers a query run.
  */
 export interface SetQueriesPayload {
   exploreId: ExploreId;
@@ -366,9 +351,23 @@ export const importQueries = (
  * @param modification Action object with a type, e.g., ADD_FILTER
  * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
  */
-export function modifyQueries(exploreId: ExploreId, modification: QueryFixAction, modifier: any): ThunkResult<void> {
-  return (dispatch) => {
-    dispatch(modifyQueriesAction({ exploreId, modification, modifier }));
+export function modifyQueries(
+  exploreId: ExploreId,
+  modification: QueryFixAction,
+  modifier: (query: DataQuery, modification: QueryFixAction) => Promise<DataQuery>
+): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const state = getState().explore[exploreId]!;
+
+    const { queries } = state;
+
+    const nextQueriesRaw = await Promise.all(queries.map((query) => modifier({ ...query }, modification)));
+
+    const nextQueries = nextQueriesRaw.map((nextQuery, i) => {
+      return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
+    });
+
+    dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
     }
@@ -747,21 +746,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (modifyQueriesAction.match(action)) {
-    const { queries } = state;
-    const { modification, modifier } = action.payload;
-    let nextQueries: DataQuery[];
-    nextQueries = queries.map((query, i) => {
-      const nextQuery = modifier({ ...query }, modification);
-      return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
-    });
-    return {
-      ...state,
-      queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries),
-    };
-  }
-
   if (setQueriesAction.match(action)) {
     const { queries } = action.payload;
     return {
@@ -981,7 +965,7 @@ export const processQueryResponse = (
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
-    showTable: !!tableResult,
+    showTable: !!tableResult?.length,
     showTrace: !!traceFrames.length,
     showNodeGraph: !!nodeGraphFrames.length,
     showFlameGraph: !!flameGraphFrames.length,

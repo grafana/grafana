@@ -10,17 +10,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	authInfoStore := newFakeAuthInfoStore()
 	srv := ProvideAuthInfoService(
 		&OSSUserProtectionImpl{},
@@ -131,7 +131,7 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, usr.Login, "loginuser1")
 
 			// remove user
-			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", usr.ID)
 				return err
 			})
@@ -203,7 +203,7 @@ func TestUserAuth(t *testing.T) {
 
 		t.Run("Always return the most recently used auth_module", func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore = db.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
@@ -271,7 +271,7 @@ func TestUserAuth(t *testing.T) {
 
 		t.Run("Keeps track of last used auth_module when not using oauth", func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore = db.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
@@ -405,7 +405,7 @@ func TestUserAuth(t *testing.T) {
 			// where we have duplicate users
 
 			// Restore after destructive operation
-			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore = db.InitTestDB(t)
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
 					Email: fmt.Sprint("user", i, "@test.com"),
@@ -423,7 +423,7 @@ func TestUserAuth(t *testing.T) {
 
 		t.Run("calculate metrics on duplicate userstats", func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore = db.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{

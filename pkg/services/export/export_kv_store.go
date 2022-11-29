@@ -5,13 +5,13 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportKVStore(helper *commitHelper, job *gitExportJob) error {
 	kvdir := path.Join(helper.orgDir, "system", "kv_store")
 
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type kvResult struct {
 			Namespace string    `xorm:"namespace"`
 			Key       string    `xorm:"key"`

@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -20,12 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -40,43 +44,48 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
-	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
+func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtService models.JWTService,
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore db.DB,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
-	orgService org.Service) *ContextHandler {
+	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
+) *ContextHandler {
 	return &ContextHandler{
-		Cfg:              cfg,
-		AuthTokenService: tokenService,
-		JWTAuthService:   jwtService,
-		RemoteCache:      remoteCache,
-		RenderService:    renderService,
-		SQLStore:         sqlStore,
-		tracer:           tracer,
-		authProxy:        authProxy,
-		authenticator:    authenticator,
-		loginService:     loginService,
-		apiKeyService:    apiKeyService,
-		userService:      userService,
-		orgService:       orgService,
+		Cfg:               cfg,
+		AuthTokenService:  tokenService,
+		JWTAuthService:    jwtService,
+		RemoteCache:       remoteCache,
+		RenderService:     renderService,
+		SQLStore:          sqlStore,
+		tracer:            tracer,
+		authProxy:         authProxy,
+		authenticator:     authenticator,
+		loginService:      loginService,
+		apiKeyService:     apiKeyService,
+		userService:       userService,
+		orgService:        orgService,
+		oauthTokenService: oauthTokenService,
+		features:          features,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg              *setting.Cfg
-	AuthTokenService models.UserTokenService
-	JWTAuthService   models.JWTService
-	RemoteCache      *remotecache.RemoteCache
-	RenderService    rendering.Service
-	SQLStore         sqlstore.Store
-	tracer           tracing.Tracer
-	authProxy        *authproxy.AuthProxy
-	authenticator    loginpkg.Authenticator
-	loginService     login.Service
-	apiKeyService    apikey.Service
-	userService      user.Service
-	orgService       org.Service
+	Cfg               *setting.Cfg
+	AuthTokenService  auth.UserTokenService
+	JWTAuthService    models.JWTService
+	RemoteCache       *remotecache.RemoteCache
+	RenderService     rendering.Service
+	SQLStore          db.DB
+	tracer            tracing.Tracer
+	authProxy         *authproxy.AuthProxy
+	authenticator     loginpkg.Authenticator
+	loginService      login.Service
+	apiKeyService     apikey.Service
+	userService       user.Service
+	orgService        org.Service
+	oauthTokenService oauthtoken.OAuthTokenService
+	features          *featuremgmt.FeatureManager
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -262,6 +271,9 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
 	defer span.End()
 
+	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
 	var (
 		apikey *apikey.APIKey
 		errKey error
@@ -304,7 +316,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
-		//Use the old APIkey method.  This provides backwards compatibility.
+		// Use the old APIkey method.  This provides backwards compatibility.
+		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
 		reqContext.ApiKeyID = apikey.Id
@@ -351,7 +364,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return false
 	}
 
-	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
 	defer span.End()
 
 	username, password, err := util.DecodeBasicAuthHeader(header)
@@ -360,12 +373,15 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return true
 	}
 
+	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
 	authQuery := models.LoginUserQuery{
 		Username: username,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := h.authenticator.AuthenticateUser(reqContext.Req.Context(), &authQuery); err != nil {
+	if err := h.authenticator.AuthenticateUser(ctx, &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -428,6 +444,34 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		return false
 	}
 
+	if h.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		// Check whether the logged in User has a token (whether the User used an OAuth provider to login)
+		oauthToken, exists, _ := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
+		if exists {
+			if h.hasAccessTokenExpired(oauthToken) {
+				reqContext.Logger.Info("access token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
+
+				// If the User doesn't have a refresh_token or refreshing the token was unsuccessful then log out the User and invalidate the OAuth tokens
+				if err = h.oauthTokenService.TryTokenRefresh(ctx, oauthToken); err != nil {
+					if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
+						reqContext.Logger.Error("could not fetch a new access token", "userId", oauthToken.UserId, "error", err)
+					}
+
+					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+					if err = h.oauthTokenService.InvalidateOAuthTokens(ctx, oauthToken); err != nil {
+						reqContext.Logger.Error("could not invalidate OAuth tokens", "userId", oauthToken.UserId, "error", err)
+					}
+
+					err = h.AuthTokenService.RevokeToken(ctx, token, false)
+					if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
+						reqContext.Logger.Error("failed to revoke auth token", "error", err)
+					}
+					return false
+				}
+			}
+		}
+	}
+
 	reqContext.SignedInUser = queryResult
 	reqContext.IsSignedIn = true
 	reqContext.UserToken = token
@@ -451,8 +495,8 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
-	token *models.UserToken) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService auth.UserTokenService,
+	token *auth.UserToken) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -614,6 +658,15 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 
 	logger.Debug("Successfully got user info", "userID", user.UserID, "username", user.Login)
 
+	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
+	for _, header := range h.Cfg.AuthProxyHeaders {
+		if header != "" {
+			ctx = WithAuthHTTPHeader(ctx, header)
+		}
+	}
+
+	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
 	// Add user info to context
 	reqContext.SignedInUser = user
 	reqContext.IsSignedIn = true
@@ -632,4 +685,52 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 	}
 
 	return true
+}
+
+type authHTTPHeaderListContextKey struct{}
+
+var authHTTPHeaderListKey = authHTTPHeaderListContextKey{}
+
+// AuthHTTPHeaderList used to record HTTP headers that being when verifying authentication
+// of an incoming HTTP request.
+type AuthHTTPHeaderList struct {
+	Items []string
+}
+
+// WithAuthHTTPHeader returns a copy of parent in which the named HTTP header will be included
+// and later retrievable by AuthHTTPHeaderListFromContext.
+func WithAuthHTTPHeader(parent context.Context, name string) context.Context {
+	list := AuthHTTPHeaderListFromContext(parent)
+
+	if list == nil {
+		list = &AuthHTTPHeaderList{
+			Items: []string{},
+		}
+	}
+
+	list.Items = append(list.Items, name)
+
+	return context.WithValue(parent, authHTTPHeaderListKey, list)
+}
+
+// AuthHTTPHeaderListFromContext returns the AuthHTTPHeaderList in a context.Context, if any,
+// and will include any HTTP headers used when verifying authentication of an incoming HTTP request.
+func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
+	if list, ok := c.Value(authHTTPHeaderListKey).(*AuthHTTPHeaderList); ok {
+		return list
+	}
+	return nil
+}
+
+func (h *ContextHandler) hasAccessTokenExpired(token *models.UserAuth) bool {
+	if token.OAuthExpiry.IsZero() {
+		return false
+	}
+
+	getTime := h.GetTime
+	if getTime == nil {
+		getTime = time.Now
+	}
+
+	return token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime())
 }

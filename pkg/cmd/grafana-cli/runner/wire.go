@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -15,7 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
-	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -43,11 +46,11 @@ import (
 	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -79,6 +82,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -111,10 +115,9 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	objectdummyserver "github.com/grafana/grafana/pkg/services/store/object/dummy"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -125,7 +128,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/services/userauth/userauthimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -155,7 +157,7 @@ var wireSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
-	sqlstore.ProvideService,
+	db.ProvideService,
 	wire.InterfaceValue(new(usagestats.Service), noOpUsageStats{}),
 	wire.InterfaceValue(new(routing.RouteRegister), noOpRouteRegister{}),
 	encryptionservice.ProvideEncryptionService,
@@ -226,6 +228,7 @@ var wireSet = wire.NewSet(
 	loginpkg.ProvideService,
 	wire.Bind(new(loginpkg.Authenticator), new(*loginpkg.AuthenticatorService)),
 	loginattemptimpl.ProvideService,
+	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
@@ -250,14 +253,14 @@ var wireSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	oauthtoken.ProvideService,
-	auth.ProvideActiveAuthTokenService,
-	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	phlare.ProvideService,
+	parca.ProvideService,
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	grafanads.ProvideService,
@@ -300,7 +303,7 @@ var wireSet = wire.NewSet(
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
-	cmreg.CoremodelSet,
+	corekind.KindSet,
 	cuectx.GrafanaCUEContext,
 	cuectx.GrafanaThemaRuntime,
 	csrf.ProvideCSRFFilter,
@@ -321,16 +324,16 @@ var wireSet = wire.NewSet(
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	teamimpl.ProvideService,
-	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,
-	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
+	objectdummyserver.ProvideFakeObjectServer,
+	wire.Bind(new(notifications.TempUserStore), new(*dbtest.FakeDB)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
-	mockstore.NewSQLStoreMock,
+	dbtest.NewFakeDB,
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.DB), new(*dbtest.FakeDB)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
 	acimpl.ProvideAccessControl,

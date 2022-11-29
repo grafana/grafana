@@ -1,447 +1,534 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file.",
+  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
-      "default": "",
-      "en-US": "",
-      "es-ES": "",
-      "fr-FR": "",
-      "zh-Hans": ""
+      "default": "Por defecto"
     },
-    "save": ""
+    "save": "Guardar"
   },
   "dashboard": {
     "inspect": {
-      "actions-tab": "",
-      "data-tab": "",
-      "error-tab": "",
-      "json-tab": "",
-      "meta-tab": "",
-      "query-tab": "",
-      "stats-tab": "",
-      "subtitle": "",
-      "title": ""
+      "actions-tab": "Acciones",
+      "data-tab": "Datos",
+      "error-tab": "Error",
+      "json-tab": "JSON",
+      "meta-tab": "Metadatos",
+      "query-tab": "Consulta",
+      "stats-tab": "Estadísticas",
+      "subtitle": "{{queryCount}} consultas con un tiempo total de consulta de {{formatted}}",
+      "title": "Inspeccionar: {{panelTitle}}"
     },
     "inspect-data": {
-      "data-options": "",
-      "dataframe-aria-label": "",
-      "dataframe-label": "",
-      "download-csv": "",
-      "download-excel-description": "",
-      "download-excel-label": "",
-      "download-logs": "",
-      "download-service": "",
-      "download-traces": "",
-      "excel-header": "",
-      "formatted": "",
-      "formatted-data-description": "",
-      "formatted-data-label": "",
-      "panel-transforms": "",
-      "series-to-columns": "",
-      "transformation": "",
-      "transformations-description": "",
-      "transformations-label": ""
+      "data-options": "Opciones de datos",
+      "dataframe-aria-label": "Seleccionar marco de datos",
+      "dataframe-label": "Mostrar marco de datos",
+      "download-csv": "Descargar CSV",
+      "download-excel-description": "Añadir encabezado a CSV para su uso con Excel",
+      "download-excel-label": "Descargar para Excel",
+      "download-logs": "Descargar registros",
+      "download-service": "Descargar gráfico de servicio",
+      "download-traces": "Descargar seguimientos",
+      "excel-header": "Encabezado de Excel",
+      "formatted": "Datos formateados",
+      "formatted-data-description": "Los datos de la tabla están formateados con opciones definidas en las pestañas Campo y Anulación.",
+      "formatted-data-label": "Datos formateados",
+      "panel-transforms": "Transformaciones de panel",
+      "series-to-columns": "Series unidas por el tiempo",
+      "transformation": "Series unidas por el tiempo",
+      "transformations-description": "Los datos de la tabla se muestran con transformaciones definidas en la pestaña Transformar del panel.",
+      "transformations-label": "Aplicar transformaciones de panel"
     },
     "inspect-json": {
-      "dataframe-description": "",
-      "dataframe-label": "",
-      "panel-data-description": "",
-      "panel-data-label": "",
-      "panel-json-description": "",
-      "panel-json-label": "",
-      "select-source": "",
-      "unknown": ""
+      "dataframe-description": "Datos brutos sin transformaciones y configuración de campo aplicada. ",
+      "dataframe-label": "JSON del marco de datos (de la consulta)",
+      "panel-data-description": "El modelo RAW ha pasado a la visualización del panel",
+      "panel-data-label": "Datos de panel",
+      "panel-json-description": "El modelo guardado en el panel de control JSON que configura cómo funciona todo.",
+      "panel-json-label": "JSON de panel",
+      "select-source": "Seleccionar fuente",
+      "unknown": "Objeto desconocido: {{show}}"
     },
     "inspect-meta": {
-      "no-inspector": ""
+      "no-inspector": "No hay inspector de metadatos"
     },
     "inspect-stats": {
-      "data-title": "",
-      "processing-time": "",
-      "queries": "",
-      "request-time": "",
-      "rows": "",
-      "table-title": ""
-    },
-    "refresh-picker": {
-      "off-arialabel": "",
-      "off-description": "",
-      "off-label": "",
-      "on-description": ""
+      "data-title": "Estadísticas de origen de datos",
+      "processing-time": "Tiempo de procesamiento de datos",
+      "queries": "Número de consultas",
+      "request-time": "Tiempo total de solicitud",
+      "rows": "Número total de filas",
+      "table-title": "Estadísticas"
     },
     "toolbar": {
-      "add-panel": "",
-      "comments-show": "",
-      "mark-favorite": "",
-      "open-original": "",
-      "playlist-next": "",
-      "playlist-previous": "",
-      "playlist-stop": "",
-      "refresh": "",
-      "save": "",
-      "settings": "",
-      "share": "",
-      "tv-button": "",
-      "unmark-favorite": ""
+      "add-panel": "Añadir panel",
+      "comments-show": "Mostrar comentarios del panel de control",
+      "mark-favorite": "Marcar como favorito",
+      "open-original": "Abrir el panel de control original",
+      "playlist-next": "Ir al siguiente panel de control",
+      "playlist-previous": "Ir al panel de control anterior",
+      "playlist-stop": "Detener la lista de reproducción",
+      "refresh": "Actualizar panel de control",
+      "save": "Guardar panel de control",
+      "settings": "Ajustes del panel de control",
+      "share": "Compartir panel o panel de control",
+      "tv-button": "Alternar entre los modos de vista",
+      "unmark-favorite": "Deshacer marca como favorito"
     }
   },
   "folder-picker": {
-    "loading": ""
+    "loading": "Cargando carpetas..."
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "",
-      "create": "",
-      "error": "",
-      "folder": "",
-      "folder-description": "",
-      "name": ""
+      "cancel": "Cancelar",
+      "create": "Crear panel de librería",
+      "error": "Ya existe un panel de librería con este nombre",
+      "folder": "Guardar en carpeta",
+      "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
+      "name": "Nombre del panel de librería"
     }
   },
   "library-panels": {
     "save": {
-      "error": "",
-      "success": ""
+      "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
+      "success": "Panel de librería guardado"
     }
   },
   "nav": {
     "admin": {
-      "subtitle": "",
+      "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
+      "title": "Administrador del servidor"
+    },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
       "title": ""
     },
     "alerting": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
+      "title": "Alertas"
     },
     "alerting-admin": {
-      "title": ""
+      "title": "Administrador"
     },
     "alerting-am-routes": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Determinar cómo se enrutan las alertas a los puntos de contacto",
+      "title": "Políticas de notificación"
     },
     "alerting-channels": {
-      "title": ""
+      "title": "Canales de notificación"
     },
     "alerting-groups": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ver alertas agrupadas de una instancia de Alertmanager",
+      "title": "Grupos"
     },
     "alerting-legacy": {
-      "title": ""
+      "title": "Alertas (heredado)"
     },
     "alerting-list": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Reglas que determinan si una alerta se activará",
+      "title": "Reglas de alerta"
     },
     "alerting-receivers": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Decida cómo se notifica a sus contactos cuando se activa una alerta",
+      "title": "Puntos de contacto"
     },
     "alerting-silences": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Detener notificaciones de una o más reglas de alerta",
+      "title": "Silencios"
     },
     "alerts-and-incidents": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Aplicaciones de gestión de alertas e incidentes",
+      "title": "Alertas e incidentes"
     },
     "api-keys": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
+      "title": "Claves API"
     },
     "apps": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
+      "title": "Aplicaciones"
     },
     "config": {
-      "title": "",
-      "titleBeforeTopnav": ""
+      "title": "Administración",
+      "titleBeforeTopnav": "Configuración"
     },
     "correlations": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Añadir y configurar correlaciones",
+      "title": "Correlaciones"
     },
     "create": {
-      "title": ""
+      "title": "Crear"
     },
     "create-alert": {
-      "title": ""
+      "title": "Nueva regla de alerta"
     },
     "create-dashboard": {
-      "title": ""
+      "title": "Panel de control"
     },
     "create-folder": {
-      "title": ""
+      "title": "Carpeta"
     },
     "create-import": {
-      "title": ""
+      "title": "Importar"
     },
     "dashboards": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Cree y administre paneles de control para visualizar sus datos",
+      "title": "Paneles de control"
     },
     "datasources": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Añadir y configurar orígenes de datos",
+      "title": "Orígenes de datos"
     },
     "explore": {
-      "title": ""
+      "title": "Explorar"
     },
     "global-orgs": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
+      "title": "Organizaciones"
     },
     "global-users": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
+      "title": "",
+      "titleBeforeTopnav": "Usuarios"
     },
     "help": {
-      "title": ""
+      "title": "Ayuda"
     },
-    "help/community": "",
-    "help/documentation": "",
-    "help/keyboard-shortcuts": "",
-    "help/support": "",
+    "help/community": "Comunidad",
+    "help/documentation": "Documentación",
+    "help/keyboard-shortcuts": "Atajos de teclado",
+    "help/support": "Asistencia",
     "home": {
-      "title": ""
+      "title": "Inicio"
     },
     "library-panels": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
+      "title": "Paneles de la librería"
     },
     "live": {
-      "title": ""
+      "title": "Transmisión de eventos"
     },
     "live-cloud": {
-      "title": ""
+      "title": "Nube"
     },
     "live-pipeline": {
-      "title": ""
+      "title": "Cartera"
     },
     "live-status": {
-      "title": ""
+      "title": "Estado"
     },
     "manage-dashboards": {
-      "title": ""
+      "title": "Navegar"
     },
     "monitoring": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Aplicaciones de supervisión e infraestructura",
+      "title": "Seguimiento"
     },
     "new-dashboard": {
-      "title": ""
+      "title": "Nuevo panel de control"
     },
     "new-folder": {
-      "title": ""
+      "title": "Nueva carpeta"
     },
     "org-settings": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Gestionar las preferencias en una organización",
+      "title": "",
+      "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
+      "title": "Listas de reproducción"
     },
     "plugins": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Amplíe la experiencia de Grafana con los complementos",
+      "title": "Complementos"
     },
     "profile/notifications": {
-      "title": ""
+      "title": "Historial de notificaciones"
     },
     "profile/password": {
-      "title": ""
+      "title": "Cambiar contraseña"
     },
     "profile/settings": {
-      "title": ""
+      "title": "Preferencias"
     },
-    "profile/switch-org": "",
+    "profile/switch-org": "Cambiar de organización",
     "scenes": {
-      "title": ""
+      "title": "Escenas"
     },
     "search": {
-      "placeholder": ""
+      "placeholder": "Buscar Grafana"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Vea la configuración definida en los ajustes de Grafana",
+      "title": "Configuración"
     },
     "service-accounts": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Use cuentas de servicio para ejecutar cargas de trabajo automatizadas en Grafana",
+      "title": "Cuentas de servicios"
     },
-    "sign-in": "",
+    "sign-in": "Iniciar sesión",
     "sign-out": {
-      "title": ""
+      "title": "Cerrar sesión"
     },
     "snapshots": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
+      "title": "Instantáneas"
     },
     "starred": {
-      "title": ""
+      "title": "Destacado"
     },
     "starred-empty": {
-      "title": ""
+      "title": "Tus paneles de control destacados aparecerán aquí"
     },
     "storage": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Gestionar el almacenamiento de archivos",
+      "title": "Almacenamiento"
     },
     "teams": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
+      "title": "Equipos"
     },
     "upgrading": {
-      "title": ""
+      "title": "Estadísticas y licencia"
     },
     "users": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Invite y asigne roles a los usuarios",
+      "title": "Usuarios"
     }
   },
   "navigation": {
     "kiosk": {
-      "tv-alert": ""
+      "tv-alert": "Pulse ESC para salir del modo de quiosco"
     }
   },
   "news": {
-    "title": ""
+    "title": "Últimas entradas del blog"
+  },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
   },
   "panel": {
     "header-menu": {
-      "inspect": "",
-      "inspect-data": "",
-      "inspect-json": "",
-      "more": "",
-      "share": "",
-      "view": ""
+      "hide-legend": "",
+      "inspect": "Inspeccionar",
+      "inspect-data": "Datos",
+      "inspect-json": "JSON de panel",
+      "more": "Más...",
+      "share": "Compartir",
+      "show-legend": "",
+      "view": "Vista"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "Desactivar actualización automática",
+      "label": "Apagado"
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
     "dashboard": {
-      "title": ""
+      "title": "Compartir"
     },
     "embed": {
-      "copy": "",
-      "html": "",
-      "html-description": "",
-      "info": "",
-      "time-range": "",
-      "time-range-description": ""
+      "copy": "Copiar al portapapeles",
+      "html": "Incrustar HTML",
+      "html-description": "El código HTML a continuación se puede pegar e incluir en otra página web. A menos que se active el acceso anónimo, el usuario que vea esa página debe iniciar sesión en Grafana para que el gráfico se cargue.",
+      "info": "Genere un HTML para incrustar un iframe con este panel.",
+      "time-range": "Intervalo de tiempo actual",
+      "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto"
     },
     "export": {
-      "cancel-button": "",
-      "info-text": "",
-      "save-button": "",
-      "share-default-label": "",
-      "share-externally-label": "",
-      "view-button": ""
+      "cancel-button": "Cancelar",
+      "info-text": "Exporte este panel de control.",
+      "save-button": "Guardar en archivo",
+      "share-default-label": "Exportar con los valores predeterminados eliminados",
+      "share-externally-label": "Exportar para compartir externamente",
+      "view-button": "Ver JSON"
     },
     "library": {
-      "info": ""
+      "info": "Cree un panel de librería."
     },
     "link": {
-      "copy-link-button": "",
-      "info-text": "",
-      "link-url": "",
-      "render-alert": "",
-      "render-instructions": "",
-      "rendered-image": "",
-      "save-alert": "",
-      "save-dashboard": "",
-      "shorten-url": "",
-      "time-range-description": "",
-      "time-range-label": ""
+      "copy-link-button": "Copiar",
+      "info-text": "Cree un enlace directo a este panel de control o panel, personalizado con las siguientes opciones.",
+      "link-url": "URL del enlace",
+      "render-alert": "Complemento de renderizador de imagen no instalado",
+      "render-instructions": "Para renderizar una imagen de panel, debe instalar el complemento <1>Complemento renderizador de imágenes de Grafana</1>. Póngase en contacto con su administrador de Grafana para instalar el complemento.",
+      "rendered-image": "Enlace directo a la imagen renderizada",
+      "save-alert": "El panel de control no se ha guardado",
+      "save-dashboard": "Para renderizar una imagen de panel, primero debe guardar el panel de control.",
+      "shorten-url": "Acortar url",
+      "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto",
+      "time-range-label": "Bloquear el intervalo de tiempo"
     },
     "panel": {
-      "title": ""
+      "title": "Compartir panel"
     },
     "snapshot": {
-      "cancel-button": "",
-      "copy-link-button": "",
-      "delete-button": "",
-      "deleted-message": "",
-      "expire": "",
-      "expire-day": "",
-      "expire-hour": "",
-      "expire-never": "",
-      "expire-week": "",
-      "info-text-1": "",
-      "info-text-2": "",
-      "local-button": "",
-      "mistake-message": "",
-      "name": "",
-      "timeout": "",
-      "timeout-description": ""
+      "cancel-button": "Cancelar",
+      "copy-link-button": "Copiar",
+      "delete-button": "Elimine la instantánea.",
+      "deleted-message": "La instantánea se ha eliminado. Si ya ha accedido una vez a ella, la eliminación de la caché del navegador o de la caché de la CDN puede tardar hasta una hora.",
+      "expire": "Expira",
+      "expire-day": "1 día",
+      "expire-hour": "1 hora",
+      "expire-never": "Nunca",
+      "expire-week": "7 días",
+      "info-text-1": "Una instantánea es una forma inmediata de compartir un panel interactivo públicamente. Cuando se crean, eliminamos datos confidenciales como consultas (métricas, plantilla y anotación) y enlaces de panel, dejando solo los datos de métricas visibles y los nombres de serie incrustados en el panel.",
+      "info-text-2": "Tenga en cuenta que su instantánea <1>puede ser vista por cualquiera</1> que tenga el enlace y pueda acceder a la URL. Comparta sus instantáneas con cautela.",
+      "local-button": "Instantánea local",
+      "mistake-message": "¿Ha cometido un error? ",
+      "name": "Nombre de la instantánea",
+      "timeout": "Tiempo de espera (segundos)",
+      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
+      "url-label": ""
     },
     "tab-title": {
-      "embed": "",
-      "export": "",
-      "library-panel": "",
-      "link": "",
-      "snapshot": ""
+      "embed": "Incrustar",
+      "export": "Exportar",
+      "library-panel": "Panel de librería",
+      "link": "Enlace",
+      "snapshot": "Vista rápida"
     },
     "theme-picker": {
-      "current": "",
-      "dark": "",
-      "field-name": "",
-      "light": ""
+      "current": "Actual",
+      "dark": "Oscuro",
+      "field-name": "Tema",
+      "light": "Claro"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
     "fields": {
-      "timezone-label": ""
+      "timezone-label": "Zona horaria"
     }
   },
   "shared-preferences": {
     "fields": {
-      "home-dashboard-label": "",
-      "home-dashboard-placeholder": "",
-      "locale-label": "",
-      "locale-placeholder": "",
-      "theme-label": "",
-      "week-start-label": ""
+      "home-dashboard-label": "Panel de control de inicio",
+      "home-dashboard-placeholder": "Panel de control por defecto",
+      "locale-label": "Idioma",
+      "locale-placeholder": "Cambiar idioma",
+      "theme-label": "Tema de interfaz de usuario",
+      "week-start-label": "Inicio de la semana"
     },
     "theme": {
-      "dark-label": "",
-      "default-label": "",
-      "light-label": ""
+      "dark-label": "Oscuro",
+      "default-label": "Por defecto",
+      "light-label": "Claro"
     },
-    "title": ""
+    "title": "Preferencias"
   },
   "time-picker": {
     "absolute": {
-      "recent-title": "",
-      "title": ""
+      "recent-title": "Intervalos absolutos utilizados recientemente",
+      "title": "Intervalo de tiempo absoluto"
+    },
+    "calendar": {
+      "apply-button": "",
+      "cancel-button": "Cancelar",
+      "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
+    },
+    "time-range": {
+      "aria-role": "",
+      "default-title": "",
+      "example-title": "",
+      "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
-    "current-org-button": "",
-    "name-column": "",
-    "role-column": "",
-    "select-org-button": "",
-    "title": ""
+    "current-org-button": "Actual",
+    "name-column": "Nombre",
+    "role-column": "Rol",
+    "select-org-button": "Seleccionar organización",
+    "title": "Organizaciones"
   },
   "user-profile": {
     "fields": {
-      "email-error": "",
-      "email-label": "",
-      "name-error": "",
-      "name-label": "",
-      "username-label": ""
+      "email-error": "El correo electrónico es obligatorio",
+      "email-label": "Correo electrónico",
+      "name-error": "El nombre es obligatorio",
+      "name-label": "Nombre",
+      "username-label": "Nombre de usuario"
     },
-    "title": ""
+    "title": "Editar perfil"
   },
   "user-session": {
-    "browser-column": "",
-    "created-at-column": "",
-    "ip-column": "",
-    "revoke": "",
-    "seen-at-column": ""
+    "browser-column": "Navegador y sistema operativo",
+    "created-at-column": "Conectado",
+    "ip-column": "Dirección IP",
+    "revoke": "Revocar sesión de usuario",
+    "seen-at-column": "Última conexión"
   },
   "user-sessions": {
-    "loading": ""
+    "loading": "Cargando sesiones..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

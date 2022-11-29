@@ -32,6 +32,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
     return (
       <div
         {...otherProps}
+        tabIndex={-1}
         ref={localRef}
         className={styles.wrapper}
         role="menu"
@@ -56,16 +57,16 @@ export const Menu = Object.assign(MenuComp, {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    header: css`
-      padding: ${theme.spacing(0.5, 0.5, 1, 0.5)};
-      border-bottom: 1px solid ${theme.colors.border.weak};
-    `,
-    wrapper: css`
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      display: inline-block;
-      border-radius: ${theme.shape.borderRadius()};
-      padding: ${theme.spacing(0.5, 0)};
-    `,
+    header: css({
+      padding: `${theme.spacing(0.5, 0.5, 1, 0.5)}`,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    wrapper: css({
+      background: `${theme.colors.background.primary}`,
+      boxShadow: `${theme.shadows.z3}`,
+      display: `inline-block`,
+      borderRadius: `${theme.shape.borderRadius()}`,
+      padding: `${theme.spacing(0.5, 0)}`,
+    }),
   };
 };

@@ -99,7 +99,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
-			ExpectedError:     ErrInvalidBasicRole,
+			ExpectedError:     &InvalidBasicRoleError{idP: "Gitlab"},
 		},
 		{ // Edge case, no match, no strict mode and no fallback => User has an empty role
 			Name:              "Fallback with no default will create a user with an empty role",
@@ -117,7 +117,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{editorGroup}, ",") + "]",
 			RoleAttributePath: "",
-			ExpectedError:     ErrInvalidBasicRole,
+			ExpectedError:     &InvalidBasicRoleError{idP: "Gitlab"},
 		},
 	}
 

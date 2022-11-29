@@ -12,7 +12,6 @@ import (
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -444,9 +443,10 @@ func TestValidate(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
 			condition := testCase.condition(cacheService)
 
-			evaluator := NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, log.New("test"), cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+			evalCtx := Context(context.Background(), u)
 
-			err := evaluator.Validate(context.Background(), u, condition)
+			_, err := evaluator.Create(evalCtx, condition)
 			if testCase.error {
 				require.Error(t, err)
 			} else {

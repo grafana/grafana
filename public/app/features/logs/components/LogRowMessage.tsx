@@ -27,7 +27,7 @@ interface Props extends Themeable2 {
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
-  onToggleContext: () => void;
+  onToggleContext: (method: string) => void;
   updateLimit?: () => void;
   logsSortOrder?: LogsSortOrder | null;
 }
@@ -47,7 +47,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       display: inherit;
     `,
     horizontalScroll: css`
-      label: verticalScroll;
+      label: horizontalScroll;
       white-space: pre;
     `,
     contextNewline: css`
@@ -64,18 +64,18 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       position: absolute;
       top: 0;
       bottom: auto;
-      height: 36px;
+      height: ${theme.spacing(4.5)};
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       padding: ${theme.spacing(0, 0, 0, 0.5)};
       z-index: 100;
       visibility: hidden;
-      width: ${showContextButton ? '80px' : '40px'};
+      width: ${showContextButton ? theme.spacing(10) : theme.spacing(5)};
     `,
     logRowMenuCell: css`
       position: absolute;
       right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
-      margin-top: -1px;
+      margin-top: -${theme.spacing(0.125)};
     `,
   };
 };
@@ -122,7 +122,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
-    this.props.onToggleContext();
+    this.props.onToggleContext('open');
   };
 
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
@@ -207,11 +207,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 </Tooltip>
               )}
               <Tooltip placement="top" content={'Copy'}>
-                <IconButton
-                  size="md"
-                  name="copy"
-                  onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
-                />
+                <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
               </Tooltip>
             </span>
           </td>

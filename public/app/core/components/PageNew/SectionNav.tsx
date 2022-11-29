@@ -71,37 +71,41 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.canvas,
       flexShrink: 0,
       transition: theme.transitions.create(['width', 'max-height']),
+      maxHeight: 0,
+      visibility: 'hidden',
       [theme.breakpoints.up('md')]: {
         width: 0,
-      },
-      [theme.breakpoints.down('md')]: {
-        maxHeight: 0,
+        maxHeight: 'unset',
       },
     }),
     navExpanded: css({
+      maxHeight: '50vh',
+      visibility: 'visible',
       [theme.breakpoints.up('md')]: {
         width: '250px',
-      },
-      [theme.breakpoints.down('md')]: {
-        maxHeight: '50vh',
+        maxHeight: 'unset',
       },
     }),
     items: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(4.5, 1, 2, 2),
+      padding: theme.spacing(2, 1, 2, 2),
       minWidth: '250px',
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(4.5, 1, 2, 2),
+      },
     }),
     collapseIcon: css({
       border: `1px solid ${theme.colors.border.weak}`,
-      transform: 'translateX(50%)',
-      top: theme.spacing(8),
-      right: theme.spacing(-1),
+      left: '50%',
+      transform: 'translate(-50%, 50%) rotate(90deg)',
+      top: theme.spacing(0),
 
-      [theme.breakpoints.down('md')]: {
-        left: '50%',
-        transform: 'translate(-50%, 50%) rotate(90deg)',
-        top: theme.spacing(2),
+      [theme.breakpoints.up('md')]: {
+        transform: 'translateX(50%)',
+        top: theme.spacing(8),
+        left: theme.spacing(1),
+        right: theme.spacing(-1),
       },
     }),
   };

@@ -10,15 +10,16 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -71,9 +72,9 @@ var (
 func TestListFiles(t *testing.T) {
 	roots := []storageRuntime{publicStaticFilesStorage}
 
-	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, allowAllAuthService, cfg)
+	}, allowAllAuthService, cfg, nil)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
@@ -91,9 +92,9 @@ func TestListFiles(t *testing.T) {
 func TestListFilesWithoutPermissions(t *testing.T) {
 	roots := []storageRuntime{publicStaticFilesStorage}
 
-	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, denyAllAuthService, cfg)
+	}, denyAllAuthService, cfg, nil)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 	rowLen, err := frame.RowLen()
@@ -105,19 +106,19 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	t.Helper()
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
-	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1, false)
+	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
 	sqlStorage.store = mockStorage
 
 	if authService == nil {
 		authService = allowAllAuthService
 	}
-	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, authService, cfg)
+	}, authService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
-	store.quotaService = quotatest.NewQuotaServiceFake()
+	store.quotaService = quotatest.New(false, nil)
 
 	return store, mockStorage, storageName
 }
@@ -256,8 +257,8 @@ func TestShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
 
 func TestSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 	prefix := "resources"
-	sqlStorage := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1, false)
-	sqlStorage2 := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1, false)
+	sqlStorage := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
+	sqlStorage2 := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -265,38 +266,38 @@ func TestSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 		}
 	}()
 
-	newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage, sqlStorage2}, func(orgId int64) []storageRuntime {
+	newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage, sqlStorage2}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	}, allowAllAuthService, cfg)
+	}, allowAllAuthService, cfg, nil)
 }
 
 func TestContentRootWithNestedStorage(t *testing.T) {
 	globalOrgID := int64(accesscontrol.GlobalOrgID)
-	db := sqlstore.InitTestDB(t)
+	testDB := db.InitTestDB(t)
 	orgedUser := &user.SignedInUser{OrgID: 1}
 
 	t.Helper()
 	mockContentFSApi := &filestorage.MockFileStorage{}
-	contentStorage := newSQLStorage(RootStorageMeta{}, RootContent, "Content root", "dummy descr", &StorageSQLConfig{}, db, globalOrgID, false)
+	contentStorage := newSQLStorage(RootStorageMeta{}, RootContent, "Content root", "dummy descr", &StorageSQLConfig{}, testDB, globalOrgID, false)
 	contentStorage.store = mockContentFSApi
 
 	nestedRoot := "nested"
 	mockNestedFSApi := &filestorage.MockFileStorage{}
-	nestedStorage := newSQLStorage(RootStorageMeta{}, nestedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, db, globalOrgID, true)
+	nestedStorage := newSQLStorage(RootStorageMeta{}, nestedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, testDB, globalOrgID, true)
 	nestedStorage.store = mockNestedFSApi
 
 	nestedOrgedRoot := "nestedOrged"
 	mockNestedOrgedFSApi := &filestorage.MockFileStorage{}
-	nestedOrgedStorage := newSQLStorage(RootStorageMeta{}, nestedOrgedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, db, globalOrgID, true)
+	nestedOrgedStorage := newSQLStorage(RootStorageMeta{}, nestedOrgedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, testDB, globalOrgID, true)
 	nestedOrgedStorage.store = mockNestedOrgedFSApi
 
-	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime {
 		return []storageRuntime{nestedOrgedStorage, contentStorage}
-	}, allowAllAuthService, cfg)
+	}, allowAllAuthService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
-	store.quotaService = quotatest.NewQuotaServiceFake()
+	store.quotaService = quotatest.New(false, nil)
 	fileName := "file.jpg"
 
 	tests := []struct {
@@ -517,7 +518,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 }
 
 func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
-	db := sqlstore.InitTestDB(t)
+	db := db.InitTestDB(t)
 	ctx := context.Background()
 	nestedStorage := newSQLStorage(RootStorageMeta{}, "nested", "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, true)
 	contentStorage := newSQLStorage(RootStorageMeta{}, RootContent, "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, false)
@@ -530,7 +531,7 @@ func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	store := newStandardStorageService(db, []storageRuntime{nestedStorage, contentStorage}, func(orgId int64) []storageRuntime { return make([]storageRuntime, 0) }, allowAllAuthService, cfg)
+	store := newStandardStorageService(db, []storageRuntime{nestedStorage, contentStorage}, func(orgId int64) []storageRuntime { return make([]storageRuntime, 0) }, allowAllAuthService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}

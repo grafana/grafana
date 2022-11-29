@@ -9,8 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -27,6 +30,9 @@ type setUserResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -109,6 +115,9 @@ type setTeamResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetTeamResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -194,6 +203,9 @@ type setBuiltInResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -275,6 +287,9 @@ type setResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -336,17 +351,17 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 }
 
 type getResourcePermissionsTest struct {
-	desc              string
-	user              *user.SignedInUser
-	numUsers          int
-	actions           []string
-	resource          string
-	resourceID        string
-	resourceAttribute string
-	onlyManaged       bool
+	desc        string
+	user        *user.SignedInUser
+	numUsers    int
+	query       GetResourcePermissionsQuery
+	expectedLen int
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
@@ -355,11 +370,15 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
-			numUsers:          3,
-			actions:           []string{"datasources:query"},
-			resource:          "datasources",
-			resourceID:        "1",
-			resourceAttribute: "uid",
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				EnforceAccessControl: true,
+			},
+			expectedLen: 4,
 		},
 		{
 			desc: "should return manage permissions for all resource ids",
@@ -368,22 +387,62 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
-			numUsers:          3,
-			actions:           []string{"datasources:query"},
-			resource:          "datasources",
-			resourceID:        "1",
-			resourceAttribute: "uid",
-			onlyManaged:       true,
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				OnlyManaged:          true,
+				EnforceAccessControl: true,
+			},
+			expectedLen: 3,
+		},
+		{
+			desc: "should return users caller can read",
+			user: &user.SignedInUser{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionOrgUsersRead: {"users:id:1", "users:id:3"}},
+				}},
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				OnlyManaged:          true,
+				EnforceAccessControl: true,
+			},
+			expectedLen: 2,
+		},
+		{
+			desc: "should return permissions for all users when access control is not enforces",
+			user: &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: {}}},
+			numUsers: 3,
+			query: GetResourcePermissionsQuery{
+				Actions:              []string{"datasources:query"},
+				Resource:             "datasources",
+				ResourceID:           "1",
+				ResourceAttribute:    "uid",
+				OnlyManaged:          true,
+				EnforceAccessControl: false,
+			},
+			expectedLen: 3,
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
+			orgService, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
 
-			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 				role := &accesscontrol.Role{
-					OrgID:   test.user.OrgID,
+					OrgID:   tt.user.OrgID,
 					UID:     "seeded",
 					Name:    "seeded",
 					Updated: time.Now(),
@@ -416,40 +475,30 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.resourceAttribute, test.numUsers)
+			seedResourcePermissions(t, store, sql, orgService, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers)
 
-			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgID, GetResourcePermissionsQuery{
-				User:              test.user,
-				Actions:           test.actions,
-				Resource:          test.resource,
-				ResourceID:        test.resourceID,
-				ResourceAttribute: test.resourceAttribute,
-				OnlyManaged:       test.onlyManaged,
-			})
+			tt.query.User = tt.user
+			permissions, err := store.GetResourcePermissions(context.Background(), tt.user.OrgID, tt.query)
 			require.NoError(t, err)
-
-			expectedLen := test.numUsers
-			if !test.onlyManaged {
-				expectedLen += 1
-			}
-			assert.Len(t, permissions, expectedLen)
+			assert.Len(t, permissions, tt.expectedLen)
 		})
 	}
 }
 
-func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
+func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, orgService org.Service, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
-	var org *models.Org
+	var orgModel *org.Org
 	for i := 0; i < numUsers; i++ {
-		if org == nil {
-			addedOrg, err := sql.CreateOrgWithMember("test", int64(i))
+		if orgModel == nil {
+			cmd := &org.CreateOrgCommand{Name: "test", UserID: int64(i)}
+			addedOrg, err := orgService.CreateWithMember(context.Background(), cmd)
 			require.NoError(t, err)
-			org = &addedOrg
+			orgModel = addedOrg
 		}
 
 		u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
 			Login: fmt.Sprintf("user:%s%d", resourceID, i),
-			OrgID: org.Id,
+			OrgID: orgModel.ID,
 		})
 		require.NoError(t, err)
 
@@ -464,6 +513,6 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 }
 
 func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
-	sql := sqlstore.InitTestDB(t)
+	sql := db.InitTestDB(t)
 	return NewStore(sql), sql
 }

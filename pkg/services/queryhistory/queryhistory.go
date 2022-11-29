@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister) *QueryHistoryService {
 	s := &QueryHistoryService{
-		SQLStore:      sqlStore,
+		store:         sqlStore,
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
 		log:           log.New("query-history"),
@@ -39,7 +39,7 @@ type Service interface {
 }
 
 type QueryHistoryService struct {
-	SQLStore      db.DB
+	store         db.DB
 	Cfg           *setting.Cfg
 	RouteRegister routing.RouteRegister
 	log           log.Logger

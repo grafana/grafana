@@ -157,6 +157,22 @@
   },
   {
     "type":"label",
+    "name":"datasource/Phlare",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/221"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Parca",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/221"
+    }
+  },
+  {
+    "type":"label",
     "name":"datasource/Elasticsearch",
     "action":"addToProject",
     "addToProject":{

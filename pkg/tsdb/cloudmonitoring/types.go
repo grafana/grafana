@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -14,69 +16,72 @@ type (
 		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
 			*backend.DataResponse, cloudMonitoringResponse, string, error)
 		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
-		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text string) error
 		buildDeepLink() string
 		getRefID() string
 	}
 
-	// Used to build time series filters
-	cloudMonitoringTimeSeriesFilter struct {
-		Target      string
-		Params      url.Values
-		RefID       string
-		GroupBys    []string
-		AliasBy     string
-		ProjectName string
-		Selector    string
-		Service     string
-		Slo         string
-	}
-
-	// Used to build MQL queries
-	cloudMonitoringTimeSeriesQuery struct {
-		RefID       string
-		ProjectName string
-		Query       string
-		IntervalMS  int64
-		AliasBy     string
-		timeRange   backend.TimeRange
-		GraphPeriod string
-	}
-
-	metricQuery struct {
-		ProjectName        string
-		MetricType         string
-		CrossSeriesReducer string
-		AlignmentPeriod    string
-		PerSeriesAligner   string
-		GroupBys           []string
-		Filters            []string
-		AliasBy            string
-		View               string
-		EditorMode         string
-		Query              string
-		Preprocessor       string
-		PreprocessorType   preprocessorType
-		GraphPeriod        string
-	}
-
-	sloQuery struct {
-		ProjectName      string
-		AlignmentPeriod  string
-		PerSeriesAligner string
-		AliasBy          string
-		SelectorName     string
-		ServiceId        string
-		SloId            string
-		LookbackPeriod   string
-	}
-
+	// Plugin API query data request used to generate
+	// a cloudMonitoringTimeSeriesList or cloudMonitoringTimeSeriesQuery
 	grafanaQuery struct {
-		DatasourceId int
-		RefId        string
-		QueryType    string
-		MetricQuery  metricQuery
-		SloQuery     sloQuery
+		AliasBy         string           `json:"aliasBy"`
+		TimeSeriesList  *timeSeriesList  `json:"timeSeriesList,omitempty"`
+		TimeSeriesQuery *timeSeriesQuery `json:"timeSeriesQuery,omitempty"`
+		// TODO: Merge SloQuery into TimeSeriesList
+		SloQuery *sloQuery `json:"sloQuery,omitempty"`
+	}
+
+	// These should reflect GCM APIs
+	// timeSeries.list https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list
+	timeSeriesList struct {
+		ProjectName        string   `json:"projectName"`
+		CrossSeriesReducer string   `json:"crossSeriesReducer"`
+		AlignmentPeriod    string   `json:"alignmentPeriod"`
+		PerSeriesAligner   string   `json:"perSeriesAligner"`
+		GroupBys           []string `json:"groupBys"`
+		Filters            []string `json:"filters"`
+		View               string   `json:"view"`
+		// Not part of the GCM API
+		// TODO: Use API fields instead
+		MetricType   string `json:"metricType"`
+		Preprocessor string `json:"preprocessor"`
+	}
+	// TODO: sloQuery can be specified as timeSeriesList parameters
+	sloQuery struct {
+		SelectorName   string `json:"selectorName"`
+		ServiceId      string `json:"serviceId"`
+		SloId          string `json:"sloId"`
+		LookbackPeriod string `json:"lookbackPeriod"`
+	}
+
+	// timeSeries.query https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/query
+	timeSeriesQuery struct {
+		ProjectName string `json:"projectName"`
+		Query       string `json:"query"`
+		// Not part of the GCM API, will be added to Query
+		GraphPeriod string `json:"graphPeriod"`
+	}
+
+	// Internal structs. Include computed values
+	// cloudMonitoringTimeSeriesList is used to build time series with a filter
+	cloudMonitoringTimeSeriesList struct {
+		refID      string
+		aliasBy    string
+		logger     log.Logger
+		parameters *timeSeriesList
+		// TODO: Merge SloQuery into TimeSeriesList
+		sloQ *sloQuery
+		// Processed properties
+		params url.Values
+	}
+	// cloudMonitoringTimeSeriesQuery is used to build MQL queries
+	cloudMonitoringTimeSeriesQuery struct {
+		refID      string
+		aliasBy    string
+		logger     log.Logger
+		parameters *timeSeriesQuery
+		// Processed properties
+		timeRange  backend.TimeRange
+		IntervalMS int64
 	}
 
 	cloudMonitoringBucketOptions struct {

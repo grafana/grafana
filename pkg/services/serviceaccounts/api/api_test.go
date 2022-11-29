@@ -15,10 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -26,10 +28,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -43,10 +45,13 @@ var (
 )
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
+	store := db.InitTestDB(t)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
-	orgService := orgimpl.ProvideService(store, setting.NewCfg())
+	orgService, err := orgimpl.ProvideService(store, setting.NewCfg(), quotaService)
+	require.NoError(t, err)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
 	svcmock := tests.ServiceAccountMock{}
 
@@ -56,8 +61,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 		store.Cfg.AutoAssignOrg = autoAssignOrg
 	}()
 
-	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-	err := store.CreateOrg(context.Background(), orgCmd)
+	orgCmd := &org.CreateOrgCommand{Name: "Some Test Org"}
+	_, err = orgService.CreateWithMember(context.Background(), orgCmd)
 	require.Nil(t, err)
 
 	type testCreateSATestCase struct {
@@ -210,9 +215,11 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 // test the accesscontrol endpoints
 // with permissions and without permissions
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	svcmock := tests.ServiceAccountMock{}
 
@@ -281,15 +288,18 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
-	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
+	sqlStore db.DB, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
-	userSvc := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil)
+
+	userSvc, err := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, quotatest.New(false, nil))
+	require.NoError(t, err)
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
 		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
 	require.NoError(t, err)
+	acService := actest.FakeService{}
 
-	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
+	a := NewServiceAccountsAPI(cfg, svc, acmock, acService, routerRegister, saStore, saPermissionService)
 	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
@@ -315,8 +325,10 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 }
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
+	store := db.InitTestDB(t)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	svcmock := tests.ServiceAccountMock{}
@@ -407,8 +419,10 @@ func newString(s string) *string {
 }
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
+	store := db.InitTestDB(t)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(store)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
 	svcmock := tests.ServiceAccountMock{}

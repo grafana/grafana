@@ -20,13 +20,13 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -776,7 +776,7 @@ func TestNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers apimodels.Receivers
+		var receivers []apimodels.Receiver
 		err := json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -799,7 +799,7 @@ func TestNotificationChannels(t *testing.T) {
 		t.Cleanup(func() {
 			store.GenerateNewAlertRuleUID = originalFunction
 		})
-		store.GenerateNewAlertRuleUID = func(_ *sqlstore.DBSession, _ int64, ruleTitle string) (string, error) {
+		store.GenerateNewAlertRuleUID = func(_ *db.Session, _ int64, ruleTitle string) (string, error) {
 			return "UID_" + ruleTitle, nil
 		}
 
@@ -811,8 +811,9 @@ func TestNotificationChannels(t *testing.T) {
 	// Eventually, we'll get all the desired alerts.
 	// nolint:gosec
 	require.Eventually(t, func() bool {
-		// TODO: not waiting for the failed notifications, flaky test?
-		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) && len(mockEmail.emails) >= 1
+		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) &&
+			mockChannel.totalNotificationErrors() >= len(expNotificationErrors) &&
+			len(mockEmail.emails) >= 1
 	}, 30*time.Second, 1*time.Second)
 
 	mockChannel.matchesExpNotifications(t, expNonEmailNotifications)
@@ -824,7 +825,7 @@ func TestNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers apimodels.Receivers
+	var receivers []apimodels.Receiver
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
@@ -988,8 +989,9 @@ type mockNotificationChannel struct {
 	t      *testing.T
 	server *http.Server
 
-	receivedNotifications    map[string][]string
-	receivedNotificationsMtx sync.Mutex
+	receivedNotifications  map[string][]string
+	notificationErrorCount int
+	notificationsMtx       sync.RWMutex
 }
 
 func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNotificationChannel {
@@ -1018,10 +1020,17 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 
 func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	nc.t.Helper()
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.Lock()
+	defer nc.notificationsMtx.Unlock()
 
+	// paths[0] contains the receiver's name
 	paths := strings.Split(req.URL.Path[1:], "/")
+	if _, ok := expNotificationErrors[paths[0]]; ok {
+		nc.notificationErrorCount++
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	key := strings.Join(paths[0:2], "/")
 	body := getBody(nc.t, req.Body)
 
@@ -1031,18 +1040,24 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 
 func (nc *mockNotificationChannel) totalNotifications() int {
 	total := 0
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
 	for _, v := range nc.receivedNotifications {
 		total += len(v)
 	}
 	return total
 }
 
+func (nc *mockNotificationChannel) totalNotificationErrors() int {
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
+	return nc.notificationErrorCount
+}
+
 func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map[string][]string) {
 	t.Helper()
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
 
 	require.Len(t, nc.receivedNotifications, len(exp))
 
@@ -1612,7 +1627,7 @@ const alertmanagerConfig = `
             }
           }
         ]
-      },   
+      },
 	  {
         "name": "slack_recv2",
         "grafana_managed_receiver_configs": [
@@ -1642,7 +1657,7 @@ const alertmanagerConfig = `
               "text": "Integration Test"
             },
             "secureSettings": {
-              "url": "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test"
+              "url": "http://CHANNEL_ADDR/slack_failed_recv/slack_failed_test"
             }
           }
 		]
@@ -2297,7 +2312,6 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
-          "text": "Integration Test [FIRING:1] SlackAlert1 (default)",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2308,18 +2322,11 @@ var expNonEmailNotifications = map[string][]string{
 			  "text": "Integration Test ",
 			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>"
 			}
 		  ]
 		}`,
@@ -2327,7 +2334,6 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recvX/slack_testX": {
 		`{
 		  "channel": "#test-channel",
-          "text": "[FIRING:1] SlackAlert2 (default)",
 		  "username": "Integration Test",
 		  "attachments": [
 			{
@@ -2336,18 +2342,11 @@ var expNonEmailNotifications = map[string][]string{
 			  "text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = SlackAlert2\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SlackAlert2/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DSlackAlert2&matcher=grafana_folder%%3Ddefault\n",
 			  "fallback": "[FIRING:1] SlackAlert2 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<@user1><@user2>"
 			}
 		  ]
 		}`,
@@ -2356,7 +2355,6 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "234edb34441f942f713f3c2ccf58b1d719d921b4cbe34e57a1630f1dee847e3b",
-		  "description": "[FIRING:1] PagerdutyAlert (default)",
 		  "event_action": "trigger",
 		  "payload": {
 			"summary": "Integration Test [FIRING:1] PagerdutyAlert (default)",
@@ -2482,7 +2480,7 @@ var expNonEmailNotifications = map[string][]string{
 			{
 			  "color": 14037554,
 			  "footer": {
-				"icon_url": "https://grafana.com/assets/img/fav32.png",
+				"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 				"text": "Grafana v"
 			  },
 			  "title": "[FIRING:1] DiscordAlert (default)",
@@ -2621,6 +2619,7 @@ var expNonEmailNotifications = map[string][]string{
 			  "grafana_folder": "default"
 			},
 			"annotations": {
+			  "__orgId__":"1",
               "__values__": "{\"A\":1}",
               "__value_string__": "[ var='A' labels={} value=1 ]"
             },
@@ -2636,10 +2635,10 @@ var expNonEmailNotifications = map[string][]string{
 
 // expNotificationErrors maps a receiver name with its expected error string.
 var expNotificationErrors = map[string]string{
-	"slack_failed_recv": `Post "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test": unsupported protocol scheme "htt"`,
+	"slack_failed_recv": "request to Slack API failed with status code 500",
 }
 
-// expNotificationErrors maps a receiver name with its expected error string.
+// expInactiveReceivers is a set of receivers expected to be unused.
 var expInactiveReceivers = map[string]struct{}{
 	"slack_inactive_recv": {},
 }

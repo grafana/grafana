@@ -18,12 +18,12 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,11 +34,11 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	}
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval:                  10 * time.Second,
-			DefaultRuleEvaluationInterval: 60 * time.Second,
+			DefaultRuleEvaluationInterval: time.Minute,
 		},
 		SQLStore:         sqlStore,
 		Logger:           log.New("alertmanager-test"),

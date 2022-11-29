@@ -18,16 +18,16 @@ apk add --no-cache curl npm yarn build-base openssh git-lfs perl-utils coreutils
 # apk add --no-cache xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
-filename="go1.18.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "e85278e98f57cdb150fe8409e6e5df5343ecb13cebf03a5d5ff12bd55a80264f"
+filename="go1.19.3.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "74b9640724fd4e6bb0ed2a1bc44ae813a03f1e72a4c76253e2d5c015494430ba"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-GOLANGCILINT_VERSION=1.45.0
+GOLANGCILINT_VERSION=1.50.0
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
     "/tmp/$filename.tar.gz" \
-    "ca06a2b170f41a9e1e34d40ca88b15b8fed2d7e37310f0c08b7fc244c34292a9"
+    "b4b329efcd913082c87d0e9606711ecb57415b5e6ddf233fde9e76c69d9b4e8b"
 untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
@@ -40,7 +40,7 @@ apk add --no-cache fontconfig zip jq
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "e1be1930379bd169d3a8e82135cf57216ad52ecfaf520b5804f269721e4dcc3d"
+    "20d1d4e2b399d0287d91e65faeee8ffbef08e3262b0be5eda7def7b3c2799ddd"
 chmod 755 /usr/local/bin/cc-test-reporter
 
 curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.27/grabpl"
@@ -52,7 +52,7 @@ git clone https://github.com/magefile/mage.git /tmp/mage
 cd /tmp/mage && go run bootstrap.go
 mv $HOME/go/bin/mage /usr/local/bin
 
-wget -O - -q https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b /usr/local/bin v2.10.0
+wget -O - -q https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b /usr/local/bin v2.14.0
 
 source "/etc/profile"
 sh -l -c "go get -u github.com/mgechev/revive"

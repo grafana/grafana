@@ -30,7 +30,7 @@ const SearchTitle = ({ term }) => (
 
 Prefer using `<Trans />` for JSX children, and `t()` for props and other javascript usage.
 
-When translating in grafana-ui, import `<Trans />` and `t()` from `src/utils/i18n`.
+When translating in grafana-ui, use a relative path to import `<Trans />` and `t()` from `src/utils/i18n`.
 
 Note that our tooling must be able to statically analyse the code to extract the phrase, so the `i18nKey` can not be dynamic. e.g. the following will not work:
 
@@ -68,11 +68,9 @@ While the `t` function can technically be used outside of React functions (e.g, 
    1. Grafana OSS Crowdin project -> "dot dot dot" menu in top right -> Target languages
    2. Grafana OSS Crowdin project -> Integrations -> Github -> Sync Now
    3. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
-2. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `VALID_LOCALES`)
-3. Update `public/app/core/internationalization/index.tsx` to add the message loader for the new locale
-4. Update `public/app/core/components/SharedPreferences/SharedPreferences.tsx` to add the new locale to the options.
-5. Update `public/locales/i18next-parser.config.js` to add the new locale to `locales`
-6. Run `yarn i18n:extract` and commit the result
+2. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `LOCALES`)
+3. Update `public/locales/i18next-parser.config.js` to add the new locale to `locales`
+4. Run `yarn i18n:extract` and commit the result
 
 ## How translations work in Grafana
 

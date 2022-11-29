@@ -3,8 +3,8 @@ package dashverimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -157,12 +156,3 @@ func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend
 	tCtx.httpProvider.setResponse(res)
 	return tCtx.queryData.Execute(context.Background(), q)
 }
-
-type fakeLogger struct {
-	log.Logger
-}
-
-func (fl *fakeLogger) Debug(testMessage string, ctx ...interface{}) {}
-func (fl *fakeLogger) Info(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Warn(testMessage string, ctx ...interface{})  {}
-func (fl *fakeLogger) Error(testMessage string, ctx ...interface{}) {}

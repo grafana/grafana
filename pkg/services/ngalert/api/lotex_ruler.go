@@ -183,6 +183,7 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	if err != nil {
 		return "", err
 	}
+
 	// Validate URL
 	if ds.Url == "" {
 		return "", fmt.Errorf("URL for this data source is empty")
@@ -203,10 +204,14 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	subtype := ctx.Query(subtypeQuery)
 	subTypePrefix, ok := subtypeToPrefix[subtype]
 	if !ok {
-		r.log.Debug("unable to determine prometheus datasource subtype, using default prefix", "subtype", subtype)
+		r.log.Debug(
+			"Unable to determine prometheus datasource subtype, using default prefix",
+			"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype, "prefix", prefix)
 		return prefix, nil
 	}
 
+	r.log.Debug("Determined prometheus datasource subtype",
+		"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype)
 	return subTypePrefix, nil
 }
 

@@ -225,7 +225,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 	// Check for templating errors
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
+		on.log.Warn("failed to template Opsgenie message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
@@ -272,7 +272,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	bodyJSON.Set("details", details)
 	apiURL = tmpl(on.APIUrl)
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie URL", "err", tmplErr.Error(), "fallback", on.APIUrl)
+		on.log.Warn("failed to template Opsgenie URL", "error", tmplErr.Error(), "fallback", on.APIUrl)
 		apiURL = on.APIUrl
 	}
 
