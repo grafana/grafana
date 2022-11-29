@@ -86,7 +86,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       requiredImageRendererPluginVersion: string;
     };
     thumbnailsExist: boolean;
-  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
+  } = {systemRequirements: {met: false, requiredImageRendererPluginVersion: ''}, thumbnailsExist: false};
   rendererVersion = '';
   secretsManagerPluginEnabled = false;
   http2Enabled = false;
@@ -122,7 +122,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
-  unifiedAlerting = { minInterval: '' };
+  unifiedAlerting = {minInterval: ''};
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
@@ -141,7 +141,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
-
+  usageInsightsEnabled =  true;
   tokenExpirationDayLimit: undefined;
 
   constructor(options: GrafanaBootConfig) {
@@ -189,11 +189,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
 function getThemeCustomizations(config: GrafanaBootConfig) {
   const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
   const themeOptions: NewThemeOptions = {
-    colors: { mode },
+    colors: {mode},
   };
 
   if (config.featureToggles.interFont) {
-    themeOptions.typography = { fontFamily: '"Inter", "Helvetica", "Arial", sans-serif' };
+    themeOptions.typography = {fontFamily: '"Inter", "Helvetica", "Arial", sans-serif'};
   }
 
   return themeOptions;

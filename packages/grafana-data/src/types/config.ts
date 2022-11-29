@@ -217,6 +217,7 @@ export interface GrafanaConfig {
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+  usageInsightsEnabled: boolean;
 }
 
 export interface AuthSettings {

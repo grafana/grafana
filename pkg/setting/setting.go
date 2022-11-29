@@ -179,6 +179,9 @@ var (
 	GrafanaComUrl string
 
 	ImageUploadProvider string
+
+	// Usage Insights
+	UsageInsightsEnabled bool
 )
 
 // AddChangePasswordLink returns if login form is disabled or not since
