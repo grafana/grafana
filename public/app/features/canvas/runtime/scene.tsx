@@ -494,23 +494,38 @@ export class Scene {
       this.arrowLine.setAttribute('y2', `${y}`);
 
       if (!event.buttons) {
-        // TODO: Handle saving connection
-        const connection = {
-          source: {
-            x: 0,
-            y: 0,
-          },
-          target: {
-            x: x / parentBoundingRect.width - 0.5,
-            y: y / parentBoundingRect.height - 0.5,
-          },
-          // targetName: string,
-          color: 'white',
-          size: 10,
-          path: ConnectionPath.Straight,
-        };
+        if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
+          const arrowLineX1 = this.arrowLine.x1.baseVal.value;
+          const arrowLineY1 = this.arrowLine.y1.baseVal.value;
 
-        if (this.connectionSource) {
+          const sourceRect = this.connectionSource.div.getBoundingClientRect();
+          const parentRect = this.connectionSource.div.parentElement.getBoundingClientRect();
+          const parentBorderWidth = parseFloat(getComputedStyle(this.connectionSource.div.parentElement).borderWidth);
+
+          const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
+          const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
+
+          const sourceX = (arrowLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
+          const sourceY = (arrowLineY1 - sourceVerticalCenter) / (sourceRect.height / 2);
+
+          const targetX = (x - sourceHorizontalCenter) / (sourceRect.width / 2);
+          const targetY = (y - sourceVerticalCenter) / (sourceRect.height / 2);
+
+          const connection = {
+            source: {
+              x: sourceX,
+              y: sourceY,
+            },
+            target: {
+              x: targetX,
+              y: targetY,
+            },
+            // targetName: string,
+            color: 'white',
+            size: 10,
+            path: ConnectionPath.Straight,
+          };
+
           const { options } = this.connectionSource;
           if (!options.connections) {
             options.connections = [];

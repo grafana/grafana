@@ -59,14 +59,14 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
       const parentBorderWidth = parseFloat(getComputedStyle(parent).borderWidth);
 
+      const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
       const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
-      const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
 
-      const x1 = sourceHorizontalCenter + (info.source.y * sourceRect.width) / 2;
-      const y1 = sourceVerticalCenter + (info.source.x * sourceRect.height) / 2;
+      const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
+      const y1 = sourceVerticalCenter + (info.source.y * sourceRect.height) / 2;
 
-      const x2 = sourceHorizontalCenter + (info.target.y * sourceRect.width) / 2;
-      const y2 = sourceVerticalCenter + (info.target.x * sourceRect.height) / 2;
+      const x2 = sourceHorizontalCenter + (info.target.x * sourceRect.width) / 2;
+      const y2 = sourceVerticalCenter + (info.target.y * sourceRect.height) / 2;
 
       return (
         <svg className={styles.connection} key={idx}>
