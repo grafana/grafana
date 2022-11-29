@@ -10,9 +10,14 @@ weight: 150
 
 Feature toggles, also known as feature flags, are used for experimental or beta features in Grafana. Although we do not recommend that you use these features in production, you can turn on feature toggles to try out new functionality in development or test environments.
 
- This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md/#feature_toggles" >}}).
+ This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md/#feature_toggles" >}}). Feature toogles are also available to Grafana Cloud Advanced customers - if you use Grafana Cloud Advanced, you can open a support ticket specifying the feature toggles and stack you would like them enabled 
 
  ## Available feature toggles
+
+ **Requires dev mode** means that you need to explicitly set Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to `development` before you can enable this feature toggle. These features tend to be especially experimental.
+
+**Requires a restart** means that you need to set the given feature toggle and then restart the Grafana application in order for it to work.
+
 
  | Feature toggle name | Description                                           | Release stage | Requires dev mode? | Requires a restart? |
 |---------------------|-------------------------------------------------------|---------------|--------------------|---------------------|
