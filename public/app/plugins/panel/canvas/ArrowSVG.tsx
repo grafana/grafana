@@ -43,8 +43,31 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     return connections;
   };
 
+  // TODO: figure out how to process coordinates and draw them
+  // Figure out target and then target's relative coordinates drawing
+  // Figure out how to save arrow coordinates in the first place
   const renderConnections = () => {
     return findConnections().map((v, idx) => {
+      const { source, target, info } = v;
+      const sourceRect = source.div?.getBoundingClientRect();
+      const parent = source.div?.parentElement;
+      const parentRect = parent?.getBoundingClientRect();
+
+      if (!sourceRect || !parent || !parentRect) {
+        return;
+      }
+
+      const parentBorderWidth = parseFloat(getComputedStyle(parent).borderWidth);
+
+      const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
+      const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
+
+      const x1 = sourceHorizontalCenter + (info.source.y * sourceRect.width) / 2;
+      const y1 = sourceVerticalCenter + (info.source.x * sourceRect.height) / 2;
+
+      const x2 = sourceHorizontalCenter + (info.target.y * sourceRect.width) / 2;
+      const y2 = sourceVerticalCenter + (info.target.x * sourceRect.height) / 2;
+
       return (
         <svg className={styles.connection} key={idx}>
           <defs>
@@ -63,10 +86,10 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
           <line
             style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }}
             markerEnd="url(#arrowhead)"
-            x1={10 + 10 * idx}
-            x2={20 + 10 * idx}
-            y1={30 + 10 * idx}
-            y2={40 + 10 * idx}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
           />
         </svg>
       );
@@ -109,5 +132,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: absolute;
     width: 100%;
     height: 100%;
+    z-index: 1000;
+    pointer-events: none;
   `,
 });
