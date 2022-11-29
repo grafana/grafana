@@ -21,7 +21,7 @@ import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { SavedQueryRef } from 'app/features/query-library/api/SavedQueriesApi';
+import { SavedQueryLink } from 'app/features/query-library/types';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -133,20 +133,6 @@ const defaults: any = {
   },
   title: '',
   savedQueryLink: null,
-};
-
-export type SavedQueryVariable<T = unknown> = {
-  type: 'text' | 'datasource' | string; // TODO: enumify
-  name: string;
-  current: {
-    // current.value follows the structure from dashboard variables
-    value: T;
-  };
-};
-
-export type SavedQueryLink = {
-  ref: SavedQueryRef;
-  variables: SavedQueryVariable[];
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
