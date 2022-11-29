@@ -36,6 +36,10 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		HomePath: cmd.HomePath(),
 		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
+	if !cfg.CaseInsensitiveLogin {
+		logger.Info("Case Insensitive Login is not enabled, setting to true to not introduce any more conflicts")
+		cfg.CaseInsensitiveLogin = true
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -203,6 +207,12 @@ func getDocumentationForFile() string {
 #
 # If you feel like you want to wait with a specific block,
 # delete all lines regarding that conflict block.
+# email - the user’s email
+# login - the user’s login/username
+# last_seen_at - the user’s last login
+# auth_module - if the user was created/signed in using an authentication provider
+# conflict_email - a boolean if we consider the email to be a conflict
+# conflict_login - a boolean if we consider the login to be a conflict
 #
 `
 }

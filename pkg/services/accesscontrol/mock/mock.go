@@ -20,6 +20,7 @@ type fullAccessControl interface {
 type Calls struct {
 	Evaluate                       []interface{}
 	GetUserPermissions             []interface{}
+	ClearUserPermissionCache       []interface{}
 	IsDisabled                     []interface{}
 	DeclareFixedRoles              []interface{}
 	DeclarePluginRoles             []interface{}
@@ -43,6 +44,7 @@ type Mock struct {
 	// Override functions
 	EvaluateFunc                       func(context.Context, *user.SignedInUser, accesscontrol.Evaluator) (bool, error)
 	GetUserPermissionsFunc             func(context.Context, *user.SignedInUser, accesscontrol.Options) ([]accesscontrol.Permission, error)
+	ClearUserPermissionCacheFunc       func(*user.SignedInUser)
 	IsDisabledFunc                     func() bool
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
 	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
@@ -136,6 +138,14 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user *user.SignedInUser, 
 	}
 	// Otherwise return the Permissions list
 	return m.permissions, nil
+}
+
+func (m *Mock) ClearUserPermissionCache(user *user.SignedInUser) {
+	m.Calls.ClearUserPermissionCache = append(m.Calls.ClearUserPermissionCache, []interface{}{user})
+	// Use override if provided
+	if m.ClearUserPermissionCacheFunc != nil {
+		m.ClearUserPermissionCacheFunc(user)
+	}
 }
 
 // Middleware checks if service disabled or not to switch to fallback authorization.

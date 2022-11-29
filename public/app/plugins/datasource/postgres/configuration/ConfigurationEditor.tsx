@@ -156,10 +156,16 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         ) : null}
       </FieldSet>
 
-      {options.jsonData.sslmode !== 'disable' ? (
+      {jsonData.sslmode !== PostgresTLSModes.disable ? (
         <FieldSet label="TLS/SSL Auth Details">
-          {options.jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
-            <TLSSecretsConfig editorProps={props} labelWidth={labelWidthSSLDetails}></TLSSecretsConfig>
+          {jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
+            <TLSSecretsConfig
+              showCACert={
+                jsonData.sslmode === PostgresTLSModes.verifyCA || jsonData.sslmode === PostgresTLSModes.verifyFull
+              }
+              editorProps={props}
+              labelWidth={labelWidthSSLDetails}
+            ></TLSSecretsConfig>
           ) : (
             <>
               <InlineField

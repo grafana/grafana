@@ -47,7 +47,7 @@ import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { VisualizationButton } from './VisualizationButton';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
-import { toggleTableView } from './state/reducers';
+import { PanelEditorUIState, toggleTableView } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { calculatePanelSize } from './utils';
@@ -191,11 +191,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onToggleTableView = () => {
     this.props.toggleTableView();
-  };
-
-  onTogglePanelOptions = () => {
-    const { uiState, updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
@@ -438,8 +433,27 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
+  renderHorizontalSplit(uiState: PanelEditorUIState, styles: EditorStyles) {
+    return (
+      <SplitPaneWrapper
+        splitOrientation="horizontal"
+        maxSize={-200}
+        paneSize={uiState.topPaneSize}
+        primary="first"
+        secondaryPaneStyle={{ minHeight: 0 }}
+        onDragFinished={(size) => {
+          if (size) {
+            updatePanelEditorUIState({ topPaneSize: size / window.innerHeight });
+          }
+        }}
+      >
+        {this.renderPanelAndEditor(styles)}
+      </SplitPaneWrapper>
+    );
+  }
+
   render() {
-    const { initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav, className } = this.props;
+    const { initDone, uiState, theme, sectionNav, pageNav, className, updatePanelEditorUIState } = this.props;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
@@ -457,18 +471,29 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       >
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>
-            <SplitPaneWrapper
-              leftPaneComponents={this.renderPanelAndEditor(styles)}
-              rightPaneComponents={this.renderOptionsPane()}
-              uiState={uiState}
-              updateUiState={updatePanelEditorUIState}
-              rightPaneVisible={uiState.isPanelOptionsVisible}
-            />
+            {!uiState.isPanelOptionsVisible ? (
+              this.renderHorizontalSplit(uiState, styles)
+            ) : (
+              <SplitPaneWrapper
+                splitOrientation="vertical"
+                maxSize={-300}
+                paneSize={uiState.rightPaneSize}
+                primary="second"
+                onDragFinished={(size) => {
+                  if (size) {
+                    updatePanelEditorUIState({ rightPaneSize: size / window.innerWidth });
+                  }
+                }}
+              >
+                {this.renderHorizontalSplit(uiState, styles)}
+                {this.renderOptionsPane()}
+              </SplitPaneWrapper>
+            )}
           </div>
           {this.state.showSaveLibraryPanelModal && (
             <SaveLibraryPanelModal
               panel={this.props.panel as PanelModelWithLibraryPanel}
-              folderId={this.props.dashboard.meta.folderId as number}
+              folderUid={this.props.dashboard.meta.folderUid ?? ''}
               onConfirm={this.onConfirmAndDismissLibarayPanelModel}
               onDiscard={this.onDiscard}
               onDismiss={this.onConfirmAndDismissLibarayPanelModel}

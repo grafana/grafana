@@ -4,8 +4,11 @@ import {
   Field,
   FieldType,
   getDisplayProcessor,
+  getLinksSupplier,
   GrafanaTheme2,
+  InterpolateFunction,
   isBooleanUnit,
+  SortedVector,
   TimeRange,
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
@@ -58,6 +61,14 @@ export function prepareGraphableFields(
                 return v;
               })
             ),
+          };
+
+          fields.push(copy);
+          break; // ok
+        case FieldType.string:
+          copy = {
+            ...field,
+            values: new ArrayVector(field.values.toArray()),
           };
 
           fields.push(copy);
@@ -122,4 +133,47 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
     return [defaultTimezone];
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
+}
+
+export function regenerateLinksSupplier(
+  alignedDataFrame: DataFrame,
+  frames: DataFrame[],
+  replaceVariables: InterpolateFunction,
+  timeZone: string
+): DataFrame {
+  alignedDataFrame.fields.forEach((field) => {
+    const frameIndex = field.state?.origin?.frameIndex;
+
+    if (frameIndex === undefined) {
+      return;
+    }
+
+    const frame = frames[frameIndex];
+    const tempFields: Field[] = [];
+
+    /* check if field has sortedVector values
+      if it does, sort all string fields in the original frame by the order array already used for the field
+      otherwise just attach the fields to the temporary frame used to get the links
+    */
+    for (const frameField of frame.fields) {
+      if (frameField.type === FieldType.string) {
+        if (field.values instanceof SortedVector) {
+          const copiedField = { ...frameField };
+          copiedField.values = new SortedVector(frameField.values, field.values.getOrderArray());
+          tempFields.push(copiedField);
+        } else {
+          tempFields.push(frameField);
+        }
+      }
+    }
+
+    const tempFrame: DataFrame = {
+      fields: [...alignedDataFrame.fields, ...tempFields],
+      length: alignedDataFrame.fields.length + tempFields.length,
+    };
+
+    field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
+  });
+
+  return alignedDataFrame;
 }

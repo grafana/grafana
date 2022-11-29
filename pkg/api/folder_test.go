@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -145,7 +146,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.folderService = folderService
 		hs.AccessControl = acmock.New()
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
@@ -242,10 +243,11 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		store := mockstore.NewSQLStoreMock()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{
-			AccessControl: acmock.New(),
-			folderService: folderService,
-			Cfg:           setting.NewCfg(),
-			Features:      featuremgmt.WithFeatures(),
+			AccessControl:        acmock.New(),
+			folderService:        folderService,
+			Cfg:                  setting.NewCfg(),
+			Features:             featuremgmt.WithFeatures(),
+			accesscontrolService: actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)
