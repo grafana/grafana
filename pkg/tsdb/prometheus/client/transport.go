@@ -33,13 +33,6 @@ func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *se
 
 	opts.Middlewares = middlewares(logger, httpMethod)
 
-	// Eventually, parts of this will be moved into the Grafana Plugin SDK. However, as the feature `secureSocksDatasourceProxy` is being developed,
-	// we need to translate the datasource json data to an SDK option to let the httpclientprovider know to wrap the transport
-	enableSecureSocksProxy, _ := maputil.GetBool(jsonData, "enableSecureSocksProxy")
-	if enableSecureSocksProxy {
-		opts.CustomOptions["secure_socks_proxy"] = "enabled"
-	}
-
 	// Set SigV4 service namespace
 	if opts.SigV4 != nil {
 		opts.SigV4.Service = "aps"

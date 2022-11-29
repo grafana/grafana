@@ -1,13 +1,8 @@
 package httpclientprovider
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"errors"
 	"fmt"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -18,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
-	"golang.org/x/net/proxy"
 )
 
 var newProviderFunc = sdkhttpclient.NewProvider
@@ -61,70 +55,17 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 				return
 			}
 
-			_, enableSecureSocksProxy := opts.CustomOptions["secure_socks_proxy"]
-			if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && enableSecureSocksProxy {
-				err = newSecureSocksProxy(cfg, transport)
+			if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) &&
+				cfg.SecureSocksDSProxy.Enabled && secureSocksProxyEnabledOnDS(opts) {
+				err = newSecureSocksProxy(&cfg.SecureSocksDSProxy, transport)
 				if err != nil {
-					logger.Error("Failed to enable the socks proxy", "error", err.Error(), "datasource", datasourceName)
+					logger.Error("Failed to enable secure socks proxy", "error", err.Error(), "datasource", datasourceName)
 				}
 			}
 
 			newConntrackRoundTripper(datasourceLabelName, transport)
 		},
 	})
-}
-
-// newSecureSocksProxy takes a http.DefaultTransport and wraps it in a socks5 proxy with TLS
-func newSecureSocksProxy(cfg *setting.Cfg, transport *http.Transport) error {
-	// all fields must be specified to use the proxy
-	if cfg.SecureSocksDSProxy.RootCA == "" {
-		return errors.New("missing rootCA")
-	} else if cfg.SecureSocksDSProxy.ClientCert == "" || cfg.SecureSocksDSProxy.ClientKey == "" {
-		return errors.New("missing client key pair")
-	} else if cfg.SecureSocksDSProxy.ServerName == "" {
-		return errors.New("missing server name")
-	} else if cfg.SecureSocksDSProxy.ProxyAddress == "" {
-		return errors.New("missing proxy address")
-	}
-
-	certPool := x509.NewCertPool()
-	for _, rootCAFile := range strings.Split(cfg.SecureSocksDSProxy.RootCA, " ") {
-		// nolint:gosec
-		// The gosec G304 warning can be ignored because `rootCAFile` comes from config ini.
-		pem, err := os.ReadFile(rootCAFile)
-		if err != nil {
-			return err
-		}
-		if !certPool.AppendCertsFromPEM(pem) {
-			return errors.New("failed to append CA certificate " + rootCAFile)
-		}
-	}
-
-	cert, err := tls.LoadX509KeyPair(cfg.SecureSocksDSProxy.ClientCert, cfg.SecureSocksDSProxy.ClientKey)
-	if err != nil {
-		return err
-	}
-
-	tlsDialer := &tls.Dialer{
-		Config: &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			ServerName:   cfg.SecureSocksDSProxy.ServerName,
-			RootCAs:      certPool,
-		},
-	}
-	dialSocksProxy, err := proxy.SOCKS5("tcp", cfg.SecureSocksDSProxy.ProxyAddress, nil, tlsDialer)
-	if err != nil {
-		return err
-	}
-
-	contextDialer, ok := dialSocksProxy.(proxy.ContextDialer)
-	if !ok {
-		return errors.New("unable to cast socks proxy dialer to context proxy dialer")
-	}
-
-	transport.DialContext = contextDialer.DialContext
-
-	return nil
 }
 
 // newConntrackRoundTripper takes a http.DefaultTransport and adds the Conntrack Dialer
