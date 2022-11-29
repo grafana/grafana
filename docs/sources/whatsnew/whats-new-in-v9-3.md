@@ -24,13 +24,13 @@ Available in **beta** in all editions of Grafana
 
 Use Grafana’s redesigned navigation to get full visibility into the health of your systems, by quickly jumping between features as part of your incident response workflow.
 
-As Grafana has grown from a visualization tool to an observability solution, we’ve added many tools along the way. This has resulted in pages that are visually inconsistent or hard to find. The updates to navigation give Grafana a new look and feel and make page layouts and navigation patterns more consistent.
+As Grafana has grown from a data visualization tool to an observability solution, we’ve added many new features along the way. This has resulted in pages that are visually inconsistent or hard to find. These updates to navigation give Grafana a new look and feel and make page layouts and navigation patterns more consistent.
 
 We’ve revamped the navigation menu and grouped related tools together, making it easier to find what you need. Pages in Grafana now leverage new layouts that include breadcrumbs and a sidebar, allowing you to quickly jump between pages. We’ve also introduced a header that appears on all pages in Grafana, making dashboard search accessible from any page.
 
 To try out Grafana’s new navigation, enable the `topnav` feature toggle. If you are a Cloud Advanced customer, open a ticket with our support team and we will enable it for you.
 
-**Note:** The Grafana and Grafana Cloud documentation has not yet been updated to reflect changes to the navigation.
+**Note:** The Grafana and Grafana Cloud documentation has not yet been updated to reflect changes to the navigation - these changes will roll out when the new navigation becomes generally available.
 
 ## View dashboards in Spanish, French, German, and Simplified Chinese
 
