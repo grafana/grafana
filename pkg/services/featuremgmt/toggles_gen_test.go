@@ -38,6 +38,12 @@ func TestFeatureToggleFiles(t *testing.T) {
 			"toggles_gen.go",
 			generateRegistry(t),
 		)
+
+		// Docs files
+		verifyAndGenerateFile(t,
+			"../../../docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md",
+			generateDocsMD(),
+		)
 	})
 
 	t.Run("check feature naming convention", func(t *testing.T) {
@@ -170,4 +176,51 @@ const (`)
 	buff.WriteString(")\n")
 
 	return buff.String()
+}
+
+func generateDocsMD() string {
+	buf := `---
+aliases:
+  - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+description: Learn about toggles for experimental and beta features, which you can enable or disable.
+title: Configure feature toggles
+weight: 150
+---
+
+# Configure feature toggles
+
+Feature toggles, also known as feature flags, are used for experimental or beta features in Grafana. Although we do not recommend that you use these features in production, you can turn on feature toggles to try out new functionality in development or test environments.
+
+This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md/#feature_toggles" >}}). Feature toogles are also available to Grafana Cloud Advanced customers - if you use Grafana Cloud Advanced, you can open a support ticket specifying the feature toggles and stack you would like them enabled 
+
+## Available feature toggles
+| Feature toggle name | Description                                           | Release stage | Enabled by default |
+|---------------------|-------------------------------------------------------|---------------|--------------------|
+`
+	for _, flag := range standardFeatureFlags {
+		if !flag.RequiresDevMode {
+			on := ""
+			if flag.Expression == "true" {
+				on = "Yes"
+			}
+			buf += "| " + flag.Name + " | " + flag.Description + " | " + flag.State.String() + " | " + on + "  | \n"
+		}
+	}
+
+	buf += `
+## Development feature toggles
+
+The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be especially experimental.
+
+
+| Feature toggle name | Description                                           | 
+|---------------------|-------------------------------------------------------|
+`
+	for _, flag := range standardFeatureFlags {
+		if flag.RequiresDevMode {
+			buf += "| " + flag.Name + " | " + flag.Description + " | \n"
+		}
+	}
+
+	return buf
 }

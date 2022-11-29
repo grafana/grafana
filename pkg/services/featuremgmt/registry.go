@@ -115,7 +115,7 @@ var (
 		{
 			Name:         "lokiMonacoEditor",
 			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			Expression:   "true",
 			FrontendOnly: true,
 		},
