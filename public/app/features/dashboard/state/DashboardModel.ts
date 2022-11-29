@@ -126,11 +126,6 @@ export class DashboardModel implements TimeModel {
   };
 
   constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
-    if (!data) {
-      // FIXME please, use default?
-      data = {};
-    }
-
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // TODO: UID is used in many places assuming it always exist
