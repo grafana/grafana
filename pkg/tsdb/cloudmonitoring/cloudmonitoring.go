@@ -208,18 +208,16 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) []string {
 	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
-	filters := []string{}
 	if prevFilters != nil {
 		filtersIface := prevFilters.([]interface{})
+		filters := []string{}
 		for _, f := range filtersIface {
 			filters = append(filters, f.(string))
 		}
 		metricTypeFilterArray = append([]string{"AND"}, metricTypeFilterArray...)
-		filters = append(filters, metricTypeFilterArray...)
-	} else {
-		filters = metricTypeFilterArray
+		return append(filters, metricTypeFilterArray...)
 	}
-	return filters
+	return metricTypeFilterArray
 }
 
 func migrateRequest(req *backend.QueryDataRequest) error {
