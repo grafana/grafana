@@ -10,9 +10,6 @@ import (
 
 type LoginServiceFake struct{}
 
-func (l *LoginServiceFake) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
-	return nil, nil
-}
 func (l *LoginServiceFake) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	return nil
 }
