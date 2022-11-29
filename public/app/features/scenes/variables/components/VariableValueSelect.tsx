@@ -7,7 +7,7 @@ import { SceneComponentProps } from '../../core/types';
 import { MultiValueVariable } from '../variants/MultiValueVariable';
 
 export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVariable>) {
-  const { value, key, loading, isMulti, options } = model.useState();
+  const { value, key, loading, isMulti } = model.useState();
 
   if (isMulti) {
     return (
@@ -18,7 +18,7 @@ export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVar
         value={isArray(value) ? value : [value]}
         allowCustomValue
         isLoading={loading}
-        options={options}
+        options={model.getOptionsForSelect()}
         closeMenuOnSelect={false}
         onChange={(newValue) => {
           model.changeValueTo(
@@ -38,7 +38,7 @@ export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVar
       value={value}
       allowCustomValue
       isLoading={loading}
-      options={options}
+      options={model.getOptionsForSelect()}
       onChange={(newValue) => {
         model.changeValueTo(newValue.value!, newValue.label!);
       }}

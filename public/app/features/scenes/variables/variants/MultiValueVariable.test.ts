@@ -152,5 +152,18 @@ describe('MultiValueVariable', () => {
 
       expect(variable.getValue()).toEqual(['1', '2']);
     });
+
+    it('GetValue should return allValue when value is $__all', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        optionsToReturn: [],
+        value: ALL_VARIABLE_VALUE,
+        allValue: '.*',
+        text: 'A',
+      });
+
+      expect(variable.getValue()).toEqual('.*');
+    });
   });
 });

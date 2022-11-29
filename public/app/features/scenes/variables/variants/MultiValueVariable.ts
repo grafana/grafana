@@ -19,6 +19,8 @@ export interface MultiValueVariableState extends SceneVariableState {
   text: VariableValue; // old current.value
   options: VariableValueOption[];
   isMulti?: boolean;
+  includeAll?: boolean;
+  allValue?: string;
 }
 
 export interface VariableGetOptionsArgs {
@@ -101,6 +103,10 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
   public getValue(): VariableValue {
     if (this.hasAllValue()) {
+      if (this.state.allValue) {
+        return this.state.allValue;
+      }
+
       return this.state.options.map((x) => x.value);
     }
 
@@ -144,5 +150,15 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   private setStateHelper(state: Partial<MultiValueVariableState>) {
     const test: SceneObject<MultiValueVariableState> = this;
     test.setState(state);
+  }
+
+  public getOptionsForSelect(): VariableValueOption[] {
+    let options = this.state.options;
+
+    if (this.state.includeAll) {
+      options = [{ value: ALL_VARIABLE_VALUE, label: ALL_VARIABLE_TEXT }, ...options];
+    }
+
+    return options;
   }
 }

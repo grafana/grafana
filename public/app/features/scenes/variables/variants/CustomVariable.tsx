@@ -43,11 +43,6 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
     });
 
     return of(options);
-
-    // TODO: Support 'All'
-    //if (this.state.includeAll) {
-    //  options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
-    //}
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {

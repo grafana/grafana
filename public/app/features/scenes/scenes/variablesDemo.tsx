@@ -23,6 +23,7 @@ export function getVariablesDemo(): Scene {
           query: 'A.*',
           value: 'server',
           text: '',
+          includeAll: true,
           delayMs: 1000,
           options: [],
         }),
