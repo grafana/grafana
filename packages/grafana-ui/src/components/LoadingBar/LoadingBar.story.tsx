@@ -8,13 +8,17 @@ import { LoadingBar, LoadingBarProps, useStyles2 } from '@grafana/ui';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
+import mdx from './LoadingBar.mdx';
+
 const meta: ComponentMeta<typeof LoadingBar> = {
   title: 'General/LoadingBar',
   component: LoadingBar,
   decorators: [withCenteredStory],
   parameters: {
     controls: {},
-    docs: {},
+    docs: {
+      page: mdx,
+    },
   },
 };
 
