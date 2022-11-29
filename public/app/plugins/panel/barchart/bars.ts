@@ -140,6 +140,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       : (u, splits) => {
           // hSpacing?
           const dim = u.bbox.width;
+          const _dir = dir * (isXHorizontal ? 1 : -1);
 
           let dataLen = splits.length;
           let lastIdx = dataLen - 1;
@@ -156,7 +157,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             return shouldSkip ? null : v;
           });
 
-          return dir === -1 ? splits2 : splits2.reverse();
+          return _dir === 1 ? splits2 : splits2.reverse();
         };
 
   // the splits passed into here are data[0] values looked up by the indices returned from splits()

@@ -156,6 +156,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
           placeholder: 'None',
           min: 0,
         },
+        showIf: (opts) => opts.xTickLabelRotation !== 0,
       })
       .addCustomEditor({
         id: 'xTickLabelSpacing',
