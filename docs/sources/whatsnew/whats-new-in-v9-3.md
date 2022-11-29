@@ -38,7 +38,7 @@ Generally available in all editions of Grafana
 
 We have added four new languages to Grafana: Spanish, French, German, and Simplified Chinese.
 
-With millions of users across the globe, Grafana has a global footprint. In order to make it accessible to a wider audience, we have taken the first steps in localizing key workflows. You can now set Grafana’s language for the navigation, viewing dashboards, and a handful of settings. This will cover the main activities a Viewer would perform within Grafana.
+With millions of users across the globe, Grafana has a global footprint. In order to make it accessible to a wider audience, we have taken the first steps in localizing key workflows. You can now set Grafana’s language for the navigation, viewing dashboards, and some settings. This will cover the main activities a Viewer performs within Grafana.
 
 Read more about configuring the [default language for your organization](https://grafana.com/docs/grafana/latest/administration/organization-preferences/) and [updating your profile](https://grafana.com/docs/grafana/latest/administration/user-management/user-preferences/) in our documentation.
 
