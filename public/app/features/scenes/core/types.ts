@@ -63,7 +63,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** This abtractions declares what variables the scene object depends on and how to handle when they change value. **/
   readonly variableDependency?: SceneVariableDependencyConfigLike;
 
-  /** This abtractions declares what variables the scene object depends on and how to handle when they change value. **/
+  /** This abstraction declares URL sync dependencies of a scene object. **/
   readonly urlSync?: SceneObjectUrlSyncHandler<TState>;
 
   /** Subscribe to state changes */
