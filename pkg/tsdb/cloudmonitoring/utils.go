@@ -1,32 +1,17 @@
 package cloudmonitoring
 
 import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
-
-func reverse(s string) string {
-	chars := []rune(s)
-	for i, j := 0, len(chars)-1; i < j; i, j = i+1, j-1 {
-		chars[i], chars[j] = chars[j], chars[i]
-	}
-	return string(chars)
-}
-
-func toSnakeCase(str string) string {
-	return strings.ToLower(matchAllCap.ReplaceAllString(str, "${1}_${2}"))
-}
-
-func containsLabel(labels []string, newLabel string) bool {
-	for _, val := range labels {
-		if val == newLabel {
-			return true
-		}
-	}
-	return false
-}
 
 func addInterval(period string, field *data.Field) error {
 	period = strings.TrimPrefix(period, "+")
@@ -51,4 +36,27 @@ func toString(v interface{}) string {
 		return ""
 	}
 	return v.(string)
+}
+
+func createRequest(logger log.Logger, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+	u, err := url.Parse(dsInfo.url)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join(u.Path, "render")
+
+	method := http.MethodGet
+	if body != nil {
+		method = http.MethodPost
+	}
+	req, err := http.NewRequest(method, dsInfo.services[cloudMonitor].url, body)
+	if err != nil {
+		logger.Error("Failed to create request", "error", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.URL.Path = proxyPass
+
+	return req, nil
 }

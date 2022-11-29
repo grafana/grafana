@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/huandu/xstrings"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -47,7 +48,7 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 		}
 		logger.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
-	r, err := s.createRequest(logger, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
+	r, err := createRequest(logger, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
@@ -114,6 +115,10 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 		labels := make(map[string]string)
 		labels["resource.type"] = series.Resource.Type
 		seriesLabels["resource.type"] = series.Resource.Type
+		groupBysMap := make(map[string]bool)
+		for _, groupBy := range groupBys {
+			groupBysMap[groupBy] = true
+		}
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.getRefID()
@@ -125,7 +130,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 			labels["metric.label."+key] = value
 			seriesLabels["metric.label."+key] = value
 
-			if len(groupBys) == 0 || containsLabel(groupBys, "metric.label."+key) {
+			if len(groupBys) == 0 || groupBysMap["metric.label."+key] {
 				defaultMetricName += " " + value
 			}
 		}
@@ -134,14 +139,14 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 			labels["resource.label."+key] = value
 			seriesLabels["resource.label."+key] = value
 
-			if containsLabel(groupBys, "resource.label."+key) {
+			if groupBysMap["resource.label."+key] {
 				defaultMetricName += " " + value
 			}
 		}
 
 		for labelType, labelTypeValues := range series.MetaData {
 			for labelKey, labelValue := range labelTypeValues {
-				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
+				key := xstrings.ToSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
 
 				switch v := labelValue.(type) {
 				case string:
@@ -382,7 +387,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) getFilter() string {
 			operator := timeSeriesFilter.parameters.Filters[i-1]
 			switch {
 			case operator == "=~" || operator == "!=~":
-				filterString = reverse(strings.Replace(reverse(filterString), "~", "", 1))
+				filterString = xstrings.Reverse(strings.Replace(xstrings.Reverse(filterString), "~", "", 1))
 				filterString += fmt.Sprintf(`monitoring.regex.full_match("%s")`, part)
 			case strings.Contains(part, "*"):
 				filterString += interpolateFilterWildcards(part)

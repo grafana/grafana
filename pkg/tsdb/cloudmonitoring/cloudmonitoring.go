@@ -7,14 +7,13 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/url"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
+	"github.com/huandu/xstrings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -32,7 +31,6 @@ var (
 )
 
 var (
-	matchAllCap                 = regexp.MustCompile("(.)([A-Z][a-z]*)")
 	legendKeyFormat             = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 	metricNameFormat            = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
 	wildcardRegexRe             = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
@@ -464,7 +462,7 @@ func interpolateFilterWildcards(value string) string {
 		value = strings.Replace(value, "*", "", 1)
 		value = fmt.Sprintf(`ends_with("%s")`, value)
 	case matches == 1 && strings.HasSuffix(value, "*"):
-		value = reverse(strings.Replace(reverse(value), "*", "", 1))
+		value = xstrings.Reverse(strings.Replace(xstrings.Reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
 	case matches != 0:
 		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
@@ -577,29 +575,6 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 		}
 	}
 	return bucketBound
-}
-
-func (s *Service) createRequest(logger log.Logger, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.url)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	method := http.MethodGet
-	if body != nil {
-		method = http.MethodPost
-	}
-	req, err := http.NewRequest(method, dsInfo.services[cloudMonitor].url, body)
-	if err != nil {
-		logger.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.URL.Path = proxyPass
-
-	return req, nil
 }
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
