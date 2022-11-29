@@ -66,7 +66,7 @@ type CreateFolderCommand struct {
 	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid"`
+	ParentUID   string `json:"parentUid"`
 
 	SignedInUser *user.SignedInUser `json:"-"`
 }
@@ -86,7 +86,7 @@ type UpdateFolderCommand struct {
 // to move a folder.
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
-	NewParentUID string `json:"new_parent_uid"`
+	NewParentUID string `json:"newParentUid"`
 	OrgID        int64  `json:"-"`
 
 	SignedInUser *user.SignedInUser `json:"-"`

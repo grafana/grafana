@@ -237,9 +237,15 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     switch (this.type) {
       case 'graph':
-        if (config?.featureToggles?.autoMigrateGraphPanels) {
+        if (config.featureToggles?.autoMigrateGraphPanels || !config.angularSupportEnabled) {
           this.autoMigrateFrom = this.type;
           this.type = 'timeseries';
+        }
+        break;
+      case 'table-old':
+        if (!config.angularSupportEnabled) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'table';
         }
         break;
       case 'heatmap-new':
@@ -416,7 +422,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const wasAngular = this.autoMigrateFrom === 'graph';
+      const wasAngular = this.autoMigrateFrom === 'graph' || this.autoMigrateFrom === 'table-old';
       this.callPanelTypeChangeHandler(
         plugin,
         this.autoMigrateFrom,
