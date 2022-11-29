@@ -68,7 +68,6 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 9
 
-- [What's new in 9.3]({{< relref "whats-new-in-v9-3/" >}})
 - [What's new in 9.2]({{< relref "whats-new-in-v9-2/" >}})
 - [What's new in 9.1]({{< relref "whats-new-in-v9-1/" >}})
 - [What's new in 9.0]({{< relref "whats-new-in-v9-0/" >}})
