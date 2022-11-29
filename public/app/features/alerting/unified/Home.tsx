@@ -35,13 +35,19 @@ export default function Home() {
             </li>
           </ul>
         </ContentBox>
-        <ContentBox title="Getting started" className={styles.gettingStartedBlock}>
+        <ContentBox title="Get started" className={styles.gettingStartedBlock}>
           <Stack direction="column" alignItems="space-between">
             <ul>
-              <li>Create alert rules for your data sources</li>
-              <li>Assign labels to your alerts to give them context and meaning</li>
-              <li>Configure where to send your alerts based on assigned labels</li>
-              <li>Send notifications to tools, such as Slack, MS Teams, PagerDuty, OpsGenie and more</li>
+              <li>Create an alert rule by creating queries and expressions from multiple data sources.</li>
+              <li>
+                Add labels to your alert rule to connect alerts to contact points and silence alert instances that have
+                matching labels.
+              </li>
+              <li>Create contact points to define where to send your alert notifications to.</li>
+              <li>
+                Configure notification policies to decide where, when, and how your alerts are routed to contact points.
+              </li>
+              <li>Add mute timings or silences for times when you don’t want notifications to be sent out.</li>
             </ul>
             <div>
               <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
@@ -61,6 +67,10 @@ export default function Home() {
             allow="autoplay; fullscreen"
             allowFullScreen
             frameBorder="0"
+            // This is necessary because color-scheme defined on :root has impact on iframe elements
+            // More about how color-scheme works for iframes https://github.com/w3c/csswg-drafts/issues/4772
+            // Summary: If the color scheme of an iframe differs from embedding document iframe gets an opaque canvas bg appropriate to its color scheme
+            style={{ colorScheme: 'light dark' }}
           ></iframe>
         </ContentBox>
       </div>
@@ -125,8 +135,11 @@ function WelcomeHeader({ className }: { className?: string }) {
 
   return (
     <div className={cx(styles.container, className)}>
-      <h2>What you can do</h2>
-      <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Alerting Docs" />
+      <header>
+        <h2>Welcome to Grafana Alerting</h2>
+        <div>Grafana Alerting helps you manage your alert rules.</div>
+      </header>
+      {/*<ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Alerting Docs" />*/}
 
       <div className={styles.ctaContainer}>
         <WelcomeCTABox
