@@ -1,21 +1,21 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-ui/
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-header/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-row/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/shortcuts/
-  - /docs/grafana/latest/dashboards/search/
-  - /docs/grafana/latest/reference/search/
+  - dashboard-ui/
+  - dashboard-ui/dashboard-header/
+  - ../features/dashboard/dashboards/
+  - dashboard-ui/dashboard-row/
+  - ../features/dashboard/dashboards/
+  - shortcuts/
+  - search/
+  - ../reference/search/
   - /docs/grafana/latest/dashboards/use-dashboards/
-title: Use dashboards
-menuTitle: Use dashboards
-weight: 1
 keywords:
   - dashboard
   - search
   - shortcuts
+menuTitle: Use dashboards
+title: Use dashboards
+weight: 1
 ---
 
 # Use dashboards

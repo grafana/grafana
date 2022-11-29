@@ -1,9 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/migrating-alerts/differences-and-limitations/
+  - differences-and-limitations/
   - /docs/grafana/latest/alerting/migrating-alerts/migrating-legacy-alerts/
-  - /docs/grafana/latest/alerting/migrating-legacy-alerts/
-  - /docs/grafana/latest/alerting/unified-alerting/opt-in/
+  - ../migrating-legacy-alerts/
+  - ../unified-alerting/opt-in/
 description: Migrate legacy dashboard alerts
 title: Differences and limitations
 weight: 106

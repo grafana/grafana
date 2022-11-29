@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/datasources/prometheus/template-variables/
-  - /docs/grafana/latest/data-sources/prometheus/template-variables/
+  - ../../data-sources/prometheus/template-variables/
 description: Using template variables with Prometheus in Grafana
 keywords:
   - grafana

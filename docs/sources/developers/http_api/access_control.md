@@ -1,8 +1,8 @@
 ---
 aliases:
   - /docs/grafana/latest/developers/http_api/access_control/
-  - /docs/grafana/latest/http_api/access_control/
-  - /docs/grafana/latest/http_api/accesscontrol/
+  - ../../http_api/access_control/
+  - ../../http_api/accesscontrol/
 description: ''
 keywords:
   - grafana

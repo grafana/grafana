@@ -1,9 +1,9 @@
 ---
 aliases:
   - /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
-  - /docs/grafana/latest/datasources/cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/aws-authentication/
-  - /docs/grafana/latest/data-sources/elasticsearch/aws-authentication/
+  - ../cloudwatch/
+  - ../../data-sources/aws-cloudwatch/aws-authentication/
+  - ../../data-sources/elasticsearch/aws-authentication/
 description: Guide to configuring AWS authentication in Grafana
 keywords:
   - grafana

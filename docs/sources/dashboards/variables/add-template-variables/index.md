@@ -1,34 +1,31 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/variable-types/
-  - /docs/grafana/latest/variables/add-query-variable/
-  - /docs/grafana/latest/variables/variable-types/add-query-variable/
-  - /docs/grafana/latest/variables/add-custom-variable/
-  - /docs/grafana/latest/variables/variable-types/add-custom-variable/
-  - /docs/grafana/latest/variables/add-text-box-variable/
-  - /docs/grafana/latest/variables/variable-types/add-text-box-variable/
-  - /docs/grafana/latest/variables/add-constant-variable/
-  - /docs/grafana/latest/variables/variable-types/add-constant-variable/
-  - /docs/grafana/latest/variables/add-data-source-variable/
-  - /docs/grafana/latest/variables/variable-types/add-data-source-variable/
-  - /docs/grafana/latest/variables/add-interval-variable/
-  - /docs/grafana/latest/variables/variable-types/add-interval-variable/
-  - /docs/grafana/latest/variables/add-ad-hoc-filters/
-  - /docs/grafana/latest/variables/variable-types/add-ad-hoc-filters/
-  - /docs/grafana/latest/variables/global-variables/
-  - /docs/grafana/latest/variables/variable-types/global-variables/
-  - /docs/grafana/latest/variables/chained-variables/
-  - /docs/grafana/latest/variables/variable-types/chained-variables/
-  - /docs/grafana/latest/variables/add-template-variables/
-  - /docs/grafana/latest/variables/variable-selection-options/
-  - /docs/grafana/latest/variables/filter-variables-with-regex/
-  - /docs/grafana/latest/variables/formatting-multi-value-variables/
-  - /docs/grafana/latest/reference/templating/
-  - /docs/grafana/latest/variables/manage-variable/
+  - ../../variables/variable-types/
+  - ../../variables/add-query-variable/
+  - ../../variables/variable-types/add-query-variable/
+  - ../../variables/add-custom-variable/
+  - ../../variables/variable-types/add-custom-variable/
+  - ../../variables/add-text-box-variable/
+  - ../../variables/variable-types/add-text-box-variable/
+  - ../../variables/add-constant-variable/
+  - ../../variables/variable-types/add-constant-variable/
+  - ../../variables/add-data-source-variable/
+  - ../../variables/variable-types/add-data-source-variable/
+  - ../../variables/add-interval-variable/
+  - ../../variables/variable-types/add-interval-variable/
+  - ../../variables/add-ad-hoc-filters/
+  - ../../variables/variable-types/add-ad-hoc-filters/
+  - ../../variables/global-variables/
+  - ../../variables/variable-types/global-variables/
+  - ../../variables/chained-variables/
+  - ../../variables/variable-types/chained-variables/
+  - ../../variables/add-template-variables/
+  - ../../variables/variable-selection-options/
+  - ../../variables/filter-variables-with-regex/
+  - ../../variables/formatting-multi-value-variables/
+  - ../../reference/templating/
+  - ../../variables/manage-variable/
   - /docs/grafana/latest/dashboards/variables/add-template-variables/
-title: Add and manage variables
-menuTitle: Manage variables
-weight: 100
 keywords:
   - grafana
   - documentation
@@ -39,6 +36,9 @@ keywords:
   - nested
   - chained
   - linked
+menuTitle: Manage variables
+title: Add and manage variables
+weight: 100
 ---
 
 # Add and manage variables

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/configure-alertmanager
-  - /docs/grafana/latest/alerting/configure-alertmanager
+  - ../configure-alertmanager/
+  - ../configure-alertmanager/
 description: Configure Alertmanager
 keywords:
   - grafana

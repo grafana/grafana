@@ -1,20 +1,20 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/enterprise/reporting/
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/dashboards/reporting/
-  - /docs/grafana/latest/enterprise/export-pdf/
-  - /docs/grafana/latest/panels/create-reports
+  - ../administration/reports/
+  - ../enterprise/reporting/
+  - ../administration/reports/
+  - reporting/
+  - ../enterprise/export-pdf/
+  - ../panels/create-reports/
   - /docs/grafana/latest/dashboards/create-reports
-title: Create and manage reports
-menuTitle: Reporting
-weight: 85
 keywords:
   - grafana
   - reporting
   - export
   - pdf
+menuTitle: Reporting
+title: Create and manage reports
+weight: 85
 ---
 
 # Create and manage reports

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-history/
-  - /docs/grafana/latest/reference/dashboard_history/
+  - ../dashboard-history/
+  - ../../reference/dashboard_history/
   - /docs/grafana/latest/dashboards/build-dashboards/manage-version-history/
 keywords:
   - grafana
@@ -9,8 +9,8 @@ keywords:
   - documentation
   - version
   - history
-title: Manage dashboard version history
 menutitle: Manage version history
+title: Manage dashboard version history
 weight: 400
 ---
 

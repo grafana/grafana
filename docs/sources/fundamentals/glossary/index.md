@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/basics/glossary/
-  - /docs/grafana/latest/getting-started/glossary/
-  - /docs/grafana/latest/guides/glossary/
+  - ../basics/glossary/
+  - ../getting-started/glossary/
+  - ../guides/glossary/
   - /docs/grafana/latest/fundamentals/glossary/
 description: Grafana glossary
 keywords:

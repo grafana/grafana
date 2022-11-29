@@ -1,17 +1,17 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/configure-panels-visualizations/
+  - dashboards/configure-panels-visualizations/
   - /docs/grafana/latest/panels-visualizations/
-  - /docs/grafana/latest/features/panels/panels/
-  - /docs/grafana/latest/panels/
-title: Panels and visualizations
-menuTitle: Panels and visualizations
-weight: 80
+  - features/panels/panels/
+  - panels/
 keywords:
   - grafana
   - configure
   - panels
   - visualizations
+menuTitle: Panels and visualizations
+title: Panels and visualizations
+weight: 80
 ---
 
 # Panels and visualizations

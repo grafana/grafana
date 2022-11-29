@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/json-model/
-  - /docs/grafana/latest/reference/dashboard/
+  - ../json-model/
+  - ../../reference/dashboard/
   - /docs/grafana/latest/dashboards/build-dashboards/view-dashboard-json-model/
 keywords:
   - grafana

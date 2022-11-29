@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/developers/http_api/playlist/
-  - /docs/grafana/latest/http_api/playlist/
+  - ../../http_api/playlist/
 description: Playlist Admin HTTP API
 keywords:
   - grafana
