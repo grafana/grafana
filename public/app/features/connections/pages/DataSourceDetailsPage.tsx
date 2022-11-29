@@ -33,10 +33,9 @@ function NotFoundDatasource() {
 
   return (
     <Alert severity={AppNotificationSeverity.Warning} title="">
-      Maybe you have mistyped the URL or the plugin with the id <Badge text={id} color="orange" /> is not available
-      anymore?
+      Maybe you mistyped the URL or the plugin with the id <Badge text={id} color="orange" /> is unavailable.
       <br />
-      To see what is available please see <a href={ROUTES.ConnectData}>the list of datasources</a>.
+      To see a list of available datasources please <a href={ROUTES.ConnectData}>click here</a>.
     </Alert>
   );
 }
