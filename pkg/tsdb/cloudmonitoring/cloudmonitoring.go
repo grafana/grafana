@@ -207,18 +207,16 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) []string {
 	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
-	filters := []string{}
 	if prevFilters != nil {
 		filtersIface := prevFilters.([]interface{})
+		filters := []string{}
 		for _, f := range filtersIface {
 			filters = append(filters, f.(string))
 		}
 		metricTypeFilterArray = append([]string{"AND"}, metricTypeFilterArray...)
-		filters = append(filters, metricTypeFilterArray...)
-	} else {
-		filters = metricTypeFilterArray
+		return append(filters, metricTypeFilterArray...)
 	}
-	return filters
+	return metricTypeFilterArray
 }
 
 func migratePreprocessor(tsl *timeSeriesList, preprocessor string) {
@@ -227,16 +225,18 @@ func migratePreprocessor(tsl *timeSeriesList, preprocessor string) {
 	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
 	t := toPreprocessorType(preprocessor)
 	if t != PreprocessorTypeNone {
+		// Move aggregation to secondaryAggregation
 		tsl.SecondaryAlignmentPeriod = tsl.AlignmentPeriod
 		tsl.SecondaryCrossSeriesReducer = tsl.CrossSeriesReducer
 		tsl.SecondaryPerSeriesAligner = tsl.PerSeriesAligner
+		tsl.SecondaryGroupBys = tsl.GroupBys
 
+		// Set a default cross series reducer if grouped
 		if len(tsl.GroupBys) == 0 {
 			tsl.CrossSeriesReducer = crossSeriesReducerDefault
-		} else {
-			tsl.SecondaryGroupBys = tsl.GroupBys
 		}
 
+		// Set aligner based on preprocessor type
 		aligner := "ALIGN_RATE"
 		if t == PreprocessorTypeDelta {
 			aligner = "ALIGN_DELTA"

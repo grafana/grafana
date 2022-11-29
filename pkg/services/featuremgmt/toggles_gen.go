@@ -215,6 +215,10 @@ const (
 	// Show the flame graph
 	FlagFlameGraph = "flameGraph"
 
+	// FlagCloudWatchCrossAccountQuerying
+	// Use cross-account querying in CloudWatch datasource
+	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
+
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
 	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
@@ -266,4 +270,8 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagAuthnService
+	// Use new auth service to perform authentication
+	FlagAuthnService = "authnService"
 )
