@@ -30,7 +30,7 @@ cookie_secure = true
 
 ### Add a SameSite attribute to cookies
 
-To mitigate almost all CSRF-attacks, set the _cookie_samesite_ option to `strict`. This setting prevents clients from sending the cookie in requests that are made cross-site, but only from the site that sat the cookie.
+To mitigate almost all CSRF-attacks, set the _cookie_samesite_ option to `strict`. This setting prevents clients from sending the cookie in requests that are made cross-site, but only from the site that creates the cookie.
 
 Example:
 
@@ -44,7 +44,7 @@ cookie_samesite = strict
 ### Add a prefix to cookie names
 
 You can further secure the cookie authentication by adding a [Cookie Prefix](https://googlechrome.github.io/samples/cookie-prefixes/). Cookies without a special prefix can be overwritten in a man-in-the-middle attack, even if the site uses HTTPS. A cookie prefix forces clients only to accept the cookie if certain criteria are met.
-Add a prefix to the current cookie name with either `__Secure-` or `__Host-` where the latter provides additional protection by only allowing the cookie to be sat from the host that sent the Set-Cookie header.
+Add a prefix to the current cookie name with either `__Secure-` or `__Host-` where the latter provides additional protection by only allowing the cookie to be created from the host that sent the Set-Cookie header.
 
 Example:
 
