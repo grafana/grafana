@@ -5,6 +5,7 @@ import {
 } from '../__mocks__/argResourcePickerResponse';
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
+import { mockGetValidLocations } from '../__mocks__/resourcePickerRows';
 import { AzureGraphResponse } from '../types';
 
 import ResourcePickerData from './resourcePickerData';
@@ -21,7 +22,10 @@ const createResourcePickerData = (responses: AzureGraphResponse[]) => {
     postResource.mockResolvedValueOnce(res);
   });
   resourcePickerData.postResource = postResource;
-
+  const logLocationsMap = mockGetValidLocations();
+  resourcePickerData.getValidLocations = jest.fn().mockResolvedValue(logLocationsMap);
+  resourcePickerData.logLocationsMap = logLocationsMap;
+  resourcePickerData.logLocations = Array.from(logLocationsMap.values()).map((location) => `"${location.name}"`);
   return { resourcePickerData, postResource };
 };
 describe('AzureMonitor resourcePickerData', () => {

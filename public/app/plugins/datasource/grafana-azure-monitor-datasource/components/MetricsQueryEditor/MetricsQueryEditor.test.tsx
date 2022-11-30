@@ -10,6 +10,7 @@ import createMockQuery from '../../__mocks__/query';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
+  mockGetValidLocations,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
@@ -44,7 +45,7 @@ export function createMockResourcePickerData() {
   mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
   mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
   mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
-
+  mockResourcePicker.getValidLocations = jest.fn().mockResolvedValue(mockGetValidLocations());
   return mockResourcePicker;
 }
 
