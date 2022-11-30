@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -71,9 +72,10 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
       {/* List */}
       <ul className={styles.list}>
         {dataSources.map((dataSource) => {
+          const dsLink = config.appSubUrl + dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid);
           return (
             <li key={dataSource.uid}>
-              <Card href={dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid)}>
+              <Card href={dsLink}>
                 <Card.Heading>{dataSource.name}</Card.Heading>
                 <Card.Figure>
                   <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
