@@ -192,7 +192,6 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.terms.min_doc_count).toBe(1);
   });
 
-  // This wasn't migrated, I don't think it make sense at backend as variables are going to be interpolated before
   it('with term agg and variable as min_doc_count', () => {
     const query = builder.build({
       refId: 'A',

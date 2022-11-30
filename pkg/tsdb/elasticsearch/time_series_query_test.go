@@ -22,9 +22,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With defaults", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"refId": "A",
 				"timeField": "@timestamp",
-				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "1" }],
+				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
 				"metrics": [{"type": "count", "id": "0" }]
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
@@ -34,7 +33,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, rangeFilter.Lte, toMs)
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
-			require.Equal(t, sr.Aggs[0].Key, "1")
+			require.Equal(t, sr.Aggs[0].Key, "2")
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 			require.Equal(t, dateHistogramAgg.Field, "@timestamp")
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromMs)
@@ -1094,7 +1093,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, serialDiffAgg.Key, "2")
 			plAgg := serialDiffAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			require.Equal(t, plAgg.BucketPath, "3")
-			require.Equal(t, plAgg.Settings["lag"], float64(5))
+			require.Equal(t, plAgg.Settings["lag"], 5.)
 		})
 
 		t.Run("With serial_diff (from frontend tests)", func(t *testing.T) {
