@@ -1,7 +1,7 @@
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
-import type { Situation, Label } from './situation';
+import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 
@@ -27,11 +27,7 @@ export type DataProvider = {
   getAllMetricNames: () => Promise<Metric[]>;
   getAllLabelNames: () => Promise<string[]>;
   getLabelValues: (labelName: string) => Promise<string[]>;
-  // getSeries: (selector: string) => Promise<Record<string, string[]>>;
-
-  // get series values
   getSeriesValues: (name: string, match: string) => Promise<string[]>;
-  // Get labels for series
   getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
 };
 
@@ -160,11 +156,7 @@ async function getLabelValues(
     return dataProvider.getLabelValues(labelName);
   } else {
     const selector = makeSelector(metric, otherLabels);
-    // const data = await dataProvider.getSeries(selector);
-    // return data[labelName] ?? [];
-
-    const data = await dataProvider.getSeriesValues(labelName, selector);
-    return data;
+    return await dataProvider.getSeriesValues(labelName, selector);
   }
 }
 
