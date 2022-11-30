@@ -2,7 +2,6 @@ package loginattemptimpl
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -17,6 +16,7 @@ type xormStore struct {
 type store interface {
 	CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error)
+	DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error)
 }
 
@@ -41,26 +41,7 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAtte
 func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error) {
 	var deletedRows int64
 	err := xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var maxId int64
-		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
-		result, err := sess.Query(sql, cmd.OlderThan.Unix())
-		if err != nil {
-			return err
-		}
-		if len(result) == 0 || result[0] == nil {
-			return nil
-		}
-
-		// TODO: why don't we know the type of ID?
-		maxId = toInt64(result[0]["id"])
-
-		if maxId == 0 {
-			return nil
-		}
-
-		sql = "DELETE FROM login_attempt WHERE id <= ?"
-
-		deleteResult, err := sess.Exec(sql, maxId)
+		deleteResult, err := sess.Exec("DELETE FROM login_attempt WHERE created < ?", cmd.OlderThan.Unix())
 		if err != nil {
 			return err
 		}
@@ -72,6 +53,13 @@ func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLo
 		return nil
 	})
 	return deletedRows, err
+}
+
+func (xs *xormStore) DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error {
+	return xs.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM login_attempt WHERE username = ?", cmd.Username)
+		return err
+	})
 }
 
 func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error) {
@@ -92,17 +80,4 @@ func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query GetUser
 	})
 
 	return total, err
-}
-
-func toInt64(i interface{}) int64 {
-	switch i := i.(type) {
-	case []byte:
-		n, _ := strconv.ParseInt(string(i), 10, 64)
-		return n
-	case int:
-		return int64(i)
-	case int64:
-		return i
-	}
-	return 0
 }

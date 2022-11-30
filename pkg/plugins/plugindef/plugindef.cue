@@ -16,7 +16,7 @@ seqs: [
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
-				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
+				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
 
 				// The set of all plugin types. This hidden field exists solely
 				// so that the set can be string-interpolated into other fields.

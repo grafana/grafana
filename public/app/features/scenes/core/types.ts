@@ -1,13 +1,13 @@
 import React from 'react';
 import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
-import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, TimeZone, UrlQueryMap } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, TimeZone } from '@grafana/data';
 
 import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
-  $timeRange?: SceneTimeRange;
+  $timeRange?: SceneTimeRangeLike;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
   $variables?: SceneVariables;
@@ -19,8 +19,6 @@ export interface SceneLayoutChildSize {
 export interface SceneLayoutChildInteractions {
   isDraggable?: boolean;
   isResizable?: boolean;
-  isCollapsible?: boolean;
-  isCollapsed?: boolean;
 }
 
 export interface SceneLayoutChildState
@@ -64,6 +62,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** This abtractions declares what variables the scene object depends on and how to handle when they change value. **/
   readonly variableDependency?: SceneVariableDependencyConfigLike;
+
+  /** This abstraction declares URL sync dependencies of a scene object. **/
+  readonly urlSync?: SceneObjectUrlSyncHandler<TState>;
 
   /** Subscribe to state changes */
   subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
@@ -128,11 +129,15 @@ interface SceneComponentEditWrapperProps {
   children: React.ReactNode;
 }
 
-export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {
+export interface SceneTimeRangeState extends SceneObjectStatePlain {
+  from: string;
+  to: string;
   timeZone: TimeZone;
+  fiscalYearStartMonth?: number;
+  value: TimeRange;
 }
 
-export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
+export interface SceneTimeRangeLike extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;
   onRefresh(): void;
@@ -147,7 +152,16 @@ export function isSceneObject(obj: any): obj is SceneObject {
 }
 
 /** These functions are still just temporary until this get's refined */
-export interface SceneObjectWithUrlSync extends SceneObject {
-  getUrlState(): UrlQueryMap;
-  updateFromUrl(values: UrlQueryMap): void;
+export interface SceneObjectWithUrlSync<TState> extends SceneObject {
+  getUrlState(state: TState): SceneObjectUrlValues;
+  updateFromUrl(values: SceneObjectUrlValues): void;
 }
+
+export interface SceneObjectUrlSyncHandler<TState> {
+  getKeys(): Set<string>;
+  getUrlState(state: TState): SceneObjectUrlValues;
+  updateFromUrl(values: SceneObjectUrlValues): void;
+}
+
+export type SceneObjectUrlValue = string | string[] | undefined | null;
+export type SceneObjectUrlValues = Record<string, SceneObjectUrlValue>;
