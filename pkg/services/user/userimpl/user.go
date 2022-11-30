@@ -35,7 +35,7 @@ func ProvideService(
 	cacheService *localcache.CacheService,
 	quotaService quota.Service,
 ) (user.Service, error) {
-	store := provideStore(db, cfg)
+	store := ProvideStore(db, cfg)
 	s := &Service{
 		store:        &store,
 		orgService:   orgService,

@@ -30,7 +30,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
 	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 	require.NoError(t, err)
-	userStore := provideStore(ss, setting.NewCfg())
+	userStore := ProvideStore(ss, setting.NewCfg())
 	usr := &user.SignedInUser{
 		OrgID:       1,
 		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
@@ -725,7 +725,7 @@ func TestIntegrationUserUpdate(t *testing.T) {
 	}
 
 	ss := db.InitTestDB(t)
-	userStore := provideStore(ss, setting.NewCfg())
+	userStore := ProvideStore(ss, setting.NewCfg())
 
 	users := createFiveTestUsers(t, ss, func(i int) *user.CreateUserCommand {
 		return &user.CreateUserCommand{
