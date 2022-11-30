@@ -13,7 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -130,5 +132,46 @@ func TestNewSecureSocksProxy(t *testing.T) {
 			settings.RootCA = rootCACert
 		})
 		require.Error(t, newSecureSocksProxy(settings, &http.Transport{}))
+	})
+}
+
+func TestSecureSocksProxyEnabledOnDS(t *testing.T) {
+	t.Run("Secure socks proxy should only be enabled when the json data contains enableSecureSocksProxy=true", func(t *testing.T) {
+		tests := []struct {
+			instanceSettings *backend.AppInstanceSettings
+			enabled          bool
+		}{
+			{
+				instanceSettings: &backend.AppInstanceSettings{
+					JSONData: []byte("{}"),
+				},
+				enabled: false,
+			},
+			{
+				instanceSettings: &backend.AppInstanceSettings{
+					JSONData: []byte("{ \"enableSecureSocksProxy\": \"nonbool\" }"),
+				},
+				enabled: false,
+			},
+			{
+				instanceSettings: &backend.AppInstanceSettings{
+					JSONData: []byte("{ \"enableSecureSocksProxy\": false }"),
+				},
+				enabled: false,
+			},
+			{
+				instanceSettings: &backend.AppInstanceSettings{
+					JSONData: []byte("{ \"enableSecureSocksProxy\": true }"),
+				},
+				enabled: true,
+			},
+		}
+
+		for _, tt := range tests {
+			opts, err := tt.instanceSettings.HTTPClientOptions()
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.enabled, secureSocksProxyEnabledOnDS(opts))
+		}
 	})
 }
