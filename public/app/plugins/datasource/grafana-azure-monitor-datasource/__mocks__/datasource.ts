@@ -27,13 +27,13 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       getProvider: jest.fn().mockResolvedValueOnce({
         namespace: 'Microsoft.Insights',
         resourceTypes: [
-          { resourceType: 'workspace', locations: ['northeurope'], apiVersions: ['2022-11-11'], capabilities: '' },
+          { resourceType: 'logs', locations: ['North Europe'], apiVersions: ['2022-11-11'], capabilities: '' },
         ],
       }),
       getLocations: jest
         .fn()
         .mockResolvedValueOnce(
-          new Map([['northeurope', { displayName: 'North Europe', name: 'northeurope', supportsLogs: true }]])
+          new Map([['North Europe', { displayName: 'North Europe', name: 'northeurope', supportsLogs: false }]])
         ),
     },
 

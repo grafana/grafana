@@ -7,7 +7,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureDataSourceJsonData, AzureQueryType } from '../types';
+import { AzureDataSourceJsonData, AzureMonitorLocationsResponse, AzureQueryType } from '../types';
 
 const templateSrv = new TemplateSrv();
 
@@ -348,6 +348,89 @@ describe('AzureMonitorDatasource', () => {
       for (const [path, templateVariable] of templateVariables.entries()) {
         expect(get(templatedQuery[0].azureMonitor, path)).toEqual(templateVariable.templateVariable.current.value);
       }
+    });
+  });
+
+  describe('When performing getLocations', () => {
+    const sub1Response: AzureMonitorLocationsResponse = {
+      value: [
+        {
+          id: '/subscriptions/mock-subscription-id-1/locations/northeurope',
+          name: 'northeurope',
+          displayName: 'North Europe',
+          regionalDisplayName: '(Europe) North Europe',
+          metadata: {
+            regionType: 'Physical',
+            regionCategory: 'Recommended',
+            geographyGroup: 'EU',
+            longitude: '-0',
+            latitude: '0',
+            physicalLocation: 'Europe',
+            pairedRegion: [],
+          },
+        },
+      ],
+    };
+
+    const sub2Response: AzureMonitorLocationsResponse = {
+      value: [
+        {
+          id: '/subscriptions/mock-subscription-id-2/locations/eastus2',
+          name: 'eastus2',
+          displayName: 'East US 2',
+          regionalDisplayName: '(US) East US 2',
+          metadata: {
+            regionType: 'Physical',
+            regionCategory: 'Recommended',
+            geographyGroup: 'US',
+            longitude: '-0',
+            latitude: '0',
+            physicalLocation: 'US',
+            pairedRegion: [],
+          },
+        },
+      ],
+    };
+
+    beforeEach(() => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const expectedPaths = [1, 2].map(
+          (sub) => `azuremonitor/subscriptions/mock-subscription-id-${sub}/locations?api-version=2020-01-01`
+        );
+        expect(expectedPaths).toContain(path);
+        if (path.includes('mock-subscription-id-1')) {
+          return Promise.resolve(sub1Response);
+        } else {
+          return Promise.resolve(sub2Response);
+        }
+      });
+    });
+
+    it('should return a locations map', async () => {
+      const result = await ctx.ds.azureMonitorDatasource.getLocations(['mock-subscription-id-1']);
+
+      expect(result.size).toBe(1);
+      expect(result.has('North Europe')).toBe(true);
+      expect(result.get('North Europe')?.name).toBe('northeurope');
+      expect(result.get('North Europe')?.displayName).toBe('North Europe');
+      expect(result.get('North Europe')?.supportsLogs).toBe(false);
+    });
+
+    it('should return a locations map with locations deduped', async () => {
+      const result = await ctx.ds.azureMonitorDatasource.getLocations([
+        'mock-subscription-id-1',
+        'mock-subscription-id-2',
+      ]);
+
+      expect(result.size).toBe(2);
+      expect(result.has('North Europe')).toBe(true);
+      expect(result.get('North Europe')?.name).toBe('northeurope');
+      expect(result.get('North Europe')?.displayName).toBe('North Europe');
+      expect(result.get('North Europe')?.supportsLogs).toBe(false);
+      expect(result.has('East US 2')).toBe(true);
+      expect(result.get('East US 2')?.name).toBe('eastus2');
+      expect(result.get('East US 2')?.displayName).toBe('East US 2');
+      expect(result.get('East US 2')?.supportsLogs).toBe(false);
     });
   });
 
