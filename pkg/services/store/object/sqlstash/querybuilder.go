@@ -12,7 +12,7 @@ type selectQuery struct {
 	args  []interface{}
 }
 
-func (q *selectQuery) addWhere(f string, val string) {
+func (q *selectQuery) addWhere(f string, val interface{}) {
 	q.args = append(q.args, val)
 	q.where = append(q.where, f+"=?")
 }
@@ -35,11 +35,6 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 	} else if count == 1 {
 		q.addWhere(f, vals[0])
 	}
-}
-
-func (q *selectQuery) addWherePrefix(f string, v string) {
-	q.args = append(q.args, v+"%")
-	q.where = append(q.where, f+" LIKE ?")
 }
 
 func (q *selectQuery) toQuery() (string, []interface{}) {

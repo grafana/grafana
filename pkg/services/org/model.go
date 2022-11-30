@@ -148,6 +148,7 @@ type OrgUserDTO struct {
 	LastSeenAtAge string          `json:"lastSeenAtAge"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 	IsDisabled    bool            `json:"isDisabled"`
+	AuthLabels    []string        `json:"authLabels" xorm:"-"`
 }
 
 type RemoveOrgUserCommand struct {

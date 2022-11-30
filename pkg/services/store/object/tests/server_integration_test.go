@@ -48,9 +48,6 @@ func requireObjectMatch(t *testing.T, obj *object.RawObject, m rawObjectMatcher)
 		if m.grn.TenantId > 0 && m.grn.TenantId != obj.GRN.TenantId {
 			mismatches += fmt.Sprintf("expected tenant: %d, actual: %d\n", m.grn.TenantId, obj.GRN.TenantId)
 		}
-		if m.grn.Scope != "" && m.grn.Scope != obj.GRN.Scope {
-			mismatches += fmt.Sprintf("expected Scope: %s, actual: %s\n", m.grn.Scope, obj.GRN.Scope)
-		}
 		if m.grn.Kind != "" && m.grn.Kind != obj.GRN.Kind {
 			mismatches += fmt.Sprintf("expected Kind: %s, actual: %s\n", m.grn.Kind, obj.GRN.Kind)
 		}
@@ -125,9 +122,8 @@ func TestIntegrationObjectServer(t *testing.T) {
 	firstVersion := "1"
 	kind := models.StandardKindJSONObj
 	grn := &object.GRN{
-		Kind:  kind,
-		UID:   "my-test-entity",
-		Scope: models.ObjectStoreScopeEntity,
+		Kind: kind,
+		UID:  "my-test-entity",
 	}
 	body := []byte("{\"name\":\"John\"}")
 
@@ -171,7 +167,6 @@ func TestIntegrationObjectServer(t *testing.T) {
 		foundGRN := readResp.Object.GRN
 		require.NotNil(t, foundGRN)
 		require.Equal(t, testCtx.user.OrgID, foundGRN.TenantId) // orgId becomes the tenant id when not set
-		require.Equal(t, grn.Scope, foundGRN.Scope)
 		require.Equal(t, grn.Kind, foundGRN.Kind)
 		require.Equal(t, grn.UID, foundGRN.UID)
 
@@ -205,9 +200,8 @@ func TestIntegrationObjectServer(t *testing.T) {
 	t.Run("should be able to update an object", func(t *testing.T) {
 		before := time.Now()
 		grn := &object.GRN{
-			Kind:  kind,
-			UID:   util.GenerateShortUID(),
-			Scope: models.ObjectStoreScopeEntity,
+			Kind: kind,
+			UID:  util.GenerateShortUID(),
 		}
 
 		writeReq1 := &object.WriteObjectRequest{
@@ -316,9 +310,8 @@ func TestIntegrationObjectServer(t *testing.T) {
 
 		w2, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:   uid2,
-				Kind:  kind,
-				Scope: grn.Scope,
+				UID:  uid2,
+				Kind: kind,
 			},
 			Body: body,
 		})
@@ -326,9 +319,8 @@ func TestIntegrationObjectServer(t *testing.T) {
 
 		w3, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:   uid3,
-				Kind:  kind2,
-				Scope: grn.Scope,
+				UID:  uid3,
+				Kind: kind2,
 			},
 			Body: body,
 		})
@@ -336,9 +328,8 @@ func TestIntegrationObjectServer(t *testing.T) {
 
 		w4, err := testCtx.client.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				UID:   uid4,
-				Kind:  kind2,
-				Scope: grn.Scope,
+				UID:  uid4,
+				Kind: kind2,
 			},
 			Body: body,
 		})

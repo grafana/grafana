@@ -236,7 +236,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 						Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 					},
 				}
-				err = sqlStore.GetTeamsByUser(context.Background(), query)
+				err = teamSvc.GetTeamsByUser(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
 				require.Equal(t, query.Result[0].Name, "group2 name")

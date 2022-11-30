@@ -125,9 +125,8 @@ func (e *objectStoreJob) start(ctx context.Context) {
 
 		_, err = e.store.AdminWrite(ctx, &object.AdminWriteObjectRequest{
 			GRN: &object.GRN{
-				Scope: models.ObjectStoreScopeEntity,
-				UID:   dash.UID,
-				Kind:  models.StandardKindDashboard,
+				UID:  dash.UID,
+				Kind: models.StandardKindDashboard,
 			},
 			ClearHistory: true,
 			Version:      fmt.Sprintf("%d", dash.Version),
@@ -135,9 +134,11 @@ func (e *objectStoreJob) start(ctx context.Context) {
 			UpdatedAt:    dash.Updated.UnixMilli(),
 			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
 			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
-			Origin:       "export-from-sql",
 			Body:         dash.Data,
 			Comment:      "(exported from SQL)",
+			Origin: &object.ObjectOriginInfo{
+				Source: "export-from-sql",
+			},
 		})
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
@@ -175,9 +176,8 @@ func (e *objectStoreJob) start(ctx context.Context) {
 
 		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
 			GRN: &object.GRN{
-				Scope: models.ObjectStoreScopeEntity,
-				UID:   playlist.Uid,
-				Kind:  models.StandardKindPlaylist,
+				UID:  playlist.Uid,
+				Kind: models.StandardKindPlaylist,
 			},
 			Body:    prettyJSON(playlist),
 			Comment: "export from playlists",
@@ -240,9 +240,8 @@ func (e *objectStoreJob) start(ctx context.Context) {
 
 			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
 				GRN: &object.GRN{
-					Scope: models.ObjectStoreScopeEntity,
-					UID:   dto.Key,
-					Kind:  models.StandardKindSnapshot,
+					UID:  dto.Key,
+					Kind: models.StandardKindSnapshot,
 				},
 				Body:    prettyJSON(m),
 				Comment: "export from snapshtts",
