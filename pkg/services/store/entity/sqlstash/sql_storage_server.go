@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -305,7 +306,12 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		return nil, err
 	}
 
-	slug := slugifyTitle(summary.name, r.GRN.UID)
+	t := summary.name
+	if t == "" {
+		t = r.GRN.UID
+	}
+
+	slug := slugify.Slugify(t)
 	etag := createContentsHash(body)
 	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
