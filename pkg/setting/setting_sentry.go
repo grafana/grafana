@@ -13,6 +13,12 @@ func (cfg *Cfg) readSentryConfig() {
 	raw := cfg.Raw.Section("log.frontend")
 	provider := raw.Key("provider").MustString("sentry")
 	if provider == "sentry" || provider != "grafana" {
+		if raw.Key("sentry_dsn").String() == "" {
+			cfg.Logger.Warn("frontend logging provider is Sentry, but Sentry DSN not configured")
+		}
+		if raw.Key("custom_endpoint").String() != "" {
+			cfg.Logger.Warn("custom_endpoint is no longer support with Sentry as frontend logging provider")
+		}
 		cfg.Sentry = Sentry{
 			Enabled:        raw.Key("enabled").MustBool(true),
 			DSN:            raw.Key("sentry_dsn").String(),

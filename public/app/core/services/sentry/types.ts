@@ -1,10 +1,9 @@
 import { Event as SentryEvent } from '@sentry/browser';
-import { Response } from '@sentry/types';
 
 import { EchoEvent, EchoEventType } from '@grafana/runtime';
 
 export interface BaseTransport {
-  sendEvent(event: SentryEvent): PromiseLike<Response>;
+  sendEvent(event: SentryEvent): PromiseLike<void>;
 }
 
 export type SentryEchoEvent = EchoEvent<EchoEventType.Sentry, SentryEvent>;
