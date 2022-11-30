@@ -12,7 +12,7 @@ import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { fetchEditableRuleAction } from './state/actions';
 import { rulerRuleToFormValues } from './utils/rule-form';
-import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
+import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 import { createUrl } from './utils/url';
 
 export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
@@ -65,21 +65,6 @@ export function generateCopiedRuleTitle(originRuleWithLocation: RuleWithLocation
   }
 
   return newName;
-}
-
-function getRuleName(rule: RulerRuleDTO) {
-  if (isGrafanaRulerRule(rule)) {
-    return rule.grafana_alert.title;
-  }
-  if (isAlertingRulerRule(rule)) {
-    return rule.alert;
-  }
-
-  if (isRecordingRulerRule(rule)) {
-    return rule.record;
-  }
-
-  return '';
 }
 
 function changeRuleName(rule: RulerRuleDTO, newName: string) {

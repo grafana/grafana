@@ -129,7 +129,7 @@ describe('CloneRuleEditor', function () {
       await waitForElementToBeRemoved(ui.loadingGroupIndicator.query(), { container: ui.inputs.group.get() });
 
       await waitFor(() => {
-        expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (Copied)');
+        expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');
         expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
         expect(ui.inputs.group.get()).toHaveTextContent('group1');
         expect(ui.inputs.labelValue(0).get()).toHaveTextContent('critical');
@@ -189,7 +189,7 @@ describe('CloneRuleEditor', function () {
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
 
       await waitFor(() => {
-        expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (Copied)');
+        expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');
         expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
         expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
         expect(ui.inputs.group.get()).toHaveTextContent('group1');
