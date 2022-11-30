@@ -1,5 +1,6 @@
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
-import * as React from 'react';
+import React from 'react';
+import { useEffectOnce } from 'react-use';
 import { Node, Plugin } from 'slate';
 import { Editor } from 'slate-react';
 
