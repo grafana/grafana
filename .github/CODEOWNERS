@@ -12,10 +12,10 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation
-/docs/ @grafana/docs-squad
-/contribute/ @grafana/docs-squad
-/docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/backend @grafana/docs-squad @grafana/plugins-platform-backend
+/docs/ @grafana/docs-grafana
+/contribute/ @grafana/docs-grafana
+/docs/sources/developers/plugins/ @grafana/docs-grafana @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/backend @grafana/docs-grafana @grafana/plugins-platform-backend
 # Set up, dashboards/visualization, best practices: Chris Moyer
 # Alerting: Brenda Muir
 /docs/sources/administration/ @Eve832 @GrafanaWriter
