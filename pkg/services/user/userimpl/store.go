@@ -49,7 +49,7 @@ type sqlStore struct {
 	cfg     *setting.Cfg
 }
 
-func provideStore(db db.DB, cfg *setting.Cfg) sqlStore {
+func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
 	return sqlStore{
 		db:      db,
 		dialect: db.GetDialect(),
