@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 )
 
@@ -31,7 +30,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		return err
 	}
 
-	rootDir := path.Join(helper.orgDir, models.ObjectStoreScopeDrive)
+	rootDir := path.Join(helper.orgDir, "drive")
 	folderStructure := commitOptions{
 		when:    time.Now(),
 		comment: "Exported folder structure",

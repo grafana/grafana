@@ -11,38 +11,39 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind"
-	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Make sure we implement both store + admin
-var _ object.ObjectStoreServer = &sqlObjectServer{}
-var _ object.ObjectStoreAdminServer = &sqlObjectServer{}
+var _ entity.EntityStoreServer = &sqlEntityServer{}
+var _ entity.EntityStoreAdminServer = &sqlEntityServer{}
 
-func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.ObjectReferenceResolver) object.ObjectStoreServer {
-	objectServer := &sqlObjectServer{
+func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.EntityReferenceResolver) entity.EntityStoreServer {
+	entityServer := &sqlEntityServer{
 		sess:     db.GetSqlxSession(),
-		log:      log.New("sql-object-server"),
+		log:      log.New("sql-entity-server"),
 		kinds:    kinds,
 		resolver: resolver,
 	}
-	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
-	return objectServer
+	entity.RegisterEntityStoreServer(grpcServerProvider.GetServer(), entityServer)
+	return entityServer
 }
 
-type sqlObjectServer struct {
+type sqlEntityServer struct {
 	log      log.Logger
 	sess     *session.SessionDB
 	kinds    kind.KindRegistry
-	resolver resolver.ObjectReferenceResolver
+	resolver resolver.EntityReferenceResolver
 }
 
-func getReadSelect(r *object.ReadObjectRequest) string {
+func getReadSelect(r *entity.ReadEntityRequest) string {
 	fields := []string{
 		"tenant_id", "kind", "uid", // The PK
 		"version", "slug", "folder",
@@ -60,10 +61,10 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
 
-func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	raw := &object.RawObject{
-		GRN:    &object.GRN{},
-		Origin: &object.ObjectOriginInfo{},
+func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
+	raw := &entity.Entity{
+		GRN:    &entity.GRN{},
+		Origin: &entity.EntityOriginInfo{},
 	}
 	slug := ""
 
@@ -92,12 +93,12 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 		raw.Origin = nil
 	}
 
-	rsp := &object.ReadObjectResponse{
-		Object: raw,
+	rsp := &entity.ReadEntityResponse{
+		Entity: raw,
 	}
 
 	if r.WithSummary || summaryjson.errors != nil {
-		summary, err := summaryjson.toObjectSummary()
+		summary, err := summaryjson.toEntitySummary()
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +112,7 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	return rsp, nil
 }
 
-func (s *sqlObjectServer) validateGRN(ctx context.Context, grn *object.GRN) (*object.GRN, error) {
+func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*entity.GRN, error) {
 	if grn == nil {
 		return nil, fmt.Errorf("missing GRN")
 	}
@@ -137,7 +138,7 @@ func (s *sqlObjectServer) validateGRN(ctx context.Context, grn *object.GRN) (*ob
 	return grn, nil
 }
 
-func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
 	if r.Version != "" {
 		return s.readFromHistory(ctx, r)
 	}
@@ -156,13 +157,13 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
-		return &object.ReadObjectResponse{}, nil
+		return &entity.ReadEntityResponse{}, nil
 	}
 
-	return s.rowToReadObjectResponse(ctx, rows, r)
+	return s.rowToReadEntityResponse(ctx, rows, r)
 }
 
-func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
+func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
 	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -184,14 +185,14 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 
 	// Version or key not found
 	if !rows.Next() {
-		return &object.ReadObjectResponse{}, nil
+		return &entity.ReadEntityResponse{}, nil
 	}
 
-	raw := &object.RawObject{
+	raw := &entity.Entity{
 		GRN: r.GRN,
 	}
-	rsp := &object.ReadObjectResponse{
-		Object: raw,
+	rsp := &entity.ReadEntityResponse{
+		Entity: raw,
 	}
 	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &raw.UpdatedAt, &raw.UpdatedBy)
 	if err != nil {
@@ -219,13 +220,13 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 
 	// Clear the body if not requested
 	if !r.WithBody {
-		rsp.Object.Body = nil
+		rsp.Entity.Body = nil
 	}
 
 	return rsp, err
 }
 
-func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObjectRequest) (*object.BatchReadObjectResponse, error) {
+func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
 	if len(b.Batch) < 1 {
 		return nil, fmt.Errorf("missing querires")
 	}
@@ -261,9 +262,9 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 	defer func() { _ = rows.Close() }()
 
 	// TODO? make sure the results are in order?
-	rsp := &object.BatchReadObjectResponse{}
+	rsp := &entity.BatchReadEntityResponse{}
 	for rows.Next() {
-		r, err := s.rowToReadObjectResponse(ctx, rows, req)
+		r, err := s.rowToReadEntityResponse(ctx, rows, req)
 		if err != nil {
 			return nil, err
 		}
@@ -272,12 +273,12 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 	return rsp, nil
 }
 
-func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectRequest) (*object.WriteObjectResponse, error) {
-	return s.AdminWrite(ctx, object.ToAdminWriteObjectRequest(r))
+func (s *sqlEntityServer) Write(ctx context.Context, r *entity.WriteEntityRequest) (*entity.WriteEntityResponse, error) {
+	return s.AdminWrite(ctx, entity.ToAdminWriteEntityRequest(r))
 }
 
 //nolint:gocyclo
-func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
+func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEntityRequest) (*entity.WriteEntityResponse, error) {
 	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -305,19 +306,24 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		return nil, err
 	}
 
-	slug := slugifyTitle(summary.name, r.GRN.UID)
+	t := summary.name
+	if t == "" {
+		t = r.GRN.UID
+	}
+
+	slug := slugify.Slugify(t)
 	etag := createContentsHash(body)
-	rsp := &object.WriteObjectResponse{
+	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
-		Status: object.WriteObjectResponse_CREATED, // Will be changed if not true
+		Status: entity.WriteEntityResponse_CREATED, // Will be changed if not true
 	}
 	origin := r.Origin
 	if origin == nil {
-		origin = &object.ObjectOriginInfo{}
+		origin = &entity.EntityOriginInfo{}
 	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		var versionInfo *object.ObjectVersionInfo
+		var versionInfo *entity.EntityVersionInfo
 		isUpdate := false
 		if r.ClearHistory {
 			// Optionally keep the original creation time information
@@ -331,7 +337,7 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			if err != nil {
 				return err
 			}
-			versionInfo = &object.ObjectVersionInfo{}
+			versionInfo = &entity.EntityVersionInfo{}
 		} else {
 			versionInfo, err = s.selectForUpdate(ctx, tx, oid)
 			if err != nil {
@@ -339,10 +345,10 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			}
 		}
 
-		// Same object
+		// Same entity
 		if versionInfo.ETag == etag {
-			rsp.Object = versionInfo
-			rsp.Status = object.WriteObjectResponse_UNCHANGED
+			rsp.Entity = versionInfo
+			rsp.Status = entity.WriteEntityResponse_UNCHANGED
 			return nil
 		}
 
@@ -430,10 +436,10 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			}
 		}
 
-		// 5. Add/update the main `object` table
-		rsp.Object = versionInfo
+		// 5. Add/update the main `entity` table
+		rsp.Entity = versionInfo
 		if isUpdate {
-			rsp.Status = object.WriteObjectResponse_UPDATED
+			rsp.Status = entity.WriteEntityResponse_UPDATED
 			_, err = tx.Exec(ctx, "UPDATE entity SET "+
 				"body=?, size=?, etag=?, version=?, "+
 				"updated_at=?, updated_by=?,"+
@@ -482,12 +488,12 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 	})
 	rsp.SummaryJson = summary.marshaled
 	if err != nil {
-		rsp.Status = object.WriteObjectResponse_ERROR
+		rsp.Status = entity.WriteEntityResponse_ERROR
 	}
 	return rsp, err
 }
 
-func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, grn string, createdAt *int64, createdBy *string) error {
+func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, grn string, createdAt *int64, createdBy *string) error {
 	if *createdAt > 1000 {
 		ignore := int64(0)
 		createdAt = &ignore
@@ -509,7 +515,7 @@ func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	return err
 }
 
-func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*object.ObjectVersionInfo, error) {
+func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, error) {
 	q := "SELECT etag,version,updated_at,size FROM entity WHERE grn=?"
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
@@ -518,7 +524,7 @@ func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	if err != nil {
 		return nil, err
 	}
-	current := &object.ObjectVersionInfo{}
+	current := &entity.EntityVersionInfo{}
 	if rows.Next() {
 		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
@@ -528,7 +534,7 @@ func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	return current, err
 }
 
-func (s *sqlObjectServer) prepare(ctx context.Context, r *object.AdminWriteObjectRequest) (*summarySupport, []byte, error) {
+func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntityRequest) (*summarySupport, []byte, error) {
 	grn := r.GRN
 	builder := s.kinds.GetSummaryBuilder(grn.Kind)
 	if builder == nil {
@@ -547,13 +553,13 @@ func (s *sqlObjectServer) prepare(ctx context.Context, r *object.AdminWriteObjec
 	return summaryjson, body, nil
 }
 
-func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
+func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
 	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp := &object.DeleteObjectResponse{}
+	rsp := &entity.DeleteEntityResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
 		return err
@@ -578,7 +584,7 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, err
 	return rows > 0, err
 }
 
-func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
+func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
 	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -603,11 +609,11 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	rsp := &object.ObjectHistoryResponse{
+	rsp := &entity.EntityHistoryResponse{
 		GRN: r.GRN,
 	}
 	for rows.Next() {
-		v := &object.ObjectVersionInfo{}
+		v := &entity.EntityVersionInfo{}
 		err := rows.Scan(&v.Version, &v.Size, &v.ETag, &v.UpdatedAt, &v.UpdatedBy, &v.Comment)
 		if err != nil {
 			return nil, err
@@ -617,7 +623,7 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	return rsp, err
 }
 
-func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequest) (*object.ObjectSearchResponse, error) {
+func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequest) (*entity.EntitySearchResponse, error) {
 	user := store.UserFromContext(ctx)
 	if user == nil {
 		return nil, fmt.Errorf("missing user in context")
@@ -675,10 +681,10 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 	}
 	defer func() { _ = rows.Close() }()
 	oid := ""
-	rsp := &object.ObjectSearchResponse{}
+	rsp := &entity.EntitySearchResponse{}
 	for rows.Next() {
-		result := &object.ObjectSearchResult{
-			GRN: &object.GRN{},
+		result := &entity.EntitySearchResult{
+			GRN: &entity.GRN{},
 		}
 		summaryjson := summarySupport{}
 

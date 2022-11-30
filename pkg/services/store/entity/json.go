@@ -1,4 +1,4 @@
-package object
+package entity
 
 import (
 	"encoding/base64"
@@ -10,12 +10,12 @@ import (
 )
 
 func init() { //nolint:gochecknoinits
-	jsoniter.RegisterTypeEncoder("object.ObjectSearchResult", &searchResultCodec{})
-	jsoniter.RegisterTypeEncoder("object.WriteObjectResponse", &writeResponseCodec{})
-	jsoniter.RegisterTypeEncoder("object.ReadObjectResponse", &readResponseCodec{})
+	jsoniter.RegisterTypeEncoder("entity.EntitySearchResult", &searchResultCodec{})
+	jsoniter.RegisterTypeEncoder("entity.WriteObjectResponse", &writeResponseCodec{})
+	jsoniter.RegisterTypeEncoder("entity.ReadEntityResponse", &readResponseCodec{})
 
-	jsoniter.RegisterTypeEncoder("object.RawObject", &rawObjectCodec{})
-	jsoniter.RegisterTypeDecoder("object.RawObject", &rawObjectCodec{})
+	jsoniter.RegisterTypeEncoder("entity.Entity", &rawEntityCodec{})
+	jsoniter.RegisterTypeDecoder("entity.Entity", &rawEntityCodec{})
 }
 
 func writeRawJson(stream *jsoniter.Stream, val []byte) {
@@ -27,30 +27,30 @@ func writeRawJson(stream *jsoniter.Stream, val []byte) {
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
-type rawObjectCodec struct{}
+type rawEntityCodec struct{}
 
-func (obj *RawObject) MarshalJSON() ([]byte, error) {
+func (obj *Entity) MarshalJSON() ([]byte, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(obj)
 }
 
-// UnmarshalJSON will read JSON into a RawObject
-func (obj *RawObject) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON will read JSON into a Entity
+func (obj *Entity) UnmarshalJSON(b []byte) error {
 	if obj == nil {
 		return fmt.Errorf("unexpected nil for raw objcet")
 	}
 	iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, b)
-	readRawObject(iter, obj)
+	readEntity(iter, obj)
 	return iter.Error
 }
 
-func (codec *rawObjectCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	f := (*RawObject)(ptr)
+func (codec *rawEntityCodec) IsEmpty(ptr unsafe.Pointer) bool {
+	f := (*Entity)(ptr)
 	return f.GRN == nil && f.Body == nil
 }
 
-func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	obj := (*RawObject)(ptr)
+func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	obj := (*Entity)(ptr)
 	stream.WriteObjectStart()
 	stream.WriteObjectField("GRN")
 	stream.WriteVal(obj.GRN)
@@ -121,13 +121,13 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 	stream.WriteObjectEnd()
 }
 
-func (codec *rawObjectCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
-	*(*RawObject)(ptr) = RawObject{}
-	raw := (*RawObject)(ptr)
-	readRawObject(iter, raw)
+func (codec *rawEntityCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+	*(*Entity)(ptr) = Entity{}
+	raw := (*Entity)(ptr)
+	readEntity(iter, raw)
 }
 
-func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
+func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
 		case "GRN":
@@ -152,7 +152,7 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 		case "version":
 			raw.Version = iter.ReadString()
 		case "origin":
-			raw.Origin = &ObjectOriginInfo{}
+			raw.Origin = &EntityOriginInfo{}
 			iter.ReadVal(raw.Origin)
 
 		case "body":
@@ -160,7 +160,7 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 			iter.ReadVal(&val) // ??? is there a smarter way to just keep the underlying bytes without read+marshal
 			body, err := json.Marshal(val)
 			if err != nil {
-				iter.ReportError("raw object", "error creating json from body")
+				iter.ReportError("raw entity", "error creating json from body")
 				return
 			}
 			raw.Body = body
@@ -169,7 +169,7 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 			val := iter.ReadString()
 			body, err := base64.StdEncoding.DecodeString(val)
 			if err != nil {
-				iter.ReportError("raw object", "error decoding base64 body")
+				iter.ReportError("raw entity", "error decoding base64 body")
 				return
 			}
 			raw.Body = body
@@ -184,21 +184,21 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
 type readResponseCodec struct{}
 
-func (obj *ReadObjectResponse) MarshalJSON() ([]byte, error) {
+func (obj *ReadEntityResponse) MarshalJSON() ([]byte, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(obj)
 }
 
 func (codec *readResponseCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	f := (*ReadObjectResponse)(ptr)
+	f := (*ReadEntityResponse)(ptr)
 	return f == nil
 }
 
 func (codec *readResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	obj := (*ReadObjectResponse)(ptr)
+	obj := (*ReadEntityResponse)(ptr)
 	stream.WriteObjectStart()
-	stream.WriteObjectField("object")
-	stream.WriteVal(obj.Object)
+	stream.WriteObjectField("entity")
+	stream.WriteVal(obj.Entity)
 
 	if len(obj.SummaryJson) > 0 {
 		stream.WriteMore()
@@ -212,18 +212,18 @@ func (codec *readResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
 type searchResultCodec struct{}
 
-func (obj *ObjectSearchResult) MarshalJSON() ([]byte, error) {
+func (obj *EntitySearchResult) MarshalJSON() ([]byte, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(obj)
 }
 
 func (codec *searchResultCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	f := (*ObjectSearchResult)(ptr)
+	f := (*EntitySearchResult)(ptr)
 	return f.GRN == nil && f.Body == nil
 }
 
 func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	obj := (*ObjectSearchResult)(ptr)
+	obj := (*EntitySearchResult)(ptr)
 	stream.WriteObjectStart()
 	stream.WriteObjectField("GRN")
 	stream.WriteVal(obj.GRN)
@@ -285,18 +285,18 @@ func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can
 type writeResponseCodec struct{}
 
-func (obj *WriteObjectResponse) MarshalJSON() ([]byte, error) {
+func (obj *WriteEntityResponse) MarshalJSON() ([]byte, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(obj)
 }
 
 func (codec *writeResponseCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	f := (*WriteObjectResponse)(ptr)
+	f := (*WriteEntityResponse)(ptr)
 	return f == nil
 }
 
 func (codec *writeResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	obj := (*WriteObjectResponse)(ptr)
+	obj := (*WriteEntityResponse)(ptr)
 	stream.WriteObjectStart()
 	stream.WriteObjectField("status")
 	stream.WriteString(obj.Status.String())
@@ -311,10 +311,10 @@ func (codec *writeResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Str
 		stream.WriteObjectField("GRN")
 		stream.WriteVal(obj.GRN)
 	}
-	if obj.Object != nil {
+	if obj.Entity != nil {
 		stream.WriteMore()
-		stream.WriteObjectField("object")
-		stream.WriteVal(obj.Object)
+		stream.WriteObjectField("entity")
+		stream.WriteVal(obj.Entity)
 	}
 	if len(obj.SummaryJson) > 0 {
 		stream.WriteMore()

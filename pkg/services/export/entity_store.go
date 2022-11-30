@@ -13,14 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
-	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var _ Job = new(objectStoreJob)
+var _ Job = new(entityStoreJob)
 
-type objectStoreJob struct {
+type entityStoreJob struct {
 	logger log.Logger
 
 	statusMu      sync.Mutex
@@ -32,19 +32,19 @@ type objectStoreJob struct {
 
 	sess               *session.SessionDB
 	playlistService    playlist.Service
-	store              object.ObjectStoreServer
+	store              entity.EntityStoreServer
 	dashboardsnapshots dashboardsnapshots.Service
 }
 
-func startObjectStoreJob(ctx context.Context,
+func startEntityStoreJob(ctx context.Context,
 	cfg ExportConfig,
 	broadcaster statusBroadcaster,
 	db db.DB,
 	playlistService playlist.Service,
-	store object.ObjectStoreServer,
+	store entity.EntityStoreServer,
 	dashboardsnapshots dashboardsnapshots.Service,
 ) (Job, error) {
-	job := &objectStoreJob{
+	job := &entityStoreJob{
 		logger:      log.New("export_to_object_store_job"),
 		cfg:         cfg,
 		ctx:         ctx,
@@ -67,11 +67,11 @@ func startObjectStoreJob(ctx context.Context,
 	return job, nil
 }
 
-func (e *objectStoreJob) requestStop() {
+func (e *entityStoreJob) requestStop() {
 	e.stopRequested = true
 }
 
-func (e *objectStoreJob) start(ctx context.Context) {
+func (e *entityStoreJob) start(ctx context.Context) {
 	defer func() {
 		e.logger.Info("Finished dummy export job")
 
@@ -123,8 +123,8 @@ func (e *objectStoreJob) start(ctx context.Context) {
 			rowUser.UserID = 0 // avoid Uint64Val issue????
 		}
 
-		_, err = e.store.AdminWrite(ctx, &object.AdminWriteObjectRequest{
-			GRN: &object.GRN{
+		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
+			GRN: &entity.GRN{
 				UID:  dash.UID,
 				Kind: models.StandardKindDashboard,
 			},
@@ -136,7 +136,7 @@ func (e *objectStoreJob) start(ctx context.Context) {
 			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
 			Body:         dash.Data,
 			Comment:      "(exported from SQL)",
-			Origin: &object.ObjectOriginInfo{
+			Origin: &entity.EntityOriginInfo{
 				Source: "export-from-sql",
 			},
 		})
@@ -174,8 +174,8 @@ func (e *objectStoreJob) start(ctx context.Context) {
 			return
 		}
 
-		_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-			GRN: &object.GRN{
+		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
 				UID:  playlist.Uid,
 				Kind: models.StandardKindPlaylist,
 			},
@@ -238,8 +238,8 @@ func (e *objectStoreJob) start(ctx context.Context) {
 				m.Snapshot = b
 			}
 
-			_, err = e.store.Write(ctx, &object.WriteObjectRequest{
-				GRN: &object.GRN{
+			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
+				GRN: &entity.GRN{
 					UID:  dto.Key,
 					Kind: models.StandardKindSnapshot,
 				},
@@ -272,7 +272,7 @@ type dashInfo struct {
 }
 
 // TODO, paging etc
-func (e *objectStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) {
+func (e *entityStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) {
 	e.status.Last = "find dashbaords...."
 	e.broadcaster(e.status)
 
@@ -281,14 +281,14 @@ func (e *objectStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) 
 	return dash, err
 }
 
-func (e *objectStoreJob) getStatus() ExportStatus {
+func (e *entityStoreJob) getStatus() ExportStatus {
 	e.statusMu.Lock()
 	defer e.statusMu.Unlock()
 
 	return e.status
 }
 
-func (e *objectStoreJob) getConfig() ExportConfig {
+func (e *entityStoreJob) getConfig() ExportConfig {
 	e.statusMu.Lock()
 	defer e.statusMu.Unlock()
 
