@@ -115,7 +115,7 @@ You can build your own customized image that includes plugins. This saves time i
 
 In the [Grafana GitHub repository](https://github.com/grafana/grafana) there is a folder called `packaging/docker/custom/`, which includes a Dockerfile that can be used to build a custom Grafana image. It accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
 
-The `GRAFANA_VERSION` build argument needs to be a valid `grafana/grafana` docker image tag. By default this will build an Alpine-based image. To build an Ubuntu-based image, append `-ubuntu` to the `GRAFANA_VERSION` build argument (Grafana v6.5+).
+The `GRAFANA_VERSION` build argument must be a valid `grafana/grafana` docker image tag. By default, this builds an Alpine-based image. To build an Ubuntu-based image, append `-ubuntu` to the `GRAFANA_VERSION` build argument (available in Grafana v6.5 and later).
 
 Example of how to build and run:
 
