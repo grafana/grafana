@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
@@ -160,28 +159,6 @@ func NotServiceAccountFilter(ss *SQLStore) string {
 		ss.Dialect.BooleanStr(false))
 }
 
-// deprecated method, use only for tests
-func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
-	if err := ss.GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
-		return err
-	}
-
-	valid := false
-	for _, other := range getOrgsForUserCmd.Result {
-		if other.OrgId == cmd.OrgId {
-			valid = true
-		}
-	}
-	if !valid {
-		return fmt.Errorf("user does not belong to org")
-	}
-
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
-	})
-}
-
 func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error {
 	user := user.User{
 		ID:    userID,
@@ -225,121 +202,6 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		sess.OrderBy("org.name")
 		err := sess.Find(&query.Result)
 		sort.Sort(byOrgName(query.Result))
-		return err
-	})
-}
-
-func newSignedInUserCacheKey(orgID, userID int64) string {
-	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
-}
-
-// deprecated method, use only for tests
-func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
-	if cached, found := ss.CacheService.Get(cacheKey); found {
-		cachedUser := cached.(user.SignedInUser)
-		query.Result = &cachedUser
-		return nil
-	}
-
-	err := ss.GetSignedInUser(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	cacheKey = newSignedInUserCacheKey(query.Result.OrgID, query.UserId)
-	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
-	return nil
-}
-
-func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
-		orgId := "u.org_id"
-		if query.OrgId > 0 {
-			orgId = strconv.FormatInt(query.OrgId, 10)
-		}
-
-		var rawSQL = `SELECT
-		u.id                  as user_id,
-		u.is_admin            as is_grafana_admin,
-		u.email               as email,
-		u.login               as login,
-		u.name                as name,
-		u.is_disabled         as is_disabled,
-		u.help_flags1         as help_flags1,
-		u.last_seen_at        as last_seen_at,
-		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
-		user_auth.auth_module as external_auth_module,
-		user_auth.auth_id     as external_auth_id,
-		org.name              as org_name,
-		org_user.role         as org_role,
-		org.id                as org_id
-		FROM ` + dialect.Quote("user") + ` as u
-		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
-		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
-		LEFT OUTER JOIN org on org.id = org_user.org_id `
-
-		sess := dbSess.Table("user")
-		sess = sess.Context(ctx)
-		switch {
-		case query.UserId > 0:
-			sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
-		case query.Login != "":
-			if ss.Cfg.CaseInsensitiveLogin {
-				sess.SQL(rawSQL+"WHERE LOWER(u.login)=LOWER(?)", query.Login)
-			} else {
-				sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
-			}
-		case query.Email != "":
-			if ss.Cfg.CaseInsensitiveLogin {
-				sess.SQL(rawSQL+"WHERE LOWER(u.email)=LOWER(?)", query.Email)
-			} else {
-				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
-			}
-		}
-
-		var usr user.SignedInUser
-		has, err := sess.Get(&usr)
-		if err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		if usr.OrgRole == "" {
-			usr.OrgID = -1
-			usr.OrgName = "Org missing"
-		}
-
-		if usr.ExternalAuthModule != "oauth_grafana_com" {
-			usr.ExternalAuthID = ""
-		}
-
-		// tempUser is used to retrieve the teams for the signed in user for internal use.
-		tempUser := &user.SignedInUser{
-			OrgID: usr.OrgID,
-			Permissions: map[int64]map[string][]string{
-				usr.OrgID: {
-					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
-				},
-			},
-		}
-		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
-			OrgId:        usr.OrgID,
-			UserId:       usr.UserID,
-			SignedInUser: tempUser,
-		}
-		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
-		if err != nil {
-			return err
-		}
-
-		usr.Teams = make([]int64, len(getTeamsByUserQuery.Result))
-		for i, t := range getTeamsByUserQuery.Result {
-			usr.Teams[i] = t.Id
-		}
-
-		query.Result = &usr
 		return err
 	})
 }

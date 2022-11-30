@@ -201,7 +201,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/barchart/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -273,7 +273,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/candlestick/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -755,7 +755,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/histogram/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1282,7 +1282,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/state-timeline/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1318,7 +1318,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/status-history/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
