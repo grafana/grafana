@@ -8,10 +8,8 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
-	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
-	tload "github.com/grafana/thema/load"
 )
 
 // CoreStructuredDeclParentPath is the path, relative to the repository root, where
@@ -48,28 +46,14 @@ func loadpFrameworkOnce() {
 	})
 }
 
-var prefix = filepath.Join("/pkg", "kindsys")
-
 func doLoadFrameworkCUE(ctx *cue.Context) (cue.Value, error) {
-	var v cue.Value
-	var err error
-
-	absolutePath := prefix
-	if !filepath.IsAbs(absolutePath) {
-		absolutePath, err = filepath.Abs(absolutePath)
-		if err != nil {
-			return v, err
-		}
-	}
-
-	bi, err := tload.InstancesWithThema(grafana.CueSchemaFS, absolutePath)
+	v, err := cuectx.BuildGrafanaInstance(ctx, filepath.Join("pkg", "kindsys"), "kindsys", nil)
 	if err != nil {
 		return v, err
 	}
-	v = ctx.BuildInstance(bi)
 
 	if err = v.Validate(cue.Concrete(false), cue.All()); err != nil {
-		return cue.Value{}, fmt.Errorf("coremodel framework loaded cue.Value has err: %w", err)
+		return cue.Value{}, fmt.Errorf("kindsys framework loaded cue.Value has err: %w", err)
 	}
 
 	return v, nil
