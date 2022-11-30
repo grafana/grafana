@@ -6,6 +6,7 @@ import { DataSourcePluginMeta, GrafanaTheme2, PageLayoutType } from '@grafana/da
 import { getBackendSrv } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { t } from 'app/core/internationalization';
 import { useAddDatasource } from 'app/features/datasources/state';
 
 const topDatasources = [
@@ -50,15 +51,19 @@ export function DatasourceOnboarding({
   return (
     <Page
       navId="dashboards/browse"
-      pageNav={{ text: 'New dashboard', url: '/dashboard/new' }}
+      pageNav={{ text: t('dashboard', 'New dashboard'), url: '/dashboard/new' }}
       layout={PageLayoutType.Canvas}
     >
       <div className={styles.wrapper}>
-        <h1 className={styles.title}>Welcome to Grafana dashboards!</h1>
+        <h1 className={styles.title}>{t('datasource-onboarding.welcome', 'Welcome to Grafana dashboards!')}</h1>
         <div className={styles.description}>
-          <h4 className={styles.explanation}>{"To visualize your data, you'll need to connect it first."}</h4>
+          <h4 className={styles.explanation}>
+            {t('datasource-onboarding.explanation', "To visualize your data, you'll need to connect it first.")}
+          </h4>
         </div>
-        <h4 className={styles.preferredDataSource}>Connect your preferred data source:</h4>
+        <h4 className={styles.preferredDataSource}>
+          {t('datasource-onboarding.preferred', 'Connect your preferred data source:')}
+        </h4>
         {!loadingDatasources && datasources !== undefined && (
           <ul className={styles.datasources}>
             {datasources.map((d) => (
@@ -66,7 +71,9 @@ export function DatasourceOnboarding({
                 <button onClick={() => onAddDatasource(d)}>
                   <img
                     src={d.info.logos.small}
-                    alt={`Logo for ${d.name} data source`}
+                    alt={t('datasource-onboarding.logo', 'Logo for {{datasourceName}} data source', {
+                      datasourceName: d.name,
+                    })}
                     height="16"
                     width="16"
                     className={styles.logo}
@@ -78,14 +85,14 @@ export function DatasourceOnboarding({
             ))}
             <li>
               <a href="/datasources/new" className={styles.viewAll}>
-                <span>View all</span>
+                <span>{t('datasource-onboarding.viewAll', 'View all')}</span>
                 <Icon name="arrow-right" size="lg" />
               </a>
             </li>
           </ul>
         )}
         <button onClick={onNewDashboard} className={styles.createNew}>
-          <span>Or set up a new dashboard with sample data</span>
+          <span>{t('datasource-onboarding.sampleData', 'Or set up a new dashboard with sample data')}</span>
           <Icon name="arrow-right" size="lg" />
         </button>
       </div>
