@@ -1795,6 +1795,12 @@ This option does not require any configuration.
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
 
+#### renderer_token
+
+> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later versions.
+
+An auth token that will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer side.
+
 ### server_url
 
 URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, will enable Grafana to render panels and dashboards to PNG-images using HTTP requests to an external service.
