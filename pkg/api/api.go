@@ -103,7 +103,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Index)
-	r.Get("/admin/users", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), hs.Index)
+	// Show the combined users page for org admins if topnav is enabled
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		r.Get("/admin/users", authorize(reqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))), hs.Index)
+	} else {
+		r.Get("/admin/users", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), hs.Index)
+	}
 	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead)), hs.Index)
 	r.Get("/admin/orgs", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
@@ -117,10 +122,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
 
-	r.Get("/plugins", reqSignedIn, hs.Index)
-	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
-	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
-	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
+	r.Get("/plugins", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
+	r.Get("/plugins/:id/", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
+	r.Get("/plugins/:id/edit", middleware.CanAdminPlugins(hs.Cfg), hs.Index) // deprecated
+	r.Get("/plugins/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
 	// App Root Page
 	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
 	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)

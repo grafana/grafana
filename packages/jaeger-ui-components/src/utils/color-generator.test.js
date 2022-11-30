@@ -26,7 +26,7 @@ it('gives the same color for the same key', () => {
   expect(colorOne).toBe(colorTwo);
 });
 
-it('gives different colors for each for each key', () => {
+it('gives different colors for each key', () => {
   clear();
   const colorOne = getColorByKey('serviceA', createTheme());
   const colorTwo = getColorByKey('serviceB', createTheme());
@@ -35,8 +35,10 @@ it('gives different colors for each for each key', () => {
 
 it('should not allow red', () => {
   expect(colorsToFilter.indexOf('#E24D42')).toBe(4);
+  expect(colorsToFilter.indexOf('#BF1B00')).toBe(28);
   const filteredColors = getFilteredColors(colorsToFilter, createTheme());
   expect(filteredColors.indexOf('#E24D42')).toBe(-1);
+  expect(filteredColors.indexOf('#BF1B00')).toBe(-1);
 });
 
 it('should not allow colors with a contrast ratio < 3 in light mode', () => {
@@ -53,4 +55,24 @@ it('should not allow colors with a contrast ratio < 3 in dark mode', () => {
   const filteredColors = getFilteredColors(colorsToFilter, createTheme({ colors: { mode: 'dark' } }));
   expect(filteredColors.indexOf('#890F02')).toBe(-1);
   expect(filteredColors.indexOf('#0A437C')).toBe(-1);
+});
+
+it('should not allow a color that is the same as the previous color', () => {
+  clear();
+  const theme = createTheme();
+  const colorOne = getColorByKey('random4', theme); // #447EBC
+  const colorTwo = getColorByKey('random17', theme); // #447EBC
+  expect(colorOne).not.toBe(colorTwo);
+  expect(colorOne).toBe('#447EBC');
+  expect(colorTwo).toBe('#B7DBAB');
+});
+
+it('should not allow a color that looks similar to the previous color', () => {
+  clear();
+  const theme = createTheme({ colors: { mode: 'light' } });
+  const colorOne = getColorByKey('random9', theme); // #58140C
+  const colorTwo = getColorByKey('random18', theme); // #511749
+  expect(colorOne).toBe('#58140C');
+  // #1F78C1 is the next color that has a contrast ratio >= 3 for the current theme
+  expect(colorTwo).toBe('#1F78C1');
 });
