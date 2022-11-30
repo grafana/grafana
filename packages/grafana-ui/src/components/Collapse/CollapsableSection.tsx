@@ -56,6 +56,7 @@ export const CollapsableSection: FC<Props> = ({
     <>
       <label className={cx(styles.header, className)}>
         <button
+          type="button"
           id={`collapse-button-${id}`}
           className={styles.button}
           onClick={onClick}
