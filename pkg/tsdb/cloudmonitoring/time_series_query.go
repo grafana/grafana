@@ -1,23 +1,18 @@
 package cloudmonitoring
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
-	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/otel/attribute"
+	"github.com/huandu/xstrings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
@@ -36,83 +31,17 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *ba
 	return ""
 }
 
-func doRequestQueryPage(log log.Logger, requestBody map[string]interface{}, r *http.Request, dsInfo datasourceInfo) (cloudMonitoringResponse, error) {
-	buf, err := json.Marshal(requestBody)
-	if err != nil {
-		return cloudMonitoringResponse{}, err
-	}
-	r.Body = io.NopCloser(bytes.NewBuffer(buf))
-	res, err := dsInfo.services[cloudMonitor].client.Do(r)
-	if err != nil {
-		return cloudMonitoringResponse{}, err
-	}
-
-	dnext, err := unmarshalResponse(log, res)
-	if err != nil {
-		return cloudMonitoringResponse{}, err
-	}
-	return dnext, nil
-}
-
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
-	dr := &backend.DataResponse{}
-	projectName := timeSeriesQuery.parameters.ProjectName
-
-	if projectName == "" {
-		var err error
-		projectName, err = s.getDefaultProject(ctx, dsInfo)
-		if err != nil {
-			dr.Error = err
-			return dr, cloudMonitoringResponse{}, "", nil
-		}
-		timeSeriesQuery.logger.Info("No project name set on query, using project name from datasource", "projectName", projectName)
-	}
-
 	timeSeriesQuery.parameters.Query += timeSeriesQuery.appendGraphPeriod(req)
 	from := req.Queries[0].TimeRange.From
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.parameters.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
-	p := path.Join("/v3/projects", projectName, "timeSeries:query")
-
-	ctx, span := tracer.Start(ctx, "cloudMonitoring MQL query")
-	span.SetAttributes("query", timeSeriesQuery.parameters.Query, attribute.Key("query").String(timeSeriesQuery.parameters.Query))
-	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-	defer span.End()
-
 	requestBody := map[string]interface{}{
 		"query": timeSeriesQuery.parameters.Query,
 	}
-	r, err := s.createRequest(timeSeriesQuery.logger, &dsInfo, p, bytes.NewBuffer([]byte{}))
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
-	tracer.Inject(ctx, r.Header, span)
-	r = r.WithContext(ctx)
-
-	d, err := doRequestQueryPage(timeSeriesQuery.logger, requestBody, r, dsInfo)
-	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
-	for d.NextPageToken != "" {
-		requestBody := map[string]interface{}{
-			"query":     timeSeriesQuery.parameters.Query,
-			"pageToken": d.NextPageToken,
-		}
-		nextPage, err := doRequestQueryPage(timeSeriesQuery.logger, requestBody, r, dsInfo)
-		if err != nil {
-			dr.Error = err
-			return dr, cloudMonitoringResponse{}, "", nil
-		}
-		d.TimeSeriesData = append(d.TimeSeriesData, nextPage.TimeSeriesData...)
-		d.NextPageToken = nextPage.NextPageToken
-	}
-
-	return dr, d, timeSeriesQuery.parameters.Query, nil
+	return runTimeSeriesRequest(ctx, timeSeriesQuery.logger, req, s, dsInfo, tracer, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
@@ -129,7 +58,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 		labels := make(map[string]string)
 
 		for n, d := range response.TimeSeriesDescriptor.LabelDescriptors {
-			key := toSnakeCase(d.Key)
+			key := xstrings.ToSnakeCase(d.Key)
 			key = strings.Replace(key, ".", ".label.", 1)
 
 			labelValue := series.LabelValues[n]
@@ -355,4 +284,17 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getRefID() string {
 	return timeSeriesQuery.refID
+}
+
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getAliasBy() string {
+	return timeSeriesQuery.aliasBy
+}
+
+func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getParameter(i string) string {
+	switch i {
+	case "project":
+		return timeSeriesQuery.parameters.ProjectName
+	default:
+		return ""
+	}
 }

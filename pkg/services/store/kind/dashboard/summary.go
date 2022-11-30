@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -57,7 +58,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) mo
 		}
 
 		dashboardRefs := NewReferenceAccumulator()
-		url := fmt.Sprintf("/d/%s/%s", uid, models.SlugifyTitle(dash.Title))
+		url := fmt.Sprintf("/d/%s/%s", uid, slugify.Slugify(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
 		summary.URL = url
