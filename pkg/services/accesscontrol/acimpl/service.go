@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,12 +30,12 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService, accessControl accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
 
 	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, service).RegisterAPIEndpoints()
+		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 			return nil, err
 		}
@@ -59,6 +60,8 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	SearchUsersPermissions(ctx context.Context, orgID int64, userFilter []int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
+	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 }
 
 // Service is the service implementing role based access control.
@@ -153,6 +156,93 @@ func (s *Service) ClearUserPermissionCache(user *user.SignedInUser) {
 		return
 	}
 	s.cache.Delete(key)
+}
+
+func (s *Service) GetFilteredUserPermissions(ctx context.Context, userID, orgID int64, filterOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+	defer timer.ObserveDuration()
+
+	if permissions, success := s.getFilteredUserPermissionsFromCache(userID, orgID, filterOptions); success {
+		return permissions, nil
+	}
+	return s.getFilteredUserPermissions(ctx, userID, orgID, filterOptions)
+
+}
+
+func (s *Service) getFilteredUserPermissions(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+
+	roles, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
+	//TODO check if perms for that user have been added?
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
+	}
+
+	//TODO deal with users that don't exist in org - no role == not an org member?
+	// Or just leave it?
+
+	permissions := make([]accesscontrol.Permission, 0)
+	for _, builtin := range roles[userID] {
+		if basicRole, ok := s.roles[builtin]; ok {
+			for _, permission := range basicRole.Permissions {
+				if permissionMatchesOptions(permission, searchOptions) {
+					permissions = append(permissions, permission)
+				}
+			}
+		}
+	}
+
+	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, []int64{userID}, searchOptions)
+	//dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+	//	OrgID:  user.OrgID,
+	//	UserID: user.UserID,
+	//	// TODO is this needed for OSS?
+	//	Roles:   accesscontrol.GetOrgRoles(user),
+	//	TeamIDs: user.Teams,
+	//})
+	if err != nil {
+		return nil, err
+	}
+	// TODO check that there's anything to append for this user?
+	permissions = append(permissions, dbPermissions[userID]...)
+
+	return permissions, nil
+}
+
+func (s *Service) getFilteredUserPermissionsFromCache(userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
+	u := &user.SignedInUser{
+		UserID: userID,
+		OrgID:  orgID,
+	}
+	key, err := permissionCacheKey(u)
+	if err != nil {
+		s.log.Debug("could not obtain cache key to fetch filtered user permissions", "error", err.Error())
+		return nil, false
+	}
+
+	permissions, ok := s.cache.Get(key)
+	if !ok {
+		return nil, false
+	}
+
+	s.log.Debug("using cached permissions", "key", key)
+	filteredPermissions := make([]accesscontrol.Permission, 0)
+	for _, permission := range permissions.([]accesscontrol.Permission) {
+		if permissionMatchesOptions(permission, searchOptions) {
+			filteredPermissions = append(filteredPermissions, permission)
+		}
+	}
+
+	return filteredPermissions, true
+}
+
+func permissionMatchesOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
+	if searchOptions.Scope != "" && permission.Scope != searchOptions.Scope {
+		return false
+	}
+	if searchOptions.Action != "" && permission.Action == searchOptions.ActionPrefix {
+		return true
+	}
+	return strings.HasPrefix(permission.Action, searchOptions.ActionPrefix)
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
