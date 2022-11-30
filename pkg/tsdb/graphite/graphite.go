@@ -111,11 +111,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		"until":         []string{until},
 		"format":        []string{"json"},
 		"maxDataPoints": []string{"500"},
+		"target":        []string{},
 	}
 
 	// Calculate and get the last target of Graphite Request
-	var target string
 	emptyQueries := make([]string, 0)
+	origRefIds := make(map[string]string, 0)
 	for _, query := range req.Queries {
 		model, err := simplejson.NewJson(query.JSON)
 		if err != nil {
@@ -133,17 +134,29 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
 			continue
 		}
-		target = fixIntervalFormat(currTarget)
+		target := fixIntervalFormat(currTarget)
+
+		// This is a somewhat inglorious way to ensure we can associate results with the right query
+		// By using aliasSub, we can get back a resolved series Target name (accounting for other aliases)
+		// And the original refId. Since there are no restrictions on refId, we need to format it to make it
+		// easy to find in the response
+		formattedRefId := strings.ReplaceAll(query.RefID, " ", "_")
+		origRefIds[formattedRefId] = query.RefID
+		// This will set the alias to `<resolvedSeriesName> <formattedRefId>`
+		// e.g. aliasSub(alias(myquery, "foo"), "(^.*$)", "\1 A") will return "foo A"
+		target = fmt.Sprintf("aliasSub(%s,\"(^.*$)\",\"\\1 %s\")", target, formattedRefId)
+		formData["target"] = append(formData["target"], target)
 	}
 
 	var result = backend.QueryDataResponse{}
 
-	if target == "" {
-		logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return &result, errors.New("no query target found for the alert rule")
+	if len(emptyQueries) != 0 {
+		logger.Error("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
+		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
+		if len(emptyQueries) == len(req.Queries) {
+			return &result, errors.New("no query target found for the alert rule")
+		}
 	}
-
-	formData["target"] = []string{target}
 
 	if setting.Env == setting.Dev {
 		logger.Debug("Graphite request", "params", formData)
@@ -157,7 +170,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	ctx, span := s.tracer.Start(ctx, "graphite query")
 	defer span.End()
 
-	span.SetAttributes("target", target, attribute.Key("target").String(target))
+	targetStr := strings.Join(formData["target"], ",")
+	span.SetAttributes("target", targetStr, attribute.Key("target").String(targetStr))
 	span.SetAttributes("from", from, attribute.Key("from").String(from))
 	span.SetAttributes("until", until, attribute.Key("until").String(until))
 	span.SetAttributes("datasource_id", dsInfo.Id, attribute.Key("datasource_id").Int64(dsInfo.Id))
@@ -175,7 +189,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
-	frames, err := s.toDataFrames(logger, res)
+	frames, err := s.toDataFrames(logger, res, origRefIds)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -186,8 +200,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: make(backend.Responses),
 	}
 
-	result.Responses["A"] = backend.DataResponse{
-		Frames: frames,
+	for _, f := range frames {
+		result.Responses[f.Name] = backend.DataResponse{
+			Frames: data.Frames{f},
+		}
 	}
 
 	return &result, nil
@@ -219,7 +235,7 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response) ([]Target
 	return data, nil
 }
 
-func (s *Service) toDataFrames(logger log.Logger, response *http.Response) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origRefIds map[string]string) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(logger, response)
 	if err != nil {
 		return nil, err
@@ -229,7 +245,10 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response) (fram
 	for _, series := range responseData {
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
 		values := make([]*float64, 0, len(series.DataPoints))
-		name := series.Target
+		// series.Target will be in the format <resolvedSeriesName> <formattedRefId>
+		ls := strings.LastIndex(series.Target, " ")
+		target := series.Target[:ls]
+		refId := origRefIds[series.Target[ls+1:]]
 
 		for _, dataPoint := range series.DataPoints {
 			var timestamp, value, err = parseDataTimePoint(dataPoint)
@@ -250,9 +269,9 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response) (fram
 			}
 		}
 
-		frames = append(frames, data.NewFrame(name,
+		frames = append(frames, data.NewFrame(refId,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: target})))
 
 		if setting.Env == setting.Dev {
 			logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
