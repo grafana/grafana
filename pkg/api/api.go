@@ -285,11 +285,11 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 			// Will eventually be replaced with the 'object' route
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
+		}
 
-			// Allow HTTP access to the object storage feature (dev only for now)
-			if hs.Features.IsEnabled(featuremgmt.FlagGrpcServer) {
-				apiRoute.Group("/object", hs.httpEntityStore.RegisterHTTPRoutes)
-			}
+		// Allow HTTP access to the entity storage feature (dev only for now)
+		if hs.Features.IsEnabled(featuremgmt.FlagEntityStore) {
+			apiRoute.Group("/entity", hs.httpEntityStore.RegisterHTTPRoutes)
 		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {

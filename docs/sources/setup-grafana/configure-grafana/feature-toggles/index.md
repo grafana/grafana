@@ -105,7 +105,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `export`                               | Export grafana instance (to git, etc)                     |
 | `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                    |
 | `grpcServer`                           | Run GRPC server                                           |
-| `objectStore`                          | SQL-based object store                                    |
+| `entityStore`                          | SQL-based entity store (requires storage flag also)       |
 | `queryLibrary`                         | Reusable query library                                    |
 | `accessControlOnCall`                  | Access control primitives for OnCall                      |
 | `nestedFolders`                        | Enable folder nesting                                     |
