@@ -4,6 +4,7 @@ import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObject } from '../../core/types';
 import { forEachSceneObjectInState } from '../../core/utils';
 import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableValueChangedEvent } from '../types';
+import { SceneVariableRunner } from '../variants/SceneVariableRunner';
 
 export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
   /** Variables that have changed in since the activation or since the first manual value change */
@@ -15,9 +16,15 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   /** Variables currently updating  */
   private updating = new Map<SceneVariable, VariableUpdateInProgress>();
 
+  private runner: SceneVariableRunner = new SceneVariableRunner();
+
   public getByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
     return this.state.variables.find((x) => x.state.name === name);
+  }
+
+  public getRunner() {
+    return this.runner;
   }
 
   /**
@@ -70,6 +77,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
         continue;
       }
 
+      console.log('updating, set', variable, this.updating);
       this.updating.set(variable, {
         variable,
         subscription: variable.validateAndUpdate().subscribe({
@@ -87,7 +95,9 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     const update = this.updating.get(variable);
     update?.subscription.unsubscribe();
 
+    console.log('updating, delete', variable, this.updating);
     this.updating.delete(variable);
+    console.log('updating, post delete', this.updating);
     this.variablesToUpdate.delete(variable);
     this.updateNextBatch();
   }
