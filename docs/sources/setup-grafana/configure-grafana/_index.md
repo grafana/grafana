@@ -297,8 +297,8 @@ Sets the maximum time using a duration format (5s/5m/5ms) before timing out read
 This setting enables you to specify additional headers that the server adds to HTTP(S) responses.
 
 ```
-; exampleHeader1 = exampleValue1
-; exampleHeader2 = exampleValue2
+exampleHeader1 = exampleValue1
+exampleHeader2 = exampleValue2
 ```
 
 <hr />
