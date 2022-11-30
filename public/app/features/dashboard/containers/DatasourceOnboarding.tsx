@@ -57,11 +57,16 @@ export function DatasourceOnboarding({
         <h1 className={styles.title}>Welcome to Grafana dashboards!</h1>
         <div className={styles.description}>
           <h4 className={styles.explanation}>{"To visualize your data, you'll need to connect it first."}</h4>
-          <a href="#more" className={styles.link}>
+          <a
+            href="https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/"
+            rel="noreferrer"
+            target="_blank"
+            className={styles.link}
+          >
             Learn more
           </a>
         </div>
-        <h4 className={styles.preferredDataSource}>Select your preferred data source:</h4>
+        <h4 className={styles.preferredDataSource}>Connect your preferred data source:</h4>
         {!loadingDatasources && datasources !== undefined && (
           <ul className={styles.datasources}>
             {datasources.map((d) => (
@@ -74,8 +79,8 @@ export function DatasourceOnboarding({
                     width="16"
                     className={styles.logo}
                   />
-                  <span style={{ marginRight: 'auto' }}>{d.name}</span>
-                  <Icon name="arrow-right" size="lg" className={styles.textLink} />
+                  <span className={styles.datasourceName}>{d.name}</span>
+                  <Icon name="arrow-right" size="lg" className={styles.arrowIcon} />
                 </button>
               </li>
             ))}
@@ -98,17 +103,42 @@ export function DatasourceOnboarding({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    createNew: css({
+    wrapper: css({
       display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    title: css({
+      textAlign: 'center',
+      fontSize: theme.typography.pxToRem(32),
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    description: css({
+      display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       gap: theme.spacing(1),
-      margin: '0px',
-      marginTop: theme.spacing(8),
-      padding: theme.spacing(0),
-      border: 'none',
-      background: 'inherit',
-      fontSize: theme.typography.h6.fontSize,
+      maxWidth: '50vw',
+      marginBottom: theme.spacing(8),
       color: theme.colors.text.secondary,
+    }),
+    explanation: css({
+      marginBottom: '0px',
+      textAlign: 'center',
+      fontSize: theme.typography.pxToRem(19),
+    }),
+    link: css({
+      textDecoration: 'underline',
+      textUnderlinePosition: 'under',
+      fontSize: theme.typography.h5.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    preferredDataSource: css({
+      marginBottom: theme.spacing(3),
+      fontSize: theme.typography.pxToRem(19),
+      fontWeight: theme.typography.fontWeightRegular,
     }),
     datasources: css({
       display: 'grid',
@@ -138,46 +168,16 @@ function getStyles(theme: GrafanaTheme2) {
         },
       },
     }),
-    description: css({
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      maxWidth: '50vw',
-      marginBottom: theme.spacing(8),
-      color: theme.colors.text.secondary,
-    }),
-    explanation: css({
-      marginBottom: '0px',
-      textAlign: 'center',
-      fontSize: theme.typography.pxToRem(19),
-    }),
-    link: css({
-      textDecoration: 'underline',
-      textUnderlinePosition: 'under',
-      fontSize: theme.typography.h5.fontSize,
-      color: theme.colors.text.secondary,
-    }),
     logo: css({
       width: theme.spacing(2),
       height: theme.spacing(2),
       objectFit: 'contain',
     }),
-    preferredDataSource: css({
-      marginBottom: theme.spacing(3),
-      fontSize: theme.typography.pxToRem(19),
-      fontWeight: theme.typography.fontWeightRegular,
+    datasourceName: css({
+      marginRight: 'auto',
     }),
-    secondary: css({
-      color: theme.colors.text.secondary,
-    }),
-    textLink: css({
+    arrowIcon: css({
       color: theme.colors.text.link,
-    }),
-    title: css({
-      textAlign: 'center',
-      fontSize: theme.typography.pxToRem(32),
-      fontWeight: theme.typography.fontWeightBold,
     }),
     viewAll: css({
       display: 'flex',
@@ -191,12 +191,20 @@ function getStyles(theme: GrafanaTheme2) {
       textDecoration: 'underline',
       textUnderlinePosition: 'under',
     }),
-    wrapper: css({
+    createNew: css({
       display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
       alignItems: 'center',
-      justifyContent: 'center',
+      gap: theme.spacing(1),
+      margin: '0px',
+      marginTop: theme.spacing(8),
+      padding: theme.spacing(0),
+      border: 'none',
+      background: 'inherit',
+      fontSize: theme.typography.h6.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    secondary: css({
+      color: theme.colors.text.secondary,
     }),
   };
 }
