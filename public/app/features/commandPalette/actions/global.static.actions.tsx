@@ -14,7 +14,7 @@ export interface NavBarActions {
   actions: Action[];
 }
 
-// TODO: crappy hacky, make this better. make ids mandatory on nav items?
+// TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle;
 }
