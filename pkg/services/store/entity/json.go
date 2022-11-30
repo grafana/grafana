@@ -11,7 +11,7 @@ import (
 
 func init() { //nolint:gochecknoinits
 	jsoniter.RegisterTypeEncoder("entity.EntitySearchResult", &searchResultCodec{})
-	jsoniter.RegisterTypeEncoder("entity.WriteObjectResponse", &writeResponseCodec{})
+	jsoniter.RegisterTypeEncoder("entity.WriteEntityResponse", &writeResponseCodec{})
 	jsoniter.RegisterTypeEncoder("entity.ReadEntityResponse", &readResponseCodec{})
 
 	jsoniter.RegisterTypeEncoder("entity.Entity", &rawEntityCodec{})
