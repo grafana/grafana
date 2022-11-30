@@ -375,6 +375,7 @@ var (
 		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "authnService",

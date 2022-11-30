@@ -226,10 +226,11 @@ Some stable features are enabled by default -- they can be disabled by setting t
 	}, false)
 
 	if hasDeprecatedFlags {
-
 		buf += `
 ## Deprecated feature toggles
-	
+
+When stable or beta features are slated for removal, they will be marked as Deprecated first.
+
 	` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 			return flag.State == FeatureStateDeprecated
 		}, false)
@@ -238,7 +239,8 @@ Some stable features are enabled by default -- they can be disabled by setting t
 	buf += `
 ## Alpha feature toggles
 
-These are features early in their development lifecycle, they are not yet supported in grafana cloud.
+These are features early in their development lifecycle, they are not yet supported in grafana cloud.  Alpha features may
+be changed or removed without notice.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.State == FeatureStateAlpha && !flag.RequiresDevMode

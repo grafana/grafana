@@ -46,7 +46,8 @@ Some stable features are enabled by default -- they can be disabled by setting t
 
 ## Alpha feature toggles
 
-These are features early in their development lifecycle, they are not yet supported in grafana cloud.
+These are features early in their development lifecycle, they are not yet supported in grafana cloud. Alpha features may
+be changed or removed without notice.
 
 | Feature toggle name                | Description                                                                                                                                                 |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -86,6 +87,7 @@ These are features early in their development lifecycle, they are not yet suppor
 | `showDashboardValidationWarnings`  | Show warnings when Dashboards do not validate against the schema                                                                                            |
 | `mysqlAnsiQuotes`                  | Use double quote to escape keyword in Mysql query                                                                                                           |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                    |
+| `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                              |
 
 ## Development feature toggles
