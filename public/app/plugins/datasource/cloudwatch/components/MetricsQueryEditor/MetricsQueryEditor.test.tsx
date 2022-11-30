@@ -50,6 +50,7 @@ const setup = () => {
   datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
   datasource.api.getRegions = jest.fn().mockResolvedValue([]);
   datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(false);
 
   const props: Props = {
     query: {

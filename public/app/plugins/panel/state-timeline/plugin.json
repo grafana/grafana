@@ -3,8 +3,6 @@
   "name": "State timeline",
   "id": "state-timeline",
 
-  "state": "beta",
-
   "info": {
     "description": "State changes and durations",
     "author": {

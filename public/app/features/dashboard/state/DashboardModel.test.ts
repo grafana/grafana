@@ -13,7 +13,7 @@ import { PanelModel } from '../state/PanelModel';
 
 jest.mock('app/core/services/context_srv');
 
-const mockContextSrv = jest.mocked(contextSrv, true);
+const mockContextSrv = jest.mocked(contextSrv);
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),

@@ -263,7 +263,11 @@ type Cfg struct {
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
-	CSPTemplate           string
+	CSPTemplate string
+	// CSPReportEnabled toggles Content Security Policy Report Only support.
+	CSPReportOnlyEnabled bool
+	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
+	CSPReportOnlyTemplate string
 	AngularSupportEnabled bool
 
 	TempDataLifetime time.Duration
@@ -381,6 +385,9 @@ type Cfg struct {
 	HiddenUsers           map[string]struct{}
 	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
 
+	// Service Accounts
+	SATokenExpirationDayLimit int
+
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
 	AnnotationMaximumTagsLength        int64
@@ -420,9 +427,9 @@ type Cfg struct {
 	LDAPSkipOrgRoleSync bool
 	LDAPAllowSignup     bool
 
-	DefaultTheme  string
-	DefaultLocale string
-	HomePage      string
+	DefaultTheme    string
+	DefaultLanguage string
+	HomePage        string
 
 	Quota QuotaSettings
 
@@ -468,6 +475,8 @@ type Cfg struct {
 
 	Search SearchSettings
 
+	SecureSocksDSProxy SecureSocksDSProxySettings
+
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
@@ -477,6 +486,8 @@ type Cfg struct {
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
 	GRPCServerTLSConfig *tls.Config
+
+	CustomResponseHeaders map[string]string
 }
 
 type CommandLineArgs struct {
@@ -974,6 +985,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	if err := readServiceAccountSettings(iniFile, cfg); err != nil {
+		return err
+	}
 	if err := readAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
@@ -1069,6 +1083,13 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
+
+	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
+	if err != nil {
+		// if the proxy is misconfigured, disable it rather than crashing
+		cfg.SecureSocksDSProxy.Enabled = false
+		cfg.Logger.Error("secure_socks_datasource_proxy unable to start up", "err", err.Error())
+	}
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1285,9 +1306,19 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
+	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(true)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
-	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(true)
+	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
+	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
+
+	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
+		return fmt.Errorf("enabling content_security_policy requires a content_security_policy_template configuration")
+	}
+
+	if cfg.CSPReportOnlyEnabled && cfg.CSPReportOnlyTemplate == "" {
+		return fmt.Errorf("enabling content_security_policy_report_only requires a content_security_policy_report_only_template configuration")
+	}
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
@@ -1435,7 +1466,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
-	cfg.DefaultLocale = valueAsString(users, "default_locale", "")
+	cfg.DefaultLanguage = valueAsString(users, "default_language", "")
 	cfg.HomePage = valueAsString(users, "home_page", "")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
@@ -1464,6 +1495,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		}
 	}
 
+	return nil
+}
+
+func readServiceAccountSettings(iniFile *ini.File, cfg *Cfg) error {
+	serviceAccount := iniFile.Section("service_accounts")
+	cfg.SATokenExpirationDayLimit = serviceAccount.Key("token_expiration_day_limit").MustInt(-1)
 	return nil
 }
 
@@ -1656,6 +1693,14 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
+
+	headersSection := cfg.Raw.Section("server.custom_response_headers")
+	keys := headersSection.Keys()
+	cfg.CustomResponseHeaders = make(map[string]string, len(keys))
+
+	for _, key := range keys {
+		cfg.CustomResponseHeaders[key.Name()] = key.Value()
+	}
 
 	return nil
 }

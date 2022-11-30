@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/object"
-	"github.com/grafana/grafana/pkg/services/store/router"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 
@@ -27,18 +26,16 @@ type HTTPObjectStore interface {
 }
 
 type httpObjectStore struct {
-	store  object.ObjectStoreServer
-	log    log.Logger
-	kinds  kind.KindRegistry
-	router router.ObjectStoreRouter
+	store object.ObjectStoreServer
+	log   log.Logger
+	kinds kind.KindRegistry
 }
 
 func ProvideHTTPObjectStore(store object.ObjectStoreServer, kinds kind.KindRegistry) HTTPObjectStore {
 	return &httpObjectStore{
-		store:  store,
-		log:    log.New("http-object-store"),
-		kinds:  kinds,
-		router: router.NewObjectStoreRouter(kinds),
+		store: store,
+		log:   log.New("http-object-store"),
+		kinds: kinds,
 	}
 }
 
@@ -48,16 +45,16 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	reqGrafanaAdmin := middleware.ReqSignedIn //.ReqGrafanaAdmin
 
 	// Every * must parse to a GRN (uid+kind)
-	route.Get("/store/*", reqGrafanaAdmin, routing.Wrap(s.doGetObject))
-	route.Post("/store/*", reqGrafanaAdmin, routing.Wrap(s.doWriteObject))
-	route.Delete("/store/*", reqGrafanaAdmin, routing.Wrap(s.doDeleteObject))
-	route.Get("/raw/*", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
-	route.Get("/history/*", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
-	route.Get("/list/*", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
+	route.Get("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetObject))
+	route.Post("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doWriteObject))
+	route.Delete("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doDeleteObject))
+	route.Get("/raw/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
+	route.Get("/history/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
+	route.Get("/list/:uid", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
 
 	// File upload
-	route.Post("/upload/:scope", reqGrafanaAdmin, routing.Wrap(s.doUpload))
+	route.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
 }
 
 // This function will extract UID+Kind from the requested path "*" in our router
@@ -65,12 +62,6 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 // This will quickly be revisited as we explore how to encode UID+Kind in a "GRN" format
 func (s *httpObjectStore) getGRNFromRequest(c *models.ReqContext) (*object.GRN, map[string]string, error) {
 	params := web.Params(c.Req)
-	info, err := s.router.RouteFromKey(c.Req.Context(),
-		fmt.Sprintf("%d/%s", c.OrgID, params["*"]))
-	if err != nil {
-		return nil, params, err
-	}
-
 	// Read parameters that are encoded in the URL
 	vals := c.Req.URL.Query()
 	for k, v := range vals {
@@ -78,7 +69,11 @@ func (s *httpObjectStore) getGRNFromRequest(c *models.ReqContext) (*object.GRN, 
 			params[k] = v[0]
 		}
 	}
-	return info.GRN, params, nil
+	return &object.GRN{
+		TenantId: c.OrgID,
+		Kind:     params[":kind"],
+		UID:      params[":uid"],
+	}, params, nil
 }
 
 func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
@@ -182,6 +177,7 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 	rsp, err := s.store.Write(c.Req.Context(), &object.WriteObjectRequest{
 		GRN:             grn,
 		Body:            b,
+		Folder:          params["folder"],
 		Comment:         params["comment"],
 		PreviousVersion: params["previousVersion"],
 	})
@@ -233,10 +229,6 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 	if len(fileinfo) < 1 {
 		return response.Error(400, "missing files", nil)
 	}
-	scope := web.Params(c.Req)[":scope"]
-	if scope == "" {
-		return response.Error(400, "invalid scope", nil)
-	}
 
 	var rsp []*object.WriteObjectResponse
 
@@ -257,12 +249,7 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 			if err != nil || kind.ID == "" {
 				return response.Error(400, "Unsupported kind: "+fileHeader.Filename, err)
 			}
-			uid := folder
-			if uid != "" {
-				uid = uid + "/" + fileHeader.Filename[:idx]
-			} else {
-				uid = fileHeader.Filename[:idx]
-			}
+			uid := fileHeader.Filename[:idx]
 
 			file, err := fileHeader.Open()
 			if err != nil {
@@ -278,9 +265,9 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 			}
 
 			grn := &object.GRN{
-				Scope: scope,
-				UID:   uid,
-				Kind:  kind.ID,
+				UID:      uid,
+				Kind:     kind.ID,
+				TenantId: c.OrgID,
 			}
 
 			if !overwriteExistingFile {
@@ -301,6 +288,7 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 				GRN:     grn,
 				Body:    data,
 				Comment: message,
+				Folder:  folder,
 				//	PreviousVersion: params["previousVersion"],
 			})
 

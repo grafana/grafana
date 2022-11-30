@@ -179,10 +179,6 @@ const (
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
 
-	// FlagUseLegacyHeatmapPanel
-	// Continue to use the angular/flot based heatmap panel
-	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -196,7 +192,7 @@ const (
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
-	// Enables work-in-progress internationalization
+	// Enables internationalization
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
@@ -218,6 +214,10 @@ const (
 	// FlagFlameGraph
 	// Show the flame graph
 	FlagFlameGraph = "flameGraph"
+
+	// FlagCloudWatchCrossAccountQuerying
+	// Use cross-account querying in CloudWatch datasource
+	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
@@ -270,4 +270,12 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagSecureSocksDatasourceProxy
+	// Enable secure socks tunneling for supported core datasources
+	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
+
+	// FlagAuthnService
+	// Use new auth service to perform authentication
+	FlagAuthnService = "authnService"
 )

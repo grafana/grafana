@@ -7,9 +7,9 @@ export const GERMAN_GERMANY = 'de-DE';
 export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const PSEUDO_LOCALE = 'pseudo-LOCALE';
 
-export const DEFAULT_LOCALE = ENGLISH_US;
+export const DEFAULT_LANGUAGE = ENGLISH_US;
 
-interface LocaleDefinition {
+interface LanguageDefinitions {
   /** IETF language tag for the language e.g. en-US */
   code: string;
 
@@ -20,7 +20,7 @@ interface LocaleDefinition {
   loader: () => Promise<ResourceKey>;
 }
 
-export const LOCALES: LocaleDefinition[] = [
+export const LANGUAGES: LanguageDefinitions[] = [
   {
     code: ENGLISH_US,
     name: 'English',
@@ -53,11 +53,11 @@ export const LOCALES: LocaleDefinition[] = [
 ];
 
 if (process.env.NODE_ENV === 'development') {
-  LOCALES.push({
+  LANGUAGES.push({
     code: PSEUDO_LOCALE,
     name: 'Pseudo-locale',
     loader: () => import('../../../locales/pseudo-LOCALE/grafana.json'),
   });
 }
 
-export const VALID_LOCALES = LOCALES.map((v) => v.code);
+export const VALID_LANGUAGES = LANGUAGES.map((v) => v.code);

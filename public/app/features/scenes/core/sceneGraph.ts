@@ -1,12 +1,12 @@
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, ScopedVars } from '@grafana/data';
 
-import { sceneInterpolator } from '../variables/interpolation/sceneInterpolator';
+import { CustomFormatterFn, sceneInterpolator } from '../variables/interpolation/sceneInterpolator';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { SceneVariables } from '../variables/types';
 
 import { SceneDataNode } from './SceneDataNode';
 import { SceneTimeRange as SceneTimeRangeImpl } from './SceneTimeRange';
-import { SceneDataState, SceneEditor, SceneLayoutState, SceneObject, SceneTimeRange } from './types';
+import { SceneDataState, SceneEditor, SceneLayoutState, SceneObject, SceneTimeRangeLike } from './types';
 
 /**
  * Get the closest node with variables
@@ -42,7 +42,7 @@ export function getData(sceneObject: SceneObject): SceneObject<SceneDataState> {
 /**
  * Will walk up the scene object graph to the closest $timeRange scene object
  */
-export function getTimeRange(sceneObject: SceneObject): SceneTimeRange {
+export function getTimeRange(sceneObject: SceneObject): SceneTimeRangeLike {
   const { $timeRange } = sceneObject.state;
   if ($timeRange) {
     return $timeRange;
@@ -89,13 +89,18 @@ export function getLayout(scene: SceneObject): SceneObject<SceneLayoutState> {
 /**
  * Interpolates the given string using the current scene object as context.   *
  */
-export function interpolate(sceneObject: SceneObject, value: string | undefined | null): string {
+export function interpolate(
+  sceneObject: SceneObject,
+  value: string | undefined | null,
+  scopedVars?: ScopedVars,
+  format?: string | CustomFormatterFn
+): string {
   // Skip interpolation if there are no variable dependencies
   if (!value || !sceneObject.variableDependency || sceneObject.variableDependency.getNames().size === 0) {
     return value ?? '';
   }
 
-  return sceneInterpolator(sceneObject, value);
+  return sceneInterpolator(sceneObject, value, scopedVars, format);
 }
 
 export const EmptyVariableSet = new SceneVariableSet({ variables: [] });
@@ -108,7 +113,7 @@ export const EmptyDataNode = new SceneDataNode({
   },
 });
 
-export const DefaultTimeRange = new SceneTimeRangeImpl(getDefaultTimeRange());
+export const DefaultTimeRange = new SceneTimeRangeImpl();
 
 export const sceneGraph = {
   getVariables,

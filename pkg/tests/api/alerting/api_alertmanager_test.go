@@ -2539,12 +2539,6 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	return u.ID
 }
 
-func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {
-	org, err := store.CreateOrgWithMember(name, userID)
-	require.NoError(t, err)
-	return org.Id
-}
-
 func getLongString(t *testing.T, n int) string {
 	t.Helper()
 

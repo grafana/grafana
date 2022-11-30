@@ -125,6 +125,10 @@ type GetAuthInfoQuery struct {
 	Result *UserAuth
 }
 
+type GetUserLabelsQuery struct {
+	UserIDs []int64
+}
+
 type TeamOrgGroupDTO struct {
 	TeamName string `json:"teamName"`
 	OrgName  string `json:"orgName"`

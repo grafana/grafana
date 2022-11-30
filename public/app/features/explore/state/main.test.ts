@@ -139,7 +139,10 @@ describe('Explore reducer', () => {
           .givenReducer(exploreReducer, initialState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.left }))
           .thenStateShouldEqual({
+            evenSplitPanes: true,
+            largerExploreId: undefined,
             left: rightItemMock,
+            maxedExploreId: undefined,
             right: undefined,
           } as unknown as ExploreState);
       });
@@ -162,7 +165,10 @@ describe('Explore reducer', () => {
           .givenReducer(exploreReducer, initialState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
           .thenStateShouldEqual({
+            evenSplitPanes: true,
+            largerExploreId: undefined,
             left: leftItemMock,
+            maxedExploreId: undefined,
             right: undefined,
           } as unknown as ExploreState);
       });

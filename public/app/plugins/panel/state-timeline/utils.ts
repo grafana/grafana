@@ -209,7 +209,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     }
 
     const field = frame.fields[i];
-    const config = field.config as FieldConfig<TimelineFieldConfig>;
+    const config: FieldConfig<TimelineFieldConfig> = field.config;
     const customConfig: TimelineFieldConfig = {
       ...defaultConfig,
       ...config.custom,
@@ -259,8 +259,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
           return true;
         },
       },
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
+      scales: [xScaleKey, null],
     };
     builder.setSync();
     builder.setCursor(cursor);
@@ -284,9 +283,9 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
  * in:  1,        1,undefined,        1,2,        2,null,2,3
  * out: 1,undefined,undefined,undefined,2,undefined,null,2,3
  */
-export function unsetSameFutureValues(values: any[]): any[] | undefined {
+export function unsetSameFutureValues(values: unknown[]): unknown[] | undefined {
   let prevVal = values[0];
-  let clone: any[] | undefined = undefined;
+  let clone: unknown[] | undefined = undefined;
 
   for (let i = 1; i < values.length; i++) {
     let value = values[i];

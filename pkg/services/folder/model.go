@@ -3,7 +3,9 @@ package folder
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -65,7 +67,9 @@ type CreateFolderCommand struct {
 	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid"`
+	ParentUID   string `json:"parentUid"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -75,14 +79,18 @@ type UpdateFolderCommand struct {
 	NewUID         *string `json:"uid" xorm:"uid"`
 	NewTitle       *string `json:"title"`
 	NewDescription *string `json:"description"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
 // to move a folder.
 type MoveFolderCommand struct {
 	UID          string `json:"uid"`
-	NewParentUID string `json:"new_parent_uid"`
+	NewParentUID string `json:"newParentUid"`
 	OrgID        int64  `json:"-"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
@@ -91,6 +99,8 @@ type DeleteFolderCommand struct {
 	UID              string `json:"uid" xorm:"uid"`
 	OrgID            int64  `json:"orgId" xorm:"org_id"`
 	ForceDeleteRules bool   `json:"forceDeleteRules"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -102,6 +112,8 @@ type GetFolderQuery struct {
 	ID    *int64
 	Title *string
 	OrgID int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
@@ -130,7 +142,7 @@ func (f *Folder) ToLegacyModel() *models.Folder {
 		Id:        f.ID,
 		Uid:       f.UID,
 		Title:     f.Title,
-		Url:       models.GetFolderUrl(f.UID, models.SlugifyTitle(f.Title)),
+		Url:       models.GetFolderUrl(f.UID, slugify.Slugify(f.Title)),
 		Version:   0,
 		Created:   f.Created,
 		Updated:   f.Updated,

@@ -193,11 +193,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.toggleTableView();
   };
 
-  onTogglePanelOptions = () => {
-    const { uiState, updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
-  };
-
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
     const { dashboard, panel, uiState, tableViewEnabled, theme } = this.props;
 
@@ -498,7 +493,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {this.state.showSaveLibraryPanelModal && (
             <SaveLibraryPanelModal
               panel={this.props.panel as PanelModelWithLibraryPanel}
-              folderId={this.props.dashboard.meta.folderId as number}
+              folderUid={this.props.dashboard.meta.folderUid ?? ''}
               onConfirm={this.onConfirmAndDismissLibarayPanelModel}
               onDiscard={this.onDiscard}
               onDismiss={this.onConfirmAndDismissLibarayPanelModel}
