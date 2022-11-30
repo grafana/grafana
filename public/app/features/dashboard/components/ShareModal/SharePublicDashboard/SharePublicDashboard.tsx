@@ -169,7 +169,7 @@ export const SharePublicDashboard = (props: Props) => {
             data-testid={selectors.UnsupportedDatasourcesWarningAlert}
           >
             <div>
-              {`There are datasources in this dashboard that are unsupported for public dashboards: ${getUnsupportedDashboardDatasources(
+              {`There are datasources in this dashboard that are unsupported for public dashboards. Panels that use these datasources may not function properly: ${getUnsupportedDashboardDatasources(
                 props.dashboard.panels
               ).join(', ')}. See the `}
               <a href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/" className="text-link">
