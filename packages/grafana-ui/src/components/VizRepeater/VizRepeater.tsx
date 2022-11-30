@@ -164,6 +164,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
+      padding: '4px',
       overflow: `${minVizWidth ? 'auto' : 'hidden'} ${minVizHeight ? 'auto' : 'hidden'}`,
     };
 
