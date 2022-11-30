@@ -45,6 +45,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderState } from './PanelHeader/PanelHeaderState';
 import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -588,10 +589,11 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const leftItems = [
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
     ];
+    const headerState = <PanelHeaderState errorMessage={errorMessage} data={data} key="state" />;
 
     if (config.featureToggles.newPanelChromeUI) {
       return (
-        <PanelChrome width={width} height={height} title={title} leftItems={leftItems} padding={noPadding}>
+        <PanelChrome state={headerState} width={width} height={height} title={title} padding={noPadding}>
           {(innerWidth, innerHeight) => (
             <>
               <ErrorBoundary

@@ -37,7 +37,7 @@ export interface PanelChromeProps {
   // dragClass?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
-  // states?: ReactNode[];
+  state?: ReactNode; // maybe PanelDataState?
   /** @deprecated in favor of prop states
    * which will serve the same purpose
    * of showing the panel state in the top right corner
@@ -65,7 +65,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   // dragClass,
   hoverHeader = false,
   loadingState,
-  // states = [],
+  state = null,
   leftItems = [],
 }) => {
   const theme = useTheme2();
@@ -92,6 +92,8 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
       {loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems && (
         <LoadingBar containerWidth={width} width={128} height={2} />
       )}
+
+      {!isUsingDeprecatedLeftItems && state}
 
       {hasHeader && !hoverHeader && (
         <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
