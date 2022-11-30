@@ -598,6 +598,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
+	if len(hs.Cfg.CustomResponseHeaders) > 0 {
+		m.Use(middleware.AddCustomResponseHeaders(hs.Cfg))
+	}
+
 	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
