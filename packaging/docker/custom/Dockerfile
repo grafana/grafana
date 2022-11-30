@@ -12,7 +12,7 @@ ENV GF_PATHS_PLUGINS="/var/lib/grafana-plugins"
 RUN mkdir -p "$GF_PATHS_PLUGINS" && \
     chown -R grafana:${GF_GID} "$GF_PATHS_PLUGINS" && \
     if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
-      apk add --no-cache udev ttf-opensans chromium \
+      apk add --no-cache udev ttf-opensans chromium; \
     fi
 
 USER grafana
