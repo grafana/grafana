@@ -94,7 +94,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 			frame.Meta = frameMeta
 
 			var err error
-			iterator := timeSeriesDataIterator{&series, &d}
+			iterator := timeSeriesDataIterator{series, d}
 			frames, err = appendFrames(frames, iterator, n, defaultMetricName, seriesLabels, frame, timeSeriesQuery)
 			if err != nil {
 				return err

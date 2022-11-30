@@ -153,11 +153,11 @@ type timeSeriesPointDescriptor struct {
 	MetricKind string `json:"metricKind"`
 }
 
-func (ts *timeSeriesPointDescriptor) metricType() string {
+func (ts timeSeriesPointDescriptor) metricType() string {
 	return ts.Key
 }
 
-func (ts *timeSeriesPointDescriptor) valueType() string {
+func (ts timeSeriesPointDescriptor) valueType() string {
 	return ts.ValueType
 }
 
@@ -170,17 +170,17 @@ type timeSeriesData struct {
 	PointData []timeSeriesPointData `json:"pointData"`
 }
 
-func (ts *timeSeriesData) length() int {
+func (ts timeSeriesData) length() int {
 	return len(ts.PointData)
 }
 
-func (ts *timeSeriesData) getPoint(index int) point {
+func (ts timeSeriesData) getPoint(index int) point {
 	return &ts.PointData[index]
 }
 
 type timeSeriesDataIterator struct {
-	*timeSeriesData
-	*timeSeriesPointDescriptor
+	timeSeriesData
+	timeSeriesPointDescriptor
 }
 
 type timeSeriesPointData struct {
@@ -191,31 +191,31 @@ type timeSeriesPointData struct {
 	} `json:"timeInterval"`
 }
 
-func (point *timeSeriesPointData) doubleValue(descriptorIndex int) float64 {
+func (point timeSeriesPointData) doubleValue(descriptorIndex int) float64 {
 	return point.Values[descriptorIndex].DoubleValue
 }
 
-func (point *timeSeriesPointData) int64Value(descriptorIndex int) string {
+func (point timeSeriesPointData) int64Value(descriptorIndex int) string {
 	return point.Values[descriptorIndex].IntValue
 }
 
-func (point *timeSeriesPointData) boolValue(descriptorIndex int) bool {
+func (point timeSeriesPointData) boolValue(descriptorIndex int) bool {
 	return point.Values[descriptorIndex].BoolValue
 }
 
-func (point *timeSeriesPointData) bucketCounts(descriptorIndex int) []string {
+func (point timeSeriesPointData) bucketCounts(descriptorIndex int) []string {
 	return point.Values[descriptorIndex].DistributionValue.BucketCounts
 }
 
-func (point *timeSeriesPointData) bucketValue(descriptorIndex int, bucketCountIndex int) string {
+func (point timeSeriesPointData) bucketValue(descriptorIndex int, bucketCountIndex int) string {
 	return point.Values[descriptorIndex].DistributionValue.BucketCounts[bucketCountIndex]
 }
 
-func (point *timeSeriesPointData) bucketOptions(descriptorIndex int) cloudMonitoringBucketOptions {
+func (point timeSeriesPointData) bucketOptions(descriptorIndex int) cloudMonitoringBucketOptions {
 	return point.Values[descriptorIndex].DistributionValue.BucketOptions
 }
 
-func (point *timeSeriesPointData) endTime() time.Time {
+func (point timeSeriesPointData) endTime() time.Time {
 	return point.TimeInterval.EndTime
 }
 
@@ -234,19 +234,19 @@ type timeSeries struct {
 	Points     []timeSeriesPoint                 `json:"points"`
 }
 
-func (ts *timeSeries) length() int {
+func (ts timeSeries) length() int {
 	return len(ts.Points)
 }
 
-func (ts *timeSeries) getPoint(index int) point {
+func (ts timeSeries) getPoint(index int) point {
 	return &ts.Points[index]
 }
 
-func (ts *timeSeries) metricType() string {
+func (ts timeSeries) metricType() string {
 	return ts.Metric.Type
 }
 
-func (ts *timeSeries) valueType() string {
+func (ts timeSeries) valueType() string {
 	return ts.ValueType
 }
 
@@ -281,31 +281,31 @@ type timeSeriesPointValue struct {
 	} `json:"distributionValue"`
 }
 
-func (point *timeSeriesPoint) doubleValue(descriptorIndex int) float64 {
+func (point timeSeriesPoint) doubleValue(descriptorIndex int) float64 {
 	return point.Value.DoubleValue
 }
 
-func (point *timeSeriesPoint) int64Value(descriptorIndex int) string {
+func (point timeSeriesPoint) int64Value(descriptorIndex int) string {
 	return point.Value.IntValue
 }
 
-func (point *timeSeriesPoint) boolValue(descriptorIndex int) bool {
+func (point timeSeriesPoint) boolValue(descriptorIndex int) bool {
 	return point.Value.BoolValue
 }
 
-func (point *timeSeriesPoint) bucketCounts(descriptorIndex int) []string {
+func (point timeSeriesPoint) bucketCounts(descriptorIndex int) []string {
 	return point.Value.DistributionValue.BucketCounts
 }
 
-func (point *timeSeriesPoint) bucketValue(descriptorIndex int, bucketCountIndex int) string {
+func (point timeSeriesPoint) bucketValue(descriptorIndex int, bucketCountIndex int) string {
 	return point.Value.DistributionValue.BucketCounts[bucketCountIndex]
 }
 
-func (point *timeSeriesPoint) bucketOptions(descriptorIndex int) cloudMonitoringBucketOptions {
+func (point timeSeriesPoint) bucketOptions(descriptorIndex int) cloudMonitoringBucketOptions {
 	return point.Value.DistributionValue.BucketOptions
 }
 
-func (point *timeSeriesPoint) endTime() time.Time {
+func (point timeSeriesPoint) endTime() time.Time {
 	return point.Interval.EndTime
 }
 

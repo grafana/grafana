@@ -90,7 +90,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 		}
 
 		var err error
-		frames, err = appendFrames(frames, &series, 0, defaultMetricName, seriesLabels, frame, query)
+		frames, err = appendFrames(frames, series, 0, defaultMetricName, seriesLabels, frame, query)
 		if err != nil {
 			return err
 		}
