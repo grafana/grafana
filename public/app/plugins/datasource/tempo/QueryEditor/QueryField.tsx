@@ -77,7 +77,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
-    const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
+    let queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON File' },
       { value: 'serviceMap', label: 'Service Graph' },
@@ -98,6 +98,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     }
 
     if (config.featureToggles.traceqlEditor) {
+      // Remove the traceId option first
+      queryTypeOptions = queryTypeOptions.filter((qto) => qto.value !== 'traceId');
       queryTypeOptions.push({ value: 'traceql', label: 'TraceQL' });
     }
 
