@@ -57,14 +57,6 @@ export function DatasourceOnboarding({
         <h1 className={styles.title}>Welcome to Grafana dashboards!</h1>
         <div className={styles.description}>
           <h4 className={styles.explanation}>{"To visualize your data, you'll need to connect it first."}</h4>
-          <a
-            href="https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/"
-            rel="noreferrer"
-            target="_blank"
-            className={styles.link}
-          >
-            Learn more
-          </a>
         </div>
         <h4 className={styles.preferredDataSource}>Connect your preferred data source:</h4>
         {!loadingDatasources && datasources !== undefined && (
@@ -128,12 +120,6 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: '0px',
       textAlign: 'center',
       fontSize: theme.typography.pxToRem(19),
-    }),
-    link: css({
-      textDecoration: 'underline',
-      textUnderlinePosition: 'under',
-      fontSize: theme.typography.h5.fontSize,
-      color: theme.colors.text.secondary,
     }),
     preferredDataSource: css({
       marginBottom: theme.spacing(3),
@@ -201,9 +187,6 @@ function getStyles(theme: GrafanaTheme2) {
       border: 'none',
       background: 'inherit',
       fontSize: theme.typography.h6.fontSize,
-      color: theme.colors.text.secondary,
-    }),
-    secondary: css({
       color: theme.colors.text.secondary,
     }),
   };
