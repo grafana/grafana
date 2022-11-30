@@ -1,28 +1,31 @@
-package sqlstore
+package statsimpl
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := InitTestDB(t)
-	populateDB(t, sqlStore)
+	db := sqlstore.InitTestDB(t)
+	statsService := &sqlStatsService{db: db}
+	populateDB(t, db)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
 		query := models.GetSystemStatsQuery{}
-		err := sqlStore.GetSystemStats(context.Background(), &query)
+		err := statsService.GetSystemStats(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, int64(3), query.Result.Users)
 		assert.Equal(t, int64(0), query.Result.Editors)
@@ -35,37 +38,39 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
 		query := models.GetSystemUserCountStatsQuery{}
-		err := sqlStore.GetSystemUserCountStats(context.Background(), &query)
+		err := statsService.GetSystemUserCountStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get datasource stats should not results in error", func(t *testing.T) {
 		query := models.GetDataSourceStatsQuery{}
-		err := sqlStore.GetDataSourceStats(context.Background(), &query)
+		err := statsService.GetDataSourceStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get datasource access stats should not results in error", func(t *testing.T) {
 		query := models.GetDataSourceAccessStatsQuery{}
-		err := sqlStore.GetDataSourceAccessStats(context.Background(), &query)
+		err := statsService.GetDataSourceAccessStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get alert notifier stats should not results in error", func(t *testing.T) {
 		query := models.GetAlertNotifierUsageStatsQuery{}
-		err := sqlStore.GetAlertNotifiersUsageStats(context.Background(), &query)
+		err := statsService.GetAlertNotifiersUsageStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get admin stats should not result in error", func(t *testing.T) {
 		query := models.GetAdminStatsQuery{}
-		err := sqlStore.GetAdminStats(context.Background(), &query)
+		err := statsService.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 }
 
-func populateDB(t *testing.T, sqlStore *SQLStore) {
+func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	t.Helper()
+
+	orgService, _ := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 
 	users := make([]user.User, 3)
 	for i := range users {
@@ -81,33 +86,41 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	}
 
 	// add 2nd user as editor
-	cmd := &models.AddOrgUserCommand{
-		OrgId:  users[0].OrgID,
-		UserId: users[1].ID,
+	cmd := &org.AddOrgUserCommand{
+		OrgID:  users[0].OrgID,
+		UserID: users[1].ID,
 		Role:   org.RoleEditor,
 	}
-	err := sqlStore.addOrgUser(context.Background(), cmd)
+	err := orgService.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// add 3rd user as viewer
-	cmd = &models.AddOrgUserCommand{
-		OrgId:  users[0].OrgID,
-		UserId: users[2].ID,
+	cmd = &org.AddOrgUserCommand{
+		OrgID:  users[0].OrgID,
+		UserID: users[2].ID,
 		Role:   org.RoleViewer,
 	}
-	err = sqlStore.addOrgUser(context.Background(), cmd)
+	err = orgService.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// add 1st user as admin
-	cmd = &models.AddOrgUserCommand{
-		OrgId:  users[1].OrgID,
-		UserId: users[0].ID,
+	cmd = &org.AddOrgUserCommand{
+		OrgID:  users[1].OrgID,
+		UserID: users[0].ID,
 		Role:   org.RoleAdmin,
 	}
-	err = sqlStore.addOrgUser(context.Background(), cmd)
+	err = orgService.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
+}
 
-	// force renewal of user stats
-	err = sqlStore.updateUserRoleCountsIfNecessary(context.Background(), true)
+func TestIntegration_GetAdminStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	db := sqlstore.InitTestDB(t)
+	statsService := ProvideService(db)
+
+	query := models.GetAdminStatsQuery{}
+	err := statsService.GetAdminStats(context.Background(), &query)
 	require.NoError(t, err)
 }

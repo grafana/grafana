@@ -1,16 +1,14 @@
+// DO NOT ADD METHODS TO THIS FILES. SQLSTORE IS DEPRECATED AND WILL BE REMOVED.
 package sqlstore
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -204,120 +202,6 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		sort.Sort(byOrgName(query.Result))
 		return err
 	})
-}
-
-// GetTeamsByUser is used by the Guardian when checking a users' permissions
-// TODO: use team.Service after user service is split
-func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		query.Result = make([]*models.TeamDTO, 0)
-
-		var sql bytes.Buffer
-		var params []interface{}
-		params = append(params, query.OrgId, query.UserId)
-
-		sql.WriteString(getTeamSelectSQLBase([]string{}))
-		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
-		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
-
-		if !ac.IsDisabled(ss.Cfg) {
-			acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
-			if err != nil {
-				return err
-			}
-			sql.WriteString(` and` + acFilter.Where)
-			params = append(params, acFilter.Args...)
-		}
-
-		err := sess.SQL(sql.String(), params...).Find(&query.Result)
-		return err
-	})
-}
-
-func getTeamMemberCount(filteredUsers []string) string {
-	if len(filteredUsers) > 0 {
-		return `(SELECT COUNT(*) FROM team_member
-			INNER JOIN ` + dialect.Quote("user") + ` ON team_member.user_id = ` + dialect.Quote("user") + `.id
-			WHERE team_member.team_id = team.id AND ` + dialect.Quote("user") + `.login NOT IN (?` +
-			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
-			`) AS member_count `
-	}
-
-	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
-}
-
-func getTeamSelectSQLBase(filteredUsers []string) string {
-	return `SELECT
-		team.id as id,
-		team.org_id,
-		team.name as name,
-		team.email as email, ` +
-		getTeamMemberCount(filteredUsers) +
-		` FROM team as team `
-}
-
-func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {
-	return deleteUserInTransaction(ss, sess, cmd)
-}
-
-func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
-	// Check if user exists
-	usr := user.User{ID: cmd.UserId}
-	has, err := sess.Where(NotServiceAccountFilter(ss)).Get(&usr)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return user.ErrUserNotFound
-	}
-	for _, sql := range UserDeletions() {
-		_, err := sess.Exec(sql, cmd.UserId)
-		if err != nil {
-			return err
-		}
-	}
-
-	return deleteUserAccessControl(sess, cmd.UserId)
-}
-
-func deleteUserAccessControl(sess *DBSession, userID int64) error {
-	// Delete user role assignments
-	if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
-		return err
-	}
-
-	// Delete permissions that are scoped to user
-	if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
-		return err
-	}
-
-	var roleIDs []int64
-	if err := sess.SQL("SELECT id FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
-		return err
-	}
-
-	if len(roleIDs) == 0 {
-		return nil
-	}
-
-	query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
-	args := make([]interface{}, 0, len(roleIDs)+1)
-	args = append(args, query)
-	for _, id := range roleIDs {
-		args = append(args, id)
-	}
-
-	// Delete managed user permissions
-	if _, err := sess.Exec(args...); err != nil {
-		return err
-	}
-
-	// Delete managed user roles
-	if _, err := sess.Exec("DELETE FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func UserDeletions() []string {

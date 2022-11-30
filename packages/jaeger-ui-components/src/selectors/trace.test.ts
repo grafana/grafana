@@ -13,8 +13,10 @@
 // limitations under the License.
 
 import { values as _values } from 'lodash';
+import TreeNode from 'src/utils/TreeNode';
 
 import traceGenerator from '../demo/trace-generators';
+import { TraceResponse, TraceSpan, TraceSpanData } from '../types/trace';
 import { numberSortComparator } from '../utils/sort';
 
 import {
@@ -29,7 +31,7 @@ import {
 import * as traceSelectors from './trace';
 import { followsFromRef } from './trace.fixture';
 
-const generatedTrace = traceGenerator.trace({ numberOfSpans: 45 });
+const generatedTrace: TraceResponse = traceGenerator.trace({ numberOfSpans: 45 });
 
 it('getTraceId() should return the traceID', () => {
   expect(traceSelectors.getTraceId(generatedTrace)).toBe(generatedTrace.traceID);
@@ -39,7 +41,7 @@ it('hydrateSpansWithProcesses() should return the trace with processes on each s
   const hydratedTrace = traceSelectors.hydrateSpansWithProcesses(generatedTrace);
 
   hydratedTrace.spans.forEach((span) =>
-    expect(getSpanProcess(span)).toBe(generatedTrace.processes[getSpanProcessId(span)])
+    expect(getSpanProcess(span as TraceSpan)).toBe(generatedTrace.processes[getSpanProcessId(span)])
   );
 });
 
@@ -55,7 +57,7 @@ describe('getTraceSpanIdsAsTree()', () => {
     const tree = traceSelectors.getTraceSpanIdsAsTree(generatedTrace);
     const spanMap = traceSelectors.getTraceSpansAsMap(generatedTrace);
 
-    tree.walk((value, node) => {
+    tree.walk((value: string | number | undefined, node: TreeNode) => {
       const expectedParentValue = value === traceSelectors.TREE_ROOT_ID ? null : value;
       node.children.forEach((childNode) => {
         expect(getSpanParentId(spanMap.get(childNode.value))).toBe(expectedParentValue);
@@ -98,7 +100,7 @@ it('getParentSpan() should return the first span if there are multiple parents',
         references: [],
       },
     ],
-  };
+  } as unknown as TraceResponse;
 
   expect(traceSelectors.getParentSpan(trace)).toBe(firstSpan);
 });
@@ -131,14 +133,14 @@ it('getTraceDepth() should determine the total depth of the trace tree', () => {
 });
 
 it('getSpanDepthForTrace() should determine the depth of a given span in the parent', () => {
-  function testDepthCalc(span) {
+  function testDepthCalc(span: TraceSpanData) {
     let depth = 2;
     let currentId = getSpanParentId(span);
 
-    const findCurrentSpanById = (item) => getSpanId(item) === currentId;
+    const findCurrentSpanById = (item: TraceSpanData) => getSpanId(item) === currentId;
     while (currentId !== getSpanId(generatedTrace.spans[0])) {
       depth++;
-      currentId = getSpanParentId(generatedTrace.spans.find(findCurrentSpanById));
+      currentId = getSpanParentId(generatedTrace.spans.find(findCurrentSpanById)!);
     }
 
     // console.log('hypothetical depth', depth);
@@ -183,10 +185,13 @@ it('formatDurationForUnit() should use the formatters to return the proper value
 });
 
 it('formatDurationForTrace() should return a ms value for traces shorter than a second', () => {
+  const firstSpan = generatedTrace.spans[0];
+  firstSpan.duration = 600000;
   expect(
     traceSelectors.formatDurationForTrace({
       trace: {
-        spans: [{ duration: 600000 }],
+        ...generatedTrace,
+        spans: [firstSpan],
       },
       duration: 302000,
     })
@@ -266,14 +271,17 @@ it('getTreeSizeForTraceSpan() should return the size for a child span', () => {
       trace: generatedTrace,
       span: generatedTrace.spans[1],
     })
-  ).toBe(traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(generatedTrace.spans[1].spanID).size - 1);
+  ).toBe(traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(generatedTrace.spans[1].spanID)!.size - 1);
 });
 
 it('getTreeSizeForTraceSpan() should return -1 for an absent span', () => {
+  const absentSpan = generatedTrace.spans[0];
+  absentSpan.spanID = 'whatever';
+
   expect(
     traceSelectors.getTreeSizeForTraceSpan({
       trace: generatedTrace,
-      span: { spanID: 'whatever' },
+      span: absentSpan,
     })
   ).toBe(-1);
 });
@@ -287,7 +295,7 @@ it('getTraceName() should return the trace name based on the parentSpan', () => 
 
 it('omitCollapsedSpans() should filter out collapsed spans', () => {
   const span = generatedTrace.spans[1];
-  const size = traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(span.spanID).size - 1;
+  const size = traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(span.spanID)!.size - 1;
 
   expect(
     traceSelectors.omitCollapsedSpans({
@@ -299,15 +307,13 @@ it('omitCollapsedSpans() should filter out collapsed spans', () => {
 });
 
 it('getTicksForTrace() should return a list of ticks given interval parameters', () => {
+  const trace = generatedTrace;
   const timestamp = new Date().getTime() * 1000;
-  const trace = {
-    spans: [
-      {
-        startTime: timestamp,
-        duration: 3000000,
-      },
-    ],
-  };
+
+  trace.spans.forEach((span) => {
+    span.duration = 3000000;
+    span.startTime = timestamp;
+  });
 
   expect(
     traceSelectors.getTicksForTrace({
@@ -325,14 +331,20 @@ it('getTicksForTrace() should return a list of ticks given interval parameters',
 
 it('getTicksForTrace() should use defaults', () => {
   const timestamp = new Date().getTime() * 1000;
-  const trace = {
-    spans: [
-      {
-        startTime: timestamp,
-        duration: 4000000,
-      },
-    ],
-  };
+  const trace = traceGenerator.trace({ numberOfSpans: 1 });
+
+  trace.spans = [
+    {
+      traceID: '5031233a-d0b5-5d41-9b4b-4c072bcf5020',
+      processID: 'b5f4e0ff-7318-5017-a3f3-9c7b423a82aa',
+      spanID: 'e871771f-f1b4-54af-9e9d-826259c2915e',
+      flags: 0,
+      logs: [],
+      operationName: 'POST',
+      startTime: timestamp,
+      duration: 4000000,
+    },
+  ];
 
   expect(traceSelectors.getTicksForTrace({ trace })).toEqual([
     { timestamp, width: traceSelectors.DEFAULT_TICK_WIDTH },
