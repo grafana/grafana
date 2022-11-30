@@ -20,6 +20,8 @@ import {
   GetMetricMetadataQuery,
   AzureMetricQuery,
   AzureMonitorLocations,
+  AzureMonitorProvidersResponse,
+  AzureMonitorLocationsResponse,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -299,8 +301,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   async getProvider(providerName: string) {
-    return ResponseParser.parseProvider(
-      await this.getResource(`${routeNames.azureMonitor}/providers/${providerName}?api-version=2021-04-01`)
+    return await this.getResource<AzureMonitorProvidersResponse>(
+      `${routeNames.azureMonitor}/providers/${providerName}?api-version=2021-04-01`
     );
   }
 
@@ -308,7 +310,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     let locations: AzureMonitorLocations[] = [];
     for (const subscription of subscriptions) {
       const subLocations = ResponseParser.parseLocations(
-        await this.getResource(
+        await this.getResource<AzureMonitorLocationsResponse>(
           `${routeNames.azureMonitor}/subscriptions/${subscription}/locations?api-version=2020-01-01`
         )
       );

@@ -7,7 +7,7 @@ import {
   AzureMonitorMetricAvailabilityMetadata,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorOption,
-  AzureProvider,
+  AzureMonitorLocationsResponse,
 } from '../types';
 export default class ResponseParser {
   static parseResponseValues(
@@ -173,7 +173,7 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseLocations(result: any) {
+  static parseLocations(result: AzureMonitorLocationsResponse) {
     const locations: AzureMonitorLocations[] = [];
 
     if (!result) {
@@ -185,12 +185,5 @@ export default class ResponseParser {
     }
 
     return locations;
-  }
-
-  static parseProvider(result: any): AzureProvider {
-    return {
-      namespace: result.namespace,
-      resourceTypes: result.resourceTypes,
-    };
   }
 }

@@ -123,7 +123,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         resourceGroupName: item.resourceGroup,
         type,
         typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        location: this.logLocationsMap.get(item.location)?.name || item.location,
+        location: this.logLocationsMap.get(item.location)?.displayName || item.location,
       };
     });
   };
@@ -364,13 +364,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
   }
 
-  private async getValidLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
+  async getValidLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
     const subscriptionIds = subscriptions.map((sub) => sub.id);
     const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
     const insightsProvider = await this.azureMonitorDatasource.getProvider('Microsoft.Insights');
     const logsProvider = insightsProvider.resourceTypes.find((provider) => provider.resourceType === 'logs');
 
-    if (!logsProvider) return locations;
+    if (!logsProvider) {
+      return locations;
+    }
 
     const logsLocations = logsProvider.locations.map((location) => ({
       displayName: location,
