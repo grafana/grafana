@@ -16,22 +16,22 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default -- they can be disabled by setting the flag to false in the configuration.
 
-| Feature toggle name          | Description                                                                                                     | Enabled by default |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `promQueryBuilder`           | Show prometheus query builder                                                                                   | Yes                |
-| `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                                                    |                    |
-| `database_metrics`           | Add prometheus metrics for database tables                                                                      |                    |
-| `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                                                          | Yes                |
-| `featureHighlights`          | Highlight Enterprise features                                                                                   |                    |
-| `commandPalette`             | Enable command palette                                                                                          | Yes                |
-| `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                                           | Yes                |
-| `prometheusBufferedClient`   | Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new) |                    |
-| `internationalization`       | Enables internationalization                                                                                    |                    |
-| `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token                            |                    |
+| FEATURE TOGGLE NAME          | DESCRIPTION                                                                                                     | ENABLE BY DEFAULT |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `promQueryBuilder`           | Show prometheus query builder                                                                                   | Yes               |
+| `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                                                    |                   |
+| `database_metrics`           | Add prometheus metrics for database tables                                                                      |                   |
+| `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                                                          | Yes               |
+| `featureHighlights`          | Highlight Enterprise features                                                                                   |                   |
+| `commandPalette`             | Enable command palette                                                                                          | Yes               |
+| `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                                           | Yes               |
+| `prometheusBufferedClient`   | Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new) |                   |
+| `internationalization`       | Enables internationalization                                                                                    |                   |
+| `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token                            |                   |
 
 ## Beta feature toggles
 
-| Feature toggle name               | Description                                                                     |
+| FEATURE TOGGLE NAME               | DESCRIPTION                                                                     |
 | --------------------------------- | ------------------------------------------------------------------------------- |
 | `trimDefaults`                    | Use cue schema to remove values that will be applied automatically              |
 | `panelTitleSearch`                | Search for dashboards using panel title                                         |
@@ -48,7 +48,7 @@ Some stable features are enabled by default -- they can be disabled by setting t
 
 These are features early in their development lifecycle, they are not yet supported in grafana cloud.
 
-| Feature toggle name                | Description                                                                                                                                                 |
+| FEATURE TOGGLE NAME                | DESCRIPTION                                                                                                                                                 |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                           |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                     |
@@ -92,7 +92,7 @@ These are features early in their development lifecycle, they are not yet suppor
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be especially experimental.
 
-| Feature toggle name                    | Description                                               |
+| FEATURE TOGGLE NAME                    | DESCRIPTION                                               |
 | -------------------------------------- | --------------------------------------------------------- |
 | `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI |
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                     |

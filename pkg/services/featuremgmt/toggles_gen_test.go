@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/olekukonko/tablewriter"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
@@ -213,27 +214,16 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default -- they can be disabled by setting the flag to false in the configuration.
 
-| Feature toggle name | Description                                           | Enabled by default |
-|---------------------|-------------------------------------------------------|--------------------|
-`
-	for _, flag := range standardFeatureFlags {
-		if flag.State == FeatureStateStable {
-			on := ""
-			if flag.Expression == "true" {
-				on = "Yes"
-			}
-			buf += "| `" + flag.Name + "` | " + flag.Description + " | " + on + "  | \n"
-		} else if flag.State == FeatureStateDeprecated {
-			hasDeprecatedFlags = true
-		}
-	}
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.State == FeatureStateStable
+	}, true)
 
 	buf += `
 ## Beta feature toggles
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.State == FeatureStateBeta
-	})
+	}, false)
 
 	if hasDeprecatedFlags {
 
@@ -242,7 +232,7 @@ Some stable features are enabled by default -- they can be disabled by setting t
 	
 	` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 			return flag.State == FeatureStateDeprecated
-		})
+		}, false)
 	}
 
 	buf += `
@@ -252,7 +242,7 @@ These are features early in their development lifecycle, they are not yet suppor
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.State == FeatureStateAlpha && !flag.RequiresDevMode
-	})
+	}, false)
 
 	buf += `
 ## Development feature toggles
@@ -261,19 +251,40 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.RequiresDevMode
-	})
+	}, false)
 	return buf
 }
 
-func writeToggleDocsTable(include func(FeatureFlag) bool) string {
-	buf := `
-| Feature toggle name | Description                                           | 
-|---------------------|-------------------------------------------------------|
-`
+func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bool) string {
+	data := [][]string{}
+
 	for _, flag := range standardFeatureFlags {
 		if include(flag) {
-			buf += "| `" + flag.Name + "` | " + flag.Description + " | \n"
+			row := []string{"`" + flag.Name + "`", flag.Description}
+			if showEnableByDefault {
+				on := ""
+				if flag.Expression == "true" {
+					on = "Yes"
+				}
+				row = append(row, on)
+			}
+			data = append(data, row)
 		}
 	}
-	return buf
+
+	header := []string{"Feature toggle name", "Description"}
+	if showEnableByDefault {
+		header = append(header, "Enable by default")
+	}
+
+	sb := &strings.Builder{}
+	table := tablewriter.NewWriter(sb)
+	table.SetHeader(header)
+	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+	table.SetAutoWrapText(false)
+	table.AppendBulk(data) // Add Bulk Data
+	table.Render()
+
+	return sb.String()
 }
