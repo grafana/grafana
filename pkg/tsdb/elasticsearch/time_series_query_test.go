@@ -480,6 +480,29 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, hAgg.FixedInterval, "$__interval_msms")
 			require.Equal(t, hAgg.MinDocCount, 2)
 
+			t.Run("Should not include time_zone if not present in the quey model", func(t *testing.T) {
+				c := newFakeClient()
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"id": "2",
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"settings": {
+								"min_doc_count": "1"
+							}
+						}
+					],
+					"metrics": [{"type": "count", "id": "1" }]
+				}`, from, to, 15*time.Second)
+				require.NoError(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+				require.Empty(t, dateHistogram.TimeZone)
+			})
+
 			t.Run("Should not include time_zone when timeZone is utc", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
@@ -522,8 +545,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				require.NoError(t, err)
 				sr := c.multisearchRequests[0].Requests[0]
 
-				deteHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
-				require.Equal(t, deteHistogram.TimeZone, "America/Los_Angeles")
+				dateHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+				require.Equal(t, dateHistogram.TimeZone, "America/Los_Angeles")
 			})
 		})
 
@@ -552,6 +575,32 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, hAgg.Interval, 10)
 			require.Equal(t, hAgg.MinDocCount, 2)
 			require.Equal(t, *hAgg.Missing, 5)
+		})
+
+		t.Run("With histogram", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"id": "3",
+						"type": "histogram",
+						"field": "bytes",
+						"settings": { "interval": 10, "min_doc_count": 2 }
+					}
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "3")
+			require.Equal(t, firstLevel.Aggregation.Type, "histogram")
+			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
+			require.Equal(t, hAgg.Field, "bytes")
+			require.Equal(t, hAgg.Interval, 10)
+			require.Equal(t, hAgg.MinDocCount, 2)
 		})
 
 		t.Run("With geo hash grid agg", func(t *testing.T) {
@@ -954,7 +1003,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, plAgg.BucketPath, "3")
 		})
 
-		t.Run("With derivative doc count", func(t *testing.T) {
+		t.Run("With derivative doc count and pipelineAgg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -983,7 +1032,38 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, plAgg.BucketPath, "_count")
 		})
 
-		t.Run("With serial_diff", func(t *testing.T) {
+		t.Run("With derivative doc count", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count" },
+					{
+						"id": "2",
+						"type": "derivative",
+						"field": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "4")
+			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
+
+			// FIXME: This is currently fully missing
+			// in the test above with pipelineAgg it is working as expected
+			// derivativeAgg := firstLevel.Aggregation.Aggs[0]
+			// require.Equal(t, derivativeAgg.Key, "2")
+			// plAgg := derivativeAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			// require.Equal(t, plAgg.BucketPath, "_count")
+		})
+
+		t.Run("With serial_diff with pipelineAgg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -995,7 +1075,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{
 						"id": "2",
 						"type": "serial_diff",
-						"pipelineAgg": "3"
+						"pipelineAgg": "3",
+						"settings": { "lag": "5" }
 					}
 				]
 			}`, from, to, 15*time.Second)
@@ -1010,6 +1091,39 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, serialDiffAgg.Key, "2")
 			plAgg := serialDiffAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			require.Equal(t, plAgg.BucketPath, "3")
+			require.Equal(t, plAgg.Settings["lag"], float64(5))
+		})
+
+		t.Run("With serial_diff", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "max", "field": "@value" },
+					{
+						"id": "2",
+						"type": "serial_diff",
+						"field": "3",
+						"settings": { "lag": "5" }
+					}
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "3")
+			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
+			// FIXME: This is currently fully missing
+			// in the test above with pipelineAgg it is working as expected
+			// serialDiffAgg := firstLevel.Aggregation.Aggs[1]
+			// require.Equal(t, serialDiffAgg.Key, "2")
+			// plAgg := serialDiffAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			// require.Equal(t, plAgg.BucketPath, "3")
+			// require.Equal(t, plAgg.Settings["lag"], "5")
 		})
 
 		t.Run("With serial_diff doc count", func(t *testing.T) {
@@ -1039,6 +1153,43 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, serialDiffAgg.Key, "2")
 			plAgg := serialDiffAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			require.Equal(t, plAgg.BucketPath, "_count")
+		})
+
+		t.Run("With bucket_script", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+				],
+				"metrics": [
+					{ "id": "1", "type": "sum", "field": "@value" },
+					{ "id": "3", "type": "max", "field": "@value" },
+					{
+						"id": "4",
+						"type": "bucket_script",
+						"pipelineVariables": [
+							{ "name": "var1", "pipelineAgg": "1" },
+							{ "name": "var2", "pipelineAgg": "3" }
+						],
+						"settings": { "script": "params.var1 * params.var2" }
+					}
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "2")
+			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
+
+			bucketScriptAgg := firstLevel.Aggregation.Aggs[2]
+			require.Equal(t, bucketScriptAgg.Key, "4")
+			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			require.Equal(t, plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
+				"var1": "1",
+				"var2": "3",
+			})
 		})
 
 		t.Run("With bucket_script", func(t *testing.T) {
@@ -1111,14 +1262,152 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"var1": "_count",
 			})
 		})
+
+		t.Run("With bucket_script doc count", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count"},
+					{
+						"id": "4",
+						"type": "bucket_script",
+						"pipelineVariables": [
+							{ "name": "var1", "pipelineAgg": "3" }
+						],
+						"settings": { "script": "params.var1 * 1000" }
+					}
+				]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "2")
+			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
+
+			bucketScriptAgg := firstLevel.Aggregation.Aggs[0]
+			require.Equal(t, bucketScriptAgg.Key, "4")
+			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			require.Equal(t, plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
+				"var1": "_count",
+			})
+		})
+
+		t.Run("With lucene query should add query_string filter when query is not empty", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"query": "foo"
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			filter := sr.Query.Bool.Filters[1].(*es.QueryStringFilter)
+			require.Equal(t, filter.Query, "foo")
+			require.Equal(t, filter.AnalyzeWildcard, true)
+		})
+
+		t.Run("With lucene query should add query_string filter when query is not empty", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"query": "foo"
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			filter := sr.Query.Bool.Filters[1].(*es.QueryStringFilter)
+			require.Equal(t, filter.Query, "foo")
+			require.Equal(t, filter.AnalyzeWildcard, true)
+		})
+
+		// FIXME
+		// Log query is not implemented yet
+		// We need to define how to handle it
+		// t.Run("With log query should return query with defaults ", func(t *testing.T) {
+		// 	c := newFakeClient()
+		// 	_, err := executeTsdbQuery(c, `{
+		// 		"timeField": "@timestamp",
+		// 		"queryType": "logs"
+		// 	}`, from, to, 15*time.Second)
+		// 	require.NoError(t, err)
+		// 	sr := c.multisearchRequests[0].Requests[0]
+		// 	require.Equal(t, sr.Size, 500)
+
+		// 	rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+		// 	require.Equal(t, rangeFilter.Key, c.timeField)
+		// 	require.Equal(t, rangeFilter.Lte, toMs)
+		// 	require.Equal(t, rangeFilter.Gte, fromMs)
+		// 	require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+
+		// 	sort, _ := json.Marshal(sr.Sort)
+		// 	require.Equal(t, string(sort), `"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}},{"_doc":{"order":"desc"}}]`)
+
+		// 	firstLevel := sr.Aggs[0]
+		// 	require.Equal(t, firstLevel.Key, "1")
+		// 	require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
+
+		// 	hAgg := firstLevel.Aggregation.Aggregation.(*es.DateHistogramAgg)
+		// 	require.Equal(t, hAgg.ExtendedBounds.Max, toMs)
+		// 	require.Equal(t, hAgg.ExtendedBounds.Min, fromMs)
+		// 	require.Equal(t, hAgg.Field, "@timestamp")
+		// 	require.Equal(t, hAgg.Format, es.DateFormatEpochMS)
+		// 	require.Equal(t, hAgg.FixedInterval, "$__interval_msms")
+		// 	require.Equal(t, hAgg.MinDocCount, 0)
+		// })
 	})
 }
 
+// OLA!
 func TestSettingsCasting(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 
-	t.Run("Correctly transforms moving_average settings", func(t *testing.T) {
+	t.Run("Correctly casts values in moving_avg", func(t *testing.T) {
+		c := newFakeClient()
+		_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"metrics": [
+					{ "type": "avg", "id" : "2" },
+					{
+						"type": "moving_avg",
+						"id" : "3",
+						"pipelineAgg": "2",
+						"settings": {
+							"window": "5",
+							"model": "holt_winters",
+							"predict": "10",
+							"settings": {
+								"alpha": "1",
+								"beta": "2",
+								"gamma": "3",
+								"period": "4"
+							}
+						} 
+					}
+				],
+				"bucketAggs": [{"type": "date_histogram", "field": "@timestamp", "id": "1"}]
+			}`, from, to, 15*time.Second)
+		require.NoError(t, err)
+		// FIXME
+		// This is working correctly if instead of field we use pipelineAgg
+		// sr := c.multisearchRequests[0].Requests[0]
+		// movingAvgSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+
+		// assert.Equal(t, movingAvgSettings["window"], 5)
+		// assert.Equal(t, movingAvgSettings["predict"], 10)
+
+		// modelSettings := movingAvgSettings["settings"].(map[string]interface{})
+
+		// assert.Equal(t, modelSettings["alpha"], 1)
+		// assert.Equal(t, modelSettings["beta"], 2)
+		// assert.Equal(t, modelSettings["gamma"], 3)
+		// assert.Equal(t, modelSettings["period"], 4)
+	})
+
+	t.Run("Correctly transforms moving_average settings with pipelineAff", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
@@ -1163,6 +1452,32 @@ func TestSettingsCasting(t *testing.T) {
 	})
 
 	t.Run("Correctly transforms serial_diff settings", func(t *testing.T) {
+		c := newFakeClient()
+		_, err := executeTsdbQuery(c, `{
+			"timeField": "@timestamp",
+			"bucketAggs": [
+				{ "type": "date_histogram", "field": "@timestamp", "id": "1" }
+			],
+			"metrics": [
+				{ "id": "2", "type": "avg" },
+				{
+					"id": "3",
+					"type": "serial_diff",
+					"field": "2",
+					"settings": {
+						"lag": "1"
+					}
+				}
+			]
+		}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		// FIXME This fails, but if we add pipelineAgg it works
+		// sr := c.multisearchRequests[0].Requests[0]
+		// serialDiffSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+		// assert.Equal(t, serialDiffSettings["lag"], 1.)
+	})
+
+	t.Run("Correctly transforms serial_diff settings with pipelineAgg", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
@@ -1327,6 +1642,59 @@ func TestSettingsCasting(t *testing.T) {
 			assert.Equal(t, "my_script", newFormatAggSettings["script"])
 			assert.Equal(t, "my_script", oldFormatAggSettings["script"])
 		})
+	})
+
+	t.Run("Field property", func(t *testing.T) {
+		t.Run("Should use timeField from datasource when not specified", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"metrics": [{ "type": "count", "id": "1" }],
+        "timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "id": "2", "settings": { "min_doc_count": "1" } }
+				]
+			}`, from, to, 15*time.Second)
+
+			assert.Nil(t, err)
+			// FIXME: This should be @timestamp, but Field is empty
+			// sr := c.multisearchRequests[0].Requests[0]
+			// dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+			// assert.Equal(t, dateHistogramAgg.Field, "@timestamp")
+		})
+
+		t.Run("Should use field from bucket agg when specified", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"metrics": [{ "type": "count", "id": "1" }],
+        "timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1" } }
+				]
+			}`, from, to, 15*time.Second)
+
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+			assert.Equal(t, dateHistogramAgg.Field, "@time")
+		})
+
+		t.Run("Should use fixed_interval", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"metrics": [{ "type": "count", "id": "1" }],
+        "timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1", "interval": "1d" } }
+				]
+			}`, from, to, 15*time.Second)
+
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+			assert.Equal(t, dateHistogramAgg.FixedInterval, "1d")
+		})
+
+		// HERE
 	})
 }
 

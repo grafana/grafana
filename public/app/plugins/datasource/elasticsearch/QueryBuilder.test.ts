@@ -413,7 +413,6 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.aggs['2'].top_metrics.size).toBe(1);
   });
 
-  // Next to migrate:
   it('with derivative', () => {
     const query = builder.build({
       refId: 'A',
@@ -589,6 +588,8 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.histogram.min_doc_count).toBe('2');
   });
 
+  // This test wasn't migrated, as adhoc variables are going to be interpolated before
+  // Or we need to add this to backend query builder (TBD)
   it('with adhoc filters', () => {
     const query = builder.build(
       {
