@@ -117,7 +117,7 @@ In the [Grafana GitHub repository](https://github.com/grafana/grafana) there is 
 
 The `GRAFANA_VERSION` build argument must be a valid `grafana/grafana` docker image tag. By default, this builds an Alpine-based image. To build an Ubuntu-based image, append `-ubuntu` to the `GRAFANA_VERSION` build argument (available in Grafana v6.5 and later).
 
-Example of how to build and run:
+The following example shows you how to build and run a custom Grafana Docker image based on the latest official Ubuntu-based Grafana Docker image:
 
 ```bash
 cd packaging/docker/custom
