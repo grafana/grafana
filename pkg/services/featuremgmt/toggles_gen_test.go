@@ -26,6 +26,20 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"live-service-web-worker":       true,
 	}
 
+	t.Run("check registy constraints", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Expression == "true" && flag.State != FeatureStateStable {
+				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
+			}
+			if flag.RequiresDevMode && flag.State != FeatureStateAlpha {
+				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
+			}
+			if flag.State == FeatureStateUnknown {
+				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
+			}
+		}
+	})
+
 	t.Run("verify files", func(t *testing.T) {
 		// Typescript files
 		verifyAndGenerateFile(t,
@@ -179,6 +193,8 @@ const (`)
 }
 
 func generateDocsMD() string {
+	hasDeprecatedFlags := false
+
 	buf := `---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
@@ -193,34 +209,71 @@ Feature toggles, also known as feature flags, are used for experimental or beta 
 
 This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md/#feature_toggles" >}}). Feature toogles are also available to Grafana Cloud Advanced customers - if you use Grafana Cloud Advanced, you can open a support ticket specifying the feature toggles and stack you would like them enabled 
 
-## Available feature toggles
-| Feature toggle name | Description                                           | Release stage | Enabled by default |
-|---------------------|-------------------------------------------------------|---------------|--------------------|
+## Stable feature toggles
+
+Some stable features are enabled by default -- they can be disabled by setting the flag to false in the configuration.
+
+| Feature toggle name | Description                                           | Enabled by default |
+|---------------------|-------------------------------------------------------|--------------------|
 `
 	for _, flag := range standardFeatureFlags {
-		if !flag.RequiresDevMode {
+		if flag.State == FeatureStateStable {
 			on := ""
 			if flag.Expression == "true" {
 				on = "Yes"
 			}
-			buf += "| " + flag.Name + " | " + flag.Description + " | " + flag.State.String() + " | " + on + "  | \n"
+			buf += "| `" + flag.Name + "` | " + flag.Description + " | " + on + "  | \n"
+		} else if flag.State == FeatureStateDeprecated {
+			hasDeprecatedFlags = true
 		}
 	}
+
+	buf += `
+## Beta feature toggles
+
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.State == FeatureStateBeta
+	})
+
+	if hasDeprecatedFlags {
+
+		buf += `
+## Deprecated feature toggles
+	
+	` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+			return flag.State == FeatureStateDeprecated
+		})
+	}
+
+	buf += `
+## Alpha feature toggles
+
+These are features early in their development lifecycle, they are not yet supported in grafana cloud.
+
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.State == FeatureStateAlpha && !flag.RequiresDevMode
+	})
 
 	buf += `
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be especially experimental.
 
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+		return flag.RequiresDevMode
+	})
+	return buf
+}
 
+func writeToggleDocsTable(include func(FeatureFlag) bool) string {
+	buf := `
 | Feature toggle name | Description                                           | 
 |---------------------|-------------------------------------------------------|
 `
 	for _, flag := range standardFeatureFlags {
-		if flag.RequiresDevMode {
-			buf += "| " + flag.Name + " | " + flag.Description + " | \n"
+		if include(flag) {
+			buf += "| `" + flag.Name + "` | " + flag.Description + " | \n"
 		}
 	}
-
 	return buf
 }

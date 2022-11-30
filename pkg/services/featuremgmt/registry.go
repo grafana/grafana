@@ -72,7 +72,7 @@ var (
 		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:         "tempoApmTable",
@@ -222,7 +222,7 @@ var (
 		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
-			State:           FeatureStateAlpha,
+			State:           FeatureStateBeta,
 			RequiresRestart: true,
 		},
 		{
@@ -257,6 +257,7 @@ var (
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "dataConnectionsConsole",
@@ -315,10 +316,12 @@ var (
 		{
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "interFont",
 			Description: "Switch to inter font",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -335,6 +338,7 @@ var (
 		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when Dashboards do not validate against the schema",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "mysqlAnsiQuotes",
@@ -344,6 +348,7 @@ var (
 		{
 			Name:        "datasourceLogger",
 			Description: "Logs all datasource requests",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "accessControlOnCall",
