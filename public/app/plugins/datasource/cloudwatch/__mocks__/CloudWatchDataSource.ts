@@ -71,7 +71,7 @@ export function setupMockedDataSource({
   if (variables) {
     templateService = setupMockedTemplateService(variables);
     if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name;
+      templateService.getVariableName = (name: string) => name.replace('$', '');
     }
   }
 
@@ -83,6 +83,7 @@ export function setupMockedDataSource({
   datasource.api.getRegions = jest.fn().mockResolvedValue([]);
   datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
   datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
   datasource.logsQueryRunner.defaultLogGroups = [];
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
@@ -240,4 +241,17 @@ export const periodIntervalVariable: CustomVariableModel = {
   query: '',
   hide: VariableHide.dontHide,
   type: 'custom',
+};
+
+export const accountIdVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'accountId',
+  name: 'accountId',
+  current: {
+    value: 'templatedaccountId',
+    text: 'templatedaccountId',
+    selected: true,
+  },
+  options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
 };

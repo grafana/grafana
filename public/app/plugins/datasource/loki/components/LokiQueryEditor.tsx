@@ -31,7 +31,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
-  const [labelsLoaded, setLabelsLoaded] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
   const query = getQueryWithDefaults(props.query);
@@ -73,29 +72,9 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     onChange(query);
   };
 
-  const onClickChooserButton = () => {
+  const onClickLabelBrowserButton = () => {
     setLabelBrowserVisible((visible) => !visible);
   };
-
-  const getChooserText = (logLabelsLoaded: boolean, hasLogLabels: boolean) => {
-    if (!logLabelsLoaded) {
-      return 'Loading labels...';
-    }
-    if (!hasLogLabels) {
-      return '(No labels found)';
-    }
-    return 'Label browser';
-  };
-
-  useEffect(() => {
-    datasource.languageProvider.start().then(() => {
-      setLabelsLoaded(true);
-    });
-  }, [datasource]);
-
-  const hasLogLabels = datasource.languageProvider.getLabelKeys().length > 0;
-  const labelBrowserText = getChooserText(labelsLoaded, hasLogLabels);
-  const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
   return (
     <>
@@ -119,16 +98,16 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         onChange={onChange}
         onAddQuery={onAddQuery}
       />
+      <LabelBrowserModal
+        isOpen={labelBrowserVisible}
+        datasource={datasource}
+        query={query}
+        app={app}
+        onClose={() => setLabelBrowserVisible(false)}
+        onChange={onChangeInternal}
+        onRunQuery={onRunQuery}
+      />
       <EditorHeader>
-        <LabelBrowserModal
-          isOpen={labelBrowserVisible}
-          languageProvider={datasource.languageProvider}
-          query={query}
-          app={app}
-          onClose={() => setLabelBrowserVisible(false)}
-          onChange={onChangeInternal}
-          onRunQuery={onRunQuery}
-        />
         <Stack gap={1}>
           <Button
             aria-label={selectors.components.QueryBuilder.queryPatterns}
@@ -149,14 +128,8 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           >
             Kick start your query
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onClickChooserButton}
-            disabled={buttonDisabled}
-            data-testid="label-browser-button"
-          >
-            {labelBrowserText}
+          <Button variant="secondary" size="sm" onClick={onClickLabelBrowserButton} data-testid="label-browser-button">
+            Label browser
           </Button>
         </Stack>
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onExplainChange} />

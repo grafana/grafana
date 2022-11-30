@@ -17,13 +17,13 @@ type MetricsRequest struct {
 	Namespace string
 }
 
-func GetMetricsRequest(parameters url.Values) (*MetricsRequest, error) {
+func GetMetricsRequest(parameters url.Values) (MetricsRequest, error) {
 	resourceRequest, err := getResourceRequest(parameters)
 	if err != nil {
-		return nil, err
+		return MetricsRequest{}, err
 	}
 
-	return &MetricsRequest{
+	return MetricsRequest{
 		ResourceRequest: resourceRequest,
 		Namespace:       parameters.Get("namespace"),
 	}, nil
