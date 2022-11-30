@@ -174,7 +174,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	}
 
 	if affectedRows == 0 {
-		return nil, ErrPublicDashboardNotFound.Errorf("Create: failed to create a public dashboard with Uid: %s", uid)
+		return nil, ErrInternalServerError.Errorf("Create: failed to create a public dashboard with Uid: %s", uid)
 	}
 
 	//Get latest public dashboard to return
