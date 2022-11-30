@@ -87,6 +87,12 @@ function formatValue(
     return '';
   }
 
+  // Special handling for custom values that should not be formatted / escaped
+  // This is used by the custom allValue that usually contain wildcards and therefore should not be escaped
+  if (typeof value === 'object' && 'isCustomValue' in value && formatNameOrFn !== FormatRegistryID.text) {
+    return value.toString();
+  }
+
   // if (isAdHoc(variable) && format !== FormatRegistryID.queryParam) {
   //   return '';
   // }
