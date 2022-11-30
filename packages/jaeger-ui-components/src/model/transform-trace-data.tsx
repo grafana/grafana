@@ -92,6 +92,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     processes[id] = {
       ...process,
       tags: orderTags(process.tags),
+      serviceName: 'serviceName',
     };
     return processes;
   }, {});
