@@ -129,6 +129,12 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
+	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	if !hs.AccessControl.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	}
+
 	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
 	// TODO set ParentUID if nested folders are enabled
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
@@ -212,7 +218,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules")})
+	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -251,6 +257,7 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		Updated:       folder.Updated,
 		Version:       folder.Version,
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
+		ParentUID:     folder.ParentUID,
 	}
 }
 

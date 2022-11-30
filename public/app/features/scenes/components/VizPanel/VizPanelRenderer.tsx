@@ -50,7 +50,7 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   }
 
   return (
-    <div ref={ref as RefCallback<HTMLDivElement>} style={{ width: '100%', height: '100%' }}>
+    <div ref={ref as RefCallback<HTMLDivElement>} style={{ position: 'absolute', width: '100%', height: '100%' }}>
       <PanelChrome
         title={titleInterpolated}
         width={width}

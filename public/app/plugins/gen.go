@@ -19,7 +19,6 @@ import (
 var skipPlugins = map[string]bool{
 	"canvas":         true,
 	"heatmap":        true,
-	"heatmap-old":    true,
 	"candlestick":    true,
 	"state-timeline": true,
 	"status-history": true,
