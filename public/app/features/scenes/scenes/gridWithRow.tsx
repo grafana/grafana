@@ -1,7 +1,6 @@
-import { VizPanel } from '../components';
+import { VizPanel, SceneGridLayout, SceneGridRow } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 

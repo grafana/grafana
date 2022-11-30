@@ -198,7 +198,7 @@ func (s *ServiceImpl) addPluginToSection(c *models.ReqContext, treeRoot *navtree
 		case navtree.NavIDApps:
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Apps",
-				Icon:       "apps",
+				Icon:       "layer-group",
 				SubTitle:   "App plugins that extend the Grafana experience",
 				Id:         navtree.NavIDApps,
 				Children:   []*navtree.NavLink{appLink},
@@ -263,6 +263,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections"},
+		"grafana-k6-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
