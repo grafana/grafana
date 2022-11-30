@@ -94,8 +94,8 @@ export function getVariablesDemoWithAll(): Scene {
         new TestVariable({
           name: 'server',
           query: 'A.*',
-          value: 'server',
-          text: '',
+          value: 'AA',
+          text: 'AA',
           includeAll: true,
           defaultToAll: true,
           delayMs: 1000,
@@ -104,7 +104,7 @@ export function getVariablesDemoWithAll(): Scene {
         new TestVariable({
           name: 'pod',
           query: 'A.$server.*',
-          value: 'pod',
+          value: [],
           delayMs: 1000,
           isMulti: true,
           includeAll: true,
@@ -115,7 +115,7 @@ export function getVariablesDemoWithAll(): Scene {
         new TestVariable({
           name: 'handler',
           query: 'A.$server.$pod.*',
-          value: 'handler',
+          value: [],
           delayMs: 1000,
           includeAll: true,
           defaultToAll: false,

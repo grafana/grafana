@@ -72,8 +72,13 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
       // If no valid values pick the first option
       if (validValues.length === 0) {
-        stateUpdate.value = [options[0].value];
-        stateUpdate.text = [options[0].label];
+        if (this.state.defaultToAll) {
+          stateUpdate.value = [ALL_VARIABLE_VALUE];
+          stateUpdate.text = [ALL_VARIABLE_TEXT];
+        } else {
+          stateUpdate.value = [options[0].value];
+          stateUpdate.text = [options[0].label];
+        }
       }
       // We have valid values, if it's different from current valid values update current values
       else if (!isEqual(validValues, this.state.value)) {
@@ -85,9 +90,14 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
       // Single valued variable
       const foundCurrent = options.find((x) => x.value === this.state.value);
       if (!foundCurrent) {
-        // Current value is not valid. Set to first of the available options
-        stateUpdate.value = options[0].value;
-        stateUpdate.text = options[0].label;
+        if (this.state.defaultToAll) {
+          stateUpdate.value = ALL_VARIABLE_VALUE;
+          stateUpdate.text = ALL_VARIABLE_TEXT;
+        } else {
+          // Current value is not valid. Set to first of the available options
+          stateUpdate.value = options[0].value;
+          stateUpdate.text = options[0].label;
+        }
       }
     }
 
@@ -159,6 +169,13 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
     if (this.state.includeAll) {
       options = [{ value: ALL_VARIABLE_VALUE, label: ALL_VARIABLE_TEXT }, ...options];
+    }
+
+    if (!Array.isArray(this.state.value)) {
+      const current = options.find((x) => x.value === this.state.value);
+      if (!current) {
+        options = [{ value: this.state.value, label: String(this.state.text) }, ...options];
+      }
     }
 
     return options;

@@ -2,7 +2,7 @@ import { lastValueFrom, Observable, of } from 'rxjs';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { SceneVariableValueChangedEvent, VariableValueOption } from '../types';
+import { SceneVariableValueChangedEvent, VariableValueCustom, VariableValueOption } from '../types';
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from '../variants/MultiValueVariable';
 
 export interface ExampleVariableState extends MultiValueVariableState {
@@ -33,6 +33,24 @@ describe('MultiValueVariable', () => {
 
       expect(variable.state.value).toBe('B');
       expect(variable.state.text).toBe('B');
+    });
+
+    it('Should pick All value when defaultToAll is true', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        optionsToReturn: [
+          { label: 'B', value: 'B' },
+          { label: 'C', value: 'C' },
+        ],
+        defaultToAll: true,
+        value: 'A',
+        text: 'A',
+      });
+
+      await lastValueFrom(variable.validateAndUpdate());
+
+      expect(variable.state.value).toBe(ALL_VARIABLE_VALUE);
     });
 
     it('Should keep current value if current value is valid', async () => {
@@ -86,6 +104,26 @@ describe('MultiValueVariable', () => {
 
       expect(variable.state.value).toEqual(['A']);
       expect(variable.state.text).toEqual(['A']);
+    });
+
+    it('Should select All option if none of the current values are valid', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        isMulti: true,
+        defaultToAll: true,
+        optionsToReturn: [
+          { label: 'A', value: 'A' },
+          { label: 'C', value: 'C' },
+        ],
+        value: ['D', 'E'],
+        text: ['E', 'E'],
+      });
+
+      await lastValueFrom(variable.validateAndUpdate());
+
+      expect(variable.state.value).toEqual([ALL_VARIABLE_VALUE]);
+      expect(variable.state.text).toEqual([ALL_VARIABLE_TEXT]);
     });
 
     it('Should handle $__all value and send change event even when value is still $__all', async () => {
@@ -163,7 +201,51 @@ describe('MultiValueVariable', () => {
         text: 'A',
       });
 
-      expect(variable.getValue()).toEqual('.*');
+      const value = variable.getValue() as VariableValueCustom;
+      expect(value.isCustomValue).toBe(true);
+      expect(value.toString()).toBe('.*');
+    });
+  });
+
+  describe('getOptionsForSelect', () => {
+    it('Should return options', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [{ label: 'A', value: '1' }],
+        optionsToReturn: [],
+        value: '1',
+        text: 'A',
+      });
+
+      expect(variable.getOptionsForSelect()).toEqual([{ label: 'A', value: '1' }]);
+    });
+
+    it('Should return include All option when includeAll is true', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [{ label: 'A', value: '1' }],
+        optionsToReturn: [],
+        includeAll: true,
+        value: '1',
+        text: 'A',
+      });
+
+      expect(variable.getOptionsForSelect()).toEqual([
+        { label: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE },
+        { label: 'A', value: '1' },
+      ]);
+    });
+
+    it('Should add current value if not found', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        optionsToReturn: [],
+        value: '1',
+        text: 'A',
+      });
+
+      expect(variable.getOptionsForSelect()).toEqual([{ label: 'A', value: '1' }]);
     });
   });
 });

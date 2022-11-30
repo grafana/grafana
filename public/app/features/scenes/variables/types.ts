@@ -50,7 +50,7 @@ export interface VariableValueCustom {
 export interface ValidateAndUpdateResult {}
 export interface VariableValueOption {
   label: string;
-  value: string;
+  value: VariableValueSingle;
 }
 
 export interface SceneVariableSetState extends SceneObjectStatePlain {
