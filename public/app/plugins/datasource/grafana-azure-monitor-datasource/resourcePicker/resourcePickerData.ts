@@ -368,10 +368,14 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const subscriptionIds = subscriptions.map((sub) => sub.id);
     const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
     const insightsProvider = await this.azureMonitorDatasource.getProvider('Microsoft.Insights');
-    const logsProvider = insightsProvider.resourceTypes.find((provider) => provider.resourceType === 'logs');
+    const logsProvider = insightsProvider?.resourceTypes.find((provider) => provider.resourceType === 'logs');
 
     if (!logsProvider) {
-      return locations;
+      const correctedMap = new Map<string, AzureMonitorLocations>();
+      for (const value of locations.values()) {
+        correctedMap.set(value.name, value);
+      }
+      return correctedMap;
     }
 
     const logsLocations = logsProvider.locations.map((location) => ({
