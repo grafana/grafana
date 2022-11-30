@@ -775,16 +775,16 @@ describe('AzureMonitorDatasource', () => {
           })
           .then((results: any) => {
             expect(results.dimensions).toMatchInlineSnapshot(`
-              Array [
-                Object {
+              [
+                {
                   "label": "Response type",
                   "value": "ResponseType",
                 },
-                Object {
+                {
                   "label": "Geo type",
                   "value": "GeoType",
                 },
-                Object {
+                {
                   "label": "API name",
                   "value": "ApiName",
                 },

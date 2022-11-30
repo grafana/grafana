@@ -79,6 +79,12 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 		querySeriesSet := vars[c.InputRefID]
 		nilReducedCount := 0
 		firingCount := 0
+
+		if len(querySeriesSet.Values) == 0 {
+			// Append a NoData data frame so "has no value" still works
+			querySeriesSet.Values = append(querySeriesSet.Values, mathexp.NoData{}.New())
+		}
+
 		for _, val := range querySeriesSet.Values {
 			var reducedNum mathexp.Number
 			var name string
@@ -103,10 +109,6 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 			// TODO handle error / no data signals
 			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
 
-			if thisCondNoDataFound {
-				nilReducedCount++
-			}
-
 			evalRes := c.Evaluator.Eval(reducedNum)
 
 			if evalRes {
@@ -119,6 +121,8 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 				}
 				matches = append(matches, match)
 				firingCount++
+			} else if thisCondNoDataFound {
+				nilReducedCount++
 			}
 		}
 
@@ -142,7 +146,6 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.V
 			matches = append(matches, EvalMatch{
 				Metric: "NoData",
 			})
-			noDataFound = true
 		}
 
 		firingCount = 0

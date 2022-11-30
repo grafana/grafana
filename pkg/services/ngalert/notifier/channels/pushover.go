@@ -3,6 +3,7 @@ package channels
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -42,10 +43,10 @@ type PushoverNotifier struct {
 type pushoverSettings struct {
 	userKey          string
 	apiToken         string
-	alertingPriority int
-	okPriority       int
-	retry            int
-	expire           int
+	alertingPriority int64
+	okPriority       int64
+	retry            int64
+	expire           int64
 	device           string
 	alertingSound    string
 	okSound          string
@@ -54,40 +55,91 @@ type pushoverSettings struct {
 	message          string
 }
 
+func buildPushoverSettings(fc FactoryConfig) (pushoverSettings, error) {
+	settings := pushoverSettings{}
+	rawSettings := struct {
+		UserKey          string      `json:"userKey,omitempty" yaml:"userKey,omitempty"`
+		APIToken         string      `json:"apiToken,omitempty" yaml:"apiToken,omitempty"`
+		AlertingPriority json.Number `json:"priority,omitempty" yaml:"priority,omitempty"`
+		OKPriority       json.Number `json:"okPriority,omitempty" yaml:"okPriority,omitempty"`
+		Retry            json.Number `json:"retry,omitempty" yaml:"retry,omitempty"`
+		Expire           json.Number `json:"expire,omitempty" yaml:"expire,omitempty"`
+		Device           string      `json:"device,omitempty" yaml:"device,omitempty"`
+		AlertingSound    string      `json:"sound,omitempty" yaml:"sound,omitempty"`
+		OKSound          string      `json:"okSound,omitempty" yaml:"okSound,omitempty"`
+		Upload           *bool       `json:"uploadImage,omitempty" yaml:"uploadImage,omitempty"`
+		Title            string      `json:"title,omitempty" yaml:"title,omitempty"`
+		Message          string      `json:"message,omitempty" yaml:"message,omitempty"`
+	}{}
+
+	err := fc.Config.unmarshalSettings(&rawSettings)
+	if err != nil {
+		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	settings.userKey = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "userKey", rawSettings.UserKey)
+	if settings.userKey == "" {
+		return settings, errors.New("user key not found")
+	}
+	settings.apiToken = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "apiToken", rawSettings.APIToken)
+	if settings.apiToken == "" {
+		return settings, errors.New("API token not found")
+	}
+	if rawSettings.AlertingPriority != "" {
+		settings.alertingPriority, err = rawSettings.AlertingPriority.Int64()
+		if err != nil {
+			return settings, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
+		}
+	}
+
+	if rawSettings.OKPriority != "" {
+		settings.okPriority, err = rawSettings.OKPriority.Int64()
+		if err != nil {
+			return settings, fmt.Errorf("failed to convert OK priority to integer: %w", err)
+		}
+	}
+
+	settings.retry, _ = rawSettings.Retry.Int64()
+	settings.expire, _ = rawSettings.Expire.Int64()
+
+	settings.device = rawSettings.Device
+	settings.alertingSound = rawSettings.AlertingSound
+	settings.okSound = rawSettings.OKSound
+
+	if rawSettings.Upload == nil || *rawSettings.Upload {
+		settings.upload = true
+	}
+
+	settings.message = rawSettings.Message
+	if settings.message == "" {
+		settings.message = DefaultMessageEmbed
+	}
+
+	settings.title = rawSettings.Title
+	if settings.title == "" {
+		settings.title = DefaultMessageTitleEmbed
+	}
+
+	return settings, nil
+}
+
 func PushoverFactory(fc FactoryConfig) (NotificationChannel, error) {
-	pn, err := newPushoverNotifier(fc)
+	notifier, err := NewPushoverNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return pn, nil
+	return notifier, nil
 }
 
-// newPushoverNotifier is the constructor for the Pushover notifier
-func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
-	decryptFunc := fc.DecryptFunc
-	userKey := decryptFunc(context.Background(), fc.Config.SecureSettings, "userKey", fc.Config.Settings.Get("userKey").MustString())
-	if userKey == "" {
-		return nil, errors.New("user key not found")
-	}
-	apiToken := decryptFunc(context.Background(), fc.Config.SecureSettings, "apiToken", fc.Config.Settings.Get("apiToken").MustString())
-	if apiToken == "" {
-		return nil, errors.New("API token not found")
-	}
-
-	alertingPriority, err := strconv.Atoi(fc.Config.Settings.Get("priority").MustString("0")) // default Normal
+// NewSlackNotifier is the constructor for the Slack notifier
+func NewPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
+	settings, err := buildPushoverSettings(fc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert alerting priority to integer: %w", err)
+		return nil, err
 	}
-	okPriority, err := strconv.Atoi(fc.Config.Settings.Get("okPriority").MustString("0")) // default Normal
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert OK priority to integer: %w", err)
-	}
-	retry, _ := strconv.Atoi(fc.Config.Settings.Get("retry").MustString())
-	expire, _ := strconv.Atoi(fc.Config.Settings.Get("expire").MustString())
-
 	return &PushoverNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   fc.Config.UID,
@@ -97,24 +149,11 @@ func newPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 			Settings:              fc.Config.Settings,
 			SecureSettings:        fc.Config.SecureSettings,
 		}),
-		tmpl:   fc.Template,
-		log:    log.New("alerting.notifier.pushover"),
-		images: fc.ImageStore,
-		ns:     fc.NotificationService,
-		settings: pushoverSettings{
-			userKey:          userKey,
-			apiToken:         apiToken,
-			alertingPriority: alertingPriority,
-			okPriority:       okPriority,
-			retry:            retry,
-			expire:           expire,
-			device:           fc.Config.Settings.Get("device").MustString(),
-			alertingSound:    fc.Config.Settings.Get("sound").MustString(),
-			okSound:          fc.Config.Settings.Get("okSound").MustString(),
-			upload:           fc.Config.Settings.Get("uploadImage").MustBool(true),
-			title:            fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-			message:          fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
-		},
+		tmpl:     fc.Template,
+		log:      log.New("alerting.notifier.pushover"),
+		images:   fc.ImageStore,
+		ns:       fc.NotificationService,
+		settings: settings,
 	}, nil
 }
 
@@ -172,16 +211,16 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	if status == model.AlertResolved {
 		priority = pn.settings.okPriority
 	}
-	if err := w.WriteField("priority", strconv.Itoa(priority)); err != nil {
+	if err := w.WriteField("priority", strconv.FormatInt(priority, 10)); err != nil {
 		return nil, b, fmt.Errorf("failed to write the priority: %w", err)
 	}
 
 	if priority == 2 {
-		if err := w.WriteField("retry", strconv.Itoa(pn.settings.retry)); err != nil {
+		if err := w.WriteField("retry", strconv.FormatInt(pn.settings.retry, 10)); err != nil {
 			return nil, b, fmt.Errorf("failed to write retry: %w", err)
 		}
 
-		if err := w.WriteField("expire", strconv.Itoa(pn.settings.expire)); err != nil {
+		if err := w.WriteField("expire", strconv.FormatInt(pn.settings.expire, 10)); err != nil {
 			return nil, b, fmt.Errorf("failed to write expire: %w", err)
 		}
 	}
@@ -209,6 +248,40 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		return nil, b, fmt.Errorf("failed write the message: %w", err)
 	}
 
+	pn.writeImageParts(ctx, w, as...)
+
+	var sound string
+	if status == model.AlertResolved {
+		sound = tmpl(pn.settings.okSound)
+	} else {
+		sound = tmpl(pn.settings.alertingSound)
+	}
+	if sound != "default" {
+		if err := w.WriteField("sound", sound); err != nil {
+			return nil, b, fmt.Errorf("failed to write the sound: %w", err)
+		}
+	}
+
+	// Mark the message as HTML
+	if err := w.WriteField("html", "1"); err != nil {
+		return nil, b, fmt.Errorf("failed to mark the message as HTML: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return nil, b, fmt.Errorf("failed to close the multipart request: %w", err)
+	}
+
+	if tmplErr != nil {
+		pn.log.Warn("failed to template pushover message", "error", tmplErr.Error())
+	}
+
+	headers := map[string]string{
+		"Content-Type": w.FormDataContentType(),
+	}
+
+	return headers, b, nil
+}
+
+func (pn *PushoverNotifier) writeImageParts(ctx context.Context, w *multipart.Writer, as ...*types.Alert) {
 	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
 	// If the image is larger than pushoverMaxFileSize then return an error.
 	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
@@ -242,34 +315,4 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 		return ErrImagesDone
 	}, as...)
-
-	var sound string
-	if status == model.AlertResolved {
-		sound = tmpl(pn.settings.okSound)
-	} else {
-		sound = tmpl(pn.settings.alertingSound)
-	}
-	if sound != "default" {
-		if err := w.WriteField("sound", sound); err != nil {
-			return nil, b, fmt.Errorf("failed to write the sound: %w", err)
-		}
-	}
-
-	// Mark the message as HTML
-	if err := w.WriteField("html", "1"); err != nil {
-		return nil, b, fmt.Errorf("failed to mark the message as HTML: %w", err)
-	}
-	if err := w.Close(); err != nil {
-		return nil, b, fmt.Errorf("failed to close the multipart request: %w", err)
-	}
-
-	if tmplErr != nil {
-		pn.log.Warn("failed to template pushover message", "error", tmplErr.Error())
-	}
-
-	headers := map[string]string{
-		"Content-Type": w.FormDataContentType(),
-	}
-
-	return headers, b, nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -24,9 +25,12 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		here we test the service as a whole and should probably initialize the service with a proper store
 	*/
 	store := db.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
+	require.Nil(t, err)
 	kvStore := kvstore.ProvideService(store)
-	orgService := orgimpl.ProvideService(store, setting.NewCfg())
+	orgService, err := orgimpl.ProvideService(store, setting.NewCfg(), quotaService)
+	require.Nil(t, err)
 	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
 	autoAssignOrg := store.Cfg.AutoAssignOrg
 	store.Cfg.AutoAssignOrg = true
@@ -35,7 +39,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	}()
 
 	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-	err := store.CreateOrg(context.Background(), orgCmd)
+	err = store.CreateOrg(context.Background(), orgCmd)
 	require.Nil(t, err)
 
 	t.Run("should call store function", func(t *testing.T) {

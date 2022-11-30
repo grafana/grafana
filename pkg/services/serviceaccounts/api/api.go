@@ -25,12 +25,13 @@ import (
 )
 
 type ServiceAccountsAPI struct {
-	cfg               *setting.Cfg
-	service           service
-	accesscontrol     accesscontrol.AccessControl
-	RouterRegister    routing.RouteRegister
-	log               log.Logger
-	permissionService accesscontrol.ServiceAccountPermissionsService
+	cfg                  *setting.Cfg
+	service              service
+	accesscontrol        accesscontrol.AccessControl
+	accesscontrolService accesscontrol.Service
+	RouterRegister       routing.RouteRegister
+	log                  log.Logger
+	permissionService    accesscontrol.ServiceAccountPermissionsService
 }
 
 // Service implements the API exposed methods for service accounts.
@@ -57,6 +58,7 @@ func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
 	service service,
 	accesscontrol accesscontrol.AccessControl,
+	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
@@ -149,6 +151,10 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 			}
 		}
+
+		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	return response.JSON(http.StatusCreated, serviceAccount)

@@ -59,7 +59,6 @@ export interface FeatureToggles {
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
-  useLegacyHeatmapPanel?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
@@ -69,6 +68,7 @@ export interface FeatureToggles {
   objectStore?: boolean;
   traceqlEditor?: boolean;
   flameGraph?: boolean;
+  cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
@@ -80,5 +80,8 @@ export interface FeatureToggles {
   datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
+  secureSocksDatasourceProxy?: boolean;
+  authnService?: boolean;
 }

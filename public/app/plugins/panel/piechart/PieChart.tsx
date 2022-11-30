@@ -199,7 +199,7 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
   const { eventBus } = usePanelContext();
 
   const onMouseOut = useCallback(
-    (event: any) => {
+    (event: React.MouseEvent<SVGGElement>) => {
       eventBus?.publish({
         type: DataHoverClearEvent.type,
         payload: {
@@ -215,7 +215,7 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
   );
 
   const onMouseMoveOverArc = useCallback(
-    (event: any) => {
+    (event: React.MouseEvent<SVGGElement>) => {
       eventBus?.publish({
         type: DataHoverEvent.type,
         payload: {
@@ -226,12 +226,16 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
         },
       });
 
-      const coords = localPoint(event.target.ownerSVGElement, event);
-      tooltip.showTooltip({
-        tooltipLeft: coords!.x,
-        tooltipTop: coords!.y,
-        tooltipData: getTooltipData(pie, arc, tooltipOptions),
-      });
+      const owner = event.currentTarget.ownerSVGElement;
+
+      if (owner) {
+        const coords = localPoint(owner, event);
+        tooltip.showTooltip({
+          tooltipLeft: coords!.x,
+          tooltipTop: coords!.y,
+          tooltipData: getTooltipData(pie, arc, tooltipOptions),
+        });
+      }
     },
     [eventBus, arc, tooltip, pie, tooltipOptions]
   );

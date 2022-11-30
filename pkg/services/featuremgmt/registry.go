@@ -249,11 +249,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "useLegacyHeatmapPanel",
-			Description: "Continue to use the angular/flot based heatmap panel",
-			State:       FeatureStateStable,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
@@ -270,8 +265,8 @@ var (
 		},
 		{
 			Name:        "internationalization",
-			Description: "Enables work-in-progress internationalization",
-			State:       FeatureStateAlpha,
+			Description: "Enables internationalization",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "topnav",
@@ -298,6 +293,11 @@ var (
 		{
 			Name:        "flameGraph",
 			Description: "Show the flame graph",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "cloudWatchCrossAccountQuerying",
+			Description: "Use cross-account querying in CloudWatch datasource",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -358,8 +358,22 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "accessTokenExpirationCheck",
+			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
+			State:       FeatureStateStable,
+		},
+		{
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "secureSocksDatasourceProxy",
+			Description: "Enable secure socks tunneling for supported core datasources",
+		},
+		{
+			Name:        "authnService",
+			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
 		},
 	}

@@ -55,9 +55,10 @@ func ProvideServiceAccountsService(
 		kvStore,
 		orgService,
 	)
+	log := log.New("serviceaccounts")
 	s := &ServiceAccountsService{
 		store:         serviceAccountsStore,
-		log:           log.New("serviceaccounts"),
+		log:           log,
 		backgroundLog: log.New("serviceaccounts.background"),
 	}
 
@@ -67,7 +68,7 @@ func ProvideServiceAccountsService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, permissionService)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
