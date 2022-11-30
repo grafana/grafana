@@ -75,9 +75,61 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
  */
 export interface VariableModel {
+  datasource: DataSourceRef;
+  description?: string;
+  error?: Record<string, unknown>;
+  global: boolean;
+  hide: VariableHide;
+  id: string;
+  index: number;
   label?: string;
   name: string;
+  /**
+   * TODO: Move this into a separated QueryVariableModel type
+   */
+  query?: string;
+  rootStateKey?: string;
+  skipUrlSync: boolean;
+  state: LoadingState;
   type: VariableType;
+}
+
+export const defaultVariableModel: Partial<VariableModel> = {
+  global: false,
+  id: '00000000-0000-0000-0000-000000000000',
+  index: -1,
+  skipUrlSync: false,
+};
+
+/**
+ * TODO: There is a bug generating the names, they are always title case
+ */
+export enum VariableHide {
+  DontHide = 0,
+  HideLabel = 1,
+  HideVariable = 2,
+}
+
+export enum LoadingState {
+  Done = 'Done',
+  Error = 'Error',
+  Loading = 'Loading',
+  NonStarted = 'NonStarted',
+  Streaming = 'Streaming',
+}
+
+/**
+ * Ref to a DataSource instance
+ */
+export interface DataSourceRef {
+  /**
+   * The plugin type-id
+   */
+  type?: string;
+  /**
+   * Specific datasource instance
+   */
+  uid?: string;
 }
 
 /**

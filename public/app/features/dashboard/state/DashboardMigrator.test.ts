@@ -889,30 +889,30 @@ describe('DashboardModel', () => {
           list: [
             {
               type: 'query',
-              // @ts-expect-error
               hide: VariableHide.dontHide,
               datasource: null,
+              // @ts-expect-error
               allFormat: '',
             },
             {
               type: 'query',
-              // @ts-expect-error
               hide: VariableHide.hideLabel,
               datasource: null,
+              // @ts-expect-error
               allFormat: '',
             },
             {
               type: 'query',
-              // @ts-expect-error
               hide: VariableHide.hideVariable,
               datasource: null,
+              // @ts-expect-error
               allFormat: '',
             },
             {
               type: 'constant',
-              // @ts-expect-error
               hide: VariableHide.dontHide,
               query: 'default value',
+              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
@@ -920,9 +920,9 @@ describe('DashboardModel', () => {
             },
             {
               type: 'constant',
-              // @ts-expect-error
               hide: VariableHide.hideLabel,
               query: 'default value',
+              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
@@ -930,9 +930,9 @@ describe('DashboardModel', () => {
             },
             {
               type: 'constant',
-              // @ts-expect-error
               hide: VariableHide.hideVariable,
               query: 'default value',
+              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
@@ -1853,9 +1853,9 @@ describe('DashboardModel', () => {
             {
               type: 'query',
               name: 'var',
-              // @ts-expect-error
               options: [{ text: 'A', value: 'A' }],
               refresh: 0,
+              // @ts-expect-error
               datasource: 'prom',
             },
           ],

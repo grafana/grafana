@@ -83,6 +83,19 @@ const (
 	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
 )
 
+// Defines values for LoadingState.
+const (
+	LoadingStateDone LoadingState = "Done"
+
+	LoadingStateError LoadingState = "Error"
+
+	LoadingStateLoading LoadingState = "Loading"
+
+	LoadingStateNonStarted LoadingState = "NonStarted"
+
+	LoadingStateStreaming LoadingState = "Streaming"
+)
+
 // Defines values for MappingType.
 const (
 	MappingTypeRange MappingType = "range"
@@ -160,6 +173,37 @@ const (
 // Defines values for ValueMapType.
 const (
 	ValueMapTypeValue ValueMapType = "value"
+)
+
+// Defines values for VariableHide.
+const (
+	VariableHideN0 VariableHide = 0
+
+	VariableHideN1 VariableHide = 1
+
+	VariableHideN2 VariableHide = 2
+)
+
+// Defines values for VariableModelHide.
+const (
+	VariableModelHideN0 VariableModelHide = 0
+
+	VariableModelHideN1 VariableModelHide = 1
+
+	VariableModelHideN2 VariableModelHide = 2
+)
+
+// Defines values for VariableModelState.
+const (
+	VariableModelStateDone VariableModelState = "Done"
+
+	VariableModelStateError VariableModelState = "Error"
+
+	VariableModelStateLoading VariableModelState = "Loading"
+
+	VariableModelStateNonStarted VariableModelState = "NonStarted"
+
+	VariableModelStateStreaming VariableModelState = "Streaming"
 )
 
 // Defines values for VariableModelType.
@@ -366,6 +410,15 @@ type DashboardLink struct {
 // DashboardLinkType defines model for DashboardLink.Type.
 type DashboardLinkType string
 
+// Ref to a DataSource instance
+type DataSourceRef struct {
+	// The plugin type-id
+	Type *string `json:"type,omitempty"`
+
+	// Specific datasource instance
+	Uid *string `json:"uid,omitempty"`
+}
+
 // DynamicConfigValue defines model for dashboard.DynamicConfigValue.
 type DynamicConfigValue struct {
 	Id    string       `json:"id"`
@@ -543,6 +596,9 @@ type HeatmapPanel struct {
 
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
+
+// LoadingState defines model for dashboard.LoadingState.
+type LoadingState string
 
 // TODO docs
 type MappingType string
@@ -894,15 +950,43 @@ type ValueMappingResult struct {
 	Text  *string `json:"text,omitempty"`
 }
 
+// TODO: There is a bug generating the names, they are always title case
+type VariableHide int
+
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
 // TODO what about what's in public/app/features/types.ts?
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 type VariableModel struct {
-	Label *string           `json:"label,omitempty"`
-	Name  string            `json:"name"`
-	Type  VariableModelType `json:"type"`
+	Datasource struct {
+		// The plugin type-id
+		Type *string `json:"type,omitempty"`
+
+		// Specific datasource instance
+		Uid *string `json:"uid,omitempty"`
+	} `json:"datasource"`
+	Description *string                 `json:"description,omitempty"`
+	Error       *map[string]interface{} `json:"error,omitempty"`
+	Global      bool                    `json:"global"`
+	Hide        VariableModelHide       `json:"hide"`
+	Id          string                  `json:"id"`
+	Index       int                     `json:"index"`
+	Label       *string                 `json:"label,omitempty"`
+	Name        string                  `json:"name"`
+
+	// TODO: Move this into a separated QueryVariableModel type
+	Query        *string            `json:"query,omitempty"`
+	RootStateKey *string            `json:"rootStateKey,omitempty"`
+	SkipUrlSync  bool               `json:"skipUrlSync"`
+	State        VariableModelState `json:"state"`
+	Type         VariableModelType  `json:"type"`
 }
+
+// VariableModelHide defines model for VariableModel.Hide.
+type VariableModelHide int
+
+// VariableModelState defines model for VariableModel.State.
+type VariableModelState string
 
 // VariableModelType defines model for VariableModel.Type.
 type VariableModelType string

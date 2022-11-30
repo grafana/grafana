@@ -2,6 +2,7 @@ import {
   AnnotationQuery,
   Dashboard,
   defaultDashboardCursorSync,
+  defaultVariableModel,
   GraphPanel,
   Panel,
   VariableModel,
@@ -59,6 +60,7 @@ export function createAnnotationJSONFixture(annotationInput: Partial<AnnotationQ
 
 export function createVariableJSONFixture(annotationInput: Partial<VariableModel>): VariableModel {
   return {
+    ...defaultVariableModel,
     name: 'foo.variable',
     type: 'constant',
     ...annotationInput,

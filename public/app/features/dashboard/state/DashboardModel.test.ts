@@ -1,6 +1,7 @@
 import { keys as _keys } from 'lodash';
 
 import { VariableHide } from '@grafana/data';
+import { defaultVariableModel } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
@@ -334,7 +335,12 @@ describe('DashboardModel', () => {
           // TODO: Variables in schema are incompleted. They are declared as
           // VariableModel but there are more variable types with more aggregated data
           // The schema should reflect all possible values that can go to variable list
-          list: [{ hide: VariableHide.hideVariable }],
+          list: [
+            {
+              ...defaultVariableModel,
+              hide: VariableHide.hideVariable,
+            },
+          ],
         },
       });
     });

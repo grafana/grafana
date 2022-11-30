@@ -124,12 +124,34 @@ lineage: seqs: [
 				// TODO what about what's in public/app/features/types.ts?
 				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 				#VariableModel: {
+					id: string | *"00000000-0000-0000-0000-000000000000"
 					type:   #VariableType
 					name:   string
 					label?: string
+					rootStateKey?: string
+					global: bool | *false
+					hide: #VariableHide
+					skipUrlSync: bool | *false
+					index: int32 | *-1
+					state: #LoadingState
+					error?: {...}
+					description?: string
+					// TODO: Move this into a separated QueryVariableModel type
+					query?: string
+					datasource: #DataSourceRef
 					...
-				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+				// TODO: There is a bug generating the names, they are always title case
+				#VariableHide: 0 | 1 | 2  @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+				#LoadingState: "NonStarted" | "Loading" | "Streaming" | "Done" | "Error"  @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+				// Ref to a DataSource instance
+				#DataSourceRef: {
+					// The plugin type-id
+					type?: string @grafanamaturity(NeedsExpertReview)
 
+					// Specific datasource instance
+					uid?: string @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 				// TODO docs
 				#DashboardLink: {

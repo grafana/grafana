@@ -1,12 +1,40 @@
 import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 
-export interface Dashboard extends raw.Dashboard {
-  panels?: Array<Panel | raw.RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
-}
-
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends raw.Panel {
   fieldConfig: FieldConfigSource<TCustomFieldConfig>;
+}
+
+export enum VariableHide {
+  dontHide,
+  hideLabel,
+  hideVariable,
+}
+
+export enum LoadingState {
+  NotStarted = 'NotStarted',
+  Loading = 'Loading',
+  Streaming = 'Streaming',
+  Done = 'Done',
+  Error = 'Error',
+}
+
+export interface VariableModel
+  extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'state' | 'datasource'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+  hide: VariableHide;
+  state: LoadingState;
+  datasource: raw.DataSourceRef | null;
+}
+
+export interface Dashboard extends Omit<raw.Dashboard, 'templating'> {
+  panels?: Array<Panel | raw.RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
+  templating?: {
+    list?: VariableModel[];
+  };
 }
 
 export interface FieldConfig<TOptions = Record<string, unknown>> extends raw.FieldConfig {
@@ -18,6 +46,15 @@ export interface FieldConfigSource<TOptions = Record<string, unknown>> extends r
 }
 
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
+export const defaultVariableModel = {
+  ...raw.defaultVariableModel,
+  rootStateKey: null,
+  error: null,
+  description: null,
+  hide: VariableHide.dontHide,
+  state: LoadingState.NotStarted,
+  datasource: null,
+} as VariableModel;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = raw.defaultFieldConfigSource;
