@@ -197,8 +197,8 @@
       "title": "Organizaciones"
     },
     "global-users": {
-      "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "",
+      "subtitle": "",
+      "title": "Usuarios",
       "titleBeforeTopnav": "Usuarios"
     },
     "help": {
