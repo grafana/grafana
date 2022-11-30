@@ -51,6 +51,7 @@ export interface BarsOptions {
   getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
   fillOpacity?: number;
   formatValue: (seriesIdx: number, value: any) => string;
+  formatShortValue: (seriesIdx: number, value: any) => string;
   timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -116,7 +117,17 @@ function calculateFontSizeWithMetrics(
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, rawValue, getColor, formatValue, fillOpacity = 1, showValue, xSpacing = 0 } = opts;
+  const {
+    xOri,
+    xDir: dir,
+    rawValue,
+    getColor,
+    formatValue,
+    formatShortValue,
+    fillOpacity = 1,
+    showValue,
+    xSpacing = 0,
+  } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
@@ -181,7 +192,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       return vals;
     }
 
-    return splits.map((v) => formatValue(0, v));
+    return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
   };
 
   // this expands the distr: 2 scale so that the indicies of each data[0] land at the proper justified positions

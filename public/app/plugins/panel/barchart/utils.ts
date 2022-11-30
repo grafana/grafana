@@ -81,14 +81,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   timeZone,
 }) => {
   const builder = new UPlotConfigBuilder();
-  const defaultValueFormatter = (seriesIdx: number, value: any) => {
+
+  const formatValue = (seriesIdx: number, value: any) => {
     return formattedValueToString(frame.fields[seriesIdx].display!(value));
+  };
+
+  const formatShortValue = (seriesIdx: number, value: any) => {
+    return shortenValue(formatValue(seriesIdx, value), xTickLabelMaxLength);
   };
 
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
-
-  const formatValue = defaultValueFormatter;
 
   // Use bar width when only one field
   if (frame.fields.length === 2) {
@@ -107,6 +110,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     getColor,
     fillOpacity,
     formatValue,
+    formatShortValue,
     timeZone,
     text,
     showValue,
@@ -127,7 +131,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
   if (xTickLabelRotation !== 0) {
-    builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength));
+    // these are the amount of space we already have available between plot edge and first label
+    // TODO: removing these hardcoded value requires reading back uplot instance props
+    let lftSpace = 50;
+    let btmSpace = vizOrientation.xOri === ScaleOrientation.Horizontal ? 14 : 5;
+
+    builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength, lftSpace, btmSpace));
   }
 
   builder.setPrepData(config.prepData);
@@ -296,7 +305,13 @@ function shortenValue(value: string, length: number) {
   }
 }
 
-function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLength: number): Padding {
+function getRotationPadding(
+  frame: DataFrame,
+  rotateLabel: number,
+  valueMaxLength: number,
+  lftSpace = 0,
+  btmSpace = 0
+): Padding {
   const values = frame.fields[0].values;
   const fontSize = UPLOT_AXIS_FONT_SIZE;
   const displayProcessor = frame.fields[0].display ?? ((v) => v);
@@ -328,9 +343,15 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
       : 0;
 
   // Add padding to the bottom to avoid clipping the rotated labels.
-  const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
+  const paddingBottom =
+    Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength - btmSpace;
 
-  return [Math.round(UPLOT_AXIS_FONT_SIZE * uPlot.pxRatio), paddingRight, paddingBottom, paddingLeft];
+  return [
+    Math.round(UPLOT_AXIS_FONT_SIZE * uPlot.pxRatio),
+    paddingRight,
+    paddingBottom,
+    Math.max(0, paddingLeft - lftSpace),
+  ];
 }
 
 /** @internal */
