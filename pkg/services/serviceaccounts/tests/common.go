@@ -115,6 +115,7 @@ type serviceAccountStore interface {
 
 // create mock for serviceaccountservice
 type ServiceAccountMock struct {
+	Store             serviceAccountStore
 	Calls             Calls
 	Stats             *serviceaccounts.Stats
 	SecretScanEnabled bool
@@ -122,11 +123,11 @@ type ServiceAccountMock struct {
 
 func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, orgID, saForm})
-	return &serviceaccounts.ServiceAccountDTO{}, nil
+	return s.Store.CreateServiceAccount(ctx, orgID, saForm)
 }
 func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
-	return nil
+	return s.Store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
 func (s *ServiceAccountMock) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
 	return 0, nil

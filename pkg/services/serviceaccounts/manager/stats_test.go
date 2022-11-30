@@ -4,31 +4,22 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_UsageStats(t *testing.T) {
-	storeMock := &tests.ServiceAccountMock{Calls: tests.Calls{}, Stats: &serviceaccounts.Stats{
-		ServiceAccounts: 1,
-		Tokens:          1,
-	}}
-	/*
-		how to create this test
-
-		make a mock of the ServiceAccountService?
-		make a real ServiceAccountService?
-		We really only want to be able to see that the usageStats act as expected
-
-		So maybe we should only mock the ServiceAccountService and add method getUsageMetrics (which should return a map[]string) to it?
-	*/
-	svc := ServiceAccountsService{secretScanEnabled: true}
+	storeMock := newServiceAccountStoreFake()
+	svc := ServiceAccountsService{storeMock, log.New("test"), log.New("background-test"), &SecretsCheckerFake{}, true, 5}
 	err := svc.DeleteServiceAccount(context.Background(), 1, 1)
 	require.NoError(t, err)
-	assert.Len(t, storeMock.Calls.DeleteServiceAccount, 1)
 
+	storeMock.ExpectedStats = &serviceaccounts.Stats{
+		ServiceAccounts: 1,
+		Tokens:          1,
+	}
 	stats, err := svc.getUsageMetrics(context.Background())
 	require.NoError(t, err)
 

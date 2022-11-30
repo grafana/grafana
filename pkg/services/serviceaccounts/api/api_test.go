@@ -47,9 +47,13 @@ var (
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
-	orgService, err := orgimpl.ProvideService(store, setting.NewCfg(), quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
-	svcmock := tests.ServiceAccountMock{}
+	kvStore := kvstore.ProvideService(store)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.Nil(t, err)
+	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
+	svcmock := tests.ServiceAccountMock{Store: saStore, Calls: tests.Calls{}, Stats: nil, SecretScanEnabled: false}
 
 	autoAssignOrg := store.Cfg.AutoAssignOrg
 	store.Cfg.AutoAssignOrg = true

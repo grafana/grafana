@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -13,13 +12,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
-
-// write mocks for the as in the userimpl
-// provide service
-// store should not be needed
-
-// initilize service accounts service
-type ServiceAccountStoreMock struct{}
 
 type FakeServiceAccountStore struct {
 	ExpectedServiceAccountID                *serviceaccounts.ServiceAccount
@@ -127,15 +119,6 @@ func (f *SecretsCheckerFake) CheckTokens(ctx context.Context) error {
 }
 
 func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
-	/*
-		here we test the service as a whole and should probably initialize the service with a proper store
-	*/
-	store := db.InitTestDB(t)
-	autoAssignOrg := store.Cfg.AutoAssignOrg
-	store.Cfg.AutoAssignOrg = true
-	defer func() {
-		store.Cfg.AutoAssignOrg = autoAssignOrg
-	}()
 	storeMock := newServiceAccountStoreFake()
 	svc := ServiceAccountsService{storeMock, log.New("test"), log.New("background.test"), &SecretsCheckerFake{}, false, 0}
 	testOrgId := 1
