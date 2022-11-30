@@ -6,6 +6,7 @@ import { DataSourcePluginMeta, GrafanaTheme2, PageLayoutType } from '@grafana/da
 import { getBackendSrv } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { useAddDatasource } from 'app/features/datasources/state';
 
@@ -61,35 +62,43 @@ export function DatasourceOnboarding({
             {t('datasource-onboarding.explanation', "To visualize your data, you'll need to connect it first.")}
           </h4>
         </div>
-        <h4 className={styles.preferredDataSource}>
-          {t('datasource-onboarding.preferred', 'Connect your preferred data source:')}
-        </h4>
-        {!loadingDatasources && datasources !== undefined && (
-          <ul className={styles.datasources}>
-            {datasources.map((d) => (
-              <li key={d.id}>
-                <button onClick={() => onAddDatasource(d)}>
-                  <img
-                    src={d.info.logos.small}
-                    alt={t('datasource-onboarding.logo', 'Logo for {{datasourceName}} data source', {
-                      datasourceName: d.name,
-                    })}
-                    height="16"
-                    width="16"
-                    className={styles.logo}
-                  />
-                  <span className={styles.datasourceName}>{d.name}</span>
-                  <Icon name="arrow-right" size="lg" className={styles.arrowIcon} />
-                </button>
-              </li>
-            ))}
-            <li>
-              <a href="/datasources/new" className={styles.viewAll}>
-                <span>{t('datasource-onboarding.viewAll', 'View all')}</span>
-                <Icon name="arrow-right" size="lg" />
-              </a>
-            </li>
-          </ul>
+        {contextSrv.hasRole('Admin') ? (
+          <>
+            <h4 className={styles.preferredDataSource}>
+              {t('datasource-onboarding.preferred', 'Connect your preferred data source:')}
+            </h4>
+            {!loadingDatasources && datasources !== undefined && (
+              <ul className={styles.datasources}>
+                {datasources.map((d) => (
+                  <li key={d.id}>
+                    <button onClick={() => onAddDatasource(d)}>
+                      <img
+                        src={d.info.logos.small}
+                        alt={t('datasource-onboarding.logo', 'Logo for {{datasourceName}} data source', {
+                          datasourceName: d.name,
+                        })}
+                        height="16"
+                        width="16"
+                        className={styles.logo}
+                      />
+                      <span className={styles.datasourceName}>{d.name}</span>
+                      <Icon name="arrow-right" size="lg" className={styles.arrowIcon} />
+                    </button>
+                  </li>
+                ))}
+                <li>
+                  <a href="/datasources/new" className={styles.viewAll}>
+                    <span>{t('datasource-onboarding.viewAll', 'View all')}</span>
+                    <Icon name="arrow-right" size="lg" />
+                  </a>
+                </li>
+              </ul>
+            )}
+          </>
+        ) : (
+          <h4>
+            {t('datasource-onboarding.contact-admin', 'Please contact your administrator to configure data sources.')}
+          </h4>
         )}
         <button onClick={onNewDashboard} className={styles.createNew}>
           <span>{t('datasource-onboarding.sampleData', 'Or set up a new dashboard with sample data')}</span>
