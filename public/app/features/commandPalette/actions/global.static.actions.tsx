@@ -30,14 +30,12 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Actio
       continue;
     }
 
-    const hasPerform = url && !hasChildren;
-
     const action: Action = {
       id: idForNavItem(navItem),
       name: text, // TODO: translate
       section: isCreateAction ? SECTION_ACTIONS : SECTION_PAGES,
       parent: parent && idForNavItem(parent),
-      perform: hasPerform ? () => locationService.push(url) : undefined,
+      perform: url ? () => locationService.push(url) : undefined,
       icon: !parent && isIconName(icon) && <Icon name={icon} size="md" />,
     };
 
