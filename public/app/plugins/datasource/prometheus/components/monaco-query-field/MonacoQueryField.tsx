@@ -132,8 +132,6 @@ const MonacoQueryField = (props: Props) => {
           });
 
           // we construct a DataProvider object
-          // const getSeries = (selector: string) => lpRef.current.getSeries(selector);
-
           const getHistory = () =>
             Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
 
