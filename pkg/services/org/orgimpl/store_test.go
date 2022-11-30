@@ -401,9 +401,6 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			err = orgUserStore.RemoveOrgUser(context.Background(), &remCmd)
 			require.NoError(t, err)
 			require.True(t, remCmd.UserWasDeleted)
-
-			err = ss.GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.ID})
-			require.Equal(t, err, user.ErrUserNotFound)
 		})
 
 		t.Run("Cannot delete last admin org user", func(t *testing.T) {
