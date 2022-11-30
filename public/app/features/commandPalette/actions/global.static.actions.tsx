@@ -23,7 +23,7 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Actio
   const navActions: Action[] = [];
 
   for (const navItem of navTree) {
-    const { url, text, isCreateAction, children, icon } = navItem;
+    const { url, text, isCreateAction, children } = navItem;
     const hasChildren = Boolean(children?.length);
 
     if (!(url || hasChildren)) {
@@ -34,9 +34,11 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Actio
       id: idForNavItem(navItem),
       name: text, // TODO: translate
       section: isCreateAction ? SECTION_ACTIONS : SECTION_PAGES,
-      parent: parent && idForNavItem(parent),
       perform: url ? () => locationService.push(url) : undefined,
-      icon: !parent && isIconName(icon) && <Icon name={icon} size="md" />,
+      parent: parent && idForNavItem(parent),
+
+      // Only show icons for top level items
+      icon: !parent && iconForNavItem(navItem),
     };
 
     navActions.push(action);
@@ -103,3 +105,13 @@ export default (navBarTree: NavModelItem[]) => {
 
   return [...globalActions, ...navBarActions];
 };
+
+function iconForNavItem(navItem: NavModelItem) {
+  if (navItem.icon && isIconName(navItem.icon)) {
+    return <Icon name={navItem.icon} size="md" />;
+  } else if (navItem.img) {
+    return <img alt="" src={navItem.img} style={{ width: 16, height: 16 }} />;
+  }
+
+  return undefined;
+}
