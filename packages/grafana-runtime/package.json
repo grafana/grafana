@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "9.3.0",
+  "version": "9.3.1",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -35,10 +35,10 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
-    "@grafana/data": "9.3.0",
-    "@grafana/e2e-selectors": "9.3.0",
+    "@grafana/data": "9.3.1",
+    "@grafana/e2e-selectors": "9.3.1",
     "@grafana/faro-web-sdk": "1.0.0-beta2",
-    "@grafana/ui": "9.3.0",
+    "@grafana/ui": "9.3.1",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
