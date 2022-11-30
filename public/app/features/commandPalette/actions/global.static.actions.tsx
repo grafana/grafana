@@ -65,6 +65,7 @@ export default (navBarTree: NavModelItem[]) => {
       id: 'go/search',
       name: 'Search',
       keywords: 'navigate',
+      icon: <Icon name="search" size="md" />,
       perform: () => locationService.push('?search=open'),
       section: SECTION_PAGES,
       shortcut: ['s', 'o'],
