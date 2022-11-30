@@ -12,7 +12,6 @@ import (
 )
 
 type Store interface {
-	GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error
 	GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error
 	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
 	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
