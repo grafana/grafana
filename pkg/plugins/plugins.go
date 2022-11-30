@@ -115,10 +115,10 @@ func (p PluginDTO) File(name string) (File, error) {
 		return nil, err
 	}
 
-	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	// nolint:gosec
-	f, err := os.Open(filepath.Join(absPluginDir, cleanPath))
+	absFilePath := filepath.Join(absPluginDir, cleanPath)
+	// Wrapping in filepath.Clean to properly handle
+	// gosec G304 Potential file inclusion via variable rule.
+	f, err := os.Open(filepath.Clean(absFilePath))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, ErrFileNotExist
