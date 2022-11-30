@@ -1326,13 +1326,12 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		// FIXME
-		// Log query is not implemented yet
-		// We need to define how to handle it
+		// Log query is not implemented with defaults
 		// t.Run("With log query should return query with defaults  (from frontend tests)", func(t *testing.T) {
 		// 	c := newFakeClient()
 		// 	_, err := executeTsdbQuery(c, `{
 		// 		"timeField": "@timestamp",
-		// 		"queryType": "logs"
+		// 		"metrics": { "type": "logs", "id": "1"}
 		// 	}`, from, to, 15*time.Second)
 		// 	require.NoError(t, err)
 		// 	sr := c.multisearchRequests[0].Requests[0]
