@@ -59,7 +59,6 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
-	DeleteUserAccessControl(ctx context.Context, userID int64) error
 }
 
 // Service is the service implementing role based access control.
@@ -150,10 +149,6 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.Signe
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
-}
-
-func (s *Service) DeleteUserAccessControl(ctx context.Context, userID int64) error {
-	return s.store.DeleteUserAccessControl(ctx, userID)
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments

@@ -34,8 +34,6 @@ type Service interface {
 	DeclareFixedRoles(registrations ...RoleRegistration) error
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
-	// DeleteUserAccessControl deletes access control for user
-	DeleteUserAccessControl(context.Context, int64) error
 }
 
 type RoleRegistry interface {

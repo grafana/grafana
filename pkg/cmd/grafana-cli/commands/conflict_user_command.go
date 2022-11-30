@@ -378,7 +378,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 				if delErr != nil {
 					return fmt.Errorf("error during deletion of user: %w", delErr)
 				}
-				delACErr := r.ac.DeleteUserAccessControl(ctx, fromUserId)
+				delACErr := r.ac.DeleteUserPermissions(ctx, 0, fromUserId)
 				if delACErr != nil {
 					return fmt.Errorf("error during deletion of user access control: %w", delACErr)
 				}

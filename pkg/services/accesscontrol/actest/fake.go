@@ -28,10 +28,6 @@ func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID in
 	return f.ExpectedErr
 }
 
-func (f FakeService) DeleteUserAccessControl(ctx context.Context, userID int64) error {
-	return f.ExpectedErr
-}
-
 func (f FakeService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
 	return f.ExpectedErr
 }
