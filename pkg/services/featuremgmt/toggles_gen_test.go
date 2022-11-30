@@ -282,7 +282,10 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	table.SetHeader(header)
 	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 	table.SetCenterSeparator("|")
+	table.SetAutoFormatHeaders(false)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.AppendBulk(data) // Add Bulk Data
 	table.Render()
 
