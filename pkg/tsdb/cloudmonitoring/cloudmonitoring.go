@@ -206,6 +206,46 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) []string {
+	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
+	if prevFilters != nil {
+		filtersIface := prevFilters.([]interface{})
+		filters := []string{}
+		for _, f := range filtersIface {
+			filters = append(filters, f.(string))
+		}
+		metricTypeFilterArray = append([]string{"AND"}, metricTypeFilterArray...)
+		return append(filters, metricTypeFilterArray...)
+	}
+	return metricTypeFilterArray
+}
+
+func migratePreprocessor(tsl *timeSeriesList, preprocessor string) {
+	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
+	// and the aggregation that is specified in the UI becomes the secondary aggregation
+	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
+	t := toPreprocessorType(preprocessor)
+	if t != PreprocessorTypeNone {
+		// Move aggregation to secondaryAggregation
+		tsl.SecondaryAlignmentPeriod = tsl.AlignmentPeriod
+		tsl.SecondaryCrossSeriesReducer = tsl.CrossSeriesReducer
+		tsl.SecondaryPerSeriesAligner = tsl.PerSeriesAligner
+		tsl.SecondaryGroupBys = tsl.GroupBys
+
+		// Set a default cross series reducer if grouped
+		if len(tsl.GroupBys) == 0 {
+			tsl.CrossSeriesReducer = crossSeriesReducerDefault
+		}
+
+		// Set aligner based on preprocessor type
+		aligner := "ALIGN_RATE"
+		if t == PreprocessorTypeDelta {
+			aligner = "ALIGN_DELTA"
+		}
+		tsl.PerSeriesAligner = aligner
+	}
+}
+
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
 		var rawQuery map[string]interface{}
@@ -227,6 +267,13 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			}
 			if rawQuery["aliasBy"] != nil {
 				gq.AliasBy = rawQuery["aliasBy"].(string)
+			}
+			if rawQuery["metricType"] != nil {
+				// metricType should be a filter
+				gq.TimeSeriesList.Filters = migrateMetricTypeFilter(rawQuery["metricType"].(string), rawQuery["filters"])
+			}
+			if rawQuery["preprocessor"] != nil {
+				migratePreprocessor(gq.TimeSeriesList, rawQuery["preprocessor"].(string))
 			}
 
 			b, err := json.Marshal(gq)
@@ -255,7 +302,23 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					GraphPeriod: toString(metricQuery["graphPeriod"]),
 				}
 			} else {
-				rawQuery["timeSeriesList"] = metricQuery
+				tslb, err := json.Marshal(metricQuery)
+				if err != nil {
+					return err
+				}
+				tsl := &timeSeriesList{}
+				err = json.Unmarshal(tslb, tsl)
+				if err != nil {
+					return err
+				}
+				if metricQuery["metricType"] != nil {
+					// metricType should be a filter
+					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
+				}
+				if rawQuery["preprocessor"] != nil {
+					migratePreprocessor(tsl, rawQuery["preprocessor"].(string))
+				}
+				rawQuery["timeSeriesList"] = tsl
 			}
 			if metricQuery["aliasBy"] != nil {
 				rawQuery["aliasBy"] = metricQuery["aliasBy"]
@@ -273,18 +336,18 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 		// SloQuery was merged into timeSeriesList
 		if rawQuery["sloQuery"] != nil {
 			if rawQuery["timeSeriesList"] == nil {
-				rawQuery["timeSeriesList"] = map[string]interface{}{}
+				rawQuery["timeSeriesList"] = &timeSeriesList{}
 			}
-			tsl := rawQuery["timeSeriesList"].(map[string]interface{})
+			tsl := rawQuery["timeSeriesList"].(*timeSeriesList)
 			sloq := rawQuery["sloQuery"].(map[string]interface{})
 			if sloq["projectName"] != nil {
-				tsl["projectName"] = sloq["projectName"]
+				tsl.ProjectName = sloq["projectName"].(string)
 			}
 			if sloq["alignmentPeriod"] != nil {
-				tsl["alignmentPeriod"] = sloq["alignmentPeriod"]
+				tsl.AlignmentPeriod = sloq["alignmentPeriod"].(string)
 			}
 			if sloq["perSeriesAligner"] != nil {
-				tsl["perSeriesAligner"] = sloq["perSeriesAligner"]
+				tsl.PerSeriesAligner = sloq["perSeriesAligner"].(string)
 			}
 			rawQuery["timeSeriesList"] = tsl
 			b, err := json.Marshal(rawQuery)
@@ -399,7 +462,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 					q.TimeSeriesList.View = "FULL"
 				}
 				cmtsf.parameters = q.TimeSeriesList
-				params.Add("filter", buildFilterString(q.TimeSeriesList.MetricType, q.TimeSeriesList.Filters))
+				params.Add("filter", buildFilterString(q.TimeSeriesList.Filters))
 				params.Add("view", q.TimeSeriesList.View)
 				setMetricAggParams(&params, q.TimeSeriesList, durationSeconds, query.Interval.Milliseconds())
 				queryInterface = cmtsf
@@ -452,7 +515,7 @@ func interpolateFilterWildcards(value string) string {
 	return value
 }
 
-func buildFilterString(metricType string, filterParts []string) string {
+func buildFilterString(filterParts []string) string {
 	filterString := ""
 	for i, part := range filterParts {
 		mod := i % 4
@@ -475,7 +538,7 @@ func buildFilterString(metricType string, filterParts []string) string {
 		}
 	}
 
-	return strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " ")
+	return strings.Trim(filterString, " ")
 }
 
 func buildSLOFilterExpression(projectName string, q *sloQuery) string {
@@ -498,40 +561,29 @@ func setMetricAggParams(params *url.Values, query *timeSeriesList, durationSecon
 	}
 
 	alignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
-
-	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
-	// and the aggregation that is specified in the UI becomes the secondary aggregation
-	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	t := toPreprocessorType(query.Preprocessor)
-	if t != PreprocessorTypeNone {
-		params.Add("secondaryAggregation.alignmentPeriod", alignmentPeriod)
-		params.Add("secondaryAggregation.crossSeriesReducer", query.CrossSeriesReducer)
-		params.Add("secondaryAggregation.perSeriesAligner", query.PerSeriesAligner)
-
-		primaryCrossSeriesReducer := crossSeriesReducerDefault
-		if len(query.GroupBys) > 0 {
-			primaryCrossSeriesReducer = query.CrossSeriesReducer
-		}
-		params.Add("aggregation.crossSeriesReducer", primaryCrossSeriesReducer)
-
-		aligner := "ALIGN_RATE"
-		if t == PreprocessorTypeDelta {
-			aligner = "ALIGN_DELTA"
-		}
-		params.Add("aggregation.perSeriesAligner", aligner)
-
-		for _, groupBy := range query.GroupBys {
-			params.Add("secondaryAggregation.groupByFields", groupBy)
-		}
-	} else {
+	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
+	if query.CrossSeriesReducer != "" {
 		params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
+	}
+	if query.PerSeriesAligner != "" {
 		params.Add("aggregation.perSeriesAligner", query.PerSeriesAligner)
 	}
-
-	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
-
 	for _, groupBy := range query.GroupBys {
 		params.Add("aggregation.groupByFields", groupBy)
+	}
+
+	if query.SecondaryAlignmentPeriod != "" {
+		secondaryAlignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
+		params.Add("secondaryAggregation.alignmentPeriod", secondaryAlignmentPeriod)
+	}
+	if query.SecondaryCrossSeriesReducer != "" {
+		params.Add("secondaryAggregation.crossSeriesReducer", query.SecondaryCrossSeriesReducer)
+	}
+	if query.SecondaryPerSeriesAligner != "" {
+		params.Add("secondaryAggregation.perSeriesAligner", query.SecondaryPerSeriesAligner)
+	}
+	for _, groupBy := range query.SecondaryGroupBys {
+		params.Add("secondaryAggregation.groupByFields", groupBy)
 	}
 }
 
