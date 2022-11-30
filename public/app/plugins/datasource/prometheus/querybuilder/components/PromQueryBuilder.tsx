@@ -157,7 +157,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
-    return datasource.languageProvider.fetchSeriesValues(forLabel.label, promQLExpression).then((response) => {
+    return datasource.languageProvider.fetchSeriesValuesWithMatch(forLabel.label, promQLExpression).then((response) => {
       return response.map((v) => ({
         value: v,
         label: v,

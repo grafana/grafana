@@ -132,7 +132,7 @@ const MonacoQueryField = (props: Props) => {
           });
 
           // we construct a DataProvider object
-          const getSeries = (selector: string) => lpRef.current.getSeries(selector);
+          // const getSeries = (selector: string) => lpRef.current.getSeries(selector);
 
           const getHistory = () =>
             Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
@@ -155,18 +155,17 @@ const MonacoQueryField = (props: Props) => {
 
           const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
 
-          const getSeriesValues = lpRef.current.fetchSeriesValues;
+          const getSeriesValues = lpRef.current.getSeriesValues;
 
           // const hasLabelsSupport = lpRef.current.datasource.hasLabelsMatchAPISupport()
-          const getSeriesLabelsMatch = lpRef.current.fetchSeriesLabelsMatch;
+          const getSeriesLabels = lpRef.current.fetchSeriesLabelsMatch;
           const dataProvider = {
-            getSeries,
             getHistory,
             getAllMetricNames,
             getAllLabelNames,
             getLabelValues,
             getSeriesValues,
-            getSeriesLabelsMatch,
+            getSeriesLabels,
           };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 

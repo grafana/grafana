@@ -501,12 +501,20 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return [];
   }
 
+  getSeriesValues = async (labelName: string, selector: string): Promise<string[]> => {
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      const data = await this.getSeries(selector);
+      return data[labelName] ?? [];
+    }
+    return this.fetchSeriesValuesWithMatch(labelName, selector);
+  };
+
   /**
    * Fetches all values for a label, with optional match[]
    * @param name
    * @param match
    */
-  fetchSeriesValues = async (name: string, match?: string): Promise<string[]> => {
+  fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const range = this.datasource.getTimeRangeParams();
     const urlParams = {
