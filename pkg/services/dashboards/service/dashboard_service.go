@@ -120,7 +120,10 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	if isParentFolderChanged {
 		// Check that the user is allowed to add a dashboard to the folder
-		guardian := guardian.New(ctx, dash.Id, dto.OrgId, dto.User)
+		guardian, err := guardian.New(ctx, dash.Uid, dto.OrgId, dto.User)
+		if err != nil {
+			return nil, err
+		}
 		if canSave, err := guardian.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canSave {
 			if err != nil {
 				return nil, err
@@ -140,7 +143,16 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
-	guard := guardian.New(ctx, dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
+	uid, err := dr.GetDashboardIdForSavePermissionCheck(ctx, *dash)
+	if err != nil {
+		return nil, err
+	}
+
+	guard, err := guardian.New(ctx, uid, dto.OrgId, dto.User)
+	if err != nil {
+		return nil, err
+	}
+
 	if dash.Id == 0 {
 		if canCreate, err := guard.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
@@ -181,6 +193,28 @@ func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int6
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
 	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
+}
+
+// GetDashboardIdForSavePermissionCheck return the dashboard id to be used for checking permission of dashboard
+// It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
+func (dr *DashboardServiceImpl) GetDashboardIdForSavePermissionCheck(ctx context.Context, d models.Dashboard) (string, error) {
+	newDashboard := d.Id == 0
+
+	if newDashboard {
+		// return parent folder UID if exists
+		if d.FolderId != 0 {
+			q := &models.GetDashboardQuery{
+				Id: d.FolderId,
+			}
+			if err := dr.GetDashboard(ctx, q); err != nil {
+				return "", err
+			}
+			return q.Result.Uid, nil
+		}
+		return "", nil
+	}
+
+	return d.Uid, nil
 }
 
 func validateDashboardRefreshInterval(dash *models.Dashboard) error {

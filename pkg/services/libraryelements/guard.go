@@ -45,7 +45,10 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 		return err
 	}
 
-	g := guardian.New(ctx, folder.ID, user.OrgID, user)
+	g, err := guardian.New(ctx, folder.UID, user.OrgID, user)
+	if err != nil {
+		return err
+	}
 
 	canEdit, err := g.CanEdit()
 	if err != nil {
@@ -68,7 +71,10 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 		return err
 	}
 
-	g := guardian.New(ctx, folder.ID, user.OrgID, user)
+	g, err := guardian.New(ctx, folder.UID, user.OrgID, user)
+	if err != nil {
+		return err
+	}
 
 	canView, err := g.CanView()
 	if err != nil {

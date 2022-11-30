@@ -73,7 +73,15 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				teamSvc := &teamtest.FakeService{}
 				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  q.Id,
+						Uid: q.Uid,
+					}
+				}).Return(nil).Maybe()
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil).Maybe()
+				hs.DashboardService = dashSvc
 
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
@@ -127,7 +135,15 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					rw.WriteHeader(200)
 					externalRequest = req
 				})
-				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, ts.URL)}
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  q.Id,
+						Uid: q.Uid,
+					}
+				}).Return(nil).Maybe()
+				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, ts.URL), DashboardService: dashSvc}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
@@ -146,8 +162,17 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
 				d := setUpSnapshotTest(t, testUserID, "")
-				hs := &HTTPServer{dashboardsnapshotsService: d}
 
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  q.Id,
+						Uid: q.Uid,
+					}
+				}).Return(nil)
+
+				hs := &HTTPServer{dashboardsnapshotsService: d, DashboardService: dashSvc}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
@@ -169,7 +194,17 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					rw.WriteHeader(500)
 					_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
 				})
-				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, testUserID, ts.URL)}
+
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  q.Id,
+						Uid: q.Uid,
+					}
+				}).Return(nil)
+
+				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, testUserID, ts.URL), DashboardService: dashSvc}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 

@@ -27,8 +27,8 @@ func ProvideService(
 }
 
 func InitLegacyGuardian(store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) {
-	New = func(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser) DashboardGuardian {
-		return newDashboardGuardian(ctx, dashId, orgId, user, store, dashSvc, teamSvc)
+	New = func(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+		return newDashboardGuardian(ctx, dashUID, orgId, user, store, dashSvc, teamSvc)
 	}
 }
 
@@ -36,7 +36,7 @@ func InitAccessControlGuardian(
 	store db.DB, ac accesscontrol.AccessControl, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardService dashboards.DashboardService,
 ) {
-	New = func(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser) DashboardGuardian {
-		return NewAccessControlDashboardGuardian(ctx, dashId, user, store, ac, folderPermissionsService, dashboardPermissionsService, dashboardService)
+	New = func(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+		return NewAccessControlDashboardGuardian(ctx, dashUID, user, store, ac, folderPermissionsService, dashboardPermissionsService, dashboardService)
 	}
 }

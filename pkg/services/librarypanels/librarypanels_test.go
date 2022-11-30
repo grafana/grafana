@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -762,7 +763,16 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	store := dbtest.NewFakeDB()
-	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
+
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardQuery)
+		q.Result = &models.Dashboard{
+			Id:  q.Id,
+			Uid: q.Uid,
+		}
+	}).Return(nil)
+	guardian.InitLegacyGuardian(store, dashSvc, &teamtest.FakeService{})
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {

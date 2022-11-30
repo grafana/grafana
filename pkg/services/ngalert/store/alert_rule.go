@@ -375,7 +375,11 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 
 	// if access control is disabled, check that the user is allowed to save in the folder.
 	if withCanSave && st.AccessControl.IsDisabled() {
-		g := guardian.New(ctx, folder.ID, orgID, user)
+		g, err := guardian.New(ctx, folder.UID, orgID, user)
+		if err != nil {
+			return folder, err
+		}
+
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
 				st.Logger.Error("checking can save permission has failed", "userId", user.UserID, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)

@@ -22,23 +22,36 @@ var permissionMap = map[string]models.PermissionType{
 var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
-	ctx context.Context, dashboardId int64, user *user.SignedInUser,
+	ctx context.Context, dashboardUID string, user *user.SignedInUser,
 	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
-) *AccessControlDashboardGuardian {
+) (*AccessControlDashboardGuardian, error) {
+	dashID := int64(0)
+	if dashboardUID != "" {
+		q := &models.GetDashboardQuery{
+			Uid:   dashboardUID,
+			OrgId: user.OrgID,
+		}
+
+		if err := dashboardService.GetDashboard(ctx, q); err != nil {
+			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
+		}
+		dashID = q.Result.Id
+	}
+
 	return &AccessControlDashboardGuardian{
 		ctx:                         ctx,
 		log:                         log.New("dashboard.permissions"),
-		dashboardID:                 dashboardId,
+		dashboardID:                 dashID,
 		user:                        user,
 		store:                       store,
 		ac:                          ac,
 		folderPermissionsService:    folderPermissionsService,
 		dashboardPermissionsService: dashboardPermissionsService,
 		dashboardService:            dashboardService,
-	}
+	}, nil
 }
 
 type AccessControlDashboardGuardian struct {

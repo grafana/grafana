@@ -57,15 +57,6 @@ func (d *Dashboard) SetVersion(version int) {
 	d.Data.Set("version", version)
 }
 
-// GetDashboardIdForSavePermissionCheck return the dashboard id to be used for checking permission of dashboard
-func (d *Dashboard) GetDashboardIdForSavePermissionCheck() int64 {
-	if d.Id == 0 {
-		return d.FolderId
-	}
-
-	return d.Id
-}
-
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}

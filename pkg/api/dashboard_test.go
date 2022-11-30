@@ -1153,6 +1153,16 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 	role org.RoleType, fn scenarioFunc, sqlmock sqlstore.Store, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
+
+		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:  q.Id,
+				Uid: q.Uid,
+			}
+		}).Return(nil)
+
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
@@ -1164,6 +1174,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
 			Kinds:                   corekind.NewBase(nil),
+			DashboardService:        dashSvc,
 		}
 
 		sc := setupScenarioContext(t, url)

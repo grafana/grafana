@@ -12,11 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
-	ErrGuardianPermissionExists = errors.New("permission already exists")
-	ErrGuardianOverride         = errors.New("you can only override a permission to be higher")
+	ErrGuardianPermissionExists    = errors.New("permission already exists")
+	ErrGuardianOverride            = errors.New("you can only override a permission to be higher")
+	ErrGuardianGetDashboardFailure = errutil.NewBase(errutil.StatusInternal, "guardian.get-dashboard-failure", errutil.WithPublicMessage("Failed to get dashboard"))
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -54,21 +56,34 @@ type dashboardGuardianImpl struct {
 
 // New factory for creating a new dashboard guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var New = func(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser) DashboardGuardian {
+var New = func(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
-func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) *dashboardGuardianImpl {
+func newDashboardGuardian(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+	dashID := int64(0)
+	if dashUID != "" {
+		q := &models.GetDashboardQuery{
+			Uid:   dashUID,
+			OrgId: orgId,
+		}
+
+		if err := dashSvc.GetDashboard(ctx, q); err != nil {
+			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
+		}
+		dashID = q.Result.Id
+	}
+
 	return &dashboardGuardianImpl{
 		user:             user,
-		dashId:           dashId,
+		dashId:           dashID,
 		orgId:            orgId,
 		log:              log.New("dashboard.permissions"),
 		ctx:              ctx,
 		store:            store,
 		dashboardService: dashSvc,
 		teamService:      teamSvc,
-	}
+	}, nil
 }
 
 func (g *dashboardGuardianImpl) CanSave() (bool, error) {
@@ -319,7 +334,7 @@ func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 // nolint:unused
 type FakeDashboardGuardian struct {
-	DashId                           int64
+	DashUID                          string
 	OrgId                            int64
 	User                             *user.SignedInUser
 	CanSaveValue                     bool
@@ -379,10 +394,10 @@ func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 // nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
-	New = func(_ context.Context, dashId int64, orgId int64, user *user.SignedInUser) DashboardGuardian {
+	New = func(_ context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 		mock.OrgId = orgId
-		mock.DashId = dashId
+		mock.DashUID = dashUID
 		mock.User = user
-		return mock
+		return mock, nil
 	}
 }
