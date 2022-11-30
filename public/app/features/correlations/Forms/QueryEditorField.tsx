@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
@@ -38,6 +38,19 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
 
   const runner = useMemo(createQueryRunner, []);
 
+  useEffect(() => {
+    runner.get().subscribe((panelData) => {
+      if (!panelData || panelData.state === 'Error') {
+        setIsValidQuery(false);
+      } else if (panelData.state === 'Done') {
+        setIsValidQuery(true);
+      } else {
+        setIsValidQuery(undefined);
+      }
+      return runner.destroy;
+    });
+  }, [runner]);
+
   const {
     value: datasource,
     loading: dsLoading,
@@ -59,16 +72,6 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
         timeRange: getDefaultTimeRange(),
         maxDataPoints: 100,
         minInterval: null,
-      });
-
-      runner.get().subscribe((panelData) => {
-        if (!panelData || panelData.state === 'Error') {
-          setIsValidQuery(false);
-        } else if (panelData.state === 'Done') {
-          setIsValidQuery(true);
-        } else {
-          setIsValidQuery(undefined);
-        }
       });
     }
   };
