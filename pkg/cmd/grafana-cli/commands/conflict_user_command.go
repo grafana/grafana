@@ -346,11 +346,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
-		if err := r.Store.WithDbSession(ctx, func(sess *db.Session) error {
-			err := sess.Begin()
-			if err != nil {
-				return fmt.Errorf("could not open a db session: %w", err)
-			}
+		if err := r.Store.InTransaction(ctx, func(ctx context.Context) error {
 			for _, u := range users {
 				if u.Direction == "+" {
 					id, err := strconv.ParseInt(u.ID, 10, 64)
@@ -366,18 +362,16 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 					fromUserIds = append(fromUserIds, id)
 				}
 			}
-			if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&intoUser); err != nil {
+			if _, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: intoUserId}); err != nil {
 				return fmt.Errorf("could not find intoUser: %w", err)
 			}
-
 			for _, fromUserId := range fromUserIds {
-				var fromUser user.User
-				exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&fromUser)
+				_, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: fromUserId})
+				if err != nil && err == user.ErrUserNotFound {
+					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
+				}
 				if err != nil {
 					return fmt.Errorf("could not find fromUser: %w", err)
-				}
-				if !exists {
-					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
 				}
 				//  delete the user
 				delErr := r.userService.Delete(ctx, &user.DeleteUserCommand{UserID: fromUserId})
@@ -388,10 +382,6 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 				if delACErr != nil {
 					return fmt.Errorf("error during deletion of user access control: %w", delACErr)
 				}
-			}
-			commitErr := sess.Commit()
-			if commitErr != nil {
-				return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
 			}
 
 			updateMainCommand := &user.UpdateUserCommand{
