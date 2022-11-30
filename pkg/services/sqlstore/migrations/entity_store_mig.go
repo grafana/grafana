@@ -18,7 +18,7 @@ func getLatinPathColumn(name string) *migrator.Column {
 	}
 }
 
-func addObjectStorageMigrations(mg *migrator.Migrator) {
+func addEntityStoreMigrations(mg *migrator.Migrator) {
 	grnLength := 256 // len(tenant)~8 + len(kind)!16 + len(kind)~128 = 256
 	tables := []migrator.Table{}
 	tables = append(tables, migrator.Table{

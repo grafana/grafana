@@ -18,15 +18,15 @@ import (
 // 2. CREATE/UPDATE/DELETE same items to the object store
 // 3. Use the object store for all read operations
 // This givs us a safe test bed to work with the store but still roll back without any lost work
-type objectStoreImpl struct {
-	sess        *session.SessionDB
-	sqlimpl     *Service
-	objectstore entity.EntityStoreServer
+type entityStoreImpl struct {
+	sess    *session.SessionDB
+	sqlimpl *Service
+	store   entity.EntityStoreServer
 }
 
-var _ playlist.Service = &objectStoreImpl{}
+var _ playlist.Service = &entityStoreImpl{}
 
-func (s *objectStoreImpl) sync() {
+func (s *entityStoreImpl) sync() {
 	type Info struct {
 		OrgID int64  `db:"org_id"`
 		UID   string `db:"uid"`
@@ -55,7 +55,7 @@ func (s *objectStoreImpl) sync() {
 			return
 		}
 		body, _ := json.Marshal(dto)
-		_, _ = s.objectstore.Write(ctx, &entity.WriteEntityRequest{
+		_, _ = s.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				TenantId: info.OrgID,
 				UID:      info.UID,
@@ -66,14 +66,14 @@ func (s *objectStoreImpl) sync() {
 	}
 }
 
-func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
+func (s *entityStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	rsp, err := s.sqlimpl.store.Insert(ctx, cmd)
 	if err == nil && rsp != nil {
 		body, err := json.Marshal(cmd)
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
-		_, err = s.objectstore.Write(ctx, &entity.WriteEntityRequest{
+		_, err = s.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				Kind: models.StandardKindPlaylist,
 				UID:  rsp.UID,
@@ -87,14 +87,14 @@ func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 	return rsp, err
 }
 
-func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
+func (s *entityStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlaylistCommand) (*playlist.PlaylistDTO, error) {
 	rsp, err := s.sqlimpl.store.Update(ctx, cmd)
 	if err == nil {
 		body, err := json.Marshal(cmd)
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
-		_, err = s.objectstore.Write(ctx, &entity.WriteEntityRequest{
+		_, err = s.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  rsp.Uid,
 				Kind: models.StandardKindPlaylist,
@@ -108,10 +108,10 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 	return rsp, err
 }
 
-func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlaylistCommand) error {
+func (s *entityStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlaylistCommand) error {
 	err := s.sqlimpl.store.Delete(ctx, cmd)
 	if err == nil {
-		_, err = s.objectstore.Delete(ctx, &entity.DeleteEntityRequest{
+		_, err = s.store.Delete(ctx, &entity.DeleteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  cmd.UID,
 				Kind: models.StandardKindPlaylist,
@@ -128,7 +128,7 @@ func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlayli
 // Read access is managed entirely by the object store
 //------------------------------------------------------
 
-func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
+func (s *entityStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.Playlist, error) {
 	p, err := s.Get(ctx, q) // OrgID is actually picked from the user!
 	if err != nil {
 		return nil, err
@@ -141,8 +141,8 @@ func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPl
 	}, nil
 }
 
-func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
-	rsp, err := s.objectstore.Read(ctx, &entity.ReadEntityRequest{
+func (s *entityStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
+	rsp, err := s.store.Read(ctx, &entity.ReadEntityRequest{
 		GRN: &entity.GRN{
 			UID:  q.UID,
 			Kind: models.StandardKindPlaylist,
@@ -162,10 +162,10 @@ func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQ
 	return found, err
 }
 
-func (s *objectStoreImpl) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {
+func (s *entityStoreImpl) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {
 	playlists := make(playlist.Playlists, 0)
 
-	rsp, err := s.objectstore.Search(ctx, &entity.EntitySearchRequest{
+	rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
 		Kind:     []string{models.StandardKindPlaylist},
 		WithBody: true,
 		Limit:    1000,

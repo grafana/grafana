@@ -233,7 +233,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	switch cfg.Format {
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
-	case "objectStore":
+	case "entityStore":
 		job, err = startEntityStoreJob(ctx, cfg, broadcast, ex.db, ex.playlistService, ex.store, ex.dashboardsnapshotsService)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))

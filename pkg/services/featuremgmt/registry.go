@@ -281,8 +281,8 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "objectStore",
-			Description:     "SQL-based object store",
+			Name:            "entityStore",
+			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
