@@ -143,7 +143,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 				// TODO: There is a bug generating the names, they are always title case
 				#VariableHide: 0 | 1 | 2  @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
-				#LoadingState: "NonStarted" | "Loading" | "Streaming" | "Done" | "Error"  @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+				#LoadingState: "NonStarted" | "Loading" | "Streaming" | "Done" | "Error"  @cuetsy(kind="enum") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 				// Ref to a DataSource instance
 				#DataSourceRef: {
 					// The plugin type-id
