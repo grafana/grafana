@@ -14,7 +14,6 @@
 
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { ViewRangeTimeUpdate } from 'src/TraceTimelineViewer/types';
 
 import traceGenerator from '../demo/trace-generators';
 import { getTraceName } from '../model/trace-viewer';
