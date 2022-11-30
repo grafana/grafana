@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -251,6 +252,7 @@ func (s *fakeRenderService) Init() error {
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	store := sqlstore.InitTestDB(t)
+	statsService := statsimpl.ProvideService(store)
 	hs := &HTTPServer{
 		Cfg:                  cfg,
 		Live:                 newTestLive(t, store),
@@ -262,6 +264,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		searchUsersService:   searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		ldapGroups:           ldap.ProvideGroupsService(),
 		accesscontrolService: actest.FakeService{},
+		statsService:         statsService,
 	}
 
 	sc := setupScenarioContext(t, url)
