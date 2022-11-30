@@ -20,7 +20,7 @@ export function createDashboardModelFixture(
   const dashboardJson: Dashboard = {
     editable: true,
     graphTooltip: defaultDashboardCursorSync,
-    schemaVersion: 36,
+    schemaVersion: 1,
     revision: 1,
     style: 'dark',
     ...dashboardInput,

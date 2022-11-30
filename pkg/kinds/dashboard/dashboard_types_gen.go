@@ -958,13 +958,8 @@ type VariableHide int
 // TODO what about what's in public/app/features/types.ts?
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 type VariableModel struct {
-	Datasource struct {
-		// The plugin type-id
-		Type *string `json:"type,omitempty"`
-
-		// Specific datasource instance
-		Uid *string `json:"uid,omitempty"`
-	} `json:"datasource"`
+	// Ref to a DataSource instance
+	Datasource  *DataSourceRef          `json:"datasource,omitempty"`
 	Description *string                 `json:"description,omitempty"`
 	Error       *map[string]interface{} `json:"error,omitempty"`
 	Global      bool                    `json:"global"`

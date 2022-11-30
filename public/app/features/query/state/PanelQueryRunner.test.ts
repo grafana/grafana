@@ -1,5 +1,3 @@
-import {createDashboardModelFixture} from "../../dashboard/state/__fixtures__/dashboardFixtures";
-
 const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
 
 import { Subject } from 'rxjs';
@@ -9,6 +7,7 @@ import * as grafanaData from '@grafana/data';
 import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 
 import { Echo } from '../../../core/services/echo/Echo';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
 import {
   createDashboardQueryRunner,

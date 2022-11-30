@@ -176,6 +176,7 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = createDashboardModelFixture({
+        schemaVersion: 1,
         panels: [
           createPanelJSONFixture({
             type: 'graph',
@@ -224,7 +225,6 @@ describe('DashboardModel', () => {
       target = model.panels[0].targets[0];
     });
 
-    // TODO: This test was broken when using fixtures
     it('should update query schema', () => {
       expect(target.fields).toBe(undefined);
       expect(target.select.length).toBe(2);
@@ -332,9 +332,6 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         templating: {
-          // TODO: Variables in schema are incompleted. They are declared as
-          // VariableModel but there are more variable types with more aggregated data
-          // The schema should reflect all possible values that can go to variable list
           list: [
             {
               ...defaultVariableModel,

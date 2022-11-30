@@ -138,7 +138,7 @@ lineage: seqs: [
 					description?: string
 					// TODO: Move this into a separated QueryVariableModel type
 					query?: string
-					datasource: #DataSourceRef
+					datasource?: #DataSourceRef
 					...
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 				// TODO: There is a bug generating the names, they are always title case

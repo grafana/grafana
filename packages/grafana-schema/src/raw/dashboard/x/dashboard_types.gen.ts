@@ -75,7 +75,7 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
  */
 export interface VariableModel {
-  datasource: DataSourceRef;
+  datasource?: DataSourceRef;
   description?: string;
   error?: Record<string, unknown>;
   global: boolean;
