@@ -34,8 +34,8 @@ const setup = (propOverrides?: TracePageHeaderEmbedProps) => {
     hideMap: false,
     timeZone: '',
     viewRange: { time: { current: [10, 20] as [number, number] } },
-    updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => {},
-    updateViewRangeTime: (start: number, end: number, trackSrc?: string) => {},
+    updateNextViewRangeTime: () => {},
+    updateViewRangeTime: () => {},
     ...propOverrides,
   };
 
