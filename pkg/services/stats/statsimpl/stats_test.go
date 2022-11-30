@@ -112,3 +112,15 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	err = orgService.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
 }
+
+func TestIntegration_GetAdminStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	db := sqlstore.InitTestDB(t)
+	statsService := ProvideService(db)
+
+	query := models.GetAdminStatsQuery{}
+	err := statsService.GetAdminStats(context.Background(), &query)
+	require.NoError(t, err)
+}

@@ -12,12 +12,8 @@ import (
 )
 
 type Store interface {
-	GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error
-	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
-	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
 	GetDialect() migrator.Dialect
 	GetDBType() core.DbType
-	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
 	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error
