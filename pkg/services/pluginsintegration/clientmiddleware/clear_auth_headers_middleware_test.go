@@ -51,7 +51,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
@@ -101,7 +101,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
@@ -173,7 +173,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
@@ -258,7 +258,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
-				}, nil)
+				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)

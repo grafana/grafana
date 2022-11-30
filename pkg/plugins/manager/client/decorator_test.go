@@ -39,13 +39,17 @@ func TestDecorator(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, d)
 
-	_, _ = d.QueryData(context.Background(), nil)
+	_, _ = d.QueryData(context.Background(), &backend.QueryDataRequest{})
 	require.True(t, queryDataCalled)
 
-	_ = d.CallResource(context.Background(), nil, nil)
+	sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		return nil
+	})
+
+	_ = d.CallResource(context.Background(), &backend.CallResourceRequest{}, sender)
 	require.True(t, callResourceCalled)
 
-	_, _ = d.CheckHealth(context.Background(), nil)
+	_, _ = d.CheckHealth(context.Background(), &backend.CheckHealthRequest{})
 	require.True(t, checkHealthCalled)
 
 	require.Len(t, ctx.QueryDataCallChain, 4)
@@ -214,6 +218,12 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 	err := m.next.RunStream(ctx, req, sender)
 	m.sCtx.RunStreamCallChain = append(m.sCtx.RunStreamCallChain, fmt.Sprintf("after %s", m.Name))
 	return err
+}
+
+type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
+
+func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
+	return fn(res)
 }
 
 var _ plugins.Client = &TestClient{}

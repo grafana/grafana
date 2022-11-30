@@ -31,12 +31,50 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	regularQuery := func(t *testing.T, tsCtx *testScenarioContext) dtos.MetricRequest {
+		t.Helper()
+
+		return metricRequestWithQueries(t, fmt.Sprintf(`{
+			"datasource": {
+				"uid": "%s"
+			}
+		}`, tsCtx.uid))
+	}
+
+	expressionQuery := func(t *testing.T, tsCtx *testScenarioContext) dtos.MetricRequest {
+		t.Helper()
+
+		return metricRequestWithQueries(t, fmt.Sprintf(`{
+			"refId": "A",
+			"datasource": {
+				"uid": "%s",
+				"type": "%s"
+			}
+		}`, tsCtx.uid, tsCtx.testPluginID), `{
+			"refId": "B",
+			"datasource": {
+				"type": "__expr__",
+				"uid": "__expr__",
+				"name": "Expression"
+			},
+			"type": "math",
+			"expression": "$A - 50"
+		}`)
+	}
+
 	newTestScenario(t, "When oauth token not available", func(t *testing.T, tsCtx *testScenarioContext) {
 		tsCtx.testEnv.OAuthTokenService.Token = nil
 
-		tsCtx.runQueryDataTest(t)
 		tsCtx.runCheckHealthTest(t)
 		tsCtx.runCallResourceTest(t)
+
+		t.Run("regular query", func(t *testing.T) {
+			tsCtx.runQueryDataTest(t, regularQuery(t, tsCtx))
+		})
+
+		t.Run("expression query", func(t *testing.T) {
+			tsCtx.runQueryDataTest(t, expressionQuery(t, tsCtx))
+		})
 	})
 
 	newTestScenario(t, "When oauth token available", func(t *testing.T, tsCtx *testScenarioContext) {
@@ -49,9 +87,16 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
 		tsCtx.testEnv.OAuthTokenService.Token = token
 
-		tsCtx.runQueryDataTest(t)
 		tsCtx.runCheckHealthTest(t)
 		tsCtx.runCallResourceTest(t)
+
+		t.Run("regular query", func(t *testing.T) {
+			tsCtx.runQueryDataTest(t, regularQuery(t, tsCtx))
+		})
+
+		t.Run("expression query", func(t *testing.T) {
+			tsCtx.runQueryDataTest(t, expressionQuery(t, tsCtx))
+		})
 	})
 }
 
@@ -140,7 +185,7 @@ func newTestScenario(t *testing.T, name string, callback func(t *testing.T, ctx 
 	})
 }
 
-func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T) {
+func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricRequest) {
 	t.Run("When calling /api/ds/query should set expected headers on outgoing QueryData and HTTP request", func(t *testing.T) {
 		var received *struct {
 			ctx context.Context
@@ -175,17 +220,8 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T) {
 			return &backend.QueryDataResponse{}, nil
 		})
 
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"datasource": map[string]interface{}{
-				"uid": tsCtx.uid,
-			},
-		})
 		buf1 := &bytes.Buffer{}
-		err := json.NewEncoder(buf1).Encode(dtos.MetricRequest{
-			From:    "now-1h",
-			To:      "now",
-			Queries: []*simplejson.Json{query},
-		})
+		err := json.NewEncoder(buf1).Encode(mr)
 		require.NoError(t, err)
 		u := fmt.Sprintf("http://admin:admin@%s/api/ds/query", tsCtx.grafanaListeningAddr)
 
@@ -564,4 +600,20 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 		return tp.StreamHandler.RunStream(ctx, req, sender)
 	}
 	return backendplugin.ErrMethodNotImplemented
+}
+
+func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
+	t.Helper()
+	queries := make([]*simplejson.Json, 0)
+	for _, q := range rawQueries {
+		json, err := simplejson.NewJson([]byte(q))
+		require.NoError(t, err)
+		queries = append(queries, json)
+	}
+	return dtos.MetricRequest{
+		From:    "now-1h",
+		To:      "now",
+		Queries: queries,
+		Debug:   false,
+	}
 }

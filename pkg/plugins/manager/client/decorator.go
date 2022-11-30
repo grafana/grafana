@@ -27,36 +27,72 @@ func NewDecorator(client plugins.Client, middlewares ...plugins.ClientMiddleware
 }
 
 func (d *Decorator) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.QueryData(ctx, req)
 }
 
 func (d *Decorator) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if req == nil {
+		return fmt.Errorf("req cannot be nil")
+	}
+
+	if sender == nil {
+		return fmt.Errorf("sender cannot be nil")
+	}
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CallResource(ctx, req, sender)
 }
 
 func (d *Decorator) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CollectMetrics(ctx, req)
 }
 
 func (d *Decorator) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CheckHealth(ctx, req)
 }
 
 func (d *Decorator) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.SubscribeStream(ctx, req)
 }
 
 func (d *Decorator) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.PublishStream(ctx, req)
 }
 
 func (d *Decorator) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if req == nil {
+		return fmt.Errorf("req cannot be nil")
+	}
+
+	if sender == nil {
+		return fmt.Errorf("sender cannot be nil")
+	}
+
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.RunStream(ctx, req, sender)
 }
