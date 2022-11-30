@@ -8,7 +8,7 @@ import { getGridWithMultipleData } from './gridWithMultipleData';
 import { getGridWithRowLayoutTest } from './gridWithRow';
 import { getNestedScene } from './nested';
 import { getSceneWithRows } from './sceneWithRows';
-import { getVariablesDemo } from './variablesDemo';
+import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 export function getScenes(): Scene[] {
   return [
@@ -22,6 +22,7 @@ export function getScenes(): Scene[] {
     getGridWithMultipleTimeRanges(),
     getMultipleGridLayoutTest(),
     getVariablesDemo(),
+    getVariablesDemoWithAll(),
   ];
 }
 

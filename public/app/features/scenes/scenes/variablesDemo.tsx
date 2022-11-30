@@ -23,7 +23,6 @@ export function getVariablesDemo(): Scene {
           query: 'A.*',
           value: 'server',
           text: '',
-          includeAll: true,
           delayMs: 1000,
           options: [],
         }),
@@ -52,6 +51,77 @@ export function getVariablesDemo(): Scene {
         new DataSourceVariable({
           name: 'ds',
           query: 'testdata',
+        }),
+      ],
+    }),
+    layout: new SceneFlexLayout({
+      direction: 'row',
+      children: [
+        new SceneFlexLayout({
+          children: [
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'handler: $handler',
+              $data: getQueryRunnerWithRandomWalkQuery({
+                alias: 'handler: $handler',
+              }),
+            }),
+            new SceneCanvasText({
+              size: { width: '40%' },
+              text: 'server: ${server} pod:${pod}',
+              fontSize: 20,
+              align: 'center',
+            }),
+          ],
+        }),
+      ],
+    }),
+    $timeRange: new SceneTimeRange(),
+    actions: [new SceneTimePicker({})],
+    subMenu: new SceneSubMenu({
+      children: [new VariableValueSelectors({})],
+    }),
+  });
+
+  return scene;
+}
+
+export function getVariablesDemoWithAll(): Scene {
+  const scene = new Scene({
+    title: 'Variables with All option',
+    $variables: new SceneVariableSet({
+      variables: [
+        new TestVariable({
+          name: 'server',
+          query: 'A.*',
+          value: 'server',
+          text: '',
+          includeAll: true,
+          defaultToAll: true,
+          delayMs: 1000,
+          options: [],
+        }),
+        new TestVariable({
+          name: 'pod',
+          query: 'A.$server.*',
+          value: 'pod',
+          delayMs: 1000,
+          isMulti: true,
+          includeAll: true,
+          defaultToAll: true,
+          text: '',
+          options: [],
+        }),
+        new TestVariable({
+          name: 'handler',
+          query: 'A.$server.$pod.*',
+          value: 'handler',
+          delayMs: 1000,
+          includeAll: true,
+          defaultToAll: false,
+          isMulti: true,
+          text: '',
+          options: [],
         }),
       ],
     }),

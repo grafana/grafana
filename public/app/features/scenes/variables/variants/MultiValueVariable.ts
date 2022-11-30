@@ -21,6 +21,7 @@ export interface MultiValueVariableState extends SceneVariableState {
   options: VariableValueOption[];
   isMulti?: boolean;
   includeAll?: boolean;
+  defaultToAll?: boolean;
   allValue?: string;
 }
 
