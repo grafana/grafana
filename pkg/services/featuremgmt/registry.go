@@ -15,6 +15,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "promQueryBuilder",
+			Description:  "Show prometheus query builder",
+			State:        FeatureStateStable,
+			Expression:   "true", // on by default
+			FrontendOnly: true,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -106,9 +113,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "lokiMonacoEditor",
-			Description: "Access to Monaco query editor for Loki",
-			State:       FeatureStateAlpha,
+			Name:         "lokiMonacoEditor",
+			Description:  "Access to Monaco query editor for Loki",
+			State:        FeatureStateAlpha,
+			Expression:   "true",
+			FrontendOnly: true,
 		},
 		{
 			Name:        "swaggerUi",
@@ -160,12 +169,6 @@ var (
 			FrontendOnly:    true,
 		},
 		{
-			Name:         "explore2Dashboard",
-			Description:  "Experimental Explore to Dashboard workflow",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
@@ -178,9 +181,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "commandPalette",
-			Description: "Enable command palette",
-			State:       FeatureStateAlpha,
+			Name:         "commandPalette",
+			Description:  "Enable command palette",
+			State:        FeatureStateStable,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "correlations",
@@ -191,6 +196,7 @@ var (
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -204,13 +210,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheusStreamingJSONParser",
-			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateBeta,
+			Name:        "prometheusBufferedClient",
+			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
+			State:       FeatureStateStable,
 		},
 		{
-			Name:        "prometheusStreamingJSONParserTest",
-			Description: "Run both old and streaming requests and log differences",
+			Name:        "newDBLibrary",
+			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -243,11 +249,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "useLegacyHeatmapPanel",
-			Description: "Continue to use the angular/flot based heatmap panel",
-			State:       FeatureStateStable,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
@@ -264,8 +265,8 @@ var (
 		},
 		{
 			Name:        "internationalization",
-			Description: "Enables work-in-progress internationalization",
-			State:       FeatureStateAlpha,
+			Description: "Enables internationalization",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "topnav",
@@ -292,6 +293,11 @@ var (
 		{
 			Name:        "flameGraph",
 			Description: "Show the flame graph",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "cloudWatchCrossAccountQuerying",
+			Description: "Use cross-account querying in CloudWatch datasource",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -336,10 +342,39 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
+		{
 			Name:            "accessControlOnCall",
 			Description:     "Access control primitives for OnCall",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "accessTokenExpirationCheck",
+			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "elasticsearchBackendMigration",
+			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "secureSocksDatasourceProxy",
+			Description: "Enable secure socks tunneling for supported core datasources",
+		},
+		{
+			Name:        "authnService",
+			Description: "Use new auth service to perform authentication",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

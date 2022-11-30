@@ -5,7 +5,19 @@ import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchRequest } from './query-runner/CloudWatchRequest';
-import { CloudWatchJsonData, DescribeLogGroupsRequest, Dimensions, MultiFilters } from './types';
+import {
+  CloudWatchJsonData,
+  DescribeLogGroupsRequest,
+  GetDimensionKeysRequest,
+  GetDimensionValuesRequest,
+  GetMetricsRequest,
+  LogGroupResponse,
+  MetricResponse,
+  MultiFilters,
+  Account,
+  ResourceRequest,
+  ResourceResponse,
+} from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
   text: string;
@@ -25,6 +37,18 @@ export class CloudWatchAPI extends CloudWatchRequest {
     return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/${subtype}`, parameters);
   }
 
+  getAccounts({ region }: ResourceRequest): Promise<Account[]> {
+    return this.memoizedGetRequest<Array<ResourceResponse<Account>>>('accounts', {
+      region: this.templateSrv.replace(region),
+    }).then((accounts) => accounts.map((a) => a.value));
+  }
+
+  isMonitoringAccount(region: string): Promise<boolean> {
+    return this.getAccounts({ region })
+      .then((accounts) => accounts.some((account) => account.isMonitoringAccount))
+      .catch(() => false);
+  }
+
   getRegions() {
     return this.memoizedGetRequest<SelectableResourceValue[]>('regions').then((regions) => [
       { label: 'default', value: 'default', text: 'default' },
@@ -33,7 +57,9 @@ export class CloudWatchAPI extends CloudWatchRequest {
   }
 
   getNamespaces() {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('namespaces');
+    return this.memoizedGetRequest<Array<ResourceResponse<string>>>('namespaces').then((namespaces) =>
+      namespaces.map((n) => ({ label: n.value, value: n.value }))
+    );
   }
 
   async describeLogGroups(params: DescribeLogGroupsRequest) {
@@ -43,6 +69,20 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
+  async describeCrossAccountLogGroups(params: DescribeLogGroupsRequest): Promise<SelectableResourceValue[]> {
+    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('describe-log-groups', {
+      ...params,
+      region: this.templateSrv.replace(this.getActualRegion(params.region)),
+      accountId: this.templateSrv.replace(params.accountId),
+    }).then((resourceResponse) =>
+      resourceResponse.map((resource) => ({
+        label: resource.value.name,
+        value: resource.value.arn,
+        text: resource.accountId || '',
+      }))
+    );
+  }
+
   async describeAllLogGroups(params: DescribeLogGroupsRequest) {
     return this.memoizedGetRequest<SelectableResourceValue[]>('all-log-groups', {
       ...params,
@@ -50,62 +90,64 @@ export class CloudWatchAPI extends CloudWatchRequest {
     });
   }
 
-  async getMetrics(namespace: string | undefined, region?: string) {
+  async getMetrics({ region, namespace, accountId }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
     if (!namespace) {
       return [];
     }
 
-    return this.memoizedGetRequest<SelectableResourceValue[]>('metrics', {
+    return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-    });
+      accountId: this.templateSrv.replace(accountId),
+    }).then((metrics) => metrics.map((m) => ({ label: m.value.name, value: m.value.name })));
   }
 
-  async getAllMetrics(region: string): Promise<Array<{ metricName?: string; namespace: string }>> {
-    const values = await this.memoizedGetRequest<SelectableResourceValue[]>('all-metrics', {
+  async getAllMetrics({
+    region,
+    accountId,
+  }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
+    return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
-    });
-
-    return values.map((v) => ({ metricName: v.value, namespace: v.text }));
+      accountId: this.templateSrv.replace(accountId),
+    }).then((metrics) => metrics.map((m) => ({ metricName: m.value.name, namespace: m.value.namespace })));
   }
 
-  async getDimensionKeys(
-    namespace: string | undefined,
-    region: string,
-    dimensionFilters: Dimensions = {},
-    metricName = ''
-  ) {
-    if (!namespace) {
-      return [];
-    }
-
-    return this.memoizedGetRequest<SelectableResourceValue[]>('dimension-keys', {
+  async getDimensionKeys({
+    region,
+    namespace = '',
+    dimensionFilters = {},
+    metricName = '',
+    accountId,
+  }: GetDimensionKeysRequest): Promise<Array<SelectableValue<string>>> {
+    return this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
+      accountId: this.templateSrv.replace(accountId),
+      metricName: this.templateSrv.replace(metricName),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
-      metricName,
-    });
+    }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
   }
 
-  async getDimensionValues(
-    region: string,
-    namespace: string | undefined,
-    metricName: string | undefined,
-    dimensionKey: string,
-    filterDimensions: {}
-  ) {
+  async getDimensionValues({
+    dimensionKey,
+    region,
+    namespace,
+    dimensionFilters = {},
+    metricName = '',
+    accountId,
+  }: GetDimensionValuesRequest) {
     if (!namespace || !metricName) {
       return [];
     }
 
-    const values = await this.memoizedGetRequest<SelectableResourceValue[]>('dimension-values', {
+    const values = await this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
-      dimensions: JSON.stringify(this.convertDimensionFormat(filterDimensions, {})),
-    });
-
+      dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
+      accountId: this.templateSrv.replace(accountId),
+    }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
     return values;
   }
 

@@ -478,6 +478,7 @@ func TestUserAuth(t *testing.T) {
 }
 
 type FakeAuthInfoStore struct {
+	login.AuthInfoService
 	ExpectedError                   error
 	ExpectedUser                    *user.User
 	ExpectedOAuth                   *models.UserAuth

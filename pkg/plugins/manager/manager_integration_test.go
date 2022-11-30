@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -47,8 +50,9 @@ import (
 )
 
 func TestIntegrationPluginManager(t *testing.T) {
-	t.Helper()
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	staticRootPath, err := filepath.Abs("../../../public/")
 	require.NoError(t, err)
 
@@ -71,10 +75,11 @@ func TestIntegrationPluginManager(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := &setting.Cfg{
-		Raw:                raw,
-		StaticRootPath:     staticRootPath,
-		BundledPluginsPath: bundledPluginsPath,
-		Azure:              &azsettings.AzureSettings{},
+		Raw:                    raw,
+		StaticRootPath:         staticRootPath,
+		BundledPluginsPath:     bundledPluginsPath,
+		Azure:                  &azsettings.AzureSettings{},
+		IsFeatureToggleEnabled: func(_ string) bool { return false },
 	}
 
 	tracer := tracing.InitializeTracerForTest()
@@ -97,12 +102,15 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
+	phlare := phlare.ProvideService(hcp)
+	parca := parca.ProvideService(hcp)
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
+	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, phlare, parca)
 
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg), reg, provider.ProvideService(coreRegistry))
+	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg),
+		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry())
 	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
 
@@ -111,7 +119,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
 	verifyBackendProcesses(t, reg.Plugins(ctx))
-	verifyPluginQuery(t, ctx, client.ProvideService(reg))
+	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg))
 }
 
 func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
@@ -136,7 +144,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	require.NoError(t, err)
 	payload, err := resp.MarshalJSON()
 	require.NoError(t, err)
-	require.JSONEq(t, `{"results":{"A":{"frames":[{"schema":{"refId":"A","fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time"}},{"name":"A-series","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1661420570000,1661420630000,1661420690000,1661420750000,1661420810000,1661420870000],[1,20,90,30,5,0]]}}]}}}`, string(payload))
+	require.JSONEq(t, `{"results":{"A":{"frames":[{"schema":{"refId":"A","fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time"}},{"name":"A-series","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1661420570000,1661420630000,1661420690000,1661420750000,1661420810000,1661420870000],[1,20,90,30,5,0]]}}],"status":200}}}`, string(payload))
 }
 
 func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Service) {
@@ -156,7 +164,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"gettingstarted": {},
 		"graph":          {},
 		"heatmap":        {},
-		"heatmap-old":    {},
 		"histogram":      {},
 		"icon":           {},
 		"live":           {},
@@ -201,6 +208,8 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
+		"phlare":                           {},
+		"parca":                            {},
 	}
 
 	expApps := map[string]struct{}{

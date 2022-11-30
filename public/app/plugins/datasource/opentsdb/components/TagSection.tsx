@@ -2,7 +2,7 @@ import { has, size } from 'lodash';
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { Select, InlineFormLabel, Icon } from '@grafana/ui';
+import { Select, InlineFormLabel, Icon, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 
@@ -23,6 +23,8 @@ export function TagSection({
   suggestTagValues,
   tsdbVersion,
 }: TagSectionProps) {
+  const buttonStyles = useStyles2(clearButtonStyles);
+
   const [tagKeys, updTagKeys] = useState<Array<SelectableValue<string>>>();
   const [keyIsLoading, updKeyIsLoading] = useState<boolean>();
 
@@ -119,21 +121,24 @@ export function TagSection({
             return (
               <InlineFormLabel key={idx} width="auto" data-testid={testIds.list + idx}>
                 {tagKey}={tagValue}
-                <a onClick={() => editTag(tagKey, tagValue)}>
+                <button type="button" className={buttonStyles} onClick={() => editTag(tagKey, tagValue)}>
                   <Icon name={'pen'} />
-                </a>
-                <a onClick={() => removeTag(tagKey)} data-testid={testIds.remove}>
+                </button>
+                <button
+                  type="button"
+                  className={buttonStyles}
+                  onClick={() => removeTag(tagKey)}
+                  data-testid={testIds.remove}
+                >
                   <Icon name={'times'} />
-                </a>
+                </button>
               </InlineFormLabel>
             );
           })}
         {!addTagMode && (
-          <label className="gf-form-label query-keyword">
-            <a onClick={changeAddTagMode} data-testid={testIds.open}>
-              <Icon name={'plus'} />
-            </a>
-          </label>
+          <button className="gf-form-label" type="button" onClick={changeAddTagMode} aria-label="Add tag">
+            <Icon name={'plus'} />
+          </button>
         )}
       </div>
       {addTagMode && (
@@ -189,17 +194,19 @@ export function TagSection({
 
           <div className="gf-form">
             {errors && (
-              <label className="gf-form-label" title={errors} data-testid={testIds.error}>
+              <div className="gf-form-label" title={errors} data-testid={testIds.error}>
                 <Icon name={'exclamation-triangle'} color={'rgb(229, 189, 28)'} />
-              </label>
+              </div>
             )}
 
-            <label className="gf-form-label">
-              <a onClick={addTag}>add tag</a>
-              <a onClick={changeAddTagMode}>
+            <div className="gf-form-label">
+              <button type="button" className={buttonStyles} onClick={addTag}>
+                add tag
+              </button>
+              <button type="button" className={buttonStyles} onClick={changeAddTagMode}>
                 <Icon name={'times'} />
-              </a>
-            </label>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -212,7 +219,6 @@ export function TagSection({
 
 export const testIds = {
   section: 'opentsdb-tag',
-  open: 'opentsdb-tag-editor',
   list: 'opentsdb-tag-list',
   error: 'opentsdb-tag-error',
   remove: 'opentsdb-tag-remove',

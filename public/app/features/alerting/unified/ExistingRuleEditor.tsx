@@ -19,9 +19,21 @@ interface ExistingRuleEditorProps {
 
 export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
   useCleanup((state) => (state.unifiedAlerting.ruleForm.existingRule = initialAsyncRequestState));
-  const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
+
+  const {
+    loading: loadingAlertRule,
+    result,
+    error,
+    dispatched,
+  } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
+
   const dispatch = useDispatch();
-  const { isEditable } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), result?.rule);
+  const { isEditable, loading: loadingEditable } = useIsRuleEditable(
+    ruleId.ruleIdentifierToRuleSourceName(identifier),
+    result?.rule
+  );
+
+  const loading = loadingAlertRule || loadingEditable;
 
   useEffect(() => {
     if (!dispatched) {

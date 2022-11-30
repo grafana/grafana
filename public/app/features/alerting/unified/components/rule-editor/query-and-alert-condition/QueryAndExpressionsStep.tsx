@@ -3,8 +3,9 @@ import { useFormContext } from 'react-hook-form';
 
 import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Field, InputControl, Stack, Tooltip } from '@grafana/ui';
+import { Alert, Button, Field, InputControl, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -146,7 +147,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   }, [condition, queries, setValue]);
 
   return (
-    <RuleEditorSection stepNo={1} title="Set a query and alert condition">
+    <RuleEditorSection stepNo={2} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
 
       {/* This is the PromQL Editor for Cloud rules and recording rules */}

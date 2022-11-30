@@ -215,8 +215,8 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   cardContainer: css`
-    padding: ${theme.v1.spacing.xs} 0 ${theme.v1.spacing.xxs} 0;
-    line-height: ${theme.v1.typography.lineHeight.md};
+    padding: ${theme.spacing(0.5)} 0 ${theme.spacing(0.25)} 0;
+    line-height: ${theme.typography.body.lineHeight};
     margin-bottom: 0px;
   `,
   container: css`
@@ -234,34 +234,34 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     width: 100%;
     height: 100%;
-    background: ${theme.v1.colors.bg2};
-    padding: ${theme.v1.spacing.xs} ${theme.v1.spacing.sm};
-    border-radius: ${theme.v1.border.radius.md};
-    margin-bottom: ${theme.v1.spacing.xs};
+    background: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
+    border-radius: ${theme.shape.borderRadius(2)};
+    margin-bottom: ${theme.spacing(0.5)};
 
     & > * {
-      margin-right: ${theme.v1.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     }
   `,
   alertName: css`
-    font-size: ${theme.v1.typography.size.md};
-    font-weight: ${theme.v1.typography.weight.bold};
+    font-size: ${theme.typography.h6.fontSize};
+    font-weight: ${theme.typography.fontWeightBold};
   `,
   alertLabels: css`
     > * {
-      margin-right: ${theme.v1.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
     }
   `,
   alertDuration: css`
-    font-size: ${theme.v1.typography.size.sm};
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
   alertRuleItemText: css`
-    font-weight: ${theme.v1.typography.weight.bold};
-    font-size: ${theme.v1.typography.size.sm};
+    font-weight: ${theme.typography.fontWeightBold};
+    font-size: ${theme.typography.bodySmall.fontSize};
     margin: 0;
   `,
   alertRuleItemTime: css`
-    color: ${theme.v1.colors.textWeak};
+    color: ${theme.colors.text.secondary};
     font-weight: normal;
     white-space: nowrap;
   `,
@@ -279,7 +279,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
   `,
   alertIcon: css`
-    margin-right: ${theme.v1.spacing.xs};
+    margin-right: ${theme.spacing(0.5)};
   `,
   instanceDetails: css`
     min-width: 1px;
@@ -288,6 +288,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     text-overflow: ellipsis;
   `,
   customGroupDetails: css`
-    margin-bottom: ${theme.v1.spacing.xs};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
 });

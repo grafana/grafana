@@ -186,29 +186,29 @@ describe('applyFieldOverrides', () => {
       });
 
       expect(withOverrides[0].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
-                                                                                 Object {
-                                                                                   "__field": Object {
-                                                                                     "text": "Field",
-                                                                                     "value": Object {},
-                                                                                   },
-                                                                                   "__series": Object {
-                                                                                     "text": "Series",
-                                                                                     "value": Object {
-                                                                                       "name": "A",
-                                                                                     },
-                                                                                   },
-                                                                                 }
-                                                                                 `);
+        {
+          "__field": {
+            "text": "Field",
+            "value": {},
+          },
+          "__series": {
+            "text": "Series",
+            "value": {
+              "name": "A",
+            },
+          },
+        }
+      `);
 
       expect(withOverrides[1].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
-        Object {
-          "__field": Object {
+        {
+          "__field": {
             "text": "Field",
-            "value": Object {},
+            "value": {},
           },
-          "__series": Object {
+          "__series": {
             "text": "Series",
-            "value": Object {
+            "value": {
               "name": "B",
             },
           },
@@ -258,7 +258,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: undefined as any as InterpolateFunction,
+      replaceVariables: undefined as unknown as InterpolateFunction,
       theme: createTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -285,7 +285,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: undefined as any as InterpolateFunction,
+      replaceVariables: undefined as unknown as InterpolateFunction,
       theme: createTheme(),
     })[0];
     const valueColumn = data.fields[1];
@@ -322,7 +322,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: undefined as any as InterpolateFunction,
+      replaceVariables: undefined as unknown as InterpolateFunction,
       theme: createTheme(),
     })[0];
 
@@ -384,8 +384,8 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 
     expect(dsFieldConfig).toMatchInlineSnapshot(`
-      Object {
-        "custom": Object {},
+      {
+        "custom": {},
         "decimals": 2,
         "max": 100,
         "min": 0,
@@ -419,8 +419,8 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 
     expect(dsFieldConfig).toMatchInlineSnapshot(`
-      Object {
-        "custom": Object {
+      {
+        "custom": {
           "property1": 10,
           "property2": 10,
         },

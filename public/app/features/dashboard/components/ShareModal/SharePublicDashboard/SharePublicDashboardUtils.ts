@@ -4,6 +4,7 @@ import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 export interface PublicDashboard {
   accessToken?: string;
+  annotationsEnabled: boolean;
   isEnabled: boolean;
   uid: string;
   dashboardUid: string;

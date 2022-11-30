@@ -28,10 +28,10 @@ Here's a cURL command that works for getting the home dashboard when you are run
 curl http://admin:admin@localhost:3000/api/search
 ```
 
-To pass a username and password with [HTTP basic authorization]({{< relref "/administration/roles-and-permissions/access-control/manage-rbac-roles/" >}}), encode them as base64.
+To pass a username and password with [HTTP basic authorization]({{< relref "../../administration/roles-and-permissions/access-control/manage-rbac-roles/" >}}), encode them as base64.
 You can't use authorization tokens in the request.
 
-For example, to [list permissions associated with roles]({{< relref "/administration/roles-and-permissions/access-control/manage-rbac-roles/" >}}) given a username of `user` and password of `password`, use:
+For example, to [list permissions associated with roles]({{< relref "../../administration/roles-and-permissions/access-control/manage-rbac-roles/" >}}) given a username of `user` and password of `password`, use:
 
 ```
 curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' --header 'Authorization: Basic dXNlcjpwYXNzd29yZAo='

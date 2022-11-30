@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
@@ -31,6 +30,7 @@ type azureClaims struct {
 	ClaimNames        claimNames             `json:"_claim_names,omitempty"`
 	ClaimSources      map[string]claimSource `json:"_claim_sources,omitempty"`
 	TenantID          string                 `json:"tid,omitempty"`
+	OAuthVersion      string                 `json:"ver,omitempty"`
 }
 
 type claimNames struct {
@@ -43,10 +43,6 @@ type claimSource struct {
 
 type azureAccessClaims struct {
 	TenantID string `json:"tid"`
-}
-
-func (s *SocialAzureAD) Type() int {
-	return int(models.AZUREAD)
 }
 
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -65,6 +61,10 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
+	if claims.OAuthVersion == "1.0" {
+		return nil, &Error{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
+	}
+
 	email := claims.extractEmail()
 	if email == "" {
 		return nil, ErrEmailNotFound
@@ -72,7 +72,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, ErrInvalidBasicRole
+		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
 	}
 
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)

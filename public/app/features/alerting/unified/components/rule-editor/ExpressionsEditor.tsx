@@ -1,7 +1,7 @@
 import React, { FC, useMemo } from 'react';
 
 import { PanelData } from '@grafana/data';
-import { Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';

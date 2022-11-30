@@ -38,11 +38,12 @@ func createServiceAccountAdminToken(t *testing.T, name string, env *server.TestE
 	})
 
 	return keyGen.ClientSecret, &user.SignedInUser{
-		UserID: account.ID,
-		Email:  account.Email,
-		Name:   account.Name,
-		Login:  account.Login,
-		OrgID:  account.OrgID,
+		UserID:           account.ID,
+		Email:            account.Email,
+		Name:             account.Name,
+		Login:            account.Login,
+		OrgID:            account.OrgID,
+		IsServiceAccount: true,
 	}
 }
 
@@ -57,6 +58,7 @@ func createTestContext(t *testing.T) testContext {
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagQueryLibrary},
+		QueryRetries:         3,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 

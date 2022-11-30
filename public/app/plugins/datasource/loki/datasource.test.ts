@@ -882,7 +882,7 @@ describe('LokiDatasource', () => {
     });
 
     it('keeps all labels when no labels are loaded', async () => {
-      ds.getResource = () => Promise.resolve({ data: [] });
+      ds.getResource = () => Promise.resolve({ data: [] } as any);
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -896,7 +896,7 @@ describe('LokiDatasource', () => {
     });
 
     it('filters out non existing labels', async () => {
-      ds.getResource = () => Promise.resolve({ data: ['foo'] });
+      ds.getResource = () => Promise.resolve({ data: ['foo'] } as any);
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',

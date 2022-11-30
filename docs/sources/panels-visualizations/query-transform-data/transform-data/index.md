@@ -359,11 +359,9 @@ The result after applying the inner join transformation looks like the following
 
 #### Outer join
 
-An outer join includes all data from an inner join and rows where values do not match in every input.
+An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins Query A and Query B on the time field, the outer join includes all rows that don’t match on the time field.
 
-Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur - performing an inner join.
-
-In the following example, two queries return table data. It is visualized as two tables before applying the inner join transformation.
+In the following example, two queries return table data. It is visualized as two tables before applying the outer join transformation.
 
 Query A:
 
@@ -381,10 +379,12 @@ Query B:
 | 2020-07-07 11:24:20 | server 2 | 5      |
 | 2020-07-07 11:04:20 | server 3 | 10     |
 
-The result after applying the inner join transformation looks like the following:
+The result after applying the outer join transformation looks like the following:
 
 | Time                | Job     | Uptime    | Server   | Errors |
 | ------------------- | ------- | --------- | -------- | ------ |
+| 2020-07-07 11:04:20 |         |           | server 3 | 10     |
+| 2020-07-07 11:14:20 | postgre | 345001233 |          |        |
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
@@ -500,6 +500,38 @@ Grafana displays a list of fields returned by the query. You can:
 In the example below, I hid the value field and renamed Max and Min.
 
 {{< figure src="/static/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Partition by values
+
+This transformation can help eliminate the need for multiple queries to the same datasource with different `WHERE` clauses when graphing multiple series. Consider a metrics SQL table with the following data:
+
+| Time                | Region | Value |
+| ------------------- | ------ | ----- |
+| 2022-10-20 12:00:00 | US     | 1520  |
+| 2022-10-20 12:00:00 | EU     | 2936  |
+| 2022-10-20 01:00:00 | US     | 1327  |
+| 2022-10-20 01:00:00 | EU     | 912   |
+
+Prior to v9.3, if you wanted to plot a red trendline for US and a blue one for EU in the same TimeSeries panel, you would likely have to split this into two queries:
+
+`SELECT Time, Value FROM metrics WHERE Time > '2022-10-20' AND Region='US'`<br>
+`SELECT Time, Value FROM metrics WHERE Time > '2022-10-20' AND Region='EU'`
+
+This also requires you to know ahead of time which regions actually exist in the metrics table.
+
+With the _Partition by values_ transformer, you can now issue a single query and split the results by unique values in one or more columns (`fields`) of your choosing. The following example uses `Region`.
+
+`SELECT Time, Region, Value FROM metrics WHERE Time > '2022-10-20'`
+
+| Time                | Region | Value |
+| ------------------- | ------ | ----- |
+| 2022-10-20 12:00:00 | US     | 1520  |
+| 2022-10-20 01:00:00 | US     | 1327  |
+
+| Time                | Region | Value |
+| ------------------- | ------ | ----- |
+| 2022-10-20 12:00:00 | EU     | 2936  |
+| 2022-10-20 01:00:00 | EU     | 912   |
 
 ### Reduce
 

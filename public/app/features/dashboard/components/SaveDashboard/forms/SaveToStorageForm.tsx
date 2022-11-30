@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -12,7 +13,6 @@ import {
   Input,
   RadioButtonGroup,
   Spinner,
-  Stack,
   TextArea,
 } from '@grafana/ui';
 import { getGrafanaStorage } from 'app/features/storage/storage';

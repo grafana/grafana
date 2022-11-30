@@ -364,11 +364,14 @@
    "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
    "properties": {
     "Error": {
-     "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+     "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
+    },
+    "Status": {
+     "$ref": "#/definitions/Status"
     }
    },
    "title": "DataResponse contains the results from a DataQuery.",
@@ -394,11 +397,6 @@
     "status"
    ],
    "type": "object"
-  },
-  "DsPermissionType": {
-   "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
-   "format": "int64",
-   "type": "integer"
   },
   "Duration": {
    "format": "int64",
@@ -1046,12 +1044,6 @@
   },
   "GettableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -1984,12 +1976,6 @@
   },
   "PostableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -2833,6 +2819,10 @@
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "Status": {
+   "format": "int64",
+   "type": "integer"
+  },
   "Success": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -3087,6 +3077,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3096,9 +3087,6 @@
     },
     "Host": {
      "type": "string"
-    },
-    "OmitHost": {
-     "type": "boolean"
     },
     "Opaque": {
      "type": "string"
@@ -3122,7 +3110,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "Userinfo": {
@@ -3302,7 +3290,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3407,7 +3394,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3463,12 +3449,14 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3517,14 +3505,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -3706,6 +3692,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -3872,39 +3859,6 @@
       "description": "gettableAlerts",
       "schema": {
        "$ref": "#/definitions/gettableAlerts"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "tags": [
-     "alertmanager"
-    ]
-   },
-   "post": {
-    "description": "create alertmanager alerts",
-    "operationId": "RoutePostGrafanaAMAlerts",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "PostableAlerts",
-      "schema": {
-       "items": {
-        "$ref": "#/definitions/postableAlert"
-       },
-       "type": "array"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
       }
      },
      "400": {
@@ -4800,75 +4754,6 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
-   "post": {
-    "operationId": "RoutePostTestReceivers",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/TestReceiversConfigBodyParams"
-      }
-     },
-     {
-      "description": "DatasoureUID should be the datasource UID identifier",
-      "in": "path",
-      "name": "DatasourceUID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "207": {
-      "description": "MultiStatus",
-      "schema": {
-       "$ref": "#/definitions/MultiStatus"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     },
-     "408": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
-      }
-     },
-     "409": {
-      "description": "AlertManagerNotReady",
-      "schema": {
-       "$ref": "#/definitions/AlertManagerNotReady"
-      }
-     }
-    },
-    "summary": "Test Grafana managed receivers without saving them.",
-    "tags": [
-     "alertmanager"
-    ]
-   }
-  },
   "/api/prometheus/grafana/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
@@ -5612,6 +5497,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5702,6 +5592,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {

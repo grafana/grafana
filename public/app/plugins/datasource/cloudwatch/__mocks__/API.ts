@@ -12,7 +12,7 @@ export function setupMockedAPI({
   response,
   getMock,
 }: {
-  getMock?: jest.Func;
+  getMock?: jest.Mock;
   response?: Array<{ text: string; label: string; value: string }>;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
@@ -21,7 +21,7 @@ export function setupMockedAPI({
 
   const timeSrv = getTimeSrv();
   const api = new CloudWatchAPI(CloudWatchSettings, templateService);
-  const resourceRequestMock = jest.fn().mockReturnValue(response);
+  let resourceRequestMock = getMock ? getMock : jest.fn().mockReturnValue(response);
   setBackendSrv({
     ...getBackendSrv(),
     get: resourceRequestMock,

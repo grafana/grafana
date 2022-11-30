@@ -173,21 +173,21 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing Account DB Access", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		ss := db.InitTestDB(t)
+		orgStore = sqlStore{
+			db:      ss,
+			dialect: ss.GetDialect(),
+		}
+		ids := []int64{}
+
+		for i := 1; i < 4; i++ {
+			cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+			res, err := orgStore.CreateWithMember(context.Background(), cmd)
+			require.NoError(t, err)
+			ids = append(ids, res.ID)
+		}
 
 		t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
-			var err error
-			var cmd *models.CreateOrgCommand
-			ids := []int64{}
-
-			for i := 1; i < 4; i++ {
-				cmd = &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err = sqlStore.CreateOrg(context.Background(), cmd)
-				require.NoError(t, err)
-
-				ids = append(ids, cmd.Result.Id)
-			}
-
 			query := &org.SearchOrgsQuery{IDs: ids}
 			queryResult, err := orgStore.Search(context.Background(), query)
 
@@ -195,37 +195,28 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 			require.Equal(t, len(queryResult), 3)
 		})
 
-		t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
-			sqlStore = db.InitTestDB(t)
-			for i := 1; i < 4; i++ {
-				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err := sqlStore.CreateOrg(context.Background(), cmd)
-				require.NoError(t, err)
-			}
+		t.Run("Should be able to search with defaults", func(t *testing.T) {
+			query := &org.SearchOrgsQuery{}
+			queryResult, err := orgStore.Search(context.Background(), query)
 
-			t.Run("Should be able to search with defaults", func(t *testing.T) {
-				query := &org.SearchOrgsQuery{}
-				queryResult, err := orgStore.Search(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult), 3)
+		})
 
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult), 3)
-			})
+		t.Run("Should be able to limit search", func(t *testing.T) {
+			query := &org.SearchOrgsQuery{Limit: 1}
+			queryResult, err := orgStore.Search(context.Background(), query)
 
-			t.Run("Should be able to limit search", func(t *testing.T) {
-				query := &org.SearchOrgsQuery{Limit: 1}
-				queryResult, err := orgStore.Search(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult), 1)
+		})
 
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult), 1)
-			})
+		t.Run("Should be able to limit and paginate search", func(t *testing.T) {
+			query := &org.SearchOrgsQuery{Limit: 2, Page: 1}
+			queryResult, err := orgStore.Search(context.Background(), query)
 
-			t.Run("Should be able to limit and paginate search", func(t *testing.T) {
-				query := &org.SearchOrgsQuery{Limit: 2, Page: 1}
-				queryResult, err := orgStore.Search(context.Background(), query)
-
-				require.NoError(t, err)
-				require.Equal(t, len(queryResult), 1)
-			})
+			require.NoError(t, err)
+			require.Equal(t, len(queryResult), 1)
 		})
 	})
 }
@@ -402,7 +393,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 		t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
 			// make sure ac2 has no org
-			err := ss.DeleteOrg(context.Background(), &models.DeleteOrgCommand{Id: ac2.OrgID})
+			err := orgUserStore.Delete(context.Background(), &org.DeleteOrgCommand{ID: ac2.OrgID})
 			require.NoError(t, err)
 
 			// remove ac2 user from ac1 org
@@ -410,9 +401,6 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			err = orgUserStore.RemoveOrgUser(context.Background(), &remCmd)
 			require.NoError(t, err)
 			require.True(t, remCmd.UserWasDeleted)
-
-			err = ss.GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.ID})
-			require.Equal(t, err, user.ErrUserNotFound)
 		})
 
 		t.Run("Cannot delete last admin org user", func(t *testing.T) {
@@ -468,7 +456,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 }
 
 // This test will be refactore after the CRUD store  refactor
-func TestSQLStore_AddOrgUser(t *testing.T) {
+func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -533,7 +521,7 @@ func TestSQLStore_AddOrgUser(t *testing.T) {
 	require.Equal(t, saFound.OrgID, u.OrgID)
 }
 
-func TestSQLStore_GetOrgUsers(t *testing.T) {
+func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -639,7 +627,7 @@ func hasWildcardScope(user *user.SignedInUser, action string) bool {
 	return false
 }
 
-func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
+func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -654,17 +642,19 @@ func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 		dialect: store.GetDialect(),
 		cfg:     setting.NewCfg(),
 	}
-	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
-		Login: "Admin",
-		Email: "admin@localhost",
-		OrgID: 1,
-	})
+
+	id, err := orgUserStore.Insert(context.Background(),
+		&org.Org{
+			ID:      1,
+			Created: constNow,
+			Updated: constNow,
+		})
 	require.NoError(t, err)
 
 	newUser, err := store.CreateUser(context.Background(), user.CreateUserCommand{
 		Login:      "Viewer",
 		Email:      "viewer@localhost",
-		OrgID:      1,
+		OrgID:      id,
 		IsDisabled: true,
 		Name:       "Viewer Localhost",
 	})
@@ -691,7 +681,7 @@ func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 
 	actual := result[0]
 	assert.Equal(t, int64(1), actual.OrgID)
-	assert.Equal(t, newUser.ID, actual.UserID)
+	assert.Equal(t, int64(1), actual.UserID)
 	assert.Equal(t, "viewer@localhost", actual.Email)
 	assert.Equal(t, "Viewer Localhost", actual.Name)
 	assert.Equal(t, "Viewer", actual.Login)
@@ -702,7 +692,7 @@ func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	assert.Equal(t, true, actual.IsDisabled)
 }
 
-func TestSQLStore_SearchOrgUsers(t *testing.T) {
+func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -776,7 +766,10 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 	}
 }
 
-func TestSQLStore_RemoveOrgUser(t *testing.T) {
+func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := db.InitTestDB(t)
 	orgUserStore := sqlStore{
 		db:      store,
@@ -806,12 +799,6 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// assert the org has been assigned
-	user := &models.GetUserByIdQuery{Id: 2}
-	err = store.GetUserById(context.Background(), user)
-	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgID, int64(1))
-
 	// remove the user org
 	err = orgUserStore.RemoveOrgUser(context.Background(), &org.RemoveOrgUserCommand{
 		UserID:                   2,
@@ -819,10 +806,4 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 		ShouldDeleteOrphanedUser: false,
 	})
 	require.NoError(t, err)
-
-	// assert the org has been removed
-	user = &models.GetUserByIdQuery{Id: 2}
-	err = store.GetUserById(context.Background(), user)
-	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgID, int64(0))
 }

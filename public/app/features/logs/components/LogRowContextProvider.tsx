@@ -149,7 +149,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // React Hook that creates an object state value called result to component state and a setter function called setResult
   // The initial value for result is null
   // Used for sorting the response from backend
-  const [result, setResult] = useState<ResultType>(null as any as ResultType);
+  const [result, setResult] = useState<ResultType>(null as unknown as ResultType);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
   // The initial value for hasMoreContextRows is {before: true, after: true}

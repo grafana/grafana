@@ -201,7 +201,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/barchart/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -273,7 +273,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/candlestick/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -441,8 +441,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/img/icn-panel.svg",
-        "large": "public/img/icn-panel.svg"
+        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
       },
       "build": {},
       "screenshots": null,
@@ -725,51 +725,6 @@
     "signatureOrg": ""
   },
   {
-    "name": "Heatmap (legacy)",
-    "type": "panel",
-    "id": "heatmap-old",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Legacy heatmap panel based on angular, d3, and flot",
-      "links": [
-        {
-          "name": "Brendan Gregg - Heatmaps",
-          "url": "http://www.brendangregg.com/heatmaps.html"
-        },
-        {
-          "name": "Brendan Gregg - Latency Heatmaps",
-          "url": " http://www.brendangregg.com/HeatMaps/latency.html"
-        }
-      ],
-      "logos": {
-        "small": "public/app/plugins/panel/heatmap-old/img/icn-heatmap-panel.svg",
-        "large": "public/app/plugins/panel/heatmap-old/img/icn-heatmap-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/heatmap-old/",
-    "category": "",
-    "state": "deprecated",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": ""
-  },
-  {
     "name": "Histogram",
     "type": "panel",
     "id": "histogram",
@@ -800,7 +755,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/histogram/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1327,7 +1282,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/state-timeline/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1363,7 +1318,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/status-history/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""

@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch, Select } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Select } from '@grafana/ui';
 
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
-import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { standardStatistics } from '../../standardStatistics';
 import { MetricStat } from '../../types';
 import { appendTemplateVariables, toOption } from '../../utils/utils';
+import { Account } from '../Account';
 
 export type Props = {
   refId: string;
@@ -27,10 +30,22 @@ export function MetricStatEditor({
   onChange,
   onRunQuery,
 }: React.PropsWithChildren<Props>) {
-  const { region, namespace, metricName, dimensions } = metricStat;
   const namespaces = useNamespaces(datasource);
-  const metrics = useMetrics(datasource, region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName, dimensions ?? {});
+  const metrics = useMetrics(datasource, metricStat);
+  const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
+  const accountState = useAccountOptions(datasource.api, metricStat.region);
+
+  useEffect(() => {
+    datasource.api.isMonitoringAccount(metricStat.region).then((isMonitoringAccount) => {
+      if (isMonitoringAccount && !accountState.loading && accountState.value?.length && !metricStat.accountId) {
+        onChange({ ...metricStat, accountId: 'all' });
+      }
+
+      if (!accountState.loading && accountState.value && !accountState.value.length && metricStat.accountId) {
+        onChange({ ...metricStat, accountId: undefined });
+      }
+    });
+  }, [accountState, metricStat, onChange, datasource.api]);
 
   const onMetricStatChange = (metricStat: MetricStat) => {
     onChange(metricStat);
@@ -47,7 +62,7 @@ export function MetricStatEditor({
     if (!metricName) {
       return metricStat;
     }
-    await datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+    await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }
@@ -58,6 +73,16 @@ export function MetricStatEditor({
   return (
     <EditorRows>
       <EditorRow>
+        {!disableExpressions && config.featureToggles.cloudWatchCrossAccountQuerying && (
+          <Account
+            accountId={metricStat.accountId}
+            onChange={(accountId?: string) => {
+              onChange({ ...metricStat, accountId });
+              onRunQuery();
+            }}
+            accountOptions={accountState?.value || []}
+          ></Account>
+        )}
         <EditorFieldGroup>
           <EditorField label="Namespace" width={26}>
             <Select
@@ -122,9 +147,7 @@ export function MetricStatEditor({
             datasource={datasource}
           />
         </EditorField>
-      </EditorRow>
-      {!disableExpressions && (
-        <EditorRow>
+        {!disableExpressions && (
           <EditorField
             label="Match exact"
             optional={true}
@@ -141,8 +164,8 @@ export function MetricStatEditor({
               }}
             />
           </EditorField>
-        </EditorRow>
-      )}
+        )}
+      </EditorRow>
     </EditorRows>
   );
 }

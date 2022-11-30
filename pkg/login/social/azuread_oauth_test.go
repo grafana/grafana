@@ -13,6 +13,8 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func trueBoolPtr() *bool {
@@ -54,7 +56,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer"),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -93,7 +95,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer"),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -143,7 +145,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Only other roles",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer"),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -171,7 +173,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Editor"),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Editor", false, *featuremgmt.WithFeatures()),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -220,7 +222,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name:   "Grafana Admin but setting is disabled",
-			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor")},
+			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor", false, *featuremgmt.WithFeatures())},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -242,7 +244,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
 			fields: fields{
 				SocialBase: newSocialBase("azuread",
-					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures())},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -263,7 +265,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim",
 			fields: fields{SocialBase: newSocialBase("azuread",
-				&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
+				&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures())},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -302,7 +304,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			fields: fields{
 				allowedGroups: []string{"foo", "bar"},
 				SocialBase: newSocialBase("azuread",
-					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Viewer"),
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -324,7 +326,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				ID:                "1",
@@ -349,7 +351,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when forceUseGraphAPI is set",
 			fields: fields{
-				SocialBase:       newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, ""),
+				SocialBase:       newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures()),
 				forceUseGraphAPI: true,
 			},
 			claims: &azureClaims{
@@ -376,7 +378,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, "", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -392,7 +394,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, "", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -416,7 +418,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			}
 
 			if tt.fields.SocialBase == nil {
-				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "")
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
 			}
 
 			key := []byte("secret")

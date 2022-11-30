@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const { onRunQuery, placeholder } = props;
+  const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
@@ -31,8 +31,8 @@ export function TraceQLEditor(props: Props) {
     <CodeEditor
       value={props.value}
       language={langId}
-      onBlur={props.onChange}
-      height={'30px'}
+      onBlur={onChange}
+      onChange={onChange}
       containerStyles={styles.queryField}
       monacoOptions={{
         folding: false,
@@ -54,6 +54,7 @@ export function TraceQLEditor(props: Props) {
         setupAutocompleteFn(editor, monaco);
         setupActions(editor, monaco, onRunQuery);
         setupPlaceholder(editor, monaco, styles);
+        setupAutoSize(editor);
       }}
     />
   );
@@ -91,17 +92,28 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
   editor.addAction({
     id: 'run-query',
     label: 'Run Query',
-
     keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-
     contextMenuGroupId: 'navigation',
-
     contextMenuOrder: 1.5,
-
     run: function () {
       onRunQuery();
     },
   });
+}
+
+function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
+  const container = editor.getDomNode();
+  const updateHeight = () => {
+    if (container) {
+      const contentHeight = Math.min(1000, editor.getContentHeight());
+      const width = parseInt(container.style.width, 10);
+      container.style.width = `${width}px`;
+      container.style.height = `${contentHeight}px`;
+      editor.layout({ width, height: contentHeight });
+    }
+  };
+  editor.onDidContentSizeChange(updateHeight);
+  updateHeight();
 }
 
 /**

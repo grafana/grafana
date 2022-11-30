@@ -37,6 +37,7 @@ declare -A cypressConfig=(
   [viewportHeight]=1080
   [trashAssetsBeforeRuns]=false
   [videoUploadOnPasses]=false
+  [reporter]=../../e2e/log-reporter.js
 )
 
 
@@ -68,6 +69,7 @@ case "$1" in
     *)
         cypressConfig[integrationFolder]=../../e2e/"${args[0]}"
         cypressConfig[testFiles]=$testFilesForSingleSuite
+        cypressConfig[video]=${args[1]}
         ;;
 esac
 

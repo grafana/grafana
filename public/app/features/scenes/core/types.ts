@@ -1,21 +1,30 @@
 import React from 'react';
-import { Subscribable } from 'rxjs';
+import { Observer, Subscription, Unsubscribable } from 'rxjs';
 
-import { EventBus, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
+import { BusEvent, BusEventHandler, BusEventType, PanelData, TimeRange, TimeZone } from '@grafana/data';
 
-import { SceneVariableSet } from '../variables/types';
+import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
-  $timeRange?: SceneTimeRange;
+  $timeRange?: SceneTimeRangeLike;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
-  $variables?: SceneVariableSet;
+  $variables?: SceneVariables;
 }
 
-export interface SceneLayoutChildState extends SceneObjectStatePlain {
+export interface SceneLayoutChildSize {
   size?: SceneObjectSize;
 }
+export interface SceneLayoutChildInteractions {
+  isDraggable?: boolean;
+  isResizable?: boolean;
+}
+
+export interface SceneLayoutChildState
+  extends SceneObjectStatePlain,
+    SceneLayoutChildSize,
+    SceneLayoutChildInteractions {}
 
 export type SceneObjectState = SceneObjectStatePlain | SceneLayoutState | SceneLayoutChildState;
 
@@ -41,18 +50,30 @@ export interface SceneDataState extends SceneObjectStatePlain {
   data?: PanelData;
 }
 
-export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
+export interface SceneObject<TState extends SceneObjectState = SceneObjectState> {
   /** The current state */
-  state: TState;
+  readonly state: TState;
 
   /** True when there is a React component mounted for this Object */
-  isActive?: boolean;
+  readonly isActive: boolean;
 
   /** SceneObject parent */
-  parent?: SceneObject;
+  readonly parent?: SceneObject;
 
-  /** Currently only used from root to broadcast events */
-  events: EventBus;
+  /** This abtractions declares what variables the scene object depends on and how to handle when they change value. **/
+  readonly variableDependency?: SceneVariableDependencyConfigLike;
+
+  /** This abstraction declares URL sync dependencies of a scene object. **/
+  readonly urlSync?: SceneObjectUrlSyncHandler<TState>;
+
+  /** Subscribe to state changes */
+  subscribeToState(observer?: Partial<Observer<TState>>): Subscription;
+
+  /** Subscribe to a scene event */
+  subscribeToEvent<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+
+  /** Publish an event and optionally bubble it up the scene */
+  publishEvent(event: BusEvent, bubble?: boolean): void;
 
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
@@ -63,11 +84,11 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Called when the Component is mounted. A place to register event listeners add subscribe to state changes */
   activate(): void;
 
-  /** Called when component unmounts. Unsubscribe to events */
+  /** Called when component unmounts. Unsubscribe and closes all subscriptions  */
   deactivate(): void;
 
-  /** Get the scene editor */
-  getSceneEditor(): SceneEditor;
+  /** Get the scene root */
+  getRoot(): SceneObject;
 
   /** Returns a deep clone this object and all its children */
   clone(state?: Partial<TState>): this;
@@ -77,6 +98,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** To be replaced by declarative method */
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
+
+  /** Force a re-render, should only be needed when variable values change */
+  forceRender(): void;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;
@@ -96,10 +120,24 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   onMouseEnterObject(model: SceneObject): void;
   onMouseLeaveObject(model: SceneObject): void;
   onSelectObject(model: SceneObject): void;
+  getEditComponentWrapper(): React.ComponentType<SceneComponentEditWrapperProps>;
 }
 
-export interface SceneTimeRangeState extends SceneObjectStatePlain, TimeRange {}
-export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
+interface SceneComponentEditWrapperProps {
+  editor: SceneEditor;
+  model: SceneObject;
+  children: React.ReactNode;
+}
+
+export interface SceneTimeRangeState extends SceneObjectStatePlain {
+  from: string;
+  to: string;
+  timeZone: TimeZone;
+  fiscalYearStartMonth?: number;
+  value: TimeRange;
+}
+
+export interface SceneTimeRangeLike extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;
   onRefresh(): void;
@@ -114,7 +152,16 @@ export function isSceneObject(obj: any): obj is SceneObject {
 }
 
 /** These functions are still just temporary until this get's refined */
-export interface SceneObjectWithUrlSync extends SceneObject {
-  getUrlState(): UrlQueryMap;
-  updateFromUrl(values: UrlQueryMap): void;
+export interface SceneObjectWithUrlSync<TState> extends SceneObject {
+  getUrlState(state: TState): SceneObjectUrlValues;
+  updateFromUrl(values: SceneObjectUrlValues): void;
 }
+
+export interface SceneObjectUrlSyncHandler<TState> {
+  getKeys(): Set<string>;
+  getUrlState(state: TState): SceneObjectUrlValues;
+  updateFromUrl(values: SceneObjectUrlValues): void;
+}
+
+export type SceneObjectUrlValue = string | string[] | undefined | null;
+export type SceneObjectUrlValues = Record<string, SceneObjectUrlValue>;

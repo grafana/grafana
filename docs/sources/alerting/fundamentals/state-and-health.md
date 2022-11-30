@@ -9,6 +9,7 @@ keywords:
   - guide
   - state
 title: State and health of alerting rules
+weight: 405
 ---
 
 # State and health of alerting rules

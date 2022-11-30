@@ -10,8 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -28,6 +30,9 @@ type setUserResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -110,6 +115,9 @@ type setTeamResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetTeamResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -195,6 +203,9 @@ type setBuiltInResourcePermissionTest struct {
 }
 
 func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -276,6 +287,9 @@ type setResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -345,6 +359,9 @@ type getResourcePermissionsTest struct {
 }
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
@@ -420,8 +437,10 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
+			orgService, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
 
-			err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 				role := &accesscontrol.Role{
 					OrgID:   tt.user.OrgID,
 					UID:     "seeded",
@@ -456,7 +475,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			seedResourcePermissions(t, store, sql, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers)
+			seedResourcePermissions(t, store, sql, orgService, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers)
 
 			tt.query.User = tt.user
 			permissions, err := store.GetResourcePermissions(context.Background(), tt.user.OrgID, tt.query)
@@ -466,19 +485,20 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	}
 }
 
-func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
+func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, orgService org.Service, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
-	var org *models.Org
+	var orgModel *org.Org
 	for i := 0; i < numUsers; i++ {
-		if org == nil {
-			addedOrg, err := sql.CreateOrgWithMember("test", int64(i))
+		if orgModel == nil {
+			cmd := &org.CreateOrgCommand{Name: "test", UserID: int64(i)}
+			addedOrg, err := orgService.CreateWithMember(context.Background(), cmd)
 			require.NoError(t, err)
-			org = &addedOrg
+			orgModel = addedOrg
 		}
 
 		u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
 			Login: fmt.Sprintf("user:%s%d", resourceID, i),
-			OrgID: org.Id,
+			OrgID: orgModel.ID,
 		})
 		require.NoError(t, err)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
@@ -37,7 +38,7 @@ type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
 	NodeType() NodeType
 	RefID() string
-	Execute(c context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error)
+	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error)
 	String() string
 }
 
@@ -46,10 +47,10 @@ type DataPipeline []Node
 
 // execute runs all the command/datasource requests in the pipeline return a
 // map of the refId of the of each command
-func (dp *DataPipeline) execute(c context.Context, s *Service) (mathexp.Vars, error) {
+func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 	for _, node := range *dp {
-		res, err := node.Execute(c, vars, s)
+		res, err := node.Execute(c, now, vars, s)
 		if err != nil {
 			return nil, err
 		}
@@ -143,11 +144,12 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		}
 
 		rn := &rawNode{
-			Query:      rawQueryProp,
-			RefID:      query.RefID,
-			TimeRange:  query.TimeRange,
-			QueryType:  query.QueryType,
-			DataSource: query.DataSource,
+			Query:         rawQueryProp,
+			RefID:         query.RefID,
+			TimeRange:     query.TimeRange,
+			QueryType:     query.QueryType,
+			DataSource:    query.DataSource,
+			QueryEnricher: query.QueryEnricher,
 		}
 
 		var node Node

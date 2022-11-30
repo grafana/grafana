@@ -5,6 +5,8 @@ import (
 	"embed"
 	"text/template"
 	"time"
+
+	"github.com/grafana/codejen"
 )
 
 // All the parsed templates in the tmpl subdirectory
@@ -29,9 +31,17 @@ type (
 		LineageCUEPath string
 		GenLicense     bool
 	}
-	tvars_coremodel_registry struct {
-		Header     tvars_autogen_header
-		Coremodels []tplVars
+	tvars_gen_header struct {
+		MainGenerator string
+		Using         []codejen.NamedJenny
+		From          string
+	}
+	tvars_kind_registry struct {
+		// Header tvars_autogen_header
+		NumRaw, NumStructured int
+		PackageName           string
+		KindPackagePrefix     string
+		Kinds                 []*DeclForGen
 	}
 	tvars_coremodel_imports struct {
 		PackageName string

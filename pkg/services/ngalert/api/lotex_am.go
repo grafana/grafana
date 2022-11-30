@@ -255,7 +255,3 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 		nil,
 	)
 }
-
-func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigBodyParams) response.Response {
-	return NotImplementedResp
-}

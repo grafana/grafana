@@ -3,7 +3,8 @@ import React, { FunctionComponent, useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, InputGroup, Select, stylesFactory, useTheme2 } from '@grafana/ui';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { Dimensions, MetricStat } from '../../types';
@@ -33,7 +34,7 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
 
 export const FilterItem: FunctionComponent<Props> = ({
   filter,
-  metricStat: { region, namespace, metricName, dimensions },
+  metricStat: { region, namespace, metricName, dimensions, accountId },
   datasource,
   dimensionKeys,
   disableExpressions,
@@ -51,7 +52,14 @@ export const FilterItem: FunctionComponent<Props> = ({
     }
 
     return datasource.api
-      .getDimensionValues(region, namespace, metricName, filter.key, dimensionsExcludingCurrentKey)
+      .getDimensionValues({
+        dimensionKey: filter.key,
+        dimensionFilters: dimensionsExcludingCurrentKey,
+        region,
+        namespace,
+        metricName,
+        accountId,
+      })
       .then((result: Array<SelectableValue<string>>) => {
         if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);
@@ -60,7 +68,14 @@ export const FilterItem: FunctionComponent<Props> = ({
       });
   };
 
-  const [state, loadOptions] = useAsyncFn(loadDimensionValues, [filter.key, dimensions]);
+  const [state, loadOptions] = useAsyncFn(loadDimensionValues, [
+    filter.key,
+    dimensions,
+    region,
+    namespace,
+    metricName,
+    accountId,
+  ]);
   const theme = useTheme2();
   const styles = getOperatorStyles(theme);
 

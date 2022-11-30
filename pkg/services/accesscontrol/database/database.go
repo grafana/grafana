@@ -9,10 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-const (
-	globalOrgID = 0
-)
-
 func ProvideService(sql db.DB) *AccessControlStore {
 	return &AccessControlStore{sql}
 }
@@ -29,7 +25,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			return nil
 		}
 
-		filter, params := userRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles)
+		filter, params := accesscontrol.UserRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles)
 
 		q := `
 		SELECT
@@ -59,55 +55,108 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
-func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {
-	var params []interface{}
-	builder := strings.Builder{}
+// SearchUsersPermissions returns the list of user permissions indexed by UserID
+func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	type UserRBACPermission struct {
+		UserID int64  `xorm:"user_id"`
+		Action string `xorm:"action"`
+		Scope  string `xorm:"scope"`
+	}
+	dbPerms := make([]UserRBACPermission, 0)
+	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// Find permissions
+		q := `
+		SELECT
+			user_id,
+			action,
+			scope
+		FROM (
+			SELECT ur.user_id, ur.org_id, p.action, p.scope
+				FROM permission AS p
+				INNER JOIN user_role AS ur on ur.role_id = p.role_id
+			UNION ALL
+				SELECT tm.user_id, tr.org_id, p.action, p.scope
+					FROM permission AS p
+					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
+					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
+			UNION ALL
+				SELECT ou.user_id, br.org_id, p.action, p.scope
+					FROM permission AS p
+					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+					INNER JOIN org_user AS ou ON ou.role = br.role
+			UNION ALL
+				SELECT sa.user_id, br.org_id, p.action, p.scope
+					FROM permission AS p
+					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
+					INNER JOIN (
+						SELECT u.id AS user_id
+						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
+					) AS sa ON 1 = 1 
+					WHERE br.role = ?
+		) AS up
+		WHERE (org_id = ? OR org_id = ?)
+		`
+		params := []interface{}{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
 
-	// This is an additional security. We should never have permissions granted to userID 0.
-	// Only allow real users to get user/team permissions (anonymous/apikeys)
-	if userID > 0 {
-		builder.WriteString(`
-			SELECT ur.role_id
-			FROM user_role AS ur
-			WHERE ur.user_id = ?
-			AND (ur.org_id = ? OR ur.org_id = ?)
-		`)
-		params = []interface{}{userID, orgID, globalOrgID}
+		if options.ActionPrefix != "" {
+			q += ` AND action LIKE ?`
+			params = append(params, options.ActionPrefix+"%")
+		}
+		if options.Action != "" {
+			q += ` AND action = ?`
+			params = append(params, options.Action)
+		}
+		if options.Scope != "" {
+			q += ` AND scope = ?`
+			params = append(params, options.Scope)
+		}
+
+		return sess.SQL(q, params...).
+			Find(&dbPerms)
+	}); err != nil {
+		return nil, err
 	}
 
-	if len(teamIDs) > 0 {
-		if builder.Len() > 0 {
-			builder.WriteString("UNION")
-		}
-		builder.WriteString(`
-			SELECT tr.role_id FROM team_role as tr
-			WHERE tr.team_id IN(?` + strings.Repeat(", ?", len(teamIDs)-1) + `)
-			AND tr.org_id = ?
-		`)
-		for _, id := range teamIDs {
-			params = append(params, id)
-		}
-		params = append(params, orgID)
+	mapped := map[int64][]accesscontrol.Permission{}
+	for i := range dbPerms {
+		mapped[dbPerms[i].UserID] = append(mapped[dbPerms[i].UserID], accesscontrol.Permission{Action: dbPerms[i].Action, Scope: dbPerms[i].Scope})
 	}
 
-	if len(roles) != 0 {
-		if builder.Len() > 0 {
-			builder.WriteString("UNION")
-		}
+	return mapped, nil
+}
 
-		builder.WriteString(`
-			SELECT br.role_id FROM builtin_role AS br
-			WHERE br.role IN (?` + strings.Repeat(", ?", len(roles)-1) + `)
-			AND (br.org_id = ? OR br.org_id = ?)
-		`)
-		for _, role := range roles {
-			params = append(params, role)
-		}
+// GetUsersBasicRoles returns the list of user basic roles (Admin, Editor, Viewer, Grafana Admin) indexed by UserID
+func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, orgID int64) (map[int64][]string, error) {
+	type UserOrgRole struct {
+		UserID  int64  `xorm:"id"`
+		OrgRole string `xorm:"role"`
+		IsAdmin bool   `xorm:"is_admin"`
+	}
+	dbRoles := make([]UserOrgRole, 0)
+	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		// Find roles
+		q := `
+		SELECT u.id, ou.role, u.is_admin
+		FROM ` + s.sql.GetDialect().Quote("user") + ` AS u 
+		LEFT JOIN org_user AS ou ON u.id = ou.user_id
+		WHERE u.is_admin OR ou.org_id = ?
+		`
 
-		params = append(params, orgID, globalOrgID)
+		return sess.SQL(q, orgID).Find(&dbRoles)
+	}); err != nil {
+		return nil, err
 	}
 
-	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
+	roles := map[int64][]string{}
+	for i := range dbRoles {
+		if dbRoles[i].OrgRole != "" {
+			roles[dbRoles[i].UserID] = []string{dbRoles[i].OrgRole}
+		}
+		if dbRoles[i].IsAdmin {
+			roles[dbRoles[i].UserID] = append(roles[dbRoles[i].UserID], accesscontrol.RoleGrafanaAdmin)
+		}
+	}
+	return roles, nil
 }
 
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {

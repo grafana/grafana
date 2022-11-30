@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/stretchr/testify/mock"
@@ -42,5 +41,5 @@ func TestDashboardResolver(t *testing.T) {
 }
 
 func createDashboardResolverSut(dbs *dashboards.FakeDashboardService) *dashboardResolver {
-	return newDashboardResolver(dbs, log.NewNopLogger(), 1*time.Nanosecond)
+	return newDashboardResolver(dbs, 1*time.Nanosecond)
 }

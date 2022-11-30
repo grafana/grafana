@@ -25,10 +25,12 @@ describe('Typeahead', () => {
       render(<Typeahead origin="test" groupedItems={completionItemGroups} isOpen />);
       expect(screen.getByTestId('typeahead')).toBeInTheDocument();
 
-      const items = screen.getAllByRole('listitem');
-      expect(items).toHaveLength(2);
-      expect(items[0]).toHaveTextContent('my group');
-      expect(items[1]).toHaveTextContent('first item');
+      const groupTitles = screen.getAllByRole('listitem');
+      expect(groupTitles).toHaveLength(1);
+      expect(groupTitles[0]).toHaveTextContent('my group');
+      const items = screen.getAllByRole('menuitem');
+      expect(items).toHaveLength(1);
+      expect(items[0]).toHaveTextContent('first item');
     });
 
     it('can be rendered properly even if the size of items is large', () => {

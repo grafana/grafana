@@ -31,7 +31,7 @@ export const Pages = {
     url: '/datasources/new',
     /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
-    dataSourcePluginsV2: (pluginName: string) => `Add data source ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
@@ -124,6 +124,7 @@ export const Pages = {
             selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
+            applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
@@ -186,7 +187,9 @@ export const Pages = {
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
       EnableSwitch: 'data-testid public dashboard on off switch',
+      EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
       SaveConfigButton: 'data-testid public dashboard save config button',
+      DeleteButton: 'data-testid public dashboard delete button',
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
@@ -224,6 +227,13 @@ export const Pages = {
     url: '/?search=openn',
     FolderView: {
       url: '/?search=open&layout=folders',
+    },
+  },
+  PublicDashboards: {
+    ListItem: {
+      linkButton: 'public-dashboard-link-button',
+      configButton: 'public-dashboard-configuration-button',
+      trashcanButton: 'public-dashboard-remove-button',
     },
   },
 };
