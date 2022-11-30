@@ -48,7 +48,7 @@ export const ResultItem = React.forwardRef(
           <div className={styles.textContainer}>
             <div>
               {ancestors.length > 0 &&
-                ancestors.map((ancestor, index) => (
+                ancestors.map((ancestor) => (
                   <React.Fragment key={ancestor.id}>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
                     <span className={styles.breadcrumbAncestor}>&rsaquo;</span>
