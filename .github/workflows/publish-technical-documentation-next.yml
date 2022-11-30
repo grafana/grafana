@@ -11,7 +11,6 @@ on:
 jobs:
   sync:
     runs-on: "ubuntu-latest"
-    needs: "test"
     steps:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v3"
