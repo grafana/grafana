@@ -165,10 +165,13 @@ To remove the filter, click the blue funnel icon and then click **Clear filter**
 
 You can use the table footer to show [calculations]({{< relref "../../calculation-types/" >}}) on fields.
 
-After enabling the table footer, you can select your **Calculation** and select the **Fields** that should be calculated. Not selecting any field apply the calculation to all numeric fields.
+After you enable the table footer:
+
+1. Select the **Calculation**
+2. Select the **Fields** that you want to calculate
+
+The system applies the calculation to all numeric fields if you do not select a field.
 
 ### Count rows
 
-On selecting the **Count** calculation, you will see the **Count rows** switch.
-
-By enabling this option the footer will show the number of rows in the dataset instead of the number of values in the selected fields.
+If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.

@@ -43,11 +43,6 @@ type Implementation struct {
 	orgService      org.Service
 }
 
-// CreateUser creates inserts a new one.
-func (ls *Implementation) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
-	return ls.userService.Create(context.Background(), &cmd)
-}
-
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
 func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
@@ -80,7 +75,12 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			}
 		}
 
-		result, errCreateUser := ls.createUser(extUser)
+		result, errCreateUser := ls.userService.Create(ctx, &user.CreateUserCommand{
+			Login:        extUser.Login,
+			Email:        extUser.Email,
+			Name:         extUser.Name,
+			SkipOrgSetup: len(extUser.OrgRoles) > 0,
+		})
 		if errCreateUser != nil {
 			return errCreateUser
 		}
@@ -205,16 +205,6 @@ func (ls *Implementation) DisableExternalUser(ctx context.Context, username stri
 // SetTeamSyncFunc sets the function received through args as the team sync function.
 func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
-}
-
-func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*user.User, error) {
-	cmd := user.CreateUserCommand{
-		Login:        extUser.Login,
-		Email:        extUser.Email,
-		Name:         extUser.Name,
-		SkipOrgSetup: len(extUser.OrgRoles) > 0,
-	}
-	return ls.CreateUser(cmd)
 }
 
 func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {

@@ -248,6 +248,40 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		return nil, b, fmt.Errorf("failed write the message: %w", err)
 	}
 
+	pn.writeImageParts(ctx, w, as...)
+
+	var sound string
+	if status == model.AlertResolved {
+		sound = tmpl(pn.settings.okSound)
+	} else {
+		sound = tmpl(pn.settings.alertingSound)
+	}
+	if sound != "default" {
+		if err := w.WriteField("sound", sound); err != nil {
+			return nil, b, fmt.Errorf("failed to write the sound: %w", err)
+		}
+	}
+
+	// Mark the message as HTML
+	if err := w.WriteField("html", "1"); err != nil {
+		return nil, b, fmt.Errorf("failed to mark the message as HTML: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return nil, b, fmt.Errorf("failed to close the multipart request: %w", err)
+	}
+
+	if tmplErr != nil {
+		pn.log.Warn("failed to template pushover message", "error", tmplErr.Error())
+	}
+
+	headers := map[string]string{
+		"Content-Type": w.FormDataContentType(),
+	}
+
+	return headers, b, nil
+}
+
+func (pn *PushoverNotifier) writeImageParts(ctx context.Context, w *multipart.Writer, as ...*types.Alert) {
 	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
 	// If the image is larger than pushoverMaxFileSize then return an error.
 	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
@@ -281,34 +315,4 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 		return ErrImagesDone
 	}, as...)
-
-	var sound string
-	if status == model.AlertResolved {
-		sound = tmpl(pn.settings.okSound)
-	} else {
-		sound = tmpl(pn.settings.alertingSound)
-	}
-	if sound != "default" {
-		if err := w.WriteField("sound", sound); err != nil {
-			return nil, b, fmt.Errorf("failed to write the sound: %w", err)
-		}
-	}
-
-	// Mark the message as HTML
-	if err := w.WriteField("html", "1"); err != nil {
-		return nil, b, fmt.Errorf("failed to mark the message as HTML: %w", err)
-	}
-	if err := w.Close(); err != nil {
-		return nil, b, fmt.Errorf("failed to close the multipart request: %w", err)
-	}
-
-	if tmplErr != nil {
-		pn.log.Warn("failed to template pushover message", "error", tmplErr.Error())
-	}
-
-	headers := map[string]string{
-		"Content-Type": w.FormDataContentType(),
-	}
-
-	return headers, b, nil
 }

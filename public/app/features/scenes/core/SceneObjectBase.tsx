@@ -9,7 +9,7 @@ import { SceneVariableDependencyConfigLike } from '../variables/types';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import { SceneObject, SceneComponent, SceneObjectState } from './types';
+import { SceneObject, SceneComponent, SceneObjectState, SceneObjectUrlSyncHandler } from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
@@ -26,6 +26,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   protected _subs = new Subscription();
 
   protected _variableDependency: SceneVariableDependencyConfigLike | undefined;
+  protected _urlSync: SceneObjectUrlSyncHandler<TState> | undefined;
 
   public constructor(state: TState) {
     if (!state.key) {
@@ -55,6 +56,11 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   /** Returns variable dependency config */
   public get variableDependency(): SceneVariableDependencyConfigLike | undefined {
     return this._variableDependency;
+  }
+
+  /** Returns url sync config */
+  public get urlSync(): SceneObjectUrlSyncHandler<TState> | undefined {
+    return this._urlSync;
   }
 
   /**
