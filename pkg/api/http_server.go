@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/stats"
-	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
+	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -145,7 +145,7 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
-	httpObjectStore              httpobjectstore.HTTPObjectStore
+	httpEntityStore              httpentitystore.HTTPEntityStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
 	QueryLibraryHTTPService      querylibrary.HTTPService
 	QueryLibraryService          querylibrary.Service
@@ -234,7 +234,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService, httpObjectStore httpobjectstore.HTTPObjectStore,
+	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
@@ -312,7 +312,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		secretsMigrator:              secretsMigrator,
 		secretsPluginMigrator:        secretsPluginMigrator,
 		secretsStore:                 secretsStore,
-		httpObjectStore:              httpObjectStore,
+		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,

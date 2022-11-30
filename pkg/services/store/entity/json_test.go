@@ -1,4 +1,4 @@
-package object
+package entity
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ func TestRawEncoders(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	raw := &RawObject{
+	raw := &Entity{
 		GRN: &GRN{
 			UID:  "a",
 			Kind: "b",
@@ -42,7 +42,7 @@ func TestRawEncoders(t *testing.T) {
 		"etag": "d"
 	  }`, str)
 
-	copy := &RawObject{}
+	copy := &Entity{}
 	err = json.Unmarshal(b, copy)
 	require.NoError(t, err)
 }

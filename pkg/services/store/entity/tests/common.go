@@ -1,4 +1,4 @@
-package object_server_tests
+package entity_server_tests
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	saAPI "github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	saTests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/require"
@@ -53,7 +53,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 
 type testContext struct {
 	authToken string
-	client    object.ObjectStoreClient
+	client    entity.EntityStoreClient
 	user      *user.SignedInUser
 	ctx       context.Context
 }
@@ -80,7 +80,7 @@ func createTestContext(t *testing.T) testContext {
 	)
 	require.NoError(t, err)
 
-	client := object.NewObjectStoreClient(conn)
+	client := entity.NewEntityStoreClient(conn)
 
 	return testContext{
 		authToken: authToken,

@@ -1,13 +1,13 @@
 syntax = "proto3";
-package object;
+package entity;
 
-option go_package = "./;object";
+option go_package = "./;entity";
 
 message GRN {
   // the tenant/org id
   int64 tenant_id = 1;
 
-  // Identify the object kind.  This kind will be used to apply a schema to the body and
+  // Identify the entity kind.  This kind will be used to apply a schema to the body and
   // will trigger additional indexing behavior.
   string kind = 3;
 
@@ -16,21 +16,21 @@ message GRN {
   string UID = 4;
 }
 
-// The canonical object/document data -- this represents the raw bytes and storage level metadata
-message RawObject {
-  // Object identifier
+// The canonical entity/document data -- this represents the raw bytes and storage level metadata
+message Entity {
+  // Entity identifier
   GRN GRN = 1;
 
-  // Time in epoch milliseconds that the object was created
+  // Time in epoch milliseconds that the entity was created
   int64 created_at = 2;
 
-  // Time in epoch milliseconds that the object was updated
+  // Time in epoch milliseconds that the entity was updated
   int64 updated_at = 3;
 
-  // Who created the object
+  // Who created the entity
   string created_by = 4;
 
-  // Who updated the object
+  // Who updated the entity
   string updated_by = 5;
 
   // Content Length
@@ -39,7 +39,7 @@ message RawObject {
   // MD5 digest of the body
   string ETag = 7;
 
-  // Raw bytes of the storage object.  The kind will determine what is a valid payload
+  // Raw bytes of the storage entity.  The kind will determine what is a valid payload
   bytes body = 8;
 
   // Folder UID
@@ -48,29 +48,29 @@ message RawObject {
   // Unique slug within folder (may be UID)
   string slug = 10;
 
-  // The version will change when the object is saved. It is not necessarily sortable
+  // The version will change when the entity is saved. It is not necessarily sortable
   //
   // NOTE: currently managed by the dashboard+dashboard_version tables
   string version = 11;
 
   // External location info
-  ObjectOriginInfo origin = 12;
+  EntityOriginInfo origin = 12;
 }
 
-message ObjectOriginInfo {
+message EntityOriginInfo {
   // NOTE: currently managed by the dashboard_provisioning table
   string source = 1;
 
   // Key in the upstream system
   string key = 2;
 
-  // Time in epoch milliseconds that the object was last synced with an external system (provisioning/git)
+  // Time in epoch milliseconds that the entity was last synced with an external system (provisioning/git)
   int64 time = 3;
 }
 
-// Report error while working with objects
+// Report error while working with entitys
 // NOTE: real systems at scale will contain errors.
-message ObjectErrorInfo {
+message EntityErrorInfo {
   // Match an error code registry?
   int64 code = 1;
 
@@ -81,15 +81,15 @@ message ObjectErrorInfo {
   bytes details_json = 3;
 }
 
-// This is a subset of RawObject that does not include body or sync info
-message ObjectVersionInfo {
-  // The version will change when the object is saved. It is not necessarily sortable
+// This is a subset of Entity that does not include body or sync info
+message EntityVersionInfo {
+  // The version will change when the entity is saved. It is not necessarily sortable
   string version = 1;
 
-  // Time in epoch milliseconds that the object was updated
+  // Time in epoch milliseconds that the entity was updated
   int64 updated_at = 2;
 
-  // Who updated the object
+  // Who updated the entity
   string updated_by = 3;
 
   // Content Length
@@ -108,8 +108,8 @@ message ObjectVersionInfo {
 // Get request/response
 //-----------------------------------------------
 
-message ReadObjectRequest {
-  // Object identifier
+message ReadEntityRequest {
+  // Entity identifier
   GRN GRN = 1;
 
   // Fetch an explicit version
@@ -122,11 +122,11 @@ message ReadObjectRequest {
   bool with_summary = 4;
 }
 
-message ReadObjectResponse {
-  // Object details with the body removed
-  RawObject object = 1; 
+message ReadEntityResponse {
+  // Entity details with the body removed
+  Entity entity = 1; 
 
-  // Object summary as JSON
+  // Entity summary as JSON
   bytes summary_json = 2;
 }
 
@@ -134,29 +134,29 @@ message ReadObjectResponse {
 // Make many read requests at once (by Kind+ID+version)
 //------------------------------------------------------
 
-message BatchReadObjectRequest {
-  repeated ReadObjectRequest batch = 1;
+message BatchReadEntityRequest {
+  repeated ReadEntityRequest batch = 1;
 }
 
-message BatchReadObjectResponse {
-  repeated ReadObjectResponse results = 1;
+message BatchReadEntityResponse {
+  repeated ReadEntityResponse results = 1;
 }
 
 //-----------------------------------------------
 // Write request/response
 //-----------------------------------------------
 
-message WriteObjectRequest {
-  // Object identifier
+message WriteEntityRequest {
+  // Entity identifier
   GRN GRN = 1;
 
-  // Where to save the object (empty will leave it unchanged)
+  // Where to save the entity (empty will leave it unchanged)
   string folder = 2;
 
-  // The raw object body
+  // The raw entity body
   bytes body = 3;
 
-  // Message that can be seen when exploring object history
+  // Message that can be seen when exploring entity history
   string comment = 4;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
@@ -166,32 +166,32 @@ message WriteObjectRequest {
 // This operation is useful when syncing a resource from external sources
 // that have more accurate metadata information (git, or an archive).
 // This process can bypass the forced checks that 
-message AdminWriteObjectRequest {
-  // Object identifier
+message AdminWriteEntityRequest {
+  // Entity identifier
   GRN GRN = 1;
 
-  // Where to save the object (empty will leave it unchanged)
+  // Where to save the entity (empty will leave it unchanged)
   string folder = 2;
 
-  // The raw object body
+  // The raw entity body
   bytes body = 3;
 
-  // Message that can be seen when exploring object history
+  // Message that can be seen when exploring entity history
   string comment = 4;
 
-  // Time in epoch milliseconds that the object was created
+  // Time in epoch milliseconds that the entity was created
   // Optional, if 0 it will use the current time
   int64 created_at = 5;
 
-  // Time in epoch milliseconds that the object was updated
+  // Time in epoch milliseconds that the entity was updated
   // Optional, if empty it will use the current user
   int64 updated_at = 6;
 
-  // Who created the object
+  // Who created the entity
   // Optional, if 0 it will use the current time
   string created_by = 7;
 
-  // Who updated the object
+  // Who updated the entity
   // Optional, if empty it will use the current user
   string updated_by = 8;
 
@@ -207,21 +207,21 @@ message AdminWriteObjectRequest {
   // This will make sense for systems that manage history explicitly externallay
   bool clear_history = 11;
 
-  // Optionally define where the object came from
-  ObjectOriginInfo origin = 12;
+  // Optionally define where the entity came from
+  EntityOriginInfo origin = 12;
 }
 
-message WriteObjectResponse {
+message WriteEntityResponse {
   // Error info -- if exists, the save did not happen
-  ObjectErrorInfo error = 1;
+  EntityErrorInfo error = 1;
 
-  // Object identifier
+  // Entity identifier
   GRN GRN = 2;
 
-  // Object details with the body removed
-  ObjectVersionInfo object = 3; 
+  // Entity details with the body removed
+  EntityVersionInfo entity = 3; 
 
-  // Object summary as JSON
+  // Entity summary as JSON
   bytes summary_json = 4;
 
   // Status code
@@ -240,15 +240,15 @@ message WriteObjectResponse {
 // Delete request/response
 //-----------------------------------------------
 
-message DeleteObjectRequest {
-  // Object identifier
+message DeleteEntityRequest {
+  // Entity identifier
   GRN GRN = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
   string previous_version = 3;
 }
 
-message DeleteObjectResponse {
+message DeleteEntityResponse {
   bool OK = 1;
 }
 
@@ -256,8 +256,8 @@ message DeleteObjectResponse {
 // History request/response
 //-----------------------------------------------
 
-message ObjectHistoryRequest {
-  // Object identifier
+message EntityHistoryRequest {
+  // Entity identifier
   GRN GRN = 1;
 
   // Maximum number of items to return
@@ -267,12 +267,12 @@ message ObjectHistoryRequest {
   string next_page_token = 5;
 }
 
-message ObjectHistoryResponse {
-  // Object identifier
+message EntityHistoryResponse {
+  // Entity identifier
   GRN GRN = 1;
 
-  // Object metadata without the raw bytes
-  repeated ObjectVersionInfo versions = 2;
+  // Entity metadata without the raw bytes
+  repeated EntityVersionInfo versions = 2;
 
   // More results exist... pass this in the next request
   string next_page_token = 3;
@@ -283,7 +283,7 @@ message ObjectHistoryResponse {
 // List request/response
 //-----------------------------------------------
 
-message ObjectSearchRequest {
+message EntitySearchRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
@@ -315,24 +315,24 @@ message ObjectSearchRequest {
   bool with_fields = 10;
 }
 
-// Search result metadata for each object
-message ObjectSearchResult {
-  // Object identifier
+// Search result metadata for each entity
+message EntitySearchResult {
+  // Entity identifier
   GRN GRN = 1;
 
-  // The current veresion of this object
+  // The current veresion of this entity
   string version = 2;
 
   // Content Length
   int64 size = 3;
 
-  // Time in epoch milliseconds that the object was updated
+  // Time in epoch milliseconds that the entity was updated
   int64 updated_at = 4;
 
-  // Who updated the object
+  // Who updated the entity
   string updated_by = 5;
 
-  // Optionally include the full object body
+  // Optionally include the full entity body
   bytes body = 6;
 
   //----------------------------------------
@@ -357,12 +357,12 @@ message ObjectSearchResult {
   // Optionally include extracted JSON
   bytes fields_json = 12;
 
-  // ObjectErrorInfo in json
+  // EntityErrorInfo in json
   bytes error_json = 13;
 }
 
-message ObjectSearchResponse {
-  repeated ObjectSearchResult results = 1;
+message EntitySearchResponse {
+  repeated EntitySearchResult results = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;
@@ -373,25 +373,25 @@ message ObjectSearchResponse {
 // Storage interface
 //-----------------------------------------------
 
-// The object store provides a basic CRUD (+watch eventually) interface for generic objects
-service ObjectStore {
-  rpc Read(ReadObjectRequest) returns (ReadObjectResponse);
-  rpc BatchRead(BatchReadObjectRequest) returns (BatchReadObjectResponse);
-  rpc Write(WriteObjectRequest) returns (WriteObjectResponse);
-  rpc Delete(DeleteObjectRequest) returns (DeleteObjectResponse);
-  rpc History(ObjectHistoryRequest) returns (ObjectHistoryResponse);
-  rpc Search(ObjectSearchRequest) returns (ObjectSearchResponse);
+// The entity store provides a basic CRUD (+watch eventually) interface for generic entitys
+service EntityStore {
+  rpc Read(ReadEntityRequest) returns (ReadEntityResponse);
+  rpc BatchRead(BatchReadEntityRequest) returns (BatchReadEntityResponse);
+  rpc Write(WriteEntityRequest) returns (WriteEntityResponse);
+  rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);
+  rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
+  rpc Search(EntitySearchRequest) returns (EntitySearchResponse);
 
 // Ideally an additional search endpoint with more flexibility to limit what you actually care about
 //  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/proto/backend.proto#L129
-//  rpc SearchEX(ObjectSearchRequest) returns (DataResponse);
+//  rpc SearchEX(EntitySearchRequest) returns (DataResponse);
 
   // TEMPORARY... while we split this into a new service (see below)
-  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
+  rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
 }
 
-// The admin service extends the basic object store interface, but provides
+// The admin service extends the basic entity store interface, but provides
 // more explicit control that can support bulk operations like efficient git sync
-service ObjectStoreAdmin {
-  rpc AdminWrite(AdminWriteObjectRequest) returns (WriteObjectResponse);
+service EntityStoreAdmin {
+  rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type summarySupport struct {
-	model       *models.ObjectSummary
+	model       *models.EntitySummary
 	name        string
 	description *string // null or empty
 	labels      *string
@@ -16,7 +16,7 @@ type summarySupport struct {
 	marshaled   []byte
 }
 
-func newSummarySupport(summary *models.ObjectSummary) (*summarySupport, error) {
+func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
 	var err error
 	var js []byte
 	s := &summarySupport{
@@ -63,9 +63,9 @@ func newSummarySupport(summary *models.ObjectSummary) (*summarySupport, error) {
 	return s, err
 }
 
-func (s summarySupport) toObjectSummary() (*models.ObjectSummary, error) {
+func (s summarySupport) toEntitySummary() (*models.EntitySummary, error) {
 	var err error
-	summary := &models.ObjectSummary{
+	summary := &models.EntitySummary{
 		Name: s.name,
 	}
 	if s.description != nil {

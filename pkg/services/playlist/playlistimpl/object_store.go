@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	objectstore "github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -21,7 +22,7 @@ import (
 type objectStoreImpl struct {
 	sess        *session.SessionDB
 	sqlimpl     *Service
-	objectstore object.ObjectStoreServer
+	objectstore entity.EntityStoreServer
 }
 
 var _ playlist.Service = &objectStoreImpl{}

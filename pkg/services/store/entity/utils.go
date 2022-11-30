@@ -1,8 +1,8 @@
-package object
+package entity
 
 // The admin request is a superset of write request features
-func ToAdminWriteObjectRequest(req *WriteObjectRequest) *AdminWriteObjectRequest {
-	return &AdminWriteObjectRequest{
+func ToAdminWriteEntityRequest(req *WriteEntityRequest) *AdminWriteEntityRequest {
+	return &AdminWriteEntityRequest{
 		GRN:             req.GRN,
 		Body:            req.Body,
 		Folder:          req.Folder,

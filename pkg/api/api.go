@@ -288,7 +288,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Allow HTTP access to the object storage feature (dev only for now)
 			if hs.Features.IsEnabled(featuremgmt.FlagGrpcServer) {
-				apiRoute.Group("/object", hs.httpObjectStore.RegisterHTTPRoutes)
+				apiRoute.Group("/object", hs.httpEntityStore.RegisterHTTPRoutes)
 			}
 		}
 
