@@ -27,7 +27,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"live-service-web-worker":       true,
 	}
 
-	t.Run("check registy constraints", func(t *testing.T) {
+	t.Run("check registry constraints", func(t *testing.T) {
 		for _, flag := range standardFeatureFlags {
 			if flag.Expression == "true" && flag.State != FeatureStateStable {
 				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
