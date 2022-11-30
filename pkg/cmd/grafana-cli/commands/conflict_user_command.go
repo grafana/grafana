@@ -59,7 +59,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
 	quotaService := quotaimpl.ProvideService(s, cfg)
-	userService, err := userimpl.ProvideService(s, nil, nil, nil, nil, quotaService)
+	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, quotaService)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
@@ -346,58 +346,54 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
-		if err := r.Store.InTransaction(ctx, func(ctx context.Context) error {
-			for _, u := range users {
-				if u.Direction == "+" {
-					id, err := strconv.ParseInt(u.ID, 10, 64)
-					if err != nil {
-						return fmt.Errorf("could not convert id in +")
-					}
-					intoUserId = id
-				} else if u.Direction == "-" {
-					id, err := strconv.ParseInt(u.ID, 10, 64)
-					if err != nil {
-						return fmt.Errorf("could not convert id in -")
-					}
-					fromUserIds = append(fromUserIds, id)
-				}
-			}
-			if _, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: intoUserId}); err != nil {
-				return fmt.Errorf("could not find intoUser: %w", err)
-			}
-			for _, fromUserId := range fromUserIds {
-				_, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: fromUserId})
-				if err != nil && err == user.ErrUserNotFound {
-					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
-				}
+		for _, u := range users {
+			if u.Direction == "+" {
+				id, err := strconv.ParseInt(u.ID, 10, 64)
 				if err != nil {
-					return fmt.Errorf("could not find fromUser: %w", err)
+					return fmt.Errorf("could not convert id in +")
 				}
-				//  delete the user
-				delErr := r.userService.Delete(ctx, &user.DeleteUserCommand{UserID: fromUserId})
-				if delErr != nil {
-					return fmt.Errorf("error during deletion of user: %w", delErr)
+				intoUserId = id
+			} else if u.Direction == "-" {
+				id, err := strconv.ParseInt(u.ID, 10, 64)
+				if err != nil {
+					return fmt.Errorf("could not convert id in -")
 				}
-				delACErr := r.ac.DeleteUserAccessControl(ctx, fromUserId)
-				if delACErr != nil {
-					return fmt.Errorf("error during deletion of user access control: %w", delACErr)
-				}
+				fromUserIds = append(fromUserIds, id)
 			}
-
-			updateMainCommand := &user.UpdateUserCommand{
-				UserID: intoUser.ID,
-				Login:  strings.ToLower(intoUser.Login),
-				Email:  strings.ToLower(intoUser.Email),
-			}
-			updateErr := r.userService.Update(ctx, updateMainCommand)
-			if updateErr != nil {
-				return fmt.Errorf("could not update user: %w", updateErr)
-			}
-
-			return nil
-		}); err != nil {
-			return err
 		}
+		if _, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: intoUserId}); err != nil {
+			return fmt.Errorf("could not find intoUser: %w", err)
+		}
+		for _, fromUserId := range fromUserIds {
+			_, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: fromUserId})
+			if err != nil && err == user.ErrUserNotFound {
+				fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
+			}
+			if err != nil {
+				return fmt.Errorf("could not find fromUser: %w", err)
+			}
+			//  delete the user
+			delErr := r.userService.Delete(ctx, &user.DeleteUserCommand{UserID: fromUserId})
+			if delErr != nil {
+				return fmt.Errorf("error during deletion of user: %w", delErr)
+			}
+			delACErr := r.ac.DeleteUserAccessControl(ctx, fromUserId)
+			if delACErr != nil {
+				return fmt.Errorf("error during deletion of user access control: %w", delACErr)
+			}
+		}
+
+		updateMainCommand := &user.UpdateUserCommand{
+			UserID: intoUser.ID,
+			Login:  strings.ToLower(intoUser.Login),
+			Email:  strings.ToLower(intoUser.Email),
+		}
+		updateErr := r.userService.Update(ctx, updateMainCommand)
+		if updateErr != nil {
+			return fmt.Errorf("could not update user: %w", updateErr)
+		}
+
+		return nil
 	}
 	return nil
 }
