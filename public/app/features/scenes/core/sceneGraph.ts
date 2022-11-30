@@ -6,7 +6,7 @@ import { SceneVariables } from '../variables/types';
 
 import { SceneDataNode } from './SceneDataNode';
 import { SceneTimeRange as SceneTimeRangeImpl } from './SceneTimeRange';
-import { SceneDataState, SceneEditor, SceneLayoutState, SceneObject, SceneTimeRange } from './types';
+import { SceneDataState, SceneEditor, SceneLayoutState, SceneObject, SceneTimeRangeLike } from './types';
 
 /**
  * Get the closest node with variables
@@ -42,7 +42,7 @@ export function getData(sceneObject: SceneObject): SceneObject<SceneDataState> {
 /**
  * Will walk up the scene object graph to the closest $timeRange scene object
  */
-export function getTimeRange(sceneObject: SceneObject): SceneTimeRange {
+export function getTimeRange(sceneObject: SceneObject): SceneTimeRangeLike {
   const { $timeRange } = sceneObject.state;
   if ($timeRange) {
     return $timeRange;
