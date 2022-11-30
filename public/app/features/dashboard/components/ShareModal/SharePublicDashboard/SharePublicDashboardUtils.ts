@@ -39,18 +39,18 @@ export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boo
  * Get unique datasource names from all panels that are not currently supported by public dashboards.
  */
 export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string[] => {
-  let result = new Map<string, boolean>();
+  let unsupportedDS = new Set<string>();
 
   for (const panel of panels) {
     for (const target of panel.targets) {
       let ds = target?.datasource?.type;
-      if (ds && !result.has(ds) && !supportedDatasources[ds]) {
-        result.set(ds, true);
+      if (ds && !supportedDatasources.has(ds)) {
+        unsupportedDS.add(ds);
       }
     }
   }
 
-  return Array.from(result.keys()).sort();
+  return Array.from(unsupportedDS).sort();
 };
 
 /**
