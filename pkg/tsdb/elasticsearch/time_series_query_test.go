@@ -41,11 +41,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toMs)
 		})
 
-		// Copied from frontend tests
-		t.Run("Should clean settings from null values", func(t *testing.T) {
+		t.Run("Should clean settings from null values (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"refId": "A",
 				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "1" }],
 				"metrics": [{"type": "avg", "id": "0", "settings": {"missing": "null", "script": "1" } }]
@@ -101,7 +99,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Field, "@value")
 		})
 
-		t.Run("With term agg and order by term", func(t *testing.T) {
+		t.Run("With term agg and order by term (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -181,7 +179,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, termsAgg.Order["_count"], "asc")
 		})
 
-		t.Run("With term agg and order by count agg", func(t *testing.T) {
+		t.Run("With term agg and order by count agg (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -294,7 +292,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, termsAgg.Order["_key"], "asc")
 		})
 
-		t.Run("With term agg and valid min_doc_count", func(t *testing.T) {
+		t.Run("With term agg and valid min_doc_count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -385,7 +383,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, dateHistogramAgg.Aggregation.Aggregation.(*es.DateHistogramAgg).Field, "@timestamp")
 		})
 
-		t.Run("With filters aggs and empty label", func(t *testing.T) {
+		t.Run("With filters aggs and empty label (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -429,7 +427,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, sr.Size, 500)
 		})
 
-		t.Run("With raw document metric query", func(t *testing.T) {
+		t.Run("With raw document metric query (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -480,7 +478,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, hAgg.FixedInterval, "$__interval_msms")
 			require.Equal(t, hAgg.MinDocCount, 2)
 
-			t.Run("Should not include time_zone if not present in the quey model", func(t *testing.T) {
+			t.Run("Should not include time_zone if not present in the query model (from frontend tests)", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
 					"timeField": "@timestamp",
@@ -577,7 +575,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, *hAgg.Missing, 5)
 		})
 
-		t.Run("With histogram", func(t *testing.T) {
+		t.Run("With histogram (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -628,7 +626,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, ghGridAgg.Precision, 3)
 		})
 
-		t.Run("With moving average", func(t *testing.T) {
+		t.Run("With moving average (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -667,7 +665,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 		})
 
-		t.Run("With moving average with pipelineAgg", func(t *testing.T) {
+		t.Run("With moving average", func(t *testing.T) {
+			// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -705,7 +704,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, pl.BucketPath, "3")
 		})
 
-		t.Run("With moving average doc count", func(t *testing.T) {
+		t.Run("With moving average doc count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -738,7 +737,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			// require.Equal(t, pl.BucketPath, "_count")
 		})
 
-		t.Run("With moving average doc count with pipelineAgg", func(t *testing.T) {
+		t.Run("With moving average doc count", func(t *testing.T) {
+			// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -770,7 +770,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, pl.BucketPath, "_count")
 		})
 
-		t.Run("With broken moving average", func(t *testing.T) {
+		t.Run("With broken moving average (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -808,7 +808,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			// require.Equal(t, plAgg.BucketPath, "3")
 		})
 
-		t.Run("With broken moving average with pipelineAgg", func(t *testing.T) {
+		t.Run("With broken moving average", func(t *testing.T) {
+			// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -844,7 +845,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, plAgg.BucketPath, "3")
 		})
 
-		t.Run("With top_metrics", func(t *testing.T) {
+		t.Run("With top_metrics (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1003,7 +1004,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, plAgg.BucketPath, "3")
 		})
 
-		t.Run("With derivative doc count and pipelineAgg", func(t *testing.T) {
+		t.Run("With derivative doc count", func(t *testing.T) {
+			// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1032,7 +1034,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, plAgg.BucketPath, "_count")
 		})
 
-		t.Run("With derivative doc count", func(t *testing.T) {
+		t.Run("With derivative doc count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1063,7 +1065,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			// require.Equal(t, plAgg.BucketPath, "_count")
 		})
 
-		t.Run("With serial_diff with pipelineAgg", func(t *testing.T) {
+		t.Run("With serial_diff", func(t *testing.T) {
+			// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1094,7 +1097,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, plAgg.Settings["lag"], float64(5))
 		})
 
-		t.Run("With serial_diff", func(t *testing.T) {
+		t.Run("With serial_diff (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1192,7 +1195,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			})
 		})
 
-		t.Run("With bucket_script", func(t *testing.T) {
+		t.Run("With bucket_script (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1263,7 +1266,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			})
 		})
 
-		t.Run("With bucket_script doc count", func(t *testing.T) {
+		t.Run("With bucket_script doc count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1297,7 +1300,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			})
 		})
 
-		t.Run("With lucene query should add query_string filter when query is not empty", func(t *testing.T) {
+		t.Run("With lucene query should add query_string filter when query is not empty (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1310,7 +1313,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, filter.AnalyzeWildcard, true)
 		})
 
-		t.Run("With lucene query should add query_string filter when query is not empty", func(t *testing.T) {
+		t.Run("With lucene query should add query_string filter when query is not empty (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1326,7 +1329,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		// FIXME
 		// Log query is not implemented yet
 		// We need to define how to handle it
-		// t.Run("With log query should return query with defaults ", func(t *testing.T) {
+		// t.Run("With log query should return query with defaults  (from frontend tests)", func(t *testing.T) {
 		// 	c := newFakeClient()
 		// 	_, err := executeTsdbQuery(c, `{
 		// 		"timeField": "@timestamp",
@@ -1360,12 +1363,11 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 	})
 }
 
-// OLA!
 func TestSettingsCasting(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 
-	t.Run("Correctly casts values in moving_avg", func(t *testing.T) {
+	t.Run("Correctly casts values in moving_avg (from frontend tests)", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
@@ -1407,7 +1409,8 @@ func TestSettingsCasting(t *testing.T) {
 		// assert.Equal(t, modelSettings["period"], 4)
 	})
 
-	t.Run("Correctly transforms moving_average settings with pipelineAff", func(t *testing.T) {
+	t.Run("Correctly transforms moving_average settings", func(t *testing.T) {
+		// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
@@ -1451,7 +1454,7 @@ func TestSettingsCasting(t *testing.T) {
 		assert.Equal(t, 4., modelSettings["period"])
 	})
 
-	t.Run("Correctly transforms serial_diff settings", func(t *testing.T) {
+	t.Run("Correctly transforms serial_diff settings (from frontend tests)", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
@@ -1477,7 +1480,8 @@ func TestSettingsCasting(t *testing.T) {
 		// assert.Equal(t, serialDiffSettings["lag"], 1.)
 	})
 
-	t.Run("Correctly transforms serial_diff settings with pipelineAgg", func(t *testing.T) {
+	t.Run("Correctly transforms serial_diff settings", func(t *testing.T) {
+		// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
@@ -1644,7 +1648,7 @@ func TestSettingsCasting(t *testing.T) {
 		})
 	})
 
-	t.Run("Field property", func(t *testing.T) {
+	t.Run("Field property (from frontend tests)", func(t *testing.T) {
 		t.Run("Should use timeField from datasource when not specified", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
@@ -1693,8 +1697,6 @@ func TestSettingsCasting(t *testing.T) {
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 			assert.Equal(t, dateHistogramAgg.FixedInterval, "1d")
 		})
-
-		// HERE
 	})
 }
 
