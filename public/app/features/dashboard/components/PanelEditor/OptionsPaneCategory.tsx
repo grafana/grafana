@@ -145,7 +145,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: hidden;
       line-height: 1.5;
       font-size: 1rem;
-      padding-left: ${theme.spacing(0.7)};
+      padding-left: 6px;
       font-weight: ${theme.typography.fontWeightMedium};
       margin: 0;
     `,
