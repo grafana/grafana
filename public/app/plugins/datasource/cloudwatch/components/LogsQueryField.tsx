@@ -7,7 +7,6 @@ import { Editor } from 'slate-react';
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import {
   BracesPlugin,
-  LegacyForms,
   QueryField,
   SlatePrism,
   TypeaheadInput,
@@ -26,7 +25,7 @@ import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-import { LogGroupSelector } from './LogGroupSelector';
+import { LogGroupSelection } from './LogGroupSelection';
 import QueryHeader from './QueryHeader';
 
 export interface CloudWatchLogsQueryFieldProps
@@ -39,14 +38,9 @@ export interface CloudWatchLogsQueryFieldProps
   query: CloudWatchLogsQuery;
 }
 
-const rowGap = css`
-  gap: 3px;
-`;
-
 const addPaddingToButton = css`
   padding: 1px 4px;
 `;
-
 interface State {
   hint:
     | {
@@ -128,7 +122,7 @@ class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFi
 
   render() {
     const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource, theme } = this.props;
-    const { region, refId, expression, logGroupNames } = query;
+    const { expression } = query;
     const { hint } = this.state;
 
     const showError = data && data.error && data.error.refId === query.refId;
@@ -143,25 +137,7 @@ class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFi
           onChange={onChange}
           sqlCodeEditorIsDirty={false}
         />
-        <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
-          <LegacyForms.FormField
-            label="Log Groups"
-            labelWidth={6}
-            className="flex-grow-1"
-            inputEl={
-              <LogGroupSelector
-                region={region}
-                selectedLogGroups={logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups}
-                datasource={datasource}
-                onChange={function (logGroups: string[]): void {
-                  onChange({ ...query, logGroupNames: logGroups });
-                }}
-                onRunQuery={onRunQuery}
-                refId={refId}
-              />
-            }
-          />
-        </div>
+        <LogGroupSelection datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery} />
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
@@ -173,7 +149,6 @@ class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFi
               cleanText={cleanText}
               placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
               portalOrigin="cloudwatch"
-              disabled={!logGroupNames || logGroupNames.length === 0}
             />
           </div>
           {ExtraFieldElement}
