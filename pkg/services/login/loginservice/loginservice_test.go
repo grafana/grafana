@@ -28,7 +28,6 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	login := Implementation{
 		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
-		SQLStore:        nil,
 		userService:     usertest.NewUserServiceFake(),
 		orgService:      orgtest.NewOrgServiceFake(),
 	}
@@ -53,7 +52,6 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	login := Implementation{
 		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
-		SQLStore:        nil,
 		userService:     usertest.NewUserServiceFake(),
 		orgService:      orgService,
 	}

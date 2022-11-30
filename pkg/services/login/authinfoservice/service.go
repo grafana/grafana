@@ -185,6 +185,13 @@ func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthI
 	return s.authInfoStore.GetAuthInfo(ctx, query)
 }
 
+func (s *Implementation) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
+	if len(query.UserIDs) == 0 {
+		return map[int64]string{}, nil
+	}
+	return s.authInfoStore.GetUserLabels(ctx, query)
+}
+
 func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
 	return s.authInfoStore.UpdateAuthInfo(ctx, cmd)
 }
