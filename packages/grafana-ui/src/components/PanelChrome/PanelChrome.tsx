@@ -86,10 +86,12 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const handleMenuOpen = () => {};
 
   const hasHeader = title || titleItems.length > 0 || menu;
-
+  const isUsingDeprecatedLeftItems = leftItems.length > 0;
   return (
     <div className={styles.container} style={containerStyles}>
-      {loadingState === LoadingState.Loading && <LoadingBar containerWidth={width} width={128} height={2} />}
+      {loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems && (
+        <LoadingBar containerWidth={width} width={128} height={2} />
+      )}
 
       {hasHeader && !hoverHeader && (
         <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
@@ -131,7 +133,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
             </Dropdown>
           )}
 
-          {leftItems.length > 0 && (
+          {isUsingDeprecatedLeftItems && (
             <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
           )}
         </div>
