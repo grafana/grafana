@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { Control, Controller } from 'react-hook-form';
+import { UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -16,11 +16,13 @@ import { SharePublicDashboardInputs } from './SharePublicDashboard';
 export const Configuration = ({
   disabled,
   dashboard,
-  control,
+  register,
+  onEnabledSwitchClick,
 }: {
   disabled: boolean;
   dashboard: DashboardModel;
-  control: Control<SharePublicDashboardInputs>;
+  register: UseFormRegister<SharePublicDashboardInputs>;
+  onEnabledSwitchClick: () => void;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
@@ -34,87 +36,33 @@ export const Configuration = ({
       <FieldSet disabled={disabled} className={styles.dashboardConfig}>
         <VerticalGroup spacing="md">
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label>Allow viewers to change time ranges</Label>
-            <Controller
-              name="isTimePickerEnabled"
-              control={control}
-              render={({ field }) => (
-                <Switch
-                  {...field}
-                  data-testid={selectors.EnableAnnotationsSwitch}
-                  // value={isTimePickerEnabled}
-                  onChange={() => {
-                    console.log('te cabe', control.validFieldsRef.current.isTimePickerEnabled);
-                    reportInteraction('grafana_dashboards_annotations_clicked', {
-                      action: field.value ? 'disable' : 'enable',
-                    });
-                    field.onChange();
-                  }}
-                />
-              )}
-            />
-            {/*<TimeRangeInput value={timeRange} disabled onChange={() => {}} />*/}
+            <Label description="The public dashboard uses the default time settings of the dashboard">Time range</Label>
+            <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
-          {/*{!isTimePickerEnabled && (*/}
-          {/*  <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">*/}
-          {/*    <p className={styles.timeRangeDisabledText}>*/}
-          {/*      The public dashboard will use the default time settings of the dashboard*/}
-          {/*    </p>*/}
-          {/*    <TimeRangeInput value={timeRange} disabled onChange={() => {}} />*/}
-          {/*  </Layout>*/}
-          {/*)}*/}
-
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Show annotations on public dashboard">Show annotations</Label>
-            <Controller
-              name="isAnnotationsEnabled"
-              control={control}
-              render={({ field }) => (
-                <Switch
-                  {...field}
-                  data-testid={selectors.EnableAnnotationsSwitch}
-                  // value={isAnnotationsEnabled}
-                  // onChange={() => {
-                  //   reportInteraction('grafana_dashboards_annotations_clicked', {
-                  //     action: isAnnotationsEnabled ? 'disable' : 'enable',
-                  //   });
-                  //   onToggleAnnotations();
-                  // }}
-                />
-              )}
+            <Switch
+              {...register('isAnnotationsEnabled', {
+                onChange: (e) =>
+                  reportInteraction('grafana_dashboards_annotations_clicked', {
+                    action: e.target.checked ? 'enable' : 'disable',
+                  }),
+              })}
+              data-testid={selectors.EnableAnnotationsSwitch}
             />
           </Layout>
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
-            <Controller
-              name="enabledSwitch.isEnabled"
-              control={control}
-              render={({ field }) => (
-                <Switch
-                  {...field}
-                  data-testid={selectors.EnableSwitch}
-                  // value={isAnnotationsEnabled}
-                  // onChange={() => {
-                  //     reportInteraction('grafana_dashboards_public_enable_clicked', {
-                  //   action: isPubDashEnabled ? 'disable' : 'enable',
-                  // });
-                  //
-                  //   onToggleEnabled();
-                  // }}
-                />
-              )}
+            <Switch
+              {...register('enabledSwitch', {
+                onChange: (e) =>
+                  reportInteraction('grafana_dashboards_public_enable_clicked', {
+                    action: e.target.checked ? 'enable' : 'disable',
+                  }),
+              })}
+              data-testid={selectors.EnableSwitch}
+              onClick={onEnabledSwitchClick}
             />
-            {/*<Switch*/}
-            {/*  data-testid={selectors.EnableSwitch}*/}
-            {/*  value={isPubDashEnabled}*/}
-            {/*  onChange={() => {*/}
-            {/*    reportInteraction('grafana_dashboards_public_enable_clicked', {*/}
-            {/*      action: isPubDashEnabled ? 'disable' : 'enable',*/}
-            {/*    });*/}
-
-            {/*    onToggleEnabled();*/}
-            {/*  }}*/}
-            {/*/>*/}
           </Layout>
         </VerticalGroup>
       </FieldSet>

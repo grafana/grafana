@@ -44,7 +44,7 @@ import { ShareModal } from '../ShareModal';
 
 interface Props extends ShareModalTabProps {}
 
-export type SharePublicDashboardAcknowledgmentInputs = {
+type SharePublicDashboardAcknowledgmentInputs = {
   publicAcknowledgment: boolean;
   dataSourcesAcknowledgment: boolean;
   usageAcknowledgment: boolean;
@@ -52,8 +52,7 @@ export type SharePublicDashboardAcknowledgmentInputs = {
 
 export type SharePublicDashboardInputs = {
   isAnnotationsEnabled: boolean;
-  enabledSwitch: { isEnabled: boolean; wasTouched: boolean };
-  isTimePickerEnabled: boolean;
+  enabledSwitch: boolean;
 } & SharePublicDashboardAcknowledgmentInputs;
 
 export const SharePublicDashboard = (props: Props) => {
@@ -66,8 +65,6 @@ export const SharePublicDashboard = (props: Props) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const { hasPublicDashboard } = props.dashboard.meta;
 
-  // const onSubmit: SubmitHandler<SharePublicDashboardInputs> = (data) => console.log(data);
-
   const {
     isLoading: isGetLoading,
     data: publicDashboard,
@@ -78,18 +75,23 @@ export const SharePublicDashboard = (props: Props) => {
     skip: !hasPublicDashboard,
   });
 
-  const { control, getValues, reset } = useForm<SharePublicDashboardInputs>({
+  const {
+    reset,
+    handleSubmit,
+    watch,
+    register,
+    setValue,
+    getValues,
+    formState: { touchedFields },
+  } = useForm<SharePublicDashboardInputs>({
     defaultValues: {
       publicAcknowledgment: false,
       dataSourcesAcknowledgment: false,
       usageAcknowledgment: false,
       isAnnotationsEnabled: false,
-      enabledSwitch: { isEnabled: false, wasTouched: false },
-      isTimePickerEnabled: false,
+      enabledSwitch: false,
     },
   });
-
-  console.log(getValues());
 
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
   const [updatePublicDashboard, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
@@ -109,14 +111,15 @@ export const SharePublicDashboard = (props: Props) => {
       dataSourcesAcknowledgment: isPublicDashboardPersisted,
       usageAcknowledgment: isPublicDashboardPersisted,
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
-      enabledSwitch: { wasTouched: isPublicDashboardPersisted, isEnabled: publicDashboard?.isEnabled },
+      enabledSwitch: publicDashboard?.isEnabled,
     });
   }, [publicDashboard, reset]);
 
   const isLoading = isGetLoading || isSaveLoading || isUpdateLoading;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const acknowledged =
-    getValues('publicAcknowledgment') && getValues('dataSourcesAcknowledgment') && getValues('usageAcknowledgment');
+    watch('publicAcknowledgment') && watch('dataSourcesAcknowledgment') && watch('usageAcknowledgment');
+
   const isSaveDisabled = useMemo(
     () =>
       !hasWritePermissions ||
@@ -126,20 +129,30 @@ export const SharePublicDashboard = (props: Props) => {
       isFetching ||
       isGetError ||
       //CHEQUAR QUE CAMBIA. SINO USAR FORM
-      (!publicDashboardPersisted(publicDashboard) && !getValues('enabledSwitch').wasTouched),
-    [hasWritePermissions, acknowledged, props.dashboard, isLoading, isGetError, getValues, publicDashboard, isFetching]
+      (!publicDashboardPersisted(publicDashboard) && !touchedFields.enabledSwitch),
+    [
+      hasWritePermissions,
+      acknowledged,
+      props.dashboard,
+      isLoading,
+      isGetError,
+      publicDashboard,
+      isFetching,
+      touchedFields.enabledSwitch,
+    ]
   );
+
   const isDeleteDisabled = isLoading || isFetching || isGetError;
 
-  const onSavePublicConfig = async () => {
+  const onSavePublicConfig = async (values: SharePublicDashboardInputs) => {
     reportInteraction('grafana_dashboards_public_create_clicked');
 
     const req = {
       dashboard: props.dashboard,
       payload: {
         ...publicDashboard!,
-        isEnabled: getValues('enabledSwitch').isEnabled,
-        annotationsEnabled: getValues('isAnnotationsEnabled'),
+        isEnabled: values.enabledSwitch,
+        annotationsEnabled: values.isAnnotationsEnabled,
       },
     };
 
@@ -177,28 +190,25 @@ export const SharePublicDashboard = (props: Props) => {
             This dashboard cannot be made public because it has template variables
           </Alert>
         ) : (
-          <>
+          <form onSubmit={handleSubmit(onSavePublicConfig)}>
             <Description />
             <hr />
             <div className={styles.checkboxes}>
               <AcknowledgeCheckboxes
                 disabled={publicDashboardPersisted(publicDashboard) || !hasWritePermissions || isLoading || isGetError}
-                control={control}
+                register={register}
               />
             </div>
             <hr />
             <Configuration
-              control={control}
+              register={register}
               dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isGetError}
-
-              // onToggleEnabled={() =>
-              //   setEnabledSwitch((prevState) => ({ isEnabled: !prevState.isEnabled, wasTouched: true }))
-              // }
-              // onToggleAnnotations={() => setAnnotationsEnabled((prevState) => !prevState)}
-              // onToggleTimePicker={() => setTimePickerEnabled((prevState) => !prevState)}
+              onEnabledSwitchClick={() => {
+                setValue('enabledSwitch', !getValues('enabledSwitch'), { shouldTouch: true });
+              }}
             />
-            {publicDashboardPersisted(publicDashboard) && getValues('enabledSwitch').isEnabled && (
+            {publicDashboardPersisted(publicDashboard) && watch('enabledSwitch') && (
               <Field label="Link URL" className={styles.publicUrl}>
                 <Input
                   disabled={isLoading}
@@ -237,11 +247,12 @@ export const SharePublicDashboard = (props: Props) => {
             )}
             <HorizontalGroup>
               <Layout orientation={isDesktop ? 0 : 1}>
-                <Button disabled={isSaveDisabled} onClick={onSavePublicConfig} data-testid={selectors.SaveConfigButton}>
+                <Button type="submit" disabled={isSaveDisabled} data-testid={selectors.SaveConfigButton}>
                   {hasPublicDashboard ? 'Save public dashboard' : 'Create public dashboard'}
                 </Button>
                 {publicDashboard && hasWritePermissions && (
                   <DeletePublicDashboardButton
+                    type="button"
                     disabled={isDeleteDisabled}
                     data-testid={selectors.DeleteButton}
                     onDismiss={onDismissDelete}
@@ -259,7 +270,7 @@ export const SharePublicDashboard = (props: Props) => {
               </Layout>
               {(isSaveLoading || isFetching) && <Spinner />}
             </HorizontalGroup>
-          </>
+          </form>
         )}
       </div>
     </>
