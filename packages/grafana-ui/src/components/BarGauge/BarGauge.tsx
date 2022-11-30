@@ -83,19 +83,25 @@ export class BarGauge extends PureComponent<Props> {
     const { title } = this.props.value;
     const styles = getTitleStyles(this.props);
 
-    if (!title) {
+    if (onClick) {
       return (
-        <button style={styles.wrapper} onClick={onClick} className={cx(clearButtonStyles(theme), className)}>
+        <button
+          type="button"
+          style={styles.wrapper}
+          onClick={onClick}
+          className={cx(clearButtonStyles(theme), className)}
+        >
+          <div style={styles.title}>{title}</div>
           {this.renderBarAndValue()}
         </button>
       );
     }
 
     return (
-      <button style={styles.wrapper} onClick={onClick} className={cx(clearButtonStyles(theme), className)}>
-        <div style={styles.title}>{title}</div>
+      <div style={styles.wrapper} className={className}>
+        {title && <div style={styles.title}>{title}</div>}
         {this.renderBarAndValue()}
-      </button>
+      </div>
     );
   }
 
