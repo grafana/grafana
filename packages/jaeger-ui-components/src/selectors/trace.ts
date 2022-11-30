@@ -83,7 +83,7 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse) {
   const comparator = (nodeA: TreeNode | undefined, nodeB: TreeNode | undefined) => {
     const a: TraceSpanData | undefined = nodeA?.value ? spansById.get(nodeA.value.toString()) : undefined;
     const b: TraceSpanData | undefined = nodeB?.value ? spansById.get(nodeB.value.toString()) : undefined;
-    return +(a!.startTime > b!.startTime) || +(a!.startTime === b!.startTime) - 1;
+    return +(a?.startTime! > b?.startTime!) || +(a?.startTime === b?.startTime) - 1;
   };
   trace.spans.forEach((span: TraceSpanData) => {
     const node: TreeNode | undefined = nodesById.get(span.spanID);
