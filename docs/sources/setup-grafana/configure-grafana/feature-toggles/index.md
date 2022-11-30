@@ -49,8 +49,8 @@ Some stable features are enabled by default. You can disable a stable feature by
 
 ## Alpha feature toggles
 
-These features are early in their development lifecycle and so are not yet supported in Grafana Cloud. Alpha features
-might be changed or removed without prior notice.
+These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
+Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
