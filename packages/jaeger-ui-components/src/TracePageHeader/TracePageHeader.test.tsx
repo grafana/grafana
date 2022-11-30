@@ -71,13 +71,11 @@ describe('TracePageHeader test', () => {
 
     expect(headerItems).toHaveLength(5);
     //                                                        Year-month-day hour-minute-second
-    expect(
-      headerItems?.[0].textContent?.match(/Trace Start:\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3}/g)
-    ).toBeTruthy();
-    expect(headerItems?.[1].textContent?.match(/Duration:[\d|\.][\.|\d|s][\.|\d|s]?[\d]?/)).toBeTruthy();
-    expect(headerItems?.[2].textContent?.match(/Services:\d\d?/g)).toBeTruthy();
-    expect(headerItems?.[3].textContent?.match(/Depth:\d\d?/)).toBeTruthy();
-    expect(headerItems?.[4].textContent?.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
+    expect(headerItems[0].textContent?.match(/Trace Start:\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3}/g)).toBeTruthy();
+    expect(headerItems[1].textContent?.match(/Duration:[\d|\.][\.|\d|s][\.|\d|s]?[\d]?/)).toBeTruthy();
+    expect(headerItems[2].textContent?.match(/Services:\d\d?/g)).toBeTruthy();
+    expect(headerItems[3].textContent?.match(/Depth:\d\d?/)).toBeTruthy();
+    expect(headerItems[4].textContent?.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
   });
 
   it('should render a <SpanGraph>', () => {
