@@ -57,7 +57,7 @@ describe('getTraceSpanIdsAsTree()', () => {
     const tree = traceSelectors.getTraceSpanIdsAsTree(generatedTrace);
     const spanMap = traceSelectors.getTraceSpansAsMap(generatedTrace);
 
-    tree.walk((value: string, node: TreeNode) => {
+    tree.walk((value: string | number | undefined, node: TreeNode) => {
       const expectedParentValue = value === traceSelectors.TREE_ROOT_ID ? null : value;
       node.children.forEach((childNode) => {
         expect(getSpanParentId(spanMap.get(childNode.value))).toBe(expectedParentValue);
@@ -271,7 +271,7 @@ it('getTreeSizeForTraceSpan() should return the size for a child span', () => {
       trace: generatedTrace,
       span: generatedTrace.spans[1],
     })
-  ).toBe(traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(generatedTrace.spans[1].spanID).size - 1);
+  ).toBe(traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(generatedTrace.spans[1].spanID)!.size - 1);
 });
 
 it('getTreeSizeForTraceSpan() should return -1 for an absent span', () => {
@@ -295,7 +295,7 @@ it('getTraceName() should return the trace name based on the parentSpan', () => 
 
 it('omitCollapsedSpans() should filter out collapsed spans', () => {
   const span = generatedTrace.spans[1];
-  const size = traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(span.spanID).size - 1;
+  const size = traceSelectors.getTraceSpanIdsAsTree(generatedTrace).find(span.spanID)!.size - 1;
 
   expect(
     traceSelectors.omitCollapsedSpans({

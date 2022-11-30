@@ -67,7 +67,7 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse) {
   const spansById = new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, span]));
   const root = new TreeNode(TREE_ROOT_ID);
   trace.spans.forEach((span: TraceSpanData) => {
-    const node = nodesById.get(span.spanID);
+    const node = nodesById.get(span.spanID)!;
     if (Array.isArray(span.references) && span.references.length) {
       const { refType, spanID: parentID } = span.references[0];
       if (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM') {
@@ -80,9 +80,9 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse) {
       root.children.push(node);
     }
   });
-  const comparator = (nodeA: { value: string }, nodeB: { value: string }) => {
-    const a: TraceSpanData | undefined = spansById.get(nodeA.value);
-    const b: TraceSpanData | undefined = spansById.get(nodeB.value);
+  const comparator = (nodeA: TreeNode | undefined, nodeB: TreeNode | undefined) => {
+    const a: TraceSpanData | undefined = nodeA?.value ? spansById.get(nodeA.value.toString()) : undefined;
+    const b: TraceSpanData | undefined = nodeB?.value ? spansById.get(nodeB.value.toString()) : undefined;
     return +(a!.startTime > b!.startTime) || +(a!.startTime === b!.startTime) - 1;
   };
   trace.spans.forEach((span: TraceSpanData) => {
@@ -148,7 +148,7 @@ export const getTraceDepth = createSelector(getTraceSpanIdsAsTree, (spanTree) =>
 export const getSpanDepthForTrace = createSelector(
   createSelector((state: { trace: TraceResponse }) => state.trace, getTraceSpanIdsAsTree),
   createSelector((state: { span: TraceSpanData }) => state.span, getSpanId),
-  (node, spanID) => node.getPath(spanID).length - 1
+  (node, spanID) => node.getPath(spanID)!.length - 1
 );
 
 export const getTraceServices = createSelector(getTraceProcesses, (processes) =>
@@ -202,7 +202,7 @@ export const getSortedSpans = createSelector(
 const getTraceSpansByHierarchyPosition = createSelector(getTraceSpanIdsAsTree, (tree) => {
   const hierarchyPositionMap = new Map();
   let i = 0;
-  tree.walk((spanID: string) => hierarchyPositionMap.set(spanID, i++));
+  tree.walk((spanID: string | number | undefined) => hierarchyPositionMap.set(spanID, i++));
   return hierarchyPositionMap;
 });
 
@@ -210,7 +210,7 @@ export const getTreeSizeForTraceSpan = createSelector(
   createSelector((state: { trace: TraceResponse }) => state.trace, getTraceSpanIdsAsTree),
   createSelector((state: { span: TraceSpanData }) => state.span, getSpanId),
   (tree, spanID) => {
-    const node: TreeNode = tree.find(spanID);
+    const node = tree.find(spanID);
     if (!node) {
       return -1;
     }
@@ -241,7 +241,7 @@ export const omitCollapsedSpans = createSelector(
   ({ collapsed }: { collapsed: string[] }) => collapsed,
   (spans, tree, collapse) => {
     const hiddenSpanIds = collapse.reduce((result, collapsedSpanId) => {
-      tree.find(collapsedSpanId).walk((id: string) => id !== collapsedSpanId && result.add(id));
+      tree.find(collapsedSpanId)!.walk((id: string | number | undefined) => id !== collapsedSpanId && result.add(id));
       return result;
     }, new Set());
 
