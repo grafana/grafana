@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -343,7 +344,16 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), f)
+	if rs, ok := f.(io.ReadSeeker); ok {
+		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), rs)
+	} else {
+		b, err := io.ReadAll(f)
+		if err != nil {
+			c.JsonApiErr(500, "Plugin file exists but could not read", err)
+			return
+		}
+		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), bytes.NewReader(b))
+	}
 }
 
 // CheckHealth returns the health of a plugin.

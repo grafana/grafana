@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -98,12 +97,7 @@ func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
 
-type File interface {
-	fs.File
-	io.Seeker
-}
-
-func (p PluginDTO) File(name string) (File, error) {
+func (p PluginDTO) File(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
 		// CleanRelativePath should clean and make the path relative so this is not expected to fail
