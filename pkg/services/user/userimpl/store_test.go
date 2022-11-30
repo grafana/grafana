@@ -459,17 +459,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, query3.Result)
 		require.Equal(t, query3.OrgId, users[1].OrgID)
-		err = ss.SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].ID, OrgId: users[0].OrgID})
-		require.Nil(t, err)
-		query4 := &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].ID}
-		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
-		require.Nil(t, err)
-		require.NotNil(t, query4.Result)
-		require.Equal(t, query4.Result.OrgID, users[0].OrgID)
-
-		cacheKey := newSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
-		_, found := ss.CacheService.Get(cacheKey)
-		require.True(t, found)
 
 		disableCmd := user.BatchDisableUsersCommand{
 			UserIDs:    []int64{users[0].ID, users[1].ID, users[2].ID, users[3].ID, users[4].ID},

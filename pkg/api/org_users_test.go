@@ -341,9 +341,9 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, o
 	require.NoError(t, err)
 
 	// Create both orgs with server admin
-	err = db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: testServerAdminViewer.OrgName, UserId: testServerAdminViewer.UserID})
+	_, err = orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: testServerAdminViewer.OrgName, UserID: testServerAdminViewer.UserID})
 	require.NoError(t, err)
-	err = db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: testAdminOrg2.OrgName, UserId: testServerAdminViewer.UserID})
+	_, err = orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: testAdminOrg2.OrgName, UserID: testServerAdminViewer.UserID})
 	require.NoError(t, err)
 
 	err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgID: testAdminOrg2.OrgID, UserID: testAdminOrg2.UserID})
@@ -729,6 +729,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			var err error
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, setting.NewCfg(), quotatest.New(false, nil))
 				hs.userService, err = userimpl.ProvideService(
 					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(), quotatest.New(false, nil))
 				require.NoError(t, err)
