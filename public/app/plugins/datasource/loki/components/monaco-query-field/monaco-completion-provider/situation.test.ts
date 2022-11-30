@@ -157,7 +157,7 @@ describe('situation', () => {
   });
 
   it('identifies AFTER_UNWRAP autocomplete situations', () => {
-    assertSituation('sum(count_over_time({one="val1"} | unwrap^', {
+    assertSituation('sum(sum_over_time({one="val1"} | unwrap^', {
       type: 'AFTER_UNWRAP',
       logQuery: '{one="val1"}',
     });
