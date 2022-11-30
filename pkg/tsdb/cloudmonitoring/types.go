@@ -184,28 +184,7 @@ type timeSeriesDataIterator struct {
 }
 
 type timeSeriesPointData struct {
-	Values []struct {
-		BoolValue         bool    `json:"boolValue"`
-		Int64Value        string  `json:"int64Value"`
-		DoubleValue       float64 `json:"doubleValue"`
-		StringValue       string  `json:"stringValue"`
-		DistributionValue struct {
-			Count                 string  `json:"count"`
-			Mean                  float64 `json:"mean"`
-			SumOfSquaredDeviation float64 `json:"sumOfSquaredDeviation"`
-			Range                 struct {
-				Min int `json:"min"`
-				Max int `json:"max"`
-			} `json:"range"`
-			BucketOptions cloudMonitoringBucketOptions `json:"bucketOptions"`
-			BucketCounts  []string                     `json:"bucketCounts"`
-			Examplars     []struct {
-				Value     float64 `json:"value"`
-				Timestamp string  `json:"timestamp"`
-				// attachments
-			} `json:"examplars"`
-		} `json:"distributionValue"`
-	} `json:"values"`
+	Values       []timeSeriesPointValue `json:"values"`
 	TimeInterval struct {
 		EndTime   time.Time `json:"endTime"`
 		StartTime time.Time `json:"startTime"`
@@ -217,7 +196,7 @@ func (point *timeSeriesPointData) doubleValue(descriptorIndex int) float64 {
 }
 
 func (point *timeSeriesPointData) int64Value(descriptorIndex int) string {
-	return point.Values[descriptorIndex].Int64Value
+	return point.Values[descriptorIndex].IntValue
 }
 
 func (point *timeSeriesPointData) boolValue(descriptorIndex int) bool {
@@ -276,28 +255,30 @@ type timeSeriesPoint struct {
 		StartTime time.Time `json:"startTime"`
 		EndTime   time.Time `json:"endTime"`
 	} `json:"interval"`
-	Value struct {
-		DoubleValue       float64 `json:"doubleValue"`
-		StringValue       string  `json:"stringValue"`
-		BoolValue         bool    `json:"boolValue"`
-		IntValue          string  `json:"int64Value"`
-		DistributionValue struct {
-			Count                 string  `json:"count"`
-			Mean                  float64 `json:"mean"`
-			SumOfSquaredDeviation float64 `json:"sumOfSquaredDeviation"`
-			Range                 struct {
-				Min int `json:"min"`
-				Max int `json:"max"`
-			} `json:"range"`
-			BucketOptions cloudMonitoringBucketOptions `json:"bucketOptions"`
-			BucketCounts  []string                     `json:"bucketCounts"`
-			Examplars     []struct {
-				Value     float64 `json:"value"`
-				Timestamp string  `json:"timestamp"`
-				// attachments
-			} `json:"examplars"`
-		} `json:"distributionValue"`
-	} `json:"value"`
+	Value timeSeriesPointValue `json:"value"`
+}
+
+type timeSeriesPointValue struct {
+	DoubleValue       float64 `json:"doubleValue"`
+	StringValue       string  `json:"stringValue"`
+	BoolValue         bool    `json:"boolValue"`
+	IntValue          string  `json:"int64Value"`
+	DistributionValue struct {
+		Count                 string  `json:"count"`
+		Mean                  float64 `json:"mean"`
+		SumOfSquaredDeviation float64 `json:"sumOfSquaredDeviation"`
+		Range                 struct {
+			Min int `json:"min"`
+			Max int `json:"max"`
+		} `json:"range"`
+		BucketOptions cloudMonitoringBucketOptions `json:"bucketOptions"`
+		BucketCounts  []string                     `json:"bucketCounts"`
+		Examplars     []struct {
+			Value     float64 `json:"value"`
+			Timestamp string  `json:"timestamp"`
+			// attachments
+		} `json:"examplars"`
+	} `json:"distributionValue"`
 }
 
 func (point *timeSeriesPoint) doubleValue(descriptorIndex int) float64 {
