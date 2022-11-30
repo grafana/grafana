@@ -166,7 +166,7 @@ export const SharePublicDashboard = (props: Props) => {
           <Alert
             severity="warning"
             title="Unsupported Datasources"
-            data-testid={selectors.TemplateVariablesWarningAlert}
+            data-testid={selectors.UnsupportedDatasourcesWarningAlert}
           >
             <div>
               {`There are datasources in this dashboard that are unsupported for public dashboards: ${getUnsupportedDashboardDatasources(
