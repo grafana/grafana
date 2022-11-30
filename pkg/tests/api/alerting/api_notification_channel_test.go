@@ -31,7 +31,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestTestReceivers(t *testing.T) {
+func TestIntegrationTestReceivers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -423,7 +427,11 @@ func TestTestReceivers(t *testing.T) {
 	})
 }
 
-func TestTestReceiversAlertCustomization(t *testing.T) {
+func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -693,7 +701,11 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 }
 
-func TestNotificationChannels(t *testing.T) {
+func TestIntegrationNotificationChannels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

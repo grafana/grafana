@@ -24,7 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestPrometheusRules(t *testing.T) {
+func TestIntegrationPrometheusRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -319,7 +323,11 @@ func TestPrometheusRules(t *testing.T) {
 	}
 }
 
-func TestPrometheusRulesFilterByDashboard(t *testing.T) {
+func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -612,7 +620,11 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 	}
 }
 
-func TestPrometheusRulesPermissions(t *testing.T) {
+func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
