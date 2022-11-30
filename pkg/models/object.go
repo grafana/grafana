@@ -52,17 +52,11 @@ const (
 	// ExternalEntityReferenceRuntime_Transformer is a "type" under runtime
 	// UIDs include: joinByField, organize, seriesToColumns, etc
 	ExternalEntityReferenceRuntime_Transformer = "transformer"
-
-	// ObjectStoreScopeEntity is organized in: {kind}/{uid}
-	ObjectStoreScopeEntity = "entity"
-
-	// ObjectStoreScopeDrive is organized in: {uid/with/slash}.{kind}
-	ObjectStoreScopeDrive = "drive"
 )
 
-// ObjectKindInfo describes information needed from the object store
+// EntityKindInfo describes information needed from the object store
 // All non-raw types will have a schema that can be used to validate
-type ObjectKindInfo struct {
+type EntityKindInfo struct {
 	// Unique short id for this kind
 	ID string `json:"id,omitempty"`
 
@@ -82,10 +76,10 @@ type ObjectKindInfo struct {
 	MimeType string `json:"mimeType,omitempty"`
 }
 
-// ObjectSummary represents common data derived from a raw object bytes.
+// EntitySummary represents common data derived from a raw object bytes.
 // The values should not depend on system state, and are derived from the raw object.
 // This summary is used for a unified search and object listing
-type ObjectSummary struct {
+type EntitySummary struct {
 	UID         string `json:"uid,omitempty"`
 	Kind        string `json:"kind,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -99,23 +93,23 @@ type ObjectSummary struct {
 	URL string `json:"URL,omitempty"`
 
 	// When errors exist
-	Error *ObjectErrorInfo `json:"error,omitempty"`
+	Error *EntityErrorInfo `json:"error,omitempty"`
 
 	// Optional field values.  The schema will define and document possible values for a given kind
 	Fields map[string]interface{} `json:"fields,omitempty"`
 
 	// eg: panels within dashboard
-	Nested []*ObjectSummary `json:"nested,omitempty"`
+	Nested []*EntitySummary `json:"nested,omitempty"`
 
 	// Optional references to external things
-	References []*ObjectExternalReference `json:"references,omitempty"`
+	References []*EntityExternalReference `json:"references,omitempty"`
 
 	// The summary can not be extended
 	_ interface{}
 }
 
 // This will likely get replaced with a more general error framework.
-type ObjectErrorInfo struct {
+type EntityErrorInfo struct {
 	// TODO: Match an error code registry?
 	Code int64 `json:"code,omitempty"`
 
@@ -129,7 +123,7 @@ type ObjectErrorInfo struct {
 // Reference to another object outside itself
 // This message is derived from the object body and can be used to search for references.
 // This does not represent a method to declare a reference to another object.
-type ObjectExternalReference struct {
+type EntityExternalReference struct {
 	// datasource (instance), dashboard (instance),
 	Kind string `json:"kind,omitempty"`
 
@@ -140,6 +134,6 @@ type ObjectExternalReference struct {
 	UID string `json:"UID,omitempty"`
 }
 
-// ObjectSummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
+// EntitySummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
 // This should not include values that depend on system state, only the raw object
-type ObjectSummaryBuilder = func(ctx context.Context, uid string, body []byte) (*ObjectSummary, []byte, error)
+type EntitySummaryBuilder = func(ctx context.Context, uid string, body []byte) (*EntitySummary, []byte, error)

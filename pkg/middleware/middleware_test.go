@@ -514,6 +514,17 @@ func TestMiddlewareContext(t *testing.T) {
 		cfg.AnonymousOrgRole = string(org.RoleEditor)
 	})
 
+	middlewareScenario(t, "middleware should add custom response headers", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, "test", sc.resp.Header().Get("X-Custom-Header"))
+		assert.Regexp(t, "other-test", sc.resp.Header().Get("X-Other-Header"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CustomResponseHeaders = map[string]string{
+			"X-Custom-Header": "test",
+			"X-Other-Header":  "other-test",
+		}
+	})
+
 	t.Run("auth_proxy", func(t *testing.T) {
 		const userID int64 = 33
 		const orgID int64 = 4
@@ -811,6 +822,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
 		sc.m = web.New()
+		sc.m.Use(AddCustomResponseHeaders(cfg))
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.UseMiddleware(ContentSecurityPolicy(cfg, logger))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))

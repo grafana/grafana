@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	objectstore "github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -21,7 +21,7 @@ import (
 type objectStoreImpl struct {
 	sess        *session.SessionDB
 	sqlimpl     *Service
-	objectstore object.ObjectStoreServer
+	objectstore entity.EntityStoreServer
 }
 
 var _ playlist.Service = &objectStoreImpl{}
@@ -55,12 +55,11 @@ func (s *objectStoreImpl) sync() {
 			return
 		}
 		body, _ := json.Marshal(dto)
-		_, _ = s.objectstore.Write(ctx, &object.WriteObjectRequest{
-			GRN: &object.GRN{
+		_, _ = s.objectstore.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
 				TenantId: info.OrgID,
 				UID:      info.UID,
 				Kind:     models.StandardKindPlaylist,
-				Scope:    models.ObjectStoreScopeEntity,
 			},
 			Body: body,
 		})
@@ -74,11 +73,10 @@ func (s *objectStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
-		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
-			GRN: &object.GRN{
-				Scope: models.ObjectStoreScopeEntity,
-				Kind:  models.StandardKindPlaylist,
-				UID:   rsp.UID,
+		_, err = s.objectstore.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
+				Kind: models.StandardKindPlaylist,
+				UID:  rsp.UID,
 			},
 			Body: body,
 		})
@@ -96,11 +94,10 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 		if err != nil {
 			return rsp, fmt.Errorf("unable to write playlist to store")
 		}
-		_, err = s.objectstore.Write(ctx, &object.WriteObjectRequest{
-			GRN: &object.GRN{
-				UID:   rsp.Uid,
-				Kind:  models.StandardKindPlaylist,
-				Scope: models.ObjectStoreScopeEntity,
+		_, err = s.objectstore.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
+				UID:  rsp.Uid,
+				Kind: models.StandardKindPlaylist,
 			},
 			Body: body,
 		})
@@ -114,11 +111,10 @@ func (s *objectStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 func (s *objectStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlaylistCommand) error {
 	err := s.sqlimpl.store.Delete(ctx, cmd)
 	if err == nil {
-		_, err = s.objectstore.Delete(ctx, &object.DeleteObjectRequest{
-			GRN: &object.GRN{
-				UID:   cmd.UID,
-				Kind:  models.StandardKindPlaylist,
-				Scope: models.ObjectStoreScopeEntity,
+		_, err = s.objectstore.Delete(ctx, &entity.DeleteEntityRequest{
+			GRN: &entity.GRN{
+				UID:  cmd.UID,
+				Kind: models.StandardKindPlaylist,
 			},
 		})
 		if err != nil {
@@ -146,31 +142,30 @@ func (s *objectStoreImpl) GetWithoutItems(ctx context.Context, q *playlist.GetPl
 }
 
 func (s *objectStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQuery) (*playlist.PlaylistDTO, error) {
-	rsp, err := s.objectstore.Read(ctx, &object.ReadObjectRequest{
-		GRN: &object.GRN{
-			UID:   q.UID,
-			Kind:  models.StandardKindPlaylist,
-			Scope: models.ObjectStoreScopeEntity,
+	rsp, err := s.objectstore.Read(ctx, &entity.ReadEntityRequest{
+		GRN: &entity.GRN{
+			UID:  q.UID,
+			Kind: models.StandardKindPlaylist,
 		},
 		WithBody: true,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if rsp.Object == nil || rsp.Object.Body == nil {
+	if rsp.Entity == nil || rsp.Entity.Body == nil {
 		return nil, fmt.Errorf("missing object")
 	}
 
 	// Get the object from payload
 	found := &playlist.PlaylistDTO{}
-	err = json.Unmarshal(rsp.Object.Body, found)
+	err = json.Unmarshal(rsp.Entity.Body, found)
 	return found, err
 }
 
 func (s *objectStoreImpl) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {
 	playlists := make(playlist.Playlists, 0)
 
-	rsp, err := s.objectstore.Search(ctx, &object.ObjectSearchRequest{
+	rsp, err := s.objectstore.Search(ctx, &entity.EntitySearchRequest{
 		Kind:     []string{models.StandardKindPlaylist},
 		WithBody: true,
 		Limit:    1000,
