@@ -501,6 +501,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return [];
   }
 
+  /**
+   * Gets series values
+   * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
+   * while maintaining backward compatability
+   * @param labelName
+   * @param selector
+   */
   getSeriesValues = async (labelName: string, selector: string): Promise<string[]> => {
     if (!this.datasource.hasLabelsMatchAPISupport()) {
       const data = await this.getSeries(selector);
