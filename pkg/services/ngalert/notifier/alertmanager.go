@@ -428,7 +428,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
 
 	// Check which receivers are active and create the receiver stage.
-	var receivers []*notify.Receiver
+	receivers := make([]*notify.Receiver, 0, len(integrationsMap))
 	activeReceivers := am.getActiveReceiversMap(am.route)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
@@ -477,7 +477,7 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
 func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]*notify.Integration, error) {
-	var integrations []*notify.Integration
+	integrations := make([]*notify.Integration, 0, len(receiver.GrafanaManagedReceivers))
 	for i, r := range receiver.GrafanaManagedReceivers {
 		n, err := am.buildReceiverIntegration(r, tmpl)
 		if err != nil {
