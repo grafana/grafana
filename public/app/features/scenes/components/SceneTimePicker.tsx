@@ -27,7 +27,7 @@ function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>
   return (
     <ToolbarButtonRow alignment="right">
       <TimePickerWithHistory
-        value={timeRangeState}
+        value={timeRangeState.value}
         onChange={timeRange.onTimeRangeChange}
         timeZone={'browser'}
         fiscalYearStartMonth={0}

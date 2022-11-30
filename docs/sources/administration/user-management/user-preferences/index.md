@@ -29,9 +29,7 @@ You can change your Grafana password at any time.
 
 1. Sign in to Grafana.
 1. Hover your mouse over the user icon in the lower-left corner of the page.
-1. Click **Change Password**.
-   Grafana opens the **Change Password** tab.
-
+1. Click **Change Password**. Grafana opens the **Change Password** tab.
 1. Enter your old password and a new password.
 1. Confirm your new password.
 1. Click **Change Password**.
@@ -54,6 +52,7 @@ You can choose the way you would like data to appear in Grafana, including the U
 - **Home dashboard** refers to the dashboard you see when you sign in to Grafana. By default, this is set to the Home dashboard.
 - **Timezone** is used by dashboards when you set time ranges, so that you view data in your timezone instead of UTC.
 - **Week start** is the first day of the week you want to use in dashboard time ranges, for example, `This week`.
+- **Language** determines the language used for parts of the Grafana interface.
 
 **To edit your preferences**:
 

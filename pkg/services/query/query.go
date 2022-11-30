@@ -21,10 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -91,41 +91,77 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-	byDataSource := parsedReq.parsedQueries
-	resp := backend.NewQueryDataResponse()
+	return s.executeConcurrentQueries(ctx, user, skipCache, reqDTO, parsedReq.parsedQueries)
+}
 
+// executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
+func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
-	results := make([]backend.Responses, len(byDataSource))
+	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
+	rchan := make(chan backend.Responses, len(queriesbyDs))
 
-	for _, queries := range byDataSource {
+	// Create panic recovery function for loop below
+	recoveryFn := func(queries []*simplejson.Json) {
+		if r := recover(); r != nil {
+			var err error
+			s.log.Error("query datasource panic", "error", r, "stack", log.Stack(1))
+			if theErr, ok := r.(error); ok {
+				err = theErr
+			} else if theErrString, ok := r.(string); ok {
+				err = fmt.Errorf(theErrString)
+			} else {
+				err = fmt.Errorf("unexpected error, see the server log for details")
+			}
+			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
+			rchan <- buildErrorResponses(err, queries)
+		}
+	}
+
+	// Query each datasource concurrently
+	for _, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
 		for i := 0; i < len(queries); i++ {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {
 			subDTO := reqDTO.CloneWithQueries(rawQueries)
+			// Handle panics in the datasource qery
+			defer recoveryFn(subDTO.Queries)
 
 			subResp, err := s.QueryData(ctx, user, skipCache, subDTO)
-
 			if err == nil {
-				results = append(results, subResp.Responses)
+				rchan <- subResp.Responses
+			} else {
+				// If there was an error, return an error response for each query for this datasource
+				rchan <- buildErrorResponses(err, subDTO.Queries)
 			}
-
-			return err
+			return nil
 		})
 	}
 
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
-
-	for _, result := range results {
+	close(rchan)
+	resp := backend.NewQueryDataResponse()
+	for result := range rchan {
 		for refId, dataResponse := range result {
 			resp.Responses[refId] = dataResponse
 		}
 	}
 
 	return resp, nil
+}
+
+// buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
+func buildErrorResponses(err error, queries []*simplejson.Json) backend.Responses {
+	er := backend.Responses{}
+	for _, query := range queries {
+		er[query.Get("refId").MustString("A")] = backend.DataResponse{
+			Error: err,
+		}
+	}
+	return er
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
