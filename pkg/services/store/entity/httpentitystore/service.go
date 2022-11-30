@@ -1,4 +1,4 @@
-package httpobjectstore
+package httpentitystore
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind"
-	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 
@@ -20,35 +20,35 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type HTTPObjectStore interface {
+type HTTPEntityStore interface {
 	// Register HTTP Access to the store
 	RegisterHTTPRoutes(routing.RouteRegister)
 }
 
-type httpObjectStore struct {
-	store object.ObjectStoreServer
+type httpEntityStore struct {
+	store entity.EntityStoreServer
 	log   log.Logger
 	kinds kind.KindRegistry
 }
 
-func ProvideHTTPObjectStore(store object.ObjectStoreServer, kinds kind.KindRegistry) HTTPObjectStore {
-	return &httpObjectStore{
+func ProvideHTTPEntityStore(store entity.EntityStoreServer, kinds kind.KindRegistry) HTTPEntityStore {
+	return &httpEntityStore{
 		store: store,
-		log:   log.New("http-object-store"),
+		log:   log.New("http-entity-store"),
 		kinds: kinds,
 	}
 }
 
-// All registered under "api/object"
-func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
+// All registered under "api/entity"
+func (s *httpEntityStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 	// For now, require admin for everything
 	reqGrafanaAdmin := middleware.ReqSignedIn //.ReqGrafanaAdmin
 
 	// Every * must parse to a GRN (uid+kind)
-	route.Get("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetObject))
-	route.Post("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doWriteObject))
-	route.Delete("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doDeleteObject))
-	route.Get("/raw/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetRawObject))
+	route.Get("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetEntity))
+	route.Post("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doWriteEntity))
+	route.Delete("/store/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doDeleteEntity))
+	route.Get("/raw/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetRawEntity))
 	route.Get("/history/:kind/:uid", reqGrafanaAdmin, routing.Wrap(s.doGetHistory))
 	route.Get("/list/:uid", reqGrafanaAdmin, routing.Wrap(s.doListFolder)) // Simplified version of search -- path is prefix
 	route.Get("/search", reqGrafanaAdmin, routing.Wrap(s.doSearch))
@@ -60,7 +60,7 @@ func (s *httpObjectStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 // This function will extract UID+Kind from the requested path "*" in our router
 // This is far from ideal! but is at least consistent for these endpoints.
 // This will quickly be revisited as we explore how to encode UID+Kind in a "GRN" format
-func (s *httpObjectStore) getGRNFromRequest(c *models.ReqContext) (*object.GRN, map[string]string, error) {
+func (s *httpEntityStore) getGRNFromRequest(c *models.ReqContext) (*entity.GRN, map[string]string, error) {
 	params := web.Params(c.Req)
 	// Read parameters that are encoded in the URL
 	vals := c.Req.URL.Query()
@@ -69,38 +69,38 @@ func (s *httpObjectStore) getGRNFromRequest(c *models.ReqContext) (*object.GRN, 
 			params[k] = v[0]
 		}
 	}
-	return &object.GRN{
+	return &entity.GRN{
 		TenantId: c.OrgID,
 		Kind:     params[":kind"],
 		UID:      params[":uid"],
 	}, params, nil
 }
 
-func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doGetEntity(c *models.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
 	}
-	rsp, err := s.store.Read(c.Req.Context(), &object.ReadObjectRequest{
+	rsp, err := s.store.Read(c.Req.Context(), &entity.ReadEntityRequest{
 		GRN:         grn,
 		Version:     params["version"],           // ?version = XYZ
 		WithBody:    params["body"] != "false",   // default to true
 		WithSummary: params["summary"] == "true", // default to false
 	})
 	if err != nil {
-		return response.Error(500, "error fetching object", err)
+		return response.Error(500, "error fetching entity", err)
 	}
-	if rsp.Object == nil {
+	if rsp.Entity == nil {
 		return response.Error(404, "not found", nil)
 	}
 
 	// Configure etag support
-	currentEtag := rsp.Object.ETag
+	currentEtag := rsp.Entity.ETag
 	previousEtag := c.Req.Header.Get("If-None-Match")
 	if previousEtag == currentEtag {
 		return response.CreateNormalResponse(
 			http.Header{
-				"ETag": []string{rsp.Object.ETag},
+				"ETag": []string{rsp.Entity.ETag},
 			},
 			[]byte{},               // nothing
 			http.StatusNotModified, // 304
@@ -111,12 +111,12 @@ func (s *httpObjectStore) doGetObject(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
-func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doGetRawEntity(c *models.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
 	}
-	rsp, err := s.store.Read(c.Req.Context(), &object.ReadObjectRequest{
+	rsp, err := s.store.Read(c.Req.Context(), &entity.ReadEntityRequest{
 		GRN:         grn,
 		Version:     params["version"], // ?version = XYZ
 		WithBody:    true,
@@ -130,14 +130,14 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 		return response.Error(400, "Unsupported kind", err)
 	}
 
-	if rsp.Object != nil && rsp.Object.Body != nil {
+	if rsp.Entity != nil && rsp.Entity.Body != nil {
 		// Configure etag support
-		currentEtag := rsp.Object.ETag
+		currentEtag := rsp.Entity.ETag
 		previousEtag := c.Req.Header.Get("If-None-Match")
 		if previousEtag == currentEtag {
 			return response.CreateNormalResponse(
 				http.Header{
-					"ETag": []string{rsp.Object.ETag},
+					"ETag": []string{rsp.Entity.ETag},
 				},
 				[]byte{},               // nothing
 				http.StatusNotModified, // 304
@@ -152,7 +152,7 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 				"Content-Type": []string{mime},
 				"ETag":         []string{currentEtag},
 			},
-			rsp.Object.Body,
+			rsp.Entity.Body,
 			200,
 		)
 	}
@@ -161,7 +161,7 @@ func (s *httpObjectStore) doGetRawObject(c *models.ReqContext) response.Response
 
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
 
-func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doWriteEntity(c *models.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
@@ -174,7 +174,7 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 		return response.Error(400, "error reading body", err)
 	}
 
-	rsp, err := s.store.Write(c.Req.Context(), &object.WriteObjectRequest{
+	rsp, err := s.store.Write(c.Req.Context(), &entity.WriteEntityRequest{
 		GRN:             grn,
 		Body:            b,
 		Folder:          params["folder"],
@@ -187,12 +187,12 @@ func (s *httpObjectStore) doWriteObject(c *models.ReqContext) response.Response 
 	return response.JSON(200, rsp)
 }
 
-func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doDeleteEntity(c *models.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
 	}
-	rsp, err := s.store.Delete(c.Req.Context(), &object.DeleteObjectRequest{
+	rsp, err := s.store.Delete(c.Req.Context(), &entity.DeleteEntityRequest{
 		GRN:             grn,
 		PreviousVersion: params["previousVersion"],
 	})
@@ -202,13 +202,13 @@ func (s *httpObjectStore) doDeleteObject(c *models.ReqContext) response.Response
 	return response.JSON(200, rsp)
 }
 
-func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doGetHistory(c *models.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
 	}
 	limit := int64(20) // params
-	rsp, err := s.store.History(c.Req.Context(), &object.ObjectHistoryRequest{
+	rsp, err := s.store.History(c.Req.Context(), &entity.EntityHistoryRequest{
 		GRN:           grn,
 		Limit:         limit,
 		NextPageToken: params["nextPageToken"],
@@ -219,7 +219,7 @@ func (s *httpObjectStore) doGetHistory(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
-func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doUpload(c *models.ReqContext) response.Response {
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
@@ -230,7 +230,7 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 		return response.Error(400, "missing files", nil)
 	}
 
-	var rsp []*object.WriteObjectResponse
+	var rsp []*entity.WriteEntityResponse
 
 	message := getMultipartFormValue(c.Req, "message")
 	overwriteExistingFile := getMultipartFormValue(c.Req, "overwriteExistingFile") != "false" // must explicitly overwrite
@@ -264,14 +264,14 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 				return response.Error(500, "Internal Server Error", err)
 			}
 
-			grn := &object.GRN{
+			grn := &entity.GRN{
 				UID:      uid,
 				Kind:     kind.ID,
 				TenantId: c.OrgID,
 			}
 
 			if !overwriteExistingFile {
-				result, err := s.store.Read(ctx, &object.ReadObjectRequest{
+				result, err := s.store.Read(ctx, &entity.ReadEntityRequest{
 					GRN:         grn,
 					WithBody:    false,
 					WithSummary: false,
@@ -279,12 +279,12 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 				if err != nil {
 					return response.Error(500, "Internal Server Error", err)
 				}
-				if result.Object != nil {
+				if result.Entity != nil {
 					return response.Error(400, "File name already in use", err)
 				}
 			}
 
-			result, err := s.store.Write(ctx, &object.WriteObjectRequest{
+			result, err := s.store.Write(ctx, &entity.WriteEntityRequest{
 				GRN:     grn,
 				Body:    data,
 				Comment: message,
@@ -302,14 +302,14 @@ func (s *httpObjectStore) doUpload(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
-func (s *httpObjectStore) doListFolder(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doListFolder(c *models.ReqContext) response.Response {
 	return response.JSON(501, "Not implemented yet")
 }
 
-func (s *httpObjectStore) doSearch(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doSearch(c *models.ReqContext) response.Response {
 	vals := c.Req.URL.Query()
 
-	req := &object.ObjectSearchRequest{
+	req := &entity.EntitySearchRequest{
 		WithBody:   asBoolean("body", vals, false),
 		WithLabels: asBoolean("labels", vals, true),
 		WithFields: asBoolean("fields", vals, true),

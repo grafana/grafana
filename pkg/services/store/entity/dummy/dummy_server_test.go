@@ -1,11 +1,11 @@
-package objectdummyserver
+package dummy
 
 import (
 	"encoding/json"
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,8 +16,8 @@ func TestRawEncoders(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	raw := &ObjectVersionWithBody{
-		&object.ObjectVersionInfo{
+	raw := &EntityVersionWithBody{
+		&entity.EntityVersionInfo{
 			Version: "A",
 		},
 		body,
@@ -30,28 +30,28 @@ func TestRawEncoders(t *testing.T) {
 	fmt.Printf("expect: %s", str)
 	require.JSONEq(t, `{"info":{"version":"A"},"body":"eyJmaWVsZCI6MS4yMywiaGVsbG8iOiJ3b3JsZCJ9"}`, str)
 
-	copy := &ObjectVersionWithBody{}
+	copy := &EntityVersionWithBody{}
 	err = json.Unmarshal(b, copy)
 	require.NoError(t, err)
 }
 
-func TestRawObjectWithHistory(t *testing.T) {
+func TestRawEntityWithHistory(t *testing.T) {
 	body, err := json.Marshal(map[string]interface{}{
 		"hello": "world",
 		"field": 1.23,
 	})
 	require.NoError(t, err)
 
-	raw := &RawObjectWithHistory{
-		Object: &object.RawObject{
-			GRN:     &object.GRN{UID: "x"},
+	raw := &EntityWithHistory{
+		Entity: &entity.Entity{
+			GRN:     &entity.GRN{UID: "x"},
 			Version: "A",
 			Body:    body,
 		},
-		History: make([]*ObjectVersionWithBody, 0),
+		History: make([]*EntityVersionWithBody, 0),
 	}
-	raw.History = append(raw.History, &ObjectVersionWithBody{
-		&object.ObjectVersionInfo{
+	raw.History = append(raw.History, &EntityVersionWithBody{
+		&entity.EntityVersionInfo{
 			Version: "B",
 		},
 		body,
@@ -63,7 +63,7 @@ func TestRawObjectWithHistory(t *testing.T) {
 	str := string(b)
 	//fmt.Printf("expect: %s", str)
 	require.JSONEq(t, `{
-		"object": {
+		"entity": {
 		  "GRN": {
 			"UID": "x"
 		  },
@@ -83,7 +83,7 @@ func TestRawObjectWithHistory(t *testing.T) {
 		]
 	  }`, str)
 
-	copy := &ObjectVersionWithBody{}
+	copy := &EntityVersionWithBody{}
 	err = json.Unmarshal(b, copy)
 	require.NoError(t, err)
 }

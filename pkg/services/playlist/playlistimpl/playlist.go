@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type Service struct {
@@ -15,7 +15,7 @@ type Service struct {
 
 var _ playlist.Service = &Service{}
 
-func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver object.ObjectStoreServer) playlist.Service {
+func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver entity.EntityStoreServer) playlist.Service {
 	var sqlstore store
 
 	// 🐢🐢🐢 pick the store
