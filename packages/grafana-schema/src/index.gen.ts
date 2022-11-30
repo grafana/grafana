@@ -80,6 +80,9 @@ export {
   defaultFieldConfig
 } from './veneer/dashboard.types';
 
+// Raw generated types from Folder kind.
+export type { Folder } from './raw/folder/x/folder_types.gen';
+
 // Raw generated types from Playlist kind.
 export type {
   Playlist,
