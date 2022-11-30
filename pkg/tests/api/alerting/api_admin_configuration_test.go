@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,6 +19,8 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -35,6 +38,9 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 
+	orgService, err := orgimpl.ProvideService(s, s.Cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+
 	// Create a user to make authenticated requests
 	userID := createUser(t, s, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
@@ -42,8 +48,12 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		Password:       "password",
 	})
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
 	// create another organisation
-	orgID := createOrg(t, s, "another org", userID)
+	newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "another org", UserID: userID})
+	require.NoError(t, err)
+	orgID := newOrg.ID
+
 	// ensure that the orgID is 3 (the disabled org)
 	require.Equal(t, disableOrgID, orgID)
 
@@ -266,7 +276,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		require.Eventually(t, func() bool {
 			return fakeAM1.AlertsCount() == 1 && fakeAM2.AlertsCount() == 1
-		}, 60*time.Second, 5*time.Second)
+		}, time.Minute, 5*time.Second)
 	}
 
 	// Add an alertmanager datasource fot the other organisation

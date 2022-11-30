@@ -25,6 +25,7 @@ export class Scene extends SceneObjectBase<SceneState> {
   public activate() {
     super.activate();
     this.urlSyncManager = new UrlSyncManager(this);
+    this.urlSyncManager.initSync();
   }
 
   public deactivate() {
@@ -41,6 +42,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   if ($editor) {
     toolbarActions.push(
       <ToolbarButton
+        key="scene-settings"
         icon="cog"
         variant={isEditing ? 'primary' : 'default'}
         onClick={() => model.setState({ isEditing: !model.state.isEditing })}

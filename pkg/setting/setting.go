@@ -385,6 +385,9 @@ type Cfg struct {
 	HiddenUsers           map[string]struct{}
 	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
 
+	// Service Accounts
+	SATokenExpirationDayLimit int
+
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
 	AnnotationMaximumTagsLength        int64
@@ -424,9 +427,9 @@ type Cfg struct {
 	LDAPSkipOrgRoleSync bool
 	LDAPAllowSignup     bool
 
-	DefaultTheme  string
-	DefaultLocale string
-	HomePage      string
+	DefaultTheme    string
+	DefaultLanguage string
+	HomePage        string
 
 	Quota QuotaSettings
 
@@ -471,6 +474,8 @@ type Cfg struct {
 	Storage StorageSettings
 
 	Search SearchSettings
+
+	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// Access Control
 	RBACEnabled         bool
@@ -978,6 +983,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	if err := readServiceAccountSettings(iniFile, cfg); err != nil {
+		return err
+	}
 	if err := readAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
@@ -1073,6 +1081,13 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
+
+	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
+	if err != nil {
+		// if the proxy is misconfigured, disable it rather than crashing
+		cfg.SecureSocksDSProxy.Enabled = false
+		cfg.Logger.Error("secure_socks_datasource_proxy unable to start up", "err", err.Error())
+	}
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1449,7 +1464,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
-	cfg.DefaultLocale = valueAsString(users, "default_locale", "")
+	cfg.DefaultLanguage = valueAsString(users, "default_language", "")
 	cfg.HomePage = valueAsString(users, "home_page", "")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
@@ -1478,6 +1493,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		}
 	}
 
+	return nil
+}
+
+func readServiceAccountSettings(iniFile *ini.File, cfg *Cfg) error {
+	serviceAccount := iniFile.Section("service_accounts")
+	cfg.SATokenExpirationDayLimit = serviceAccount.Key("token_expiration_day_limit").MustInt(-1)
 	return nil
 }
 

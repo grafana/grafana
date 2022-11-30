@@ -6,6 +6,7 @@ import {
   waitForElementToBeRemoved,
   within,
   Matcher,
+  getByRole,
   act,
 } from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
@@ -455,7 +456,7 @@ describe('CorrelationsPage', () => {
     });
 
     it('correctly sorts by source', async () => {
-      const sourceHeader = getHeaderByName('Source');
+      const sourceHeader = getByRole(getHeaderByName('Source'), 'button');
       fireEvent.click(sourceHeader);
       let cells = queryCellsByColumnName('Source');
       cells.forEach((cell, i, allCells) => {
