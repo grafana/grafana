@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -109,8 +108,8 @@ type serviceAccountStore interface {
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
 	// Service account tokens
-	// AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error
-	// DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
+	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error
+	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 }
 
 // create mock for serviceaccountservice
@@ -119,6 +118,8 @@ type ServiceAccountMock struct {
 	Calls             Calls
 	Stats             *serviceaccounts.Stats
 	SecretScanEnabled bool
+	ExpectedTokens    []apikey.APIKey
+	ExpectedError     error
 }
 
 func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
@@ -129,6 +130,19 @@ func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, se
 	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
 	return s.Store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
+
+func (s *ServiceAccountMock) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	s.Calls.RetrieveServiceAccount = append(s.Calls.RetrieveServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return s.Store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+}
+
+func (s *ServiceAccountMock) UpdateServiceAccount(ctx context.Context,
+	orgID, serviceAccountID int64,
+	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	s.Calls.UpdateServiceAccount = append(s.Calls.UpdateServiceAccount, []interface{}{ctx, orgID, serviceAccountID, saForm})
+	return s.Store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
+}
+
 func (s *ServiceAccountMock) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
 	return 0, nil
 }
@@ -197,20 +211,7 @@ func (s *ServiceAccountMock) RevertApiKey(ctx context.Context, saId int64, keyId
 
 func (s *ServiceAccountMock) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, query.OrgID, query.ServiceAccountID})
-	return nil, nil
-}
-
-func (s *ServiceAccountMock) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	s.Calls.RetrieveServiceAccount = append(s.Calls.RetrieveServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
-	return nil, nil
-}
-
-func (s *ServiceAccountMock) UpdateServiceAccount(ctx context.Context,
-	orgID, serviceAccountID int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	s.Calls.UpdateServiceAccount = append(s.Calls.UpdateServiceAccount, []interface{}{ctx, orgID, serviceAccountID, saForm})
-
-	return nil, nil
+	return s.ExpectedTokens, s.ExpectedError
 }
 
 func (s *ServiceAccountMock) SearchOrgServiceAccounts(
@@ -227,13 +228,12 @@ func (s *ServiceAccountMock) SearchOrgServiceAccounts(
 
 func (s *ServiceAccountMock) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
 	s.Calls.AddServiceAccountToken = append(s.Calls.AddServiceAccountToken, []interface{}{ctx, cmd})
-	fmt.Printf("\nhey we are mocking the add service account token\n")
-	return nil
+	return s.Store.AddServiceAccountToken(ctx, serviceAccountID, cmd)
 }
 
 func (s *ServiceAccountMock) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error {
 	s.Calls.DeleteServiceAccountToken = append(s.Calls.DeleteServiceAccountToken, []interface{}{ctx, orgID, serviceAccountID, tokenID})
-	return nil
+	return s.Store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
 func (s *ServiceAccountMock) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {

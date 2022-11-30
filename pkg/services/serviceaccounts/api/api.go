@@ -63,12 +63,13 @@ func NewServiceAccountsAPI(
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
-		cfg:               cfg,
-		service:           service,
-		accesscontrol:     accesscontrol,
-		RouterRegister:    routerRegister,
-		log:               log.New("serviceaccounts.api"),
-		permissionService: permissionService,
+		cfg:                  cfg,
+		service:              service,
+		accesscontrol:        accesscontrol,
+		accesscontrolService: accesscontrolService,
+		RouterRegister:       routerRegister,
+		log:                  log.New("serviceaccounts.api"),
+		permissionService:    permissionService,
 	}
 }
 
