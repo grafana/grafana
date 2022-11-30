@@ -96,6 +96,16 @@ func (codec *rawObjectCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteObjectField("etag")
 		stream.WriteString(obj.ETag)
 	}
+	if obj.Folder != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("folder")
+		stream.WriteString(obj.Folder)
+	}
+	if obj.Slug != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("slug")
+		stream.WriteString(obj.Slug)
+	}
 	if obj.Size > 0 {
 		stream.WriteMore()
 		stream.WriteObjectField("size")
@@ -135,6 +145,10 @@ func readRawObject(iter *jsoniter.Iterator, raw *RawObject) {
 			raw.Size = iter.ReadInt64()
 		case "etag":
 			raw.ETag = iter.ReadString()
+		case "folder":
+			raw.Folder = iter.ReadString()
+		case "slug":
+			raw.Slug = iter.ReadString()
 		case "version":
 			raw.Version = iter.ReadString()
 		case "origin":

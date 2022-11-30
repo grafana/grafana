@@ -11,15 +11,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/kind"
-	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/object"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
-	"github.com/grafana/grafana/pkg/services/store/router"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,7 +30,6 @@ func ProvideSQLObjectServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcs
 		log:      log.New("sql-object-server"),
 		kinds:    kinds,
 		resolver: resolver,
-		router:   router.NewObjectStoreRouter(kinds),
 	}
 	object.RegisterObjectStoreServer(grpcServerProvider.GetServer(), objectServer)
 	return objectServer
@@ -44,16 +40,16 @@ type sqlObjectServer struct {
 	sess     *session.SessionDB
 	kinds    kind.KindRegistry
 	resolver resolver.ObjectReferenceResolver
-	router   router.ObjectStoreRouter
 }
 
 func getReadSelect(r *object.ReadObjectRequest) string {
 	fields := []string{
-		"path", "kind", "version",
+		"tenant_id", "kind", "uid", // The PK
+		"version", "slug", "folder",
 		"size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
-		"origin", "origin_ts"}
+		"origin", "origin_key", "origin_ts"}
 
 	if r.WithBody {
 		fields = append(fields, `body`)
@@ -61,24 +57,24 @@ func getReadSelect(r *object.ReadObjectRequest) string {
 	if r.WithSummary {
 		fields = append(fields, `name`, `description`, `labels`, `fields`)
 	}
-	return "SELECT " + strings.Join(fields, ",") + " FROM object WHERE "
+	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
 
 func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql.Rows, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	path := "" // string (extract UID?)
-	var origin sql.NullString
-	originTime := int64(0)
 	raw := &object.RawObject{
-		GRN: &object.GRN{},
+		GRN:    &object.GRN{},
+		Origin: &object.ObjectOriginInfo{},
 	}
+	slug := ""
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
-		&path, &raw.GRN.Kind, &raw.Version,
+		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID,
+		&raw.Version, &slug, &raw.Folder,
 		&raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
-		&origin, &originTime,
+		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
@@ -92,17 +88,8 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 		return nil, err
 	}
 
-	if origin.Valid {
-		raw.Origin = &object.ObjectOriginInfo{
-			Source: origin.String,
-			Time:   originTime,
-		}
-	}
-
-	// Get the GRN from key.  TODO? save each part as a column?
-	info, _ := s.router.RouteFromKey(ctx, path)
-	if info.GRN != nil {
-		raw.GRN = info.GRN
+	if raw.Origin.Source == "" {
+		raw.Origin = nil
 	}
 
 	rsp := &object.ReadObjectResponse{
@@ -124,35 +111,43 @@ func (s *sqlObjectServer) rowToReadObjectResponse(ctx context.Context, rows *sql
 	return rsp, nil
 }
 
-func (s *sqlObjectServer) getObjectKey(ctx context.Context, grn *object.GRN) (router.ResourceRouteInfo, error) {
+func (s *sqlObjectServer) validateGRN(ctx context.Context, grn *object.GRN) (*object.GRN, error) {
 	if grn == nil {
-		return router.ResourceRouteInfo{}, fmt.Errorf("missing grn")
+		return nil, fmt.Errorf("missing GRN")
 	}
 	user := store.UserFromContext(ctx)
-	if user == nil {
-		return router.ResourceRouteInfo{}, fmt.Errorf("can not find user in context")
-	}
-	if user.OrgID != grn.TenantId {
-		if grn.TenantId > 0 {
-			return router.ResourceRouteInfo{}, fmt.Errorf("invalid user (wrong tenant id)")
-		}
+	if grn.TenantId == 0 {
 		grn.TenantId = user.OrgID
+	} else if grn.TenantId != user.OrgID {
+		return nil, fmt.Errorf("tenant ID does not match userID")
 	}
-	return s.router.Route(ctx, grn)
+
+	if grn.Kind == "" {
+		return nil, fmt.Errorf("GRN missing kind")
+	}
+	if grn.UID == "" {
+		return nil, fmt.Errorf("GRN missing UID")
+	}
+	if len(grn.UID) > 40 {
+		return nil, fmt.Errorf("GRN UID is too long (>40)")
+	}
+	if strings.ContainsAny(grn.UID, "/#$@?") {
+		return nil, fmt.Errorf("invalid character in GRN")
+	}
+	return grn, nil
 }
 
 func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
 	if r.Version != "" {
 		return s.readFromHistory(ctx, r)
 	}
-
-	route, err := s.getObjectKey(ctx, r.GRN)
+	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
 
-	args := []interface{}{route.Key}
-	where := "path=?"
+	args := []interface{}{grn.ToGRNString()}
+	where := "grn=?"
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
 	if err != nil {
@@ -168,10 +163,11 @@ func (s *sqlObjectServer) Read(ctx context.Context, r *object.ReadObjectRequest)
 }
 
 func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObjectRequest) (*object.ReadObjectResponse, error) {
-	route, err := s.getObjectKey(ctx, r.GRN)
+	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
+	oid := grn.ToGRNString()
 
 	fields := []string{
 		"body", "size", "etag",
@@ -180,7 +176,7 @@ func (s *sqlObjectServer) readFromHistory(ctx context.Context, r *object.ReadObj
 
 	rows, err := s.sess.Query(ctx,
 		"SELECT "+strings.Join(fields, ",")+
-			" FROM object_history WHERE path=? AND version=?", route.Key, r.Version)
+			" FROM entity_history WHERE grn=? AND version=?", oid, r.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -243,13 +239,13 @@ func (s *sqlObjectServer) BatchRead(ctx context.Context, b *object.BatchReadObje
 			return nil, fmt.Errorf("requests must want the same things")
 		}
 
-		route, err := s.getObjectKey(ctx, r.GRN)
+		grn, err := s.validateGRN(ctx, r.GRN)
 		if err != nil {
 			return nil, err
 		}
 
-		where := "path=?"
-		args = append(args, route.Key)
+		where := "grn=?"
+		args = append(args, grn.ToGRNString())
 		if r.Version != "" {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
 		}
@@ -282,14 +278,11 @@ func (s *sqlObjectServer) Write(ctx context.Context, r *object.WriteObjectReques
 
 //nolint:gocyclo
 func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteObjectRequest) (*object.WriteObjectResponse, error) {
-	route, err := s.getObjectKey(ctx, r.GRN)
+	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
-	grn := route.GRN
-	if grn == nil {
-		return nil, fmt.Errorf("invalid grn")
-	}
+	oid := grn.ToGRNString()
 
 	timestamp := time.Now().UnixMilli()
 	createdAt := r.CreatedAt
@@ -312,20 +305,15 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		return nil, err
 	}
 
+	slug := slugifyTitle(summary.name, r.GRN.UID)
 	etag := createContentsHash(body)
-	path := route.Key
-
 	rsp := &object.WriteObjectResponse{
 		GRN:    grn,
 		Status: object.WriteObjectResponse_CREATED, // Will be changed if not true
 	}
-
-	// Make sure all parent folders exist
-	if grn.Scope == models.ObjectStoreScopeDrive {
-		err = s.ensureFolders(ctx, grn)
-		if err != nil {
-			return nil, err
-		}
+	origin := r.Origin
+	if origin == nil {
+		origin = &object.ObjectOriginInfo{}
 	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
@@ -334,18 +322,18 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		if r.ClearHistory {
 			// Optionally keep the original creation time information
 			if createdAt < 1000 || createdBy == "" {
-				err = s.fillCreationInfo(ctx, tx, path, &createdAt, &createdBy)
+				err = s.fillCreationInfo(ctx, tx, oid, &createdAt, &createdBy)
 				if err != nil {
 					return err
 				}
 			}
-			_, err = doDelete(ctx, tx, path)
+			_, err = doDelete(ctx, tx, oid)
 			if err != nil {
 				return err
 			}
 			versionInfo = &object.ObjectVersionInfo{}
 		} else {
-			versionInfo, err = s.selectForUpdate(ctx, tx, path)
+			versionInfo, err = s.selectForUpdate(ctx, tx, oid)
 			if err != nil {
 				return err
 			}
@@ -385,25 +373,25 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 
 		if isUpdate {
 			// Clear the labels+refs
-			if _, err := tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", oid); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", oid); err != nil {
 				return err
 			}
 		}
 
-		// 1. Add the `object_history` values
+		// 1. Add the `entity_history` values
 		versionInfo.Size = int64(len(body))
 		versionInfo.ETag = etag
 		versionInfo.UpdatedAt = updatedAt
 		versionInfo.UpdatedBy = updatedBy
-		_, err = tx.Exec(ctx, `INSERT INTO object_history (`+
-			"path, version, message, "+
+		_, err = tx.Exec(ctx, `INSERT INTO entity_history (`+
+			"grn, version, message, "+
 			"size, body, etag, "+
 			"updated_at, updated_by) "+
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-			path, versionInfo.Version, versionInfo.Comment,
+			oid, versionInfo.Version, versionInfo.Comment,
 			versionInfo.Size, body, versionInfo.ETag,
 			updatedAt, versionInfo.UpdatedBy,
 		)
@@ -414,10 +402,10 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		// 2. Add the labels rows
 		for k, v := range summary.model.Labels {
 			_, err = tx.Exec(ctx,
-				`INSERT INTO object_labels `+
-					"(path, label, value) "+
+				`INSERT INTO entity_labels `+
+					"(grn, label, value) "+
 					`VALUES (?, ?, ?)`,
-				path, k, v,
+				oid, k, v,
 			)
 			if err != nil {
 				return err
@@ -430,11 +418,11 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			if err != nil {
 				return err
 			}
-			_, err = tx.Exec(ctx, `INSERT INTO object_ref (`+
-				"path, kind, type, uid, "+
+			_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
+				"grn, kind, type, uid, "+
 				"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-				path, ref.Kind, ref.Type, ref.UID,
+				oid, ref.Kind, ref.Type, ref.UID,
 				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 			)
 			if err != nil {
@@ -446,19 +434,19 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 		rsp.Object = versionInfo
 		if isUpdate {
 			rsp.Status = object.WriteObjectResponse_UPDATED
-			_, err = tx.Exec(ctx, "UPDATE object SET "+
+			_, err = tx.Exec(ctx, "UPDATE entity SET "+
 				"body=?, size=?, etag=?, version=?, "+
 				"updated_at=?, updated_by=?,"+
 				"name=?, description=?,"+
 				"labels=?, fields=?, errors=?, "+
-				"origin=?, origin_ts=? "+
-				"WHERE path=?",
+				"origin=?, origin_key=?, origin_ts=? "+
+				"WHERE grn=?",
 				body, versionInfo.Size, etag, versionInfo.Version,
 				updatedAt, versionInfo.UpdatedBy,
 				summary.model.Name, summary.model.Description,
 				summary.labels, summary.fields, summary.errors,
-				r.Origin, timestamp,
-				path,
+				origin.Source, origin.Key, timestamp,
+				oid,
 			)
 			return err
 		}
@@ -470,16 +458,25 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 			createdBy = updatedBy
 		}
 
-		_, err = tx.Exec(ctx, "INSERT INTO object ("+
-			"path, parent_folder_path, kind, size, body, etag, version, "+
+		_, err = tx.Exec(ctx, "INSERT INTO entity ("+
+			"grn, tenant_id, kind, uid, folder, "+
+			"size, body, etag, version, "+
 			"updated_at, updated_by, created_at, created_by, "+
-			"name, description, origin, origin_ts, "+
-			"labels, fields, errors) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			path, getParentFolderPath(grn.Kind, path), grn.Kind, versionInfo.Size, body, etag, versionInfo.Version,
+			"name, description, slug, "+
+			"labels, fields, errors, "+
+			"origin, origin_key, origin_ts) "+
+			"VALUES (?, ?, ?, ?, ?, "+
+			" ?, ?, ?, ?, "+
+			" ?, ?, ?, ?, "+
+			" ?, ?, ?, "+
+			" ?, ?, ?, "+
+			" ?, ?, ?)",
+			oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
+			versionInfo.Size, body, etag, versionInfo.Version,
 			updatedAt, createdBy, createdAt, createdBy, // created + updated are the same
-			summary.model.Name, summary.model.Description, r.Origin, timestamp,
+			summary.model.Name, summary.model.Description, slug,
 			summary.labels, summary.fields, summary.errors,
+			origin.Source, origin.Key, origin.Time,
 		)
 		return err
 	})
@@ -490,7 +487,7 @@ func (s *sqlObjectServer) AdminWrite(ctx context.Context, r *object.AdminWriteOb
 	return rsp, err
 }
 
-func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, path string, createdAt *int64, createdBy *string) error {
+func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.SessionTx, grn string, createdAt *int64, createdBy *string) error {
 	if *createdAt > 1000 {
 		ignore := int64(0)
 		createdAt = &ignore
@@ -500,7 +497,7 @@ func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 		createdBy = &ignore
 	}
 
-	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM object WHERE path=?", path)
+	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM entity WHERE grn=?", grn)
 	if err == nil {
 		if rows.Next() {
 			err = rows.Scan(&createdAt, &createdBy)
@@ -512,12 +509,12 @@ func (s *sqlObjectServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	return err
 }
 
-func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, path string) (*object.ObjectVersionInfo, error) {
-	q := "SELECT etag,version,updated_at,size FROM object WHERE path=?"
+func (s *sqlObjectServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*object.ObjectVersionInfo, error) {
+	q := "SELECT etag,version,updated_at,size FROM entity WHERE grn=?"
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
 	}
-	rows, err := tx.Query(ctx, q, path)
+	rows, err := tx.Query(ctx, q, grn)
 	if err != nil {
 		return nil, err
 	}
@@ -551,22 +548,21 @@ func (s *sqlObjectServer) prepare(ctx context.Context, r *object.AdminWriteObjec
 }
 
 func (s *sqlObjectServer) Delete(ctx context.Context, r *object.DeleteObjectRequest) (*object.DeleteObjectResponse, error) {
-	route, err := s.getObjectKey(ctx, r.GRN)
+	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
-	path := route.Key
 
 	rsp := &object.DeleteObjectResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rsp.OK, err = doDelete(ctx, tx, path)
+		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
 		return err
 	})
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, path string) (bool, error) {
-	results, err := tx.Exec(ctx, "DELETE FROM object WHERE path=?", path)
+func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, error) {
+	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", grn)
 	if err != nil {
 		return false, err
 	}
@@ -576,21 +572,21 @@ func doDelete(ctx context.Context, tx *session.SessionTx, path string) (bool, er
 	}
 
 	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, _ = tx.Exec(ctx, "DELETE FROM object_history WHERE path=?", path)
-	_, _ = tx.Exec(ctx, "DELETE FROM object_labels WHERE path=?", path)
-	_, _ = tx.Exec(ctx, "DELETE FROM object_ref WHERE path=?", path)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", grn)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
 	return rows > 0, err
 }
 
 func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRequest) (*object.ObjectHistoryResponse, error) {
-	route, err := s.getObjectKey(ctx, r.GRN)
+	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
-	path := route.Key
+	oid := grn.ToGRNString()
 
 	page := ""
-	args := []interface{}{path}
+	args := []interface{}{oid}
 	if r.NextPageToken != "" {
 		// args = append(args, r.NextPageToken) // TODO, need to get time from the version
 		// page = "AND updated <= ?"
@@ -598,8 +594,8 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	}
 
 	query := "SELECT version,size,etag,updated_at,updated_by,message \n" +
-		" FROM object_history \n" +
-		" WHERE path=? " + page + "\n" +
+		" FROM entity_history \n" +
+		" WHERE grn=? " + page + "\n" +
 		" ORDER BY updated_at DESC LIMIT 100"
 
 	rows, err := s.sess.Query(ctx, query, args...)
@@ -608,7 +604,7 @@ func (s *sqlObjectServer) History(ctx context.Context, r *object.ObjectHistoryRe
 	}
 	defer func() { _ = rows.Close() }()
 	rsp := &object.ObjectHistoryResponse{
-		GRN: route.GRN,
+		GRN: r.GRN,
 	}
 	for rows.Next() {
 		v := &object.ObjectVersionInfo{}
@@ -632,7 +628,8 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 	}
 
 	fields := []string{
-		"path", "kind", "version", "errors", // errors are always returned
+		"grn", "tenant_id", "kind", "uid",
+		"version", "folder", "slug", "errors", // errors are always returned
 		"size", "updated_at", "updated_by",
 		"name", "description", // basic summary
 	}
@@ -649,31 +646,20 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 
 	selectQuery := selectQuery{
 		fields:   fields,
-		from:     "object", // the table
+		from:     "entity", // the table
 		args:     []interface{}{},
 		limit:    int(r.Limit),
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
+	selectQuery.addWhere("tenant_id", user.OrgID)
 
 	if len(r.Kind) > 0 {
 		selectQuery.addWhereIn("kind", r.Kind)
 	}
 
-	// Locked to a folder or prefix
+	// Folder UID or OID?
 	if r.Folder != "" {
-		if strings.HasSuffix(r.Folder, "/") {
-			return nil, fmt.Errorf("folder should not end with slash")
-		}
-		if strings.HasSuffix(r.Folder, "*") {
-			keyPrefix := fmt.Sprintf("%d/%s", user.OrgID, strings.ReplaceAll(r.Folder, "*", ""))
-			selectQuery.addWherePrefix("path", keyPrefix)
-		} else {
-			keyPrefix := fmt.Sprintf("%d/%s", user.OrgID, r.Folder)
-			selectQuery.addWhere("parent_folder_path", keyPrefix)
-		}
-	} else {
-		keyPrefix := fmt.Sprintf("%d/", user.OrgID)
-		selectQuery.addWherePrefix("path", keyPrefix)
+		selectQuery.addWhere("folder", r.Folder)
 	}
 
 	query, args := selectQuery.toQuery()
@@ -688,7 +674,7 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
-	key := ""
+	oid := ""
 	rsp := &object.ObjectSearchResponse{}
 	for rows.Next() {
 		result := &object.ObjectSearchResult{
@@ -697,7 +683,8 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 		summaryjson := summarySupport{}
 
 		args := []interface{}{
-			&key, &result.GRN.Kind, &result.Version, &summaryjson.errors,
+			&oid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
+			&result.Version, &result.Folder, &result.Slug, &summaryjson.errors,
 			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
 			&result.Name, &summaryjson.description,
 		}
@@ -716,16 +703,10 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 			return rsp, err
 		}
 
-		info, err := s.router.RouteFromKey(ctx, key)
-		if err != nil {
-			return rsp, err
-		}
-		result.GRN = info.GRN
-
 		// found one more than requested
 		if len(rsp.Results) >= selectQuery.limit {
 			// TODO? should this encode start+offset?
-			rsp.NextPageToken = key
+			rsp.NextPageToken = oid
 			break
 		}
 
@@ -752,55 +733,4 @@ func (s *sqlObjectServer) Search(ctx context.Context, r *object.ObjectSearchRequ
 		rsp.Results = append(rsp.Results, result)
 	}
 	return rsp, err
-}
-
-func (s *sqlObjectServer) ensureFolders(ctx context.Context, objectgrn *object.GRN) error {
-	uid := objectgrn.UID
-	idx := strings.LastIndex(uid, "/")
-	var missing []*object.GRN
-
-	for idx > 0 {
-		parent := uid[:idx]
-		grn := &object.GRN{
-			TenantId: objectgrn.TenantId,
-			Scope:    objectgrn.Scope,
-			Kind:     models.StandardKindFolder,
-			UID:      parent,
-		}
-		fr, err := s.router.Route(ctx, grn)
-		if err != nil {
-			return err
-		}
-
-		// Not super efficient, but maybe it is OK?
-		results := []int64{}
-		err = s.sess.Select(ctx, &results, "SELECT 1 from object WHERE path=?", fr.Key)
-		if err != nil {
-			return err
-		}
-		if len(results) == 0 {
-			missing = append([]*object.GRN{grn}, missing...)
-		}
-		idx = strings.LastIndex(parent, "/")
-	}
-
-	// walk though each missing element
-	for _, grn := range missing {
-		f := &folder.Model{
-			Name: store.GuessNameFromUID(grn.UID),
-		}
-		fmt.Printf("CREATE Folder: %s\n", grn.UID)
-		body, err := json.Marshal(f)
-		if err != nil {
-			return err
-		}
-		_, err = s.Write(ctx, &object.WriteObjectRequest{
-			GRN:  grn,
-			Body: body,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
