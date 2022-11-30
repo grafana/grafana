@@ -101,7 +101,7 @@ Here is an example of the light theme.
 
 ### Change server UI theme
 
-As a Grafana server administrator, you can change the default Grafana UI theme for all users who are on the server by setting the [default_theme]({{< relref "../../setup-grafana/configure-grafana/#default-theme" >}}) option in the Grafana configuration file.
+As a Grafana server administrator, you can change the default Grafana UI theme for all users who are on the server by setting the [default_theme]({{< relref "../../setup-grafana/configure-grafana/#default_theme" >}}) option in the Grafana configuration file.
 
 To see what the current settings are, refer to [View server settings]({{< relref "../stats-and-license#view-server-settings" >}}).
 
@@ -141,7 +141,7 @@ Some tasks require certain permissions. For more information about roles, refer 
 
 ### Set server timezone
 
-Grafana server administrators can choose a default timezone for all users on the server by setting the [default_timezone]({{< relref "../../setup-grafana/configure-grafana/#default-timezone" >}}) option in the Grafana configuration file.
+Grafana server administrators can choose a default timezone for all users on the server by setting the [default_timezone]({{< relref "../../setup-grafana/configure-grafana/#default_timezone" >}}) option in the Grafana configuration file.
 
 ### Set organization timezone
 
@@ -149,7 +149,7 @@ Organization administrators can choose a default timezone for their organization
 
 1. Hover your cursor over the **Configuration** (gear) icon.
 1. Click **Preferences**.
-1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}) for more information about Grafana time settings.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 1. Click **Save**.
 
 ### Set team timezone
@@ -160,7 +160,7 @@ Organization administrators and team administrators can choose a default timezon
 1. Click **Teams**. Grafana displays the team list.
 1. Click the team for which you want to change the timezone.
 1. Click **Settings**
-1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [[Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}) for more information about Grafana time settings.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 1. Click **Save**.
 
 ### Set your personal timezone
@@ -168,7 +168,7 @@ Organization administrators and team administrators can choose a default timezon
 You can change the timezone for your user account. This setting overrides timezone settings at higher levels.
 
 1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
-1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}) for more information about Grafana time settings.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 1. Click **Save**.
 
 ## Change the default home dashboard
@@ -245,7 +245,7 @@ You can choose your own personal home dashboard. This setting overrides all home
 
 ### Change server language
 
-Grafana server administrators can change the default Grafana UI language for all users on the server by setting the [default_language]({{< relref "../../setup-grafana/configure-grafana/#default-language" >}}) option in the Grafana configuration file.
+Grafana server administrators can change the default Grafana UI language for all users on the server by setting the [default_language]({{< relref "../../setup-grafana/configure-grafana/#default_language" >}}) option in the Grafana configuration file.
 
 ### Change organization language
 

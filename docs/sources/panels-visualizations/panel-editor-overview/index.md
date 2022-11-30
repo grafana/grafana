@@ -40,7 +40,7 @@ This section describes the areas of the Grafana panel editor.
    - **Table view:** Convert any visualization to a table so that you can see the data. Table views are useful for troubleshooting.
    - **Fill:** The visualization preview fills the available space. If you change the width of the side pane or height of the bottom pane the visualization changes to fill the available space.
    - **Actual:** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
-   - **Time range controls:** For more information, refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}).
+   - **Time range controls:** **Default** is either the browser local timezone or the timezone selected at a higher level.
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 

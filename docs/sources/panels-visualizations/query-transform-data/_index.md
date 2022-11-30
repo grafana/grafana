@@ -179,8 +179,6 @@ Panel data source query options include:
 - **Time shift:** Overrides the time range for individual panels by shifting its start and end relative to the time picker.
   For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker.
 
-  For more information, refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}).
-
   > **Note:** Panel time overrides have no effect when the dashboard's time range is absolute.
 
   | Example              | Time shift field |

@@ -11,7 +11,7 @@ keywords:
   - marketplace
   - enterprise
   - license
-title: Enterprise licenses through AWS Marketplace
+title: Activate a Grafana Enterprise license purchased through AWS Marketplace
 weight: 400
 ---
 
@@ -28,7 +28,7 @@ You can deploy Grafana Enterprise in the following ways:
 
 In each case, you must activate the Grafana Enterprise license purchased in AWS Marketplace to take advantage of Grafana Enterprise observability features. Grafana Enterprise licenses purchased through AWS Marketplace are subject to the same [restrictions]({{< relref "../#license-restrictions" >}}) as Grafana Enterprise licensed purchased directly from Grafana Labs.
 
-> To purchase a license directly from Grafana Labs or learn more about other Grafana offerings, [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise).
+> To purchase a license directly from Grafana Labs or learn more about other Grafana offerings, [Contact a Grafana Labs representative](/contact?about=grafana-enterprise).
 
 ## Before you begin
 
