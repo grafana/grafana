@@ -25,7 +25,7 @@ type Team struct {
 	AccessControl map[string]interface{} `json:"accessControl"`
 
 	// AvatarUrl is the team's avatar URL.
-	AvatarUrl string `json:"avatarUrl"`
+	AvatarUrl *string `json:"avatarUrl,omitempty"`
 
 	// Created indicates when the team was created.
 	Created string `json:"created"`
@@ -40,7 +40,7 @@ type Team struct {
 	Name string `json:"name"`
 
 	// OrgId is the ID of an organisation the team belongs to.
-	OrgId *int64 `json:"orgId,omitempty"`
+	OrgId int64 `json:"orgId"`
 
 	// TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
 	Permission Permission `json:"permission"`
