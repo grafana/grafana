@@ -366,7 +366,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 		}
 		for _, fromUserId := range fromUserIds {
 			_, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: fromUserId})
-			if err != nil && err == user.ErrUserNotFound {
+			if err != nil && errors.Is(err, user.ErrUserNotFound) {
 				fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
 			}
 			if err != nil {
