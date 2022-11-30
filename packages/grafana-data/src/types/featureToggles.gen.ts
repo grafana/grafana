@@ -86,4 +86,5 @@ export interface FeatureToggles {
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
   sessionRemoteCache?: boolean;
+  secureSocksDatasourceProxy?: boolean;
 }
