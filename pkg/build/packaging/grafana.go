@@ -392,6 +392,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 	switch options.packageType {
 	case packageTypeRpm:
 		args = append(args, "-t", "rpm", "--rpm-posttrans", "packaging/rpm/control/posttrans")
+		args = append(args, "--rpm-digest", "sha256")
 	case packageTypeDeb:
 		args = append(args, "-t", "deb", "--deb-no-default-config-files")
 	default:
