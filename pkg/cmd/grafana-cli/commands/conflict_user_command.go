@@ -40,10 +40,7 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		HomePath: cmd.HomePath(),
 		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
-	if !cfg.CaseInsensitiveLogin {
-		logger.Info("Case Insensitive Login is not enabled, setting to true to not introduce any more conflicts")
-		cfg.CaseInsensitiveLogin = true
-	}
+
 	if err != nil {
 		return nil, err
 	}
