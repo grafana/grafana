@@ -14,6 +14,16 @@
 
 // See https://github.com/jaegertracing/jaeger-ui/issues/115 for details.
 
+import { TraceSpanReference } from '../types/trace';
+
+const references: TraceSpanReference[] = [
+  {
+    refType: 'FOLLOWS_FROM',
+    spanID: 'ea7cfaca83f0724b',
+    traceID: '2992f2a5b5d037a8aabffd08ef384237',
+  },
+];
+
 export const followsFromRef = {
   processes: {
     p1: {
@@ -28,13 +38,7 @@ export const followsFromRef = {
       logs: [],
       operationName: 'thread',
       processID: 'p1',
-      references: [
-        {
-          refType: 'FOLLOWS_FROM',
-          spanID: 'ea7cfaca83f0724b',
-          traceID: '2992f2a5b5d037a8aabffd08ef384237',
-        },
-      ],
+      references: references,
       spanID: '1bdf4201221bb2ac',
       startTime: 1509533706521220,
       tags: [],

@@ -22,7 +22,7 @@ export default class TreeNode {
     return (node: TreeNode) => fn(node.value, node, depth);
   }
 
-  static searchFunction(search: TreeNode | number | SearchFn) {
+  static searchFunction(search: TreeNode | number | SearchFn | string) {
     if (typeof search === 'function') {
       return search;
     }
@@ -51,7 +51,7 @@ export default class TreeNode {
     return this;
   }
 
-  find(search: TreeNode | number | SearchFn): TreeNode | null {
+  find(search: TreeNode | number | SearchFn | string): TreeNode | null {
     const searchFn = TreeNode.iterFunction(TreeNode.searchFunction(search));
     if (searchFn(this)) {
       return this;
@@ -65,7 +65,7 @@ export default class TreeNode {
     return null;
   }
 
-  getPath(search: TreeNode) {
+  getPath(search: TreeNode | string) {
     const searchFn = TreeNode.iterFunction(TreeNode.searchFunction(search));
 
     const findPath = (currentNode: TreeNode, currentPath: TreeNode[]): TreeNode[] | null => {
