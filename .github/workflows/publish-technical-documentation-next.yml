@@ -1,0 +1,30 @@
+name: "publish-technical-documentation-next"
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "docs/sources/**"
+      - "packages/grafana-*/**"
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout Grafana repo"
+        uses: "actions/checkout@v3"
+
+      - name: "Clone website-sync Action"
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.GH_BOT_ACCESS_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+
+      - name: "Publish to website repository (next)"
+        uses: "./.github/actions/website-sync"
+        id: "publish-next"
+        with:
+          repository: "grafana/website"
+          branch: "master"
+          host: "github.com"
+          github_pat: "${{ secrets.GH_BOT_ACCESS_TOKEN }}"
+          source_folder: "docs/sources"
+          target_folder: "content/docs/grafana/next"
