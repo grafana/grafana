@@ -12,7 +12,14 @@ import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTim
 
 import { AlertQuery, RulerGrafanaRuleDTO } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
-import { ExpressionQuery, ExpressionQueryType } from '../../expressions/types';
+import {
+  downsamplingTypes,
+  ExpressionQuery,
+  ExpressionQueryType,
+  reducerTypes,
+  thresholdFunctions,
+  upsamplingTypes,
+} from '../../expressions/types';
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
@@ -87,10 +94,18 @@ function ExpressionPreview({ refId, model }: ExpressionPreviewProps) {
         return <QueryBox refId={refId} headerItems={['Math']}></QueryBox>;
 
       case ExpressionQueryType.reduce:
-        return <QueryBox refId={refId} headerItems={['Reduce']}></QueryBox>;
+        return (
+          <QueryBox refId={refId} headerItems={['Reduce']}>
+            <ReduceConditionViewer model={model} />
+          </QueryBox>
+        );
 
       case ExpressionQueryType.resample:
-        return <QueryBox refId={refId} headerItems={['Resample']}></QueryBox>;
+        return (
+          <QueryBox refId={refId} headerItems={['Resample']}>
+            <ResampleExpressionViewer model={model} />
+          </QueryBox>
+        );
 
       case ExpressionQueryType.classic:
         return (
@@ -100,7 +115,11 @@ function ExpressionPreview({ refId, model }: ExpressionPreviewProps) {
         );
 
       case ExpressionQueryType.threshold:
-        return <QueryBox refId={refId} headerItems={['Threshold']}></QueryBox>;
+        return (
+          <QueryBox refId={refId} headerItems={['Threshold']}>
+            <ThresholdExpressionViewer model={model} />
+          </QueryBox>
+        );
 
       default:
         return <>Expression not supported: {model.type}</>;
@@ -155,11 +174,7 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-interface ClassicConditionViewerProps {
-  model: ExpressionQuery;
-}
-
-function ClassicConditionViewer({ model }: ClassicConditionViewerProps) {
+function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
   const styles = useStyles2(getClassicConditionViewerStyles);
 
   const reducerFunctions = keyBy(alertDef.reducerTypes, (rt) => rt.value);
@@ -169,18 +184,18 @@ function ClassicConditionViewer({ model }: ClassicConditionViewerProps) {
   return (
     <div className={styles.container}>
       {model.conditions?.map(({ query, operator, reducer, evaluator }, index) => {
-        const isRange = evaluator.type === EvalFunction.IsWithinRange || evaluator.type === EvalFunction.IsOutsideRange;
+        const isRange = isRangeEvaluator(evaluator);
 
         return (
           <React.Fragment key={index}>
-            <div className={styles.operator}>
+            <div className={styles.blue}>
               {index === 0 ? 'WHEN' : !!operator?.type && evalOperators[operator?.type]?.text}
             </div>
-            <div className={styles.reducer}>{reducer?.type && reducerFunctions[reducer.type]?.text}</div>
-            <div className={styles.of}>OF</div>
-            <div className={styles.query}>{query.params[0]}</div>
-            <div className={styles.evaluator}>{evalFunctions[evaluator.type].text}</div>
-            <div className={styles.evaluatorParam}>
+            <div className={styles.bold}>{reducer?.type && reducerFunctions[reducer.type]?.text}</div>
+            <div className={styles.blue}>OF</div>
+            <div className={styles.bold}>{query.params[0]}</div>
+            <div className={styles.blue}>{evalFunctions[evaluator.type].text}</div>
+            <div className={styles.bold}>
               {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
             </div>
           </React.Fragment>
@@ -190,6 +205,26 @@ function ClassicConditionViewer({ model }: ClassicConditionViewerProps) {
   );
 }
 
+const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
+  blue: css`
+    color: ${theme.colors.text.link};
+  `,
+  bold: css`
+    font-weight: ${theme.typography.fontWeightBold};
+  `,
+  label: css`
+    padding: ${theme.spacing(0.5, 1)};
+    background-color: ${theme.colors.background.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    line-height: ${theme.typography.bodySmall.lineHeight};
+    font-weight: ${theme.typography.fontWeightBold};
+  `,
+  value: css`
+    padding: ${theme.spacing(0.5, 1)};
+    border: 1px solid ${theme.colors.border.weak};
+  `,
+});
+
 const getClassicConditionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css`
     padding: ${theme.spacing(1)};
@@ -197,22 +232,89 @@ const getClassicConditionViewerStyles = (theme: GrafanaTheme2) => ({
     grid-template-columns: max-content max-content max-content max-content max-content max-content;
     gap: ${theme.spacing(0, 1)};
   `,
-  operator: css`
-    color: ${theme.colors.text.link};
-  `,
-  reducer: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  of: css`
-    color: ${theme.colors.text.link};
-  `,
-  query: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  evaluator: css`
-    color: ${theme.colors.text.link};
-  `,
-  evaluatorParam: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
+  ...getCommonQueryStyles(theme),
 });
+
+function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
+  const styles = useStyles2(getReduceConditionViewerStyles);
+
+  const { reducer, expression, settings } = model;
+  const reducerType = reducerTypes.find((rt) => rt.value === reducer);
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.label}>Function</div>
+      <div className={styles.value}>{reducerType?.label}</div>
+
+      <div className={styles.label}>Input</div>
+      <div className={styles.value}>{expression}</div>
+
+      <div className={styles.label}>Mode</div>
+      <div className={styles.value}>{settings?.mode}</div>
+    </div>
+  );
+}
+
+const getReduceConditionViewerStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    padding: ${theme.spacing(1)};
+    display: flex;
+    gap: ${theme.spacing(1)};
+  `,
+  ...getCommonQueryStyles(theme),
+});
+
+function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
+  const styles = useStyles2(getReduceConditionViewerStyles);
+
+  const { expression, window, downsampler, upsampler } = model;
+  const downsamplerType = downsamplingTypes.find((dt) => dt.value === downsampler);
+  const upsamplerType = upsamplingTypes.find((ut) => ut.value === upsampler);
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.label}>Input</div>
+      <div className={styles.value}>{expression}</div>
+
+      <div className={styles.label}>Resample to</div>
+      <div className={styles.value}>{window}</div>
+
+      <div className={styles.label}>Downsample</div>
+      <div className={styles.value}>{downsamplerType?.label}</div>
+
+      <div className={styles.label}>Upsample</div>
+      <div className={styles.value}>{upsamplerType?.label}</div>
+    </div>
+  );
+}
+
+function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
+  const styles = useStyles2(getReduceConditionViewerStyles);
+
+  const { expression, conditions } = model;
+
+  const evaluator = conditions && conditions[0]?.evaluator;
+  const thresholdFunction = thresholdFunctions.find((tf) => tf.value === evaluator?.type);
+
+  const isRange = evaluator ? isRangeEvaluator(evaluator) : false;
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.label}>Input</div>
+      <div className={styles.value}>{expression}</div>
+
+      {evaluator && (
+        <>
+          <div className={styles.blue}>{thresholdFunction?.label}</div>
+          <div className={styles.bold}>
+            {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function isRangeEvaluator(evaluator: { params: number[]; type: EvalFunction }) {
+  return evaluator.type === EvalFunction.IsWithinRange || evaluator.type === EvalFunction.IsOutsideRange;
+}
