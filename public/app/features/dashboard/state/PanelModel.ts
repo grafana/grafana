@@ -157,7 +157,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
-  savedQueryLink: SavedQueryLink | null = null;
+  savedQueryLink: SavedQueryLink | null = null; // Used by the experimental feature queryLibrary
 
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
