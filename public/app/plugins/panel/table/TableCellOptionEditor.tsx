@@ -1,10 +1,11 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 
-//import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
-import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
+import { Field, HorizontalGroup, Select, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptions } from './cells/BarGaugeCellOptions';
+import { ColorBackgroundCellOptions } from './cells/ColorBackgroundCellOptions';
 
 const cellDisplayModeOptions = [
   { value: TableCellDisplayMode.Auto, label: 'Auto' },
@@ -15,35 +16,45 @@ const cellDisplayModeOptions = [
   { value: TableCellDisplayMode.Image, label: 'Image' },
 ];
 
+interface ComponentMap {
+  [key: string]: React.FC;
+}
+
+const displayModeComponentMap: ComponentMap = {
+  [TableCellDisplayMode.Gauge]: BarGaugeCellOptions,
+  [TableCellDisplayMode.ColorBackground]: ColorBackgroundCellOptions,
+};
+
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
 }
 
 export const TableCellOptionEditor: React.FC<Props> = (props) => {
-  const { value } = props;
-
-  // Do processing with the values here
+  //const { value } = props;
+  const [displayMode, setDisplayMode] = useState(TableCellDisplayMode.Auto);
   let editor: ReactNode | null = null;
 
-  if (true) {
-    editor = <BarGaugeCellOptions {...props} />;
-  }
+  // Update display mode on change
+  const onDisplayModeChange = (v: SelectableValue<TableCellDisplayMode>) => {
+    if (v.value !== undefined) {
+      setDisplayMode(v.value);
+    }
+  };
 
-  const onDisplayModeChange = (v) => {};
+  // Setup specific cell editor
+  if (displayMode !== undefined && displayModeComponentMap[displayMode] !== undefined) {
+    let Comp: React.FC = displayModeComponentMap[displayMode];
+    editor = <Comp {...props} />;
+  }
 
   // Setup and inject editor
   return (
     <>
       <Field label="Cell display mode" description="Color text, background, show as gauge, etc.">
-        <Select options={cellDisplayModeOptions} value={value.displayMode} onChange={onDisplayModeChange} />
+        <Select options={cellDisplayModeOptions} value={displayMode} onChange={onDisplayModeChange} />
       </Field>
-
-      {editor}
+      <HorizontalGroup>{editor}</HorizontalGroup>
     </>
   );
-};
-
-export const cellHasSubOptions = (displayMode: string): boolean => {
-  return displayMode === 'gauge';
 };
