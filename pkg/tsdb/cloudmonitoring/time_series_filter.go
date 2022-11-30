@@ -21,133 +21,78 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, 
 	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, tracer, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
 }
 
+func extractTimeSeriesLabels(series timeSeries, groupBys []string) (data.Labels, string) {
+	seriesLabels := data.Labels{}
+	defaultMetricName := series.Metric.Type
+	seriesLabels["resource.type"] = series.Resource.Type
+	groupBysMap := make(map[string]bool)
+	for _, groupBy := range groupBys {
+		groupBysMap[groupBy] = true
+	}
+
+	for key, value := range series.Metric.Labels {
+		seriesLabels["metric.label."+key] = value
+
+		if len(groupBys) == 0 || groupBysMap["metric.label."+key] {
+			defaultMetricName += " " + value
+		}
+	}
+
+	for key, value := range series.Resource.Labels {
+		seriesLabels["resource.label."+key] = value
+
+		if groupBysMap["resource.label."+key] {
+			defaultMetricName += " " + value
+		}
+	}
+
+	for labelType, labelTypeValues := range series.MetaData {
+		for labelKey, labelValue := range labelTypeValues {
+			key := xstrings.ToSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
+
+			switch v := labelValue.(type) {
+			case string:
+				seriesLabels[key] = v
+			case bool:
+				strVal := strconv.FormatBool(v)
+				seriesLabels[key] = strVal
+			case []interface{}:
+				for _, v := range v {
+					strVal := v.(string)
+					if len(seriesLabels[key]) > 0 {
+						strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
+					}
+					seriesLabels[key] = strVal
+				}
+			}
+		}
+	}
+
+	return seriesLabels, defaultMetricName
+}
+
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string, query cloudMonitoringQueryExecutor, params url.Values, groupBys []string) error {
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeries {
-		seriesLabels := data.Labels{}
-		defaultMetricName := series.Metric.Type
-		labels := make(map[string]string)
-		labels["resource.type"] = series.Resource.Type
-		seriesLabels["resource.type"] = series.Resource.Type
-		groupBysMap := make(map[string]bool)
-		for _, groupBy := range groupBys {
-			groupBysMap[groupBy] = true
-		}
-
+		seriesLabels, defaultMetricName := extractTimeSeriesLabels(series, groupBys)
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.getRefID()
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
+			Custom: map[string]interface{}{
+				"alignmentPeriod":  params.Get("aggregation.alignmentPeriod"),
+				"perSeriesAligner": params.Get("aggregation.perSeriesAligner"),
+				"labels":           seriesLabels,
+				"groupBys":         groupBys,
+			},
 		}
 
-		for key, value := range series.Metric.Labels {
-			labels["metric.label."+key] = value
-			seriesLabels["metric.label."+key] = value
-
-			if len(groupBys) == 0 || groupBysMap["metric.label."+key] {
-				defaultMetricName += " " + value
-			}
-		}
-
-		for key, value := range series.Resource.Labels {
-			labels["resource.label."+key] = value
-			seriesLabels["resource.label."+key] = value
-
-			if groupBysMap["resource.label."+key] {
-				defaultMetricName += " " + value
-			}
-		}
-
-		for labelType, labelTypeValues := range series.MetaData {
-			for labelKey, labelValue := range labelTypeValues {
-				key := xstrings.ToSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-
-				switch v := labelValue.(type) {
-				case string:
-					labels[key] = v
-					seriesLabels[key] = v
-				case bool:
-					strVal := strconv.FormatBool(v)
-					labels[key] = strVal
-					seriesLabels[key] = strVal
-				case []interface{}:
-					for _, v := range v {
-						strVal := v.(string)
-						labels[key] = strVal
-						if len(seriesLabels[key]) > 0 {
-							strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
-						}
-						seriesLabels[key] = strVal
-					}
-				}
-			}
-		}
-
-		customFrameMeta := map[string]interface{}{}
-		customFrameMeta["alignmentPeriod"] = params.Get("aggregation.alignmentPeriod")
-		customFrameMeta["perSeriesAligner"] = params.Get("aggregation.perSeriesAligner")
-		customFrameMeta["labels"] = labels
-		customFrameMeta["groupBys"] = groupBys
-		if frame.Meta != nil {
-			frame.Meta.Custom = customFrameMeta
-		} else {
-			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
-		}
-
-		// reverse the order to be ascending
-		if series.ValueType != "DISTRIBUTION" {
-			handleNonDistributionSeries(series, defaultMetricName, seriesLabels, frame, query)
-			frames = append(frames, frame)
-			continue
-		}
-		buckets := make(map[int]*data.Frame)
-		for i := len(series.Points) - 1; i >= 0; i-- {
-			point := series.Points[i]
-			if len(point.Value.DistributionValue.BucketCounts) == 0 {
-				continue
-			}
-			for i := 0; i < len(point.Value.DistributionValue.BucketCounts); i++ {
-				value, err := strconv.ParseFloat(point.Value.DistributionValue.BucketCounts[i], 64)
-				if err != nil {
-					return err
-				}
-				if _, ok := buckets[i]; !ok {
-					// set lower bounds
-					// https://cloud.google.com/monitoring/api/ref_v3/rest/v3/TimeSeries#Distribution
-					bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
-					additionalLabels := map[string]string{"bucket": bucketBound}
-
-					timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
-					valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
-
-					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query)
-					valueField.Name = frameName
-					valueField.Labels = seriesLabels
-					setDisplayNameAsFieldName(valueField)
-
-					buckets[i] = &data.Frame{
-						Name: frameName,
-						Fields: []*data.Field{
-							timeField,
-							valueField,
-						},
-						RefID: query.getRefID(),
-						Meta: &data.FrameMeta{
-							ExecutedQueryString: executedQueryString,
-						},
-					}
-				}
-				buckets[i].AppendRow(point.Interval.EndTime, value)
-			}
-		}
-		for i := 0; i < len(buckets); i++ {
-			buckets[i].Meta.Custom = customFrameMeta
-			frames = append(frames, buckets[i])
-		}
-		if len(buckets) == 0 {
-			frames = append(frames, frame)
+		var err error
+		frames, err = appendFrames(frames, &series, 0, defaultMetricName, seriesLabels, frame, query)
+		if err != nil {
+			return err
 		}
 	}
 	if len(response.TimeSeries) > 0 {
@@ -163,36 +108,6 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	return parseTimeSeriesResponse(queryRes, response, executedQueryString, timeSeriesFilter, timeSeriesFilter.params, timeSeriesFilter.parameters.GroupBys)
-}
-
-func handleNonDistributionSeries(series timeSeries,
-	defaultMetricName string, seriesLabels map[string]string, frame *data.Frame, query cloudMonitoringQueryExecutor) {
-	for i := 0; i < len(series.Points); i++ {
-		point := series.Points[i]
-		value := point.Value.DoubleValue
-
-		if series.ValueType == "INT64" {
-			parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
-			if err == nil {
-				value = parsedValue
-			}
-		}
-
-		if series.ValueType == "BOOL" {
-			if point.Value.BoolValue {
-				value = 1
-			} else {
-				value = 0
-			}
-		}
-		frame.SetRow(len(series.Points)-1-i, point.Interval.EndTime, value)
-	}
-
-	metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
-	dataField := frame.Fields[1]
-	dataField.Name = metricName
-	dataField.Labels = seriesLabels
-	setDisplayNameAsFieldName(dataField)
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
