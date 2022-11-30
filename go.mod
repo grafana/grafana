@@ -366,24 +366,10 @@ require (
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc
 
-replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
-
-replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
-
-replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
-
-replace github.com/tidwall/gjson => github.com/tidwall/gjson v1.14.1
-
-// Upgraded to fix CVE-2020-26066. This can be removed when go.opentelemetry.io/collector and github.com/influxdata/telegraf are upgraded
-// github.com/tidwall/match v1.0.1 should not be used.
-replace github.com/tidwall/match => github.com/tidwall/match v1.1.1
-
 // Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
 // No harm to Thema because it's only a dependency in its main package.
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
-
-replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday v1.0.18
 
 // This is a patched v0.8.2 intended to fix session.Find (and others) silently ignoring SQLITE_BUSY errors. This could
 // happen, for example, during a read when the sqlite db is under heavy write load.
