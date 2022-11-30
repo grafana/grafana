@@ -88,7 +88,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const hasHeader = title || titleItems.length > 0 || menu;
 
   return (
-    <div className={styles.container} style={{ width: '400px', height }}>
+    <div className={styles.container} style={containerStyles}>
       {loadingState === LoadingState.Loading && <LoadingBar containerWidth={width} width={128} height={2} />}
 
       {hasHeader && !hoverHeader && (
@@ -204,8 +204,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       width: '100%',
-      contain: 'strict',
       flexGrow: 1,
+      overflow: 'auto',
     }),
     headerContainer: css({
       label: 'panel-header',
