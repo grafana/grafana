@@ -32,7 +32,7 @@ export type DataProvider = {
   // get series values
   getSeriesValues: (name: string, match: string) => Promise<string[]>;
   // Get labels for series
-  getSeriesLabels: (name: string) => Promise<Record<string, string[]>>;
+  getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
 };
 
 // we order items like: history, functions, metrics
@@ -114,14 +114,7 @@ async function getLabelNames(
     return dataProvider.getAllLabelNames();
   } else {
     const selector = makeSelector(metric, otherLabels);
-    // const data = await dataProvider.getSeries(selector);
-    // const possibleLabelNames = Object.keys(data); // all names from prometheus
-    // const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
-    // return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
-
-    // This will break old prometheus! This is a WIP
-    const data = await dataProvider.getSeriesLabels(selector);
-    return Object.keys(data);
+    return await dataProvider.getSeriesLabels(selector, otherLabels);
   }
 }
 

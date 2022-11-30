@@ -158,7 +158,7 @@ const MonacoQueryField = (props: Props) => {
           const getSeriesValues = lpRef.current.getSeriesValues;
 
           // const hasLabelsSupport = lpRef.current.datasource.hasLabelsMatchAPISupport()
-          const getSeriesLabels = lpRef.current.fetchSeriesLabelsMatch;
+          const getSeriesLabels = lpRef.current.getSeriesLabels;
           const dataProvider = {
             getHistory,
             getAllMetricNames,

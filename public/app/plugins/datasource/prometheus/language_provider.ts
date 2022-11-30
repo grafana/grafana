@@ -14,6 +14,7 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
@@ -513,7 +514,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const data = await this.getSeries(selector);
       return data[labelName] ?? [];
     }
-    return this.fetchSeriesValuesWithMatch(labelName, selector);
+    return await this.fetchSeriesValuesWithMatch(labelName, selector);
   };
 
   /**
@@ -529,6 +530,30 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...(match && { 'match[]': match }),
     };
     return await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+  };
+
+  /**
+   * Gets series labels
+   * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
+   * while maintaining backward compatability
+   * @param selector
+   * @param otherLabels
+   */
+  getSeriesLabels = async (selector: string, otherLabels: Label[]): Promise<string[]> => {
+    let possibleLabelNames, data: Record<string, string[]>;
+
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      data = await this.getSeries(selector);
+      possibleLabelNames = Object.keys(data); // all names from prometheus
+    } else {
+      // Exclude __name__ from output
+      otherLabels.push({ name: '__name__', value: '', op: '!=' });
+      data = await this.fetchSeriesLabelsMatch(selector);
+      possibleLabelNames = Object.keys(data);
+    }
+
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
+    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
   };
 
   /**
@@ -608,7 +633,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param match
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
-    console.log('HELLLO WORLD? fetchSeries');
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams();
     const params = { ...range, 'match[]': match };
