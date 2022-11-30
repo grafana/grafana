@@ -1,13 +1,14 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2, isIconName } from '@grafana/data';
+import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
+import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
 /**
@@ -35,7 +36,7 @@ export interface PanelChromeProps {
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
   hoverHeader?: boolean;
-  // loadingState?: LoadingState;
+  loadingState?: LoadingState;
   // states?: ReactNode[];
   /** @deprecated in favor of prop states
    * which will serve the same purpose
@@ -63,7 +64,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   menu,
   // dragClass,
   hoverHeader = false,
-  // loadingState,
+  loadingState,
   // states = [],
   leftItems = [],
 }) => {
@@ -87,7 +88,9 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const hasHeader = title || titleItems.length > 0 || menu;
 
   return (
-    <div className={styles.container} style={containerStyles}>
+    <div className={styles.container} style={{ width: '400px', height }}>
+      {loadingState === LoadingState.Loading && <LoadingBar containerWidth={width} width={128} height={2} />}
+
       {hasHeader && !hoverHeader && (
         <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
           {title && (

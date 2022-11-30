@@ -4,6 +4,7 @@ import { merge } from 'lodash';
 import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
 
+import { LoadingState } from '@grafana/data';
 import { PanelChrome, PanelChromeProps } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
@@ -221,6 +222,7 @@ Basic.args = {
   title: 'Very long title that should get ellipsis when there is no more space',
   titleItems,
   menu,
+  loadingState: LoadingState.Loading,
 };
 
 export default meta;
