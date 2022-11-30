@@ -3,6 +3,7 @@ import React, { CSSProperties } from 'react';
 import { Field, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
 import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
@@ -31,7 +32,7 @@ export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
 
     return (
       <div style={style} data-testid={key}>
-        {model.interpolate(text)}
+        {sceneGraph.interpolate(model, text)}
       </div>
     );
   };

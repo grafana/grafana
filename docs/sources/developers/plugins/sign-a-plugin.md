@@ -40,10 +40,8 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin plugin:sign
+   npx @grafana/sign-plugin
    ```
-
-> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
 
 ## Sign a private plugin
 
@@ -53,7 +51,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin plugin:sign --rootUrls https://example.com/grafana
+   npx @grafana/sign-plugin --rootUrls https://example.com/grafana
    ```
 
 ## Plugin signature levels

@@ -147,7 +147,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   }, [condition, queries, setValue]);
 
   return (
-    <RuleEditorSection stepNo={1} title="Set a query and alert condition">
+    <RuleEditorSection stepNo={2} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
 
       {/* This is the PromQL Editor for Cloud rules and recording rules */}

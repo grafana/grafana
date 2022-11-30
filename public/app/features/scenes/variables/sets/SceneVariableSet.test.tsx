@@ -72,7 +72,7 @@ describe('SceneVariableList', () => {
       C.signalUpdateCompleted();
 
       // When changing A should start B but not C (yet)
-      A.onSingleValueChange({ value: 'AB', text: 'AB' });
+      A.changeValueTo('AB');
 
       expect(B.state.loading).toBe(true);
       expect(C.state.loading).toBe(false);
@@ -125,13 +125,37 @@ describe('SceneVariableList', () => {
         expect((sceneObjectWithVariable as any)._renderCount).toBe(2);
 
         act(() => {
-          B.onSingleValueChange({ value: 'B', text: 'B' });
+          B.changeValueTo('B');
         });
 
         expect(screen.getByText('AA - B')).toBeInTheDocument();
         expect((helloText as any)._renderCount).toBe(1);
         expect((sceneObjectWithVariable as any)._renderCount).toBe(3);
       });
+    });
+  });
+
+  describe('When activated with variables update at the same time', () => {
+    it('Should not start variables multiple times', async () => {
+      const A = new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] });
+      const B = new TestVariable({ name: 'B', query: 'B.*', value: '', text: '', options: [] });
+
+      const scene = new TestScene({
+        $variables: new SceneVariableSet({ variables: [A, B] }),
+      });
+
+      scene.activate();
+
+      // Should start variables
+      expect(A.state.loading).toBe(true);
+      expect(B.state.loading).toBe(true);
+      expect(A.getValueOptionsCount).toBe(1);
+
+      // Complete the second one
+      B.signalUpdateCompleted();
+
+      // When B complete should not start another instance of A
+      expect(A.getValueOptionsCount).toBe(1);
     });
   });
 });

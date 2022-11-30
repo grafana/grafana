@@ -17,5 +17,5 @@ export const createMockDatasource = (overrides?: Partial<Datasource>) => {
     ...overrides,
   };
 
-  return jest.mocked(datasource as Datasource, true);
+  return jest.mocked(datasource as Datasource);
 };

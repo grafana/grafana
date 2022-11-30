@@ -18,7 +18,6 @@ var (
 type TeamSyncFunc func(user *user.User, externalUser *models.ExternalUserInfo) error
 
 type Service interface {
-	CreateUser(cmd user.CreateUserCommand) (*user.User, error)
 	UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error
 	DisableExternalUser(ctx context.Context, username string) error
 	SetTeamSyncFunc(TeamSyncFunc)

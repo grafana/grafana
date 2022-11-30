@@ -5,20 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { BusEvent, BusEventHandler, BusEventType, EventBusSrv } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
-import { sceneTemplateInterpolator } from '../variables/sceneTemplateInterpolator';
-import { SceneVariables, SceneVariableDependencyConfigLike } from '../variables/types';
+import { SceneVariableDependencyConfigLike } from '../variables/types';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import {
-  SceneDataState,
-  SceneObject,
-  SceneComponent,
-  SceneEditor,
-  SceneTimeRange,
-  SceneObjectState,
-  SceneLayoutState,
-} from './types';
+import { SceneObject, SceneComponent, SceneObjectState, SceneObjectUrlSyncHandler } from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
@@ -35,13 +26,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   protected _subs = new Subscription();
 
   protected _variableDependency: SceneVariableDependencyConfigLike | undefined;
+  protected _urlSync: SceneObjectUrlSyncHandler<TState> | undefined;
 
   public constructor(state: TState) {
     if (!state.key) {
       state.key = uuidv4();
     }
 
-    this._state = state;
+    this._state = Object.freeze(state);
     this._subject.next(state);
     this.setParent();
   }
@@ -64,6 +56,11 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   /** Returns variable dependency config */
   public get variableDependency(): SceneVariableDependencyConfigLike | undefined {
     return this._variableDependency;
+  }
+
+  /** Returns url sync config */
+  public get urlSync(): SceneObjectUrlSyncHandler<TState> | undefined {
+    return this._urlSync;
   }
 
   /**
@@ -101,19 +98,21 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
 
   public setState(update: Partial<TState>) {
     const prevState = this._state;
-    this._state = {
+    const newState: TState = {
       ...this._state,
       ...update,
     };
 
+    this._state = Object.freeze(newState);
+
     this.setParent();
-    this._subject.next(this._state);
+    this._subject.next(newState);
 
     // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
     this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
-        newState: this._state,
+        newState,
         partialUpdate: update,
         changedObject: this,
       }),
@@ -185,81 +184,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     return useSceneObjectState(this);
   }
 
-  /**
-   * Will walk up the scene object graph to the closest $timeRange scene object
-   */
-  public getTimeRange(): SceneTimeRange {
-    const { $timeRange } = this.state;
-    if ($timeRange) {
-      return $timeRange;
-    }
-
-    if (this.parent) {
-      return this.parent.getTimeRange();
-    }
-
-    throw new Error('No time range found in scene tree');
-  }
-
-  /**
-   * Will walk up the scene object graph to the closest $data scene object
-   */
-  public getData(): SceneObject<SceneDataState> {
-    const { $data } = this.state;
-    if ($data) {
-      return $data;
-    }
-
-    if (this.parent) {
-      return this.parent.getData();
-    }
-
-    throw new Error('No data found in scene tree');
-  }
-
-  public getVariables(): SceneVariables | undefined {
-    if (this.state.$variables) {
-      return this.state.$variables;
-    }
-
-    if (this.parent) {
-      return this.parent.getVariables();
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Will walk up the scene object graph to the closest $layout scene object
-   */
-  public getLayout(): SceneObject<SceneLayoutState> {
-    if (this.constructor.name === 'SceneFlexLayout' || this.constructor.name === 'SceneGridLayout') {
-      return this as SceneObject<SceneLayoutState>;
-    }
-
-    if (this.parent) {
-      return this.parent.getLayout();
-    }
-
-    throw new Error('No layout found in scene tree');
-  }
-
-  /**
-   * Will walk up the scene object graph to the closest $editor scene object
-   */
-  public getSceneEditor(): SceneEditor {
-    const { $editor } = this.state;
-    if ($editor) {
-      return $editor;
-    }
-
-    if (this.parent) {
-      return this.parent.getSceneEditor();
-    }
-
-    throw new Error('No editor found in scene tree');
-  }
-
   /** Force a re-render, should only be needed when variable values change */
   public forceRender(): void {
     this.setState({});
@@ -270,19 +194,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
    */
   public clone(withState?: Partial<TState>): this {
     return cloneSceneObject(this, withState);
-  }
-
-  /**
-   * Interpolates the given string using the current scene object as context.
-   * TODO: Cache interpolatinos?
-   */
-  public interpolate(value: string | undefined) {
-    // Skip interpolation if there are no variable depdendencies
-    if (!value || !this._variableDependency || this._variableDependency.getNames().size === 0) {
-      return value;
-    }
-
-    return sceneTemplateInterpolator(value, this);
   }
 }
 

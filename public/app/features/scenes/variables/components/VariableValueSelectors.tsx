@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
+import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps, SceneObject, SceneObjectStatePlain } from '../../core/types';
 import { SceneVariableState } from '../types';
 
@@ -13,7 +14,7 @@ export class VariableValueSelectors extends SceneObjectBase<SceneObjectStatePlai
 }
 
 function VariableValueSelectorsRenderer({ model }: SceneComponentProps<VariableValueSelectors>) {
-  const variables = model.getVariables()!.useState();
+  const variables = sceneGraph.getVariables(model)!.useState();
 
   return (
     <>

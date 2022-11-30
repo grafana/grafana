@@ -189,7 +189,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 					Role: plugins.Role{
 						Name: "Tester",
 						Permissions: []plugins.Permission{
-							{Action: "plugins.app:access"},
+							{Action: "plugins.app:access", Scope: "plugins:id:test-app"},
 							{Action: "test-app:read"},
 							{Action: "test-app.resource:read"},
 						},

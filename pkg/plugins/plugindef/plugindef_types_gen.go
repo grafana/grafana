@@ -362,6 +362,9 @@ type Header struct {
 
 // A resource to be included in a plugin.
 type Include struct {
+	// RBAC action the user must have to access the route
+	Action *string `json:"action,omitempty"`
+
 	// Add the include to the side menu.
 	AddToNav *bool `json:"addToNav,omitempty"`
 
@@ -462,7 +465,7 @@ type JWTTokenAuth struct {
 	Url string `json:"url"`
 }
 
-// Permission describes an RBAC permission on the plugin. A permission has an action and an option
+// Permission describes an RBAC permission on the plugin. A permission has an action and an optional
 // scope.
 // Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
 type Permission struct {

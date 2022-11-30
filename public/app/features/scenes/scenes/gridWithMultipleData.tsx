@@ -1,12 +1,11 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel, SceneGridRow } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
+import { SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
 export function getGridWithMultipleData(): Scene {
   const scene = new Scene({
@@ -14,19 +13,8 @@ export function getGridWithMultipleData(): Scene {
     layout: new SceneGridLayout({
       children: [
         new SceneGridRow({
-          $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-          $data: new SceneQueryRunner({
-            queries: [
-              {
-                refId: 'A',
-                datasource: {
-                  uid: 'gdev-testdata',
-                  type: 'testdata',
-                },
-                scenarioId: 'random_walk_table',
-              },
-            ],
-          }),
+          $timeRange: new SceneTimeRange(),
+          $data: getQueryRunnerWithRandomWalkQuery({ scenarioId: 'random_walk_table' }),
           title: 'Row A - has its own query',
           key: 'Row A',
           isCollapsed: true,
@@ -65,19 +53,7 @@ export function getGridWithMultipleData(): Scene {
               size: { x: 0, y: 2, width: 12, height: 5 },
             }),
             new VizPanel({
-              $data: new SceneQueryRunner({
-                queries: [
-                  {
-                    refId: 'A',
-                    datasource: {
-                      uid: 'gdev-testdata',
-                      type: 'testdata',
-                    },
-                    scenarioId: 'random_walk',
-                    seriesCount: 10,
-                  },
-                ],
-              }),
+              $data: getQueryRunnerWithRandomWalkQuery({ seriesCount: 10 }),
               pluginId: 'timeseries',
               title: 'Row B Child2 with data',
               key: 'Row B Child2',
@@ -88,19 +64,7 @@ export function getGridWithMultipleData(): Scene {
           ],
         }),
         new VizPanel({
-          $data: new SceneQueryRunner({
-            queries: [
-              {
-                refId: 'A',
-                datasource: {
-                  uid: 'gdev-testdata',
-                  type: 'testdata',
-                },
-                scenarioId: 'random_walk',
-                seriesCount: 10,
-              },
-            ],
-          }),
+          $data: getQueryRunnerWithRandomWalkQuery({ seriesCount: 10 }),
           isResizable: true,
           isDraggable: true,
           pluginId: 'timeseries',
@@ -129,19 +93,8 @@ export function getGridWithMultipleData(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $timeRange: new SceneTimeRange(),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 

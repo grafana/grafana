@@ -1,21 +1,17 @@
-import { dateTime, getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel, SceneGridRow } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
+import { SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
 export function getGridWithMultipleTimeRanges(): Scene {
-  const globalTimeRange = new SceneTimeRange(getDefaultTimeRange());
-
-  const now = dateTime();
+  const globalTimeRange = new SceneTimeRange();
   const row1TimeRange = new SceneTimeRange({
-    from: dateTime(now).subtract(1, 'year'),
-    to: now,
-    raw: { from: 'now-1y', to: 'now' },
+    from: 'now-1y',
+    to: 'now',
   });
 
   const scene = new Scene({
@@ -24,18 +20,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
       children: [
         new SceneGridRow({
           $timeRange: row1TimeRange,
-          $data: new SceneQueryRunner({
-            queries: [
-              {
-                refId: 'A',
-                datasource: {
-                  uid: 'gdev-testdata',
-                  type: 'testdata',
-                },
-                scenarioId: 'random_walk_table',
-              },
-            ],
-          }),
+          $data: getQueryRunnerWithRandomWalkQuery({ scenarioId: 'random_walk_table' }),
           title: 'Row A - has its own query, last year time range',
           key: 'Row A',
           isCollapsed: true,
@@ -61,19 +46,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
         }),
 
         new VizPanel({
-          $data: new SceneQueryRunner({
-            queries: [
-              {
-                refId: 'A',
-                datasource: {
-                  uid: 'gdev-testdata',
-                  type: 'testdata',
-                },
-                scenarioId: 'random_walk',
-                seriesCount: 10,
-              },
-            ],
-          }),
+          $data: getQueryRunnerWithRandomWalkQuery(),
           isResizable: true,
           isDraggable: true,
           pluginId: 'timeseries',
@@ -90,18 +63,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
     }),
     $editor: new SceneEditManager({}),
     $timeRange: globalTimeRange,
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 
