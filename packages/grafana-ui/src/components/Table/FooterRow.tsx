@@ -40,9 +40,7 @@ export const FooterRow = (props: FooterRowProps) => {
             data-testid={e2eSelectorsTable.footer}
             style={height ? { height: `${height}px` } : undefined}
           >
-            {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-              renderFooterCell(column, tableStyles, height)
-            )}
+            {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles, height))}
           </div>
         );
       })}
@@ -71,9 +69,18 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   );
 }
 
-export function getFooterValue(index: number, footerValues?: FooterItem[]) {
+export function getFooterValue(index: number, footerValues?: FooterItem[], isCountRowsSet?: boolean) {
   if (footerValues === undefined) {
     return EmptyCell;
+  }
+
+  if (isCountRowsSet) {
+    const count = footerValues[index];
+    if (typeof count !== 'string') {
+      return EmptyCell;
+    }
+
+    return FooterCell({ value: [{ Count: count }] });
   }
 
   return FooterCell({ value: footerValues[index] });

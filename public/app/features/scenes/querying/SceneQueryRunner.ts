@@ -52,7 +52,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     this._subs.add(
       timeRange.subscribeToState({
         next: (timeRange) => {
-          this.runWithTimeRange(timeRange);
+          this.runWithTimeRange(timeRange.value);
         },
       })
     );
@@ -88,7 +88,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   public setContainerWidth(width: number) {
     // If we don't have a width we should run queries
-    if (!this._containerWidth) {
+    if (!this._containerWidth && width > 0) {
       this._containerWidth = width;
 
       // If we don't have maxDataPoints specifically set and maxDataPointsFromWidth is true
@@ -108,7 +108,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   public runQueries() {
     const timeRange = sceneGraph.getTimeRange(this);
-    this.runWithTimeRange(timeRange.state);
+    this.runWithTimeRange(timeRange.state.value);
   }
 
   private getMaxDataPoints() {

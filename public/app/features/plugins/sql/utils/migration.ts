@@ -1,6 +1,6 @@
 import { AnnotationQuery } from '@grafana/data';
-import { EditorMode } from '@grafana/experimental';
 
+import { applyQueryDefaults } from '../defaults';
 import { SQLQuery } from '../types';
 
 export default function migrateAnnotation(annotation: AnnotationQuery<SQLQuery>) {
@@ -10,12 +10,7 @@ export default function migrateAnnotation(annotation: AnnotationQuery<SQLQuery>)
     return annotation;
   }
 
-  const newQuery: SQLQuery = {
-    ...(annotation.target ?? {}),
-    refId: annotation.target?.refId ?? 'Anno',
-    editorMode: EditorMode.Code,
-    rawSql: oldQuery,
-  };
+  const newQuery = applyQueryDefaults({ refId: 'Annotation', ...(annotation.target ?? {}), rawSql: oldQuery });
 
   return {
     ...annotation,

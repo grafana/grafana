@@ -69,6 +69,8 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/loki @grafana/observability-logs
 /pkg/tsdb/zipkin @grafana/observability-traces-and-profiling
 /pkg/tsdb/tempo @grafana/observability-traces-and-profiling
+/pkg/tsdb/phlare @grafana/observability-traces-and-profiling
+/pkg/tsdb/parca @grafana/observability-traces-and-profiling
 
 # BI backend code
 /pkg/tsdb/mysql @grafana/grafana-bi-squad
@@ -154,6 +156,7 @@ tsconfig.json @grafana/frontend-ops
 /public/app/plugins/panel/logs @grafana/observability-logs
 /public/app/plugins/panel/nodeGraph @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/traces @grafana/observability-traces-and-profiling
+/public/app/plugins/panel/flamegraph @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/piechart @grafana/grafana-bi-squad
 /public/app/plugins/panel/state-timeline @grafana/grafana-bi-squad
 /public/app/plugins/panel/status-history @grafana/grafana-bi-squad
@@ -196,6 +199,8 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/cloud-monitoring @grafana/cloud-provider-plugins
 /public/app/plugins/datasource/zipkin @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/tempo @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/phlare @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/parca @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager @grafana/alerting-squad
 
 # SSE - Server Side Expressions
@@ -219,6 +224,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/teamguardian @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts @grafana/grafana-authnz-team
 /pkg/services/loginattempt @grafana/grafana-authnz-team
+/pkg/services/authn @grafana/grafana-authnz-team
 
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
