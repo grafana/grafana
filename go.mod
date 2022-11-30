@@ -56,7 +56,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/gosimple/slug v1.12.0
 	github.com/grafana/cuetsy v0.1.1
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
@@ -288,7 +287,6 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.0.0-20220520183353-fd19c99a87aa // indirect
 	github.com/googleapis/go-type-adapters v1.0.0 // indirect
-	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/memberlist v0.4.0 // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
@@ -368,24 +366,10 @@ require (
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc
 
-replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
-
-replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
-
-replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
-
-replace github.com/tidwall/gjson => github.com/tidwall/gjson v1.14.1
-
-// Upgraded to fix CVE-2020-26066. This can be removed when go.opentelemetry.io/collector and github.com/influxdata/telegraf are upgraded
-// github.com/tidwall/match v1.0.1 should not be used.
-replace github.com/tidwall/match => github.com/tidwall/match v1.1.1
-
 // Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
 // No harm to Thema because it's only a dependency in its main package.
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
-
-replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday v1.0.18
 
 // This is a patched v0.8.2 intended to fix session.Find (and others) silently ignoring SQLITE_BUSY errors. This could
 // happen, for example, during a read when the sqlite db is under heavy write load.

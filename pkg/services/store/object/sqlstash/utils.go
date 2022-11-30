@@ -2,10 +2,11 @@ package sqlstash
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/gosimple/slug"
 )
 
 func createContentsHash(contents []byte) string {
@@ -13,15 +14,20 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func getParentFolderPath(kind string, key string) string {
-	idx := strings.LastIndex(key, "/")
-	if idx < 0 {
-		return "" // ?
+func slugifyTitle(title string, fallback string) string {
+	if title == "" {
+		title = fallback
 	}
-
-	// folder should have a parent up one directory
-	if kind == models.StandardKindFolder {
-		idx = strings.LastIndex(key[:idx], "/")
+	s := slug.Make(strings.ToLower(title))
+	if s == "" {
+		// If the dashboard name is only characters outside of the
+		// sluggable characters, the slug creation will return an
+		// empty string which will mess up URLs. This failsafe picks
+		// that up and creates the slug as a base64 identifier instead.
+		s = base64.RawURLEncoding.EncodeToString([]byte(title))
+		if slug.MaxLength != 0 && len(s) > slug.MaxLength {
+			s = s[:slug.MaxLength]
+		}
 	}
-	return key[:idx]
+	return s
 }

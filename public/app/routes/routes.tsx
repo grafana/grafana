@@ -330,9 +330,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')
-      ),
+      component: config.featureToggles.topnav
+        ? SafeDynamicImport(() => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage'))
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')
+          ),
     },
     {
       path: '/admin/users/create',

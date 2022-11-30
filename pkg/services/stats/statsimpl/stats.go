@@ -1,39 +1,48 @@
-package sqlstore
+package statsimpl
 
 import (
 	"context"
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/stats"
 )
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func (ss *SQLStore) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
+func ProvideService(db db.DB) stats.Service {
+	return &sqlStatsService{db: db}
+}
+
+type sqlStatsService struct{ db db.DB }
+
+func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
+	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + ss.db.GetDialect().Quote("alert_notification") + ` GROUP BY type`
 		query.Result = make([]*models.NotifierUsageStats, 0)
 		err := dbSession.SQL(rawSQL).Find(&query.Result)
 		return err
 	})
 }
 
-func (ss *SQLStore) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("data_source") + ` GROUP BY type`
+func (ss *sqlStatsService) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
+	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + ss.db.GetDialect().Quote("data_source") + ` GROUP BY type`
 		query.Result = make([]*models.DataSourceStats, 0)
 		err := dbSession.SQL(rawSQL).Find(&query.Result)
 		return err
 	})
 }
 
-func (ss *SQLStore) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
+func (ss *sqlStatsService) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
+	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + ss.db.GetDialect().Quote("data_source") + ` GROUP BY type, access`
 		query.Result = make([]*models.DataSourceAccessStats, 0)
 		err := dbSession.SQL(rawSQL).Find(&query.Result)
 		return err
@@ -45,10 +54,11 @@ func notServiceAccount(dialect migrator.Dialect) string {
 		dialect.BooleanStr(false)
 }
 
-func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		sb := &SQLBuilder{}
+func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
+	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		sb := &sqlstore.SQLBuilder{}
 		sb.Write("SELECT ")
+		dialect := ss.db.GetDialect()
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
@@ -88,10 +98,10 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		WHERE d.is_folder = ?
 	) AS folder_permissions,`, dialect.BooleanStr(true))
 
-		sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_edit", false, models.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_admin", false, models.PERMISSION_ADMIN))
-		sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_edit", true, models.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_admin", true, models.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_edit", false, models.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_admin", false, models.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_edit", true, models.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_admin", true, models.PERMISSION_ADMIN))
 
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
@@ -112,7 +122,7 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		sb.Write(ss.roleCounterSQL(ctx))
 
 		var stats models.SystemStats
-		_, err := dbSession.SQL(sb.GetSQLString(), sb.params...).Get(&stats)
+		_, err := dbSession.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&stats)
 		if err != nil {
 			return err
 		}
@@ -123,7 +133,7 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 	})
 }
 
-func (ss *SQLStore) roleCounterSQL(ctx context.Context) string {
+func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
 	const roleCounterTimeout = 20 * time.Second
 	ctx, cancel := context.WithTimeout(ctx, roleCounterTimeout)
 	defer cancel()
@@ -142,7 +152,8 @@ func (ss *SQLStore) roleCounterSQL(ctx context.Context) string {
 	return sqlQuery
 }
 
-func viewersPermissionsCounterSQL(statName string, isFolder bool, permission models.PermissionType) string {
+func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, permission models.PermissionType) string {
+	dialect := db.GetDialect()
 	return `(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("dashboard_acl") + ` AS acl
@@ -154,8 +165,9 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 	) AS ` + statName + `, `
 }
 
-func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		dialect := ss.db.GetDialect()
 		now := time.Now()
 		activeEndDate := now.Add(-activeUserTimeLimit)
 		dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
@@ -231,9 +243,9 @@ func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminSta
 	})
 }
 
-func (ss *SQLStore) GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCountStatsQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		var rawSQL = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCountStatsQuery) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		var rawSQL = `SELECT COUNT(id) AS Count FROM ` + ss.db.GetDialect().Quote("user")
 		var stats models.SystemUserCountStats
 		_, err := sess.SQL(rawSQL).Get(&stats)
 		if err != nil {
@@ -246,7 +258,7 @@ func (ss *SQLStore) GetSystemUserCountStats(ctx context.Context, query *models.G
 	})
 }
 
-func (ss *SQLStore) updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {
+func (ss *sqlStatsService) updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {
 	memoizationPeriod := time.Now().Add(-userStatsCacheLimetime)
 	if forced || userStatsCache.memoized.Before(memoizationPeriod) {
 		err := ss.updateUserRoleCounts(ctx)
@@ -270,8 +282,8 @@ var (
 	userStatsCacheLimetime = 5 * time.Minute
 )
 
-func (ss *SQLStore) updateUserRoleCounts(ctx context.Context) error {
-	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+func (ss *sqlStatsService) updateUserRoleCounts(ctx context.Context) error {
+	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		query := `
 SELECT role AS bitrole, active, COUNT(role) AS count FROM
   (SELECT last_seen_at>? AS active, last_seen_at>? AS daily_active, SUM(role) AS role
@@ -283,7 +295,7 @@ SELECT role AS bitrole, active, COUNT(role) AS count FROM
         ELSE 1
       END AS role,
       u.last_seen_at
-    FROM ` + dialect.Quote("user") + ` AS u INNER JOIN org_user ON org_user.user_id = u.id
+    FROM ` + ss.db.GetDialect().Quote("user") + ` AS u INNER JOIN org_user ON org_user.user_id = u.id
     GROUP BY u.id, u.last_seen_at, org_user.role) AS t2
   GROUP BY id, last_seen_at) AS t1
 GROUP BY active, daily_active, role;`

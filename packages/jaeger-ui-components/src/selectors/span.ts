@@ -15,25 +15,27 @@
 import fuzzy from 'fuzzy';
 import { createSelector } from 'reselect';
 
+import { TraceSpan, TraceSpanData, TraceSpanReference } from '../types/trace';
+
 import { getProcessServiceName } from './process';
 
-export const getSpanId = (span) => span.spanID;
-export const getSpanName = (span) => span.operationName;
-export const getSpanDuration = (span) => span.duration;
-export const getSpanTimestamp = (span) => span.startTime;
-export const getSpanProcessId = (span) => span.processID;
-export const getSpanReferences = (span) => span.references || [];
+export const getSpanId = (span: TraceSpanData) => span.spanID;
+export const getSpanName = (span: TraceSpanData) => span.operationName;
+export const getSpanDuration = (span: TraceSpanData) => span.duration;
+export const getSpanTimestamp = (span: TraceSpanData) => span.startTime;
+export const getSpanProcessId = (span: TraceSpanData) => span.processID;
+export const getSpanReferences = (span: TraceSpanData) => span.references || [];
 export const getSpanReferenceByType = createSelector(
-  createSelector(({ span }) => span, getSpanReferences),
-  ({ type }) => type,
-  (references, type) => references.find((ref) => ref.refType === type)
+  createSelector(({ span }: { span: TraceSpanData }) => span, getSpanReferences),
+  ({ type }: { type: string }) => type,
+  (references, type) => references.find((ref: TraceSpanReference) => ref.refType === type)
 );
 export const getSpanParentId = createSelector(
-  (span) => getSpanReferenceByType({ span, type: 'CHILD_OF' }),
+  (span: TraceSpanData) => getSpanReferenceByType({ span, type: 'CHILD_OF' }),
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
 );
 
-export const getSpanProcess = (span) => {
+export const getSpanProcess = (span: TraceSpan) => {
   if (!span.process) {
     throw new Error(
       `
@@ -42,23 +44,22 @@ export const getSpanProcess = (span) => {
     `
     );
   }
-
   return span.process;
 };
 
 export const getSpanServiceName = createSelector(getSpanProcess, getProcessServiceName);
 
 export const filterSpansForTimestamps = createSelector(
-  ({ spans }) => spans,
-  ({ leftBound }) => leftBound,
-  ({ rightBound }) => rightBound,
+  ({ spans }: { spans: TraceSpanData[] }) => spans,
+  ({ leftBound }: { leftBound: number }) => leftBound,
+  ({ rightBound }: { rightBound: number }) => rightBound,
   (spans, leftBound, rightBound) =>
     spans.filter((span) => getSpanTimestamp(span) >= leftBound && getSpanTimestamp(span) <= rightBound)
 );
 
 export const filterSpansForText = createSelector(
-  ({ spans }) => spans,
-  ({ text }) => text,
+  ({ spans }: { spans: TraceSpan[] }) => spans,
+  ({ text }: { text: string }) => text,
   (spans, text) =>
     fuzzy
       .filter(text, spans, {
@@ -67,7 +68,7 @@ export const filterSpansForText = createSelector(
       .map(({ original }) => original)
 );
 
-const getTextFilterdSpansAsMap = createSelector(filterSpansForText, (matchingSpans) =>
+const getTextFilteredSpansAsMap = createSelector(filterSpansForText, (matchingSpans) =>
   matchingSpans.reduce(
     (obj, span) => ({
       ...obj,
@@ -77,11 +78,12 @@ const getTextFilterdSpansAsMap = createSelector(filterSpansForText, (matchingSpa
   )
 );
 
+// TODO: delete this function as it is not used?
 export const highlightSpansForTextFilter = createSelector(
-  ({ spans }) => spans,
-  getTextFilterdSpansAsMap,
-  (spans, textFilteredSpansMap) =>
-    spans.map((span) => ({
+  ({ spans }: { spans: TraceSpanData[] }) => spans,
+  getTextFilteredSpansAsMap,
+  (spans, textFilteredSpansMap: { [key: string]: TraceSpanData }) =>
+    spans.map((span: TraceSpanData) => ({
       ...span,
       muted: !textFilteredSpansMap[getSpanId(span)],
     }))
