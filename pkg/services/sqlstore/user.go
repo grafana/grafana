@@ -1,3 +1,4 @@
+// DO NOT ADD METHODS TO THIS FILES. SQLSTORE IS DEPRECATED AND WILL BE REMOVED.
 package sqlstore
 
 import (
@@ -5,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/events"
@@ -254,70 +254,6 @@ func getTeamSelectSQLBase(filteredUsers []string) string {
 		team.email as email, ` +
 		getTeamMemberCount(filteredUsers) +
 		` FROM team as team `
-}
-
-func (ss *SQLStore) DeleteUserInSession(ctx context.Context, sess *DBSession, cmd *models.DeleteUserCommand) error {
-	return deleteUserInTransaction(ss, sess, cmd)
-}
-
-func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
-	// Check if user exists
-	usr := user.User{ID: cmd.UserId}
-	has, err := sess.Where(NotServiceAccountFilter(ss)).Get(&usr)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return user.ErrUserNotFound
-	}
-	for _, sql := range UserDeletions() {
-		_, err := sess.Exec(sql, cmd.UserId)
-		if err != nil {
-			return err
-		}
-	}
-
-	return deleteUserAccessControl(sess, cmd.UserId)
-}
-
-func deleteUserAccessControl(sess *DBSession, userID int64) error {
-	// Delete user role assignments
-	if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
-		return err
-	}
-
-	// Delete permissions that are scoped to user
-	if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
-		return err
-	}
-
-	var roleIDs []int64
-	if err := sess.SQL("SELECT id FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
-		return err
-	}
-
-	if len(roleIDs) == 0 {
-		return nil
-	}
-
-	query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
-	args := make([]interface{}, 0, len(roleIDs)+1)
-	args = append(args, query)
-	for _, id := range roleIDs {
-		args = append(args, id)
-	}
-
-	// Delete managed user permissions
-	if _, err := sess.Exec(args...); err != nil {
-		return err
-	}
-
-	// Delete managed user roles
-	if _, err := sess.Exec("DELETE FROM role WHERE name = ?", ac.ManagedUserRoleName(userID)); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func UserDeletions() []string {
