@@ -202,14 +202,14 @@ describe('BarChart utils', () => {
 
       const field = displayValues.viz[0].fields[1];
       expect(field.values.toArray()).toMatchInlineSnapshot(`
-      Array [
-        -10,
-        null,
-        10,
-        null,
-        null,
-      ]
-    `);
+        [
+          -10,
+          null,
+          10,
+          null,
+          null,
+        ]
+      `);
     });
 
     it('should sort fields when legend sortBy and sortDesc are set', () => {

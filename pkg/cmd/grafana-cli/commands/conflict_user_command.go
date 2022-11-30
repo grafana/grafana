@@ -39,6 +39,10 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		HomePath: cmd.HomePath(),
 		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
+	if !cfg.CaseInsensitiveLogin {
+		logger.Info("Case Insensitive Login is not enabled, setting to true to not introduce any more conflicts")
+		cfg.CaseInsensitiveLogin = true
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +68,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
 	routing := routing.ProvideRegister()
-	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil)
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}

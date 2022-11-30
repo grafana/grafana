@@ -246,6 +246,7 @@ var wireBasicSet = wire.NewSet(
 	searchV2.ProvideService,
 	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
+	store.ProvideSystemUsersService,
 	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
