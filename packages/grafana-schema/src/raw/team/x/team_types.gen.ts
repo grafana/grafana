@@ -16,7 +16,6 @@ export enum Permission {
 
 export interface Team {
   /**
-   * TODO: probably needs a better description
    * AccessControl metadata associated with a given resource.
    */
   accessControl: Record<string, unknown>;
@@ -24,6 +23,10 @@ export interface Team {
    * AvatarUrl is the team's avatar URL.
    */
   avatarUrl: string;
+  /**
+   * Created indicates when the team was created.
+   */
+  created: string;
   /**
    * Email of the team.
    */
@@ -41,7 +44,11 @@ export interface Team {
    */
   orgId?: number;
   /**
-   * TODO - check if it's used in the code
+   * TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
    */
   permission: Permission;
+  /**
+   * Updated indicates when the team was updated.
+   */
+  updated: string;
 }

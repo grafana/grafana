@@ -21,12 +21,14 @@ const (
 
 // Team defines model for team.
 type Team struct {
-	// TODO: probably needs a better description
 	// AccessControl metadata associated with a given resource.
 	AccessControl map[string]interface{} `json:"accessControl"`
 
 	// AvatarUrl is the team's avatar URL.
 	AvatarUrl string `json:"avatarUrl"`
+
+	// Created indicates when the team was created.
+	Created string `json:"created"`
 
 	// Email of the team.
 	Email *string `json:"email,omitempty"`
@@ -40,9 +42,12 @@ type Team struct {
 	// OrgId is the ID of an organisation the team belongs to.
 	OrgId *int64 `json:"orgId,omitempty"`
 
-	// TODO - check if it's used in the code
+	// TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
 	Permission Permission `json:"permission"`
+
+	// Updated indicates when the team was updated.
+	Updated string `json:"updated"`
 }
 
-// TODO - check if it's used in the code
+// TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
 type Permission int

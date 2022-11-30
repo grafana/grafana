@@ -18,11 +18,14 @@ lineage: seqs: [
 				avatarUrl: string @grafanamaturity(MaybeRemove)
 				// MemberCount is the number of the team members.
 				memberCount: int64 @grafanamaturity(ToMetadata="kind")
-				// TODO - check if it's used in the code
-				permission: #Permission @grafanamaturity(ToMetadata="kind")
-				// TODO: probably needs a better description
+				// TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
+				permission: #Permission @grafanamaturity(ToMetadata="kind", MaybeRemove)
 				// AccessControl metadata associated with a given resource.
 				accessControl: [string]: bool @grafanamaturity(ToMetadata="sys")
+				// Created indicates when the team was created.
+				created: string @grafanamaturity(ToMetadata="sys")
+				// Updated indicates when the team was updated.
+				updated: string @grafanamaturity(ToMetadata="sys")
 
 				#Permission: 1 | 2 | 4 @cuetsy(kind="enum",memberNames="viewer|editor|admin")
 			},
