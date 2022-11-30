@@ -317,10 +317,6 @@ var (
 			Description: "Enable more in memory caching for database queries",
 		},
 		{
-			Name:        "interFont",
-			Description: "Switch to inter font",
-		},
-		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
