@@ -154,9 +154,13 @@ func addObjectStorageMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v6)" // change this when we want to wipe and reset the object tables
+	suffix := " (v8)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
+	`)))
+	// for a while this was called "ObjectStore"... this can be removed before we remove the dev only flags
+	mg.AddMigration("EntityStore init: object cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
+		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
 	`)))
 
 	// Initialize all tables
