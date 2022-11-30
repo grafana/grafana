@@ -258,3 +258,19 @@ export interface LegacyAzureGetMetricMetadataQuery {
   customNamespace?: string;
   metricName: string;
 }
+
+export interface AzureMonitorLocations {
+  displayName: string;
+  name: string;
+  supportsLogs: boolean;
+}
+
+export interface AzureProvider {
+  namespace: string;
+  resourceTypes: AzureProviderResourceType[];
+}
+
+export interface AzureProviderResourceType {
+  resourceType: string;
+  locations: string[];
+}

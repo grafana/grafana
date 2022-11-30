@@ -1,4 +1,4 @@
-import { find, startsWith } from 'lodash';
+import { find, startsWith, unionBy } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -19,6 +19,7 @@ import {
   GetMetricNamesQuery,
   GetMetricMetadataQuery,
   AzureMetricQuery,
+  AzureMonitorLocations,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -295,5 +296,30 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
 
     return workingQuery;
+  }
+
+  async getProvider(providerName: string) {
+    return ResponseParser.parseProvider(
+      await this.getResource(`${routeNames.azureMonitor}/providers/${providerName}?api-version=2021-04-01`)
+    );
+  }
+
+  async getLocations(subscriptions: string[]) {
+    let locations: AzureMonitorLocations[] = [];
+    for (const subscription of subscriptions) {
+      const subLocations = ResponseParser.parseLocations(
+        await this.getResource(
+          `${routeNames.azureMonitor}/subscriptions/${subscription}/locations?api-version=2020-01-01`
+        )
+      );
+      locations = unionBy(locations, subLocations, 'name');
+    }
+
+    const locationMap = new Map<string, AzureMonitorLocations>();
+    for (const location of locations) {
+      locationMap.set(location.displayName, location);
+    }
+
+    return locationMap;
   }
 }

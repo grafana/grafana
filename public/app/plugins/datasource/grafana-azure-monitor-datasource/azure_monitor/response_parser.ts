@@ -3,9 +3,11 @@ import { find, get } from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
 import {
   AzureMonitorLocalizedValue,
+  AzureMonitorLocations,
   AzureMonitorMetricAvailabilityMetadata,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorOption,
+  AzureProvider,
 } from '../types';
 export default class ResponseParser {
   static parseResponseValues(
@@ -169,5 +171,26 @@ export default class ResponseParser {
     }
 
     return list;
+  }
+
+  static parseLocations(result: any) {
+    const locations: AzureMonitorLocations[] = [];
+
+    if (!result) {
+      return locations;
+    }
+
+    for (const location of result.value) {
+      locations.push({ name: location.name, displayName: location.displayName, supportsLogs: false });
+    }
+
+    return locations;
+  }
+
+  static parseProvider(result: any): AzureProvider {
+    return {
+      namespace: result.namespace,
+      resourceTypes: result.resourceTypes,
+    };
   }
 }
