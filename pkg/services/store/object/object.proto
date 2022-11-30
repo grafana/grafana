@@ -12,7 +12,7 @@ message GRN {
   string kind = 3;
 
   // Unique ID
-  // less then 40, no slashes or other special characters
+  // 40 characters or less, no slashes or other special characters
   string UID = 4;
 }
 
