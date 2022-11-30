@@ -1,8 +1,10 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellSubOptions } from '@grafana/schema';
 import { Field, HorizontalGroup, Select } from '@grafana/ui';
+
+import { TableCellEditorProps } from '../models.gen';
 
 const barGaugeOpts: SelectableValue[] = [
   { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
@@ -10,7 +12,7 @@ const barGaugeOpts: SelectableValue[] = [
   { value: BarGaugeDisplayMode.Lcd, label: 'Retro LCD' },
 ];
 
-export const BarGaugeCellOptions: React.FC = (props) => {
+export const BarGaugeCellOptionsEditor: React.FC<TableCellEditorProps> = (props) => {
   const onChange = () => {};
 
   return (

@@ -1,15 +1,17 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { BackgroundDisplayMode } from '@grafana/schema';
+import { BackgroundDisplayMode, TableCellSubOptions } from '@grafana/schema';
 import { HorizontalGroup, Select, Field } from '@grafana/ui';
+
+import { TableCellEditorProps } from '../models.gen';
 
 const colorBackgroundOpts: SelectableValue[] = [
   { value: BackgroundDisplayMode.Basic, label: 'Basic' },
   { value: BackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
 
-export const ColorBackgroundCellOptions: React.FC = (props) => {
+export const ColorBackgroundCellOptionsEditor: React.FC<TableCellEditorProps> = (props) => {
   const onChange = () => {};
 
   return (

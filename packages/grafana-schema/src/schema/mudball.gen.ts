@@ -480,12 +480,26 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
- * TODO docs
+ * Table cell options. Each cell has a display mode
+ * along with sub options for that display mode. Sub options
+ * are grouped within the subOptions property by display mode.
  */
 export interface TableCellOptions {
   displayMode: TableCellDisplayMode;
-  subOptions: object;
+  subOptions: TableCellSubOptionGroup;
 }
+
+/**
+ * Each sub option group can have an arbitrary set of options.
+ */
+export type TableCellSubOptionGroup = Partial<Record<TableCellDisplayMode, TableCellSubOptions>>;
+
+/**
+ * Each cell will have it's own properties so
+ * the basic subOptions is simply empty.
+ */
+export interface TableCellSubOptions {};
+
 
 export const defaultTableCellOptions: Partial<TableCellOptions> = {
   displayMode: TableCellDisplayMode.Auto,

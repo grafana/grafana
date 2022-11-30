@@ -4,8 +4,9 @@ import { SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, HorizontalGroup, Select, TableCellDisplayMode } from '@grafana/ui';
 
-import { BarGaugeCellOptions } from './cells/BarGaugeCellOptions';
-import { ColorBackgroundCellOptions } from './cells/ColorBackgroundCellOptions';
+import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
+import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
+import { TableCellEditorProps } from './models.gen';
 
 const cellDisplayModeOptions = [
   { value: TableCellDisplayMode.Auto, label: 'Auto' },
@@ -17,12 +18,12 @@ const cellDisplayModeOptions = [
 ];
 
 interface ComponentMap {
-  [key: string]: React.FC;
+  [key: string]: React.FC<TableCellEditorProps>;
 }
 
 const displayModeComponentMap: ComponentMap = {
-  [TableCellDisplayMode.Gauge]: BarGaugeCellOptions,
-  [TableCellDisplayMode.ColorBackground]: ColorBackgroundCellOptions,
+  [TableCellDisplayMode.Gauge]: BarGaugeCellOptionsEditor,
+  [TableCellDisplayMode.ColorBackground]: ColorBackgroundCellOptionsEditor,
 };
 
 interface Props {
@@ -44,9 +45,11 @@ export const TableCellOptionEditor: React.FC<Props> = (props) => {
 
   // Setup specific cell editor
   if (displayMode !== undefined && displayModeComponentMap[displayMode] !== undefined) {
-    let Comp: React.FC = displayModeComponentMap[displayMode];
-    editor = <Comp {...props} />;
+    let Comp: React.FC<TableCellEditorProps> = displayModeComponentMap[displayMode];
+    editor = <Comp options={props.value} />;
   }
+
+  console.log(props);
 
   // Setup and inject editor
   return (
