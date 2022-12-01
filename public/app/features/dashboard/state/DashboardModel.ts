@@ -125,11 +125,7 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(
-    data: Partial<Dashboard>,
-    meta?: DashboardMeta,
-    private getVariablesFromState: GetVariables = getVariablesByKey
-  ) {
+  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
