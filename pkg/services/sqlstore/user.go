@@ -151,7 +151,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) 
 	return &user, createErr
 }
 
-func NotServiceAccountFilter(ss *SQLStore) string {
+func notServiceAccountFilter(ss *SQLStore) string {
 	return fmt.Sprintf("%s.is_service_account = %s",
 		ss.Dialect.Quote("user"),
 		ss.Dialect.BooleanStr(false))
@@ -195,7 +195,7 @@ func (ss *SQLStore) getUserOrgList(ctx context.Context, query *models.GetUserOrg
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
-		sess.Where(NotServiceAccountFilter(ss))
+		sess.Where(notServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		sess.OrderBy("org.name")
 		err := sess.Find(&query.Result)
