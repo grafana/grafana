@@ -6,10 +6,10 @@ import (
 
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/plugins/codegen/kindsys"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
-func PluginTSTypesJenny(root string, inner codejen.OneToOne[*kindsys.PluginDecl]) codejen.OneToOne[*kindsys.PluginDecl] {
+func PluginTSTypesJenny(root string, inner codejen.OneToOne[*pfs.PluginDecl]) codejen.OneToOne[*pfs.PluginDecl] {
 	return &ptsJenny{
 		root:  root,
 		inner: inner,
@@ -18,14 +18,14 @@ func PluginTSTypesJenny(root string, inner codejen.OneToOne[*kindsys.PluginDecl]
 
 type ptsJenny struct {
 	root  string
-	inner codejen.OneToOne[*kindsys.PluginDecl]
+	inner codejen.OneToOne[*pfs.PluginDecl]
 }
 
 func (j *ptsJenny) JennyName() string {
 	return "PluginTSTypesJenny"
 }
 
-func (j *ptsJenny) Generate(decl *kindsys.PluginDecl) (*codejen.File, error) {
+func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	tsf := &tsast.File{}
 
 	for _, im := range decl.Imports {

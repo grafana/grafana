@@ -8,14 +8,14 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/plugins/codegen/kindsys"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 const prefix = "github.com/grafana/grafana/public/app/plugins"
 
 // PluginTreeListJenny creates a [codejen.ManyToOne] that produces Go code
 // for loading a [pfs.TreeList] given [*kindsys.PluginDecl] as inputs.
-func PluginTreeListJenny() codejen.ManyToOne[*kindsys.PluginDecl] {
+func PluginTreeListJenny() codejen.ManyToOne[*pfs.PluginDecl] {
 	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
 
 	return &ptlJenny{
@@ -33,7 +33,7 @@ func (j *ptlJenny) JennyName() string {
 	return "PluginTreeListJenny"
 }
 
-func (j *ptlJenny) Generate(decls ...*kindsys.PluginDecl) (*codejen.File, error) {
+func (j *ptlJenny) Generate(decls ...*pfs.PluginDecl) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	vars := templateVars_plugin_registry{
 		Plugins: make([]struct {

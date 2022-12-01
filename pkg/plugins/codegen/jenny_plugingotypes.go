@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/plugins/codegen/kindsys"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
-func PluginGoTypesJenny(root string, inner codejen.OneToOne[*kindsys.PluginDecl]) codejen.OneToOne[*kindsys.PluginDecl] {
+func PluginGoTypesJenny(root string, inner codejen.OneToOne[*pfs.PluginDecl]) codejen.OneToOne[*pfs.PluginDecl] {
 	return &pgoJenny{
 		inner: inner,
 		root:  root,
@@ -18,7 +18,7 @@ func PluginGoTypesJenny(root string, inner codejen.OneToOne[*kindsys.PluginDecl]
 }
 
 type pgoJenny struct {
-	inner codejen.OneToOne[*kindsys.PluginDecl]
+	inner codejen.OneToOne[*pfs.PluginDecl]
 	root  string
 }
 
@@ -26,7 +26,7 @@ func (j *pgoJenny) JennyName() string {
 	return "PluginGoTypesJenny"
 }
 
-func (j *pgoJenny) Generate(decl *kindsys.PluginDecl) (*codejen.File, error) {
+func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	b := decl.PluginMeta.Backend
 	if b == nil || !*b {
 		return nil, nil

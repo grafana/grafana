@@ -17,7 +17,7 @@ import (
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
-	"github.com/grafana/grafana/pkg/plugins/codegen/kindsys"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 var skipPlugins = map[string]bool{
@@ -48,7 +48,7 @@ func main() {
 	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 	rt := cuectx.GrafanaThemaRuntime()
 
-	pluginKindGen := codejen.JennyListWithNamer(func(d *kindsys.PluginDecl) string {
+	pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
 		return d.PluginMeta.Id
 	})
 
@@ -60,7 +60,7 @@ func main() {
 
 	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
 
-	declParser := kindsys.NewDeclParser(rt, skipPlugins)
+	declParser := pfs.NewDeclParser(rt, skipPlugins)
 	decls, err := declParser.Parse(os.DirFS(cwd))
 	if err != nil {
 		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
@@ -80,8 +80,8 @@ func main() {
 	}
 }
 
-func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*kindsys.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *kindsys.PluginDecl) corecodegen.SchemaForGen {
+func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
 		return corecodegen.SchemaForGen{
 			Name:    pd.PluginMeta.Name,
 			Schema:  pd.Lineage.Latest(),

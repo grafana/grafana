@@ -1,4 +1,4 @@
-package kindsys
+package pfs
 
 import (
 	"fmt"
@@ -8,8 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	corekindsys "github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 )
 
@@ -40,7 +39,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		}
 
 		dir := os.DirFS(path)
-		ptree, err := pfs.ParsePluginFS(dir, psr.rt)
+		ptree, err := ParsePluginFS(dir, psr.rt)
 		if err != nil {
 			log.Println(fmt.Errorf("parsing plugin failed for %s: %s", dir, err))
 			continue
@@ -50,7 +49,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		slots := p.SlotImplementations()
 
 		for slotName, lin := range slots {
-			slot, err := corekindsys.FindSlot(slotName)
+			slot, err := kindsys.FindSlot(slotName)
 			if err != nil {
 				log.Println(fmt.Errorf("parsing plugin failed for %s: %s", dir, err))
 				continue
