@@ -17,6 +17,7 @@ var _ authn.Service = new(Service)
 func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service) *Service {
 	s := &Service{
 		log:     log.New("authn.service"),
+		cfg:     cfg,
 		clients: make(map[string]authn.Client),
 		tracer:  tracer,
 	}
