@@ -292,6 +292,17 @@ Sets the maximum time using a duration format (5s/5m/5ms) before timing out read
 
 <hr />
 
+## [server.custom_response_headers]
+
+This setting enables you to specify additional headers that the server adds to HTTP(S) responses.
+
+```
+exampleHeader1 = exampleValue1
+exampleHeader2 = exampleValue2
+```
+
+<hr />
+
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other

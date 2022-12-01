@@ -4,10 +4,10 @@ import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from 
 import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { normalizeQuery } from './QueryEditor/QueryEditor';
-import { FireDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
+import { PhlareDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
 
-export class FireDataSource extends DataSourceWithBackend<Query, FireDataSourceOptions> {
-  constructor(instanceSettings: DataSourceInstanceSettings<FireDataSourceOptions>) {
+export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
+  constructor(instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>) {
     super(instanceSettings);
   }
 
