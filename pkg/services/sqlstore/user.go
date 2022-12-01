@@ -188,7 +188,7 @@ func (o byOrgName) Less(i, j int) bool {
 	return o[i].Name < o[j].Name
 }
 
-func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
+func (ss *SQLStore) getUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = make([]*models.UserOrgDTO, 0)
 		sess := dbSess.Table("org_user")
