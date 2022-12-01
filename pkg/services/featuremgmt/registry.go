@@ -319,11 +319,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "interFont",
-			Description: "Switch to inter font",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
