@@ -132,7 +132,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		children, err := s.store.GetChildren(ctx, *cmd)
 		if err != nil {
 			return nil, err
@@ -142,7 +142,8 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		for _, f := range children {
 
 			g := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
-			if canView, err := g.CanView(); err != nil || canView {
+			canView, err := g.CanView()
+			if err != nil || canView {
 				filtered = append(filtered, f)
 			}
 		}
@@ -524,12 +525,6 @@ func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) (
 	// check the flag, if old - do whatever did before
 	//  for new only the store
 	return s.store.GetParents(ctx, *cmd)
-}
-
-func (s *Service) GetTree(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.GetChildren(ctx, *cmd)
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
