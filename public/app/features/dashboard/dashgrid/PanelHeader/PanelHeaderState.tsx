@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, PanelData } from '@grafana/data';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { colorManipulator, GrafanaTheme2, PanelData } from '@grafana/data';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ToolbarButtonVariant } from '@grafana/ui/src/components/ToolbarButton';
 
 enum InfoMode {
   Error = 'Error',
@@ -17,18 +18,34 @@ interface Props {
 
 export function PanelHeaderState(props: Props) {
   // TODO Fancy logic to determine if the panel is in an error state or if has notices to show
-  const state = 'error';
+  const state = 'warning';
   const styles = useStyles2(getStyles(state));
 
-  if (!getInfoMode(state)) {
+  const mode = getInfoMode(state);
+  if (!mode) {
     return null;
   }
+
+  let variantType: ToolbarButtonVariant;
+  switch (mode) {
+    case InfoMode.Error:
+      variantType = 'destructive';
+      break;
+    case InfoMode.Info:
+      variantType = 'primary';
+      break;
+    case InfoMode.Warning:
+      variantType = 'active';
+      break;
+    default:
+      variantType = 'default';
+  }
+
   const iconName = getInfoMode(state) === InfoMode.Info ? 'info-circle' : 'exclamation-triangle';
-  const iconVariant = getInfoMode(state) === InfoMode.Warning ? 'primary' : 'secondary';
 
   return (
     <div className={styles.container}>
-      <IconButton className={styles.buttonStyles} name={iconName} tooltip="default message" />
+      <ToolbarButton variant={variantType} className={styles.buttonStyles} icon={iconName} tooltip="default message" />
     </div>
   );
 }
@@ -63,19 +80,6 @@ const getStyles = (state: string) => (theme: GrafanaTheme2) => {
       width: '32px',
       height: '32px',
       borderRadius: 0,
-      color: `${getInfoMode(state) === InfoMode.Warning ? '#000' : '#FFF'}`,
-      '&:hover': {
-        color: `${getInfoMode(state) === InfoMode.Warning ? '#000' : '#FFF'}`,
-      },
-    }),
-    info: css({
-      background: '#3D71D9',
-    }),
-    warning: css({
-      background: '#F5B73D',
-    }),
-    error: css({
-      background: '#D10E5C',
     }),
   };
 };
