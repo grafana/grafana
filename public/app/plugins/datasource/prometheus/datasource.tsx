@@ -896,12 +896,7 @@ export class PrometheusDatasource
     } else {
       // Get all tags
       const range = this.timeSrv.timeRange();
-      const start = this.getPrometheusTime(range.from, false);
-      const end = this.getPrometheusTime(range.to, true);
-      const params = {
-        start: start.toString(),
-        end: end.toString(),
-      };
+      const params = this.getTimeRangeParams();
       const result = await this.metadataRequest('/api/v1/labels', params);
       return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
     }
