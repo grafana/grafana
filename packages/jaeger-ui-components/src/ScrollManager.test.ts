@@ -183,7 +183,7 @@ describe('ScrollManager', () => {
       (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(0);
       accessors.getCollapsedChildren = () => new Set([trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID]);
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[0].spanID]);
-      console.log(trace.spans[trace.spans.length - 1].references);
+
       trace.spans[trace.spans.length - 1].references = getRefs(
         trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID,
         trace.spans[parentOfLastRowWithHiddenChildrenIndex].traceID
