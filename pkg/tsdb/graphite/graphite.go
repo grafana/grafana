@@ -261,12 +261,15 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 		values := make([]*float64, 0, len(series.DataPoints))
 		// series.Target will be in the format <resolvedSeriesName> <formattedRefId>
 		ls := strings.LastIndex(series.Target, " ")
+		if ls == -1 {
+			return nil, fmt.Errorf("received graphite response with invalid target format: %s", series.Target)
+		}
 		target := series.Target[:ls]
 		formattedRefId := series.Target[ls+1:]
 		refId, ok := origRefIds[formattedRefId]
 		if !ok {
-			// fallback - shouldn't happen except for in tests
-			refId = formattedRefId
+			logger.Warn("Unable to find refId associated with provided formattedRefId", "formattedRefId", formattedRefId)
+			refId = formattedRefId // fallback - shouldn't happen except for in tests
 		}
 
 		for _, dataPoint := range series.DataPoints {
