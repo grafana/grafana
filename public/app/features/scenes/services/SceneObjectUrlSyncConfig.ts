@@ -6,17 +6,17 @@ import {
 } from '../core/types';
 
 interface SceneObjectUrlSyncConfigOptions {
-  keys?: string[];
+  keys: string[];
 }
 
 export class SceneObjectUrlSyncConfig<TState extends SceneObjectState> implements SceneObjectUrlSyncHandler<TState> {
-  private _keys: Set<string>;
+  private _keys: string[];
 
   public constructor(private _sceneObject: SceneObjectWithUrlSync<TState>, _options: SceneObjectUrlSyncConfigOptions) {
-    this._keys = new Set(_options.keys);
+    this._keys = _options.keys;
   }
 
-  public getKeys(): Set<string> {
+  public getKeys(): string[] {
     return this._keys;
   }
 

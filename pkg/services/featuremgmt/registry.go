@@ -268,6 +268,7 @@ var (
 			Name:        "internationalization",
 			Description: "Enables internationalization",
 			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "topnav",
@@ -317,11 +318,6 @@ var (
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "interFont",
-			Description: "Switch to inter font",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:         "newPanelChromeUI",
