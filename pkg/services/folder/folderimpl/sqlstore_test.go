@@ -537,7 +537,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
-		if diff := cmp.Diff(treeLeaves[2:4], childrenUIDs); diff != "" {
+		if diff := cmp.Diff(treeLeaves[:2], childrenUIDs); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
@@ -554,7 +554,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
-		if diff := cmp.Diff(treeLeaves[4:6], childrenUIDs); diff != "" {
+		if diff := cmp.Diff(treeLeaves[2:4], childrenUIDs); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
@@ -571,7 +571,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
-		if diff := cmp.Diff(treeLeaves[1:2], childrenUIDs); diff != "" {
+		if diff := cmp.Diff(treeLeaves[:1], childrenUIDs); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
