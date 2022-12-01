@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
-import { PanelData } from '@grafana/data';
-import { IconButton, useStyles2 } from '@grafana/ui';
 import React from 'react';
+
+import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { IconButton, useStyles2 } from '@grafana/ui';
+
+enum InfoMode {
+  Error = 'Error',
+  Info = 'Info',
+  Warning = 'Warning',
+}
 
 interface Props {
   data?: PanelData;
@@ -10,20 +17,36 @@ interface Props {
 
 export function PanelHeaderState(props: Props) {
   // TODO Fancy logic to determine if the panel is in an error state or if has notices to show
-  const styles = useStyles2(getStyles);
-  const infoMode = true;
+  const state = 'error';
+  const styles = useStyles2(getStyles(state));
+
+  if (!getInfoMode(state)) {
+    return null;
+  }
+  const iconName = getInfoMode(state) === InfoMode.Info ? 'info-circle' : 'exclamation-triangle';
+  const iconVariant = getInfoMode(state) === InfoMode.Warning ? 'primary' : 'secondary';
 
   return (
     <div className={styles.container}>
-      {infoMode && (
-        //this should be reusable depending of the type of state (error, warning, info)
-        <IconButton className={styles.buttonStyles} name="info-circle" variant="secondary" tooltip="default message" />
-      )}
+      <IconButton className={styles.buttonStyles} name={iconName} tooltip="default message" />
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getInfoMode = (state: string) => {
+  switch (state) {
+    case 'error':
+      return InfoMode.Error;
+    case 'info':
+      return InfoMode.Info;
+    case 'warning':
+      return InfoMode.Warning;
+    default:
+      return undefined;
+  }
+};
+
+const getStyles = (state: string) => (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
@@ -34,14 +57,25 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     buttonStyles: css({
       display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      padding: '8px',
-      gap: '8px',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: theme.components.panel.padding,
       width: '32px',
       height: '32px',
       borderRadius: 0,
-      background: '#3D71D9;',
+      color: `${getInfoMode(state) === InfoMode.Warning ? '#000' : '#FFF'}`,
+      '&:hover': {
+        color: `${getInfoMode(state) === InfoMode.Warning ? '#000' : '#FFF'}`,
+      },
+    }),
+    info: css({
+      background: '#3D71D9',
+    }),
+    warning: css({
+      background: '#F5B73D',
+    }),
+    error: css({
+      background: '#D10E5C',
     }),
   };
 };
