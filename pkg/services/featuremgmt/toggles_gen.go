@@ -203,9 +203,9 @@ const (
 	// Run GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagObjectStore
-	// SQL-based object store
-	FlagObjectStore = "objectStore"
+	// FlagEntityStore
+	// SQL-based entity store (requires storage flag also)
+	FlagEntityStore = "entityStore"
 
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
@@ -230,10 +230,6 @@ const (
 	// FlagIncreaseInMemDatabaseQueryCache
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
-
-	// FlagInterFont
-	// Switch to inter font
-	FlagInterFont = "interFont"
 
 	// FlagNewPanelChromeUI
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu

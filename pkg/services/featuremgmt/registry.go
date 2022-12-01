@@ -268,6 +268,7 @@ var (
 			Name:        "internationalization",
 			Description: "Enables internationalization",
 			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "topnav",
@@ -281,8 +282,8 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "objectStore",
-			Description:     "SQL-based object store",
+			Name:            "entityStore",
+			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -317,11 +318,6 @@ var (
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "interFont",
-			Description: "Switch to inter font",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:         "newPanelChromeUI",

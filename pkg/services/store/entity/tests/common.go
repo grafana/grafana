@@ -64,7 +64,7 @@ func createTestContext(t *testing.T) testContext {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrpcServer,
-			featuremgmt.FlagObjectStore,
+			featuremgmt.FlagEntityStore,
 		},
 		AppModeProduction: false,         // required for migrations to run
 		GRPCServerAddress: "127.0.0.1:0", // :0 for choosing the port automatically
