@@ -235,7 +235,7 @@ describe('ScrollManager', () => {
 
     describe('scrollToFirstVisibleSpan', () => {
       beforeEach(() => {
-        jest.spyOn(manager, '_scrollToVisibleSpan').mockImplementationOnce();
+        jest.spyOn(manager, '_scrollToVisibleSpan');
       });
 
       it('calls _scrollToVisibleSpan searching downwards from first span', () => {
