@@ -107,7 +107,7 @@ describe('ScrollManager', () => {
   });
 
   describe('_scrollToVisibleSpan()', () => {
-    function getRefs(spanID: string) {
+    function getRefs(spanID: string | undefined) {
       return [{ refType: 'CHILD_OF', spanID }] as TraceSpanReference[];
     }
     let scrollPastMock: jest.Mock;
@@ -183,7 +183,6 @@ describe('ScrollManager', () => {
       (accessors.getBottomRowIndexVisible as jest.Mock).mockReturnValue(0);
       accessors.getCollapsedChildren = () => new Set([trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID]);
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[0].spanID]);
-
       trace.spans[trace.spans.length - 1].references = getRefs(
         trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID
       );
@@ -204,7 +203,6 @@ describe('ScrollManager', () => {
               parentID = spans[i].spanID;
               break;
             default:
-              parentID = spans[i].spanID;
               spans[i].references = getRefs(parentID);
           }
         }
