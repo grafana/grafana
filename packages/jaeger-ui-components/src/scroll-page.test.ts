@@ -14,7 +14,7 @@
 
 jest.mock('./Tween');
 
-import Tween, { TTweenOptions } from './Tween';
+import Tween from './Tween';
 import { scrollBy, scrollTo, cancel } from './scroll-page';
 
 // keep track of instances, manually
@@ -27,8 +27,7 @@ describe('scroll-by', () => {
     tweenInstances.length = 0;
     (Tween as jest.Mock).mockClear();
     (Tween as jest.Mock).mockImplementation((opts) => {
-      const rv = new Tween({ to: opts.to, onUpdate: opts.onUpdate } as TTweenOptions);
-      //const rv = { to: opts.to, onUpdate: opts.onUpdate };
+      const rv = { to: opts.to, onUpdate: opts.onUpdate } as Tween;
       Object.keys(Tween.prototype).forEach((name) => {
         if (name !== 'constructor') {
           // @ts-ignore
@@ -144,8 +143,8 @@ describe('scroll-by', () => {
       const value = 123;
       // cause a `Tween` to be created to get a reference to _onTweenUpdate
       scrollTo(10);
-      const { callbackUpdate } = tweenInstances[0];
-      callbackUpdate?.({ value, done: false });
+      const { onUpdate } = tweenInstances[0];
+      onUpdate?.({ value, done: false });
       expect((window.scrollTo as jest.Mock).mock.calls.length).toBe(1);
       expect((window.scrollTo as jest.Mock).mock.calls[0][1]).toBe(value);
     });
@@ -153,8 +152,8 @@ describe('scroll-by', () => {
     it('discards the in-progress scroll if the scroll is done', () => {
       // cause a `Tween` to be created to get a reference to _onTweenUpdate
       scrollTo(10);
-      const { callbackUpdate, cancel: twCancel } = tweenInstances[0];
-      callbackUpdate?.({ value: 123, done: true });
+      const { onUpdate, cancel: twCancel } = tweenInstances[0];
+      onUpdate?.({ value: 123, done: true });
       // if the tween is not discarded, `cancel()` will cancel it
       cancel();
       expect((twCancel as jest.Mock).mock.calls.length).toBe(0);
