@@ -170,7 +170,7 @@ describe('SharePublic', () => {
     );
 
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'), { timeout: 2000 });
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
