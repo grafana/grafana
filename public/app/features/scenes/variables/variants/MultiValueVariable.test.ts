@@ -166,6 +166,44 @@ describe('MultiValueVariable', () => {
 
       expect(variable.state.value).toEqual([ALL_VARIABLE_VALUE]);
     });
+
+    it('When changing to all value', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [
+          { label: 'A', value: '1' },
+          { label: 'B', value: '2' },
+        ],
+        isMulti: true,
+        defaultToAll: true,
+        optionsToReturn: [],
+        value: ['1'],
+        text: ['A'],
+      });
+
+      variable.changeValueTo(['1', ALL_VARIABLE_VALUE]);
+      // Should clear the value so only all value is set
+      expect(variable.state.value).toEqual([ALL_VARIABLE_VALUE]);
+    });
+
+    it('When changing from all value', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [
+          { label: 'A', value: '1' },
+          { label: 'B', value: '2' },
+        ],
+        isMulti: true,
+        defaultToAll: true,
+        optionsToReturn: [],
+        value: ['1'],
+        text: ['A'],
+      });
+
+      variable.changeValueTo([ALL_VARIABLE_VALUE, '1']);
+      // Should remove the all value so only the new value is present
+      expect(variable.state.value).toEqual(['1']);
+    });
   });
 
   describe('getValue and getValueText', () => {

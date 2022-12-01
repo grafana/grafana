@@ -24,6 +24,7 @@ export interface MultiValueVariableState extends SceneVariableState {
   includeAll?: boolean;
   defaultToAll?: boolean;
   allValue?: string;
+  placeholder?: string;
 }
 
 export interface VariableGetOptionsArgs {
@@ -166,11 +167,26 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
       }
     }
 
-    // If we are a multi valued variable is cleared (empty array) we need to set the default empty state
-    if (Array.isArray(value) && value.length === 0) {
-      const state = this.getDefaultMultiState(this.state.options);
-      value = state.value;
-      text = state.text;
+    if (Array.isArray(value)) {
+      // If we are a multi valued variable is cleared (empty array) we need to set the default empty state
+      if (value.length === 0) {
+        const state = this.getDefaultMultiState(this.state.options);
+        value = state.value;
+        text = state.text;
+      }
+
+      // If last value is the All value then replace all with it
+      if (value[value.length - 1] === ALL_VARIABLE_VALUE) {
+        value = [ALL_VARIABLE_VALUE];
+        text = [ALL_VARIABLE_TEXT];
+      }
+      // If the first value is the ALL value and we have other values, then remove the All value
+      else if (value[0] === ALL_VARIABLE_VALUE && value.length > 1) {
+        value.shift();
+        if (Array.isArray(text)) {
+          text.shift();
+        }
+      }
     }
 
     this.setStateHelper({ value, text, loading: false });
