@@ -23,9 +23,9 @@ lineage: seqs: [
 				// AccessControl metadata associated with a given resource.
 				accessControl: [string]: bool @grafanamaturity(ToMetadata="sys")
 				// Created indicates when the team was created.
-				created: string @grafanamaturity(ToMetadata="sys")
+				created: int64 @grafanamaturity(ToMetadata="sys")
 				// Updated indicates when the team was updated.
-				updated: string @grafanamaturity(ToMetadata="sys")
+				updated: int64 @grafanamaturity(ToMetadata="sys")
 
 				#Permission: 1 | 2 | 4 @cuetsy(kind="enum",memberNames="viewer|editor|admin")
 			},

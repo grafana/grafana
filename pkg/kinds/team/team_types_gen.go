@@ -28,7 +28,7 @@ type Team struct {
 	AvatarUrl *string `json:"avatarUrl,omitempty"`
 
 	// Created indicates when the team was created.
-	Created string `json:"created"`
+	Created int64 `json:"created"`
 
 	// Email of the team.
 	Email *string `json:"email,omitempty"`
@@ -46,7 +46,7 @@ type Team struct {
 	Permission Permission `json:"permission"`
 
 	// Updated indicates when the team was updated.
-	Updated string `json:"updated"`
+	Updated int64 `json:"updated"`
 }
 
 // TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
