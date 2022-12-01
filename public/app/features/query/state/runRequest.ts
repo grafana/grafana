@@ -176,6 +176,7 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
+  // If the datasource has defined a default query, make sure it's applied if the query is empty
   request.targets = request.targets.map((t) =>
     queryIsEmpty(t) ? { ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor), ...t } : t
   );
