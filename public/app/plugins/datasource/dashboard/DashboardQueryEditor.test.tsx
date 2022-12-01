@@ -8,12 +8,13 @@ import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 
-import { DashboardQueryEditor } from './DashboardQueryEditor';
-import { SHARED_DASHBOARD_QUERY } from './types';
 import {
   createDashboardModelFixture,
-  createPanelJSONFixture
-} from "../../../features/dashboard/state/__fixtures__/dashboardFixtures";
+  createPanelJSONFixture,
+} from '../../../features/dashboard/state/__fixtures__/dashboardFixtures';
+
+import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { SHARED_DASHBOARD_QUERY } from './types';
 
 jest.mock('app/core/config', () => ({
   ...(jest.requireActual('app/core/config') as unknown as object),

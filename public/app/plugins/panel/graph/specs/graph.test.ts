@@ -6,9 +6,9 @@ import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 
+import { createDashboardModelFixture } from '../../../../features/dashboard/state/__fixtures__/dashboardFixtures';
 import { graphDirective, GraphElement } from '../graph';
 import { GraphCtrl } from '../module';
-import {createDashboardModelFixture} from "../../../../features/dashboard/state/__fixtures__/dashboardFixtures";
 
 jest.mock('../event_manager', () => ({
   EventManager: class EventManagerMock {

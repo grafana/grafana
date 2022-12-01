@@ -1,8 +1,9 @@
 import { CoreApp, DataFrame, DataQueryRequest, DataSourceApi, dateTime, LoadingState, PanelData } from '@grafana/data';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
+
 import { emitDataRequestEvent } from './queryAnalytics';
-import {createDashboardModelFixture} from "../../dashboard/state/__fixtures__/dashboardFixtures";
 
 beforeEach(() => {
   jest.clearAllMocks();

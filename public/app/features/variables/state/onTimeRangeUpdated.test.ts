@@ -6,6 +6,7 @@ import { appEvents } from '../../../core/core';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { DashboardState } from '../../../types';
 import { DashboardModel } from '../../dashboard/state';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
@@ -25,7 +26,6 @@ import {
   variableStateFetching,
 } from './sharedReducer';
 import { variablesInitTransaction } from './transactionReducer';
-import {createDashboardModelFixture} from "../../dashboard/state/__fixtures__/dashboardFixtures";
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
