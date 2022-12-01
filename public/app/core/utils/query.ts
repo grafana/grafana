@@ -9,6 +9,27 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
   }
 };
 
+export function queryIsEmpty(query: DataQuery): boolean {
+  const schema: Record<keyof DataQuery, string> = {
+    refId: 'string',
+    hide: 'boolean',
+    key: 'string',
+    queryType: 'string',
+    datasource: 'object',
+  };
+
+  for (const key in query) {
+    if (key === 'label') {
+      continue;
+    }
+    if (!(key in schema)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datasource?: DataSourceRef): DataQuery[] {
   const q = query || {};
   q.refId = getNextRefIdChar(queries);
