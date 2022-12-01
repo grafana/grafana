@@ -129,7 +129,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -153,7 +152,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -177,7 +175,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -201,7 +198,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -225,7 +221,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
