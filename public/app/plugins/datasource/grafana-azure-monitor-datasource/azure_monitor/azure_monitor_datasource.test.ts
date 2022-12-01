@@ -410,10 +410,10 @@ describe('AzureMonitorDatasource', () => {
       const result = await ctx.ds.azureMonitorDatasource.getLocations(['mock-subscription-id-1']);
 
       expect(result.size).toBe(1);
-      expect(result.has('North Europe')).toBe(true);
-      expect(result.get('North Europe')?.name).toBe('northeurope');
-      expect(result.get('North Europe')?.displayName).toBe('North Europe');
-      expect(result.get('North Europe')?.supportsLogs).toBe(false);
+      expect(result.has('northeurope')).toBe(true);
+      expect(result.get('northeurope')?.name).toBe('northeurope');
+      expect(result.get('northeurope')?.displayName).toBe('North Europe');
+      expect(result.get('northeurope')?.supportsLogs).toBe(undefined);
     });
 
     it('should return a locations map with locations deduped', async () => {
@@ -423,14 +423,14 @@ describe('AzureMonitorDatasource', () => {
       ]);
 
       expect(result.size).toBe(2);
-      expect(result.has('North Europe')).toBe(true);
-      expect(result.get('North Europe')?.name).toBe('northeurope');
-      expect(result.get('North Europe')?.displayName).toBe('North Europe');
-      expect(result.get('North Europe')?.supportsLogs).toBe(false);
-      expect(result.has('East US 2')).toBe(true);
-      expect(result.get('East US 2')?.name).toBe('eastus2');
-      expect(result.get('East US 2')?.displayName).toBe('East US 2');
-      expect(result.get('East US 2')?.supportsLogs).toBe(false);
+      expect(result.has('northeurope')).toBe(true);
+      expect(result.get('northeurope')?.name).toBe('northeurope');
+      expect(result.get('northeurope')?.displayName).toBe('North Europe');
+      expect(result.get('northeurope')?.supportsLogs).toBe(undefined);
+      expect(result.has('eastus2')).toBe(true);
+      expect(result.get('eastus2')?.name).toBe('eastus2');
+      expect(result.get('eastus2')?.displayName).toBe('East US 2');
+      expect(result.get('eastus2')?.supportsLogs).toBe(undefined);
     });
   });
 

@@ -23,10 +23,10 @@ const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   });
   resourcePickerData.postResource = postResource;
   const logLocationsMap = mockGetValidLocations();
-  const getValidLocations = jest.spyOn(resourcePickerData, 'getValidLocations').mockResolvedValue(logLocationsMap);
+  const getLogsLocations = jest.spyOn(resourcePickerData, 'getLogsLocations').mockResolvedValue(logLocationsMap);
   resourcePickerData.logLocationsMap = logLocationsMap;
   resourcePickerData.logLocations = Array.from(logLocationsMap.values()).map((location) => `"${location.name}"`);
-  return { resourcePickerData, postResource, mockDatasource, getValidLocations };
+  return { resourcePickerData, postResource, mockDatasource, getValidLocations: getLogsLocations };
 };
 
 describe('AzureMonitor resourcePickerData', () => {
@@ -386,7 +386,7 @@ describe('AzureMonitor resourcePickerData', () => {
       const { resourcePickerData, getValidLocations } = createResourcePickerData([createMockARGSubscriptionResponse()]);
       getValidLocations.mockRestore();
       const subscriptions = await resourcePickerData.getSubscriptions();
-      const locations = await resourcePickerData.getValidLocations(subscriptions);
+      const locations = await resourcePickerData.getLogsLocations(subscriptions);
 
       expect(locations.size).toBe(1);
       expect(locations.has('northeurope')).toBe(true);
@@ -402,7 +402,7 @@ describe('AzureMonitor resourcePickerData', () => {
       getValidLocations.mockRestore();
       mockDatasource.azureMonitorDatasource.getProvider = jest.fn().mockResolvedValue(undefined);
       const subscriptions = await resourcePickerData.getSubscriptions();
-      const locations = await resourcePickerData.getValidLocations(subscriptions);
+      const locations = await resourcePickerData.getLogsLocations(subscriptions);
 
       expect(locations.size).toBe(1);
       expect(locations.has('northeurope')).toBe(true);

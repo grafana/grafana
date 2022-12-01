@@ -51,7 +51,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const subscriptions = await this.getSubscriptions();
 
     if (this.logLocationsMap.size === 0) {
-      this.logLocationsMap = await this.getValidLocations(subscriptions);
+      this.logLocationsMap = await this.getLogsLocations(subscriptions);
       this.logLocations = Array.from(this.logLocationsMap.values()).map((location) => `"${location.name}"`);
     }
 
@@ -226,6 +226,9 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     resourceGroupId: string,
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
+    if (!this.logLocations) {
+      return [];
+    }
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroupId}"
@@ -364,18 +367,14 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
   }
 
-  async getValidLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
+  async getLogsLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
     const subscriptionIds = subscriptions.map((sub) => sub.id);
     const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
     const insightsProvider = await this.azureMonitorDatasource.getProvider('Microsoft.Insights');
     const logsProvider = insightsProvider?.resourceTypes.find((provider) => provider.resourceType === 'logs');
 
     if (!logsProvider) {
-      const correctedMap = new Map<string, AzureMonitorLocations>();
-      for (const value of locations.values()) {
-        correctedMap.set(value.name, value);
-      }
-      return correctedMap;
+      return locations;
     }
 
     const logsLocations = logsProvider.locations.map((location) => ({
@@ -386,11 +385,12 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
     const logLocationsMap = new Map<string, AzureMonitorLocations>();
 
-    for (const location of logsLocations) {
-      const name = locations.get(location.displayName)?.name || '';
+    for (const logLocation of logsLocations) {
+      const name =
+        Array.from(locations.values()).find((location) => logLocation.displayName === location.displayName)?.name || '';
 
       if (name !== '') {
-        logLocationsMap.set(name, { ...location, name });
+        logLocationsMap.set(name, { ...logLocation, name });
       }
     }
 

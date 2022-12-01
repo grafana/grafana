@@ -39,6 +39,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
   listByResourceGroupApiVersion = '2021-04-01';
+  providerApiVersion = '2021-04-01';
+  locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   resourcePath: string;
   azurePortalUrl: string;
@@ -302,24 +304,21 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   async getProvider(providerName: string) {
     return await this.getResource<AzureMonitorProvidersResponse>(
-      `${routeNames.azureMonitor}/providers/${providerName}?api-version=2021-04-01`
+      `${routeNames.azureMonitor}/providers/${providerName}?api-version=${this.providerApiVersion}`
     );
   }
 
   async getLocations(subscriptions: string[]) {
-    let locations: AzureMonitorLocations[] = [];
+    const locationMap = new Map<string, AzureMonitorLocations>();
     for (const subscription of subscriptions) {
       const subLocations = ResponseParser.parseLocations(
         await this.getResource<AzureMonitorLocationsResponse>(
-          `${routeNames.azureMonitor}/subscriptions/${subscription}/locations?api-version=2020-01-01`
+          `${routeNames.azureMonitor}/subscriptions/${subscription}/locations?api-version=${this.locationsApiVersion}`
         )
       );
-      locations = unionBy(locations, subLocations, 'name');
-    }
-
-    const locationMap = new Map<string, AzureMonitorLocations>();
-    for (const location of locations) {
-      locationMap.set(location.displayName, location);
+      for (const location of subLocations) {
+        locationMap.set(location.name, location);
+      }
     }
 
     return locationMap;

@@ -33,7 +33,7 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       getLocations: jest
         .fn()
         .mockResolvedValueOnce(
-          new Map([['North Europe', { displayName: 'North Europe', name: 'northeurope', supportsLogs: false }]])
+          new Map([['northeurope', { displayName: 'North Europe', name: 'northeurope', supportsLogs: false }]])
         ),
     },
 

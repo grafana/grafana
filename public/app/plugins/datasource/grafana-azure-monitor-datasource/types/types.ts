@@ -262,7 +262,7 @@ export interface LegacyAzureGetMetricMetadataQuery {
 export interface AzureMonitorLocations {
   displayName: string;
   name: string;
-  supportsLogs: boolean;
+  supportsLogs?: boolean;
 }
 
 export interface AzureMonitorProvidersResponse {

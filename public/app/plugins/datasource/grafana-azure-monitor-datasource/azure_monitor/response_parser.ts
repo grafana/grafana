@@ -181,7 +181,7 @@ export default class ResponseParser {
     }
 
     for (const location of result.value) {
-      locations.push({ name: location.name, displayName: location.displayName, supportsLogs: false });
+      locations.push({ name: location.name, displayName: location.displayName, supportsLogs: undefined });
     }
 
     return locations;
