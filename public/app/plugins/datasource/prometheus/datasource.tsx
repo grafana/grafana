@@ -895,7 +895,6 @@ export class PrometheusDatasource
       return uniqueLabels.map((value: any) => ({ text: value }));
     } else {
       // Get all tags
-      const range = this.timeSrv.timeRange();
       const params = this.getTimeRangeParams();
       const result = await this.metadataRequest('/api/v1/labels', params);
       return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
@@ -903,7 +902,8 @@ export class PrometheusDatasource
   }
 
   async getTagValues(options: { key?: string } = {}) {
-    const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`);
+    const params = this.getTimeRangeParams();
+    const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
