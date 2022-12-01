@@ -159,93 +159,6 @@ func (s *Service) ClearUserPermissionCache(user *user.SignedInUser) {
 	s.cache.Delete(key)
 }
 
-func (s *Service) GetFilteredUserPermissions(ctx context.Context, userID, orgID int64, filterOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
-	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
-	defer timer.ObserveDuration()
-
-	if permissions, success := s.getFilteredUserPermissionsFromCache(userID, orgID, filterOptions); success {
-		return permissions, nil
-	}
-	return s.getFilteredUserPermissions(ctx, userID, orgID, filterOptions)
-
-}
-
-func (s *Service) getFilteredUserPermissions(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
-
-	roles, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
-	//TODO check if perms for that user have been added?
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
-	}
-
-	//TODO deal with users that don't exist in org - no role == not an org member?
-	// Or just leave it?
-
-	permissions := make([]accesscontrol.Permission, 0)
-	for _, builtin := range roles[userID] {
-		if basicRole, ok := s.roles[builtin]; ok {
-			for _, permission := range basicRole.Permissions {
-				if permissionMatchesOptions(permission, searchOptions) {
-					permissions = append(permissions, permission)
-				}
-			}
-		}
-	}
-
-	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, []int64{userID}, searchOptions)
-	//dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-	//	OrgID:  user.OrgID,
-	//	UserID: user.UserID,
-	//	// TODO is this needed for OSS?
-	//	Roles:   accesscontrol.GetOrgRoles(user),
-	//	TeamIDs: user.Teams,
-	//})
-	if err != nil {
-		return nil, err
-	}
-	// TODO check that there's anything to append for this user?
-	permissions = append(permissions, dbPermissions[userID]...)
-
-	return permissions, nil
-}
-
-func (s *Service) getFilteredUserPermissionsFromCache(userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
-	u := &user.SignedInUser{
-		UserID: userID,
-		OrgID:  orgID,
-	}
-	key, err := permissionCacheKey(u)
-	if err != nil {
-		s.log.Debug("could not obtain cache key to fetch filtered user permissions", "error", err.Error())
-		return nil, false
-	}
-
-	permissions, ok := s.cache.Get(key)
-	if !ok {
-		return nil, false
-	}
-
-	s.log.Debug("using cached permissions", "key", key)
-	filteredPermissions := make([]accesscontrol.Permission, 0)
-	for _, permission := range permissions.([]accesscontrol.Permission) {
-		if permissionMatchesOptions(permission, searchOptions) {
-			filteredPermissions = append(filteredPermissions, permission)
-		}
-	}
-
-	return filteredPermissions, true
-}
-
-func permissionMatchesOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
-	if searchOptions.Scope != "" && permission.Scope != searchOptions.Scope {
-		return false
-	}
-	if searchOptions.Action != "" && permission.Action == searchOptions.ActionPrefix {
-		return true
-	}
-	return strings.HasPrefix(permission.Action, searchOptions.ActionPrefix)
-}
-
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
 }
@@ -356,13 +269,13 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, orgID)
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, []int64{}, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get managed permissions (DB)
-	usersPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, options)
+	usersPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, []int64{}, options)
 	if err != nil {
 		return nil, err
 	}
@@ -421,4 +334,85 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 	}
 
 	return res, nil
+}
+
+func (s *Service) SearchUserPermissions(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+	defer timer.ObserveDuration()
+
+	if permissions, success := s.searchUserPermissionsFromCache(userID, orgID, searchOptions); success {
+		return permissions, nil
+	}
+	return s.searchUserPermissions(ctx, userID, orgID, searchOptions)
+
+}
+
+func (s *Service) searchUserPermissions(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	// Get permissions for user's basic roles from RAM
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
+	}
+	var roles []string
+	var ok bool
+	if roles, ok = roleList[userID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
+	}
+	permissions := make([]accesscontrol.Permission, 0)
+	for _, builtin := range roles {
+		if basicRole, ok := s.roles[builtin]; ok {
+			for _, permission := range basicRole.Permissions {
+				if PermissionMatchesOptions(permission, searchOptions) {
+					permissions = append(permissions, permission)
+				}
+			}
+		}
+	}
+
+	// Get permissions from the DB
+	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, []int64{userID}, searchOptions)
+	if err != nil {
+		return nil, err
+	}
+	permissions = append(permissions, dbPermissions[userID]...)
+
+	return permissions, nil
+}
+
+func (s *Service) searchUserPermissionsFromCache(userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
+	// Create a temp signed in user object to retrieve cache key
+	tempUser := &user.SignedInUser{
+		UserID: userID,
+		OrgID:  orgID,
+	}
+	key, err := permissionCacheKey(tempUser)
+	if err != nil {
+		s.log.Debug("could not obtain cache key to search user permissions", "error", err.Error())
+		return nil, false
+	}
+
+	permissions, ok := s.cache.Get(key)
+	if !ok {
+		return nil, false
+	}
+
+	s.log.Debug("using cached permissions", "key", key)
+	filteredPermissions := make([]accesscontrol.Permission, 0)
+	for _, permission := range permissions.([]accesscontrol.Permission) {
+		if PermissionMatchesOptions(permission, searchOptions) {
+			filteredPermissions = append(filteredPermissions, permission)
+		}
+	}
+
+	return filteredPermissions, true
+}
+
+func PermissionMatchesOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
+	if searchOptions.Scope != "" && permission.Scope != searchOptions.Scope {
+		return false
+	}
+	if searchOptions.Action != "" {
+		return permission.Action == searchOptions.ActionPrefix
+	}
+	return strings.HasPrefix(permission.Action, searchOptions.ActionPrefix)
 }

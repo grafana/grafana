@@ -31,7 +31,7 @@ type Service interface {
 	// ClearUserPermissionCache removes the permission cache entry for the given user
 	ClearUserPermissionCache(user *user.SignedInUser)
 	// GetFilteredUserPermissions returns all users' permissions filtered by an action prefix
-	GetFilteredUserPermissions(ctx context.Context, userID, orgID int64, filterOptions SearchOptions) ([]Permission, error)
+	SearchUserPermissions(ctx context.Context, userID, orgID int64, filterOptions SearchOptions) ([]Permission, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error

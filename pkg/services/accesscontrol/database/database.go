@@ -76,6 +76,25 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 	}
 	dbPerms := make([]UserRBACPermission, 0)
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		var params []interface{}
+
+		var userRoleFilter, userTeamFilter, userBasicFilter, userAdminFilter string
+		if len(userFilter) > 0 {
+			idParams := make([]interface{}, len(userRoleFilter)*4)
+			for _, u := range userFilter {
+				idParams = append(idParams, u)
+			}
+
+			userRoleFilter = " WHERE ur.user_id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
+			params = append(params, idParams...)
+			userTeamFilter = " WHERE tm.user_id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
+			params = append(params, idParams...)
+			userBasicFilter = " WHERE ou.user_id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
+			params = append(params, idParams...)
+			userAdminFilter = " AND u.id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
+			params = append(params, idParams...)
+		}
+
 		// Find permissions
 		q := `
 		SELECT
@@ -85,30 +104,33 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		FROM (
 			SELECT ur.user_id, ur.org_id, p.action, p.scope
 				FROM permission AS p
-				INNER JOIN user_role AS ur on ur.role_id = p.role_id
-			UNION ALL
+				INNER JOIN user_role AS ur on ur.role_id = p.role_id` + userRoleFilter +
+			` UNION ALL
 				SELECT tm.user_id, tr.org_id, p.action, p.scope
 					FROM permission AS p
 					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
-					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
-			UNION ALL
+					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id` + userTeamFilter +
+			` UNION ALL
 				SELECT ou.user_id, br.org_id, p.action, p.scope
 					FROM permission AS p
 					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
-					INNER JOIN org_user AS ou ON ou.role = br.role
-			UNION ALL
+					INNER JOIN org_user AS ou ON ou.role = br.role` + userBasicFilter +
+			` UNION ALL
 				SELECT sa.user_id, br.org_id, p.action, p.scope
 					FROM permission AS p
 					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
 					INNER JOIN (
 						SELECT u.id AS user_id
-						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
-					) AS sa ON 1 = 1
+						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin` + userAdminFilter +
+			`) AS sa ON 1 = 1
 					WHERE br.role = ?
 		) AS up
 		WHERE (org_id = ? OR org_id = ?)
 		`
-		params := []interface{}{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
+
+		params = append(params, accesscontrol.RoleGrafanaAdmin)
+		params = append(params, accesscontrol.GlobalOrgID)
+		params = append(params, orgID)
 
 		if options.ActionPrefix != "" {
 			q += ` AND action LIKE ?`
@@ -121,12 +143,6 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		if options.Scope != "" {
 			q += ` AND scope = ?`
 			params = append(params, options.Scope)
-		}
-		if len(userFilter) > 0 {
-			q += "AND user_id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
-			for _, u := range userFilter {
-				params = append(params, u)
-			}
 		}
 
 		return sess.SQL(q, params...).
@@ -159,7 +175,6 @@ func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter 
 		LEFT JOIN org_user AS ou ON u.id = ou.user_id
 		WHERE (u.is_admin OR ou.org_id = ?)
 		`
-
 		params := []interface{}{orgID}
 		if len(userFilter) > 0 {
 			q += "AND u.id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"

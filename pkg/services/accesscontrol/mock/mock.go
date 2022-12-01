@@ -29,6 +29,7 @@ type Calls struct {
 	RegisterAttributeScopeResolver []interface{}
 	DeleteUserPermissions          []interface{}
 	SearchUsersPermissions         []interface{}
+	SearchUserPermissions          []interface{}
 }
 
 type Mock struct {
@@ -54,6 +55,7 @@ type Mock struct {
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
 	SearchUsersPermissionsFunc         func(context.Context, *user.SignedInUser, int64, accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
+	SearchUserPermissionsFunc          func(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -221,6 +223,15 @@ func (m *Mock) SearchUsersPermissions(ctx context.Context, user *user.SignedInUs
 	// Use override if provided
 	if m.SearchUsersPermissionsFunc != nil {
 		return m.SearchUsersPermissionsFunc(ctx, user, orgID, options)
+	}
+	return nil, nil
+}
+
+func (m *Mock) SearchUserPermissions(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	m.Calls.SearchUserPermissions = append(m.Calls.SearchUserPermissions, []interface{}{ctx, userID, orgID, searchOptions})
+	// Use override if provided
+	if m.SearchUserPermissionsFunc != nil {
+		return m.SearchUserPermissionsFunc(ctx, userID, orgID, searchOptions)
 	}
 	return nil, nil
 }
