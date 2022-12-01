@@ -14,3 +14,15 @@ type PluginDecl struct {
 	PluginPath string
 	PluginMeta plugindef.PluginDef
 }
+
+func EmptyPluginDecl(path string, meta plugindef.PluginDef) *PluginDecl {
+	return &PluginDecl{
+		PluginPath: path,
+		PluginMeta: meta,
+		Imports:    make([]*ast.ImportSpec, 0),
+	}
+}
+
+func (decl *PluginDecl) HasSchema() bool {
+	return decl.Lineage != nil && decl.Slot != nil
+}

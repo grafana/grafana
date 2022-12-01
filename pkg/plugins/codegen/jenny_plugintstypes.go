@@ -26,6 +26,10 @@ func (j *ptsJenny) JennyName() string {
 }
 
 func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
+	if !decl.HasSchema() {
+		return nil, nil
+	}
+
 	tsf := &tsast.File{}
 
 	for _, im := range decl.Imports {

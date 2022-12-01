@@ -22,13 +22,6 @@ var tmplFS embed.FS
 // The following group of types, beginning with templateVars_*, all contain the set
 // of variables expected by the corresponding named template file under tmpl/
 type (
-	templateVars_autogen_header struct {
-		GeneratorPath  string
-		LineagePath    string
-		LineageCUEPath string
-		GenLicense     bool
-	}
-
 	templateVars_plugin_registry struct {
 		Plugins []struct {
 			PkgName    string

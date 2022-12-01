@@ -27,7 +27,7 @@ func (j *pgoJenny) JennyName() string {
 
 func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	b := decl.PluginMeta.Backend
-	if b == nil || !*b {
+	if b == nil || !*b || !decl.HasSchema() {
 		return nil, nil
 	}
 

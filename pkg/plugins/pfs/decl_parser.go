@@ -48,6 +48,11 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		p := ptree.RootPlugin()
 		slots := p.SlotImplementations()
 
+		if len(slots) == 0 {
+			decls = append(decls, EmptyPluginDecl(path, p.Meta()))
+			continue
+		}
+
 		for slotName, lin := range slots {
 			slot, err := kindsys.FindSlot(slotName)
 			if err != nil {
