@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
@@ -12,7 +12,7 @@ import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
-import { fetchAllPromBuildInfoAction } from './state/actions';
+import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
 
@@ -44,12 +44,14 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
   const copyFromIdentifier = ruleId.tryParse(copyFromId);
 
   const { loading = true } = useAsync(async () => {
-    await dispatch(fetchAllPromBuildInfoAction());
+    if (identifier) {
+      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
+    }
   }, [dispatch]);
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  const getContent = () => {
+  const getContent = useCallback(() => {
     if (loading) {
       return;
     }
@@ -71,7 +73,7 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
     }
 
     return <AlertRuleForm />;
-  };
+  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
 
   return (
     <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={getPageNav(identifier ? 'edit' : 'add')}>
