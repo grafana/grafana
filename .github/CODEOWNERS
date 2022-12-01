@@ -167,6 +167,7 @@ tsconfig.json @grafana/frontend-ops
 /public/app/plugins/panel/timeseries @grafana/grafana-bi-squad
 /public/app/plugins/panel/geomap @grafana/grafana-edge-squad
 /public/app/plugins/panel/canvas @grafana/grafana-edge-squad
+/public/app/plugins/panel/video @grafana/grafana-edge-squad
 /public/app/plugins/panel/candlestick @grafana/grafana-edge-squad
 /public/app/plugins/panel/icon @grafana/grafana-edge-squad
 /scripts/build/release-packages.sh @grafana/plugins-platform-frontend
