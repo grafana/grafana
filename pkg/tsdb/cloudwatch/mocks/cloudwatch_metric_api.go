@@ -9,9 +9,8 @@ import (
 )
 
 type FakeMetricsAPI struct {
-	cloudwatchiface.CloudWatchAPI
-
 	Metrics        []*cloudwatch.Metric
+	OwningAccounts []*string
 	MetricsPerPage int
 }
 
@@ -23,7 +22,8 @@ func (c *FakeMetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn
 
 	for i, metrics := range chunks {
 		response := fn(&cloudwatch.ListMetricsOutput{
-			Metrics: metrics,
+			Metrics:        metrics,
+			OwningAccounts: c.OwningAccounts,
 		}, i+1 == len(chunks))
 		if !response {
 			break

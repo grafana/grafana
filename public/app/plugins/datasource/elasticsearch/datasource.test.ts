@@ -12,6 +12,7 @@ import {
   DateTime,
   dateTime,
   Field,
+  FieldType,
   MutableDataFrame,
   RawTimeRange,
   TimeRange,
@@ -223,11 +224,23 @@ describe('ElasticDatasource', () => {
         expect(received[0]).toEqual({
           data: [
             {
-              datapoints: [[10, 1000]],
-              metric: 'count',
-              props: {},
+              name: 'resolvedVariable',
               refId: 'test',
-              target: 'resolvedVariable',
+              fields: [
+                {
+                  name: 'Time',
+                  type: FieldType.time,
+                  config: {},
+                  values: new ArrayVector([1000]),
+                },
+                {
+                  name: 'Value',
+                  type: FieldType.number,
+                  config: {},
+                  values: new ArrayVector([10]),
+                },
+              ],
+              length: 1,
             },
           ],
         });
@@ -255,7 +268,7 @@ describe('ElasticDatasource', () => {
 
     it('should resolve the alias variable for the alias/target in the result', async () => {
       const { result } = await runScenario();
-      expect(result.data[0].target).toEqual('resolvedVariable');
+      expect(result.data[0].name).toEqual('resolvedVariable');
     });
 
     it('should json escape lucene query', async () => {

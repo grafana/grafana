@@ -65,9 +65,10 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
-  objectStore?: boolean;
+  entityStore?: boolean;
   traceqlEditor?: boolean;
   flameGraph?: boolean;
+  cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
@@ -81,4 +82,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
+  secureSocksDatasourceProxy?: boolean;
+  authnService?: boolean;
 }
