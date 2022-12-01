@@ -185,13 +185,15 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
         )}
         <ConfirmModal
           isOpen={!!provRuleCloneUrl}
-          title="Clone provisioned rule?"
+          title="Clone provisioned rule"
           body={
             <div>
-              <p>The new rule will not be marked as a provisioned rule</p>
               <p>
-                You will need to set a new alert group for the cloned rule because the alert group of origin has been
-                provisioned and cannot be used for rules created in the UI.
+                The new rule will <span className={style.bold}>NOT</span> be marked as a provisioned rule.
+              </p>
+              <p>
+                You will need to set a new alert group for the cloned rule because the original one has been provisioned
+                and cannot be used for rules created in the UI.
               </p>
             </div>
           }
@@ -213,5 +215,8 @@ function inViewMode(pathname: string): boolean {
 export const getStyles = (theme: GrafanaTheme2) => ({
   button: css`
     padding: 0 ${theme.spacing(2)};
+  `,
+  bold: css`
+    font-weight: ${theme.typography.fontWeightBold};
   `,
 });
