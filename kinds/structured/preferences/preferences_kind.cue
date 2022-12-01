@@ -24,20 +24,8 @@ lineage: seqs: [
 				// Selected language (beta)
 				language?: string
 
-				navbar?: #NavbarPreference
-
+				// Explore query history preferences
 				queryHistory?: #QueryHistoryPreference
-
-				#NavLink: {
-					id: string
-					text?: string
-					URL?: string
-					target?: string
-				} @cuetsy(kind="interface")
-
-				#NavbarPreference: {
-					savedItems?: [...#NavLink]
-				} @cuetsy(kind="interface")
 
 				#QueryHistoryPreference: {
 					// one of: '' | 'query' | 'starred';

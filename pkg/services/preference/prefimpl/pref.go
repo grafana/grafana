@@ -301,9 +301,6 @@ func (s *Service) saveEntity(ctx context.Context, p *pref.Preference) error {
 				HomeTab: &p.JSONData.QueryHistory.HomeTab,
 			}
 		}
-		if len(p.JSONData.Navbar.SavedItems) > 0 {
-			m.Navbar = &preferences.NavbarPreference{}
-		}
 	}
 	if p.Timezone != "" {
 		m.Timezone = &p.Timezone

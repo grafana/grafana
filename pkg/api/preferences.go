@@ -103,12 +103,6 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 			dto.Language = &preference.JSONData.Language
 		}
 
-		// TODO!!!
-		// dto.Navbar = preference.JSONData.Navbar
-		// dto.Navbar = &preferences.NavbarPreference{
-		// 	SavedItems: ,
-		// }
-
 		if preference.JSONData.QueryHistory.HomeTab != "" {
 			dto.QueryHistory = &preferences.QueryHistoryPreference{
 				HomeTab: &preference.JSONData.QueryHistory.HomeTab,

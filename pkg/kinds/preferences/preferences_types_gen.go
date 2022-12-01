@@ -17,7 +17,6 @@ type Preferences struct {
 
 	// Selected language (beta)
 	Language     *string                 `json:"language,omitempty"`
-	Navbar       *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory *QueryHistoryPreference `json:"queryHistory,omitempty"`
 
 	// light, dark, empty is default
@@ -30,19 +29,6 @@ type Preferences struct {
 
 	// day of the week (sunday, monday, etc)
 	WeekStart *string `json:"weekStart,omitempty"`
-}
-
-// NavLink defines model for preferences.NavLink.
-type NavLink struct {
-	URL    *string `json:"URL,omitempty"`
-	Id     string  `json:"id"`
-	Target *string `json:"target,omitempty"`
-	Text   *string `json:"text,omitempty"`
-}
-
-// NavbarPreference defines model for preferences.NavbarPreference.
-type NavbarPreference struct {
-	SavedItems *[]NavLink `json:"savedItems,omitempty"`
 }
 
 // QueryHistoryPreference defines model for preferences.QueryHistoryPreference.

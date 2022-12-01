@@ -8,21 +8,6 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export interface NavLink {
-  URL?: string;
-  id: string;
-  target?: string;
-  text?: string;
-}
-
-export interface NavbarPreference {
-  savedItems?: Array<NavLink>;
-}
-
-export const defaultNavbarPreference: Partial<NavbarPreference> = {
-  savedItems: [],
-};
-
 export interface QueryHistoryPreference {
   /**
    * one of: '' | 'query' | 'starred';
@@ -39,7 +24,9 @@ export interface Preferences {
    * Selected language (beta)
    */
   language?: string;
-  navbar?: NavbarPreference;
+  /**
+   * Explore query history preferences
+   */
   queryHistory?: QueryHistoryPreference;
   /**
    * light, dark, empty is default

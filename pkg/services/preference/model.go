@@ -50,8 +50,10 @@ type SavePreferenceCommand struct {
 	WeekStart        string                  `json:"weekStart,omitempty"`
 	Theme            string                  `json:"theme,omitempty"`
 	Language         string                  `json:"language,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
+
+	// Deprecated: this is not used by anything anymore
+	Navbar *NavbarPreference `json:"navbar,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -65,10 +67,13 @@ type PatchPreferenceCommand struct {
 	WeekStart        *string                 `json:"weekStart,omitempty"`
 	Theme            *string                 `json:"theme,omitempty"`
 	Language         *string                 `json:"language,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
+
+	// Deprecated: this is not used by anything anymore
+	Navbar *NavbarPreference `json:"navbar,omitempty"`
 }
 
+// Deprecated: this is not used by anything anymore
 type NavLink struct {
 	ID     string `json:"id,omitempty"`
 	Text   string `json:"text,omitempty"`
@@ -76,14 +81,17 @@ type NavLink struct {
 	Target string `json:"target,omitempty"`
 }
 
+// Deprecated: this is not used by anything anymore
 type NavbarPreference struct {
 	SavedItems []NavLink `json:"savedItems"`
 }
 
 type PreferenceJSONData struct {
 	Language     string                 `json:"language"`
-	Navbar       NavbarPreference       `json:"navbar"`
 	QueryHistory QueryHistoryPreference `json:"queryHistory"`
+
+	// Deprecated: this is not used by anything anymore
+	Navbar NavbarPreference `json:"navbar"`
 }
 
 type QueryHistoryPreference struct {
