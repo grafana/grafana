@@ -30,7 +30,9 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.1",
