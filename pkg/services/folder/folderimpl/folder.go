@@ -478,13 +478,17 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 	for _, f := range folders {
+		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
 		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
+			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
 			return err
 		}
 	}
+	logger.Info("deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
+		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return err
 	}
 	return nil
