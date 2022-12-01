@@ -84,6 +84,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, logger log.L
 					}
 					return nil
 				}
+				return err
 			}
 
 			groupedFrames, err := groupResponseFrame(dataframe, model.StatsGroups)
