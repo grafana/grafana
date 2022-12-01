@@ -523,6 +523,160 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 	}
 }
 
+func TestService_SearchUserPermissions(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name         string
+		searchOption accesscontrol.SearchOptions
+		userID       int64
+		ramRoles     map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
+		storedPerms  map[int64][]accesscontrol.Permission // UserID => Permissions
+		storedRoles  map[int64][]string                   // UserID => Roles
+		want         []accesscontrol.Permission
+		wantErr      bool
+	}{
+		{
+			name: "ram only",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+			},
+			userID: 2,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsCreate},
+				}},
+				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(roletype.RoleEditor)},
+				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+		},
+		{
+			name: "stored only",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+			},
+			userID: 2,
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(roletype.RoleEditor)},
+				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+			},
+		},
+		{
+			name: "ram and stored",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+			},
+			userID: 2,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(roletype.RoleEditor)},
+				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+			},
+		},
+		{
+			name: "check action prefix filter works correctly",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+			},
+			userID: 1,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(roletype.RoleEditor)},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+			},
+		},
+		{
+			name: "check action filter works correctly",
+			searchOption: accesscontrol.SearchOptions{
+				Action: accesscontrol.ActionTeamsRead,
+			},
+			userID: 1,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(roletype.RoleEditor)},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t)
+
+			ac.roles = tt.ramRoles
+			ac.store = actest.FakeStore{
+				ExpectedUsersPermissions: tt.storedPerms,
+				ExpectedUsersRoles:       tt.storedRoles,
+			}
+
+			got, err := ac.searchUserPermissions(ctx, tt.userID, 1, tt.searchOption)
+			if tt.wantErr {
+				require.NotNil(t, err)
+				return
+			}
+			require.Nil(t, err)
+
+			assert.ElementsMatch(t, got, tt.want)
+		})
+	}
+}
+
 func TestPermissionCacheKey(t *testing.T) {
 	testcases := []struct {
 		name         string

@@ -412,7 +412,7 @@ func PermissionMatchesOptions(permission accesscontrol.Permission, searchOptions
 		return false
 	}
 	if searchOptions.Action != "" {
-		return permission.Action == searchOptions.ActionPrefix
+		return permission.Action == searchOptions.Action
 	}
 	return strings.HasPrefix(permission.Action, searchOptions.ActionPrefix)
 }
