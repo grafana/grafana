@@ -268,6 +268,7 @@ var (
 			Name:        "internationalization",
 			Description: "Enables internationalization",
 			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "topnav",
