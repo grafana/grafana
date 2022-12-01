@@ -1,24 +1,21 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/notifications/
-  - /docs/grafana/latest/alerting/contact-points/
-  - /docs/grafana/latest/alerting/unified-alerting/contact-points/
-  - /docs/grafana/latest/alerting/fundamentals/contact-points/contact-point-types/
-description: Create or edit contact point
+description: Notifications
 keywords:
   - grafana
   - alerting
-  - guide
-  - contact point
-  - notification channel
-  - create
+  - alertmanager
+  - notification policies
+  - contact points
+  - silences
 title: Notifications
 weight: 410
 ---
 
 # Notifications
 
-Notifications are sent when an alert is firing or has been resolved. You use notification policies to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
+Grafana uses Alertmanagers to send notifications for firing and resolved alerts. Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending notifications from other Alertmanagers too, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). The Grafana Alertmanager uses notification policies and contact points to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
 
 ## Notification policies
 
