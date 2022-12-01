@@ -16,6 +16,7 @@ import {
   downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
+  reducerMode,
   reducerTypes,
   thresholdFunctions,
   upsamplingTypes,
@@ -23,7 +24,7 @@ import {
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
-  const styles = useStyles2(getGrafanaRuleViewerStyles);
+  // const styles = useStyles2(getGrafanaRuleViewerStyles);
 
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
 
@@ -31,16 +32,14 @@ export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
     Prism.highlightAll();
   });
 
-  return (
-    <div>
-      <h2>Grafana Rule Preview</h2>
-      <Stack gap={2}>
-        {rule.grafana_alert.data.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
-          const dataSource = dsByUid[datasourceUid];
+  const queries = rule.grafana_alert.data.filter((q) => !isExpressionQuery(q.model));
+  const expressions = rule.grafana_alert.data.filter((q) => isExpressionQuery(q.model));
 
-          if (isExpressionQuery(model)) {
-            return <ExpressionPreview key={index} refId={refId} model={model} dataSource={dataSource} />;
-          }
+  return (
+    <Stack gap={2} direction="column">
+      <Stack gap={2}>
+        {queries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
+          const dataSource = dsByUid[datasourceUid];
 
           return (
             <QueryPreview
@@ -53,11 +52,23 @@ export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
           );
         })}
       </Stack>
-    </div>
+
+      <Stack gap={1}>
+        {expressions.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
+          const dataSource = dsByUid[datasourceUid];
+
+          return (
+            isExpressionQuery(model) && (
+              <ExpressionPreview key={index} refId={refId} model={model} dataSource={dataSource} />
+            )
+          );
+        })}
+      </Stack>
+    </Stack>
   );
 }
 
-const getGrafanaRuleViewerStyles = (theme: GrafanaTheme2) => ({});
+// const getGrafanaRuleViewerStyles = (theme: GrafanaTheme2) => ({});
 
 interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRange' | 'model'> {
   dataSource?: DataSourceInstanceSettings;
@@ -73,14 +84,18 @@ function QueryPreview({ refId, relativeTimeRange, model, dataSource }: QueryPrev
 
   return (
     <QueryBox refId={refId} headerItems={headerItems}>
-      <pre>
+      <pre className={styles.code}>
         <code>{dump(model)}</code>
       </pre>
     </QueryBox>
   );
 }
 
-const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({});
+const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
+  code: css`
+    margin: ${theme.spacing(1)};
+  `,
+});
 
 interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
   model: ExpressionQuery;
@@ -91,7 +106,11 @@ function ExpressionPreview({ refId, model }: ExpressionPreviewProps) {
   function renderPreview() {
     switch (model.type) {
       case ExpressionQueryType.math:
-        return <QueryBox refId={refId} headerItems={['Math']}></QueryBox>;
+        return (
+          <QueryBox refId={refId} headerItems={['Math']}>
+            <MathExpressionViewer model={model} />
+          </QueryBox>
+        );
 
       case ExpressionQueryType.reduce:
         return (
@@ -126,7 +145,7 @@ function ExpressionPreview({ refId, model }: ExpressionPreviewProps) {
     }
   }
 
-  return <div>{renderPreview()}</div>;
+  return <>{renderPreview()}</>;
 }
 
 interface QueryBoxProps extends React.PropsWithChildren<unknown> {
@@ -205,26 +224,6 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
   );
 }
 
-const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
-  blue: css`
-    color: ${theme.colors.text.link};
-  `,
-  bold: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  label: css`
-    padding: ${theme.spacing(0.5, 1)};
-    background-color: ${theme.colors.background.secondary};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    line-height: ${theme.typography.bodySmall.lineHeight};
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  value: css`
-    padding: ${theme.spacing(0.5, 1)};
-    border: 1px solid ${theme.colors.border.weak};
-  `,
-});
-
 const getClassicConditionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css`
     padding: ${theme.spacing(1)};
@@ -240,6 +239,7 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 
   const { reducer, expression, settings } = model;
   const reducerType = reducerTypes.find((rt) => rt.value === reducer);
+  const modeName = reducerMode.find((rm) => rm.value === settings?.mode);
 
   return (
     <div className={styles.container}>
@@ -250,7 +250,7 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
       <div className={styles.value}>{expression}</div>
 
       <div className={styles.label}>Mode</div>
-      <div className={styles.value}>{settings?.mode}</div>
+      <div className={styles.value}>{modeName?.label}</div>
     </div>
   );
 }
@@ -258,14 +258,20 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 const getReduceConditionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css`
     padding: ${theme.spacing(1)};
-    display: flex;
+    display: grid;
     gap: ${theme.spacing(1)};
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+
+    > :nth-child(6) {
+      grid-column: span 3;
+    }
   `,
   ...getCommonQueryStyles(theme),
 });
 
 function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
-  const styles = useStyles2(getReduceConditionViewerStyles);
+  const styles = useStyles2(getResampleExpressionViewerStyles);
 
   const { expression, window, downsampler, upsampler } = model;
   const downsamplerType = downsamplingTypes.find((dt) => dt.value === downsampler);
@@ -288,8 +294,19 @@ function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
   );
 }
 
+const getResampleExpressionViewerStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    padding: ${theme.spacing(1)};
+    display: grid;
+    gap: ${theme.spacing(1)};
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  `,
+  ...getCommonQueryStyles(theme),
+});
+
 function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
-  const styles = useStyles2(getReduceConditionViewerStyles);
+  const styles = useStyles2(getExpressionViewerStyles);
 
   const { expression, conditions } = model;
 
@@ -314,6 +331,50 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
     </div>
   );
 }
+
+function MathExpressionViewer({ model }: { model: ExpressionQuery }) {
+  const styles = useStyles2(getExpressionViewerStyles);
+
+  const { expression } = model;
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.label}>Input</div>
+      <div className={styles.value}>{expression}</div>
+    </div>
+  );
+}
+
+const getExpressionViewerStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    padding: ${theme.spacing(1)};
+    display: flex;
+    gap: ${theme.spacing(1)};
+  `,
+  ...getCommonQueryStyles(theme),
+});
+
+const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
+  blue: css`
+    color: ${theme.colors.text.link};
+  `,
+  bold: css`
+    font-weight: ${theme.typography.fontWeightBold};
+  `,
+  label: css`
+    display: flex;
+    align-items: center;
+    padding: ${theme.spacing(0.5, 1)};
+    background-color: ${theme.colors.background.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    line-height: ${theme.typography.bodySmall.lineHeight};
+    font-weight: ${theme.typography.fontWeightBold};
+  `,
+  value: css`
+    padding: ${theme.spacing(0.5, 1)};
+    border: 1px solid ${theme.colors.border.weak};
+  `,
+});
 
 function isRangeEvaluator(evaluator: { params: number[]; type: EvalFunction }) {
   return evaluator.type === EvalFunction.IsWithinRange || evaluator.type === EvalFunction.IsOutsideRange;

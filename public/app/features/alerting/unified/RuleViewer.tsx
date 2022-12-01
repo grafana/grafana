@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import Prism from 'prismjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import {
   Alert,
   Button,
+  CollapsableSection,
+  Collapse,
   Icon,
   LoadingPlaceholder,
   PanelChromeLoadingIndicator,
@@ -49,6 +51,8 @@ const pageTitle = 'View rule';
 
 export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
+  const [expandQuery, setExpandQuery] = useToggle(false);
+
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
 
@@ -164,7 +168,6 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <RuleState rule={rule} isCreating={false} isDeleting={false} />
           <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
         </div>
-        <div>{isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleViewer rule={rule.rulerRule} />}</div>
         <div className={styles.details}>
           <div className={styles.leftSide}>
             {rule.promRule && (
@@ -190,6 +193,16 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
         </div>
       </RuleViewerLayoutContent>
+      {isGrafanaRulerRule(rule.rulerRule) && (
+        <CollapsableSection
+          label="Query"
+          isOpen={expandQuery}
+          onToggle={setExpandQuery}
+          className={styles.queriesTitle}
+        >
+          <GrafanaRuleViewer rule={rule.rulerRule} />
+        </CollapsableSection>
+      )}
       {!isFederatedRule && data && Object.keys(data).length > 0 && (
         <>
           <div className={styles.queriesTitle}>
