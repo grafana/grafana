@@ -83,8 +83,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagObjectStore) {
-			addObjectStorageMigrations(mg)
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagEntityStore) {
+			addEntityStoreMigrations(mg)
 		}
 	}
 
@@ -104,6 +104,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddAdminOnlyMigration(mg)
 	accesscontrol.AddSeedAssignmentMigrations(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatFixedMigration(mg)
+
+	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	// TODO: This migration will be enabled later in the nested folder feature
 	// implementation process. It is on hold so we can continue working on the

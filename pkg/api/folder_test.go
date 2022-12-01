@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -146,7 +146,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.folderService = folderService
 		hs.AccessControl = acmock.New()
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
@@ -243,10 +243,11 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		store := mockstore.NewSQLStoreMock()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{
-			AccessControl: acmock.New(),
-			folderService: folderService,
-			Cfg:           setting.NewCfg(),
-			Features:      featuremgmt.WithFeatures(),
+			AccessControl:        acmock.New(),
+			folderService:        folderService,
+			Cfg:                  setting.NewCfg(),
+			Features:             featuremgmt.WithFeatures(),
+			accesscontrolService: actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -293,48 +294,4 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 
 		fn(sc)
 	})
-}
-
-type fakeFolderService struct {
-	folder.Service
-
-	GetFoldersResult     []*models.Folder
-	GetFoldersError      error
-	GetFolderByUIDResult *models.Folder
-	GetFolderByUIDError  error
-	GetFolderByIDResult  *models.Folder
-	GetFolderByIDError   error
-	CreateFolderResult   *models.Folder
-	CreateFolderError    error
-	UpdateFolderResult   *models.Folder
-	UpdateFolderError    error
-	DeleteFolderResult   *folder.Folder
-	DeleteFolderError    error
-	DeletedFolderUids    []string
-}
-
-func (s *fakeFolderService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
-	return s.GetFoldersResult, s.GetFoldersError
-}
-
-func (s *fakeFolderService) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
-	return s.GetFolderByIDResult, s.GetFolderByIDError
-}
-
-func (s *fakeFolderService) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
-	return s.GetFolderByUIDResult, s.GetFolderByUIDError
-}
-
-func (s *fakeFolderService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
-	return s.CreateFolderResult, s.CreateFolderError
-}
-
-func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
-	cmd.Result = s.UpdateFolderResult
-	return s.UpdateFolderError
-}
-
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	s.DeletedFolderUids = append(s.DeletedFolderUids, cmd.UID)
-	return s.DeleteFolderError
 }

@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
+	FooterIconURL      = "https://grafana.com/static/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
 
@@ -82,7 +82,8 @@ func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert ty
 // images have been found.
 func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc forEachImageFunc, alerts ...*types.Alert) error {
 	for index, alert := range alerts {
-		img, err := getImage(ctx, l, imageStore, *alert)
+		logger := l.New("alert", alert.String())
+		img, err := getImage(ctx, logger, imageStore, *alert)
 		if err != nil {
 			return err
 		} else if img != nil {
@@ -90,6 +91,7 @@ func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, 
 				if errors.Is(err, ErrImagesDone) {
 					return nil
 				}
+				logger.Error("Failed to attach image to notification", "error", err)
 				return err
 			}
 		}

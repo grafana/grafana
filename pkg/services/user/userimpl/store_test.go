@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -25,6 +27,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	ss := db.InitTestDB(t)
+	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
+	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -265,9 +270,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		err := ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err := orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -402,9 +407,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -415,14 +420,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// When the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
+		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		query1 := &org.GetOrgUsersQuery{OrgID: users[0].OrgID, User: usr}
-		query1Result, err := userStore.getOrgUsersForTest(context.Background(), query1)
-		require.Nil(t, err)
-
-		require.Len(t, query1Result, 1)
 
 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
 		err = userStore.getDashboardACLInfoList(permQuery)
@@ -441,9 +440,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
-			OrgId: users[0].OrgID, UserId: users[1].ID,
+			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
 
@@ -455,22 +454,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		ss.CacheService.Flush()
 
-		query3 := &models.GetSignedInUserQuery{OrgId: users[1].OrgID, UserId: users[1].ID}
-		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query3)
+		query3 := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UserID: users[1].ID}
+		query3Result, err := userStore.GetSignedInUser(context.Background(), query3)
 		require.Nil(t, err)
-		require.NotNil(t, query3.Result)
-		require.Equal(t, query3.OrgId, users[1].OrgID)
-		err = ss.SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].ID, OrgId: users[0].OrgID})
-		require.Nil(t, err)
-		query4 := &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].ID}
-		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
-		require.Nil(t, err)
-		require.NotNil(t, query4.Result)
-		require.Equal(t, query4.Result.OrgID, users[0].OrgID)
-
-		cacheKey := newSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
-		_, found := ss.CacheService.Get(cacheKey)
-		require.True(t, found)
+		require.NotNil(t, query3Result)
+		require.Equal(t, query3.OrgID, users[1].OrgID)
 
 		disableCmd := user.BatchDisableUsersCommand{
 			UserIDs:    []int64{users[0].ID, users[1].ID, users[2].ID, users[3].ID, users[4].ID},
@@ -487,15 +475,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query5Result.TotalCount, 5)
 
 		// the user is deleted
-		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].ID})
+		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		// delete connected org users and permissions
-		query2 := &org.GetOrgUsersQuery{OrgID: users[0].OrgID}
-		query2Result, err := userStore.getOrgUsersForTest(context.Background(), query2)
-		require.Nil(t, err)
-
-		require.Len(t, query2Result, 1)
 
 		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
 		err = userStore.getDashboardACLInfoList(permQuery)
@@ -725,6 +706,20 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Len(t, queryResult.Users, 1)
 		require.EqualValues(t, queryResult.TotalCount, 1)
 	})
+
+	t.Run("Can get logged in user projection", func(t *testing.T) {
+		query := user.GetSignedInUserQuery{UserID: 2}
+		queryResult, err := userStore.GetSignedInUser(context.Background(), &query)
+
+		require.NoError(t, err)
+		assert.Equal(t, queryResult.Email, "user1@test.com")
+		assert.EqualValues(t, queryResult.OrgID, 2)
+		assert.Equal(t, queryResult.Name, "user1")
+		assert.Equal(t, queryResult.Login, "loginuser1")
+		assert.EqualValues(t, queryResult.OrgRole, "Admin")
+		assert.Equal(t, queryResult.OrgName, "user1@test.com")
+		assert.Equal(t, queryResult.IsGrafanaAdmin, false)
+	})
 }
 
 func TestIntegrationUserUpdate(t *testing.T) {
@@ -843,20 +838,6 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 		return err
 	})
 	return err
-}
-
-func (ss *sqlStore) getOrgUsersForTest(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	result := make([]*org.OrgUserDTO, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		sess := dbSess.Table("org_user")
-		sess.Join("LEFT ", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
-		sess.Where("org_user.org_id=?", query.OrgID)
-		sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role")
-
-		err := sess.Find(&result)
-		return err
-	})
-	return result, err
 }
 
 // This function was copied from pkg/services/dashboards/database to circumvent

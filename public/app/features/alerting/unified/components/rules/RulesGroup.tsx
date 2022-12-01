@@ -13,7 +13,7 @@ import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -192,6 +192,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     <div className={styles.wrapper} data-testid="rule-group">
       <div className={styles.header} data-testid="rule-group-header">
         <CollapseToggle
+          size="sm"
           className={styles.collapseToggle}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
@@ -224,7 +225,14 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
       {!isCollapsed && (
         <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
       )}
-      {isEditingGroup && <EditCloudGroupModal group={group} namespace={namespace} onClose={() => closeEditModal()} />}
+      {isEditingGroup && (
+        <EditCloudGroupModal
+          groupInterval={group.interval ?? ''}
+          nameSpaceAndGroup={{ group: group, namespace: namespace }}
+          sourceName={getRulesSourceName(namespace.rulesSource)}
+          onClose={() => closeEditModal()}
+        />
+      )}
       {isReorderingGroup && (
         <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
       )}

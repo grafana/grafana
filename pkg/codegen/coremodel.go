@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"go/ast"
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing/fstest"
 
@@ -21,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
-	"golang.org/x/tools/go/ast/astutil"
 )
 
 // CoremodelDeclaration contains the results of statically analyzing a Grafana
@@ -218,7 +215,7 @@ func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, e
 	fullp := filepath.Join(path, fmt.Sprintf("%s_gen.go", lin.Name()))
 	byt, err := postprocessGoFile(genGoFile{
 		path:   fullp,
-		walker: makePrefixDropper(strings.Title(lin.Name()), "Model"),
+		walker: PrefixDropper(strings.Title(lin.Name())),
 		in:     buf.Bytes(),
 	})
 	if err != nil {
@@ -240,7 +237,7 @@ type tplVars struct {
 }
 
 func (cd *CoremodelDeclaration) GenerateTypescriptCoremodel() (*tsast.File, error) {
-	schv := thema.SchemaP(cd.Lineage, thema.LatestVersion(cd.Lineage)).UnwrapCUE()
+	schv := cd.Lineage.Latest().Underlying()
 
 	tf, err := cuetsy.GenerateAST(schv, cuetsy.Config{
 		Export: true,
@@ -271,117 +268,6 @@ func (cd *CoremodelDeclaration) GenerateTypescriptCoremodel() (*tsast.File, erro
 		tf.Nodes = append(tf.Nodes, top.D)
 	}
 	return tf, nil
-}
-
-type prefixDropper struct {
-	str     string
-	base    string
-	rxp     *regexp.Regexp
-	rxpsuff *regexp.Regexp
-}
-
-func makePrefixDropper(str, base string) astutil.ApplyFunc {
-	return (&prefixDropper{
-		str:     str,
-		base:    base,
-		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]*)`, str)),
-		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, str)),
-	}).applyfunc
-}
-
-func depoint(e ast.Expr) ast.Expr {
-	if star, is := e.(*ast.StarExpr); is {
-		return star.X
-	}
-	return e
-}
-
-func (d prefixDropper) applyfunc(c *astutil.Cursor) bool {
-	n := c.Node()
-
-	// fmt.Printf("%T %s\n", c.Node(), ast.Print(nil, c.Node()))
-	switch x := n.(type) {
-	case *ast.ValueSpec:
-		// fmt.Printf("%T %s\n", c.Node(), ast.Print(nil, c.Node()))
-		d.handleExpr(x.Type)
-		for _, id := range x.Names {
-			d.do(id)
-		}
-	case *ast.TypeSpec:
-		// Always do typespecs
-		d.do(x.Name)
-	case *ast.Field:
-		// Don't rename struct fields. We just want to rename type declarations, and
-		// field value specifications that reference those types.
-		d.handleExpr(x.Type)
-		// return false
-
-	case *ast.CommentGroup:
-		for _, c := range x.List {
-			c.Text = d.rxp.ReplaceAllString(c.Text, d.base+"$1")
-			c.Text = d.rxpsuff.ReplaceAllString(c.Text, "$1")
-		}
-	}
-	return true
-}
-
-func (d prefixDropper) handleExpr(e ast.Expr) {
-	// Deref a StarExpr, if there is one
-	expr := depoint(e)
-	switch x := expr.(type) {
-	case *ast.Ident:
-		d.do(x)
-	case *ast.ArrayType:
-		if id, is := depoint(x.Elt).(*ast.Ident); is {
-			d.do(id)
-		}
-	case *ast.MapType:
-		if id, is := depoint(x.Key).(*ast.Ident); is {
-			d.do(id)
-		}
-		if id, is := depoint(x.Value).(*ast.Ident); is {
-			d.do(id)
-		}
-	}
-}
-
-func (d prefixDropper) do(n *ast.Ident) {
-	if n.Name != d.str {
-		n.Name = strings.TrimPrefix(n.Name, d.str)
-	} else {
-		n.Name = d.base
-	}
-}
-
-// GenerateCoremodelRegistry produces Go files that define a registry with
-// references to all the Go code that is expected to be generated from the
-// provided lineages.
-func GenerateCoremodelRegistry(path string, ecl []*CoremodelDeclaration) (WriteDiffer, error) {
-	var cml []tplVars
-	for _, ec := range ecl {
-		cml = append(cml, ec.toTemplateObj())
-	}
-
-	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("coremodel_registry.tmpl").Execute(buf, tvars_coremodel_registry{
-		Header: tvars_autogen_header{
-			GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
-		},
-		Coremodels: cml,
-	}); err != nil {
-		return nil, fmt.Errorf("failed executing coremodel registry template: %w", err)
-	}
-
-	byt, err := postprocessGoFile(genGoFile{
-		path: path,
-		in:   buf.Bytes(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	wd := NewWriteDiffer()
-	wd[path] = byt
-	return wd, nil
 }
 
 var tmplTypedef = `{{range .Types}}

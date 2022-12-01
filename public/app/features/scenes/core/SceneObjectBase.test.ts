@@ -76,6 +76,20 @@ describe('SceneObject', () => {
     expect(clone.state.name).toBe('new name');
   });
 
+  it('Cannot modify state', () => {
+    const scene = new TestScene({ name: 'name' });
+    expect(() => {
+      scene.state.name = 'new name';
+    }).toThrow();
+
+    scene.setState({ name: 'new name' });
+    expect(scene.state.name).toBe('new name');
+
+    expect(() => {
+      scene.state.name = 'other name';
+    }).toThrow();
+  });
+
   describe('When activated', () => {
     const scene = new TestScene({
       $data: new SceneDataNode({}),

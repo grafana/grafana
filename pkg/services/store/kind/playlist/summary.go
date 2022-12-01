@@ -5,24 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetObjectKindInfo() models.ObjectKindInfo {
-	return models.ObjectKindInfo{
+func GetEntityKindInfo() models.EntityKindInfo {
+	return models.EntityKindInfo{
 		ID:          models.StandardKindPlaylist,
 		Name:        "Playlist",
 		Description: "Cycle though a collection of dashboards automatically",
 	}
 }
 
-func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
+func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 	return summaryBuilder
 }
 
-func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-	obj := &playlist.Model{}
+func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
+	obj := &playlist.Playlist{}
 	err := json.Unmarshal(body, obj)
 	if err != nil {
 		return nil, nil, err // unable to read object
@@ -35,7 +35,7 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Objec
 	}
 
 	obj.Uid = uid // make sure they are consistent
-	summary := &models.ObjectSummary{
+	summary := &models.EntitySummary{
 		UID:         uid,
 		Name:        obj.Name,
 		Description: fmt.Sprintf("%d items, refreshed every %s", len(*obj.Items), obj.Interval),
@@ -44,7 +44,7 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Objec
 	for _, item := range *obj.Items {
 		switch item.Type {
 		case playlist.PlaylistItemTypeDashboardByUid:
-			summary.References = append(summary.References, &models.ObjectExternalReference{
+			summary.References = append(summary.References, &models.EntityExternalReference{
 				Kind: "dashboard",
 				UID:  item.Value,
 			})
@@ -57,7 +57,7 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Objec
 
 		case playlist.PlaylistItemTypeDashboardById:
 			// obviously insufficient long term... but good to have an example :)
-			summary.Error = &models.ObjectErrorInfo{
+			summary.Error = &models.EntityErrorInfo{
 				Message: "Playlist uses deprecated internal id system",
 			}
 		}

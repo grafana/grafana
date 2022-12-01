@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen } from '@grafana/data';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
@@ -35,15 +35,20 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
+  getMainFrame(frames: DataFrame[] | null) {
+    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
+  }
+
   getTableHeight() {
     const { tableResult } = this.props;
+    const mainFrame = this.getMainFrame(tableResult);
 
-    if (!tableResult || tableResult.length === 0) {
+    if (!mainFrame || mainFrame.length === 0) {
       return 200;
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, tableResult.length * 35) + 35);
+    return Math.max(Math.min(600, mainFrame.length * 35) + 35);
   }
 
   render() {
@@ -51,11 +56,11 @@ export class TableContainer extends PureComponent<Props> {
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
-    let dataFrame = tableResult;
+    let dataFrames = tableResult;
 
-    if (dataFrame?.length) {
-      dataFrame = applyFieldOverrides({
-        data: [dataFrame],
+    if (dataFrames?.length) {
+      dataFrames = applyFieldOverrides({
+        data: dataFrames,
         timeZone,
         theme: config.theme2,
         replaceVariables: (v: string) => v,
@@ -63,29 +68,35 @@ export class TableContainer extends PureComponent<Props> {
           defaults: {},
           overrides: [],
         },
-      })[0];
+      });
       // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
       // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
       // differently and sidestep this getLinks API on a dataframe
-      for (const field of dataFrame.fields) {
-        field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore({
-            field,
-            rowIndex: config.valueRowIndex!,
-            splitOpenFn,
-            range,
-            dataFrame: dataFrame!,
-          });
-        };
+      for (const frame of dataFrames) {
+        for (const field of frame.fields) {
+          field.getLinks = (config: ValueLinkConfig) => {
+            return getFieldLinksForExplore({
+              field,
+              rowIndex: config.valueRowIndex!,
+              splitOpenFn,
+              range,
+              dataFrame: frame!,
+            });
+          };
+        }
       }
     }
 
+    const mainFrame = this.getMainFrame(dataFrames);
+    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
+
     return (
       <Collapse label="Table" loading={loading} isOpen>
-        {dataFrame?.length ? (
+        {mainFrame?.length ? (
           <Table
             ariaLabel={ariaLabel}
-            data={dataFrame}
+            data={mainFrame}
+            subData={subFrames}
             width={tableWidth}
             height={height}
             onCellFilterAdded={onCellFilterAdded}

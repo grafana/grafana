@@ -8,13 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
+func (ss *SQLStore) addOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
 		var usr user.User
 		session := sess.ID(cmd.UserId)
 		if !cmd.AllowAddingServiceAccount {
-			session = session.Where(NotServiceAccountFilter(ss))
+			session = session.Where(notServiceAccountFilter(ss))
 		}
 
 		if exists, err := session.Get(&usr); err != nil {

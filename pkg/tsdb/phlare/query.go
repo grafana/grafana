@@ -35,7 +35,7 @@ const (
 	queryTypeBoth    = "both"
 )
 
-// query processes single Fire query transforming the response to data.Frame packaged in DataResponse
+// query processes single Phlare query transforming the response to data.Frame packaged in DataResponse
 func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 	response := backend.DataResponse{}
@@ -121,7 +121,7 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 	}
 }
 
-// responseToDataFrames turns fire response to data.Frame. We encode the data into a nested set format where we have
+// responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *connect.Response[querierv1.SelectMergeStacktracesResponse], profileTypeID string) *data.Frame {
@@ -154,7 +154,7 @@ type ProfileTree struct {
 }
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
-// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Fire API.
+// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
 func levelsToTree(levels []*querierv1.Level, names []string) *ProfileTree {
 	tree := &ProfileTree{
 		Start: 0,

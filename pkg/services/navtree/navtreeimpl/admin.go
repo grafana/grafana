@@ -36,14 +36,16 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Users",
-			Id:       "users",
-			SubTitle: "Invite and assign roles to users",
-			Icon:     "user",
-			Url:      s.cfg.AppSubURL + "/org/users",
-		})
+	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
+			configNodes = append(configNodes, &navtree.NavLink{
+				Text:     "Users",
+				Id:       "users",
+				SubTitle: "Invite and assign roles to users",
+				Icon:     "user",
+				Url:      s.cfg.AppSubURL + "/org/users",
+			})
+		}
 	}
 
 	if hasAccess(s.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
@@ -123,10 +125,18 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	adminNavLinks := []*navtree.NavLink{}
 
-	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
-		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-			Text: "Users", SubTitle: "Manage and create users across the whole Grafana server", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
-		})
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
+			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+				Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+			})
+		}
+	} else {
+		if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
+			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+				Text: "Users", SubTitle: "Manage and create users across the whole Grafana server", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+			})
+		}
 	}
 
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
@@ -166,16 +176,8 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 		Children:   adminNavLinks,
 	}
 
-	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagTopnav) {
-		adminNode.SubTitle = "Manage server-wide settings and access to resources such as organizations, users, and licenses"
-	}
-
 	if len(adminNavLinks) > 0 {
-		if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagTopnav) {
-			adminNode.Url = s.cfg.AppSubURL + "/admin/server"
-		} else {
-			adminNode.Url = adminNavLinks[0].Url
-		}
+		adminNode.Url = adminNavLinks[0].Url
 	}
 
 	return adminNode
