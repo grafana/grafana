@@ -107,8 +107,8 @@ describe('ScrollManager', () => {
   });
 
   describe('_scrollToVisibleSpan()', () => {
-    function getRefs(spanID: string, traceID: string): TraceSpanReference[] {
-      return [{ refType: 'CHILD_OF', spanID, traceID }];
+    function getRefs(spanID: string) {
+      return [{ refType: 'CHILD_OF', spanID }] as TraceSpanReference[];
     }
     let scrollPastMock: jest.Mock;
 
@@ -185,8 +185,7 @@ describe('ScrollManager', () => {
       accessors.getSearchedSpanIDs = () => new Set([trace.spans[0].spanID]);
 
       trace.spans[trace.spans.length - 1].references = getRefs(
-        trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID,
-        trace.spans[parentOfLastRowWithHiddenChildrenIndex].traceID
+        trace.spans[parentOfLastRowWithHiddenChildrenIndex].spanID
       );
 
       manager._scrollToVisibleSpan(1);
@@ -206,7 +205,7 @@ describe('ScrollManager', () => {
               break;
             default:
               parentID = spans[i].spanID;
-              spans[i].references = getRefs(parentID, spans[i].traceID);
+              spans[i].references = getRefs(parentID);
           }
         }
         // set which spans are "in-view" and which have collapsed children
@@ -222,10 +221,20 @@ describe('ScrollManager', () => {
         expect(scrollPastMock).lastCalledWith(4, -1);
       });
 
+      it('ignores references with unknown types', () => {
+        // modify spans[2] so that it has an unknown refType
+        const spans = trace.spans;
+        spans[2].references = [{ refType: 'OTHER' }] as unknown as TraceSpanReference[];
+        manager.scrollToNextVisibleSpan();
+        expect(scrollPastMock).lastCalledWith(2, 1);
+        manager.scrollToPrevVisibleSpan();
+        expect(scrollPastMock).lastCalledWith(4, -1);
+      });
+
       it('handles more than one level of ancestry', () => {
         // modify spans[2] so that it has an unknown refType
         const spans = trace.spans;
-        spans[2].references = getRefs(spans[1].spanID, spans[1].traceID);
+        spans[2].references = getRefs(spans[1].spanID);
         manager.scrollToNextVisibleSpan();
         expect(scrollPastMock).lastCalledWith(4, 1);
         manager.scrollToPrevVisibleSpan();
