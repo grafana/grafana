@@ -31,7 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -174,7 +176,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, usr *tests.TestUser) {
-				server, api := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+				server, api := setupTestServer(t, store, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
 				marshalled, err := json.Marshal(tc.body)
 				require.NoError(t, err)
 
@@ -258,7 +260,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store)
+			server, _ := setupTestServer(t, store, &svcmock, routing.NewRouteRegister(), testcase.acmock, store)
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.ID))).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
@@ -282,7 +284,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store)
+			server, _ := setupTestServer(t, store, &svcmock, routing.NewRouteRegister(), testcase.acmock, store)
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.ID)).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
@@ -296,6 +298,7 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 
 func setupTestServer(
 	t *testing.T,
+	sqls *sqlstore.SQLStore,
 	svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
@@ -308,8 +311,11 @@ func setupTestServer(
 
 	userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, quotatest.New(false, nil))
 	require.NoError(t, err)
+
+	// TODO: create fake for retriever to pass into the permissionservice
+	retrieverSvc := retriever.ProvideService(sqls, nil, nil, nil)
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
-		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, svc, acmock, teamSvc, userSvc)
+		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, retrieverSvc, acmock, teamSvc, userSvc)
 	require.NoError(t, err)
 	acService := actest.FakeService{}
 
@@ -412,7 +418,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
 					scopeID = int(createdUser.ID)
 				}
-				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+				server, _ := setupTestServer(t, store, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
 
 				actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, scopeID))
 
@@ -538,7 +544,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server, saAPI := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+			server, saAPI := setupTestServer(t, store, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
 			scopeID := tc.Id
 			if tc.user != nil {
 				createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)

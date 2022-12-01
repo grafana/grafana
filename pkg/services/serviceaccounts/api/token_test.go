@@ -144,7 +144,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				bodyString = string(b)
 			}
 
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+			server, _ := setupTestServer(t, store, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
 			actual := requestResponse(server, http.MethodPost, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -249,7 +249,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.ID, token.Id)
 			bodyString := ""
-			server, _ := setupTestServer(t, &svcMock, routing.NewRouteRegister(), tc.acmock, store)
+			server, _ := setupTestServer(t, store, &svcMock, routing.NewRouteRegister(), tc.acmock, store)
 			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -370,7 +370,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			endpoint := fmt.Sprintf(serviceAccountIDPath+"/tokens", sa.ID)
 			svcMock.ExpectedTokens = tc.tokens
-			server, _ := setupTestServer(t, &svcMock, routing.NewRouteRegister(), tc.acmock, store)
+			server, _ := setupTestServer(t, store, &svcMock, routing.NewRouteRegister(), tc.acmock, store)
 			actual := requestResponse(server, http.MethodGet, endpoint, http.NoBody)
 
 			actualCode := actual.Code

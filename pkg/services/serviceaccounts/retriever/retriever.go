@@ -40,14 +40,6 @@ func ProvideService(
 	}
 }
 
-// NewServiceAccountRetrieverService creates a new ServiceAccountRetrieverService.
-// func ProvideService(store ServiceAccountRetriever) *Service {
-// 	return &Service{
-// 		store:  store,
-// 		logger: log.New("serviceaccountretriever"),
-// 	}
-// }
-
 func (s *Service) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return s.store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
 }
