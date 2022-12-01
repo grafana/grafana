@@ -74,10 +74,10 @@ export function RuleViewer({ match }: RuleViewerProps) {
   }, [queries2]);
 
   useEffect(() => {
-    if (allDataSourcesAvailable) {
+    if (allDataSourcesAvailable && expandQuery) {
       onRunQueries();
     }
-  }, [onRunQueries, allDataSourcesAvailable]);
+  }, [onRunQueries, allDataSourcesAvailable, expandQuery]);
 
   useEffect(() => {
     return () => runner.destroy();
@@ -192,43 +192,36 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
         </div>
       </RuleViewerLayoutContent>
-      {isGrafanaRulerRule(rule.rulerRule) && (
-        <CollapsableSection
-          label="Query"
-          isOpen={expandQuery}
-          onToggle={setExpandQuery}
-          className={styles.queriesTitle}
-        >
-          <GrafanaRuleViewer rule={rule.rulerRule} />
-        </CollapsableSection>
-      )}
-      {!isFederatedRule && data && Object.keys(data).length > 0 && (
-        <>
-          <div className={styles.queriesTitle}>
-            Query results <PanelChromeLoadingIndicator loading={isLoading(data)} onCancel={() => runner.cancel()} />
-          </div>
-          <RuleViewerLayoutContent padding={0}>
-            <div className={styles.queries}>
-              {queries.map((query) => {
-                return (
-                  <div key={query.refId} className={styles.query}>
-                    <RuleViewerVisualization
-                      query={query}
-                      data={data && data[query.refId]}
-                      onChangeQuery={onChangeQuery}
-                    />
-                  </div>
-                );
-              })}
+      <CollapsableSection label="Query" isOpen={expandQuery} onToggle={setExpandQuery} className={styles.queriesTitle}>
+        {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleViewer rule={rule.rulerRule} />}
+        {!isFederatedRule && data && Object.keys(data).length > 0 && (
+          <>
+            <div className={styles.queriesTitle}>
+              Query results <PanelChromeLoadingIndicator loading={isLoading(data)} onCancel={() => runner.cancel()} />
             </div>
-          </RuleViewerLayoutContent>
-        </>
-      )}
-      {!isFederatedRule && !allDataSourcesAvailable && (
-        <Alert title="Query not available" severity="warning" className={styles.queryWarning}>
-          Cannot display the query preview. Some of the data sources used in the queries are not available.
-        </Alert>
-      )}
+            <RuleViewerLayoutContent padding={0}>
+              <div className={styles.queries}>
+                {queries.map((query) => {
+                  return (
+                    <div key={query.refId} className={styles.query}>
+                      <RuleViewerVisualization
+                        query={query}
+                        data={data && data[query.refId]}
+                        onChangeQuery={onChangeQuery}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </RuleViewerLayoutContent>
+          </>
+        )}
+        {!isFederatedRule && !allDataSourcesAvailable && (
+          <Alert title="Query not available" severity="warning" className={styles.queryWarning}>
+            Cannot display the query preview. Some of the data sources used in the queries are not available.
+          </Alert>
+        )}
+      </CollapsableSection>
     </RuleViewerLayout>
   );
 }
