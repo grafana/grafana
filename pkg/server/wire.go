@@ -48,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -85,6 +84,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -124,10 +124,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
+	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/kind"
-	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
-	"github.com/grafana/grafana/pkg/services/store/object/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -142,7 +143,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/thumbs/dashboardthumbsimpl"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/services/userauth/userauthimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -247,6 +247,7 @@ var wireBasicSet = wire.NewSet(
 	searchV2.ProvideService,
 	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
+	store.ProvideSystemUsersService,
 	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
@@ -271,8 +272,6 @@ var wireBasicSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
 	oauthtoken.ProvideService,
-	auth.ProvideActiveAuthTokenService,
-	wire.Bind(new(models.ActiveTokenService), new(*auth.ActiveAuthTokenService)),
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,
@@ -355,19 +354,20 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
 	kind.ProvideService, // The registry of known kinds
-	sqlstash.ProvideSQLObjectServer,
-	resolver.ProvideObjectReferenceResolver,
-	httpobjectstore.ProvideHTTPObjectStore,
+	sqlstash.ProvideSQLEntityServer,
+	resolver.ProvideEntityReferenceResolver,
+	httpentitystore.ProvideHTTPEntityStore,
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
-	userauthimpl.ProvideService,
+	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
 	secretsMigrations.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideMigrateFromPluginService,

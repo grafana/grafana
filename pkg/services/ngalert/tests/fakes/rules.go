@@ -339,3 +339,7 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 	}
 	return result, nil
 }
+
+func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
+	return 0, nil
+}

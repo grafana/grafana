@@ -221,8 +221,8 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 			// return nil
 		}
 
-		ss.log.Debug("Creating default org", "name", MainOrgName)
-		if _, err := ss.getOrCreateOrg(sess, MainOrgName); err != nil {
+		ss.log.Debug("Creating default org", "name", mainOrgName)
+		if _, err := ss.getOrCreateOrg(sess, mainOrgName); err != nil {
 			return fmt.Errorf("failed to create default organization: %w", err)
 		}
 
@@ -325,6 +325,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		}
 
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
+
+		if ss.dbCfg.WALEnabled {
+			cnnstr += "&_journal_mode=WAL"
+		}
+
 		cnnstr += ss.buildExtraConnectionString('&')
 	default:
 		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
@@ -453,6 +458,7 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 
@@ -483,7 +489,7 @@ var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagDashboardComments,
 	featuremgmt.FlagPanelTitleSearch,
-	featuremgmt.FlagObjectStore,
+	featuremgmt.FlagEntityStore,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -677,6 +683,7 @@ type DatabaseConfig struct {
 	MaxIdleConn                 int
 	ConnMaxLifetime             int
 	CacheMode                   string
+	WALEnabled                  bool
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
 	MigrationLockAttemptTimeout int

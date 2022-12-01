@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -43,7 +44,7 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
+func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore db.DB,
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
@@ -71,7 +72,7 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 // ContextHandler is a middleware.
 type ContextHandler struct {
 	Cfg               *setting.Cfg
-	AuthTokenService  models.UserTokenService
+	AuthTokenService  auth.UserTokenService
 	JWTAuthService    models.JWTService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
@@ -428,9 +429,12 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
-		reqContext.Logger.Warn("Failed to look up user based on cookie", "error", err)
-		// Burn the cookie in case of failure
-		reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+		reqContext.Logger.Warn("failed to look up session from cookie", "error", err)
+		if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+			// Burn the cookie in case of invalid, expired or missing token
+			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+		}
+
 		reqContext.LookupTokenErr = err
 
 		return false
@@ -443,20 +447,14 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		return false
 	}
 
-	getTime := h.GetTime
-	if getTime == nil {
-		getTime = time.Now
-	}
-
 	if h.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
 		// Check whether the logged in User has a token (whether the User used an OAuth provider to login)
 		oauthToken, exists, _ := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 		if exists {
-			// Skip where the OAuthExpiry is default/zero/unset
-			if !oauthToken.OAuthExpiry.IsZero() && oauthToken.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()) {
+			if h.hasAccessTokenExpired(oauthToken) {
 				reqContext.Logger.Info("access token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
 
-				// If the User doesn't have a refresh_token or refreshing the token was unsuccessful then log out the User and Invalidate the OAuth tokens
+				// If the User doesn't have a refresh_token or refreshing the token was unsuccessful then log out the User and invalidate the OAuth tokens
 				if err = h.oauthTokenService.TryTokenRefresh(ctx, oauthToken); err != nil {
 					if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
 						reqContext.Logger.Error("could not fetch a new access token", "userId", oauthToken.UserId, "error", err)
@@ -468,7 +466,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 					}
 
 					err = h.AuthTokenService.RevokeToken(ctx, token, false)
-					if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
+					if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 						reqContext.Logger.Error("failed to revoke auth token", "error", err)
 					}
 					return false
@@ -500,8 +498,8 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
-	token *models.UserToken) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService auth.UserTokenService,
+	token *auth.UserToken) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -725,4 +723,17 @@ func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
 		return list
 	}
 	return nil
+}
+
+func (h *ContextHandler) hasAccessTokenExpired(token *models.UserAuth) bool {
+	if token.OAuthExpiry.IsZero() {
+		return false
+	}
+
+	getTime := h.GetTime
+	if getTime == nil {
+		getTime = time.Now
+	}
+
+	return token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime())
 }

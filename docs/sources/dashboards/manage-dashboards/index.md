@@ -58,8 +58,6 @@ When you save a dashboard, you can either select a folder for the dashboard to b
 
 ## Manage dashboards
 
-{{< figure src="/static/img/docs/v50/manage_dashboard_menu.png" max-width="300px" class="docs-image--right" >}}
-
 On the **Manage dashboards and folders** page, you can:
 
 - create a folder
@@ -99,8 +97,6 @@ The dashboard export action creates a Grafana JSON file that contains everything
 
 Grafana downloads a JSON file to your local machine.
 
-{{< figure src="/static/img/docs/export/export-modal.png" max-width="800px" >}}
-
 #### Make a dashboard portable
 
 If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
@@ -110,9 +106,6 @@ A template variable of the type `Constant` will automatically be hidden in the d
 ### Import a dashboard
 
 1. Click **Dashboards > Import** in the side menu.
-
-   {{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
-
 1. Perform one of the following steps:
 
    - Upload a dashboard JSON file

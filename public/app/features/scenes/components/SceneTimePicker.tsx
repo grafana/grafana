@@ -4,6 +4,7 @@ import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneComponentProps, SceneObjectStatePlain } from '../core/types';
 
 export interface SceneTimePickerState extends SceneObjectStatePlain {
@@ -16,7 +17,7 @@ export class SceneTimePicker extends SceneObjectBase<SceneTimePickerState> {
 
 function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>) {
   const { hidePicker } = model.useState();
-  const timeRange = model.getTimeRange();
+  const timeRange = sceneGraph.getTimeRange(model);
   const timeRangeState = timeRange.useState();
 
   if (hidePicker) {
@@ -26,7 +27,7 @@ function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>
   return (
     <ToolbarButtonRow alignment="right">
       <TimePickerWithHistory
-        value={timeRangeState}
+        value={timeRangeState.value}
         onChange={timeRange.onTimeRangeChange}
         timeZone={'browser'}
         fiscalYearStartMonth={0}

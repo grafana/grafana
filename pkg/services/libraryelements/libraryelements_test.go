@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -280,7 +281,9 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	cfg.RBACEnabled = false
 	features := featuremgmt.WithFeatures()
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
-	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := acmock.New()
 	folderPermissions := acmock.NewMockedPermissionsService()
@@ -306,7 +309,9 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	ac := acmock.New()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
-	dashboardStore := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 
 	d := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,
@@ -316,7 +321,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
-		OrgID: user.OrgID, Title: title, UID: title,
+		OrgID: user.OrgID, Title: title, UID: title, SignedInUser: &user,
 	})
 	require.NoError(t, err)
 
@@ -423,7 +428,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		webCtx := web.Context{Req: req}
 
 		sqlStore := db.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
 		ac := acmock.New().WithDisabled()
 		// TODO: Update tests to work with rbac
@@ -450,7 +457,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Login: userInDbName,
 		}
 
-		_, err := sqlStore.CreateUser(context.Background(), cmd)
+		_, err = sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
 
 		sc := scenarioContext{

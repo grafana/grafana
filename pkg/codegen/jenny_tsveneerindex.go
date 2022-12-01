@@ -39,7 +39,7 @@ func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexJenny"
 }
 
-func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*codejen.File, error) {
+func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, error) {
 	tsf := new(ast.File)
 	for _, decl := range decls {
 		if decl.IsRaw() {
@@ -66,11 +66,10 @@ func (gen *genTSVeneerIndex) Generate(decls []*DeclForGen) (*codejen.File, error
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *ast.File) ([]ast.Decl, error) {
 	lin := decl.Lineage()
-	sch := thema.SchemaP(lin, thema.LatestVersion(lin))
 	comm := decl.Meta.Common()
 
 	// Check the root, then walk the tree
-	rootv := sch.UnwrapCUE()
+	rootv := lin.Latest().Underlying()
 
 	var raw, custom, rawD, customD ast.Idents
 
@@ -307,7 +306,7 @@ var allowedTSVeneers = map[string]bool{
 }
 
 func allowedTSVeneersString() string {
-	var list []string
+	list := make([]string, 0, len(allowedTSVeneers))
 	for tgt := range allowedTSVeneers {
 		list = append(list, tgt)
 	}
