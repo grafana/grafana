@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
@@ -32,6 +32,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const [provRuleCloneUrl, setProvRuleCloneUrl] = useState<string | undefined>(undefined);
 
   const rulesSourceName = getRulesSourceName(rulesSource);
 
@@ -69,6 +70,8 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     return window.location.href.split('?')[0];
   };
 
+  const sourceName = getRulesSourceName(rulesSource);
+
   if (!isViewMode) {
     buttons.push(
       <Tooltip placement="top" content={'View'}>
@@ -85,47 +88,49 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  if (isEditable && rulerRule && !isFederated && !isProvisioned) {
-    const sourceName = getRulesSourceName(rulesSource);
+  if (isEditable && rulerRule && !isFederated) {
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
-      returnTo,
-    });
+    if (!isProvisioned) {
+      const editURL = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
+        returnTo,
+      });
 
-    const cloneUrl = createUrl('/alerting/new', { copyFrom: ruleId.stringifyIdentifier(identifier) });
+      if (isViewMode) {
+        buttons.push(
+          <ClipboardButton
+            key="copy"
+            icon="copy"
+            onClipboardError={(copiedText) => {
+              notifyApp.error('Error while copying URL', copiedText);
+            }}
+            className={style.button}
+            size="sm"
+            getText={buildShareUrl}
+          >
+            Copy link to rule
+          </ClipboardButton>
+        );
+      }
 
-    if (isViewMode) {
       buttons.push(
-        <ClipboardButton
-          key="copy"
-          icon="copy"
-          onClipboardError={(copiedText) => {
-            notifyApp.error('Error while copying URL', copiedText);
-          }}
-          className={style.button}
-          size="sm"
-          getText={buildShareUrl}
-        >
-          Copy link to rule
-        </ClipboardButton>
+        <Tooltip placement="top" content={'Edit'}>
+          <LinkButton
+            title="Edit"
+            className={style.button}
+            size="sm"
+            key="edit"
+            variant="secondary"
+            icon="pen"
+            href={editURL}
+          />
+        </Tooltip>
       );
     }
 
-    buttons.push(
-      <Tooltip placement="top" content={'Edit'}>
-        <LinkButton
-          title="Edit"
-          className={style.button}
-          size="sm"
-          key="edit"
-          variant="secondary"
-          icon="pen"
-          href={editURL}
-        />
-      </Tooltip>
-    );
-
+    const cloneUrl = createUrl('/alerting/new', { copyFrom: ruleId.stringifyIdentifier(identifier) });
+    // For provisioned rules an additional confirmation step is required
+    // Users have to be aware that the cloned rule will NOT be marked as provisioned
     buttons.push(
       <Tooltip placement="top" content="Duplicate">
         <LinkButton
@@ -135,7 +140,8 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
           key="clone"
           variant="secondary"
           icon="copy"
-          href={cloneUrl}
+          href={isProvisioned ? undefined : cloneUrl}
+          onClick={isProvisioned ? () => setProvRuleCloneUrl(cloneUrl) : undefined}
         />
       </Tooltip>
     );
@@ -177,6 +183,22 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
             onDismiss={() => setRuleToDelete(undefined)}
           />
         )}
+        <ConfirmModal
+          isOpen={!!provRuleCloneUrl}
+          title="Clone provisioned rule?"
+          body={
+            <div>
+              <p>The new rule will not be marked as a provisioned rule</p>
+              <p>
+                You will need to set a new alert group for the cloned rule because the alert group of origin has been
+                provisioned and cannot be used for rules created in the UI.
+              </p>
+            </div>
+          }
+          confirmText="Clone"
+          onConfirm={() => provRuleCloneUrl && locationService.push(provRuleCloneUrl)}
+          onDismiss={() => setProvRuleCloneUrl(undefined)}
+        />
       </>
     );
   }

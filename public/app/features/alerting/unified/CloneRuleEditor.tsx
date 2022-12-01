@@ -31,8 +31,14 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
   if (rule) {
     const ruleClone = cloneDeep(rule);
     changeRuleName(ruleClone.rule, generateCopiedRuleTitle(ruleClone));
+    const formPrefill = rulerRuleToFormValues(ruleClone);
 
-    return <AlertRuleForm prefill={rulerRuleToFormValues(ruleClone)} />;
+    // Provisioned alert rules have provisioned alert group which cannot be used in UI
+    if (isGrafanaRulerRule(rule.rule) && Boolean(rule.rule.grafana_alert.provenance)) {
+      formPrefill.group = '';
+    }
+
+    return <AlertRuleForm prefill={formPrefill} />;
   }
 
   if (error) {
