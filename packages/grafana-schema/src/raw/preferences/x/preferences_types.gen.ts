@@ -24,6 +24,9 @@ export const defaultNavbarPreference: Partial<NavbarPreference> = {
 };
 
 export interface QueryHistoryPreference {
+  /**
+   * one of: '' | 'query' | 'starred';
+   */
   homeTab?: string;
 }
 
@@ -31,7 +34,7 @@ export interface Preferences {
   /**
    * UID for the home dashboard
    */
-  home_dashboard?: string;
+  homeDashboardUID?: string;
   /**
    * Selected language (beta)
    */
@@ -44,10 +47,12 @@ export interface Preferences {
   theme?: string;
   /**
    * The timezone selection
+   * Would be nice it this used:
+   * import { TimeZone } from '@grafana/data';
    */
   timezone?: string;
   /**
    * day of the week (sunday, monday, etc)
    */
-  week_start?: string;
+  weekStart?: string;
 }

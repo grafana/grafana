@@ -130,6 +130,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const { disabled } = this.props;
     const styles = getStyles();
     const languages = getLanguageOptions();
+    let currentThemeOption = this.themeOptions[0].value;
+    if (theme?.length) {
+      currentThemeOption = this.themeOptions.find((item) => item.value === theme)?.value;
+    }
 
     return (
       <Form onSubmit={this.onSubmitForm}>
@@ -139,7 +143,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
                 <RadioButtonGroup
                   options={this.themeOptions}
-                  value={this.themeOptions.find((item) => item.value === theme)?.value}
+                  value={currentThemeOption}
                   onChange={this.onThemeChanged}
                 />
               </Field>
@@ -181,7 +185,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 data-testid={selectors.components.WeekStartPicker.containerV2}
               >
                 <WeekStartPicker
-                  value={weekStart}
+                  value={weekStart || ''}
                   onChange={this.onWeekStartChanged}
                   inputId={'shared-preferences-week-start-picker'}
                 />

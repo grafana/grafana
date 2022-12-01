@@ -13,7 +13,7 @@ package preferences
 // Preferences defines model for preferences.
 type Preferences struct {
 	// UID for the home dashboard
-	HomeDashboard *string `json:"home_dashboard,omitempty"`
+	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 
 	// Selected language (beta)
 	Language     *string                 `json:"language,omitempty"`
@@ -24,10 +24,12 @@ type Preferences struct {
 	Theme *string `json:"theme,omitempty"`
 
 	// The timezone selection
+	// Would be nice it this used:
+	// import { TimeZone } from '@grafana/data';
 	Timezone *string `json:"timezone,omitempty"`
 
 	// day of the week (sunday, monday, etc)
-	WeekStart *string `json:"week_start,omitempty"`
+	WeekStart *string `json:"weekStart,omitempty"`
 }
 
 // NavLink defines model for preferences.NavLink.
@@ -45,5 +47,6 @@ type NavbarPreference struct {
 
 // QueryHistoryPreference defines model for preferences.QueryHistoryPreference.
 type QueryHistoryPreference struct {
+	// one of: '' | 'query' | 'starred';
 	HomeTab *string `json:"homeTab,omitempty"`
 }

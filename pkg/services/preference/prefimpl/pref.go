@@ -286,7 +286,7 @@ func (s *Service) saveEntity(ctx context.Context, p *pref.Preference) error {
 			return err
 		}
 		if uid != "" {
-			m.HomeDashboard = &uid
+			m.HomeDashboardUID = &uid
 		}
 	}
 	if p.Theme != "" {

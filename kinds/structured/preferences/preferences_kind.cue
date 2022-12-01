@@ -8,13 +8,15 @@ lineage: seqs: [
 		schemas: [
 			{//0.0
 				// UID for the home dashboard
-				home_dashboard?: string
+				homeDashboardUID?: string
 
 				// The timezone selection
+				// Would be nice it this used:
+				// import { TimeZone } from '@grafana/data';
 				timezone?: string
 
 				// day of the week (sunday, monday, etc)
-				week_start?: string
+				weekStart?: string
 
 				// light, dark, empty is default
 				theme?: string
@@ -38,6 +40,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				#QueryHistoryPreference: {
+					// one of: '' | 'query' | 'starred';
 					homeTab?: string
 				} @cuetsy(kind="interface")
 			}
