@@ -16,8 +16,8 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-ui"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "publishConfig": {
     "main": "dist/index.js",
     "module": "dist/esm/index.js",
@@ -40,7 +40,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "cp package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json"
   },
   "browserslist": [
     "defaults",

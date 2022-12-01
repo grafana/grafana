@@ -36,7 +36,7 @@
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "cp package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "23.0.2",

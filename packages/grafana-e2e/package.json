@@ -44,7 +44,7 @@
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "cp package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.0.1",
