@@ -1,3 +1,5 @@
+import { VariableRefresh } from '@grafana/data';
+
 import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
@@ -7,8 +9,7 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { CustomVariable } from '../variables/variants/CustomVariable';
-import { QueryVariable } from '../variables/variants/QueryVariable';
-import { VariableRefresh } from '@grafana/data';
+import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 export function getQueryVariableDemo(): Scene {
   const scene = new Scene({

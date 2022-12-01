@@ -7,7 +7,7 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { CustomVariable } from '../variables/variants/CustomVariable';
-import { QueryVariable } from '../variables/variants/QueryVariable';
+import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 export function getQueryVariableDependenciesDemo(): Scene {
   const scene = new Scene({

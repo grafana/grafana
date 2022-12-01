@@ -1,11 +1,9 @@
 import { Observable } from 'rxjs';
 
 import { BusEventWithPayload } from '@grafana/data';
-
 import { VariableHide } from 'app/features/variables/types';
 
 import { SceneObject, SceneObjectStatePlain } from '../core/types';
-import { SceneVariableRunner } from './variants/SceneVariableRunner';
 
 export interface SceneVariableState extends SceneObjectStatePlain {
   name: string;
@@ -52,7 +50,6 @@ export interface SceneVariableSetState extends SceneObjectStatePlain {
 
 export interface SceneVariables extends SceneObject<SceneVariableSetState> {
   getByName(name: string): SceneVariable | undefined;
-  getRunner(): SceneVariableRunner;
 }
 
 export class SceneVariableValueChangedEvent extends BusEventWithPayload<SceneVariable> {

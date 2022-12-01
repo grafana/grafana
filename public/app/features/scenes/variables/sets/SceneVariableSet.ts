@@ -4,7 +4,6 @@ import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObject } from '../../core/types';
 import { forEachSceneObjectInState } from '../../core/utils';
 import { SceneVariable, SceneVariables, SceneVariableSetState, SceneVariableValueChangedEvent } from '../types';
-import { SceneVariableRunner } from '../variants/SceneVariableRunner';
 
 export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> implements SceneVariables {
   /** Variables that have changed in since the activation or since the first manual value change */
@@ -16,15 +15,9 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
   /** Variables currently updating  */
   private updating = new Map<SceneVariable, VariableUpdateInProgress>();
 
-  private runner: SceneVariableRunner = new SceneVariableRunner();
-
   public getByName(name: string): SceneVariable | undefined {
     // TODO: Replace with index
     return this.state.variables.find((x) => x.state.name === name);
-  }
-
-  public getRunner() {
-    return this.runner;
   }
 
   /**
