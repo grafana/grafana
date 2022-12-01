@@ -196,7 +196,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
       renderCell: ({ data: rule }) => {
         return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
       },
-      size: '290px',
+      size: '200px',
     });
 
     return columns;

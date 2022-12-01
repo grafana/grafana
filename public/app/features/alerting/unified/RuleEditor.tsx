@@ -7,9 +7,11 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
 import { AlertWarning } from './AlertWarning';
+import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
+import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchAllPromBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
@@ -33,8 +35,13 @@ const getPageNav = (state: 'edit' | 'add') => {
 
 const RuleEditor = ({ match }: RuleEditorProps) => {
   const dispatch = useDispatch();
+  const [searchParams] = useURLSearchParams();
+
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
+
+  const copyFromId = searchParams.get('copyFrom') ?? undefined;
+  const copyFromIdentifier = ruleId.tryParse(copyFromId);
 
   const { loading = true } = useAsync(async () => {
     await dispatch(fetchAllPromBuildInfoAction());
@@ -57,6 +64,10 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
 
     if (identifier) {
       return <ExistingRuleEditor key={id} identifier={identifier} />;
+    }
+
+    if (copyFromIdentifier) {
+      return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
     }
 
     return <AlertRuleForm />;
