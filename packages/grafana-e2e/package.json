@@ -42,7 +42,9 @@
     "start": "cypress run --browser=chrome",
     "start-benchmark": "CYPRESS_NO_COMMAND_LOG=1 yarn start",
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.0.1",
