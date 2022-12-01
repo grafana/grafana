@@ -97,6 +97,10 @@ export function generateRandomNodes(count = 10) {
       type: FieldType.number,
       config: { color: { fixedColor: 'red', mode: FieldColorModeId.Fixed }, displayName: 'Errors' },
     },
+    [NodeGraphDataFrameFieldNames.icon]: {
+      values: new ArrayVector(),
+      type: FieldType.string,
+    },
   };
 
   const nodeFrame = new MutableDataFrame({
@@ -128,6 +132,7 @@ export function generateRandomNodes(count = 10) {
     nodeFields[NodeGraphDataFrameFieldNames.secondaryStat].values.add(node.stat2);
     nodeFields.arc__success.values.add(node.success);
     nodeFields.arc__errors.values.add(node.error);
+    nodeFields[NodeGraphDataFrameFieldNames.icon].values.add(Math.random() > 0.9 ? 'monitor' : '');
     for (const edge of node.edges) {
       const id = `${node.id}--${edge}`;
       // We can have duplicate edges when we added some more by random

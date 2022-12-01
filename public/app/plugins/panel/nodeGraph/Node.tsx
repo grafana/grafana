@@ -4,7 +4,7 @@ import React, { MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { Icon, useTheme2 } from '@grafana/ui';
 
 import { HoverState } from './NodeGraph';
 import { NodeDatum } from './types';
@@ -94,18 +94,31 @@ export const Node = memo(function Node(props: {
       {isHovered && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
       <ColorCircle node={node} />
       <g className={styles.text}>
-        <foreignObject x={node.x - (isHovered ? 100 : 35)} y={node.y - 15} width={isHovered ? '200' : '70'} height="40">
-          <div className={cx(styles.statsText, isHovered && styles.textHovering)}>
-            <span>
-              {node.mainStat && statToString(node.mainStat.config, node.mainStat.values.get(node.dataFrameRowIndex))}
-            </span>
-            <br />
-            <span>
-              {node.secondaryStat &&
-                statToString(node.secondaryStat.config, node.secondaryStat.values.get(node.dataFrameRowIndex))}
-            </span>
-          </div>
-        </foreignObject>
+        {node.icon ? (
+          <foreignObject x={node.x - 35} y={node.y - 15} width="70" height="40">
+            <div style={{ width: 70, overflow: 'hidden', display: 'flex', justifyContent: 'center', marginTop: -4 }}>
+              <Icon name={node.icon} size={'xxxl'} />
+            </div>
+          </foreignObject>
+        ) : (
+          <foreignObject
+            x={node.x - (isHovered ? 100 : 35)}
+            y={node.y - 15}
+            width={isHovered ? '200' : '70'}
+            height="40"
+          >
+            <div className={cx(styles.statsText, isHovered && styles.textHovering)}>
+              <span>
+                {node.mainStat && statToString(node.mainStat.config, node.mainStat.values.get(node.dataFrameRowIndex))}
+              </span>
+              <br />
+              <span>
+                {node.secondaryStat &&
+                  statToString(node.secondaryStat.config, node.secondaryStat.values.get(node.dataFrameRowIndex))}
+              </span>
+            </div>
+          </foreignObject>
+        )}
         <foreignObject
           x={node.x - (isHovered ? 100 : 50)}
           y={node.y + nodeR + 5}

@@ -9,4 +9,5 @@ export enum NodeGraphDataFrameFieldNames {
   detail = 'detail__',
   arc = 'arc__',
   color = 'color',
+  icon = 'icon',
 }
