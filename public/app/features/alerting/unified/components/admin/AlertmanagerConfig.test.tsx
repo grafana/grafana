@@ -20,6 +20,7 @@ import {
   deleteAlertManagerConfig,
   updateAlertManagerConfig,
   fetchStatus,
+  fetchValidAlertManagerConfig,
 } from '../../api/alertmanager';
 import {
   disableRBAC,
@@ -46,6 +47,7 @@ const mocks = {
     deleteAlertManagerConfig: jest.mocked(deleteAlertManagerConfig),
     updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
     fetchStatus: jest.mocked(fetchStatus),
+    fetchValidConfig: jest.mocked(fetchValidAlertManagerConfig),
   },
 };
 
@@ -106,9 +108,7 @@ describe('Admin config', () => {
       alertmanager_config: {},
     });
     mocks.api.deleteAlertManagerConfig.mockResolvedValue();
-
-    await renderAdminPage(dataSources.alertManager.name);
-
+    renderAdminPage(dataSources.alertManager.name);
     await userEvent.click(await ui.resetButton.find());
     await userEvent.click(ui.confirmButton.get());
     await waitFor(() => expect(mocks.api.deleteAlertManagerConfig).toHaveBeenCalled());
@@ -134,7 +134,7 @@ describe('Admin config', () => {
 
     mocks.api.fetchConfig.mockImplementation(() => Promise.resolve(savedConfig ?? defaultConfig));
     mocks.api.updateAlertManagerConfig.mockResolvedValue();
-    await renderAdminPage(dataSources.alertManager.name);
+    renderAdminPage(dataSources.alertManager.name);
     const input = await ui.configInput.find();
     expect(input.value).toEqual(JSON.stringify(defaultConfig, null, 2));
     await userEvent.clear(input);
@@ -153,7 +153,7 @@ describe('Admin config', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    await renderAdminPage(dataSources.promAlertManager.name);
+    renderAdminPage(dataSources.promAlertManager.name);
 
     await ui.readOnlyConfig.find();
     expect(ui.configInput.query()).not.toBeInTheDocument();
