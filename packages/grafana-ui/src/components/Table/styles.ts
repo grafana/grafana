@@ -39,7 +39,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       // Cell height need to account for row border
       height: ${rowHeight - 1}px;
-      height: 100%;
       display: flex;
       align-items: center;
       border-right: 1px solid ${borderColor};
