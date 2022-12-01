@@ -152,13 +152,13 @@ func (s *entityStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQ
 	if err != nil {
 		return nil, err
 	}
-	if rsp.Entity == nil || rsp.Entity.Body == nil {
+	if rsp == nil || rsp.Body == nil {
 		return nil, fmt.Errorf("missing object")
 	}
 
 	// Get the object from payload
 	found := &playlist.PlaylistDTO{}
-	err = json.Unmarshal(rsp.Entity.Body, found)
+	err = json.Unmarshal(rsp.Body, found)
 	return found, err
 }
 

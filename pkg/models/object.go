@@ -88,6 +88,12 @@ type EntitySummary struct {
 	// Key value pairs.  Tags are are represented as keys with empty values
 	Labels map[string]string `json:"labels,omitempty"`
 
+	// Parent folder UID
+	Folder string `json:"folder,omitempty"`
+
+	// URL safe version of the name.  It will be unique within the folder
+	Slug string `json:"slug,omitempty"`
+
 	// URL should only be set if the value is not derived directly from kind+uid
 	// NOTE: this may go away with a more robust GRN solution /!\
 	URL string `json:"URL,omitempty"`
