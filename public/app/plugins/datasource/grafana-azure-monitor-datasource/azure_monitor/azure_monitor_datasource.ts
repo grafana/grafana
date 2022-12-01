@@ -1,4 +1,4 @@
-import { find, startsWith, unionBy } from 'lodash';
+import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
