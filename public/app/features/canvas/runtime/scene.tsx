@@ -506,10 +506,10 @@ export class Scene {
           const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
 
           const sourceX = (arrowLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
-          const sourceY = (arrowLineY1 - sourceVerticalCenter) / (sourceRect.height / 2);
+          const sourceY = (sourceVerticalCenter - arrowLineY1) / (sourceRect.height / 2);
 
           const targetX = (x - sourceHorizontalCenter) / (sourceRect.width / 2);
-          const targetY = (y - sourceVerticalCenter) / (sourceRect.height / 2);
+          const targetY = (sourceVerticalCenter - y) / (sourceRect.height / 2);
 
           const connection = {
             source: {

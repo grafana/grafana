@@ -43,9 +43,7 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     return connections;
   };
 
-  // TODO: figure out how to process coordinates and draw them
-  // Figure out target and then target's relative coordinates drawing
-  // Figure out how to save arrow coordinates in the first place
+  // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return findConnections().map((v, idx) => {
       const { source, target, info } = v;
@@ -63,10 +61,11 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
 
       const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
-      const y1 = sourceVerticalCenter + (info.source.y * sourceRect.height) / 2;
+      const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2;
 
+      // Change target to to be parent if no target instead of relative to source
       const x2 = sourceHorizontalCenter + (info.target.x * sourceRect.width) / 2;
-      const y2 = sourceVerticalCenter + (info.target.y * sourceRect.height) / 2;
+      const y2 = sourceVerticalCenter - (info.target.y * sourceRect.height) / 2;
 
       return (
         <svg className={styles.connection} key={idx}>
@@ -101,7 +100,7 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       <svg ref={setSVGRef} className={styles.editorSVG}>
         <defs>
           <marker
-            id="arrowhead"
+            id="editorArrowhead"
             markerWidth="10"
             markerHeight="7"
             refX="0"
@@ -112,7 +111,11 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
           </marker>
         </defs>
-        <line ref={setLineRef} style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }} markerEnd="url(#arrowhead)" />
+        <line
+          ref={setLineRef}
+          style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }}
+          markerEnd="url(#editorArrowhead)"
+        />
       </svg>
       {renderConnections()}
     </>
@@ -126,6 +129,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointer-events: none;
     width: 100%;
     height: 100%;
+    z-index: 1000;
     display: none;
   `,
   connection: css`
