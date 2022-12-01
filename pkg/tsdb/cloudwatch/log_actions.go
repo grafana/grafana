@@ -22,9 +22,11 @@ import (
 )
 
 const (
-	limitExceededException = "LimitExceededException"
-	defaultEventLimit      = int64(10)
-	defaultLogGroupLimit   = int64(50)
+	limitExceededException      = "LimitExceededException"
+	defaultEventLimit           = int64(10)
+	defaultLogGroupLimit        = int64(50)
+	logIdentifierInternal       = "__log__grafana_internal__"
+	logStreamIdentifierInternal = "__logstream__grafana_internal__"
 )
 
 type AWSError struct {
