@@ -36,10 +36,6 @@ export interface Preferences {
    * Selected language (beta)
    */
   language?: string;
-  /**
-  
-   */
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
   /**

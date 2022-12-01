@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -21,16 +22,18 @@ type Service struct {
 	cfg         *setting.Cfg
 	features    *featuremgmt.FeatureManager
 	entitystore entity.EntityStoreServer
+	sess        *session.SessionDB
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager, entitystore entity.EntityStoreServer) pref.Service {
 	service := &Service{
 		cfg:      cfg,
 		features: features,
+		sess:     db.GetSqlxSession(),
 	}
 	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		service.store = &sqlxStore{
-			sess: db.GetSqlxSession(),
+			sess: service.sess,
 		}
 	} else {
 		service.store = &sqlStore{
@@ -277,8 +280,14 @@ func (s *Service) saveEntitty(ctx context.Context, p *pref.Preference) error {
 	// Convert from pref.Preference to preferences
 	m := preferences.Preferences{}
 	if p.HomeDashboardID > 0 {
-		uid := fmt.Sprintf("[TODO:%d]", p.HomeDashboardID)
-		m.HomeDashboard = &uid
+		uid := ""
+		err := s.sess.Get(ctx, &uid, "SELECT uid FROM dashboard WHERE id=?", p.HomeDashboardID) // orgID already taken care of
+		if err != nil {
+			return err
+		}
+		if uid != "" {
+			m.HomeDashboard = &uid
+		}
 	}
 	if p.Theme != "" {
 		m.Theme = &p.Theme

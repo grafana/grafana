@@ -17,7 +17,6 @@ type Preferences struct {
 
 	// Selected language (beta)
 	Language     *string                 `json:"language,omitempty"`
-	Locale       *string                 `json:"locale,omitempty"`
 	Navbar       *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory *QueryHistoryPreference `json:"queryHistory,omitempty"`
 

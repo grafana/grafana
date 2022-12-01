@@ -19,9 +19,6 @@ lineage: seqs: [
 				// light, dark, empty is default
 				theme?: string
 
-				// 
-				locale?: string
-
 				// Selected language (beta)
 				language?: string
 
