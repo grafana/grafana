@@ -9,20 +9,16 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
   }
 };
 
+// This function checks if the query has defined properties beyond those defined in the DataQuery interface.
 export function queryIsEmpty(query: DataQuery): boolean {
-  const schema: Record<keyof DataQuery, string> = {
-    refId: 'string',
-    hide: 'boolean',
-    key: 'string',
-    queryType: 'string',
-    datasource: 'object',
-  };
+  const dataQueryProps = ['refId', 'hide', 'key', 'queryType', 'datasource'];
 
   for (const key in query) {
+    // label is not a DataQuery prop, but it's defined in the query when called from the QueryRunner.
     if (key === 'label') {
       continue;
     }
-    if (!(key in schema)) {
+    if (!dataQueryProps.includes(key)) {
       return false;
     }
   }
