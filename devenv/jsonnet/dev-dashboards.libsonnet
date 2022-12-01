@@ -716,5 +716,12 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('video-crosshairs', import '../dev-dashboards/panel-video/video-crosshairs.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
   ],
 } 
