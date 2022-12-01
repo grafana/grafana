@@ -1,6 +1,6 @@
 import { isNumber, sortBy, toLower, uniqBy } from 'lodash';
 import React from 'react';
-import { Observable, Subject, of } from 'rxjs';
+import { Observable, Subject, of, Unsubscribable } from 'rxjs';
 
 import { DataSourceApi, DataSourceRef, stringToJsRegex, VariableRefresh, VariableSort } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -22,6 +22,7 @@ export interface QueryVariableState extends MultiValueVariableState {
 }
 
 export class QueryVariable extends MultiValueVariable<QueryVariableState> {
+  private updateSubscription?: Unsubscribable;
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['regex'], // TODO: add query support
   });
@@ -39,6 +40,26 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
       sort: VariableSort.alphabeticalAsc,
       ...initialState,
     });
+  }
+
+  public activate(): void {
+    const timeRange = sceneGraph.getTimeRange(this);
+
+    if (this.state.refresh === VariableRefresh.onTimeRangeChanged) {
+      this._subs.add(
+        timeRange.subscribeToState({
+          next: () => {
+            this.updateSubscription = this.validateAndUpdate().subscribe();
+          },
+        })
+      );
+    }
+  }
+
+  public deactivate(): void {
+    if (this.updateSubscription) {
+      this.updateSubscription.unsubscribe();
+    }
   }
 
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
@@ -65,7 +86,6 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
             })
             .subscribe({
               next: (data) => {
-                console.log('data', data);
                 let regex = '';
                 if (this.state.regex) {
                   regex = sceneGraph.interpolate(this, this.state.regex, undefined, 'regex');

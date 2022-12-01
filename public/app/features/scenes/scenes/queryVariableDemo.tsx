@@ -8,6 +8,7 @@ import { VariableValueSelectors } from '../variables/components/VariableValueSel
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { QueryVariable } from '../variables/variants/QueryVariable';
+import { VariableRefresh } from '@grafana/data';
 
 export function getQueryVariableDemo(): Scene {
   const scene = new Scene({
@@ -24,6 +25,12 @@ export function getQueryVariableDemo(): Scene {
           query: { query: 'label_values(go_gc_duration_seconds, job)' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
           // regex: '/^${regex}*/',
+        }),
+        new QueryVariable({
+          name: 'instance (on time range refresh)',
+          refresh: VariableRefresh.onTimeRangeChanged,
+          query: { query: 'label_values(go_gc_duration_seconds, instance)' },
+          datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         }),
       ],
     }),
