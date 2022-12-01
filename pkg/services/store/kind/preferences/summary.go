@@ -41,6 +41,13 @@ func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 			UID:  uid,
 		}
 
+		if obj.HomeDashboard != nil && *obj.HomeDashboard != "" {
+			summary.References = append(summary.References, &models.EntityExternalReference{
+				Kind: models.StandardKindDashboard,
+				UID:  *obj.HomeDashboard,
+			})
+		}
+
 		out, err := json.MarshalIndent(obj, "", "  ")
 		return summary, out, err
 	}
