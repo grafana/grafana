@@ -1,9 +1,9 @@
-package cloudwatch
+package models
 
 import "github.com/aws/aws-sdk-go/service/cloudwatch"
 
 // queryRowResponse represents the GetMetricData response for a query row in the query editor.
-type queryRowResponse struct {
+type QueryRowResponse struct {
 	partialDataSet         map[string]*cloudwatch.MetricDataResult
 	ErrorCodes             map[string]bool
 	HasArithmeticError     bool
@@ -12,21 +12,21 @@ type queryRowResponse struct {
 	StatusCode             string
 }
 
-func newQueryRowResponse() queryRowResponse {
-	return queryRowResponse{
+func NewQueryRowResponse() QueryRowResponse {
+	return QueryRowResponse{
 		partialDataSet: make(map[string]*cloudwatch.MetricDataResult),
 		ErrorCodes: map[string]bool{
-			maxMetricsExceeded:         false,
-			maxQueryTimeRangeExceeded:  false,
-			maxQueryResultsExceeded:    false,
-			maxMatchingResultsExceeded: false},
+			MaxMetricsExceeded:         false,
+			MaxQueryTimeRangeExceeded:  false,
+			MaxQueryResultsExceeded:    false,
+			MaxMatchingResultsExceeded: false},
 		HasArithmeticError:     false,
 		ArithmeticErrorMessage: "",
 		Metrics:                []*cloudwatch.MetricDataResult{},
 	}
 }
 
-func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult) {
+func (q *QueryRowResponse) AddMetricDataResult(mdr *cloudwatch.MetricDataResult) {
 	if partialData, ok := q.partialDataSet[*mdr.Label]; ok {
 		partialData.Timestamps = append(partialData.Timestamps, mdr.Timestamps...)
 		partialData.Values = append(partialData.Values, mdr.Values...)
@@ -44,7 +44,7 @@ func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult)
 	}
 }
 
-func (q *queryRowResponse) addArithmeticError(message *string) {
+func (q *QueryRowResponse) AddArithmeticError(message *string) {
 	q.HasArithmeticError = true
 	q.ArithmeticErrorMessage = *message
 }

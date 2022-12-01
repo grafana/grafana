@@ -46,13 +46,13 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 	return results, nil
 }
 
-func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]queryRowResponse {
-	responseByID := make(map[string]queryRowResponse)
+func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]models.QueryRowResponse {
+	responseByID := make(map[string]models.QueryRowResponse)
 	errorCodes := map[string]bool{
-		maxMetricsExceeded:         false,
-		maxQueryTimeRangeExceeded:  false,
-		maxQueryResultsExceeded:    false,
-		maxMatchingResultsExceeded: false,
+		models.MaxMetricsExceeded:         false,
+		models.MaxQueryTimeRangeExceeded:  false,
+		models.MaxQueryResultsExceeded:    false,
+		models.MaxMatchingResultsExceeded: false,
 	}
 	for _, gmdo := range getMetricDataOutputs {
 		for _, message := range gmdo.Messages {
@@ -63,18 +63,18 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 		for _, r := range gmdo.MetricDataResults {
 			id := *r.Id
 
-			response := newQueryRowResponse()
+			response := models.NewQueryRowResponse()
 			if _, exists := responseByID[id]; exists {
 				response = responseByID[id]
 			}
 
 			for _, message := range r.Messages {
 				if *message.Code == "ArithmeticError" {
-					response.addArithmeticError(message.Value)
+					response.AddArithmeticError(message.Value)
 				}
 			}
 
-			response.addMetricDataResult(r)
+			response.AddMetricDataResult(r)
 
 			for code := range errorCodes {
 				if _, exists := response.ErrorCodes[code]; exists {
@@ -112,7 +112,7 @@ func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Label
 	return labels
 }
 
-func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse queryRowResponse,
+func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
 	query *models.CloudWatchQuery, dynamicLabelEnabled bool) (data.Frames, error) {
 	frames := data.Frames{}
 	for _, metric := range aggregatedResponse.Metrics {
