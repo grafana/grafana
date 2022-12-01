@@ -12,7 +12,6 @@ interface ParserErrorBoundary {
 }
 
 export function validateQuery(query: string, queryLines: string[]): ParserErrorBoundary[] | false {
-  console.log(query);
   if (!query) {
     return false;
   }

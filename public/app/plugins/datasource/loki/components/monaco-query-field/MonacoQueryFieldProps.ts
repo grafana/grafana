@@ -1,6 +1,6 @@
 import { HistoryItem } from '@grafana/data';
 
-import { LokiDatasource } from '../../datasource';
+import type LanguageProvider from '../../LanguageProvider';
 import { LokiQuery } from '../../types';
 
 // we need to store this in a separate file,
@@ -9,8 +9,8 @@ import { LokiQuery } from '../../types';
 // props as the sync-component.
 export type Props = {
   initialValue: string;
+  languageProvider: LanguageProvider;
   history: Array<HistoryItem<LokiQuery>>;
   onRunQuery: (value: string) => void;
   onBlur: (value: string) => void;
-  datasource: LokiDatasource;
 };

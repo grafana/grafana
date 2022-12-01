@@ -79,13 +79,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource }: Props) => {
+const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initialValue }: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const langProviderRef = useLatest(datasource.languageProvider);
+  const langProviderRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
@@ -131,7 +131,7 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
               return;
             }
 
-            const errors = validateQuery(datasource.interpolateString(model.getValue()), model.getLinesContent()) || [];
+            const errors = validateQuery(model.getValue(), model.getLinesContent()) || [];
 
             const markers = errors.map(({ error, ...boundary }) => ({
               message: `${

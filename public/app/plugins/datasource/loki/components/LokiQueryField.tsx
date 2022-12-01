@@ -178,7 +178,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                   {config.featureToggles.lokiMonacoEditor ? (
                     <MonacoQueryFieldWrapper
                       runQueryOnBlur={app !== CoreApp.Explore}
-                      datasource={datasource}
+                      languageProvider={datasource.languageProvider}
                       history={history ?? []}
                       onChange={this.onChangeQuery}
                       onRunQuery={onRunQuery}
