@@ -661,7 +661,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			// require.Equal(t, movingAvgAgg.Aggregation.Type, "moving_avg")
 			// pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			// require.Equal(t, pl.BucketPath, "3")
-
 		})
 
 		t.Run("With moving average", func(t *testing.T) {
