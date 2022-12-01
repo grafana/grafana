@@ -162,8 +162,6 @@ func SetupMockAccesscontrol(t *testing.T,
 	return acmock
 }
 
-// this is a way to see
-// that the Mock implements the store interface
 /* var _ serviceaccounts.Store = new(ServiceAccountsStoreMock) */
 var _ serviceaccounts.Service = new(ServiceAccountMock)
 
