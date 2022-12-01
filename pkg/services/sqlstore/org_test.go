@@ -78,20 +78,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					require.NoError(t, err)
 				})
 
-				t.Run("Can get logged in user projection", func(t *testing.T) {
-					query := models.GetSignedInUserQuery{UserId: ac2.ID}
-					err := sqlStore.GetSignedInUser(context.Background(), &query)
-
-					require.NoError(t, err)
-					require.Equal(t, query.Result.Email, "ac2@test.com")
-					require.Equal(t, query.Result.OrgID, ac2.OrgID)
-					require.Equal(t, query.Result.Name, "ac2 name")
-					require.Equal(t, query.Result.Login, "ac2")
-					require.EqualValues(t, query.Result.OrgRole, "Admin")
-					require.Equal(t, query.Result.OrgName, "ac2@test.com")
-					require.Equal(t, query.Result.IsGrafanaAdmin, true)
-				})
-
 				t.Run("Can get user organizations", func(t *testing.T) {
 					query := models.GetUserOrgListQuery{UserId: ac2.ID}
 					err := sqlStore.GetUserOrgList(context.Background(), &query)

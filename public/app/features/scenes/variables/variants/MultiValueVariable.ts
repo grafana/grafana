@@ -4,7 +4,7 @@ import { map, Observable } from 'rxjs';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneObject } from '../../core/types';
+import { SceneObject, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '../../core/types';
 import {
   SceneVariable,
   SceneVariableValueChangedEvent,
@@ -13,6 +13,7 @@ import {
   VariableValue,
   VariableValueOption,
   VariableValueCustom,
+  VariableValueSingle,
 } from '../types';
 
 export interface MultiValueVariableState extends SceneVariableState {
@@ -33,6 +34,8 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   extends SceneObjectBase<TState>
   implements SceneVariable<TState>
 {
+  protected _urlSync: SceneObjectUrlSyncHandler<TState> = new MultiValueUrlSyncHandler(this);
+
   /**
    * The source of value options.
    */
@@ -142,18 +145,36 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
-  private setStateAndPublishValueChangedEvent(state: Partial<MultiValueVariableState>) {
-    this.setStateHelper(state);
-  }
-
   /**
    * Change the value and publish SceneVariableValueChangedEvent event
    */
   public changeValueTo(value: VariableValue, text?: VariableValue) {
     if (value !== this.state.value || text !== this.state.text) {
-      this.setStateAndPublishValueChangedEvent({ value, text, loading: false });
+      if (!text) {
+        if (Array.isArray(value)) {
+          text = value.map((v) => this.findLabelTextForValue(v));
+        } else {
+          text = this.findLabelTextForValue(value);
+        }
+      }
+
+      this.setStateHelper({ value, text, loading: false });
       this.publishEvent(new SceneVariableValueChangedEvent(this), true);
     }
+  }
+
+  private findLabelTextForValue(value: VariableValueSingle): VariableValueSingle {
+    const option = this.state.options.find((x) => x.value === value);
+    if (option) {
+      return option.label;
+    }
+
+    const optionByLabel = this.state.options.find((x) => x.label === value);
+    if (optionByLabel) {
+      return optionByLabel.label;
+    }
+
+    return value;
   }
 
   /**
@@ -192,5 +213,40 @@ class CustomAllValue implements VariableValueCustom {
 
   public toString() {
     return this._value;
+  }
+}
+
+export class MultiValueUrlSyncHandler<TState extends MultiValueVariableState = MultiValueVariableState>
+  implements SceneObjectUrlSyncHandler<TState>
+{
+  public constructor(private _sceneObject: MultiValueVariable<TState>) {}
+
+  private getKey(): string {
+    return `var-${this._sceneObject.state.name}`;
+  }
+
+  public getKeys(): string[] {
+    return [this.getKey()];
+  }
+
+  public getUrlState(state: TState): SceneObjectUrlValues {
+    let urlValue: string | string[] | null = null;
+    let value = state.value;
+
+    if (Array.isArray(value)) {
+      urlValue = value.map(String);
+    } else {
+      urlValue = String(value);
+    }
+
+    return { [this.getKey()]: urlValue };
+  }
+
+  public updateFromUrl(values: SceneObjectUrlValues): void {
+    const urlValue = values[this.getKey()];
+
+    if (urlValue != null) {
+      this._sceneObject.changeValueTo(urlValue);
+    }
   }
 }
