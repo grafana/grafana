@@ -304,59 +304,6 @@ func TestTimeSeriesFilter(t *testing.T) {
 		})
 	})
 
-	t.Run("when data from query returns slo and alias by is defined", func(t *testing.T) {
-		data, err := loadTestFile("./test-data/6-series-response-slo.json")
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(data.TimeSeries))
-
-		t.Run("and alias by is expanded", func(t *testing.T) {
-			res := &backend.DataResponse{}
-			query := &cloudMonitoringTimeSeriesList{
-				params: url.Values{},
-				parameters: &timeSeriesList{
-					ProjectName: "test-proj",
-				},
-				aliasBy: "{{project}} - {{service}} - {{slo}} - {{selector}}",
-				sloQ: &sloQuery{
-					SelectorName: "select_slo_compliance",
-					ServiceId:    "test-service",
-					SloId:        "test-slo",
-				},
-			}
-			err = query.parseResponse(res, data, "")
-			require.NoError(t, err)
-			frames := res.Frames
-			require.NoError(t, err)
-			assert.Equal(t, "test-proj - test-service - test-slo - select_slo_compliance", frames[0].Fields[1].Name)
-		})
-	})
-
-	t.Run("when data from query returns slo and alias by is not defined", func(t *testing.T) {
-		data, err := loadTestFile("./test-data/6-series-response-slo.json")
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(data.TimeSeries))
-
-		t.Run("and alias by is expanded", func(t *testing.T) {
-			res := &backend.DataResponse{}
-			query := &cloudMonitoringTimeSeriesList{
-				params: url.Values{},
-				parameters: &timeSeriesList{
-					ProjectName: "test-proj",
-				},
-				sloQ: &sloQuery{
-					SelectorName: "select_slo_compliance",
-					ServiceId:    "test-service",
-					SloId:        "test-slo",
-				},
-			}
-			err = query.parseResponse(res, data, "")
-			require.NoError(t, err)
-			frames := res.Frames
-			require.NoError(t, err)
-			assert.Equal(t, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")", frames[0].Fields[1].Name)
-		})
-	})
-
 	t.Run("Parse cloud monitoring unit", func(t *testing.T) {
 		t.Run("when mapping is found a unit should be specified on the field config", func(t *testing.T) {
 			data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
@@ -424,7 +371,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		frames := res.Frames
 		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
 		require.True(t, ok)
-		labels, ok := custom["labels"].(map[string]string)
+		labels, ok := custom["labels"].(sdkdata.Labels)
 		require.True(t, ok)
 		assert.Equal(t, "114250375703598695", labels["resource.label.instance_id"])
 	})
@@ -459,7 +406,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 				Custom: map[string]interface{}{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": map[string]string{
+					"labels": sdkdata.Labels{
 						"resource.label.project_id": "grafana-prod",
 						"resource.type":             "https_lb_rule",
 					},
@@ -482,7 +429,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 				Custom: map[string]interface{}{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": map[string]string{
+					"labels": sdkdata.Labels{
 						"resource.label.project_id": "grafana-demo",
 						"resource.type":             "global",
 					},
@@ -505,7 +452,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 				Custom: map[string]interface{}{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": map[string]string{
+					"labels": sdkdata.Labels{
 						"resource.label.project_id": "grafana-prod",
 						"resource.type":             "https_lb_rule",
 					},
@@ -515,17 +462,29 @@ func TestTimeSeriesFilter(t *testing.T) {
 		})
 	})
 
-	t.Run("when data comes from a slo query, it should skip the link", func(t *testing.T) {
-		data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(data.TimeSeries))
+	t.Run("when building filter string", func(t *testing.T) {
+		t.Run("and there's no regex operator", func(t *testing.T) {
+			t.Run("and there are wildcards in a filter value", func(t *testing.T) {
+				tsl := &cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{Filters: []string{"metric.type", "=", "somemetrictype", "AND", "zone", "=", "*-central1*"}}}
+				value := tsl.getFilter()
+				assert.Equal(t, `metric.type="somemetrictype" zone=has_substring("-central1")`, value)
+			})
 
-		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesList{params: url.Values{}, sloQ: &sloQuery{SloId: "yes"}, parameters: &timeSeriesList{}}
-		err = query.parseResponse(res, data, "")
-		require.NoError(t, err)
-		frames := res.Frames
-		assert.Equal(t, len(frames[0].Fields[1].Config.Links), 0)
+			t.Run("and there are no wildcards in any filter value", func(t *testing.T) {
+				tsl := &cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{Filters: []string{"metric.type", "=", "somemetrictype", "AND", "zone", "!=", "us-central1-a"}}}
+				value := tsl.getFilter()
+				assert.Equal(t, `metric.type="somemetrictype" zone!="us-central1-a"`, value)
+			})
+		})
+
+		t.Run("and there is a regex operator", func(t *testing.T) {
+			tsl := &cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{Filters: []string{"metric.type", "=", "somemetrictype", "AND", "zone", "=~", "us-central1-a~"}}}
+			value := tsl.getFilter()
+			assert.NotContains(t, value, `=~`)
+			assert.Contains(t, value, `zone=`)
+
+			assert.Contains(t, value, `zone=monitoring.regex.full_match("us-central1-a~")`)
+		})
 	})
 }
 

@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func GetObjectKindInfo() models.ObjectKindInfo {
-	return models.ObjectKindInfo{
+func GetEntityKindInfo() models.EntityKindInfo {
+	return models.EntityKindInfo{
 		ID:          models.StandardKindDashboard,
 		Name:        "Dashboard",
 		Description: "Define a grafana dashboard layout",
@@ -20,16 +21,16 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 }
 
 // This summary does not resolve old name as UID
-func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
+func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 	builder := NewStaticDashboardSummaryBuilder(&directLookup{}, true)
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
 		return builder(ctx, uid, body)
 	}
 }
 
 // This implementation moves datasources referenced by internal ID or name to UID
-func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) models.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
 		var parsed map[string]interface{}
 
 		if sanitize {
@@ -43,21 +44,21 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) mo
 			// slug? (derived from title)
 		}
 
-		summary := &models.ObjectSummary{
+		summary := &models.EntitySummary{
 			Labels: make(map[string]string),
 			Fields: make(map[string]interface{}),
 		}
 		stream := bytes.NewBuffer(body)
 		dash, err := readDashboard(stream, lookup)
 		if err != nil {
-			summary.Error = &models.ObjectErrorInfo{
+			summary.Error = &models.EntityErrorInfo{
 				Message: err.Error(),
 			}
 			return summary, body, err
 		}
 
 		dashboardRefs := NewReferenceAccumulator()
-		url := fmt.Sprintf("/d/%s/%s", uid, models.SlugifyTitle(dash.Title))
+		url := fmt.Sprintf("/d/%s/%s", uid, slugify.Slugify(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
 		summary.URL = url
@@ -71,7 +72,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) mo
 
 		for _, panel := range dash.Panels {
 			panelRefs := NewReferenceAccumulator()
-			p := &models.ObjectSummary{
+			p := &models.EntitySummary{
 				UID:  uid + "#" + strconv.FormatInt(panel.ID, 10),
 				Kind: "panel",
 			}
