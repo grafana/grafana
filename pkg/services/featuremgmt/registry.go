@@ -16,7 +16,7 @@ var (
 		},
 		{
 			Name:         "promQueryBuilder",
-			Description:  "Show prometheus query builder",
+			Description:  "Show Prometheus query builder",
 			State:        FeatureStateStable,
 			Expression:   "true", // on by default
 			FrontendOnly: true,
@@ -33,7 +33,7 @@ var (
 		},
 		{
 			Name:        "database_metrics",
-			Description: "Add prometheus metrics for database tables",
+			Description: "Add Prometheus metrics for database tables",
 			State:       FeatureStateStable,
 		},
 		{
@@ -49,12 +49,12 @@ var (
 		},
 		{
 			Name:        "live-config",
-			Description: "Save grafana live configuration in SQL tables",
+			Description: "Save Grafana Live configuration in SQL tables",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "live-pipeline",
-			Description: "enable a generic live processing pipeline",
+			Description: "Enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -65,14 +65,14 @@ var (
 		},
 		{
 			Name:         "queryOverLive",
-			Description:  "Use grafana live websocket to execute backend queries",
+			Description:  "Use Grafana Live WebSocket to execute backend queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:         "tempoApmTable",
@@ -99,23 +99,23 @@ var (
 		},
 		{
 			Name:        "publicDashboards",
-			Description: "enables public access to dashboards",
+			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiLive",
-			Description: "support websocket streaming for loki (early prototype)",
+			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiDataframeApi",
-			Description: "use experimental loki api for websocket streaming (early prototype)",
+			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "lokiMonacoEditor",
 			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			Expression:   "true",
 			FrontendOnly: true,
 		},
@@ -126,7 +126,7 @@ var (
 		},
 		{
 			Name:        "featureHighlights",
-			Description: "Highlight Enterprise features",
+			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
 		},
 		{
@@ -222,7 +222,7 @@ var (
 		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
-			State:           FeatureStateAlpha,
+			State:           FeatureStateBeta,
 			RequiresRestart: true,
 		},
 		{
@@ -257,10 +257,11 @@ var (
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "dataConnectionsConsole",
-			Description: "Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -280,8 +281,8 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "objectStore",
-			Description:     "SQL based object store",
+			Name:            "entityStore",
+			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -315,10 +316,12 @@ var (
 		{
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "interFont",
 			Description: "Switch to inter font",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -334,16 +337,18 @@ var (
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
-			Description: "Show warnings when Dashboards do not validate against the schema",
+			Description: "Show warnings when dashboards do not validate against the schema",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "mysqlAnsiQuotes",
-			Description: "Use double quote to escape keyword in Mysql query",
+			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "datasourceLogger",
 			Description: "Logs all datasource requests",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "accessControlOnCall",
@@ -370,6 +375,7 @@ var (
 		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "authnService",
