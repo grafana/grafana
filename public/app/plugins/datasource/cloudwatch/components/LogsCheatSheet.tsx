@@ -226,6 +226,7 @@ export default class LogsCheatSheet extends PureComponent<
   renderExpression(expr: string, keyPrefix: string) {
     return (
       <button
+        type="button"
         className="cheat-sheet-item__example"
         key={expr}
         onClick={() =>
