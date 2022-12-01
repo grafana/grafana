@@ -9,6 +9,10 @@ const newPackageJson = {
   types: packageJson.publishConfig?.types ?? packageJson.types,
 };
 
+if (packageJson.publishConfig?.module) {
+  newPackageJson.module = packageJson.publishConfig.module;
+}
+
 try {
   fs.writeFileSync(`${cwd}/package.json`, JSON.stringify(newPackageJson, null, 2));
 } catch (e) {}
