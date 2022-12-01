@@ -344,7 +344,6 @@ func (s *Service) SearchUserPermissions(ctx context.Context, userID, orgID int64
 		return permissions, nil
 	}
 	return s.searchUserPermissions(ctx, userID, orgID, searchOptions)
-
 }
 
 func (s *Service) searchUserPermissions(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {

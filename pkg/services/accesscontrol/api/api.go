@@ -1,6 +1,9 @@
 package api
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -8,8 +11,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
-	"net/http"
-	"strconv"
 )
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
@@ -41,7 +42,6 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.SearchUsersPermissions))
 			rr.Get("/user/:userID/permissions/search", authorize(middleware.ReqSignedIn,
 				ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
-
 		}
 	})
 }
