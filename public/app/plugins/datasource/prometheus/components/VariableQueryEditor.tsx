@@ -41,9 +41,6 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
 
-  // if true, allows user to input metric variable in label_values() thus calling the match[] labels endpoint
-  const supportLabelMatch = datasource.hasLabelsMatchAPISupport();
-
   useEffect(() => {
     if (!query) {
       return;
@@ -159,28 +156,26 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               allowCustomValue
             />
           </InlineField>
-          {supportLabelMatch && (
-            <InlineField
-              label="Metric"
-              labelWidth={20}
-              tooltip={
-                <div>
-                  If a metric is added, this calls /api/v1/label/label/values. This endpoint is available depending on
-                  prometheus type and version in datasource configuration.
-                </div>
-              }
-            >
-              <Input
-                type="text"
-                aria-label="Metric selector"
-                placeholder="Optional metric selector"
-                value={metric}
-                onChange={onMetricChange}
-                onBlur={handleBlur}
-                width={25}
-              />
-            </InlineField>
-          )}
+          <InlineField
+            label="Metric"
+            labelWidth={20}
+            tooltip={
+              <div>
+                If a metric is added, this calls /api/v1/series. This endpoint is available depending on prometheus type
+                and version in datasource configuration.
+              </div>
+            }
+          >
+            <Input
+              type="text"
+              aria-label="Metric selector"
+              placeholder="Optional metric selector"
+              value={metric}
+              onChange={onMetricChange}
+              onBlur={handleBlur}
+              width={25}
+            />
+          </InlineField>
         </>
       )}
       {exprType === QueryType.MetricNames && (
