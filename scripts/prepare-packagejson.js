@@ -6,8 +6,11 @@ const packageJson = require(`${cwd}/package.json`);
 const newPackageJson = {
   ...packageJson,
   main: packageJson.publishConfig?.main ?? packageJson.main,
-  types: packageJson.publishConfig?.types ?? packageJson.types,
 };
+
+if (packageJson.publishConfig?.types) {
+  newPackageJson.types = packageJson.publishConfig.types;
+}
 
 if (packageJson.publishConfig?.module) {
   newPackageJson.module = packageJson.publishConfig.module;
