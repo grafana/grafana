@@ -101,26 +101,29 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
         let opacityString: string;
         const opacityInt = Math.floor((style.config.opacity ?? 1) * 255);
-        opacityString = opacityInt.toString(16).toLocaleUpperCase();
-        if (opacityInt < 16) {
-          opacityString = '0' + opacityString;
-        }
+        opacityString = componentToHex(opacityInt);
 
-        if (geom instanceof SimpleGeometry) {
+        if (geom instanceof SimpleGeometry && dims.color) {
           const coordinates = geom.getCoordinates();
-          for (let i = 0; i < coordinates!.length - 1; i++) {
-            const flowStyle = new FlowLine({
-              visible: true,
-              lineCap: 'round', // TODO make this an option
-              color: dims!.color!.get(i) + opacityString,
-              color2: dims!.color!.get(i + 1) + opacityString,
-              width: style.config.lineWidth,
-            });
-            const LS = new LineString([coordinates![i], coordinates![i + 1]]);
-            flowStyle.setGeometry(LS);
-            styles.push(flowStyle);
-          }
+          if (coordinates) {
+            for (let i = 0; i < coordinates.length - 1; i++) {
+              const color1 = dims.color.get(i);
+              const color2 = dims.color.get(i + 1);
+              const color1Hex = colorToHex(colorValues(color1));
+              const color2Hex = colorToHex(colorValues(color2));
 
+              const flowStyle = new FlowLine({
+                visible: true,
+                lineCap: 'round',
+                color: color1Hex + opacityString,
+                color2: color2Hex + opacityString,
+                width: style.config.lineWidth,
+              });
+              const LS = new LineString([coordinates![i], coordinates![i + 1]]);
+              flowStyle.setGeometry(LS);
+              styles.push(flowStyle);
+            }
+          }
           return styles;
         }
 
@@ -276,4 +279,65 @@ function findNearestTimeIndex(timestamps: number[], time: number): number | null
     }
     return lastIdx;
   }
+}
+
+// Return array of [r,g,b,a] from any valid color. If failed, returns transparent
+function colorValues(color: string) {
+  if (color === '') return [0, 0, 0, 0];
+  if (color.toLowerCase() === 'transparent') return [0, 0, 0, 0];
+  // Hex color
+  if (color[0] === '#') {
+    if (color.length < 7) {
+      // convert #RGB and #RGBA to #RRGGBB and #RRGGBBAA
+      color =
+        '#' +
+        color[1] +
+        color[1] +
+        color[2] +
+        color[2] +
+        color[3] +
+        color[3] +
+        (color.length > 4 ? color[4] + color[4] : '');
+    }
+    return [
+      parseInt(color.substr(1, 2), 16),
+      parseInt(color.substr(3, 2), 16),
+      parseInt(color.substr(5, 2), 16),
+      color.length > 7 ? parseInt(color.substr(7, 2), 16) / 255 : 1,
+    ];
+  }
+  // Named colors
+  // TODO find a way to interpret named colors without creating an element
+  if (color.indexOf('rgb') === -1) {
+    const temp_elem = document.body.appendChild(document.createElement('fictum')); // intentionally use unknown tag to lower chances of css rule override with !important
+    const flag = 'rgb(1, 2, 3)';
+    temp_elem.style.color = flag;
+    if (temp_elem.style.color !== flag) return [0, 0, 0, 0];
+    temp_elem.style.color = color;
+    if (temp_elem.style.color === flag || temp_elem.style.color === '') return [0, 0, 0, 0];
+    color = getComputedStyle(temp_elem).color;
+    document.body.removeChild(temp_elem);
+  }
+  // RGB colors
+  if (color.indexOf('rgb') === 0) {
+    if (color.indexOf('rgba') === -1) color += ',1'; // convert 'rgb(R,G,B)' to 'rgb(R,G,B)A'
+    return color.match(/[\.\d]+/g)!.map(function (a) {
+      return +a;
+    });
+  }
+  return [0, 0, 0, 0];
+}
+
+function componentToHex(c: number) {
+  const hex = c.toString(16);
+  return hex.length == 1 ? '0' + hex : hex;
+}
+
+function colorToHex(c: number[] | undefined) {
+  let hex: string = '';
+  if (c && c.length > 2) {
+    hex = '#' + componentToHex(c[0]) + componentToHex(c[1]) + componentToHex(c[2]);
+    hex = hex.toLocaleUpperCase();
+  }
+  return hex;
 }
