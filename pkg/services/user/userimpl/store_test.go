@@ -454,11 +454,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		ss.CacheService.Flush()
 
-		query3 := &models.GetSignedInUserQuery{OrgId: users[1].OrgID, UserId: users[1].ID}
-		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query3)
+		query3 := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UserID: users[1].ID}
+		query3Result, err := userStore.GetSignedInUser(context.Background(), query3)
 		require.Nil(t, err)
-		require.NotNil(t, query3.Result)
-		require.Equal(t, query3.OrgId, users[1].OrgID)
+		require.NotNil(t, query3Result)
+		require.Equal(t, query3.OrgID, users[1].OrgID)
 
 		disableCmd := user.BatchDisableUsersCommand{
 			UserIDs:    []int64{users[0].ID, users[1].ID, users[2].ID, users[3].ID, users[4].ID},
@@ -705,6 +705,20 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, queryResult.Users, 1)
 		require.EqualValues(t, queryResult.TotalCount, 1)
+	})
+
+	t.Run("Can get logged in user projection", func(t *testing.T) {
+		query := user.GetSignedInUserQuery{UserID: 2}
+		queryResult, err := userStore.GetSignedInUser(context.Background(), &query)
+
+		require.NoError(t, err)
+		assert.Equal(t, queryResult.Email, "user1@test.com")
+		assert.EqualValues(t, queryResult.OrgID, 2)
+		assert.Equal(t, queryResult.Name, "user1")
+		assert.Equal(t, queryResult.Login, "loginuser1")
+		assert.EqualValues(t, queryResult.OrgRole, "Admin")
+		assert.Equal(t, queryResult.OrgName, "user1@test.com")
+		assert.Equal(t, queryResult.IsGrafanaAdmin, false)
 	})
 }
 

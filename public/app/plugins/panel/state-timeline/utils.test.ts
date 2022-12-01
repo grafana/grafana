@@ -1,5 +1,5 @@
 import { ArrayVector, createTheme, FieldType, ThresholdsMode, TimeRange, toDataFrame, dateTime } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
 
 import {
   findNextStateIndex,
@@ -15,7 +15,10 @@ describe('prepare timeline graph', () => {
   const timeRange: TimeRange = {
     from: dateTime(1),
     to: dateTime(3),
-    raw: {} as any,
+    raw: {
+      from: dateTime(1),
+      to: dateTime(3),
+    },
   };
   it('errors with no time fields', () => {
     const frames = [
@@ -92,7 +95,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, undefined, undefined, 2, undefined, undefined]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 0);
     expect(result).toEqual(3);
   });
@@ -102,7 +106,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, undefined, undefined, 2, undefined, 3]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 5);
     expect(result).toEqual(null);
   });
@@ -112,7 +117,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, undefined, undefined, 2, undefined, 3, undefined]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 5);
     expect(result).toEqual(null);
   });
@@ -134,7 +140,8 @@ describe('findNextStateIndex', () => {
         undefined,
         undefined,
       ]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 3);
     expect(result).toEqual(8);
   });
@@ -144,7 +151,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, 3, 2]),
-    } as any;
+      config: {},
+    };
 
     test('leading', () => {
       const result = findNextStateIndex(field, 0);
@@ -232,7 +240,11 @@ describe('prepareTimelineLegendItems', () => {
       },
     ];
 
-    const result = prepareTimelineLegendItems(frame, { displayMode: LegendDisplayMode.List } as any, theme);
+    const result = prepareTimelineLegendItems(
+      frame,
+      { displayMode: LegendDisplayMode.List } as VizLegendOptions,
+      theme
+    );
 
     expect(result).toHaveLength(1);
   });

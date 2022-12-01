@@ -87,3 +87,17 @@ The following template variables are available when expanding labels and annotat
 | $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. This is unavailable when the rule uses a [classic condition]({{< relref "../../alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule" >}}).                                                                                                                                 |
 | $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the reduce or math expression. If the rule uses a classic condition instead of a reduce and math expression, then `$values` contains the combination of the `refID` and position of the condition. |
 | $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                                                                                                                                                                                                         |
+
+### Labels with dots
+
+If a label contains a dot (full stop or period) in its name then the following will not work:
+
+```
+Instance {{ $labels.instance.name }} has been down for more than 5 minutes
+```
+
+This is because we are printing a non-existing field `name` in `$labels.instance` rather than `instance.name` in `$labels`. Instead we can use the `index` function to print `instance.name`:
+
+```
+Instance {{ index $labels "instance.name" }} has been down for more than 5 minutes
+```

@@ -146,6 +146,7 @@ tsconfig.json @grafana/frontend-ops
 /public/app/features/geo/ @grafana/grafana-edge-squad
 /public/app/features/storage/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
+/public/app/features/query-library/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-experience-squad
 /public/app/features/plugins @grafana/plugins-platform-frontend
 /public/app/features/transformers/spatial @grafana/grafana-edge-squad
@@ -224,6 +225,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/teamguardian @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts @grafana/grafana-authnz-team
 /pkg/services/loginattempt @grafana/grafana-authnz-team
+/pkg/services/authn @grafana/grafana-authnz-team
 
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
