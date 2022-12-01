@@ -26,6 +26,7 @@ func TestKindRegistry(t *testing.T) {
 		"jsonobj",
 		"playlist",
 		"png",
+		"preferences",
 		"snapshot",
 		"test",
 	}, ids)

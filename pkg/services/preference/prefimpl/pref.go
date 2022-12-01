@@ -2,22 +2,28 @@ package prefimpl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/kinds/preferences"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	store    store
-	cfg      *setting.Cfg
-	features *featuremgmt.FeatureManager
+	store       store
+	cfg         *setting.Cfg
+	features    *featuremgmt.FeatureManager
+	entitystore entity.EntityStoreServer
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager, entitystore entity.EntityStoreServer) pref.Service {
 	service := &Service{
 		cfg:      cfg,
 		features: features,
@@ -30,6 +36,11 @@ func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureMan
 		service.store = &sqlStore{
 			db: db,
 		}
+	}
+
+	// optionally save to the entity store also
+	if features.IsEnabled(featuremgmt.FlagEntityStore) {
+		service.entitystore = entitystore
 	}
 	return service
 }
@@ -117,6 +128,9 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				},
 			}
 			_, err = s.store.Insert(ctx, preference)
+			if err == nil {
+				err = s.saveEntitty(ctx, preference)
+			}
 			if err != nil {
 				return err
 			}
@@ -140,7 +154,11 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	if cmd.QueryHistory != nil {
 		preference.JSONData.QueryHistory = *cmd.QueryHistory
 	}
-	return s.store.Update(ctx, preference)
+	err = s.store.Update(ctx, preference)
+	if err == nil {
+		err = s.saveEntitty(ctx, preference)
+	}
+	return err
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
@@ -225,6 +243,9 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	} else {
 		_, err = s.store.Insert(ctx, preference)
 	}
+	if err == nil {
+		err = s.saveEntitty(ctx, preference)
+	}
 	return err
 }
 
@@ -246,4 +267,63 @@ func (s *Service) GetDefaults() *pref.Preference {
 
 func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
+}
+
+func (s *Service) saveEntitty(ctx context.Context, p *pref.Preference) error {
+	if s.entitystore == nil {
+		return nil
+	}
+
+	// Convert from pref.Preference to preferences
+	m := preferences.Preferences{}
+	if p.HomeDashboardID > 0 {
+		uid := fmt.Sprintf("[TODO:%d]", p.HomeDashboardID)
+		m.HomeDashboard = &uid
+	}
+	if p.Theme != "" {
+		m.Theme = &p.Theme
+	}
+	if p.JSONData != nil {
+		if p.JSONData.Language != "" {
+			m.Language = &p.JSONData.Language
+		}
+		if p.JSONData.QueryHistory.HomeTab != "" {
+			m.QueryHistory = &preferences.QueryHistoryPreference{
+				HomeTab: &p.JSONData.QueryHistory.HomeTab,
+			}
+		}
+		if len(p.JSONData.Navbar.SavedItems) > 0 {
+			m.Navbar = &preferences.NavbarPreference{}
+		}
+	}
+	if p.Timezone != "" {
+		m.Timezone = &p.Timezone
+	}
+	if p.WeekStart != nil {
+		m.WeekStart = p.WeekStart
+	}
+
+	body, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	req := &entity.WriteEntityRequest{
+		GRN: &entity.GRN{
+			TenantId: p.OrgID,
+			Kind:     models.StandardKindPreferences,
+		},
+		Body:    body,
+		Comment: "saved from prefimpl",
+	}
+	if p.TeamID > 0 {
+		req.GRN.UID = fmt.Sprintf("team-%d", p.TeamID)
+	} else if p.UserID == 0 {
+		req.GRN.UID = "default"
+	} else {
+		req.GRN.UID = fmt.Sprintf("user-%d", p.UserID)
+	}
+
+	_, err = s.entitystore.Write(ctx, req)
+	return err
 }

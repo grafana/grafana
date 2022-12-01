@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
+	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/kinds/svg"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
@@ -34,6 +35,7 @@ type Base struct {
 	numRaw, numStructured int
 	dashboard             *dashboard.Kind
 	playlist              *playlist.Kind
+	preferences           *preferences.Kind
 	svg                   *svg.Kind
 }
 
@@ -41,6 +43,7 @@ type Base struct {
 var (
 	_ kindsys.Structured = &dashboard.Kind{}
 	_ kindsys.Structured = &playlist.Kind{}
+	_ kindsys.Structured = &preferences.Kind{}
 	_ kindsys.Raw        = &svg.Kind{}
 )
 
@@ -54,6 +57,11 @@ func (b *Base) Playlist() *playlist.Kind {
 	return b.playlist
 }
 
+// Preferences returns the [kindsys.Interface] implementation for the preferences kind.
+func (b *Base) Preferences() *preferences.Kind {
+	return b.preferences
+}
+
 // SVG returns the [kindsys.Interface] implementation for the svg kind.
 func (b *Base) SVG() *svg.Kind {
 	return b.svg
@@ -63,7 +71,7 @@ func doNewBase(rt *thema.Runtime) *Base {
 	var err error
 	reg := &Base{
 		numRaw:        1,
-		numStructured: 2,
+		numStructured: 3,
 	}
 
 	reg.dashboard, err = dashboard.NewKind(rt)
@@ -77,6 +85,12 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the playlist Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.playlist)
+
+	reg.preferences, err = preferences.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the preferences Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.preferences)
 
 	reg.svg, err = svg.NewKind()
 	if err != nil {

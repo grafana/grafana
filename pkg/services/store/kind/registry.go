@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/jsonobj"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
+	"github.com/grafana/grafana/pkg/services/store/kind/preferences"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
 	"github.com/grafana/grafana/pkg/setting"
@@ -60,6 +61,10 @@ func NewKindRegistry() KindRegistry {
 	kinds[models.StandardKindJSONObj] = &kindValues{
 		info:    jsonobj.GetEntityKindInfo(),
 		builder: jsonobj.GetEntitySummaryBuilder(),
+	}
+	kinds[models.StandardKindPreferences] = &kindValues{
+		info:    preferences.GetEntityKindInfo(),
+		builder: preferences.GetEntitySummaryBuilder(),
 	}
 
 	// create a registry

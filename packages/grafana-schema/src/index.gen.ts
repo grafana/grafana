@@ -88,3 +88,14 @@ export type {
 
 // Raw generated default consts from playlist kind.
 export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
+
+// Raw generated types from Preferences kind.
+export type {
+  Preferences,
+  NavLink,
+  NavbarPreference,
+  QueryHistoryPreference
+} from './raw/preferences/x/preferences_types.gen';
+
+// Raw generated default consts from preferences kind.
+export { defaultNavbarPreference } from './raw/preferences/x/preferences_types.gen';

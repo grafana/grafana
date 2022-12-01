@@ -4,13 +4,16 @@ package models
 // NOTE: the object store is in heavy development, and the locations will likely continue to move
 //-----------------------------------------------------------------------------------------------------
 
-import "context"
+import (
+	"context"
+)
 
 const (
-	StandardKindDashboard = "dashboard"
-	StandardKindPlaylist  = "playlist"
-	StandardKindSnapshot  = "snapshot"
-	StandardKindFolder    = "folder"
+	StandardKindDashboard   = "dashboard"
+	StandardKindPlaylist    = "playlist"
+	StandardKindSnapshot    = "snapshot"
+	StandardKindFolder      = "folder"
+	StandardKindPreferences = "preferences"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
 	// Types: influx, prometheus, testdata, ...
