@@ -471,12 +471,18 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 
 		if liveerr != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", liveerr)
 		}
 	}
 
 	if err != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
+	}
+
+	// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	if newDashboard && !hs.accesscontrolService.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID

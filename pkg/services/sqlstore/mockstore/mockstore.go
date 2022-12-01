@@ -75,11 +75,6 @@ func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUser
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	query.Result = m.ExpectedSignedInUser
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (models.Team, error) {
 	return models.Team{
 		Name:  name,

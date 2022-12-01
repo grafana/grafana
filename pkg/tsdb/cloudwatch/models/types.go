@@ -1,20 +1,5 @@
 package models
 
-import (
-	"net/url"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-)
-
-type RequestContext struct {
-	MetricsClientProvider MetricsClientProvider
-	Settings              CloudWatchSettings
-}
-
-type RequestContextFactoryFunc func(pluginCtx backend.PluginContext, region string) (reqCtx RequestContext, err error)
-
-type RouteHandlerFunc func(pluginCtx backend.PluginContext, reqContextFactory RequestContextFactoryFunc, parameters url.Values) ([]byte, *HttpError)
-
 type cloudWatchLink struct {
 	View    string        `json:"view"`
 	Stacked bool          `json:"stacked"`
@@ -31,7 +16,8 @@ type metricExpression struct {
 }
 
 type metricStatMeta struct {
-	Stat   string `json:"stat"`
-	Period int    `json:"period"`
-	Label  string `json:"label,omitempty"`
+	Stat      string `json:"stat"`
+	Period    int    `json:"period"`
+	Label     string `json:"label,omitempty"`
+	AccountId string `json:"accountId,omitempty"`
 }
