@@ -13,7 +13,7 @@ import { RuleIdentifier } from 'app/types/unified-alerting';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
+import { fetchRulesSourceBuildInfoAction, fetchEditableRuleAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { initialAsyncRequestState } from './utils/redux';
 import * as ruleId from './utils/rule-id';
@@ -71,7 +71,9 @@ const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
   const identifier = ruleId.tryParse(id, true);
 
   const { loading } = useAsync(async () => {
-    await dispatch(fetchAllPromBuildInfoAction());
+    if (identifier) {
+      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
+    }
   }, [dispatch]);
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
