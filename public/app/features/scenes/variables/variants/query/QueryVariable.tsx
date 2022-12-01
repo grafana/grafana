@@ -98,7 +98,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
       this.dataSourceSubject.subscribe({
         next: (ds) => {
           const runner = createQueryVariableRunner(ds);
-          const target = runner.getTarget({ variable: this });
+          const target = runner.getTarget(this);
           const request = this.getRequest(target);
 
           runner

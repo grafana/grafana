@@ -17,17 +17,15 @@ export interface RunnerArgs {
   searchFilter?: string;
 }
 
-type GetTargetArgs = { variable: QueryVariable };
-
 export interface QueryRunner {
-  getTarget: (args: GetTargetArgs) => DataQuery;
+  getTarget: (variable: QueryVariable) => DataQuery;
   runRequest: (args: RunnerArgs, request: DataQueryRequest) => Observable<PanelData>;
 }
 
 class StandardQueryRunner implements QueryRunner {
   public constructor(private datasource: DataSourceApi, private _runRequest = runRequest) {}
 
-  public getTarget({ variable }: GetTargetArgs) {
+  public getTarget(variable: QueryVariable) {
     if (hasStandardVariableSupport(this.datasource)) {
       return this.datasource.variables.toDataQuery(variable.state.query);
     }

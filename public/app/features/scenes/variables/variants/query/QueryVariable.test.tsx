@@ -79,7 +79,7 @@ jest.mock('@grafana/runtime', () => ({
 class FakeQueryRunner implements QueryRunner {
   constructor(private datasource: DataSourceApi, private _runRequest: jest.Mock) {}
 
-  public getTarget({ variable }: { variable: QueryVariable }) {
+  public getTarget(variable: QueryVariable) {
     return (this.datasource.variables as StandardVariableSupport<DataSourceApi>).toDataQuery(variable.state.query);
   }
   public runRequest(args: RunnerArgs, request: DataQueryRequest) {
