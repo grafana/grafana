@@ -37,7 +37,9 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       label: ${overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow'};
       padding: ${cellPadding}px;
       width: 100%;
-      height: ${rowHeight}px;
+      // Cell height need to account for row border
+      height: ${rowHeight - 1}px;
+      height: 100%;
       display: flex;
       align-items: center;
       border-right: 1px solid ${borderColor};
