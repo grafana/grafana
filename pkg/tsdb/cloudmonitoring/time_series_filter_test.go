@@ -371,7 +371,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 		frames := res.Frames
 		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
 		require.True(t, ok)
-		labels, ok := custom["labels"].(map[string]string)
+		labels, ok := custom["labels"].(sdkdata.Labels)
 		require.True(t, ok)
 		assert.Equal(t, "114250375703598695", labels["resource.label.instance_id"])
 	})
@@ -406,7 +406,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 				Custom: map[string]interface{}{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": map[string]string{
+					"labels": sdkdata.Labels{
 						"resource.label.project_id": "grafana-prod",
 						"resource.type":             "https_lb_rule",
 					},
@@ -429,7 +429,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 				Custom: map[string]interface{}{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": map[string]string{
+					"labels": sdkdata.Labels{
 						"resource.label.project_id": "grafana-demo",
 						"resource.type":             "global",
 					},
@@ -452,7 +452,7 @@ func TestTimeSeriesFilter(t *testing.T) {
 				Custom: map[string]interface{}{
 					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
-					"labels": map[string]string{
+					"labels": sdkdata.Labels{
 						"resource.label.project_id": "grafana-prod",
 						"resource.type":             "https_lb_rule",
 					},

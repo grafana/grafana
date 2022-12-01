@@ -476,6 +476,10 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
 
 			// return an error from the folder store
 			store.ExpectedError = errors.New("FAILED")
@@ -491,6 +495,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			// CreateFolder should also call the folder store's create method.
 			require.True(t, store.CreateCalled)
+			require.NotNil(t, actualCmd)
 
 			t.Cleanup(func() {
 				guardian.New = g
