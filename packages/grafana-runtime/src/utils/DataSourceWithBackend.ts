@@ -299,7 +299,7 @@ class DataSourceWithBackend<
     const result = await lastValueFrom(
       getBackendSrv().fetch<T>({
         ...options,
-        method: 'GET',
+        method: 'POST',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
         url: `/api/datasources/${this.id}/resources/${path}`,

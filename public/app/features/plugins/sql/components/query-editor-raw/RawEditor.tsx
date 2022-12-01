@@ -25,12 +25,12 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [editorRef, editorMeasure] = useMeasure<HTMLDivElement>();
 
-  const completionProvider = useMemo(() => db.getSqlCompletionProvider(), [db]);
+  const editorLanguageDefinition = useMemo(() => db.getEditorLanguageDefinition(), [db]);
 
   const renderQueryEditor = (width?: number, height?: number) => {
     return (
       <QueryEditorRaw
-        completionProvider={completionProvider}
+        editorLanguageDefinition={editorLanguageDefinition}
         query={query}
         width={width}
         height={height ? height - toolboxMeasure.height : undefined}

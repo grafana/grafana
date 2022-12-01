@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Standard"
@@ -193,8 +198,8 @@
     },
     "global-users": {
       "subtitle": "Erstelle und verwalte Benutzer auf dem gesamten Grafana-Server",
-      "title": "Benutzer",
-      "titleBeforeTopnav": ""
+      "title": "",
+      "titleBeforeTopnav": "Benutzer"
     },
     "help": {
       "title": "Hilfe"
@@ -237,8 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "Einstellungen",
-      "titleBeforeTopnav": ""
+      "title": "",
+      "titleBeforeTopnav": "Einstellungen"
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -313,6 +318,10 @@
   "news": {
     "title": "Das Neueste aus dem Blog"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
       "hide-legend": "",
@@ -327,7 +336,7 @@
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "",
+      "choose-interval": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
       "duration-selected": ""
     },
     "live-option": {
@@ -335,8 +344,8 @@
       "label": ""
     },
     "off-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Automatische Aktualisierung deaktivieren",
+      "label": "Aus"
     },
     "select-button": {
       "auto-refresh": ""
@@ -412,6 +421,9 @@
       "dark": "Dunkel",
       "field-name": "Design",
       "light": "Hell"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -442,7 +454,7 @@
     },
     "calendar": {
       "apply-button": "",
-      "cancel-button": "",
+      "cancel-button": "Abbrechen",
       "select-time": ""
     },
     "content": {

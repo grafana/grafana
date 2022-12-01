@@ -198,15 +198,14 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugin-page-grafana-cloud-link-app"))
 		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("recordedQueries")) // enterprise only
 
-		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("users"))
 		if globalUsers := root.FindById("global-users"); globalUsers != nil {
-			globalUsers.Text = "Users (All orgs)"
+			globalUsers.Text = "Users"
 			accessNodeLinks = append(accessNodeLinks, globalUsers)
 		}
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("serviceaccounts"))
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("apikeys"))
-		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("plugin-page-grafana-auth-app")) // Cloud Access Policies
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
 
 		generalNode := &NavLink{
 			Text:     "General",

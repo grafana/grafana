@@ -49,11 +49,6 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	// before 9.3.0 the quota service used to depend on on the ActiveTokenService
-	// since 9.3.0 after the quota refactoring ActiveTokenService depends on the quota
-	// therefore it's added to avoid cycle dependencies
-	// since it's used only by the middleware for enforcing quota limits.
-	activeTokenService auth.ActiveTokenService,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:               cfg,
@@ -434,9 +429,12 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
-		reqContext.Logger.Warn("Failed to look up user based on cookie", "error", err)
-		// Burn the cookie in case of failure
-		reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+		reqContext.Logger.Warn("failed to look up session from cookie", "error", err)
+		if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+			// Burn the cookie in case of invalid, expired or missing token
+			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+		}
+
 		reqContext.LookupTokenErr = err
 
 		return false

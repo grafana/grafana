@@ -396,6 +396,12 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to add datasource", err)
 	}
 
+	// Clear permission cache for the user who's created the data source, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	if !hs.AccessControl.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	}
+
 	ds := hs.convertModelToDtos(c.Req.Context(), cmd.Result)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message":    "Datasource added",

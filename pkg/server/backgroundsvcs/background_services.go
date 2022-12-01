@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
@@ -29,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	samanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -46,12 +47,12 @@ func ProvideBackgroundServiceRegistry(
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	grpcServerProvider grpcserver.Provider,
-	secretMigrationProvider secretsMigrations.SecretMigrationProvider,
+	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
-	_ *grpcserver.HealthService, _ object.ObjectStoreServer, _ *grpcserver.ReflectionService,
+	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -81,6 +82,7 @@ func ProvideBackgroundServiceRegistry(
 		authInfoService,
 		processManager,
 		secretMigrationProvider,
+		loginAttemptService,
 	)
 }
 

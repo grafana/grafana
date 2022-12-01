@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -192,8 +197,8 @@
       "title": "Organizations"
     },
     "global-users": {
-      "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users (All orgs)",
+      "subtitle": "Manage users in Grafana",
+      "title": "Users",
       "titleBeforeTopnav": "Users"
     },
     "help": {
@@ -313,6 +318,10 @@
   "news": {
     "title": "Latest from the blog"
   },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
   "panel": {
     "header-menu": {
       "hide-legend": "Hide legend",
@@ -412,6 +421,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {

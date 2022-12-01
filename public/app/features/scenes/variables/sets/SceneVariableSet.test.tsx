@@ -134,4 +134,28 @@ describe('SceneVariableList', () => {
       });
     });
   });
+
+  describe('When activated with variables update at the same time', () => {
+    it('Should not start variables multiple times', async () => {
+      const A = new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] });
+      const B = new TestVariable({ name: 'B', query: 'B.*', value: '', text: '', options: [] });
+
+      const scene = new TestScene({
+        $variables: new SceneVariableSet({ variables: [A, B] }),
+      });
+
+      scene.activate();
+
+      // Should start variables
+      expect(A.state.loading).toBe(true);
+      expect(B.state.loading).toBe(true);
+      expect(A.getValueOptionsCount).toBe(1);
+
+      // Complete the second one
+      B.signalUpdateCompleted();
+
+      // When B complete should not start another instance of A
+      expect(A.getValueOptionsCount).toBe(1);
+    });
+  });
 });

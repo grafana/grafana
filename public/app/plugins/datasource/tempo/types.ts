@@ -95,7 +95,10 @@ export type Span = {
   kind?: SpanKind;
   startTimeUnixNano: string;
   endTimeUnixNano?: string;
-  attributes?: Array<{ key: string; value: { stringValue: string } }>;
+  attributes?: Array<{
+    key: string;
+    value: { stringValue?: string; intValue?: string; boolValue?: boolean; doubleValue?: string };
+  }>;
   dropped_attributes_count?: number;
 };
 

@@ -54,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   } else {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
     borderColor = tinycolor(sourceColor).lighten(20).toString();
-    textColor = tinycolor(sourceColor).darken(15).toString();
+    textColor = tinycolor(sourceColor).darken(20).toString();
   }
 
   return {

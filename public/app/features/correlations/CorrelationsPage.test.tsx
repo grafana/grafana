@@ -1,4 +1,13 @@
-import { render, waitFor, screen, fireEvent, waitForElementToBeRemoved, within, Matcher } from '@testing-library/react';
+import {
+  render,
+  waitFor,
+  screen,
+  fireEvent,
+  waitForElementToBeRemoved,
+  within,
+  Matcher,
+  getByRole,
+} from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
@@ -411,7 +420,7 @@ describe('CorrelationsPage', () => {
     });
 
     it('correctly sorts by source', async () => {
-      const sourceHeader = getHeaderByName('Source');
+      const sourceHeader = getByRole(getHeaderByName('Source'), 'button');
       fireEvent.click(sourceHeader);
       let cells = queryCellsByColumnName('Source');
       cells.forEach((cell, i, allCells) => {

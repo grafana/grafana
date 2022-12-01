@@ -398,4 +398,169 @@ describe('Table', () => {
       expect(() => screen.getByTestId('table-footer')).toThrow('Unable to find an element');
     });
   });
+
+  describe('on table footer enabled and count calculation selected', () => {
+    it('should show count of non-null values', async () => {
+      getTestContext({
+        footerOptions: { show: true, reducer: ['count'] },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('4');
+    });
+
+    it('should show count of rows when `count rows` is selected', async () => {
+      getTestContext({
+        footerOptions: { show: true, reducer: ['count'], countRows: true },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number1',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count:'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
+    });
+
+    it('should show correct counts when turning `count rows` on and off', async () => {
+      const { rerender } = getTestContext({
+        footerOptions: { show: true, reducer: ['count'], countRows: true },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number1',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count:'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
+
+      const onSortByChange = jest.fn();
+      const onCellFilterAdded = jest.fn();
+      const onColumnResize = jest.fn();
+      const props: Props = {
+        ariaLabel: 'aria-label',
+        data: getDefaultDataFrame(),
+        height: 600,
+        width: 800,
+        onSortByChange,
+        onCellFilterAdded,
+        onColumnResize,
+      };
+
+      const propOverrides = {
+        footerOptions: { show: true, reducer: ['count'], countRows: false },
+        data: toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'number',
+              type: FieldType.number,
+              values: [1, 1, 1, 2, null],
+              config: {
+                custom: {
+                  filterable: true,
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      Object.assign(props, propOverrides);
+
+      rerender(<Table {...props} />);
+
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('4');
+    });
+  });
+
+  describe('when mounted with data and sub-data', () => {
+    it('then correct rows should be rendered and new table is rendered when expander is clicked', () => {
+      getTestContext({
+        subData: new Array(getDefaultDataFrame().length).fill(0).map((i) =>
+          toDataFrame({
+            name: 'A',
+            fields: [
+              {
+                name: 'number' + i,
+                type: FieldType.number,
+                values: [i, i, i],
+                config: {
+                  custom: {
+                    filterable: true,
+                  },
+                },
+              },
+            ],
+            meta: {
+              custom: {
+                parentRowIndex: i,
+              },
+            },
+          })
+        ),
+      });
+      expect(getTable()).toBeInTheDocument();
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+      expect(getColumnHeader(/time/)).toBeInTheDocument();
+      expect(getColumnHeader(/temperature/)).toBeInTheDocument();
+      expect(getColumnHeader(/img/)).toBeInTheDocument();
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(getRowsData(rows)).toEqual([
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+      ]);
+
+      within(rows[1]).getByLabelText('Open trace').click();
+      const rowsAfterClick = within(getTable()).getAllByRole('row');
+      expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
+      expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();
+
+      expect(within(rowsAfterClick[2]).queryByRole('table')).toBeNull();
+    });
+  });
 });
