@@ -42,7 +42,7 @@ func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 
 func TestStore_CreateServiceAccount(t *testing.T) {
 	_, store := setupTestDatabase(t)
-	orgQuery := &org.CreateOrgCommand{Name: sqlstore.MainOrgName}
+	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
 	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 	require.NoError(t, err)
 
