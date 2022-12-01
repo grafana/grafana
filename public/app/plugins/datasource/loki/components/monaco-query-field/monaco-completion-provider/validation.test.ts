@@ -2,15 +2,17 @@ import { validateQuery } from './validation';
 
 describe('Monaco Query Validation', () => {
   test('Identifies empty queries as valid', () => {
-    expect(validateQuery('', [])).toBeFalsy();
+    expect(validateQuery('', '', [])).toBeFalsy();
   });
 
   test('Identifies valid queries', () => {
-    expect(validateQuery('{place="luna"}', [])).toBeFalsy();
+    const query = '{place="luna"}';
+    expect(validateQuery(query, query, [])).toBeFalsy();
   });
 
   test('Validates logs queries', () => {
-    expect(validateQuery('{place="incomplete"', ['{place="incomplete"'])).toEqual([
+    let query = '{place="incomplete"';
+    expect(validateQuery(query, query, [query])).toEqual([
       {
         endColumn: 20,
         endLineNumber: 1,
@@ -20,7 +22,8 @@ describe('Monaco Query Validation', () => {
       },
     ]);
 
-    expect(validateQuery('{place="luna"} | notaparser', ['{place="luna"} | notaparser'])).toEqual([
+    query = '{place="luna"} | notaparser';
+    expect(validateQuery(query, query, [query])).toEqual([
       {
         endColumn: 28,
         endLineNumber: 1,
@@ -30,7 +33,8 @@ describe('Monaco Query Validation', () => {
       },
     ]);
 
-    expect(validateQuery('{place="luna"} | logfmt |', ['{place="luna"} | logfmt |'])).toEqual([
+    query = '{place="luna"} | logfmt |';
+    expect(validateQuery(query, query, [query])).toEqual([
       {
         endColumn: 26,
         endLineNumber: 1,
@@ -42,11 +46,8 @@ describe('Monaco Query Validation', () => {
   });
 
   test('Validates metric queries', () => {
-    expect(
-      validateQuery('sum(count_over_time({place="luna" | unwrap request_time [5m])) by (level)', [
-        'sum(count_over_time({ place="luna" | unwrap request_time [5m])) by (level)',
-      ])
-    ).toEqual([
+    let query = 'sum(count_over_time({place="luna" | unwrap request_time [5m])) by (level)';
+    expect(validateQuery(query, query, [query])).toEqual([
       {
         endColumn: 35,
         endLineNumber: 1,
@@ -56,11 +57,8 @@ describe('Monaco Query Validation', () => {
       },
     ]);
 
-    expect(
-      validateQuery('sum(count_over_time({place="luna"} | unwrap [5m])) by (level)', [
-        'sum(count_over_time({ place="luna" | unwrap request_time [5m])) by (level)',
-      ])
-    ).toEqual([
+    query = 'sum(count_over_time({place="luna"} | unwrap [5m])) by (level)';
+    expect(validateQuery(query, query, [query])).toEqual([
       {
         endColumn: 45,
         endLineNumber: 1,
@@ -70,7 +68,8 @@ describe('Monaco Query Validation', () => {
       },
     ]);
 
-    expect(validateQuery('sum()', ['sum()'])).toEqual([
+    query = 'sum()';
+    expect(validateQuery(query, query, [query])).toEqual([
       {
         endColumn: 5,
         endLineNumber: 1,
@@ -89,7 +88,7 @@ describe('Monaco Query Validation', () => {
 logfmt fail
 |= "a"`;
     const queryLines = query.split('\n');
-    expect(validateQuery(query, queryLines)).toEqual([
+    expect(validateQuery(query, query, queryLines)).toEqual([
       {
         endColumn: 12,
         endLineNumber: 5,
