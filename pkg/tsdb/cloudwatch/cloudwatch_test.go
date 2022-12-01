@@ -546,7 +546,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 	origNewOAMAPI := NewOAMAPI
 	origNewLogsAPI := NewLogsAPI
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
-	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
+	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
@@ -607,7 +607,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewOAMAPI := NewOAMAPI
 	origNewLogsAPI := NewLogsAPI
-	NewOAMAPI = func(sess *session.Session) models.OAMClientProvider { return nil }
+	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider { return nil }
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI

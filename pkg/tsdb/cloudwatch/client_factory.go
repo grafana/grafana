@@ -32,7 +32,7 @@ var NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 // NewOAMAPI is a CloudWatch OAM api factory.
 //
 // Stubbable by tests.
-var NewOAMAPI = func(sess *session.Session) models.OAMClientProvider {
+var NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider {
 	return oam.New(sess)
 }
 

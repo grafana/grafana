@@ -135,7 +135,7 @@ func (e *cloudWatchExecutor) getRequestContext(pluginCtx backend.PluginContext, 
 		return models.RequestContext{}, err
 	}
 	return models.RequestContext{
-		OAMClientProvider:     NewOAMAPI(sess),
+		OAMAPIProvider:        NewOAMAPI(sess),
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
 		LogsAPIProvider:       NewLogsAPI(sess),
 		Settings:              instance.Settings,
