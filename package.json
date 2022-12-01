@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "9.3.0",
+  "version": "9.3.2",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "yarn i18n:compile && NODE_ENV=production webpack --config scripts/webpack/webpack.prod.js",
