@@ -655,15 +655,15 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 
 	query := dashver.ListDashboardVersionsQuery{
 		OrgID:        c.OrgID,
-		DashboardID:  dashID,
-		DashboardUID: dashUID,
+		DashboardID:  dash.Id,
+		DashboardUID: dash.Uid,
 		Limit:        c.QueryInt("limit"),
 		Start:        c.QueryInt("start"),
 	}
 
 	res, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
+		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dash.Id), err)
 	}
 
 	for _, version := range res {
