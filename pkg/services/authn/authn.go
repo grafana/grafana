@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -32,4 +33,13 @@ type Identity struct {
 
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
+}
+
+func (i *Identity) SignedInUser() *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID:       i.OrgID,
+		OrgName:     i.OrgName,
+		OrgRole:     i.Role(),
+		IsAnonymous: i.IsAnonymous,
+	}
 }
