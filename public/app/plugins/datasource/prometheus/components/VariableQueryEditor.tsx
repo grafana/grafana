@@ -52,10 +52,10 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     const variableQuery = query.query ? migrateVariableQueryToEditor(query.query) : query;
 
     setExprType(variableQuery.exprType);
-    setLabel(variableQuery.label || '');
-    setMetric(variableQuery.metric || '');
-    setVarQuery(variableQuery.varQuery || '');
-    setSeriesQuery(variableQuery.seriesQuery || '');
+    setLabel(variableQuery.label ?? '');
+    setMetric(variableQuery.metric ?? '');
+    setVarQuery(variableQuery.varQuery ?? '');
+    setSeriesQuery(variableQuery.seriesQuery ?? '');
 
     // set the migrated label in the label options
     if (variableQuery.label) {
@@ -100,7 +100,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
   };
 
   const onLabelChange = (newLabel: SelectableValue<string>) => {
-    setLabel(newLabel.value || '');
+    setLabel(newLabel.value ?? '');
   };
 
   const onMetricChange = (e: FormEvent<HTMLInputElement>) => {
