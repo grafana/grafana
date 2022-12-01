@@ -2,9 +2,7 @@ package cloudmonitoring
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -112,58 +110,29 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
-	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
-	if err != nil {
-		timeSeriesQuery.logger.Error("Failed to generate deep link: unable to parse metrics explorer URL", "projectName", timeSeriesQuery.parameters.ProjectName, "query", timeSeriesQuery.refID)
-		return ""
-	}
-
-	q := u.Query()
-	q.Set("project", timeSeriesQuery.parameters.ProjectName)
-	q.Set("Grafana_deeplink", "true")
-
-	pageState := map[string]interface{}{
-		"xyChart": map[string]interface{}{
-			"constantLines": []string{},
-			"dataSets": []map[string]interface{}{
-				{
-					"timeSeriesQuery": timeSeriesQuery.parameters.Query,
-					"targetAxis":      "Y1",
-					"plotType":        "LINE",
-				},
-			},
-			"timeshiftDuration": "0s",
-			"y1Axis": map[string]string{
-				"label": "y1Axis",
-				"scale": "LINEAR",
-			},
-		},
-		"timeSelection": map[string]string{
-			"timeRange": "custom",
-			"start":     timeSeriesQuery.timeRange.From.Format(time.RFC3339Nano),
-			"end":       timeSeriesQuery.timeRange.To.Format(time.RFC3339Nano),
+	dataSets := []map[string]interface{}{
+		{
+			"timeSeriesQuery": timeSeriesQuery.parameters.Query,
+			"targetAxis":      "Y1",
+			"plotType":        "LINE",
 		},
 	}
 
-	blob, err := json.Marshal(pageState)
+	link, err := generateLink(
+		timeSeriesQuery.parameters.ProjectName,
+		dataSets,
+		timeSeriesQuery.timeRange.From.Format(time.RFC3339Nano),
+		timeSeriesQuery.timeRange.To.Format(time.RFC3339Nano),
+	)
 	if err != nil {
-		timeSeriesQuery.logger.Error("Failed to generate deep link", "pageState", pageState, "ProjectName", timeSeriesQuery.parameters.ProjectName, "query", timeSeriesQuery.refID)
-		return ""
+		slog.Error(
+			"Failed to generate deep link: unable to parse metrics explorer URL",
+			"ProjectName", timeSeriesQuery.parameters.Query,
+			"error", err,
+		)
 	}
 
-	q.Set("pageState", string(blob))
-	u.RawQuery = q.Encode()
-
-	accountChooserURL, err := url.Parse("https://accounts.google.com/AccountChooser")
-	if err != nil {
-		timeSeriesQuery.logger.Error("Failed to generate deep link: unable to parse account chooser URL", "ProjectName", timeSeriesQuery.parameters.ProjectName, "query", timeSeriesQuery.refID)
-		return ""
-	}
-	accountChooserQuery := accountChooserURL.Query()
-	accountChooserQuery.Set("continue", u.String())
-	accountChooserURL.RawQuery = accountChooserQuery.Encode()
-
-	return accountChooserURL.String()
+	return link
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getRefID() string {

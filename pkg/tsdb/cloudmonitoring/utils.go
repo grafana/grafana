@@ -301,3 +301,49 @@ func appendFrames(
 	}
 	return frames, nil
 }
+
+func generateLink(projectName string, dataSets []map[string]interface{}, start, end string) (string, error) {
+	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
+	if err != nil {
+		return "", err
+	}
+
+	rawQuery := u.Query()
+	rawQuery.Set("project", projectName)
+	rawQuery.Set("Grafana_deeplink", "true")
+
+	pageState := map[string]interface{}{
+		"xyChart": map[string]interface{}{
+			"constantLines":     []string{},
+			"dataSets":          dataSets,
+			"timeshiftDuration": "0s",
+			"y1Axis": map[string]string{
+				"label": "y1Axis",
+				"scale": "LINEAR",
+			},
+		},
+		"timeSelection": map[string]string{
+			"timeRange": "custom",
+			"start":     start,
+			"end":       end,
+		},
+	}
+
+	blob, err := json.Marshal(pageState)
+	if err != nil {
+		return "", err
+	}
+
+	rawQuery.Set("pageState", string(blob))
+	u.RawQuery = rawQuery.Encode()
+
+	accountChooserURL, err := url.Parse("https://accounts.google.com/AccountChooser")
+	if err != nil {
+		return "", err
+	}
+	accountChooserQuery := accountChooserURL.Query()
+	accountChooserQuery.Set("continue", u.String())
+	accountChooserURL.RawQuery = accountChooserQuery.Encode()
+
+	return accountChooserURL.String(), nil
+}

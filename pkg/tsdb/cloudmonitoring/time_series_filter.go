@@ -2,7 +2,6 @@ package cloudmonitoring
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -118,69 +117,35 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
 			filter = fmt.Sprintf(`resource.type="%s" %s`, resourceType, filter)
 		}
 	}
-
-	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
-	if err != nil {
-		slog.Error("Failed to generate deep link: unable to parse metrics explorer URL", "ProjectName",
-			timeSeriesFilter.parameters.ProjectName, "query", timeSeriesFilter.refID)
-		return ""
-	}
-
-	rawQuery := u.Query()
-	rawQuery.Set("project", timeSeriesFilter.parameters.ProjectName)
-	rawQuery.Set("Grafana_deeplink", "true")
-
-	pageState := map[string]interface{}{
-		"xyChart": map[string]interface{}{
-			"constantLines": []string{},
-			"dataSets": []map[string]interface{}{
-				{
-					"timeSeriesFilter": map[string]interface{}{
-						"aggregations":           []string{},
-						"crossSeriesReducer":     timeSeriesFilter.params.Get("aggregation.crossSeriesReducer"),
-						"filter":                 filter,
-						"groupByFields":          timeSeriesFilter.params["aggregation.groupByFields"],
-						"minAlignmentPeriod":     strings.TrimPrefix(timeSeriesFilter.params.Get("aggregation.alignmentPeriod"), "+"), // get rid of leading +
-						"perSeriesAligner":       timeSeriesFilter.params.Get("aggregation.perSeriesAligner"),
-						"secondaryGroupByFields": []string{},
-						"unitOverride":           "1",
-					},
-				},
+	dataSets := []map[string]interface{}{
+		{
+			"timeSeriesFilter": map[string]interface{}{
+				"aggregations":           []string{},
+				"crossSeriesReducer":     timeSeriesFilter.params.Get("aggregation.crossSeriesReducer"),
+				"filter":                 filter,
+				"groupByFields":          timeSeriesFilter.params["aggregation.groupByFields"],
+				"minAlignmentPeriod":     strings.TrimPrefix(timeSeriesFilter.params.Get("aggregation.alignmentPeriod"), "+"), // get rid of leading +
+				"perSeriesAligner":       timeSeriesFilter.params.Get("aggregation.perSeriesAligner"),
+				"secondaryGroupByFields": []string{},
+				"unitOverride":           "1",
 			},
-			"timeshiftDuration": "0s",
-			"y1Axis": map[string]string{
-				"label": "y1Axis",
-				"scale": "LINEAR",
-			},
-		},
-		"timeSelection": map[string]string{
-			"timeRange": "custom",
-			"start":     timeSeriesFilter.params.Get("interval.startTime"),
-			"end":       timeSeriesFilter.params.Get("interval.endTime"),
-		},
-	}
+		}}
 
-	blob, err := json.Marshal(pageState)
+	link, err := generateLink(
+		timeSeriesFilter.parameters.ProjectName,
+		dataSets,
+		timeSeriesFilter.params.Get("interval.startTime"),
+		timeSeriesFilter.params.Get("interval.endTime"),
+	)
 	if err != nil {
-		slog.Error("Failed to generate deep link", "pageState", pageState, "ProjectName", timeSeriesFilter.parameters.ProjectName,
-			"query", timeSeriesFilter.refID)
-		return ""
+		slog.Error(
+			"Failed to generate deep link: unable to parse metrics explorer URL",
+			"ProjectName", timeSeriesFilter.parameters.ProjectName,
+			"error", err,
+		)
 	}
 
-	rawQuery.Set("pageState", string(blob))
-	u.RawQuery = rawQuery.Encode()
-
-	accountChooserURL, err := url.Parse("https://accounts.google.com/AccountChooser")
-	if err != nil {
-		slog.Error("Failed to generate deep link: unable to parse account chooser URL", "ProjectName",
-			timeSeriesFilter.parameters.ProjectName, "query", timeSeriesFilter.refID)
-		return ""
-	}
-	accountChooserQuery := accountChooserURL.Query()
-	accountChooserQuery.Set("continue", u.String())
-	accountChooserURL.RawQuery = accountChooserQuery.Encode()
-
-	return accountChooserURL.String()
+	return link
 }
 
 func setDisplayNameAsFieldName(f *data.Field) {
