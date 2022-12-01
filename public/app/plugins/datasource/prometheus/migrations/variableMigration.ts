@@ -75,9 +75,9 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
 // migrate it back to a string with the correct varialbes in place
 export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVariableQuery): string {
   switch (QueryVariable.exprType) {
-    case 0: // LabelNames
+    case QueryType.LabelNames:
       return 'label_names()';
-    case 1: // LabelValues
+    case QueryType.LabelValues:
       if (QueryVariable.metric) {
         // labels endpoint match
         return `label_values(${QueryVariable.label},${QueryVariable.metric})`;
@@ -85,11 +85,11 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
         // old series match
         return `label_values(${QueryVariable.label})`;
       }
-    case 2: // MetricNames
+    case QueryType.MetricNames:
       return `metrics(${QueryVariable.metric})`;
-    case 3: // VarQueryResult
+    case QueryType.VarQueryResult:
       return `query_result(${QueryVariable.varQuery})`;
-    case 4: // SeriesQuery
+    case QueryType.SeriesQuery:
       return '' + QueryVariable.seriesQuery;
   }
 
