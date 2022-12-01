@@ -119,7 +119,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 color2: color2Hex + opacityString,
                 width: style.config.lineWidth,
               });
-              const LS = new LineString([coordinates![i], coordinates![i + 1]]);
+              const LS = new LineString([coordinates[i], coordinates[i + 1]]);
               flowStyle.setGeometry(LS);
               styles.push(flowStyle);
             }
