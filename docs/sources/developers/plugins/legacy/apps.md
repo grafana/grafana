@@ -15,8 +15,6 @@ App plugins are Grafana plugins that can bundle data source and panel plugins wi
 
 Data source and panel plugins will show up like normal plugins. The app pages will be available in the main menu.
 
-{{< figure class="float-right"  src="/static/img/docs/v3/app-in-main-menu.png" caption="App in Main Menu" >}}
-
 ## Enabling app plugins
 
 After installing an app, it has to be enabled before it shows up as a data source or panel. You can do that on the app page in the configuration tab.
