@@ -133,8 +133,21 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	}
 
 	if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagNestedFolders) {
-		// TODO filter out folders that user do not have permission to view
-		return s.store.GetChildren(ctx, *cmd)
+		children, err := s.store.GetChildren(ctx, *cmd)
+		if err != nil {
+			return nil, err
+		}
+
+		filtered := make([]*folder.Folder, 0, len(children))
+		for _, f := range children {
+
+			g := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+			if canView, err := g.CanView(); err != nil || canView {
+				filtered = append(filtered, f)
+			}
+		}
+
+		return filtered, nil
 	}
 
 	searchQuery := search.Query{
