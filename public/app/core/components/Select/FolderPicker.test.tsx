@@ -138,6 +138,26 @@ describe('FolderPicker', () => {
 
     expect(pickerOptions[0]).not.toHaveTextContent('General');
   });
+
+  it('should return the correct search results when typing in the select', async () => {
+    jest.spyOn(api, 'searchFolders').mockImplementation((query: string) => {
+      return Promise.resolve(
+        [
+          { title: 'Dash Test', uid: 'xMsQdBfWz' } as DashboardSearchHit,
+          { title: 'Dash Two', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
+        ].filter((dash) => dash.title.indexOf(query) > -1)
+      );
+    });
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    const onChangeFn = jest.fn();
+    render(<FolderPicker onChange={onChangeFn} />);
+
+    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    await userEvent.type(pickerContainer, 'Test');
+
+    expect(await screen.findByText('Dash Test')).toBeInTheDocument();
+    expect(screen.queryByText('Dash Two')).not.toBeInTheDocument();
+  });
 });
 
 describe('getInitialValues', () => {

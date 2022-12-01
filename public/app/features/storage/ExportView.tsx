@@ -61,7 +61,7 @@ interface ExporterInfo {
 
 const formats: Array<SelectableValue<string>> = [
   { label: 'GIT', value: 'git', description: 'Exports a fresh git repository' },
-  { label: 'Object store', value: 'objectStore', description: 'Export to the SQL based object store' },
+  { label: 'Entity store', value: 'entityStore', description: 'Export to the SQL based entity store' },
 ];
 
 interface Props {
@@ -173,9 +173,9 @@ export const ExportView = ({ onPathChange }: Props) => {
               onChange={(v) => setBody({ ...body!, format: v.value! })}
             />
           </Field>
-          {body?.format === 'objectStore' && !config.featureToggles.objectStore && (
+          {body?.format === 'entityStore' && !config.featureToggles.entityStore && (
             <div>
-              <Alert title="Missing feature flag">Enable the `objectStore` feature flag</Alert>
+              <Alert title="Missing feature flag">Enable the `entityStore` feature flag</Alert>
             </div>
           )}
           {body?.format === 'git' && (

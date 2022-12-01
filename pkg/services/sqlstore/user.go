@@ -2,7 +2,6 @@
 package sqlstore
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"sort"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -153,7 +151,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) 
 	return &user, createErr
 }
 
-func NotServiceAccountFilter(ss *SQLStore) string {
+func notServiceAccountFilter(ss *SQLStore) string {
 	return fmt.Sprintf("%s.is_service_account = %s",
 		ss.Dialect.Quote("user"),
 		ss.Dialect.BooleanStr(false))
@@ -190,70 +188,20 @@ func (o byOrgName) Less(i, j int) bool {
 	return o[i].Name < o[j].Name
 }
 
-func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
+func (ss *SQLStore) getUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = make([]*models.UserOrgDTO, 0)
 		sess := dbSess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
-		sess.Where(NotServiceAccountFilter(ss))
+		sess.Where(notServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		sess.OrderBy("org.name")
 		err := sess.Find(&query.Result)
 		sort.Sort(byOrgName(query.Result))
 		return err
 	})
-}
-
-// GetTeamsByUser is used by the Guardian when checking a users' permissions
-// TODO: use team.Service after user service is split
-func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		query.Result = make([]*models.TeamDTO, 0)
-
-		var sql bytes.Buffer
-		var params []interface{}
-		params = append(params, query.OrgId, query.UserId)
-
-		sql.WriteString(getTeamSelectSQLBase([]string{}))
-		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
-		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
-
-		if !ac.IsDisabled(ss.Cfg) {
-			acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
-			if err != nil {
-				return err
-			}
-			sql.WriteString(` and` + acFilter.Where)
-			params = append(params, acFilter.Args...)
-		}
-
-		err := sess.SQL(sql.String(), params...).Find(&query.Result)
-		return err
-	})
-}
-
-func getTeamMemberCount(filteredUsers []string) string {
-	if len(filteredUsers) > 0 {
-		return `(SELECT COUNT(*) FROM team_member
-			INNER JOIN ` + dialect.Quote("user") + ` ON team_member.user_id = ` + dialect.Quote("user") + `.id
-			WHERE team_member.team_id = team.id AND ` + dialect.Quote("user") + `.login NOT IN (?` +
-			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
-			`) AS member_count `
-	}
-
-	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
-}
-
-func getTeamSelectSQLBase(filteredUsers []string) string {
-	return `SELECT
-		team.id as id,
-		team.org_id,
-		team.name as name,
-		team.email as email, ` +
-		getTeamMemberCount(filteredUsers) +
-		` FROM team as team `
 }
 
 func UserDeletions() []string {
