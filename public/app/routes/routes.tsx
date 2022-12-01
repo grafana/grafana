@@ -15,6 +15,7 @@ import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
+import { getRoutes as getQueryLibraryRoutes } from 'app/features/query-library/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
@@ -330,9 +331,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')
-      ),
+      component: config.featureToggles.topnav
+        ? SafeDynamicImport(() => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage'))
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')
+          ),
     },
     {
       path: '/admin/users/create',
@@ -500,6 +503,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
+    ...getQueryLibraryRoutes(),
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
