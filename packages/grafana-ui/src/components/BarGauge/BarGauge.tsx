@@ -1,4 +1,5 @@
 // Library
+import { cx } from '@emotion/css';
 import React, { CSSProperties, PureComponent, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -23,6 +24,7 @@ import { VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
+import { clearButtonStyles } from '../Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -77,21 +79,27 @@ export class BarGauge extends PureComponent<Props> {
   };
 
   render() {
-    const { onClick, className } = this.props;
+    const { onClick, className, theme } = this.props;
     const { title } = this.props.value;
     const styles = getTitleStyles(this.props);
 
-    if (!title) {
+    if (onClick) {
       return (
-        <div style={styles.wrapper} onClick={onClick} className={className}>
+        <button
+          type="button"
+          style={styles.wrapper}
+          onClick={onClick}
+          className={cx(clearButtonStyles(theme), className)}
+        >
+          <div style={styles.title}>{title}</div>
           {this.renderBarAndValue()}
-        </div>
+        </button>
       );
     }
 
     return (
-      <div style={styles.wrapper} onClick={onClick} className={className}>
-        <div style={styles.title}>{title}</div>
+      <div style={styles.wrapper} className={className}>
+        {title && <div style={styles.title}>{title}</div>}
         {this.renderBarAndValue()}
       </div>
     );
