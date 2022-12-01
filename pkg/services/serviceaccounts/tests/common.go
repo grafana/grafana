@@ -162,7 +162,6 @@ func SetupMockAccesscontrol(t *testing.T,
 	return acmock
 }
 
-/* var _ serviceaccounts.Store = new(ServiceAccountsStoreMock) */
 var _ serviceaccounts.Service = new(ServiceAccountMock)
 
 type Calls struct {
