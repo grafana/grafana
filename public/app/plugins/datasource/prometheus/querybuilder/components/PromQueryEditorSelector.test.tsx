@@ -95,14 +95,7 @@ describe('PromQueryEditorSelector', () => {
     });
   });
 
-  it('Can enable raw query', async () => {
-    renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).toBeInTheDocument();
-    screen.getByLabelText('Raw query').click();
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-  });
-
-  it('Should show raw query by default', async () => {
+  it('Should show raw query', async () => {
     renderWithProps({
       editorMode: QueryEditorMode.Builder,
       expr: 'my_metric',

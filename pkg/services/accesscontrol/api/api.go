@@ -12,7 +12,8 @@ import (
 	"strconv"
 )
 
-func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service, features *featuremgmt.FeatureManager) *AccessControlAPI {
+func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
+	features *featuremgmt.FeatureManager) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
@@ -41,6 +42,10 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 		//rr.Get("/user/:userID/permissions", authorize(middleware.ReqSignedIn,
 		//	ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.getFilteredUserPermissions))
 		//}
+		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+			rr.Get("/users/permissions/search", authorize(middleware.ReqSignedIn,
+				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.SearchUsersPermissions))
+		}
 	})
 }
 
@@ -86,4 +91,31 @@ func (api *AccessControlAPI) getFilteredUserPermissions(c *models.ReqContext) re
 	}
 
 	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
+}
+
+// GET /api/access-control/users/permissions
+func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) response.Response {
+	searchOptions := ac.SearchOptions{
+		ActionPrefix: c.Query("actionPrefix"),
+		Action:       c.Query("action"),
+		Scope:        c.Query("scope"),
+	}
+
+	// Validate inputs
+	if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
+		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
+	}
+
+	// Compute metadata
+	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, searchOptions)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
+	}
+
+	permsByAction := map[int64]map[string][]string{}
+	for userID, userPerms := range permissions {
+		permsByAction[userID] = ac.GroupScopesByAction(userPerms)
+	}
+
+	return response.JSON(http.StatusOK, permsByAction)
 }

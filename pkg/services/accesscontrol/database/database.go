@@ -67,6 +67,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
+// SearchUsersPermissions returns the list of user permissions indexed by UserID
 func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, userFilter []int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	type UserRBACPermission struct {
 		UserID int64  `xorm:"user_id"`

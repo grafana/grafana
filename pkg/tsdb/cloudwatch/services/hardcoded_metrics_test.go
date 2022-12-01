@@ -19,7 +19,7 @@ func TestHardcodedMetrics_GetHardCodedDimensionKeysByNamespace(t *testing.T) {
 	t.Run("Should return keys if namespace exist", func(t *testing.T) {
 		resp, err := GetHardCodedDimensionKeysByNamespace("AWS/EC2")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"}, resp)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "AutoScalingGroupName"}, {Value: "ImageId"}, {Value: "InstanceId"}, {Value: "InstanceType"}}, resp)
 	})
 }
 
@@ -34,6 +34,6 @@ func TestHardcodedMetrics_GetHardCodedMetricsByNamespace(t *testing.T) {
 	t.Run("Should return metrics if namespace exist", func(t *testing.T) {
 		resp, err := GetHardCodedMetricsByNamespace("AWS/IoTAnalytics")
 		require.NoError(t, err)
-		assert.Equal(t, []resources.Metric{{Name: "ActionExecution", Namespace: "AWS/IoTAnalytics"}, {Name: "ActivityExecutionError", Namespace: "AWS/IoTAnalytics"}, {Name: "IncomingMessages", Namespace: "AWS/IoTAnalytics"}}, resp)
+		assert.Equal(t, []resources.ResourceResponse[resources.Metric]{{Value: resources.Metric{Name: "ActionExecution", Namespace: "AWS/IoTAnalytics"}}, {Value: resources.Metric{Name: "ActivityExecutionError", Namespace: "AWS/IoTAnalytics"}}, {Value: resources.Metric{Name: "IncomingMessages", Namespace: "AWS/IoTAnalytics"}}}, resp)
 	})
 }
