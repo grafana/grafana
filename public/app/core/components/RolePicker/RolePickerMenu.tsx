@@ -22,6 +22,7 @@ import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH } from './constants';
 enum GroupType {
   fixed = 'fixed',
   custom = 'custom',
+  plugin = 'plugin',
 }
 
 const BasicRoles = Object.values(OrgRole);
@@ -87,7 +88,29 @@ export const RolePickerMenu = ({
 
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
+  const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
   const optionGroups = getOptionGroups(options);
+
+  const rolesCollection = {
+    fixed: {
+      groupType: GroupType.fixed,
+      optionGroup: optionGroups.fixed,
+      renderedName: `Fixed roles`,
+      roles: fixedRoles,
+    },
+    custom: {
+      groupType: GroupType.custom,
+      optionGroup: optionGroups.custom,
+      renderedName: `Custom roles`,
+      roles: customRoles,
+    },
+    pluginRoles: {
+      groupType: GroupType.plugin,
+      optionGroup: optionGroups.plugin,
+      renderedName: `Plugin roles`,
+      roles: pluginRoles,
+    },
+  };
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];
@@ -307,8 +330,9 @@ export const RolePickerMenu = ({
   );
 };
 
-const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
+const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') && !option.name.startsWith('plugins:');
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
+const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
 
 const getOptionGroups = (options: Role[]) => {
   const groupsMap: { [key: string]: Role[] } = {};
@@ -342,9 +366,16 @@ const getOptionGroups = (options: Role[]) => {
     });
   }
 
+  const pluginGroups: Array<{
+    name: string;
+    value: string;
+    options: Role[];
+  }> = [];
+
   return {
     fixed: groups.sort((a, b) => a.name.localeCompare(b.name)),
     custom: customGroups.sort((a, b) => a.name.localeCompare(b.name)),
+    plugin: pluginGroups.sort((a, b) => a.name.localeCompare(b.name)),
   };
 };
 
