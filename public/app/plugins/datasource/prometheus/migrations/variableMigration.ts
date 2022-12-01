@@ -30,14 +30,14 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
       return {
         ...queryBase,
         exprType: QueryType.LabelValues,
-        label: labelValues[1],
-        metric: labelValues[2],
+        label: labelValues[2],
+        metric: labelValues[1],
       };
     } else {
       return {
         ...queryBase,
         exprType: QueryType.LabelValues,
-        label: labelValues[1],
+        label: labelValues[2],
       };
     }
   }
@@ -79,10 +79,8 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
       return 'label_names()';
     case QueryType.LabelValues:
       if (QueryVariable.metric) {
-        // labels endpoint match
-        return `label_values(${QueryVariable.label},${QueryVariable.metric})`;
+        return `label_values(${QueryVariable.metric},${QueryVariable.label})`;
       } else {
-        // old series match
         return `label_values(${QueryVariable.label})`;
       }
     case QueryType.MetricNames:
