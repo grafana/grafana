@@ -194,13 +194,10 @@ func (sa *ServiceAccountsService) HideApiKeysTab(ctx context.Context, orgID int6
 // MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
 	return sa.store.MigrateApiKey(ctx, orgID, keyID)
-
 }
 func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
 	return sa.store.MigrateApiKeysToServiceAccounts(ctx, orgID)
-
 }
 func (sa *ServiceAccountsService) RevertApiKey(ctx context.Context, orgID, keyID int64) error {
 	return sa.store.RevertApiKey(ctx, orgID, keyID)
-
 }
