@@ -138,7 +138,6 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	}
 
 	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
-	fmt.Printf("serviceAccount: %v", serviceAccount)
 	switch {
 	case errors.Is(err, database.ErrServiceAccountAlreadyExists):
 		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
