@@ -1,9 +1,8 @@
-import React from 'react';
 import { Observable, of } from 'rxjs';
 
 import { SceneComponentProps } from '../../core/types';
 import { VariableDependencyConfig } from '../VariableDependencyConfig';
-import { VariableValueSelect } from '../components/VariableValueSelect';
+import { renderSelectForVariable } from '../components/VariableValueSelect';
 import { VariableValueOption } from '../types';
 
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from './MultiValueVariable';
@@ -46,6 +45,6 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {
-    return <VariableValueSelect model={model} />;
+    return renderSelectForVariable(model);
   };
 }
