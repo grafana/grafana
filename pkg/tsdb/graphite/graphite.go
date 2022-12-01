@@ -122,7 +122,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	var result = backend.QueryDataResponse{}
 	if len(emptyQueries) != 0 {
-		logger.Error("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
+		logger.Warn("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
 		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
 		if len(emptyQueries) == len(req.Queries) {
 			return &result, errors.New("no query target found for the alert rule")
