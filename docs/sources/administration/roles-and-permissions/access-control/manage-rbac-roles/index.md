@@ -309,7 +309,29 @@ You can also change basic roles' permissions using the API. Refer to the [RBAC H
 
 ## Reset basic roles to their default
 
-This section describes how to reset the basic roles to their default:
+This section describes how to reset the basic roles to their default.
+
+You have two options to reset the basic roles permissions to their default.
+
+### Use the configuration option
+
+> **Note**: Available as of Grafana Enterprise 9.4.
+
+> Warning: If this option is left to true, permissions will be reset on every boot.
+
+Use the [reset_basic_roles]({{< relref "../configure-rbac/#configure-rbac-in-grafana" >}}) option to reset
+basic roles permissions to their default on Grafana instance boot up.
+
+1. Open you configuration file and update the rbac section as follow:
+
+```bash
+[rbac]
+reset_basic_roles = true
+```
+
+### Use the http endpoint
+
+An alternative to the configuration option is to use the HTTP endpoint.
 
 1. Open the YAML configuration file and locate the `roles` section.
 
@@ -327,7 +349,7 @@ This section describes how to reset the basic roles to their default:
        permissions:
          # Permission allowing to reset basic roles
          - action: 'roles:write'
-          scope: 'permissions:type:escalate'
+           scope: 'permissions:type:escalate'
    ```
 
 1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#reset-basic-roles-to-their-default" >}}) for more details.

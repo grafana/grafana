@@ -132,7 +132,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 			}
 			_, err = s.store.Insert(ctx, preference)
 			if err == nil {
-				err = s.saveEntitty(ctx, preference)
+				err = s.saveEntity(ctx, preference)
 			}
 			if err != nil {
 				return err
@@ -159,7 +159,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	}
 	err = s.store.Update(ctx, preference)
 	if err == nil {
-		err = s.saveEntitty(ctx, preference)
+		err = s.saveEntity(ctx, preference)
 	}
 	return err
 }
@@ -247,7 +247,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		_, err = s.store.Insert(ctx, preference)
 	}
 	if err == nil {
-		err = s.saveEntitty(ctx, preference)
+		err = s.saveEntity(ctx, preference)
 	}
 	return err
 }
@@ -272,7 +272,7 @@ func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
 }
 
-func (s *Service) saveEntitty(ctx context.Context, p *pref.Preference) error {
+func (s *Service) saveEntity(ctx context.Context, p *pref.Preference) error {
 	if s.entitystore == nil {
 		return nil
 	}

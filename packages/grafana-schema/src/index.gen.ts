@@ -99,3 +99,9 @@ export type {
 
 // Raw generated default consts from preferences kind.
 export { defaultNavbarPreference } from './raw/preferences/x/preferences_types.gen';
+
+// Raw generated types from Team kind.
+export type {
+  Team,
+  Permission
+} from './raw/team/x/team_types.gen';
