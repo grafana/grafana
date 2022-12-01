@@ -362,7 +362,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, userID, orgID int64
 	for _, builtin := range roles {
 		if basicRole, ok := s.roles[builtin]; ok {
 			for _, permission := range basicRole.Permissions {
-				if PermissionMatchesOptions(permission, searchOptions) {
+				if PermissionMatchesSearchOptions(permission, searchOptions) {
 					permissions = append(permissions, permission)
 				}
 			}
@@ -399,7 +399,7 @@ func (s *Service) searchUserPermissionsFromCache(userID, orgID int64, searchOpti
 	s.log.Debug("using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)
 	for _, permission := range permissions.([]accesscontrol.Permission) {
-		if PermissionMatchesOptions(permission, searchOptions) {
+		if PermissionMatchesSearchOptions(permission, searchOptions) {
 			filteredPermissions = append(filteredPermissions, permission)
 		}
 	}
@@ -407,7 +407,7 @@ func (s *Service) searchUserPermissionsFromCache(userID, orgID int64, searchOpti
 	return filteredPermissions, true
 }
 
-func PermissionMatchesOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
+func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
 	if searchOptions.Scope != "" && permission.Scope != searchOptions.Scope {
 		return false
 	}
