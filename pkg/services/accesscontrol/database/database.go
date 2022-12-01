@@ -35,6 +35,11 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			INNER JOIN role ON role.id = permission.role_id
 		` + filter
 
+		if query.RolePrefix != "" {
+			q += " WHERE role.name LIKE ?"
+			params = append(params, query.RolePrefix+"%")
+		}
+
 		if len(query.Actions) > 0 {
 			q += " WHERE permission.action IN("
 			if len(query.Actions) > 0 {

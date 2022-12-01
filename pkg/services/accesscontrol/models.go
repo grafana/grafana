@@ -215,11 +215,12 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID   int64 `json:"-"`
-	UserID  int64 `json:"userId"`
-	Roles   []string
-	Actions []string
-	TeamIDs []int64
+	OrgID      int64
+	UserID     int64
+	Roles      []string
+	Actions    []string
+	TeamIDs    []int64
+	RolePrefix string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
