@@ -8,7 +8,6 @@ import {
   Alert,
   Button,
   CollapsableSection,
-  Collapse,
   Icon,
   LoadingPlaceholder,
   PanelChromeLoadingIndicator,
