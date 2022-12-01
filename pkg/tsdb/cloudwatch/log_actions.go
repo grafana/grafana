@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -17,6 +18,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const (
@@ -40,6 +42,7 @@ type LogQueryJson struct {
 	EndTime            *int64
 	LogGroupName       string
 	LogGroupNames      []string
+	LogGroups          []suggestData
 	LogGroupNamePrefix string
 	LogStreamName      string
 	StartFromHead      bool
@@ -224,15 +227,31 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		// StartTime is effectively floored while here EndTime is ceiled and so we should get the logs user wants
 		// and also a little bit more but as CW logs accept only seconds as integers there is not much to do about
 		// that.
-		EndTime:       aws.Int64(int64(math.Ceil(float64(endTime.UnixNano()) / 1e9))),
-		LogGroupNames: aws.StringSlice(parameters.LogGroupNames),
-		QueryString:   aws.String(modifiedQueryString),
+		EndTime:     aws.Int64(int64(math.Ceil(float64(endTime.UnixNano()) / 1e9))),
+		QueryString: aws.String(modifiedQueryString),
+	}
+
+	if e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying) {
+		if parameters.LogGroups != nil && len(parameters.LogGroups) > 0 {
+			var logGroupIdentifiers []string
+			for _, lg := range parameters.LogGroups {
+				arn := lg.Value
+				// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
+				logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
+			}
+			startQueryInput.LogGroupIdentifiers = aws.StringSlice(logGroupIdentifiers)
+		}
+	}
+
+	if startQueryInput.LogGroupIdentifiers == nil {
+		startQueryInput.LogGroupNames = aws.StringSlice(parameters.LogGroupNames)
 	}
 
 	if parameters.Limit != nil {
 		startQueryInput.Limit = aws.Int64(*parameters.Limit)
 	}
 
+	logger.Debug("calling startquery with context with input", "input", startQueryInput)
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 

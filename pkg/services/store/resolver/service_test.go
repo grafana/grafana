@@ -45,18 +45,18 @@ func TestResolver(t *testing.T) {
 	pluginStore := plugins.FakePluginStore{
 		PluginList: []plugins.PluginDTO{p1, p2, p3},
 	}
-	provider := ProvideObjectReferenceResolver(ds, pluginStore)
+	provider := ProvideEntityReferenceResolver(ds, pluginStore)
 
 	scenarios := []struct {
 		name   string
-		given  *models.ObjectExternalReference
+		given  *models.EntityExternalReference
 		expect ResolutionInfo
 		err    string
 		ctx    context.Context
 	}{
 		{
 			name: "Missing datasource without type",
-			given: &models.ObjectExternalReference{
+			given: &models.EntityExternalReference{
 				Kind: models.StandardKindDataSource,
 				UID:  "xyz",
 			},
@@ -65,7 +65,7 @@ func TestResolver(t *testing.T) {
 		},
 		{
 			name: "OK datasource",
-			given: &models.ObjectExternalReference{
+			given: &models.EntityExternalReference{
 				Kind: models.StandardKindDataSource,
 				Type: "influx",
 				UID:  "influx-uid",
@@ -75,7 +75,7 @@ func TestResolver(t *testing.T) {
 		},
 		{
 			name: "Get the default datasource",
-			given: &models.ObjectExternalReference{
+			given: &models.EntityExternalReference{
 				Kind: models.StandardKindDataSource,
 			},
 			expect: ResolutionInfo{
@@ -87,7 +87,7 @@ func TestResolver(t *testing.T) {
 		},
 		{
 			name: "Get the default datasource (with type)",
-			given: &models.ObjectExternalReference{
+			given: &models.EntityExternalReference{
 				Kind: models.StandardKindDataSource,
 				Type: "influx",
 			},
@@ -99,7 +99,7 @@ func TestResolver(t *testing.T) {
 		},
 		{
 			name: "Lookup by name",
-			given: &models.ObjectExternalReference{
+			given: &models.EntityExternalReference{
 				Kind: models.StandardKindDataSource,
 				UID:  "Influx2",
 			},

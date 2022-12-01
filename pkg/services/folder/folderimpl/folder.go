@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -298,8 +299,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// (legacy) folder.
 			logger.Error("error saving folder to nested folder store", "error", err)
 			// do not shallow create error if the legacy folder delete fails
-			deleteErr := s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.UID, OrgID: cmd.OrgID, ForceDeleteRules: true, SignedInUser: user})
-			if deleteErr != nil {
+			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{
+				Id:    createdFolder.ID,
+				OrgId: createdFolder.OrgID,
+			}); deleteErr != nil {
 				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
 			}
 			return folder.FromDashboard(dash), err
@@ -414,6 +417,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		err := s.Delete(ctx, cmd)
 		if err != nil {
 			logger.Error("the delete folder on folder table failed with err: ", "error", err)
+			return err
 		}
 	}
 
@@ -459,6 +463,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -477,13 +482,17 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 	for _, f := range folders {
-		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules})
+		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
+		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
+			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
 			return err
 		}
 	}
+	logger.Info("deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
+		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return err
 	}
 	return nil
@@ -517,7 +526,7 @@ func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFold
 func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string) error {
 	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: parentUID, OrgID: orgID})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get parents: %w", err)
 	}
 
 	if len(ancestors) == folder.MaxNestedFolderDepth {

@@ -1,85 +1,15 @@
+// DO NOT ADD METHODS TO THIS FILES. SQLSTORE IS DEPRECATED AND WILL BE REMOVED.
 package sqlstore
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
-	"xorm.io/xorm"
 )
 
-// MainOrgName is the name of the main organization.
-const MainOrgName = "Main Org."
-
-func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error) {
-	// check if org name is taken
-	var org models.Org
-	exists, err := sess.Where("name=?", name).Get(&org)
-
-	if err != nil {
-		return false, nil
-	}
-
-	if exists && existingId != org.Id {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, engine *xorm.Engine) (models.Org, error) {
-	orga := models.Org{
-		Name:    name,
-		Created: time.Now(),
-		Updated: time.Now(),
-	}
-	if err := ss.inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
-		if isNameTaken, err := isOrgNameTaken(name, 0, sess); err != nil {
-			return err
-		} else if isNameTaken {
-			return models.ErrOrgNameTaken
-		}
-
-		if _, err := sess.Insert(&orga); err != nil {
-			return err
-		}
-
-		user := models.OrgUser{
-			OrgId:   orga.Id,
-			UserId:  userID,
-			Role:    org.RoleAdmin,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		_, err := sess.Insert(&user)
-
-		sess.publishAfterCommit(&events.OrgCreated{
-			Timestamp: orga.Created,
-			Id:        orga.Id,
-			Name:      orga.Name,
-		})
-
-		return err
-	}, 0); err != nil {
-		return orga, err
-	}
-
-	return orga, nil
-}
-
-func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
-	org, err := ss.createOrg(ctx, cmd.Name, cmd.UserId, ss.engine)
-	if err != nil {
-		return err
-	}
-
-	cmd.Result = org
-	return nil
-}
+const mainOrgName = "Main Org."
 
 func verifyExistingOrg(sess *DBSession, orgId int64) error {
 	var org models.Org
@@ -111,7 +41,7 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 				ss.Cfg.AutoAssignOrgId)
 		}
 
-		org.Name = MainOrgName
+		org.Name = mainOrgName
 		org.Id = int64(ss.Cfg.AutoAssignOrgId)
 	} else {
 		org.Name = orgName
