@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
+import debounce from 'debounce-promise';
 import React, { useState, useEffect, useMemo, useCallback, FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
