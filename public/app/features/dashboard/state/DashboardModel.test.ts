@@ -294,13 +294,26 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = createDashboardModelFixture({
+        schemaVersion: 30,
         annotations: {
-          list: [],
+          list: [
+            {
+              datasource: { uid: 'fake-uid', type: 'prometheus' },
+              showIn: 0,
+              name: 'Fake annotation',
+              type: 'dashboard',
+              iconColor: 'rgba(0, 211, 255, 1)',
+              enable: true,
+              hide: false,
+              builtIn: 0,
+            },
+          ],
         },
       });
     });
 
     it('should show submmenu', () => {
+      console.log(model.annotations.list);
       expect(model.isSubMenuVisible()).toBe(true);
     });
   });
