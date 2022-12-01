@@ -114,42 +114,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		"target":        []string{},
 	}
 
-	// Calculate and get the last target of Graphite Request
-	emptyQueries := make([]string, 0)
-	origRefIds := make(map[string]string, 0)
-	for _, query := range req.Queries {
-		model, err := simplejson.NewJson(query.JSON)
-		if err != nil {
-			return nil, err
-		}
-		logger.Debug("graphite", "query", model)
-		currTarget := ""
-		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
-			currTarget = fullTarget
-		} else {
-			currTarget = model.Get(TargetModelField).MustString()
-		}
-		if currTarget == "" {
-			logger.Debug("graphite", "empty query target", model)
-			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
-			continue
-		}
-		target := fixIntervalFormat(currTarget)
-
-		// This is a somewhat inglorious way to ensure we can associate results with the right query
-		// By using aliasSub, we can get back a resolved series Target name (accounting for other aliases)
-		// And the original refId. Since there are no restrictions on refId, we need to format it to make it
-		// easy to find in the response
-		formattedRefId := strings.ReplaceAll(query.RefID, " ", "_")
-		origRefIds[formattedRefId] = query.RefID
-		// This will set the alias to `<resolvedSeriesName> <formattedRefId>`
-		// e.g. aliasSub(alias(myquery, "foo"), "(^.*$)", "\1 A") will return "foo A"
-		target = fmt.Sprintf("aliasSub(%s,\"(^.*$)\",\"\\1 %s\")", target, formattedRefId)
-		formData["target"] = append(formData["target"], target)
+	// Convert datasource query to graphite target request
+	targetList, emptyQueries, origRefIds, err := s.processQueries(logger, req.Queries)
+	if err != nil {
+		return nil, err
 	}
 
 	var result = backend.QueryDataResponse{}
-
 	if len(emptyQueries) != 0 {
 		logger.Error("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
 		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
@@ -157,6 +128,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return &result, errors.New("no query target found for the alert rule")
 		}
 	}
+	formData["target"] = targetList
 
 	if setting.Env == setting.Dev {
 		logger.Debug("Graphite request", "params", formData)
@@ -209,6 +181,48 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
+// processQueries converts each datasource query to a graphite query target. It returns the list of
+// targets, a list of invalid queries, and a mapping of formatted refIds (used in the target query)
+// to original query refIds, later used to associate ressponses with the original queries
+func (s *Service) processQueries(logger log.Logger, queries []backend.DataQuery) ([]string, []string, map[string]string, error) {
+	emptyQueries := make([]string, 0)
+	origRefIds := make(map[string]string, 0)
+	targets := make([]string, 0)
+
+	for _, query := range queries {
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		logger.Debug("graphite", "query", model)
+		currTarget := ""
+		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
+			currTarget = fullTarget
+		} else {
+			currTarget = model.Get(TargetModelField).MustString()
+		}
+		if currTarget == "" {
+			logger.Debug("graphite", "empty query target", model)
+			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
+			continue
+		}
+		target := fixIntervalFormat(currTarget)
+
+		// This is a somewhat inglorious way to ensure we can associate results with the right query
+		// By using aliasSub, we can get back a resolved series Target name (accounting for other aliases)
+		// And the original refId. Since there are no restrictions on refId, we need to format it to make it
+		// easy to find in the response
+		formattedRefId := strings.ReplaceAll(query.RefID, " ", "_")
+		origRefIds[formattedRefId] = query.RefID
+		// This will set the alias to `<resolvedSeriesName> <formattedRefId>`
+		// e.g. aliasSub(alias(myquery, "foo"), "(^.*$)", "\1 A") will return "foo A"
+		target = fmt.Sprintf("aliasSub(%s,\"(^.*$)\",\"\\1 %s\")", target, formattedRefId)
+		targets = append(targets, target)
+	}
+
+	return targets, emptyQueries, origRefIds, nil
+}
+
 func (s *Service) parseResponse(logger log.Logger, res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -248,7 +262,12 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 		// series.Target will be in the format <resolvedSeriesName> <formattedRefId>
 		ls := strings.LastIndex(series.Target, " ")
 		target := series.Target[:ls]
-		refId := origRefIds[series.Target[ls+1:]]
+		formattedRefId := series.Target[ls+1:]
+		refId, ok := origRefIds[formattedRefId]
+		if !ok {
+			// fallback - shouldn't happen except for in tests
+			refId = formattedRefId
+		}
 
 		for _, dataPoint := range series.DataPoints {
 			var timestamp, value, err = parseDataTimePoint(dataPoint)

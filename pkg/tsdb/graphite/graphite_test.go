@@ -55,20 +55,20 @@ func TestFixIntervalFormat(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "target",
+				"target": "target A",
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
 		]`
 		a := 50.0
 		b := 100.0
-		expectedFrame := data.NewFrame("target",
+		expectedFrame := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		)
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse)
+		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -82,14 +82,14 @@ func TestFixIntervalFormat(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "target",
+				"target": "target A",
 				"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
 		]`
 		a := 50.0
 		b := 100.0
-		expectedFrame := data.NewFrame("target",
+		expectedFrame := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
@@ -101,7 +101,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse)
+		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
