@@ -134,7 +134,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, resp)
-		require.Nil(t, resp.Entity)
+		require.Nil(t, resp.GRN)
 	})
 
 	t.Run("should be able to read persisted objects", func(t *testing.T) {
@@ -162,9 +162,9 @@ func TestIntegrationEntityServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, readResp.SummaryJson)
-		require.NotNil(t, readResp.Entity)
+		require.NotNil(t, readResp)
 
-		foundGRN := readResp.Entity.GRN
+		foundGRN := readResp.GRN
 		require.NotNil(t, foundGRN)
 		require.Equal(t, testCtx.user.OrgID, foundGRN.TenantId) // orgId becomes the tenant id when not set
 		require.Equal(t, grn.Kind, foundGRN.Kind)
@@ -179,7 +179,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			body:         body,
 			version:      &firstVersion,
 		}
-		requireEntityMatch(t, readResp.Entity, objectMatcher)
+		requireEntityMatch(t, readResp, objectMatcher)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
 			GRN:             grn,
@@ -194,7 +194,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			WithBody: true,
 		})
 		require.NoError(t, err)
-		require.Nil(t, readRespAfterDelete.Entity)
+		require.Nil(t, readRespAfterDelete.GRN)
 	})
 
 	t.Run("should be able to update an object", func(t *testing.T) {
@@ -258,7 +258,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, readRespLatest.SummaryJson)
-		requireEntityMatch(t, readRespLatest.Entity, latestMatcher)
+		requireEntityMatch(t, readRespLatest, latestMatcher)
 
 		readRespFirstVer, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
 			GRN:      grn,
@@ -268,8 +268,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Nil(t, readRespFirstVer.SummaryJson)
-		require.NotNil(t, readRespFirstVer.Entity)
-		requireEntityMatch(t, readRespFirstVer.Entity, rawEntityMatcher{
+		require.NotNil(t, readRespFirstVer)
+		requireEntityMatch(t, readRespFirstVer, rawEntityMatcher{
 			grn:          grn,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
