@@ -41,7 +41,6 @@ func ProvideServiceAccountsService(
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
-	// serviceAccountsStore store,
 	store *sqlstore.SQLStore,
 	apiKeyService apikey.Service,
 	kvStore kvstore.KVStore,
