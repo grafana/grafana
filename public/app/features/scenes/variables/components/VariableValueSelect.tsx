@@ -1,11 +1,9 @@
 import { isArray } from 'lodash';
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { MultiSelect, Select } from '@grafana/ui';
 
 import { SceneComponentProps } from '../../core/types';
-import { VariableValueSingle } from '../types';
 import { MultiValueVariable } from '../variants/MultiValueVariable';
 
 export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVariable>) {
@@ -31,14 +29,13 @@ export function VariableValueSelect({ model }: SceneComponentProps<MultiValueVar
 export function VariableValueSelectMulti({ model }: SceneComponentProps<MultiValueVariable>) {
   const { value, key, loading } = model.useState();
   const arrayValue = isArray(value) ? value : [value];
-  const [selectValue, setSelectValue] = React.useState(arrayValue);
 
   return (
     <MultiSelect
       id={key}
       placeholder="Select value"
       width="auto"
-      value={selectValue}
+      value={arrayValue}
       tabSelectsValue={false}
       allowCustomValue
       isLoading={loading}
@@ -46,11 +43,11 @@ export function VariableValueSelectMulti({ model }: SceneComponentProps<MultiVal
       closeMenuOnSelect={false}
       isClearable={true}
       onOpenMenu={() => {}}
-      onBlur={() => {
-        model.changeValueTo(selectValue);
-      }}
-      onChange={(newValue: Array<SelectableValue<VariableValueSingle>>) => {
-        setSelectValue(newValue.map((v) => v.value!));
+      onChange={(newValue) => {
+        model.changeValueTo(
+          newValue.map((v) => v.value!),
+          newValue.map((v) => v.label!)
+        );
       }}
     />
   );

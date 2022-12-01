@@ -150,6 +150,24 @@ describe('MultiValueVariable', () => {
     });
   });
 
+  describe('changeValueTo', () => {
+    it('Should set default empty state to all value if defaultToAll multi', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        isMulti: true,
+        defaultToAll: true,
+        optionsToReturn: [],
+        value: ['1'],
+        text: ['A'],
+      });
+
+      variable.changeValueTo([]);
+
+      expect(variable.state.value).toEqual([ALL_VARIABLE_VALUE]);
+    });
+  });
+
   describe('getValue and getValueText', () => {
     it('GetValueText should return text', async () => {
       const variable = new ExampleVariable({

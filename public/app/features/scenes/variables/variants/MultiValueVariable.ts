@@ -75,13 +75,9 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
       // If no valid values pick the first option
       if (validValues.length === 0) {
-        if (this.state.defaultToAll) {
-          stateUpdate.value = [ALL_VARIABLE_VALUE];
-          stateUpdate.text = [ALL_VARIABLE_TEXT];
-        } else {
-          stateUpdate.value = [options[0].value];
-          stateUpdate.text = [options[0].label];
-        }
+        const defaultState = this.getDefaultMultiState(options);
+        stateUpdate.value = defaultState.value;
+        stateUpdate.text = defaultState.text;
       }
       // We have valid values, if it's different from current valid values update current values
       else if (!isEqual(validValues, this.state.value)) {
@@ -145,22 +141,40 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
+  private getDefaultMultiState(options: VariableValueOption[]) {
+    if (this.state.defaultToAll) {
+      return { value: [ALL_VARIABLE_VALUE], text: [ALL_VARIABLE_TEXT] };
+    } else {
+      return { value: [options[0].value], text: [options[0].label] };
+    }
+  }
+
   /**
    * Change the value and publish SceneVariableValueChangedEvent event
    */
   public changeValueTo(value: VariableValue, text?: VariableValue) {
-    if (value !== this.state.value || text !== this.state.text) {
-      if (!text) {
-        if (Array.isArray(value)) {
-          text = value.map((v) => this.findLabelTextForValue(v));
-        } else {
-          text = this.findLabelTextForValue(value);
-        }
-      }
-
-      this.setStateHelper({ value, text, loading: false });
-      this.publishEvent(new SceneVariableValueChangedEvent(this), true);
+    // Igore if there is no change
+    if (value === this.state.value && text === this.state.text) {
+      return;
     }
+
+    if (!text) {
+      if (Array.isArray(value)) {
+        text = value.map((v) => this.findLabelTextForValue(v));
+      } else {
+        text = this.findLabelTextForValue(value);
+      }
+    }
+
+    // If we are a multi valued variable is cleared (empty array) we need to set the default empty state
+    if (Array.isArray(value) && value.length === 0) {
+      const state = this.getDefaultMultiState(this.state.options);
+      value = state.value;
+      text = state.text;
+    }
+
+    this.setStateHelper({ value, text, loading: false });
+    this.publishEvent(new SceneVariableValueChangedEvent(this), true);
   }
 
   private findLabelTextForValue(value: VariableValueSingle): VariableValueSingle {
