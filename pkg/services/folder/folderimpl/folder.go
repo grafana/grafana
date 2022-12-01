@@ -460,6 +460,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
