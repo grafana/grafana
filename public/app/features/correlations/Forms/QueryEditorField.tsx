@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { DataQuery, getDefaultTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { createQueryRunner, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   Field,
   LoadingPlaceholder,
@@ -15,6 +15,10 @@ import {
   FieldValidationMessage,
   useStyles2,
 } from '@grafana/ui';
+
+import { buildQueryTransaction } from '../../../core/utils/explore';
+import { ExploreId } from '../../../types';
+import { runRequest } from '../../query/state/runRequest';
 
 interface Props {
   dsUid?: string;
@@ -36,21 +40,6 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
 
   const style = useStyles2(getStyle);
 
-  const runner = useMemo(createQueryRunner, []);
-
-  useEffect(() => {
-    runner.get().subscribe((panelData) => {
-      if (!panelData || panelData.state === 'Error') {
-        setIsValidQuery(false);
-      } else if (panelData.state === 'Done') {
-        setIsValidQuery(true);
-      } else {
-        setIsValidQuery(undefined);
-      }
-      return runner.destroy;
-    });
-  }, [runner]);
-
   const {
     value: datasource,
     loading: dsLoading,
@@ -64,14 +53,17 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   const QueryEditor = datasource?.components?.QueryEditor;
 
   const handleValidation = (value: DataQuery) => {
+    const transaction = buildQueryTransaction(ExploreId.left, [value], {}, getDefaultTimeRange(), false, 'utc');
+
     if (datasource) {
-      runner.run({
-        datasource: datasource,
-        queries: [value],
-        timezone: 'utc',
-        timeRange: getDefaultTimeRange(),
-        maxDataPoints: 100,
-        minInterval: null,
+      runRequest(datasource, transaction.request).subscribe((panelData) => {
+        if (!panelData || panelData.state === 'Error') {
+          setIsValidQuery(false);
+        } else if (panelData.state === 'Done') {
+          setIsValidQuery(true);
+        } else {
+          setIsValidQuery(undefined);
+        }
       });
     }
   };
