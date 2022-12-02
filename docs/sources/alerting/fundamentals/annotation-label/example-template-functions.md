@@ -98,13 +98,13 @@ weight: 130
 
 **TemplateString** `{{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`
 
-**Expected** `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]`
+**Expected** `/explore?left={"datasource":"gdev-prometheus","queries":[{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`
 
 ### tableLink
 
 **TemplateString** `{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`
 
-**Expected** `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]`
+**Expected** `/explore?left={"datasource":"gdev-prometheus","queries":[{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`
 
 ## args
 
