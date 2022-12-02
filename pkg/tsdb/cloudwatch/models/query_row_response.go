@@ -12,14 +12,10 @@ type QueryRowResponse struct {
 	StatusCode             string
 }
 
-func NewQueryRowResponse() QueryRowResponse {
+func NewQueryRowResponse(errors map[string]bool) QueryRowResponse {
 	return QueryRowResponse{
-		partialDataSet: make(map[string]*cloudwatch.MetricDataResult),
-		ErrorCodes: map[string]bool{
-			MaxMetricsExceeded:         false,
-			MaxQueryTimeRangeExceeded:  false,
-			MaxQueryResultsExceeded:    false,
-			MaxMatchingResultsExceeded: false},
+		partialDataSet:         make(map[string]*cloudwatch.MetricDataResult),
+		ErrorCodes:             errors,
 		HasArithmeticError:     false,
 		ArithmeticErrorMessage: "",
 		Metrics:                []*cloudwatch.MetricDataResult{},
