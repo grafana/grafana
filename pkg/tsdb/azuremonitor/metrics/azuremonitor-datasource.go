@@ -107,6 +107,7 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		}
 
 		azureURL := BuildSubscriptionMetricsURL(queryJSONModel.Subscription)
+		filterInBody := true
 		if azJSONModel.Region != "" {
 			params.Add("region", azJSONModel.Region)
 		} else {
@@ -121,6 +122,8 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 				ResourceName:        azJSONModel.ResourceName,
 			}
 			azureURL = ub.BuildMetricsURL()
+			// POST requests are only supported at the subscription level
+			filterInBody = false
 		}
 
 		// old model
@@ -174,15 +177,22 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			logger.Debug("Azuremonitor request", "params", params)
 		}
 
-		azureMonitorQueries = append(azureMonitorQueries, &types.AzureMonitorQuery{
+		query := &types.AzureMonitorQuery{
 			URL:       azureURL,
 			Target:    target,
 			Params:    params,
 			RefID:     query.RefID,
 			Alias:     alias,
 			TimeRange: query.TimeRange,
-			Filter:    filterString,
-		})
+		}
+		if filterString != "" {
+			if filterInBody {
+				query.BodyFilter = filterString
+			} else {
+				query.Params.Add("$filter", filterString)
+			}
+		}
+		azureMonitorQueries = append(azureMonitorQueries, query)
 	}
 
 	return azureMonitorQueries, nil
@@ -200,9 +210,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
-	if query.Filter != "" {
+	if query.BodyFilter != "" {
 		req.Method = http.MethodPost
-		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.Filter)))
+		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.BodyFilter)))
 	}
 
 	ctx, span := tracer.Start(ctx, "azuremonitor query")
