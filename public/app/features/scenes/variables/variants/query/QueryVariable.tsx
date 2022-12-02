@@ -9,6 +9,7 @@ import {
   DataSourceApi,
   DataSourceRef,
   getDefaultTimeRange,
+  InterpolateFunction,
   LoadingState,
   PanelData,
   ScopedVars,
@@ -27,6 +28,7 @@ import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } f
 
 import { createQueryVariableRunner } from './createQueryVariableRunner';
 import { metricNamesToVariableValues } from './utils';
+import { CustomFormatterFn } from '../../interpolation/sceneInterpolator';
 
 export interface QueryVariableState extends MultiValueVariableState {
   datasource: DataSourceRef | null;
@@ -41,12 +43,13 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
   private dataSourceSubject?: Subject<DataSourceApi>;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    statePaths: ['regex'],
+    statePaths: ['regex', 'query'],
     // TODO: add query and datasource support
   });
 
   public constructor(initialState: Partial<QueryVariableState>) {
     super({
+      type: 'query',
       name: '',
       value: '',
       text: '',
@@ -99,9 +102,17 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
         next: (ds) => {
           const runner = createQueryVariableRunner(ds);
           const target = runner.getTarget(this);
+
+          // Using InterplateFunction type to avoid breaking changes
+          // The interpolate function serves as a backwards compatibility wrapper for datasources that interpolate queries in their query method implementation.
+          // It has a "legacy" signature and the inteporlation is done by the scene interpolator.
+          const interpolate: InterpolateFunction = (value, scopedVars, format) => {
+            return sceneGraph.interpolate(this, value, scopedVars, format as string | CustomFormatterFn | undefined);
+          };
+
           const request = this.getRequest(target);
           runner
-            .runRequest({}, request)
+            .runRequest({ interpolate }, request)
             .pipe(
               filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
               take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet

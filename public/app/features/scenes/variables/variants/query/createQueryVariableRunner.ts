@@ -5,6 +5,7 @@ import {
   DataQueryRequest,
   DataSourceApi,
   getDefaultTimeRange,
+  InterpolateFunction,
   LoadingState,
   PanelData,
 } from '@grafana/data';
@@ -14,6 +15,7 @@ import { hasStandardVariableSupport } from 'app/features/variables/guard';
 import { QueryVariable } from './QueryVariable';
 
 export interface RunnerArgs {
+  interpolate: InterpolateFunction;
   searchFilter?: string;
 }
 
@@ -39,10 +41,10 @@ class StandardQueryRunner implements QueryRunner {
     }
 
     if (!this.datasource.variables.query) {
-      return this._runRequest(this.datasource, request);
+      return this._runRequest(this.datasource, request, undefined, args.interpolate);
     }
 
-    return this._runRequest(this.datasource, request, this.datasource.variables.query);
+    return this._runRequest(this.datasource, request, this.datasource.variables.query, args.interpolate);
   }
 }
 

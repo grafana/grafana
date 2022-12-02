@@ -77,10 +77,10 @@ describe('VariableDependencySet', () => {
     const fn = jest.fn();
     const deps = new VariableDependencyConfig(sceneObj, { onReferencedVariableValueChanged: fn });
 
-    deps.variableValuesChanged(new Set([new ConstantVariable({ name: 'not-dep', value: '1' })]));
+    deps.variableValuesChanged(new Set([new ConstantVariable({ type: 'constant', name: 'not-dep', value: '1' })]));
     expect(fn.mock.calls.length).toBe(0);
 
-    deps.variableValuesChanged(new Set([new ConstantVariable({ name: 'queryVarA', value: '1' })]));
+    deps.variableValuesChanged(new Set([new ConstantVariable({ type: 'constant', name: 'queryVarA', value: '1' })]));
     expect(fn.mock.calls.length).toBe(1);
   });
 });

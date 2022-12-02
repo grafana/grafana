@@ -1,11 +1,12 @@
 import { Observable } from 'rxjs';
 
-import { BusEventWithPayload } from '@grafana/data';
+import { BusEventWithPayload, VariableType } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
 import { SceneObject, SceneObjectStatePlain } from '../core/types';
 
 export interface SceneVariableState extends SceneObjectStatePlain {
+  type: VariableType;
   name: string;
   label?: string;
   hide?: VariableHide;

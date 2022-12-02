@@ -1,12 +1,13 @@
+import { VariableType } from '@grafana/schema';
 import { FormatVariable } from '../scenes/variables/interpolation/formatRegistry';
 import { VariableValue } from '../scenes/variables/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 
 export class LegacyVariableWrapper implements FormatVariable {
-  state: { name: string; value: VariableValue; text: VariableValue };
+  state: { name: string; value: VariableValue; text: VariableValue; type: VariableType };
 
-  constructor(name: string, value: VariableValue, text: VariableValue) {
-    this.state = { name, value, text };
+  constructor(name: string, value: VariableValue, text: VariableValue, type: VariableType) {
+    this.state = { name, value, text, type };
   }
 
   getValue(_fieldPath: string): VariableValue {
@@ -40,9 +41,9 @@ let legacyVariableWrapper: LegacyVariableWrapper | undefined;
 /**
  * Reuses a single instance to avoid unnecessary memory allocations
  */
-export function getVariableWrapper(name: string, value: VariableValue, text: VariableValue) {
+export function getVariableWrapper(name: string, value: VariableValue, text: VariableValue, type: VariableType) {
   if (!legacyVariableWrapper) {
-    legacyVariableWrapper = new LegacyVariableWrapper(name, value, text);
+    legacyVariableWrapper = new LegacyVariableWrapper(name, value, text, type);
   } else {
     legacyVariableWrapper.state.name = name;
     legacyVariableWrapper.state.value = value;

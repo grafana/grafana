@@ -19,10 +19,12 @@ describe('sceneInterpolator', () => {
       $variables: new SceneVariableSet({
         variables: [
           new ConstantVariable({
+            type: 'constant',
             name: 'test',
             value: 'hello',
           }),
           new ConstantVariable({
+            type: 'constant',
             name: 'atRootOnly',
             value: 'RootValue',
           }),
@@ -32,6 +34,7 @@ describe('sceneInterpolator', () => {
         $variables: new SceneVariableSet({
           variables: [
             new ConstantVariable({
+              type: 'constant',
               name: 'test',
               value: 'nestedValue',
             }),
@@ -51,6 +54,8 @@ describe('sceneInterpolator', () => {
         $variables: new SceneVariableSet({
           variables: [
             new ObjectVariable({
+              // @ts-expect-error
+              type: 'test',
               name: 'test',
               value: { prop1: 'prop1Value' },
             }),
@@ -67,6 +72,7 @@ describe('sceneInterpolator', () => {
       $variables: new SceneVariableSet({
         variables: [
           new ConstantVariable({
+            type: 'constant',
             name: 'test',
             value: 'hello',
           }),

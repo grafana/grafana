@@ -10,7 +10,6 @@ import { getNestedScene } from './nested';
 import { getSceneWithRows } from './sceneWithRows';
 import { getVariablesDemo } from './variablesDemo';
 import { getQueryVariableDemo } from './queryVariableDemo';
-import { getQueryVariableDependenciesDemo } from './queryVariableDependenciesDemo';
 
 export function getScenes(): Scene[] {
   return [
@@ -25,7 +24,6 @@ export function getScenes(): Scene[] {
     getMultipleGridLayoutTest(),
     getVariablesDemo(),
     getQueryVariableDemo(),
-    getQueryVariableDependenciesDemo(),
   ];
 }
 

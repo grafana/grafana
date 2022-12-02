@@ -5,13 +5,15 @@ import { ScopedVar } from '@grafana/data';
 import { VariableValue } from '../types';
 
 import { FormatVariable } from './formatRegistry';
+import { VariableType } from '@grafana/schema';
 
 export class ScopedVarsVariable implements FormatVariable {
   private static fieldAccessorCache: FieldAccessorCache = {};
 
-  public state: { name: string; value: ScopedVar };
+  public state: { name: string; value: ScopedVar; type: VariableType };
 
   public constructor(name: string, value: ScopedVar) {
+    // @ts-expect-error
     this.state = { name, value };
   }
 

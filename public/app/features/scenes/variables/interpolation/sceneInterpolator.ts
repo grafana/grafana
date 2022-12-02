@@ -97,9 +97,10 @@ function formatValue(
   }
 
   if (typeof formatNameOrFn === 'function') {
+    return formatNameOrFn(value, { name: variable.state.name, type: variable.state.type }, (v) => '');
     // legacy custom formatter function, TODO
     //return format(value, {}, this.formatValue);
-    throw new Error('Custom formatter function not supported');
+    // throw new Error('Custom formatter function not supported');
   }
 
   let args: string[] = [];

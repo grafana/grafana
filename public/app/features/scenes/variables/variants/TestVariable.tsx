@@ -31,6 +31,8 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
 
   public constructor(initialState: Partial<TestVariableState>) {
     super({
+      // @ts-expect-error
+      type: 'test',
       name: 'Test',
       value: 'Value',
       text: 'Text',

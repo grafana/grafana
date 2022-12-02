@@ -166,7 +166,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       formatItem = formatRegistry.get(FormatRegistryID.glob);
     }
 
-    const formatVariable = getVariableWrapper(variable.name, value, text ?? value);
+    const formatVariable = getVariableWrapper(variable.name, value, text ?? value, variable.type);
     return formatItem.formatter(value, args, formatVariable);
   }
 

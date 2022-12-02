@@ -19,6 +19,7 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
 
   public constructor(initialState: Partial<CustomVariableState>) {
     super({
+      type: 'custom',
       query: '',
       value: '',
       text: '',

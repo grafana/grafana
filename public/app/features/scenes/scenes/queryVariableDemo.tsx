@@ -8,8 +8,8 @@ import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { CustomVariable } from '../variables/variants/CustomVariable';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
+import { CustomVariable } from '../variables/variants/CustomVariable';
 
 export function getQueryVariableDemo(): Scene {
   const scene = new Scene({
@@ -17,20 +17,13 @@ export function getQueryVariableDemo(): Scene {
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({
-          name: 'regex',
-          query: 'prom,graf,nod',
-          value: 'prom',
-        }),
-        new QueryVariable({
-          name: 'job',
-          query: { query: 'label_values(go_gc_duration_seconds, job)' },
-          datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
-          // regex: '/^${regex}*/',
+          name: 'metric',
+          query: 'job : job, instance : instance',
         }),
         new QueryVariable({
           name: 'instance (on time range refresh)',
           refresh: VariableRefresh.onTimeRangeChanged,
-          query: { query: 'label_values(go_gc_duration_seconds, instance)' },
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         }),
       ],

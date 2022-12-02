@@ -5,6 +5,7 @@ import kbn from 'app/core/utils/kbn';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { VariableValue, VariableValueSingle } from '../types';
+import { VariableType } from '@grafana/schema';
 
 export interface FormatRegistryItem extends RegistryItem {
   formatter(value: VariableValue, args: string[], variable: FormatVariable): string;
@@ -18,6 +19,7 @@ export interface FormatRegistryItem extends RegistryItem {
 export interface FormatVariable {
   state: {
     name: string;
+    type: VariableType;
   };
 
   getValue(fieldPath?: string): VariableValue | undefined | null;

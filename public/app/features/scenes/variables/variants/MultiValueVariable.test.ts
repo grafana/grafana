@@ -19,6 +19,8 @@ describe('MultiValueVariable', () => {
   describe('When validateAndUpdate is called', () => {
     it('Should pick first value if current value is not valid', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         optionsToReturn: [
@@ -37,6 +39,8 @@ describe('MultiValueVariable', () => {
 
     it('Should keep current value if current value is valid', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         optionsToReturn: [{ label: 'A', value: 'A' }],
@@ -52,6 +56,8 @@ describe('MultiValueVariable', () => {
 
     it('Should maintain the valid values when multiple selected', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         isMulti: true,
@@ -71,6 +77,8 @@ describe('MultiValueVariable', () => {
 
     it('Should pick first option if none of the current values are valid', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         isMulti: true,
@@ -90,6 +98,8 @@ describe('MultiValueVariable', () => {
 
     it('Should handle $__all value and send change event even when value is still $__all', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         optionsToReturn: [
@@ -115,6 +125,8 @@ describe('MultiValueVariable', () => {
   describe('getValue and getValueText', () => {
     it('GetValueText should return text', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         optionsToReturn: [],
@@ -128,6 +140,8 @@ describe('MultiValueVariable', () => {
 
     it('GetValueText should return All text when value is $__all', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         optionsToReturn: [],
@@ -140,6 +154,8 @@ describe('MultiValueVariable', () => {
 
     it('GetValue should return all options as an array when value is $__all', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [
           { label: 'A', value: '1' },
@@ -157,6 +173,8 @@ describe('MultiValueVariable', () => {
   describe('Url syncing', () => {
     it('getUrlState should return single value state if value is single value', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         optionsToReturn: [],
@@ -169,6 +187,8 @@ describe('MultiValueVariable', () => {
 
     it('getUrlState should return string array if value is string array', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [],
         optionsToReturn: [],
@@ -181,6 +201,8 @@ describe('MultiValueVariable', () => {
 
     it('fromUrlState should update value for single value', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [
           { label: 'A', value: '1' },
@@ -198,6 +220,8 @@ describe('MultiValueVariable', () => {
 
     it('fromUrlState should update value for array value', async () => {
       const variable = new ExampleVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         options: [
           { label: 'A', value: '1' },

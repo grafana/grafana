@@ -4,6 +4,8 @@ describe('ObjectVariable', () => {
   describe('getValue', () => {
     it('it should return value according to fieldPath', () => {
       const variable = new ObjectVariable({
+        // @ts-expect-error
+        type: 'test',
         name: 'test',
         value: {
           field1: 'value1',
