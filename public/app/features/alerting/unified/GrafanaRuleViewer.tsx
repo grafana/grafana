@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { dump } from 'js-yaml';
-import { keyBy } from 'lodash';
-import Prism from 'prismjs';
-import React, { useEffect } from 'react';
+import { keyBy, startCase } from 'lodash';
+import React from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data/src';
+import { PanelData, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime/src';
-import { useStyles2 } from '@grafana/ui/src';
+import { config } from '@grafana/runtime';
+import { Badge, useStyles2 } from '@grafana/ui';
 import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 
 import { AlertQuery, RulerGrafanaRuleDTO } from '../../../types/unified-alerting-dto';
@@ -23,17 +22,23 @@ import {
 } from '../../expressions/types';
 import alertDef, { EvalFunction } from '../state/alertDef';
 
-export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
+import { ExpressionResult } from './components/expressions/Expression';
+import { VizWrapper } from './components/rule-editor/VizWrapper';
+import { TIMESERIES } from './utils/constants';
+
+export function GrafanaRuleViewer({
+  rule,
+  evalDataByQuery = {},
+}: {
+  rule: RulerGrafanaRuleDTO;
+  evalDataByQuery?: Record<string, PanelData>;
+}) {
   // const styles = useStyles2(getGrafanaRuleViewerStyles);
 
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
-
-  useEffect(() => {
-    Prism.highlightAll();
-  });
-
   const queries = rule.grafana_alert.data.filter((q) => !isExpressionQuery(q.model));
   const expressions = rule.grafana_alert.data.filter((q) => isExpressionQuery(q.model));
+  const condition = rule.grafana_alert.condition;
 
   return (
     <Stack gap={2} direction="column">
@@ -45,9 +50,11 @@ export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
             <QueryPreview
               key={index}
               refId={refId}
+              isAlertCondition={condition === refId}
               model={model}
               relativeTimeRange={relativeTimeRange}
               dataSource={dataSource}
+              queryData={evalDataByQuery[refId]}
             />
           );
         })}
@@ -59,7 +66,14 @@ export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
 
           return (
             isExpressionQuery(model) && (
-              <ExpressionPreview key={index} refId={refId} model={model} dataSource={dataSource} />
+              <ExpressionPreview
+                key={index}
+                refId={refId}
+                isAlertCondition={condition === refId}
+                model={model}
+                dataSource={dataSource}
+                evalData={evalDataByQuery[refId]}
+              />
             )
           );
         })}
@@ -71,10 +85,12 @@ export function GrafanaRuleViewer({ rule }: { rule: RulerGrafanaRuleDTO }) {
 // const getGrafanaRuleViewerStyles = (theme: GrafanaTheme2) => ({});
 
 interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRange' | 'model'> {
+  isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
+  queryData?: PanelData;
 }
 
-function QueryPreview({ refId, relativeTimeRange, model, dataSource }: QueryPreviewProps) {
+function QueryPreview({ refId, relativeTimeRange, model, dataSource, queryData }: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
 
   const headerItems = [dataSource?.name ?? '[[Data source not found]]'];
@@ -87,6 +103,8 @@ function QueryPreview({ refId, relativeTimeRange, model, dataSource }: QueryPrev
       <pre className={styles.code}>
         <code>{dump(model)}</code>
       </pre>
+      {queryData && <VizWrapper data={queryData} currentPanel={TIMESERIES} changePanel={() => null} />}
+      {/*<PanelRenderer height={200} width={400} data={queryData} pluginId={TIMESERIES} title="" />*/}
     </QueryBox>
   );
 }
@@ -98,62 +116,50 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
 });
 
 interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
+  isAlertCondition: boolean;
   model: ExpressionQuery;
   dataSource: DataSourceInstanceSettings;
+  evalData?: PanelData;
 }
 
-function ExpressionPreview({ refId, model }: ExpressionPreviewProps) {
+function ExpressionPreview({ refId, model, evalData, isAlertCondition }: ExpressionPreviewProps) {
   function renderPreview() {
     switch (model.type) {
       case ExpressionQueryType.math:
-        return (
-          <QueryBox refId={refId} headerItems={['Math']}>
-            <MathExpressionViewer model={model} />
-          </QueryBox>
-        );
+        return <MathExpressionViewer model={model} />;
 
       case ExpressionQueryType.reduce:
-        return (
-          <QueryBox refId={refId} headerItems={['Reduce']}>
-            <ReduceConditionViewer model={model} />
-          </QueryBox>
-        );
+        return <ReduceConditionViewer model={model} />;
 
       case ExpressionQueryType.resample:
-        return (
-          <QueryBox refId={refId} headerItems={['Resample']}>
-            <ResampleExpressionViewer model={model} />
-          </QueryBox>
-        );
+        return <ResampleExpressionViewer model={model} />;
 
       case ExpressionQueryType.classic:
-        return (
-          <QueryBox refId={refId} headerItems={['Classic condition']}>
-            <ClassicConditionViewer model={model} />
-          </QueryBox>
-        );
+        return <ClassicConditionViewer model={model} />;
 
       case ExpressionQueryType.threshold:
-        return (
-          <QueryBox refId={refId} headerItems={['Threshold']}>
-            <ThresholdExpressionViewer model={model} />
-          </QueryBox>
-        );
+        return <ThresholdExpressionViewer model={model} />;
 
       default:
         return <>Expression not supported: {model.type}</>;
     }
   }
 
-  return <>{renderPreview()}</>;
+  return (
+    <QueryBox refId={refId} headerItems={[startCase(model.type)]} isAlertCondition={isAlertCondition}>
+      {renderPreview()}
+      {evalData && <ExpressionResult series={evalData.series} isAlertCondition={isAlertCondition} />}
+    </QueryBox>
+  );
 }
 
 interface QueryBoxProps extends React.PropsWithChildren<unknown> {
   refId: string;
   headerItems?: string[];
+  isAlertCondition?: boolean;
 }
 
-function QueryBox({ refId, headerItems = [], children }: QueryBoxProps) {
+function QueryBox({ refId, headerItems = [], children, isAlertCondition }: QueryBoxProps) {
   const styles = useStyles2(getQueryBoxStyles);
 
   return (
@@ -165,6 +171,11 @@ function QueryBox({ refId, headerItems = [], children }: QueryBoxProps) {
             {item}
           </span>
         ))}
+        {isAlertCondition && (
+          <div className={styles.conditionIndicator}>
+            <Badge color="green" icon="check" text="Alert condition" />
+          </div>
+        )}
       </header>
       {children}
     </div>
@@ -177,6 +188,7 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
   `,
   header: css`
     display: flex;
+    align-items: center;
     gap: ${theme.spacing(1)};
     padding: ${theme.spacing(1)};
     background-color: ${theme.colors.background.secondary};
@@ -190,6 +202,9 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.link};
     padding: ${theme.spacing(0.5, 1)};
     border: 1px solid ${theme.colors.border.weak};
+  `,
+  conditionIndicator: css`
+    margin-left: auto;
   `,
 });
 

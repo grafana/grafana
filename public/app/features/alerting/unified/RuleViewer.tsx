@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import Prism from 'prismjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
@@ -7,7 +6,7 @@ import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import {
   Alert,
   Button,
-  CollapsableSection,
+  Collapse,
   Icon,
   LoadingPlaceholder,
   PanelChromeLoadingIndicator,
@@ -82,10 +81,6 @@ export function RuleViewer({ match }: RuleViewerProps) {
   useEffect(() => {
     return () => runner.destroy();
   }, [runner]);
-
-  useEffect(() => {
-    Prism.highlightAll();
-  }, []);
 
   const onChangeQuery = useCallback((query: AlertQuery) => {
     setQueries((queries) =>
@@ -192,13 +187,17 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
         </div>
       </RuleViewerLayoutContent>
-      <CollapsableSection label="Query" isOpen={expandQuery} onToggle={setExpandQuery} className={styles.queriesTitle}>
-        {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleViewer rule={rule.rulerRule} />}
+      <Collapse
+        label="Query & Results"
+        isOpen={expandQuery}
+        onToggle={setExpandQuery}
+        loading={data && isLoading(data)}
+        collapsible={true}
+        className={styles.collapse}
+      >
+        {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleViewer rule={rule.rulerRule} evalDataByQuery={data} />}
         {!isFederatedRule && data && Object.keys(data).length > 0 && (
           <>
-            <div className={styles.queriesTitle}>
-              Query results <PanelChromeLoadingIndicator loading={isLoading(data)} onCancel={() => runner.cancel()} />
-            </div>
             <RuleViewerLayoutContent padding={0}>
               <div className={styles.queries}>
                 {queries.map((query) => {
@@ -221,7 +220,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             Cannot display the query preview. Some of the data sources used in the queries are not available.
           </Alert>
         )}
-      </CollapsableSection>
+      </Collapse>
     </RuleViewerLayout>
   );
 }
@@ -238,6 +237,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     queries: css`
       height: 100%;
       width: 100%;
+    `,
+    collapse: css`
+      border: 1px solid ${theme.colors.border.weak};
     `,
     queriesTitle: css`
       padding: ${theme.spacing(2, 0.5)};
