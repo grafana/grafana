@@ -71,7 +71,6 @@ describe('ScrollManager', () => {
 
   describe('_scrollPast()', () => {
     it('throws if accessors is not set', () => {
-      manager.setAccessors(null);
       expect(manager._scrollPast).toThrow();
     });
 
@@ -117,7 +116,6 @@ describe('ScrollManager', () => {
       manager._scrollPast = scrollPastMock;
     });
     it('throws if accessors is not set', () => {
-      manager.setAccessors(null);
       expect(manager._scrollToVisibleSpan).toThrow();
     });
     it('exits if the trace is not set', () => {
