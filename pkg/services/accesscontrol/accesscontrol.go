@@ -233,7 +233,7 @@ func Reduce(ps []Permission) map[string][]string {
 				reduced[action] = []string{wildcard}
 				break
 			}
-			if includes(wildcardsByAction[action], wildcard[:len(wildcard)-2]) {
+			if includes(wildcards, wildcard[:len(wildcard)-2]) {
 				continue
 			}
 			reduced[action] = append(reduced[action], wildcard)
