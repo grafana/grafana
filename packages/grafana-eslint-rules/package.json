@@ -1,0 +1,7 @@
+{
+  "name": "@grafana/eslint-plugin",
+  "description": "ESLint rules for use within the Grafana repo. Not suitable (or supported) for external use.",
+  "version": "0.0.1",
+  "main": "./index.cjs",
+  "private": true
+}

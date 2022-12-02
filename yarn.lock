@@ -5009,6 +5009,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A."
+  languageName: node
+  linkType: soft
+
+"@grafana/eslint-plugin@workspace:packages/grafana-eslint-rules":
+  version: 0.0.0-use.local
+  resolution: "@grafana/eslint-plugin@workspace:packages/grafana-eslint-rules"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/experimental@npm:1.0.1":
   version: 1.0.1
   resolution: "@grafana/experimental@npm:1.0.1"
@@ -22026,6 +22038,7 @@ __metadata:
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 5.1.0
+    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": 1.0.1
     "@grafana/faro-core": 1.0.0-beta2
     "@grafana/faro-web-sdk": 1.0.0-beta2
