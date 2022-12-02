@@ -258,3 +258,48 @@ export interface LegacyAzureGetMetricMetadataQuery {
   customNamespace?: string;
   metricName: string;
 }
+
+export interface AzureMonitorLocations {
+  displayName: string;
+  name: string;
+  supportsLogs?: boolean;
+}
+
+export interface AzureMonitorProvidersResponse {
+  namespace: string;
+  resourceTypes: ProviderResourceType[];
+}
+
+export interface ProviderResourceType {
+  resourceType: string;
+  locations: string[];
+  apiVersions: string[];
+  capabilities: string;
+}
+
+export interface AzureMonitorLocationsResponse {
+  value: Location[];
+}
+
+interface Location {
+  id: string;
+  name: string;
+  displayName: string;
+  regionalDisplayName: string;
+  metadata: LocationMetadata;
+}
+
+interface LocationMetadata {
+  regionType: string;
+  regionCategory: string;
+  geographyGroup: string;
+  longitude: string;
+  latitude: string;
+  physicalLocation: string;
+  pairedRegion: LocationPairedRegion[];
+}
+
+interface LocationPairedRegion {
+  name: string;
+  id: string;
+}
