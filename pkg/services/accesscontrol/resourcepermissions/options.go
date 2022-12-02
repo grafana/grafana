@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type ResourceValidator func(ctx context.Context, orgID int64, resourceID string) error
@@ -39,4 +40,6 @@ type Options struct {
 	OnSetBuiltInRole func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error
 	// InheritedScopesSolver if configured can generate additional scopes that will be used when fetching permissions for a resource
 	InheritedScopesSolver InheritedScopesSolver
+	// LicenseMV if configured is applied to endpoints that can modify permissions
+	LicenseMW web.Handler
 }
