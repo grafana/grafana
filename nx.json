@@ -4,17 +4,32 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "typecheck", "lint"]
+        "cacheableOperations": [
+          "build",
+          "typecheck",
+          "lint"
+        ]
       }
     }
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["{projectRoot}/dist"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
     },
     "prettier:check": {
-      "dependsOn": ["prettier:checkDocs"]
+      "dependsOn": [
+        "prettier:checkDocs"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "lint:sass"
+      ]
     }
   }
 }

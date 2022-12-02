@@ -17,22 +17,11 @@
     "lint": "yarn eslint . --ext .js,.tsx,.ts --cache",
     "lint:sass": "yarn stylelint '../sass/**/*.scss' --cache",
     "lint:fix": "yarn lint --fix",
-    "test": "jest --notify --watch",
-    "test:ci": "mkdir -p ../../reports/junit && JEST_JUNIT_OUTPUT_DIR=../../reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
-    "test:coverage": "jest --coverage",
-    "test:coverage:changes": "jest --coverage --changedSince=origin/main",
-    "test:accessibility-report": "../../scripts/generate-a11y-report.sh",
     "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\"",
     "start": "yarn webpack --progress --color --config ../../scripts/webpack/webpack.dev.js --watch --env noTsCheck=1",
     "start:tsCheck": "yarn start --env noTsCheck=0",
     "stats": "yarn webpack --mode production --config ../../scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "themes:generate": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/generateSassVariableFiles.ts",
-    "typecheck": "tsc --noEmit",
-    "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
-    "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run test:ci",
-    "i18n:clean": "rimraf public/locales/en-US/grafana.json",
-    "i18n:extract": "yarn i18n:clean && yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}' && node ./public/locales/psuedo.js",
-    "i18n:compile": "echo '⚠️ no i18n compile yet, all good ⚠️'"
+    "typecheck": "tsc --noEmit"
   }
 }

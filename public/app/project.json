@@ -2,18 +2,25 @@
   "root": "public/app",
   "targets": {
     "build": {
-      "dependsOn": ["themes:generate", "i18n:compile"],
-      "outputs": ["{workspaceRoot}/../build"]
+      "dependsOn": [
+        "themes:generate"
+      ],
+      "outputs": [
+        "{workspaceRoot}/../build"
+      ]
     },
     "lint": {
-      "dependsOn": ["lint:sass"]
+      "dependsOn": [
+        "lint:sass"
+      ]
     },
     "start": {
-      "dependsOn": ["themes:generate", "i18n:compile"],
-      "outputs": ["{workspaceRoot}/../build"]
-    },
-    "test:ci": {
-      "dependsOn": ["i18n:compile"]
+      "dependsOn": [
+        "themes:generate"
+      ],
+      "outputs": [
+        "{workspaceRoot}/../build"
+      ]
     }
   }
 }
