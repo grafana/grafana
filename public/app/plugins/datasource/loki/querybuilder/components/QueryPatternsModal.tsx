@@ -66,7 +66,14 @@ export const QueryPatternsModal = (props: Props) => {
   };
 
   return (
-    <Modal isOpen={isOpen} title="Kick start your query" onDismiss={onClose}>
+    <Modal
+      isOpen={isOpen}
+      title="Kick start your query"
+      onDismiss={onClose}
+      className={css`
+        width: 1500px;
+      `}
+    >
       <div className={styles.spacing}>
         Kick start your query by selecting one of these queries. You can then continue to complete your query.
       </div>

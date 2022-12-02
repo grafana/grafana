@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
 import { CoreApp } from '@grafana/data';
@@ -48,7 +49,14 @@ export const LabelBrowserModal = (props: Props) => {
   };
 
   return (
-    <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose}>
+    <Modal
+      isOpen={isOpen}
+      title="Label browser"
+      onDismiss={onClose}
+      className={css`
+        width: 1500px;
+      `}
+    >
       {!labelsLoaded && <LoadingPlaceholder text="Loading labels..." />}
       {labelsLoaded && !hasLogLabels && <p>No labels found.</p>}
       {labelsLoaded && hasLogLabels && (
