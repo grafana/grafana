@@ -186,7 +186,8 @@ func (ng *AlertNG) init() error {
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
 		C:                    clk,
-		MinRuleInterval:      ng.Cfg.UnifiedAlerting.BaseInterval,
+		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
+		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
 		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
