@@ -40,9 +40,9 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 				q1 := models.GetUserOrgListQuery{UserId: ac1.ID}
 				q2 := models.GetUserOrgListQuery{UserId: ac2.ID}
-				err = sqlStore.GetUserOrgList(context.Background(), &q1)
+				err = sqlStore.getUserOrgList(context.Background(), &q1)
 				require.NoError(t, err)
-				err = sqlStore.GetUserOrgList(context.Background(), &q2)
+				err = sqlStore.getUserOrgList(context.Background(), &q2)
 				require.NoError(t, err)
 
 				require.Equal(t, q1.Result[0].OrgId, q2.Result[0].OrgId)
@@ -80,7 +80,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 				t.Run("Can get user organizations", func(t *testing.T) {
 					query := models.GetUserOrgListQuery{UserId: ac2.ID}
-					err := sqlStore.GetUserOrgList(context.Background(), &query)
+					err := sqlStore.getUserOrgList(context.Background(), &query)
 
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)

@@ -17,9 +17,7 @@ interface TestObjectState extends SceneLayoutChildState {
 }
 
 class TestObj extends SceneObjectBase<TestObjectState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, {
-    keys: ['name', 'array'],
-  });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['name', 'array'] });
 
   public getUrlState(state: TestObjectState) {
     return { name: state.name, array: state.array };
@@ -74,12 +72,6 @@ describe('UrlSyncManager', () => {
 
       // Should not update url
       expect(locationUpdates.length).toBe(1);
-
-      // When clearing url (via go back)
-      locationService.getHistory().goBack();
-
-      // Should restore to initial state
-      expect(obj.state.name).toBe('test');
     });
   });
 
@@ -104,7 +96,8 @@ describe('UrlSyncManager', () => {
       expect(obj.state.name).toBe('test2');
 
       // When relevant key is cleared (say go back)
-      locationService.partial({ name: null });
+      locationService.getHistory().goBack();
+
       // Should revert to initial state
       expect(obj.state.name).toBe('test');
 

@@ -59,13 +59,13 @@ type DatasourceInfo struct {
 // AzureMonitorQuery is the query for all the services as they have similar queries
 // with a url, a querystring and an alias field
 type AzureMonitorQuery struct {
-	URL       string
-	Target    string
-	Params    url.Values
-	RefID     string
-	Alias     string
-	TimeRange backend.TimeRange
-	Filter    string
+	URL        string
+	Target     string
+	Params     url.Values
+	RefID      string
+	Alias      string
+	TimeRange  backend.TimeRange
+	BodyFilter string
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API

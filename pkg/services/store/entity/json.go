@@ -11,8 +11,7 @@ import (
 
 func init() { //nolint:gochecknoinits
 	jsoniter.RegisterTypeEncoder("entity.EntitySearchResult", &searchResultCodec{})
-	jsoniter.RegisterTypeEncoder("entity.WriteObjectResponse", &writeResponseCodec{})
-	jsoniter.RegisterTypeEncoder("entity.ReadEntityResponse", &readResponseCodec{})
+	jsoniter.RegisterTypeEncoder("entity.WriteEntityResponse", &writeResponseCodec{})
 
 	jsoniter.RegisterTypeEncoder("entity.Entity", &rawEntityCodec{})
 	jsoniter.RegisterTypeDecoder("entity.Entity", &rawEntityCodec{})
@@ -91,33 +90,26 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 			stream.WriteString(sEnc) // works for strings
 		}
 	}
+	if len(obj.SummaryJson) > 0 {
+		stream.WriteMore()
+		stream.WriteObjectField("summary")
+		writeRawJson(stream, obj.SummaryJson)
+	}
 	if obj.ETag != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("etag")
 		stream.WriteString(obj.ETag)
-	}
-	if obj.Folder != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("folder")
-		stream.WriteString(obj.Folder)
-	}
-	if obj.Slug != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("slug")
-		stream.WriteString(obj.Slug)
 	}
 	if obj.Size > 0 {
 		stream.WriteMore()
 		stream.WriteObjectField("size")
 		stream.WriteInt64(obj.Size)
 	}
-
 	if obj.Origin != nil {
 		stream.WriteMore()
 		stream.WriteObjectField("origin")
 		stream.WriteVal(obj.Origin)
 	}
-
 	stream.WriteObjectEnd()
 }
 
@@ -145,15 +137,20 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 			raw.Size = iter.ReadInt64()
 		case "etag":
 			raw.ETag = iter.ReadString()
-		case "folder":
-			raw.Folder = iter.ReadString()
-		case "slug":
-			raw.Slug = iter.ReadString()
 		case "version":
 			raw.Version = iter.ReadString()
 		case "origin":
 			raw.Origin = &EntityOriginInfo{}
 			iter.ReadVal(raw.Origin)
+		case "summary":
+			var val interface{}
+			iter.ReadVal(&val) // ??? is there a smarter way to just keep the underlying bytes without read+marshal
+			body, err := json.Marshal(val)
+			if err != nil {
+				iter.ReportError("raw entity", "error reading summary body")
+				return
+			}
+			raw.SummaryJson = body
 
 		case "body":
 			var val interface{}
@@ -179,34 +176,6 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 			return
 		}
 	}
-}
-
-// Unlike the standard JSON marshal, this will write bytes as JSON when it can
-type readResponseCodec struct{}
-
-func (obj *ReadEntityResponse) MarshalJSON() ([]byte, error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
-	return json.Marshal(obj)
-}
-
-func (codec *readResponseCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	f := (*ReadEntityResponse)(ptr)
-	return f == nil
-}
-
-func (codec *readResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	obj := (*ReadEntityResponse)(ptr)
-	stream.WriteObjectStart()
-	stream.WriteObjectField("entity")
-	stream.WriteVal(obj.Entity)
-
-	if len(obj.SummaryJson) > 0 {
-		stream.WriteMore()
-		stream.WriteObjectField("summary")
-		writeRawJson(stream, obj.SummaryJson)
-	}
-
-	stream.WriteObjectEnd()
 }
 
 // Unlike the standard JSON marshal, this will write bytes as JSON when it can

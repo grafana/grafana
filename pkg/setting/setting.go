@@ -456,8 +456,12 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// Grafana.com URL
+	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
+	// Grafana.com API URL. Can be set separately to GrafanaComURL
+	// in case API is not publicly accessible.
+	// Defaults to GrafanaComURL setting + "/api" if unset.
+	GrafanaComAPIURL string
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
@@ -482,6 +486,8 @@ type Cfg struct {
 	RBACPermissionCache bool
 	// Enable Permission validation during role creation and provisioning
 	RBACPermissionValidationEnabled bool
+	// Reset basic roles permissions on start-up
+	RBACResetBasicRoles bool
 	// GRPC Server.
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
@@ -1102,6 +1108,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 	cfg.GrafanaComURL = GrafanaComUrl
 
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", GrafanaComUrl+"/api")
+
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 	ImageUploadProvider = cfg.ImageUploadProvider
@@ -1447,6 +1455,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
+	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {

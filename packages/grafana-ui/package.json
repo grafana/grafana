@@ -38,7 +38,9 @@
     "storybook": "start-storybook -p 9001 -c .storybook",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js"
+    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "browserslist": [
     "defaults",
@@ -107,7 +109,7 @@
     "slate-react": "0.22.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
-    "uplot": "1.6.22",
+    "uplot": "1.6.23",
     "uuid": "9.0.0"
   },
   "devDependencies": {

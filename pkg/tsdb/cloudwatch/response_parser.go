@@ -46,41 +46,38 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 	return results, nil
 }
 
-func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]queryRowResponse {
-	responseByID := make(map[string]queryRowResponse)
-	errorCodes := map[string]bool{
-		maxMetricsExceeded:         false,
-		maxQueryTimeRangeExceeded:  false,
-		maxQueryResultsExceeded:    false,
-		maxMatchingResultsExceeded: false,
+func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]models.QueryRowResponse {
+	responseByID := make(map[string]models.QueryRowResponse)
+	errors := map[string]bool{
+		models.MaxMetricsExceeded:         false,
+		models.MaxQueryTimeRangeExceeded:  false,
+		models.MaxQueryResultsExceeded:    false,
+		models.MaxMatchingResultsExceeded: false,
 	}
+	// first check if any of the getMetricDataOutputs has any errors related to the request. if so, store the errors so they can be added to each query response
 	for _, gmdo := range getMetricDataOutputs {
 		for _, message := range gmdo.Messages {
-			if _, exists := errorCodes[*message.Code]; exists {
-				errorCodes[*message.Code] = true
+			if _, exists := errors[*message.Code]; exists {
+				errors[*message.Code] = true
 			}
 		}
+	}
+	for _, gmdo := range getMetricDataOutputs {
 		for _, r := range gmdo.MetricDataResults {
 			id := *r.Id
 
-			response := newQueryRowResponse()
+			response := models.NewQueryRowResponse(errors)
 			if _, exists := responseByID[id]; exists {
 				response = responseByID[id]
 			}
 
 			for _, message := range r.Messages {
 				if *message.Code == "ArithmeticError" {
-					response.addArithmeticError(message.Value)
+					response.AddArithmeticError(message.Value)
 				}
 			}
 
-			response.addMetricDataResult(r)
-
-			for code := range errorCodes {
-				if _, exists := response.ErrorCodes[code]; exists {
-					response.ErrorCodes[code] = errorCodes[code]
-				}
-			}
+			response.AddMetricDataResult(r)
 			responseByID[id] = response
 		}
 	}
@@ -112,7 +109,7 @@ func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Label
 	return labels
 }
 
-func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse queryRowResponse,
+func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
 	query *models.CloudWatchQuery, dynamicLabelEnabled bool) (data.Frames, error) {
 	frames := data.Frames{}
 	for _, metric := range aggregatedResponse.Metrics {
@@ -194,17 +191,11 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 			Meta:  createMeta(query),
 		}
 
-		warningTextMap := map[string]string{
-			"MaxMetricsExceeded":         "Maximum number of allowed metrics exceeded. Your search may have been limited",
-			"MaxQueryTimeRangeExceeded":  "Max time window exceeded for query",
-			"MaxQueryResultsExceeded":    "Only the first 500 time series can be returned by a query.",
-			"MaxMatchingResultsExceeded": "The query matched more than 10.000 metrics, results might not be accurate.",
-		}
 		for code := range aggregatedResponse.ErrorCodes {
 			if aggregatedResponse.ErrorCodes[code] {
 				frame.AppendNotices(data.Notice{
 					Severity: data.NoticeSeverityWarning,
-					Text:     "cloudwatch GetMetricData error: " + warningTextMap[code],
+					Text:     "cloudwatch GetMetricData error: " + models.ErrorMessages[code],
 				})
 			}
 		}
