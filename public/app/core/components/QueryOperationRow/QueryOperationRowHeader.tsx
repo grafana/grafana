@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useId } from '@react-aria/utils';
 import React, { MouseEventHandler } from 'react';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
 
@@ -31,6 +32,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   id,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
+  const titleId = useId();
 
   return (
     <div className={styles.header}>
@@ -44,10 +46,13 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           type="button"
           aria-expanded={isContentVisible}
           aria-controls={id}
+          aria-labelledby={titleId}
         />
         {titleElement && (
           <div className={styles.titleWrapper} aria-label="Query operation row title">
-            <div className={cx(styles.title, disabled && styles.disabled)}>{titleElement}</div>
+            <div id={titleId} className={cx(styles.title, disabled && styles.disabled)}>
+              {titleElement}
+            </div>
           </div>
         )}
         {headerElement}
