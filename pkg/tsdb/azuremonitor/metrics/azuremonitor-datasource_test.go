@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
@@ -209,6 +210,19 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
 		},
 		{
+			name: "Includes a region and a filter",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain": "PT1M",
+				"top":       "10",
+				"region":    "westus",
+				"resources": []types.AzureMonitorResource{{ResourceGroup: "rg", ResourceName: "vm"}},
+			},
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
+			expectedFilter:          "Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm'",
+		},
+		{
 			name: "includes a resource as a filter",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain": "PT1M",
@@ -266,6 +280,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
+			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
+			require.NoError(t, err)
+
 			azureMonitorQuery := &types.AzureMonitorQuery{
 				URL:    tt.expectedURL,
 				Target: tt.azureMonitorQueryTarget,
@@ -275,14 +292,18 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				Filter: tt.expectedFilter,
+			}
+			if tt.azureMonitorVariedProperties["region"] != nil {
+				// If the region is included, the filter will be added in the Body of the request
+				azureMonitorQuery.BodyFilter = tt.expectedFilter
+			} else {
+				// In other case, the filter will be added in the URL
+				assert.Equal(t, tt.expectedFilter, queries[0].Params.Get("$filter"))
 			}
 			if azureMonitorQuery.URL == "" {
 				azureMonitorQuery.URL = "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics"
 			}
 
-			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
-			require.NoError(t, err)
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
