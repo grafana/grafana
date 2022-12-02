@@ -23,3 +23,9 @@ Welcome to Grafana 9.4! Read on to learn about [add short list of what's include
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 
 > **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
+
+## Alert email templating
+
+We've improved the design and functionality of email templates to make template creation much easier and more customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
+
+{{< figure src="/static/img/docs/alerting/alert-templates-whats-new-v9.3.png" max-width="750px" caption="Email template redesign" >}}
