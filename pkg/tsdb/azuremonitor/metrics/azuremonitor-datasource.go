@@ -185,10 +185,12 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			Alias:     alias,
 			TimeRange: query.TimeRange,
 		}
-		if filterInBody {
-			query.BodyFilter = filterString
-		} else {
-			query.Params.Add("$filter", filterString)
+		if filterString != "" {
+			if filterInBody {
+				query.BodyFilter = filterString
+			} else {
+				query.Params.Add("$filter", filterString)
+			}
 		}
 		azureMonitorQueries = append(azureMonitorQueries, query)
 	}

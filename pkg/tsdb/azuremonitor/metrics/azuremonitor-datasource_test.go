@@ -298,7 +298,11 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				azureMonitorQuery.BodyFilter = tt.expectedFilter
 			} else {
 				// In other case, the filter will be added in the URL
-				assert.Equal(t, tt.expectedFilter, queries[0].Params.Get("$filter"))
+				if tt.expectedFilter != "" {
+					assert.Equal(t, tt.expectedFilter, queries[0].Params.Get("$filter"))
+				} else {
+					assert.Equal(t, false, queries[0].Params.Has("$filter"))
+				}
 			}
 			if azureMonitorQuery.URL == "" {
 				azureMonitorQuery.URL = "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics"
