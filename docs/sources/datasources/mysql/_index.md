@@ -94,7 +94,7 @@ datasources:
     url: localhost:3306
     user: grafana
     jsonData:
-      database: grafana # Moved from Grafana 9.3
+      database: grafana
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+

@@ -130,7 +130,7 @@ datasources:
     secureJsonData:
       password: 'Password!'
     jsonData:
-      database: grafana # Moved from Grafana 9.3
+      database: grafana
       sslmode: 'disable' # disable/require/verify-ca/verify-full
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
