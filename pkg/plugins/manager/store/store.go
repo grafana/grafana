@@ -15,22 +15,24 @@ import (
 var _ plugins.Store = (*Service)(nil)
 
 type Service struct {
+	gCfg           *setting.Cfg
+	cfg            *config.Cfg
 	pluginRegistry registry.Service
+	pluginLoader   loader.Service
 }
 
 func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service,
 	pluginLoader loader.Service) (*Service, error) {
-	for _, ps := range pluginSources(gCfg, cfg) {
-		if _, err := pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
-			return nil, err
-		}
-	}
-	return New(pluginRegistry), nil
+
+	return New(gCfg, cfg, pluginRegistry, pluginLoader), nil
 }
 
-func New(pluginRegistry registry.Service) *Service {
+func New(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) *Service {
 	return &Service{
+		gCfg:           gCfg,
+		cfg:            cfg,
 		pluginRegistry: pluginRegistry,
+		pluginLoader:   pluginLoader,
 	}
 }
 
@@ -41,6 +43,16 @@ func (s *Service) Plugin(ctx context.Context, pluginID string) (plugins.PluginDT
 	}
 
 	return p.ToDTO(), true
+}
+
+func (s *Service) Run(ctx context.Context) error {
+	for _, ps := range pluginSources(s.gCfg, s.cfg) {
+		if _, err := s.pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
+			return err
+		}
+	}
+	<-ctx.Done()
+	return nil
 }
 
 func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {

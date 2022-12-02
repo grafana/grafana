@@ -51,6 +51,7 @@ func (e exitWithCode) Error() string {
 
 func RunServer(opt ServerOptions) int {
 	var (
+		target     = serverFs.String("target", "all", "modules to run, separated by spaces. ex: \"all\" or \"object-store\"")
 		configFile = serverFs.String("config", "", "path to config file")
 		homePath   = serverFs.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 		pidFile    = serverFs.String("pidfile", "", "path to pid file")
@@ -112,7 +113,7 @@ func RunServer(opt ServerOptions) int {
 		}()
 	}
 
-	if err := executeServer(*configFile, *homePath, *pidFile, *packaging, *configOverrides, traceDiagnostics, opt); err != nil {
+	if err := executeServer(*configFile, *target, *homePath, *pidFile, *packaging, *configOverrides, traceDiagnostics, opt); err != nil {
 		code := 1
 		var ewc exitWithCode
 		if errors.As(err, &ewc) {
@@ -128,7 +129,7 @@ func RunServer(opt ServerOptions) int {
 	return 0
 }
 
-func executeServer(configFile, homePath, pidFile, packaging, configOverrides string, traceDiagnostics *tracingDiagnostics, opt ServerOptions) error {
+func executeServer(configFile, target, homePath, pidFile, packaging, configOverrides string, traceDiagnostics *tracingDiagnostics, opt ServerOptions) error {
 	defer func() {
 		if err := log.Close(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
@@ -196,7 +197,8 @@ func executeServer(configFile, homePath, pidFile, packaging, configOverrides str
 			Config:   configFile,
 			HomePath: homePath,
 			// tailing arguments have precedence over the options string
-			Args: append(configOptions, serverFs.Args()...),
+			Args:   append(configOptions, serverFs.Args()...),
+			Target: target,
 		},
 		server.Options{
 			PidFile:     pidFile,
@@ -249,12 +251,8 @@ func listenToSystemSignals(ctx context.Context, s *server.Server) {
 			if err := log.Reload(); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
 			}
-		case sig := <-signalChan:
-			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-			defer cancel()
-			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
-				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
-			}
+		case _ = <-signalChan:
+			s.Shutdown()
 			return
 		}
 	}

@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,22 +19,25 @@ import (
 )
 
 type Provider interface {
-	registry.BackgroundService
+	services.Service
 	GetServer() *grpc.Server
 	GetAddress() string
 }
 
 type GPRCServerService struct {
+	*services.BasicService
 	cfg     *setting.Cfg
 	logger  log.Logger
 	server  *grpc.Server
 	address string
+	errors  chan error
 }
 
 func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer) (Provider, error) {
 	s := &GPRCServerService{
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
+		errors: make(chan error),
 	}
 
 	var opts []grpc.ServerOption
@@ -62,39 +64,50 @@ func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
 	}
 
+	s.BasicService = services.NewBasicService(s.start, s.run, s.stop)
 	s.server = grpc.NewServer(opts...)
 	return s, nil
 }
 
-func (s *GPRCServerService) Run(ctx context.Context) error {
+func (s *GPRCServerService) start(ctx context.Context) error {
 	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil)
 
 	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
 	if err != nil {
 		return fmt.Errorf("GRPC server: failed to listen: %w", err)
 	}
-
 	s.address = listener.Addr().String()
 
-	serveErr := make(chan error, 1)
 	go func() {
 		s.logger.Info("GRPC server: starting")
 		err := s.server.Serve(listener)
 		if err != nil {
-			backend.Logger.Error("GRPC server: failed to serve", "err", err)
-			serveErr <- err
+			s.logger.Error("GRPC server: stopping due to error", "err", err)
+			s.errors <- err
 		}
 	}()
 
-	select {
-	case err := <-serveErr:
-		backend.Logger.Error("GRPC server: failed to serve", "err", err)
-		return err
-	case <-ctx.Done():
+	return nil
+}
+
+func (s *GPRCServerService) run(ctx context.Context) error {
+	for {
+		select {
+		case err := <-s.errors:
+			s.logger.Error("GRPC server: failed to serve", "err", err)
+			return err
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
-	s.logger.Warn("GRPC server: shutting down")
+}
+
+func (s *GPRCServerService) stop(failure error) error {
+	if failure != nil {
+		s.logger.Error("GRPC server: failed", "err", failure)
+	}
 	s.server.Stop()
-	return ctx.Err()
+	return nil
 }
 
 func (s *GPRCServerService) IsDisabled() bool {
