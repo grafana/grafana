@@ -32,7 +32,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 			}
 			err = query.parseResponse(res, data, "")
 			frames := res.Frames
-			assert.Equal(t, "value.usage.mean", frames[0].Fields[1].Name)
+			assert.Equal(t, "value.usage.mean 200", frames[0].Fields[1].Name)
 			assert.Equal(t, 843302441.9, frames[0].Fields[1].At(0))
 		})
 

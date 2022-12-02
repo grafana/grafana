@@ -83,6 +83,12 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 			seriesLabels["metric.name"] = d.Key
 			defaultMetricName := d.Key
 
+			for key, value := range seriesLabels {
+				if strings.Contains(key, "metric.label") {
+					defaultMetricName += " " + value
+				}
+			}
+
 			customFrameMeta := map[string]interface{}{}
 			customFrameMeta["labels"] = seriesLabels
 			frameMeta := &data.FrameMeta{
