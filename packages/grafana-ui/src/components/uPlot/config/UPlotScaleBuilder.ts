@@ -156,11 +156,19 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
       // if all we got were hard limits, treat them as static min/max
       if (hardMinOnly) {
-        minMax[0] = hardMin!;
+        if (scale.distr === 3 && hardMin! <= 0) {
+          // guard log scales from <= 0 user-defined limits
+        } else {
+          minMax[0] = hardMin!;
+        }
       }
 
       if (hardMaxOnly) {
-        minMax[1] = hardMax!;
+        if (scale.distr === 3 && hardMax! <= 0) {
+          // guard log scales from <= 0 user-defined limits
+        } else {
+          minMax[1] = hardMax!;
+        }
       }
 
       // guard against invalid y ranges
