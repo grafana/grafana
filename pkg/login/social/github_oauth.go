@@ -230,7 +230,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		userInfo.Name = data.Name
 	}
 
-	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
+	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs?per_page=100")
 
 	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership
