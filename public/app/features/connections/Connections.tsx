@@ -41,6 +41,7 @@ export default function Connections() {
 
           {/* Plugin Recipes */}
           <Route exact path={ROUTES.PluginRecipes} component={PluginRecipesPage} />
+          <Route exact path={ROUTES.PluginRecipeDetails} component={PluginRecipeDetailsPage} />
 
           {/* Default page */}
           <Route component={DataSourcesListPage} />
