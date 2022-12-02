@@ -227,7 +227,7 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 }
 
 func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
-		setIntPath(bucketAgg.Settings, "min_doc_count")
+	setIntPath(bucketAgg.Settings, "min_doc_count")
 
 	return bucketAgg.Settings.MustMap()
 }
