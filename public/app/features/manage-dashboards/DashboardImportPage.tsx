@@ -131,7 +131,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     return (
       <>
         <div className={styles.option}>
-          <FileUpload accept="application/json" onFileUpload={this.onFileUpload}>
+          <FileUpload accept="application/json, text/plain" onFileUpload={this.onFileUpload}>
             Upload JSON file
           </FileUpload>
         </div>
@@ -189,7 +189,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
   pageNav: NavModelItem = {
     text: 'Import dashboard',
-    subTitle: 'Import dashboard from file or Grafana.com"',
+    subTitle: 'Import dashboard from file or Grafana.com',
     breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
   };
 
