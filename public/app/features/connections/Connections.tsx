@@ -6,6 +6,7 @@ import { StoreState, useSelector } from 'app/types';
 
 import { ROUTES } from './constants';
 import {
+  PluginRecipesPage,
   ConnectDataPage,
   DataSourceDetailsPage,
   DataSourcesListPage,
@@ -34,6 +35,9 @@ export default function Connections() {
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
         {!isConnectDataPageOverriden && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
+
+        {/* Plugin Recipes */}
+        <Route exact path={ROUTES.PluginRecipes} component={PluginRecipesPage} />
 
         {/* Default page */}
         <Route component={DataSourcesListPage} />

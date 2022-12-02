@@ -569,6 +569,15 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 		Children: []*navtree.NavLink{},
 	})
 
+	// Plugin Recipes
+	children = append(children, &navtree.NavLink{
+		Id:       "connections-plugin-recipes",
+		Text:     "Plugin Recipes",
+		SubTitle: "Install with one click",
+		Url:      s.cfg.AppSubURL + "/connections/plugin-recipes",
+		Children: []*navtree.NavLink{},
+	})
+
 	// Connections (main)
 	navLink = &navtree.NavLink{
 		Text:       "Connections",

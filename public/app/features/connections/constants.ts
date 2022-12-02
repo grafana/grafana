@@ -13,6 +13,9 @@ export const ROUTES = {
   DataSourcesEdit: `/${ROUTE_BASE_ID}/your-connections/datasources/edit/:uid`,
   DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,
 
+  // Plugin Recipes
+  PluginRecipes: `/${ROUTE_BASE_ID}/plugin-recipes`,
+
   // Connect Data
   ConnectData: `/${ROUTE_BASE_ID}/connect-data`,
   DataSourcesDetails: `/${ROUTE_BASE_ID}/connect-data/datasources/:id`,
