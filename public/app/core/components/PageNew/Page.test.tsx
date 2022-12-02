@@ -6,7 +6,6 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { configureStore } from 'app/store/configureStore';
 
 import { PageProps } from '../Page/types';
@@ -20,12 +19,9 @@ const pageNav: NavModelItem = {
     { text: 'pageNav child2', url: '2' },
   ],
 };
+
 const setup = (props: Partial<PageProps>) => {
   config.bootData.navTree = [
-    {
-      id: HOME_NAV_ID,
-      text: 'Home',
-    },
     {
       text: 'Section name',
       id: 'section',
@@ -96,7 +92,7 @@ describe('Render', () => {
 
   it('should update document title', async () => {
     setup({ navId: 'child1', pageNav });
-    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
+    expect(document.title).toBe('pageNav child1 - pageNav title - Child1 - Section name - Grafana');
   });
 
   it('should not include hideFromBreadcrumb nodes in title', async () => {

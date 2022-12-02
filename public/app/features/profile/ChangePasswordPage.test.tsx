@@ -1,12 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
 
 import config from 'app/core/config';
 
 import { backendSrv } from '../../core/services/backend_srv';
-import { configureStore } from '../../store/configureStore';
 
 import { Props, ChangePasswordPage } from './ChangePasswordPage';
 import { initialUserState } from './state/reducers';
@@ -28,7 +26,6 @@ const defaultProps: Props = {
 };
 
 async function getTestContext(overrides: Partial<Props> = {}) {
-  const store = configureStore();
   jest.clearAllMocks();
   jest.spyOn(backendSrv, 'get').mockResolvedValue({
     id: 1,
@@ -41,11 +38,7 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   });
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(
-    <Provider store={store}>
-      <ChangePasswordPage {...props} />
-    </Provider>
-  );
+  const { rerender } = render(<ChangePasswordPage {...props} />);
 
   await waitFor(() => expect(props.loadUser).toHaveBeenCalledTimes(1));
 

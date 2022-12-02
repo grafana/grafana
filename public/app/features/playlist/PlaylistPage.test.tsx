@@ -1,10 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
 
 import { contextSrv } from 'app/core/services/context_srv';
-
-import { configureStore } from '../../store/configureStore';
 
 import { PlaylistPage } from './PlaylistPage';
 
@@ -24,12 +21,7 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 function getTestContext() {
-  const store = configureStore();
-  return render(
-    <Provider store={store}>
-      <PlaylistPage />
-    </Provider>
-  );
+  return render(<PlaylistPage />);
 }
 
 describe('PlaylistPage', () => {

@@ -71,7 +71,7 @@ export class ContextSrv {
 
   constructor() {
     if (!config.bootData) {
-      config.bootData = { user: {}, settings: {}, navTree: [] } as any;
+      config.bootData = { user: {}, settings: {} } as any;
     }
 
     this.user = new User();
