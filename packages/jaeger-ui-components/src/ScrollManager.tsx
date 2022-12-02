@@ -218,7 +218,7 @@ export default class ScrollManager {
    * `setAccessors` is bound in the ctor, so it can be passed as a prop to
    * children components.
    */
-  setAccessors = (accessors: Accessors | TNil) => {
+  setAccessors = (accessors: Accessors) => {
     this._accessors = accessors;
   };
 
