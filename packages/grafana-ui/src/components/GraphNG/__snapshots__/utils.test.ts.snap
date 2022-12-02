@@ -5,7 +5,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -32,7 +32,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -129,7 +129,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -153,7 +152,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -177,7 +175,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -201,7 +198,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -225,7 +221,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
