@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
 
-import { ConnectData } from '../tabs/ConnectData';
+import { ConnectData } from './ConnectData';
 
 export function ConnectDataPage() {
   return (

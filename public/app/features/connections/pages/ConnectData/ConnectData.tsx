@@ -4,12 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
 
+import { CardGrid, CategoryHeader, NoResults, Search } from '../../components';
 import { ROUTES } from '../../constants';
-
-import { CardGrid } from './CardGrid';
-import { CategoryHeader } from './CategoryHeader';
-import { NoResults } from './NoResults';
-import { Search } from './Search';
 
 const getStyles = () => ({
   spacer: css`

@@ -22,7 +22,7 @@ func (hs *HTTPServer) GetRecipeByID(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
 	}
 
-	return response.JSON(http.StatusNotFound, recipe)
+	return response.JSON(http.StatusOK, recipe)
 }
 
 func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {

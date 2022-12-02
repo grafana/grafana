@@ -5,9 +5,8 @@ import { Provider } from 'react-redux';
 import { CatalogPlugin } from 'app/features/plugins/admin/types';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock, getPluginsStateMock } from '../../../plugins/admin/__mocks__';
-
-import { ConnectData } from './ConnectData';
+import { getCatalogPluginMock, getPluginsStateMock } from '../../../../plugins/admin/__mocks__';
+import { ConnectData } from '../ConnectData';
 
 jest.mock('app/features/datasources/api');
 

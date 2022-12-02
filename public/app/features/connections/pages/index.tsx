@@ -1,7 +1,6 @@
-export { ConnectDataPage } from './ConnectDataPage';
+export { ConnectDataPage } from './ConnectData';
 export { DataSourceDetailsPage } from './DataSourceDetailsPage';
 export { DataSourcesListPage } from './DataSourcesListPage';
 export { EditDataSourcePage } from './EditDataSourcePage';
 export { NewDataSourcePage } from './NewDataSourcePage';
-export { PluginRecipesPage } from './PluginRecipesPage';
-export { PluginRecipeDetailsPage } from './PluginRecipeDetailsPage';
+export { PluginRecipesPage, PluginRecipeDetailsPage } from './PluginRecipes';

@@ -3,13 +3,9 @@ import React, { useMemo, useState } from 'react';
 
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 
-import { ROUTES } from '../../constants';
-import { CardGrid } from '../ConnectData/CardGrid';
-import { CategoryHeader } from '../ConnectData/CategoryHeader';
-import { NoResults } from '../ConnectData/NoResults';
-import { Search } from '../ConnectData/Search';
-
-import { useGetAll } from './api';
+import { CardGrid, CategoryHeader, NoResults, Search } from '../../../components';
+import { ROUTES } from '../../../constants';
+import { useGetAll } from '../api';
 
 const getStyles = () => ({
   spacer: css`
@@ -17,7 +13,7 @@ const getStyles = () => ({
   `,
 });
 
-export function PluginRecipes() {
+export function PluginRecipesList() {
   const [searchTerm, setSearchTerm] = useState('');
   const styles = useStyles2(getStyles);
 
