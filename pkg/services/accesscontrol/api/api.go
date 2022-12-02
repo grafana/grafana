@@ -39,7 +39,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userID"))
 			rr.Get("/users/permissions/search", authorize(middleware.ReqSignedIn,
-				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.SearchUsersPermissions))
+				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
 			rr.Get("/user/:userID/permissions/search", authorize(middleware.ReqSignedIn,
 				ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
 		}
@@ -71,7 +71,7 @@ func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.R
 }
 
 // GET /api/access-control/users/permissions
-func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) response.Response {
+func (api *AccessControlAPI) searchUsersPermissions(c *models.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
@@ -109,13 +109,14 @@ func (api *AccessControlAPI) searchUserPermissions(c *models.ReqContext) respons
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
+		UserID:       userID,
 	}
 	// Validate inputs
 	if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
 		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
 	}
 
-	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), userID, c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), c.OrgID, searchOptions)
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "could not search user permissions", err)
 	}

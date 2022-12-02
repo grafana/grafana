@@ -57,7 +57,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 }
 
 // SearchUsersPermissions returns the list of user permissions indexed by UserID
-func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, userFilter []int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	type UserRBACPermission struct {
 		UserID int64  `xorm:"user_id"`
 		Action string `xorm:"action"`
@@ -68,20 +68,15 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		var params []interface{}
 
 		var userRoleFilter, userTeamFilter, userBasicFilter, userAdminFilter string
-		if len(userFilter) > 0 {
-			idParams := make([]interface{}, len(userRoleFilter)*4)
-			for _, u := range userFilter {
-				idParams = append(idParams, u)
-			}
-
-			userRoleFilter = " WHERE ur.user_id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
-			params = append(params, idParams...)
-			userTeamFilter = " WHERE tm.user_id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
-			params = append(params, idParams...)
-			userBasicFilter = " WHERE ou.user_id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
-			params = append(params, idParams...)
-			userAdminFilter = " AND u.id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
-			params = append(params, idParams...)
+		if options.UserID != 0 {
+			userRoleFilter = " WHERE ur.user_id=?"
+			params = append(params, options.UserID)
+			userTeamFilter = " WHERE tm.user_id=?"
+			params = append(params, options.UserID)
+			userBasicFilter = " WHERE ou.user_id=?"
+			params = append(params, options.UserID)
+			userAdminFilter = " AND u.id=?"
+			params = append(params, options.UserID)
 		}
 
 		// Find permissions

@@ -340,13 +340,12 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 		}
 	}
 	tests := []struct {
-		name       string
-		users      []testUser
-		permCmds   []rs.SetResourcePermissionsCommand
-		options    accesscontrol.SearchOptions
-		userFilter []int64
-		wantPerm   map[int64][]accesscontrol.Permission
-		wantErr    bool
+		name     string
+		users    []testUser
+		permCmds []rs.SetResourcePermissionsCommand
+		options  accesscontrol.SearchOptions
+		wantPerm map[int64][]accesscontrol.Permission
+		wantErr  bool
 	}{
 		{
 			name:  "user assignment by actionPrefix",
@@ -426,8 +425,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 		},
 		{
-			name:       "all assignments for one user by actionPrefix",
-			userFilter: []int64{1},
+			name: "all assignments for one user by actionPrefix",
 			users: []testUser{
 				{orgRole: org.RoleAdmin, isAdmin: true},
 				{orgRole: org.RoleEditor, isAdmin: false},
@@ -445,7 +443,10 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 				// Server Admin Assignment
 				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1000")},
 			},
-			options: accesscontrol.SearchOptions{ActionPrefix: "teams:"},
+			options: accesscontrol.SearchOptions{
+				ActionPrefix: "teams:",
+				UserID:       1,
+			},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
 					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
@@ -538,7 +539,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test
-			dbPermissions, err := acStore.SearchUsersPermissions(ctx, 1, tt.userFilter, tt.options)
+			dbPermissions, err := acStore.SearchUsersPermissions(ctx, 1, tt.options)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

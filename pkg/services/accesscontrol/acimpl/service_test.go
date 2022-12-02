@@ -528,7 +528,6 @@ func TestService_SearchUserPermissions(t *testing.T) {
 	tests := []struct {
 		name         string
 		searchOption accesscontrol.SearchOptions
-		userID       int64
 		ramRoles     map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
 		storedPerms  map[int64][]accesscontrol.Permission // UserID => Permissions
 		storedRoles  map[int64][]string                   // UserID => Roles
@@ -539,8 +538,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
+				UserID:       2,
 			},
-			userID: 2,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsCreate},
@@ -564,8 +563,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "stored only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
+				UserID:       2,
 			},
-			userID: 2,
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
 				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -584,8 +583,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram and stored",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
+				UserID:       2,
 			},
-			userID: 2,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -614,8 +613,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action prefix filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
+				UserID:       1,
 			},
-			userID: 1,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -636,8 +635,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				Action: accesscontrol.ActionTeamsRead,
+				UserID: 1,
 			},
-			userID: 1,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -665,7 +664,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 				ExpectedUsersRoles:       tt.storedRoles,
 			}
 
-			got, err := ac.searchUserPermissions(ctx, tt.userID, 1, tt.searchOption)
+			got, err := ac.searchUserPermissions(ctx, 1, tt.searchOption)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

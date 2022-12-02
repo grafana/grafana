@@ -31,7 +31,7 @@ func (f FakeService) SearchUsersPermissions(ctx context.Context, user *user.Sign
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 
-func (f FakeService) SearchUserPermissions(ctx context.Context, userID, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+func (f FakeService) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
 	return f.ExpectedFilteredUserPermissions, f.ExpectedErr
 }
 
@@ -83,7 +83,7 @@ func (f FakeStore) GetUserPermissions(ctx context.Context, query accesscontrol.G
 	return f.ExpectedUserPermissions, f.ExpectedErr
 }
 
-func (f FakeStore) SearchUsersPermissions(ctx context.Context, orgID int64, userFilter []int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+func (f FakeStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 
