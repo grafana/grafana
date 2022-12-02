@@ -96,7 +96,9 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 	}
 
 	userInfo := store.UserInfoFromString(subject)
-	if userInfo == nil {
+
+	// TODO: figure out how to handle users with ID 0
+	if userInfo == nil || userInfo.UserID == 0 {
 		if a.cfg.AnonymousEnabled {
 			return a.UserService.NewAnonymousSignedInUser(ctx)
 		}

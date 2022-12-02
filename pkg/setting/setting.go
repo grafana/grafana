@@ -190,6 +190,7 @@ func AddChangePasswordLink() bool {
 
 // TODO move all global vars to this struct
 type Cfg struct {
+	Target []string
 	Raw    *ini.File
 	Logger log.Logger
 
@@ -501,6 +502,7 @@ type CommandLineArgs struct {
 	Config   string
 	HomePath string
 	Args     []string
+	Target   string
 }
 
 func (cfg Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
@@ -611,6 +613,16 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	return nil
 }
 
+func (cfg *Cfg) ModuleEnabled(search string) bool {
+	for _, v := range cfg.Target {
+		if search == v {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
 	keys := environmentMetricsSection.Keys()
@@ -705,7 +717,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 	}
 }
 
-func applyCommandLineProperties(props map[string]string, file *ini.File) {
+func applyCommandLineProperties(target string, props map[string]string, file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
@@ -831,7 +843,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// apply command line overrides
-	applyCommandLineProperties(commandLineProps, parsedFile)
+	applyCommandLineProperties(args.Target, commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)

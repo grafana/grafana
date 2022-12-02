@@ -3,6 +3,8 @@ package grpcserver
 import (
 	"context"
 
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"google.golang.org/grpc/reflection"
@@ -12,8 +14,11 @@ import (
 // ReflectionService implements the gRPC Server Reflection Protocol:
 // https://github.com/grpc/grpc/blob/master/doc/server-reflection.md
 type ReflectionService struct {
-	cfg              *setting.Cfg
-	reflectionServer *reflectionServer
+	*services.BasicService
+	cfg                *setting.Cfg
+	log                log.Logger
+	reflectionServer   *reflectionServer
+	grpcServerProvider Provider
 }
 
 type reflectionServer struct {
@@ -27,9 +32,13 @@ func (s *reflectionServer) AuthFuncOverride(ctx context.Context, _ string) (cont
 
 func ProvideReflectionService(cfg *setting.Cfg, grpcServerProvider Provider) (*ReflectionService, error) {
 	re := &reflectionServer{reflection.NewServer(reflection.ServerOptions{Services: grpcServerProvider.GetServer()})}
+	s := &ReflectionService{
+		cfg:                cfg,
+		log:                log.New("grpc-server-reflection"),
+		reflectionServer:   re,
+		grpcServerProvider: grpcServerProvider,
+	}
+	s.BasicService = services.NewIdleService(nil, nil)
 	grpc_reflection_v1alpha.RegisterServerReflectionServer(grpcServerProvider.GetServer(), re)
-	return &ReflectionService{
-		cfg:              cfg,
-		reflectionServer: re,
-	}, nil
+	return s, nil
 }

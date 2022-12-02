@@ -36,7 +36,6 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLS
 
 func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv) {
 	t.Helper()
-	ctx := context.Background()
 
 	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -56,9 +55,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		}
 	}()
 	t.Cleanup(func() {
-		if err := env.Server.Shutdown(ctx, "test cleanup"); err != nil {
-			t.Error("Timed out waiting on server to shut down")
-		}
+		env.Server.Shutdown()
 	})
 
 	// Wait for Grafana to be ready

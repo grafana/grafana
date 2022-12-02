@@ -5,12 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +44,7 @@ func (s *testService) IsDisabled() bool {
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), usertest.NewUserServiceFake(), nil)
+	s, err := newServer(Options{}, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
@@ -65,25 +61,14 @@ func TestServer_Run_Error(t *testing.T) {
 }
 
 func TestServer_Shutdown(t *testing.T) {
-	ctx := context.Background()
-
 	s := testServer(t, newTestService(nil, false), newTestService(nil, true))
 
 	ch := make(chan error)
 
 	go func() {
 		defer close(ch)
-
-		// Wait until all services launched.
-		for _, svc := range s.backgroundServices {
-			if !svc.(*testService).isDisabled {
-				<-svc.(*testService).started
-			}
-		}
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-		defer cancel()
-		err := s.Shutdown(ctx, "test interrupt")
-		ch <- err
+		s.Shutdown()
+		ch <- nil
 	}()
 	err := s.Run()
 	require.NoError(t, err)
