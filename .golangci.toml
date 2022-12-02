@@ -83,7 +83,7 @@ text = "ST1001"
 # Use golang.org/x/text/cases instead.
 [[issues.exclude-rules]]
 linters = ["staticcheck"]
-text = "SA1019"
+text = "SA1019: strings.Title"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
