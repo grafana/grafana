@@ -494,6 +494,8 @@ type Cfg struct {
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
 	GRPCServerTLSConfig *tls.Config
+	// Entity Store
+	EntityStore EntityStoreSettings
 
 	CustomResponseHeaders map[string]string
 }
@@ -718,6 +720,15 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 }
 
 func applyCommandLineProperties(target string, props map[string]string, file *ini.File) {
+	defaultSection, err := file.GetSection("")
+	if err == nil {
+		key, err := defaultSection.GetKey("target")
+		if err == nil {
+			key.SetValue(target)
+		} else {
+			defaultSection.NewKey("target", target)
+		}
+	}
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
@@ -964,6 +975,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
+	Target := valueAsString(iniFile.Section(""), "target", "all")
+	cfg.Target = strings.Split(Target, " ")
+
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -991,6 +1005,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := readObjectStoreSettings(cfg, iniFile); err != nil {
 		return err
 	}
 
@@ -1557,6 +1575,17 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
+	return nil
+}
+
+type EntityStoreSettings struct {
+	Address string
+}
+
+func readObjectStoreSettings(cfg *Cfg, iniFile *ini.File) error {
+	os := iniFile.Section("object_store")
+	address := os.Key("address").MustString("127.0.0.1:10000")
+	cfg.EntityStore = EntityStoreSettings{Address: address}
 	return nil
 }
 

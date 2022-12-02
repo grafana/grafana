@@ -32,7 +32,7 @@ type entityStoreJob struct {
 
 	sess               *session.SessionDB
 	playlistService    playlist.Service
-	store              entity.EntityStoreServer
+	store              entity.EntityStoreClient
 	dashboardsnapshots dashboardsnapshots.Service
 }
 
@@ -41,7 +41,7 @@ func startEntityStoreJob(ctx context.Context,
 	broadcaster statusBroadcaster,
 	db db.DB,
 	playlistService playlist.Service,
-	store entity.EntityStoreServer,
+	store entity.EntityStoreClient,
 	dashboardsnapshots dashboardsnapshots.Service,
 ) (Job, error) {
 	job := &entityStoreJob{

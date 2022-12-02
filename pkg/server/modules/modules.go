@@ -5,12 +5,14 @@ import (
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/kind"
+	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,6 +32,8 @@ type Modules struct {
 	grpcServer                grpcserver.Provider
 	kindRegistry              kind.KindRegistry
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
+	db                        db.DB
+	entityReferenceResolver   resolver.EntityReferenceResolver
 
 	ModuleManager  *modules.Manager
 	ServiceManager *services.Manager
@@ -37,10 +41,21 @@ type Modules struct {
 	deps           map[string][]string
 }
 
-func ProvideService(cfg *setting.Cfg, server grpcserver.Provider, kindRegistry kind.KindRegistry, backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry, roleRegistry accesscontrol.RoleRegistry) *Modules {
+func ProvideService(
+	cfg *setting.Cfg,
+	server grpcserver.Provider,
+	kindRegistry kind.KindRegistry,
+	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry,
+	roleRegistry accesscontrol.RoleRegistry,
+	db db.DB,
+	entityReferenceResolver resolver.EntityReferenceResolver,
+) *Modules {
 	m := &Modules{
 		cfg: cfg,
 		log: log.New("modules"),
+
+		db:                      db,
+		entityReferenceResolver: entityReferenceResolver,
 
 		grpcServer:                server,
 		kindRegistry:              kindRegistry,
@@ -159,5 +174,5 @@ func (m *Modules) initGRPCServerReflection() (services.Service, error) {
 }
 
 func (m *Modules) initObjectStore() (services.Service, error) {
-	return sqlstash.ProvideSQLEntityServer(m.cfg, m.kindRegistry)
+	return sqlstash.ProvideSQLEntityServer(m.db, m.cfg, m.grpcServer, m.kindRegistry, m.entityReferenceResolver), nil
 }
