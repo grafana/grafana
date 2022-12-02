@@ -269,7 +269,6 @@ func (e *cloudWatchExecutor) getInstance(pluginCtx backend.PluginContext) (*Data
 	}
 
 	instance := i.(DataSource)
-
 	return &instance, nil
 }
 
