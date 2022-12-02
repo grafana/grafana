@@ -8,6 +8,7 @@ import { StoreState, useSelector } from 'app/types';
 import { ROUTES } from './constants';
 import {
   PluginRecipesPage,
+  PluginRecipeDetailsPage,
   ConnectDataPage,
   DataSourceDetailsPage,
   DataSourcesListPage,

@@ -4,3 +4,4 @@ export { DataSourcesListPage } from './DataSourcesListPage';
 export { EditDataSourcePage } from './EditDataSourcePage';
 export { NewDataSourcePage } from './NewDataSourcePage';
 export { PluginRecipesPage } from './PluginRecipesPage';
+export { PluginRecipeDetailsPage } from './PluginRecipeDetailsPage';
