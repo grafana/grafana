@@ -41,8 +41,6 @@ export class GraphSeriesToggler extends Component<GraphSeriesTogglerProps, Graph
   onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {
     const { series, onHiddenSeriesChanged } = this.props;
     const { hiddenSeries } = this.state;
-    console.log('onSeriesToggle series', series);
-    console.log('onSeriesToggle hidden series', hiddenSeries);
 
     if (event.ctrlKey || event.metaKey || event.shiftKey) {
       // Toggling series with key makes the series itself to toggle
