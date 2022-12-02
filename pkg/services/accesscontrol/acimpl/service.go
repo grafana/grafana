@@ -269,7 +269,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, []int64{}, orgID)
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, orgID)
 	if err != nil {
 		return nil, err
 	}
