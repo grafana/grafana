@@ -40,16 +40,6 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			params = append(params, query.RolePrefix+"%")
 		}
 
-		if len(query.Actions) > 0 {
-			q += " WHERE permission.action IN("
-			if len(query.Actions) > 0 {
-				q += "?" + strings.Repeat(",?", len(query.Actions)-1)
-			}
-			q += ")"
-			for _, a := range query.Actions {
-				params = append(params, a)
-			}
-		}
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}

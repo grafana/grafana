@@ -218,7 +218,6 @@ type GetUserPermissionsQuery struct {
 	OrgID      int64
 	UserID     int64
 	Roles      []string
-	Actions    []string
 	TeamIDs    []int64
 	RolePrefix string
 }
