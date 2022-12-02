@@ -1,8 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "custom": null
-//  }
+//  Frame[0] {}
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+---------------------+
@@ -22,9 +20,7 @@
   "frames": [
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
+        "meta": {},
         "fields": [
           {
             "name": "time",

@@ -31,14 +31,12 @@ const (
 type responseParser struct {
 	Responses []*es.SearchResponse
 	Targets   []*Query
-	DebugInfo *es.SearchDebugInfo
 }
 
-var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
+var newResponseParser = func(responses []*es.SearchResponse, targets []*Query) *responseParser {
 	return &responseParser{
 		Responses: responses,
 		Targets:   targets,
-		DebugInfo: debugInfo,
 	}
 }
 
@@ -53,22 +51,11 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 	for i, res := range rp.Responses {
 		target := rp.Targets[i]
 
-		var debugInfo *simplejson.Json
-		if rp.DebugInfo != nil && i == 0 {
-			debugInfo = simplejson.NewFromAny(rp.DebugInfo)
-		}
-
 		if res.Error != nil {
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: errors.New(errResult),
-				Frames: data.Frames{
-					&data.Frame{
-						Meta: &data.FrameMeta{
-							Custom: debugInfo,
-						},
-					},
-				}}
+			}
 			continue
 		}
 
@@ -84,7 +71,7 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 
 		for _, frame := range queryRes.Frames {
 			frame.Meta = &data.FrameMeta{
-				Custom: debugInfo,
+				Custom: nil,
 			}
 		}
 		result.Responses[target.RefID] = queryRes

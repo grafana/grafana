@@ -1,8 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "custom": null
-//  }
+//  Frame[0] {}
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
@@ -17,9 +15,7 @@
 //  
 //  
 //  
-//  Frame[1] {
-//      "custom": null
-//  }
+//  Frame[1] {}
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
@@ -34,9 +30,7 @@
 //  
 //  
 //  
-//  Frame[2] {
-//      "custom": null
-//  }
+//  Frame[2] {}
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
@@ -51,9 +45,7 @@
 //  
 //  
 //  
-//  Frame[3] {
-//      "custom": null
-//  }
+//  Frame[3] {}
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
@@ -68,9 +60,7 @@
 //  
 //  
 //  
-//  Frame[4] {
-//      "custom": null
-//  }
+//  Frame[4] {}
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
@@ -85,9 +75,7 @@
 //  
 //  
 //  
-//  Frame[5] {
-//      "custom": null
-//  }
+//  Frame[5] {}
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
@@ -107,9 +95,7 @@
   "frames": [
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
+        "meta": {},
         "fields": [
           {
             "name": "time",
@@ -154,9 +140,7 @@
     },
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
+        "meta": {},
         "fields": [
           {
             "name": "time",
@@ -201,9 +185,7 @@
     },
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
+        "meta": {},
         "fields": [
           {
             "name": "time",
@@ -248,9 +230,7 @@
     },
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
+        "meta": {},
         "fields": [
           {
             "name": "time",
@@ -295,9 +275,7 @@
     },
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
+        "meta": {},
         "fields": [
           {
             "name": "time",
@@ -342,9 +320,7 @@
     },
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
+        "meta": {},
         "fields": [
           {
             "name": "time",
