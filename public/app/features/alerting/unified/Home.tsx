@@ -24,30 +24,48 @@ export default function Home() {
         <ContentBox title="How it works at glance" className={styles.howItWorks}>
           <ul>
             <li>
-              Grafana alerting periodically queries your data sources and evaluates the alerting condition you define
+              Grafana alerting <strong>periodically queries your data sources and evaluates</strong> the alerting
+              condition you define
             </li>
-            <li>If the condition is true longer than the specified time period, the alert rule starts firing</li>
-            <li>The alert rule takes the labels you defined and labels defined in the data source to produce alerts</li>
-            <li>Alerts are sent to the Alertmanager (by default to the built-in Grafana Alertmanager)</li>
             <li>
-              Alertmanager keeps the configuration of what to do with the incoming alerts. It groups them and send to
-              appropriate contact points (e.g. Slack, email etc.)
+              If the condition is true longer than the specified time period,{' '}
+              <strong>the alert rule starts firing</strong>
+            </li>
+            <li>
+              <strong>The alert rule takes the labels</strong> you defined and labels defined in the data source{' '}
+              <strong>to produce alerts</strong>
+            </li>
+            <li>
+              <strong>Alerts are sent to the Alertmanager</strong> (by default to the built-in Grafana Alertmanager)
+            </li>
+            <li>
+              Alertmanager keeps the configuration of what to do with the incoming alerts.{' '}
+              <strong>It groups them and sends them to appropriate contact points</strong> (e.g. Slack, email etc.)
             </li>
           </ul>
         </ContentBox>
         <ContentBox title="Get started" className={styles.gettingStartedBlock}>
           <Stack direction="column" alignItems="space-between">
             <ul>
-              <li>Create an alert rule by creating queries and expressions from multiple data sources.</li>
               <li>
-                Add labels to your alert rule to connect alerts to contact points and silence alert instances that have
+                <strong>Create an alert rule</strong> by creating queries and expressions from multiple data sources.
+              </li>
+              <li>
+                <strong>Add labels</strong> to your alert rule{' '}
+                <strong>to connect alerts to notification policies</strong> and silence alert instances that have
                 matching labels.
               </li>
-              <li>Create contact points to define where to send your alert notifications to.</li>
               <li>
-                Configure notification policies to decide where, when, and how your alerts are routed to contact points.
+                <strong>Create contact points</strong> to define where to send your alert notifications to.
               </li>
-              <li>Add mute timings or silences for times when you don’t want notifications to be sent out.</li>
+              <li>
+                <strong>Configure notification policies</strong> to decide where, when, and how your alerts are routed
+                to contact points.
+              </li>
+              <li>
+                <strong>Add mute timings or silences</strong> for times when you don&apos;t want notifications to be
+                sent out.
+              </li>
             </ul>
             <div>
               <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
