@@ -243,9 +243,6 @@ describe('CloudWatchLogsQueryRunner', () => {
 
       expect(response).toEqual({
         data: [],
-        error: {
-          message: 'Query is required',
-        },
       });
     });
   });

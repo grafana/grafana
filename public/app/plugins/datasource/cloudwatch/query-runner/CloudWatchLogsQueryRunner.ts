@@ -105,7 +105,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     });
 
     if (hasQueryWithMissingLogGroupSelection) {
-      return of({ data: [], error: { message: 'Log group is required' } });
+      return of({ data: [] });
     }
 
     const hasQueryWithMissingQueryString = queryParams.some((qp) => {
@@ -113,7 +113,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     });
 
     if (hasQueryWithMissingQueryString) {
-      return of({ data: [], error: { message: 'Query is required' } });
+      return of({ data: [] });
     }
 
     const startTime = new Date();
