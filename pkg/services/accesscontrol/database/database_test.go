@@ -63,15 +63,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			expected:           5,
 		},
 		{
-			desc:               "Should filter on actions",
-			orgID:              1,
-			role:               "",
-			userPermissions:    []string{"1", "2", "10"},
-			teamPermissions:    []string{"100", "2"},
-			builtinPermissions: []string{"5", "6"},
-			expected:           3,
-		},
-		{
 			desc:               "should only get br permissions for anonymous user",
 			anonymousUser:      true,
 			orgID:              1,
