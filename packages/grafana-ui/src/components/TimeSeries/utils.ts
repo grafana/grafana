@@ -296,7 +296,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
-    if (customConfig.spanNulls !== true && showPoints !== VisibilityMode.Always) {
+    if (customConfig.spanNulls !== true) {
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
@@ -434,40 +434,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       dynamicSeriesColor = (seriesIdx) => getFieldSeriesColor(alignedFrame.fields[seriesIdx], theme).color;
     }
 
-    // this adds leading and trailing gaps when datasets have leading and trailing nulls
-    // it will cause additional unnecessary clips, but we also use adjacent gaps to show single points
-    // when not connecting across gaps, e.g. null,100,null,null,50,50,50,null,50,null,null
-    const gapsRefiner: uPlot.Series.GapsRefiner = (u, seriesIdx, idx0, idx1, gaps) => {
-      let yData = u.data[seriesIdx];
-
-      // @ts-ignore
-      let xData = u._data[0];
-
-      // scan to first and last non-null vals
-      let first = idx0,
-        last = idx1;
-
-      while (first <= last && yData[first] == null) {
-        first++;
-      }
-
-      while (last > first && yData[last] == null) {
-        last--;
-      }
-
-      if (first !== idx0) {
-        gaps.unshift([u.bbox.left, Math.round(u.valToPos(xData[first]!, 'x', true))]);
-      }
-
-      if (last !== idx1) {
-        gaps.push([Math.round(u.valToPos(xData[last]!, 'x', true)), u.bbox.left + u.bbox.width]);
-      }
-
-      return gaps;
-    };
-
     builder.addSeries({
-      gapsRefiner,
       pathBuilder,
       pointsBuilder,
       scaleKey,

@@ -133,7 +133,6 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -287,7 +286,6 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -441,7 +439,6 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -595,7 +592,6 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -749,7 +745,6 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -903,7 +898,6 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -1057,7 +1051,6 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -1211,7 +1204,6 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",

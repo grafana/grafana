@@ -1,20 +1,20 @@
 import { set } from 'lodash';
 import {
-  Observable,
-  of,
-  mergeMap,
-  map,
-  from,
+  catchError,
   concatMap,
   finalize,
+  from,
+  lastValueFrom,
+  map,
+  mergeMap,
+  Observable,
+  of,
   repeat,
   scan,
   share,
   takeWhile,
   tap,
   zip,
-  catchError,
-  lastValueFrom,
 } from 'rxjs';
 
 import {
@@ -106,6 +106,14 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     if (hasQueryWithMissingLogGroupSelection) {
       return of({ data: [], error: { message: 'Log group is required' } });
+    }
+
+    const hasQueryWithMissingQueryString = queryParams.some((qp) => {
+      return qp.queryString.length === 0;
+    });
+
+    if (hasQueryWithMissingQueryString) {
+      return of({ data: [], error: { message: 'Query is required' } });
     }
 
     const startTime = new Date();

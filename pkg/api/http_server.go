@@ -490,11 +490,11 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 func (hs *HTTPServer) configureHttps() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
+		return errors.New("cert_file cannot be empty when using HTTPS")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
+		return errors.New("cert_key cannot be empty when using HTTPS")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
@@ -530,19 +530,19 @@ func (hs *HTTPServer) configureHttps() error {
 
 func (hs *HTTPServer) configureHttp2() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+		return errors.New("cert_file cannot be empty when using HTTP2")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+		return errors.New("cert_key cannot be empty when using HTTP2")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+		return fmt.Errorf("cannot find SSL cert_file at %q", hs.Cfg.CertFile)
 	}
 
 	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+		return fmt.Errorf("cannot find SSL key_file at %q", hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -664,9 +664,8 @@ func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 		return
 	}
 
-	ctx.Resp.WriteHeader(200)
-	_, err := ctx.Resp.Write([]byte("Ok"))
-	if err != nil {
+	ctx.Resp.WriteHeader(http.StatusOK)
+	if _, err := ctx.Resp.Write([]byte("Ok")); err != nil {
 		hs.log.Error("could not write to response", "err", err)
 	}
 }
@@ -690,10 +689,10 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(503)
+		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	} else {
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(200)
+		ctx.Resp.WriteHeader(http.StatusOK)
 	}
 
 	dataBytes, err := data.EncodePretty()
