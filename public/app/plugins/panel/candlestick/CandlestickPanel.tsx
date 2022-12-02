@@ -16,7 +16,7 @@ import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
-import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
+import { ExemplarsPlugin, getVisibleLabels } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 
@@ -313,6 +313,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
             )}
             {data.annotations && (
               <ExemplarsPlugin
+                visibleLabels={getVisibleLabels(config, [info.frame])}
                 config={config}
                 exemplars={data.annotations}
                 timeZone={timeZone}

@@ -5,6 +5,7 @@ import {
   DataFrame,
   DataFrameFieldIndex,
   Field,
+  Labels,
   LinkModel,
   TimeZone,
   TIME_SERIES_TIME_FIELD_NAME,
@@ -19,9 +20,36 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  visibleLabels: Labels[];
 }
 
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
+export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[] | null) => {
+  const visibleSeries = config.series.filter((series) => series.props.show);
+  const visibleLabels: Labels[] = [];
+  if (frames?.length) {
+    visibleSeries.forEach((plotInstance) => {
+      const frameIndex = plotInstance.props?.dataFrameFieldIndex?.frameIndex;
+      const fieldIndex = plotInstance.props?.dataFrameFieldIndex?.fieldIndex;
+
+      if (frameIndex !== undefined && fieldIndex !== undefined) {
+        const field = frames[frameIndex].fields[fieldIndex];
+        if (field.labels) {
+          visibleLabels.push(field.labels);
+        }
+      }
+    });
+  }
+
+  return visibleLabels;
+};
+
+export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
+  exemplars,
+  timeZone,
+  getFieldLinks,
+  config,
+  visibleLabels,
+}) => {
   const plotInstance = useRef<uPlot>();
 
   useLayoutEffect(() => {
@@ -63,6 +91,26 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      let showMarker = false;
+
+      visibleLabels.forEach((visibleLabel) => {
+        const labelKeys = Object.keys(visibleLabel);
+        const labelValues = Object.values(visibleLabel);
+
+        const field = dataFrame.fields.find((field) => labelKeys.find((labelKey) => labelKey === field.name));
+
+        if (field) {
+          const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+          if (labelValues.includes(value)) {
+            showMarker = true;
+          }
+        }
+      });
+
+      if (!showMarker) {
+        return <></>;
+      }
+
       return (
         <ExemplarMarker
           timeZone={timeZone}
@@ -73,7 +121,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
         />
       );
     },
-    [config, timeZone, getFieldLinks]
+    [config, timeZone, getFieldLinks, visibleLabels]
   );
 
   return (
