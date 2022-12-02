@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useParams } from 'react-router-dom';
 
+import { AppNotificationSeverity } from '@grafana/data';
 import { Alert, Badge } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
-import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
+import { StoreState, useSelector } from 'app/types';
 
 import { ROUTES } from '../constants';
 

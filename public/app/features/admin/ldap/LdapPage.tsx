@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
+import { AppNotificationSeverity, NavModel } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
@@ -9,15 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import {
-  AppNotificationSeverity,
-  LdapError,
-  LdapUser,
-  StoreState,
-  SyncInfo,
-  LdapConnectionInfo,
-  AccessControlAction,
-} from 'app/types';
+import { LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo, AccessControlAction } from 'app/types';
 
 import {
   loadLdapState,

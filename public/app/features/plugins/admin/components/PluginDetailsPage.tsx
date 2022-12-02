@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem, AppNotificationSeverity } from '@grafana/data';
 import { useStyles2, TabContent, Alert } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
-import { AppNotificationSeverity } from 'app/types';
 
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';

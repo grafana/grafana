@@ -1,4 +1,5 @@
-import { AppNotificationSeverity, AppNotificationsState } from 'app/types/';
+import { AppNotificationSeverity } from '@grafana/data';
+import { AppNotificationsState } from 'app/types/';
 
 import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
 

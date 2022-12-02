@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 
+import { AppNotificationSeverity } from '@grafana/data';
 import { Alert, Icon } from '@grafana/ui';
-import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
+import { LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;

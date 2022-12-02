@@ -1,5 +1,6 @@
+import { AppNotification } from '@grafana/data';
+
 import { createErrorNotification, createSuccessNotification } from '../../core/copy/appNotification';
-import { AppNotification } from '../../types';
 import { PanelModel } from '../dashboard/state';
 
 import { addLibraryPanel, updateLibraryPanel } from './state/api';

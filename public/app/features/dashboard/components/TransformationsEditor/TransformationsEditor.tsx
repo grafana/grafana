@@ -12,6 +12,7 @@ import {
   SelectableValue,
   standardTransformersRegistry,
   TransformerRegistryItem,
+  AppNotificationSeverity,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
@@ -31,7 +32,6 @@ import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValue
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
-import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 

@@ -1,6 +1,7 @@
 import { castArray, isEqual } from 'lodash';
 
 import {
+  AppNotification,
   DataQuery,
   getDataSourceRef,
   isDataSourceRef,
@@ -20,7 +21,7 @@ import { createErrorNotification } from '../../../core/copy/appNotification';
 import { appEvents } from '../../../core/core';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { Graph } from '../../../core/utils/dag';
-import { AppNotification, StoreState, ThunkResult } from '../../../types';
+import { StoreState, ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
