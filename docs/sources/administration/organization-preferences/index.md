@@ -111,17 +111,18 @@ Organization administrators can change the UI theme for all users in an organiza
 
 1. Hover your cursor over the **Configuration** (gear) icon.
 1. Click **Preferences**.
-1. In the Preferences section, select the **UI theme**.
+1. In the **Preferences** section, select the **UI theme**.
 1. Click **Save**.
 
 ### Change team UI theme
 
-Organization and team administrators can change the UI theme for all users in a team.
+Organization and team administrators can change the UI theme for all users on a team.
 
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
 1. Click **Teams**. Grafana displays the team list.
-1. Click on the team that you want to change the UI theme for and then navigate to the **Settings** tab.
-1. In the Preferences section, select the **UI theme**.
+1. Click the team for which you want to change the UI theme.
+1. Click **Settings**.
+1. In the **Preferences** section, select the **UI theme**.
 1. Click **Save**.
 
 ### Change your personal UI theme
@@ -129,7 +130,7 @@ Organization and team administrators can change the UI theme for all users in a 
 You can change the UI theme for your user account. This setting overrides UI theme settings at higher levels.
 
 1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
-1. In the Preferences section, select the **UI theme**.
+1. In the **Preferences** section, select the **UI theme**.
 1. Click **Save**.
 
 ## Change the Grafana default timezone
@@ -153,11 +154,12 @@ Organization administrators can choose a default timezone for their organization
 
 ### Set team timezone
 
-Organization administrators and team administrators can choose a default timezone for all users in a team.
+Organization administrators and team administrators can choose a default timezone for all users on a team.
 
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
 1. Click **Teams**. Grafana displays the team list.
-1. Click on the team you that you want to change the timezone for and then navigate to the **Settings** tab.
+1. Click the team for which you want to change the timezone.
+1. Click **Settings**
 1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [[Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}) for more information about Grafana time settings.
 1. Click **Save**.
 
@@ -207,7 +209,7 @@ default_home_dashboard_path = data/main-dashboard.json
 
 ### Set the home dashboard for your organization
 
-Organization administrators can choose a home dashboard for their organization.
+Organization administrators can choose a default home dashboard for their organization.
 
 1. Navigate to the dashboard you want to set as the home dashboard.
 1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
@@ -218,13 +220,14 @@ Organization administrators can choose a home dashboard for their organization.
 
 ### Set home dashboard for your team
 
-Organization administrators and Team Admins can choose a home dashboard for a team.
+Organization administrators and Team Admins can set a default home dashboard for all users on a team.
 
 1. Navigate to the dashboard you want to set as the home dashboard.
 1. Click the star next to the dashboard title to mark the dashboard as a favorite if it is not already.
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
 1. Click **Teams**. Grafana displays the team list.
-1. Click on the team that you want to change the home dashboard for and then navigate to the **Settings** tab.
+1. Click the team for which you want to change the home dashboard.
+1. Click **Settings**.
 1. In the **Home Dashboard** field, select the dashboard that you want to use for your home dashboard. Options include all starred dashboards.
 1. Click **Save**.
 
@@ -250,17 +253,18 @@ Organization administrators can change the language for all users in an organiza
 
 1. Hover your cursor over the **Configuration** (gear) icon.
 1. Click **Preferences**.
-1. In the Preferences section, select the **Language**.
+1. In the **Preferences** section, select the **Language**.
 1. Click **Save**.
 
 ### Change team language
 
-Organization and team administrators can change the language for all users in a team.
+Organization and team administrators can set a default language for all users on a team.
 
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
 1. Click **Teams**. Grafana displays the team list.
-1. Click on the team that you want to change the language for and then navigate to the **Settings** tab.
-1. In the Preferences section, select the **Language**.
+1. Click the team for which you want to change the language.
+1. Click **Settings**
+1. In the **Preferences** section, select the **Language**.
 1. Click **Save**.
 
 ### Change your personal language
@@ -268,5 +272,5 @@ Organization and team administrators can change the language for all users in a 
 You can change the language for your user account. This setting overrides language settings at higher levels.
 
 1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
-1. In the Preferences section, select the **language**.
+1. In the **Preferences** section, select the **language**.
 1. Click **Save**.

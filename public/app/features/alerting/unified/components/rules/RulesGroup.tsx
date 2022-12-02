@@ -192,6 +192,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     <div className={styles.wrapper} data-testid="rule-group">
       <div className={styles.header} data-testid="rule-group-header">
         <CollapseToggle
+          size="sm"
           className={styles.collapseToggle}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}

@@ -707,6 +707,10 @@ func TestNotificationChannels(t *testing.T) {
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
 	mockEmail := &mockEmailHandler{}
 
+	// Set up responses
+	mockChannel.responses["slack_recv1"] = `{"ok": true}`
+	mockChannel.responses["slack_recvX"] = `{"ok": true}`
+
 	// Overriding some URLs to send to the mock channel.
 	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
@@ -990,6 +994,7 @@ type mockNotificationChannel struct {
 	server *http.Server
 
 	receivedNotifications  map[string][]string
+	responses              map[string]string
 	notificationErrorCount int
 	notificationsMtx       sync.RWMutex
 }
@@ -1007,6 +1012,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 			Addr: listener.Addr().String(),
 		},
 		receivedNotifications: make(map[string][]string),
+		responses:             make(map[string]string),
 		t:                     t,
 	}
 
@@ -1036,6 +1042,7 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
 	res.WriteHeader(http.StatusOK)
+	fmt.Fprint(res, nc.responses[paths[0]])
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {
@@ -2635,7 +2642,7 @@ var expNonEmailNotifications = map[string][]string{
 
 // expNotificationErrors maps a receiver name with its expected error string.
 var expNotificationErrors = map[string]string{
-	"slack_failed_recv": "request to Slack API failed with status code 500",
+	"slack_failed_recv": "failed to send Slack message: unexpected 5xx status code: 500",
 }
 
 // expInactiveReceivers is a set of receivers expected to be unused.
