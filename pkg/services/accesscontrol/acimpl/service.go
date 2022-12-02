@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -74,10 +73,6 @@ func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
 	}
 }
 
-var actionsToFetch = append(
-	ossaccesscontrol.TeamAdminActions, append(ossaccesscontrol.DashboardAdminActions, ossaccesscontrol.FolderAdminActions...)...,
-)
-
 // GetUserPermissions returns user permissions based on built-in roles
 func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -99,11 +94,11 @@ func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUse
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:   user.OrgID,
-		UserID:  user.UserID,
-		Roles:   accesscontrol.GetOrgRoles(user),
-		TeamIDs: user.Teams,
-		Actions: actionsToFetch,
+		OrgID:      user.OrgID,
+		UserID:     user.UserID,
+		Roles:      accesscontrol.GetOrgRoles(user),
+		TeamIDs:    user.Teams,
+		RolePrefix: accesscontrol.ManagedRolePrefix,
 	})
 	if err != nil {
 		return nil, err
