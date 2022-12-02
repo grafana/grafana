@@ -2,28 +2,16 @@ package server
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/server/modules"
 
-	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
@@ -40,13 +28,10 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	userService user.Service, loginAttemptService loginattempt.Service,
+func New(opts Options, cfg *setting.Cfg,
+	moduleService *modules.Modules,
 ) (*Server, error) {
-	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, userService, loginAttemptService)
+	s, err := newServer(opts, cfg, moduleService)
 	if err != nil {
 		return nil, err
 	}
@@ -58,32 +43,23 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry, userService user.Service, loginAttemptService loginattempt.Service,
-) (*Server, error) {
+func newServer(opts Options, cfg *setting.Cfg, moduleService *modules.Modules) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
-	s := &Server{
-		context:             childCtx,
-		childRoutines:       childRoutines,
-		HTTPServer:          httpServer,
-		provisioningService: provisioningService,
-		roleRegistry:        roleRegistry,
-		shutdownFn:          shutdownFn,
-		shutdownFinished:    make(chan struct{}),
-		log:                 log.New("server"),
-		cfg:                 cfg,
-		pidFile:             opts.PidFile,
-		version:             opts.Version,
-		commit:              opts.Commit,
-		buildBranch:         opts.BuildBranch,
-		backgroundServices:  backgroundServiceProvider.GetServices(),
-		userService:         userService,
-		loginAttemptService: loginAttemptService,
-	}
-
-	return s, nil
+	return &Server{
+		context:          childCtx,
+		childRoutines:    childRoutines,
+		shutdownFn:       shutdownFn,
+		shutdownFinished: make(chan struct{}),
+		log:              log.New("server"),
+		cfg:              cfg,
+		pidFile:          opts.PidFile,
+		version:          opts.Version,
+		commit:           opts.Commit,
+		buildBranch:      opts.BuildBranch,
+		moduleService:    moduleService,
+	}, nil
 }
 
 // Server is responsible for managing the lifecycle of services.
@@ -98,17 +74,12 @@ type Server struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 
-	pidFile            string
-	version            string
-	commit             string
-	buildBranch        string
-	backgroundServices []registry.BackgroundService
+	pidFile     string
+	version     string
+	commit      string
+	buildBranch string
 
-	HTTPServer          *api.HTTPServer
-	roleRegistry        accesscontrol.RoleRegistry
-	provisioningService provisioning.ProvisioningService
-	userService         user.Service
-	loginAttemptService loginattempt.Service
+	moduleService *modules.Modules
 }
 
 // init initializes the server and its services.
@@ -120,20 +91,9 @@ func (s *Server) init() error {
 		return nil
 	}
 	s.isInitialized = true
-
 	s.writePIDFile()
-	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
-		return err
-	}
 
-	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login, s.loginAttemptService, s.userService)
-	social.ProvideService(s.cfg, s.HTTPServer.Features)
-
-	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
-		return err
-	}
-
-	return s.provisioningService.RunInitProvisioners(s.context)
+	return s.moduleService.Init()
 }
 
 // Run initializes and starts services. This will block until all services have
@@ -145,62 +105,20 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	services := s.backgroundServices
-
-	// Start background services.
-	for _, svc := range services {
-		if registry.IsDisabled(svc) {
-			continue
-		}
-
-		service := svc
-		serviceName := reflect.TypeOf(service).String()
-		s.childRoutines.Go(func() error {
-			select {
-			case <-s.context.Done():
-				return s.context.Err()
-			default:
-			}
-			s.log.Debug("Starting background service", "service", serviceName)
-			err := service.Run(s.context)
-			// Do not return context.Canceled error since errgroup.Group only
-			// returns the first error to the caller - thus we can miss a more
-			// interesting error.
-			if err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("Stopped background service", "service", serviceName, "reason", err)
-				return fmt.Errorf("%s run error: %w", serviceName, err)
-			}
-			s.log.Debug("Stopped background service", "service", serviceName, "reason", err)
-			return nil
-		})
-	}
-
 	s.notifySystemd("READY=1")
 
 	s.log.Debug("Waiting on services...")
-	return s.childRoutines.Wait()
+	return s.moduleService.Run()
 }
 
-// Shutdown initiates Grafana graceful shutdown. This shuts down all
-// running background services. Since Run blocks Shutdown supposed to
-// be run from a separate goroutine.
-func (s *Server) Shutdown(ctx context.Context, reason string) error {
-	var err error
+func (s *Server) Shutdown() {
 	s.shutdownOnce.Do(func() {
-		s.log.Info("Shutdown started", "reason", reason)
-		// Call cancel func to stop services.
-		s.shutdownFn()
-		// Wait for server to shut down
-		select {
-		case <-s.shutdownFinished:
-			s.log.Debug("Finished waiting for server to shut down")
-		case <-ctx.Done():
-			s.log.Warn("Timed out while waiting for server to shut down")
-			err = fmt.Errorf("timeout waiting for shutdown")
+		s.log.Info("Shutdown started")
+		if err := s.moduleService.Stop(); err != nil {
+			s.log.Error("Failed to stop modules", "error", err)
 		}
+		s.log.Info("Shutdown complete")
 	})
-
-	return err
 }
 
 // ExitCode returns an exit code for a given error.
