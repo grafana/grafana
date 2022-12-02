@@ -30,6 +30,7 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
     "postpack": "mv package.json.bak package.json"
@@ -67,6 +68,7 @@
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "8.0.1",
     "@testing-library/user-event": "14.4.3",
+    "@types/eslint": "^8",
     "@types/history": "4.7.11",
     "@types/jest": "29.2.3",
     "@types/jquery": "3.5.14",
@@ -81,6 +83,7 @@
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
     "esbuild": "0.15.12",
+    "eslint": "^8.28.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",

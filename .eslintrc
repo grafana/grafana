@@ -1,24 +1,77 @@
 {
-  "extends": ["@grafana/eslint-config"],
+  "extends": [
+    "@grafana/eslint-config"
+  ],
+  "ignorePatterns": [
+    ".git",
+    ".github",
+    ".yarn",
+    "build",
+    "compiled",
+    "data",
+    "deployment_tools_config.json",
+    "devenv",
+    "dist",
+    "e2e/tmp",
+    "node_modules",
+    "pkg",
+    "public/lib/monaco",
+    "scripts/grafana-server/tmp",
+    "vendor",
+    "**/*.gen.ts",
+    "public/locales/_build/",
+    "public/locales/**/*.js",
+    "packages/grafana-ui/src/components/icon/iconbundle.ts"
+  ],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y"],
+  "plugins": [
+    "@emotion",
+    "lodash",
+    "jest",
+    "import",
+    "jsx-a11y"
+  ],
   "settings": {
     "import/internal-regex": "^(app/)|(@grafana)",
-    "import/external-module-folders": ["node_modules", ".yarn"]
+    "import/external-module-folders": [
+      "node_modules",
+      ".yarn"
+    ]
   },
   "rules": {
     "react/prop-types": "off",
     // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
-    "react/no-unknown-property": ["error", { "ignore": ["css"] }],
+    "react/no-unknown-property": [
+      "error",
+      {
+        "ignore": [
+          "css"
+        ]
+      }
+    ],
     "@emotion/jsx-import": "error",
-    "lodash/import-scope": [2, "member"],
+    "lodash/import-scope": [
+      2,
+      "member"
+    ],
     "jest/no-focused-tests": "error",
     "import/order": [
       "error",
       {
-        "groups": [["builtin", "external"], "internal", "parent", "sibling", "index"],
+        "groups": [
+          [
+            "builtin",
+            "external"
+          ],
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
         "newlines-between": "always",
-        "alphabetize": { "order": "asc" }
+        "alphabetize": {
+          "order": "asc"
+        }
       }
     ],
     "no-restricted-imports": [
@@ -27,38 +80,56 @@
         "paths": [
           {
             "name": "react-redux",
-            "importNames": ["useDispatch", "useSelector"],
+            "importNames": [
+              "useDispatch",
+              "useSelector"
+            ],
             "message": "Please import from app/types instead."
           },
           {
             "name": "react-i18next",
-            "importNames": ["Trans", "t"],
+            "importNames": [
+              "Trans",
+              "t"
+            ],
             "message": "Please import from app/core/internationalization instead"
           }
         ]
       }
     ],
-
     // Use typescript's no-redeclare for compatibility with overrides
     "no-redeclare": "off",
-    "@typescript-eslint/no-redeclare": ["error"]
+    "@typescript-eslint/no-redeclare": [
+      "error"
+    ]
   },
   "overrides": [
     {
-      "files": ["public/app/features/scenes/**/*.{ts,tsx}"],
+      "files": [
+        "public/app/features/scenes/**/*.{ts,tsx}"
+      ],
       "rules": {
-        "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "explicit" }]
+        "@typescript-eslint/explicit-member-accessibility": [
+          "error",
+          {
+            "accessibility": "explicit"
+          }
+        ]
       }
     },
     {
-      "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
+      "files": [
+        "packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"
+      ],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
         "react-hooks/exhaustive-deps": "off"
       }
     },
     {
-      "files": ["packages/grafana-ui/src/components/ThemeDemos/**/*.{ts,tsx}"],
+      "files": [
+        "packages/grafana-ui/src/components/ThemeDemos/**/*.{ts,tsx}"
+      ],
       "rules": {
         "@emotion/jsx-import": "off",
         "react/jsx-uses-react": "off",
@@ -66,16 +137,24 @@
       }
     },
     {
-      "files": ["public/dashboards/scripted*.js"],
+      "files": [
+        "public/dashboards/scripted*.js"
+      ],
       "rules": {
         "no-redeclare": "error",
         "@typescript-eslint/no-redeclare": "off"
       }
     },
     {
-      "extends": ["plugin:jsx-a11y/recommended"],
-      "files": ["**/*"],
-      "excludedFiles": ["**/*.{spec,test}.{ts,tsx}"],
+      "extends": [
+        "plugin:jsx-a11y/recommended"
+      ],
+      "files": [
+        "**/*"
+      ],
+      "excludedFiles": [
+        "**/*.{spec,test}.{ts,tsx}"
+      ],
       "rules": {
         // rules marked "off" are those left in the recommended preset we need to fix
         // we should remove the corresponding line and fix them one by one
@@ -88,10 +167,15 @@
           }
         ],
         "jsx-a11y/no-static-element-interactions": "off",
-        "jsx-a11y/label-has-associated-control": [ "error", {
-          "controlComponents": ["NumberInput"],
-          "depth": 2
-        }]
+        "jsx-a11y/label-has-associated-control": [
+          "error",
+          {
+            "controlComponents": [
+              "NumberInput"
+            ],
+            "depth": 2
+          }
+        ]
       }
     }
   ]
