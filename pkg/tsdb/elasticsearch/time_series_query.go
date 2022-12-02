@@ -181,6 +181,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	return nil
 }
 
+// Changes string values to float64 values in json
 func setFloatPath(settings *simplejson.Json, path ...string) {
 	if stringValue, err := settings.GetPath(path...).String(); err == nil {
 		if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
@@ -189,6 +190,7 @@ func setFloatPath(settings *simplejson.Json, path ...string) {
 	}
 }
 
+// Changes string values to int64 values in json
 func setIntPath(settings *simplejson.Json, path ...string) {
 	if stringValue, err := settings.GetPath(path...).String(); err == nil {
 		if value, err := strconv.ParseInt(stringValue, 10, 64); err == nil {
@@ -222,7 +224,6 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 			metricAggregation.Settings.SetPath([]string{"script"}, scriptValue)
 		}
 	}
-
 	return metricAggregation.Settings.MustMap()
 }
 
@@ -454,7 +455,15 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 		metric.Hide = metricJSON.Get("hide").MustBool(false)
 		metric.ID = metricJSON.Get("id").MustString()
 		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
-		metric.Settings = simplejson.NewFromAny(metricJSON.Get("settings").MustMap())
+		// In legacy editors, we were storing empty settings values as null
+		// The new editor doesn't store empty strings at all, but we need to ensures backward compatibility with old queries
+		settings := metricJSON.Get("settings").MustMap()
+		for k, v := range settings {
+			if v == "null" {
+				delete(settings, k)
+			}
+		}
+		metric.Settings = simplejson.NewFromAny(settings)
 		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
 		metric.Type, err = metricJSON.Get("type").String()
 		if err != nil {
