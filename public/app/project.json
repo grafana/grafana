@@ -1,4 +1,5 @@
 {
+  "name": "grafana-app",
   "root": "public/app",
   "targets": {
     "build": {
