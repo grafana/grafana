@@ -53,7 +53,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 
 type testContext struct {
 	authToken string
-	client    entity.EntityStoreClient
+	client    entity.EntityStoreServer
 	user      *user.SignedInUser
 	ctx       context.Context
 }
@@ -80,7 +80,7 @@ func createTestContext(t *testing.T) testContext {
 	)
 	require.NoError(t, err)
 
-	client := entity.NewEntityStoreClient(conn)
+	client := entity.NewEntityStoreServer(conn)
 
 	return testContext{
 		authToken: authToken,

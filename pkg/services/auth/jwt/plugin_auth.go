@@ -10,12 +10,16 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	jose "gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -51,6 +55,8 @@ type PluginAuthService interface {
 	Verify(context.Context, string) (models.JWTClaims, error)
 	Generate(string, string) (string, error)
 	IsEnabled() bool
+	UnaryClientInterceptor(string) grpc.UnaryClientInterceptor
+	StreamClientInterceptor(string) grpc.StreamClientInterceptor
 }
 
 type pluginAuthService struct {
@@ -148,6 +154,50 @@ func (s *pluginAuthService) getPrivateKey(ctx context.Context) (privKey *jose.JS
 	}
 
 	return privKey, nil
+}
+
+func (s *pluginAuthService) UnaryClientInterceptor(namespace string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if !s.IsEnabled() {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+
+		usr, err := appcontext.User(ctx)
+		if err != nil {
+			s.log.Error("Failed to get user from context", "err", err)
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+
+		token, err := s.Generate(store.GetUserIDString(usr), namespace)
+		if err != nil {
+			return err
+		}
+
+		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+func (s *pluginAuthService) StreamClientInterceptor(namespace string) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		if !s.IsEnabled() {
+			return streamer(ctx, desc, cc, method, opts...)
+		}
+
+		usr, err := appcontext.User(ctx)
+		if err != nil {
+			s.log.Error("Failed to get user from context", "err", err)
+			return streamer(ctx, desc, cc, method, opts...)
+		}
+
+		token, err := s.Generate(store.GetUserIDString(usr), namespace)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+		return streamer(ctx, desc, cc, method, opts...)
+	}
 }
 
 func generateJWK() (privKey *jose.JSONWebKey, err error) {

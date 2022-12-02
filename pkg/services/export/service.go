@@ -159,7 +159,7 @@ type StandardExport struct {
 	playlistService           playlist.Service
 	orgService                org.Service
 	datasourceService         datasources.DataSourceService
-	store                     entity.EntityStoreServer
+	store                     entity.EntityStoreClient
 
 	// updated with mutex
 	exportJob Job
@@ -167,7 +167,7 @@ type StandardExport struct {
 
 func ProvideService(db db.DB, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
-	datasourceService datasources.DataSourceService, store entity.EntityStoreServer) ExportService {
+	datasourceService datasources.DataSourceService, store entity.EntityStoreClient) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
