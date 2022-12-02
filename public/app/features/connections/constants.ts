@@ -15,6 +15,7 @@ export const ROUTES = {
 
   // Plugin Recipes
   PluginRecipes: `/${ROUTE_BASE_ID}/plugin-recipes`,
+  PluginRecipeDetails: `/${ROUTE_BASE_ID}/plugin-recipes/:id`,
 
   // Connect Data
   ConnectData: `/${ROUTE_BASE_ID}/connect-data`,

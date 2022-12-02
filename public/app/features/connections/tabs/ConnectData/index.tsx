@@ -1,2 +1,2 @@
 export * from './ConnectData';
-export * from '../PluginRecipes';
+export * from '../PluginRecipes/PluginRecipes';
