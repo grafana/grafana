@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/ticker"
 
 	"github.com/benbjohnson/clock"
@@ -98,29 +97,33 @@ type schedule struct {
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	Cfg              setting.UnifiedAlertingSettings
-	C                clock.Clock
-	EvaluatorFactory eval.EvaluatorFactory
-	RuleStore        RulesStore
-	Metrics          *metrics.Scheduler
-	AlertSender      AlertsSender
+	MaxAttempts          int64
+	BaseInterval         time.Duration
+	C                    clock.Clock
+	MinRuleInterval      time.Duration
+	DisableGrafanaFolder bool
+	AppURL               *url.URL
+	EvaluatorFactory     eval.EvaluatorFactory
+	RuleStore            RulesStore
+	Metrics              *metrics.Scheduler
+	AlertSender          AlertsSender
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
-		maxAttempts:           cfg.Cfg.MaxAttempts,
+		maxAttempts:           cfg.MaxAttempts,
 		clock:                 cfg.C,
-		baseInterval:          cfg.Cfg.BaseInterval,
+		baseInterval:          cfg.BaseInterval,
 		log:                   log.New("ngalert.scheduler"),
 		evaluatorFactory:      cfg.EvaluatorFactory,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,
-		appURL:                appURL,
-		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
+		appURL:                cfg.AppURL,
+		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
 		stateManager:          stateManager,
-		minRuleInterval:       cfg.Cfg.MinInterval,
+		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		alertsSender:          cfg.AlertSender,
 	}

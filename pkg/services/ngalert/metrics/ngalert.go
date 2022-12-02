@@ -100,7 +100,7 @@ func (ng *NGAlert) GetMultiOrgAlertmanagerMetrics() *MultiOrgAlertmanager {
 func NewNGAlert(r prometheus.Registerer) *NGAlert {
 	return &NGAlert{
 		Registerer:                  r,
-		schedulerMetrics:            newSchedulerMetrics(r),
+		schedulerMetrics:            NewSchedulerMetrics(r),
 		stateMetrics:                newStateMetrics(r),
 		multiOrgAlertmanagerMetrics: newMultiOrgAlertmanagerMetrics(r),
 		apiMetrics:                  newAPIMetrics(r),
@@ -125,7 +125,7 @@ func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Reg
 	return moa.registries.GetOrCreateOrgRegistry(id)
 }
 
-func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
+func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 	return &Scheduler{
 		Registerer: r,
 		BehindSeconds: promauto.With(r).NewGauge(prometheus.GaugeOpts{
