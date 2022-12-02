@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isString } from 'lodash';
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -30,7 +31,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { isQueryWithMixedDatasource } from '../../query-library/api/SavedQueriesApi';
@@ -459,6 +460,32 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.setState({ scrollElement });
   };
 
+  onFileDrop = (file: string | ArrayBuffer | null) => {
+    if (!file || !isString(file)) {
+      return;
+    }
+
+    const dataframeJson = dataFrameToJSON(readCSV(file, { config: { dynamicTyping: true } })[0]);
+    const grafanaDS = {
+      type: 'grafana',
+      uid: 'grafana',
+    };
+    const query = {
+      queryType: GrafanaQueryType.Snapshot,
+      snapshot: [dataframeJson],
+      datasource: grafanaDS,
+    } as GrafanaQuery;
+    this.onChange({
+      dataSource: grafanaDS,
+      queries: [query],
+    });
+
+    this.setState({
+      queries: [query],
+    });
+    this.props.onRunQueries();
+  };
+
   render() {
     const { isHelpOpen, dsSettings } = this.state;
     const styles = getStyles();
@@ -478,19 +505,7 @@ export class QueryGroup extends PureComponent<Props, State> {
               )}
             </>
           )}
-          <FileDropzone
-            onLoad={(result) => {
-              const dataframeJson = dataFrameToJSON(readCSV(result as any, { config: { dynamicTyping: true } })[0]);
-              this.onAddQuery({
-                datasource: {
-                  type: 'grafana',
-                  uid: 'grafana',
-                },
-                queryType: GrafanaQueryType.Snapshot,
-                snapshot: [dataframeJson],
-              });
-            }}
-          />
+          <FileDropzone onLoad={this.onFileDrop} />
         </div>
       </CustomScrollbar>
     );
