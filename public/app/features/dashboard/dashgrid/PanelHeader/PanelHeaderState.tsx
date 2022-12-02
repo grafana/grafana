@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { colorManipulator, GrafanaTheme2, PanelData } from '@grafana/data';
+import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { ToolbarButtonVariant } from '@grafana/ui/src/components/ToolbarButton';
 
@@ -35,7 +35,7 @@ export function PanelHeaderState(props: Props) {
       variantType = 'primary';
       break;
     case InfoMode.Warning:
-      variantType = 'active';
+      variantType = 'warning';
       break;
     default:
       variantType = 'default';
