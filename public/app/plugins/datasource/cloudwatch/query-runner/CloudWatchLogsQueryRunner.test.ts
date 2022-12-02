@@ -223,7 +223,28 @@ describe('CloudWatchLogsQueryRunner', () => {
   });
 
   describe('handleLogQueries', () => {
-    it('should return error message when missing query string', async () => {
+    it('should return silently for missing log groups', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+      const response = await lastValueFrom(
+        runner.handleLogQueries(
+          [
+            {
+              datasource: { type: 'cloudwatch', uid: 'Zne6OZIVk' },
+              id: '',
+              queryMode: 'Logs',
+              expression: 'some query string',
+              refId: 'A',
+              region: 'default',
+            },
+          ],
+          { scopedVars: {} } as DataQueryRequest<CloudWatchQuery>
+        )
+      );
+
+      expect(response).toEqual({ data: [] });
+    });
+
+    it('should return silently for an incomplete query', async () => {
       const { runner } = setupMockedLogsQueryRunner();
       const response = await lastValueFrom(
         runner.handleLogQueries(
@@ -241,9 +262,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         )
       );
 
-      expect(response).toEqual({
-        data: [],
-      });
+      expect(response).toEqual({ data: [] });
     });
   });
 });
