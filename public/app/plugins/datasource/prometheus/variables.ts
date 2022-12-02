@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
+  InterpolateFunction,
   rangeUtil,
   StandardVariableQuery,
   StandardVariableSupport,
@@ -26,7 +27,7 @@ export class PrometheusVariableSupport extends StandardVariableSupport<Prometheu
     this.query = this.query.bind(this);
   }
 
-  query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<PromQuery>, interpolate?: InterpolateFunction): Observable<DataQueryResponse> {
     const query = request.targets[0].expr;
     if (!query) {
       return of({ data: [] });
@@ -42,7 +43,8 @@ export class PrometheusVariableSupport extends StandardVariableSupport<Prometheu
       ...this.datasource.getRangeScopedVars(this.timeSrv.timeRange()),
     };
 
-    const interpolated = this.templateSrv.replace(query, scopedVars, this.datasource.interpolateQueryExpr);
+    const interpolateFn = interpolate || this.templateSrv.replace.bind(this.templateSrv);
+    const interpolated = interpolateFn(query, scopedVars, this.datasource.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this.datasource, interpolated);
     const metricFindStream = from(metricFindQuery.process());
 

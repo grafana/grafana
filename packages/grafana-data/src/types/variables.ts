@@ -10,6 +10,7 @@ import {
   DataSourceQueryType,
   QueryEditorProps,
 } from './datasource';
+import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
 
 /**
@@ -52,7 +53,7 @@ export abstract class StandardVariableSupport<
   }
 
   abstract toDataQuery(query: StandardVariableQuery): TQuery;
-  query?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
+  query?(request: DataQueryRequest<TQuery>, interpolateQuery?: InterpolateFunction): Observable<DataQueryResponse>;
 }
 
 /**

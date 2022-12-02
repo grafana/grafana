@@ -8,7 +8,7 @@ import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotatio
 import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { PanelData } from './panel';
+import { InterpolateFunction, PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
@@ -245,7 +245,10 @@ abstract class DataSourceApi<
   /**
    * Query for data, and optionally stream results
    */
-  abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
+  abstract query(
+    request: DataQueryRequest<TQuery>,
+    interpolate?: InterpolateFunction
+  ): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details (returning TestingStatus)

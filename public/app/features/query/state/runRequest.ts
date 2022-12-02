@@ -15,6 +15,7 @@ import {
   DataTopic,
   dateMath,
   guessFieldTypes,
+  InterpolateFunction,
   LoadingState,
   PanelData,
   TimeRange,
@@ -113,7 +114,8 @@ function getRequestTimeRange(request: DataQueryRequest, loadingState: LoadingSta
 export function runRequest(
   datasource: DataSourceApi,
   request: DataQueryRequest,
-  queryFunction?: typeof datasource.query
+  queryFunction?: typeof datasource.query,
+  interpolate?: InterpolateFunction
 ): Observable<PanelData> {
   let state: RunningQueryState = {
     panelData: {
@@ -132,7 +134,7 @@ export function runRequest(
     return of(state.panelData);
   }
 
-  const dataObservable = callQueryMethod(datasource, request, queryFunction).pipe(
+  const dataObservable = callQueryMethod(datasource, request, queryFunction, interpolate).pipe(
     // Transform response packets into PanelData with merged results
     map((packet: DataQueryResponse) => {
       if (!isArray(packet.data)) {
@@ -172,7 +174,8 @@ export function runRequest(
 export function callQueryMethod(
   datasource: DataSourceApi,
   request: DataQueryRequest,
-  queryFunction?: typeof datasource.query
+  queryFunction?: typeof datasource.query,
+  interpolate?: InterpolateFunction
 ) {
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (datasource.type === 'public-ds') {
@@ -186,7 +189,7 @@ export function callQueryMethod(
   }
 
   // Otherwise it is a standard datasource request
-  const returnVal = queryFunction ? queryFunction(request) : datasource.query(request);
+  const returnVal = queryFunction ? queryFunction(request, interpolate) : datasource.query(request, interpolate);
   return from(returnVal);
 }
 
