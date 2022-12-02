@@ -489,7 +489,6 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	var md io.ReadCloser
 	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
 	if err != nil {
 		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
