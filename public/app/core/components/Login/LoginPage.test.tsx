@@ -86,7 +86,7 @@ describe('Login Page', () => {
     expect(window.location.assign).toHaveBeenCalledWith('/');
   });
   it('renders social logins correctly', () => {
-    (runtimeMock as any).config.oauth = {
+    runtimeMock.config.oauth = {
       okta: {
         name: 'Okta Test',
         icon: 'signin',

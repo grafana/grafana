@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -43,17 +43,17 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 		require.NoError(b, err)
 
 		var datasources []datasources.DataSource
-		sess := store.NewSession(context.Background())
-		err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
+		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			return sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
+		})
 		require.NoError(b, err)
-		sess.Close()
 		require.Len(b, datasources, numPermissions)
 	}
 }
 
-func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []accesscontrol.Permission) {
+func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (db.DB, []accesscontrol.Permission) {
 	b.Helper()
-	sqlStore := sqlstore.InitTestDB(b)
+	sqlStore := db.InitTestDB(b)
 	store := dsService.CreateStore(sqlStore, log.New("accesscontrol.test"))
 	for i := 1; i <= numDs; i++ {
 		err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{

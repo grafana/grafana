@@ -53,7 +53,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
         {...this.props}
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
-        renderLegend={this.renderLegend as any}
+        renderLegend={this.renderLegend}
       />
     );
   }

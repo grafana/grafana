@@ -1,10 +1,10 @@
-import { t, Trans } from '@lingui/macro';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
@@ -13,11 +13,11 @@ import { usePanelSave } from '../../utils/usePanelSave';
 interface AddLibraryPanelContentsProps {
   onDismiss: () => void;
   panel: PanelModel;
-  initialFolderId?: number;
+  initialFolderUid?: string;
 }
 
-export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: AddLibraryPanelContentsProps) => {
-  const [folderId, setFolderId] = useState(initialFolderId);
+export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: AddLibraryPanelContentsProps) => {
+  const [folderUid, setFolderUid] = useState(initialFolderUid);
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
@@ -27,16 +27,16 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
 
   const { saveLibraryPanel } = usePanelSave();
   const onCreate = useCallback(() => {
-    panel.libraryPanel = { uid: undefined, name: panelName };
-    saveLibraryPanel(panel, folderId!).then((res) => {
+    panel.libraryPanel = { uid: '', name: panelName };
+    saveLibraryPanel(panel, folderUid!).then((res) => {
       if (!(res instanceof Error)) {
         onDismiss();
       }
     });
-  }, [panel, panelName, folderId, onDismiss, saveLibraryPanel]);
+  }, [panel, panelName, folderUid, onDismiss, saveLibraryPanel]);
   const isValidName = useAsync(async () => {
     try {
-      return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderId === folderId);
+      return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderUid === folderUid);
     } catch (err) {
       if (isFetchError(err)) {
         err.isHandled = true;
@@ -45,7 +45,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
     } finally {
       setWaiting(false);
     }
-  }, [debouncedPanelName, folderId]);
+  }, [debouncedPanelName, folderUid]);
 
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
@@ -53,13 +53,9 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
   return (
     <>
       <Field
-        label={t({ id: 'library-panel.add-modal.name', message: 'Library panel name' })}
+        label={t('library-panel.add-modal.name', 'Library panel name')}
         invalid={invalidInput}
-        error={
-          invalidInput
-            ? t({ id: 'library-panel.add-modal.error', message: 'Library panel with this name already exists' })
-            : ''
-        }
+        error={invalidInput ? t('library-panel.add-modal.error', 'Library panel with this name already exists') : ''}
       >
         <Input
           id="share-panel-library-panel-name-input"
@@ -69,25 +65,25 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         />
       </Field>
       <Field
-        label={t({ id: 'library-panel.add-modal.folder', message: 'Save in folder' })}
-        description={t({
-          id: 'library-panel.add-modal.folder-description',
-          message: 'Library panel permissions are derived from the folder permissions',
-        })}
+        label={t('library-panel.add-modal.folder', 'Save in folder')}
+        description={t(
+          'library-panel.add-modal.folder-description',
+          'Library panel permissions are derived from the folder permissions'
+        )}
       >
         <FolderPicker
-          onChange={({ id }) => setFolderId(id)}
-          initialFolderId={initialFolderId}
+          onChange={({ uid }) => setFolderUid(uid)}
+          initialFolderUid={initialFolderUid}
           inputId="share-panel-library-panel-folder-picker"
         />
       </Field>
 
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
-          <Trans id="library-panel.add-modal.cancel">Cancel</Trans>
+          <Trans i18nKey="library-panel.add-modal.cancel">Cancel</Trans>
         </Button>
         <Button onClick={onCreate} disabled={invalidInput}>
-          <Trans id="library-panel.add-modal.create">Create library panel</Trans>
+          <Trans i18nKey="library-panel.add-modal.create">Create library panel</Trans>
         </Button>
       </Modal.ButtonRow>
     </>
@@ -98,10 +94,10 @@ interface Props extends AddLibraryPanelContentsProps {
   isOpen?: boolean;
 }
 
-export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderId, ...props }: Props) => {
+export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
   return (
     <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
-      <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={props.onDismiss} />
+      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
     </Modal>
   );
 };

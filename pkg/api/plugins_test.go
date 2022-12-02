@@ -59,7 +59,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
 			hs.pluginInstaller = inst
-			hs.QuotaService = quotatest.NewQuotaServiceFake()
+			hs.QuotaService = quotatest.New(false, nil)
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -175,10 +175,8 @@ func Test_GetPluginAssets(t *testing.T) {
 				requestedFile: {},
 			},
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -200,10 +198,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -223,10 +219,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -248,10 +242,8 @@ func Test_GetPluginAssets(t *testing.T) {
 			},
 			PluginDir: pluginDir,
 		}
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: p,
-			},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{p},
 		}
 		l := &logtest.Fake{}
 
@@ -271,8 +263,8 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{},
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{},
 		}
 		l := &logtest.Fake{}
 
@@ -292,10 +284,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &fakePluginStore{
-			plugins: map[string]plugins.PluginDTO{
-				pluginID: {
-					Class: plugins.Core,
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{
+					JSONData: plugins.JSONData{ID: pluginID},
+					Class:    plugins.Core,
 				},
 			},
 		}
@@ -320,6 +313,7 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		pluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
@@ -331,7 +325,91 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		}
 	}
 
+	require.Equal(t, resp.Header().Get("Content-Type"), "application/json")
 	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
+}
+
+func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
+	hs := HTTPServer{
+		Cfg: setting.NewCfg(),
+		log: log.New(),
+		pluginClient: &fakePluginClient{
+			headers: map[string][]string{"Set-Cookie": {"monster"}},
+		},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	resp := httptest.NewRecorder()
+	pCtx := backend.PluginContext{}
+	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	require.NoError(t, err)
+
+	for {
+		if resp.Flushed {
+			break
+		}
+	}
+	assert.Empty(t, resp.Header().Values("Set-Cookie"), "Set-Cookie header should not be present")
+}
+
+func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
+	// Ensures Content-Type is present only once, even if it's present with
+	// a non-canonical key in the plugin response.
+
+	// Test various upper/lower case combinations for content-type that may be returned by the plugin.
+	for _, ctHeader := range []string{"content-type", "Content-Type", "CoNtEnT-TyPe"} {
+		t.Run(ctHeader, func(t *testing.T) {
+			hs := HTTPServer{
+				Cfg: setting.NewCfg(),
+				log: log.New(),
+				pluginClient: &fakePluginClient{
+					headers: map[string][]string{
+						// This should be "overwritten" by the HTTP server
+						ctHeader: {"application/json"},
+
+						// Another header that should still be present
+						"x-another": {"hello"},
+					},
+				},
+			}
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			resp := httptest.NewRecorder()
+			pCtx := backend.PluginContext{}
+			err := hs.makePluginResourceRequest(resp, req, pCtx)
+			require.NoError(t, err)
+
+			for {
+				if resp.Flushed {
+					break
+				}
+			}
+			assert.Len(t, resp.Header().Values("Content-Type"), 1, "should have 1 Content-Type header")
+			assert.Len(t, resp.Header().Values("x-another"), 1, "should have 1 X-Another header")
+		})
+	}
+}
+
+func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
+	pluginClient := &fakePluginClient{
+		statusCode: http.StatusNoContent,
+	}
+	hs := HTTPServer{
+		Cfg:          setting.NewCfg(),
+		log:          log.New(),
+		pluginClient: pluginClient,
+	}
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	resp := httptest.NewRecorder()
+	pCtx := backend.PluginContext{}
+	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	require.NoError(t, err)
+
+	for {
+		if resp.Flushed {
+			break
+		}
+	}
+
+	require.Zero(t, resp.Header().Get("Content-Type"))
 }
 
 func callGetPluginAsset(sc *scenarioContext) {
@@ -365,6 +443,9 @@ type fakePluginClient struct {
 	req *backend.CallResourceRequest
 
 	backend.QueryDataHandlerFunc
+
+	statusCode int
+	headers    map[string][]string
 }
 
 func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -376,9 +457,14 @@ func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallReso
 		return err
 	}
 
+	statusCode := http.StatusOK
+	if c.statusCode != 0 {
+		statusCode = c.statusCode
+	}
+
 	return sender.Send(&backend.CallResourceResponse{
-		Status:  http.StatusOK,
-		Headers: make(map[string][]string),
+		Status:  statusCode,
+		Headers: c.headers,
 		Body:    bytes,
 	})
 }
@@ -392,8 +478,8 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 func Test_PluginsList_AccessControl(t *testing.T) {
-	pluginStore := fakePluginStore{plugins: map[string]plugins.PluginDTO{
-		"test-app": {
+	pluginStore := plugins.FakePluginStore{PluginList: []plugins.PluginDTO{
+		{
 			PluginDir:     "/grafana/plugins/test-app/dist",
 			Class:         "external",
 			DefaultNavURL: "/plugins/test-app/page/test",
@@ -410,7 +496,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				},
 			},
 		},
-		"mysql": {
+		{
 			PluginDir: "/grafana/public/app/plugins/datasource/mysql",
 			Class:     "core",
 			Pinned:    false,
@@ -428,7 +514,8 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			},
 		},
 	}}
-	pluginSettings := fakePluginSettings{plugins: map[string]*pluginsettings.DTO{
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 		"test-app": {ID: 0, OrgID: 1, PluginID: "test-app", PluginVersion: "1.0.0", Enabled: true},
 		"mysql":    {ID: 0, OrgID: 1, PluginID: "mysql", PluginVersion: "", Enabled: true}},
 	}

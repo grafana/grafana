@@ -12,6 +12,8 @@ import {
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { QueryOptions } from 'app/types';
 
 import { VariableHide } from '../../../features/variables/types';
@@ -622,6 +624,18 @@ describe('PrometheusDatasource', () => {
       expect(templateSrvStub.replace).toBeCalledTimes(2);
       expect(queries[0].interval).toBe(interval);
     });
+
+    it('should call enhanceExprWithAdHocFilters', () => {
+      ds.enhanceExprWithAdHocFilters = jest.fn();
+      const queries = [
+        {
+          refId: 'A',
+          expr: 'rate({bar="baz", job="foo"} [5m]',
+        },
+      ];
+      ds.interpolateVariablesInQueries(queries, {});
+      expect(ds.enhanceExprWithAdHocFilters).toHaveBeenCalled();
+    });
   });
 
   describe('applyTemplateVariables', () => {
@@ -737,6 +751,7 @@ const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR 
 describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
+    id: 1,
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -899,7 +914,9 @@ describe('PrometheusDatasource2', () => {
 
   describe('When querying prometheus with one target and instant = true', () => {
     let results: any;
-    const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123`;
+    const urlExpected = `/api/datasources/1/resources/api/v1/query?query=${encodeURIComponent(
+      'test{job="testjob"}'
+    )}&time=123`;
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
       targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
@@ -1767,7 +1784,7 @@ describe('PrometheusDatasource2', () => {
       targets: [targetA, targetB],
       interval: '1s',
       panelId: '',
-    } as any as DataQueryRequest<PromQuery>;
+    } as unknown as DataQueryRequest<PromQuery>;
 
     const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
     const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
@@ -1846,6 +1863,23 @@ describe('PrometheusDatasource for POST', () => {
     const httpOptions = {
       headers: {} as { [key: string]: number | undefined },
     };
+    const instanceSettings = {
+      url: 'proxied',
+      directUrl: 'direct',
+      user: 'test',
+      password: 'mupp',
+      access: 'proxy',
+      jsonData: { httpMethod: 'POST' },
+    } as unknown as DataSourceInstanceSettings<PromOptions>;
+
+    let ds: PrometheusDatasource;
+    beforeEach(() => {
+      ds = new PrometheusDatasource(
+        instanceSettings,
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+    });
 
     it('with proxy access tracing headers should be added', () => {
       ds._addTracingHeaders(httpOptions as any, options as any);
@@ -1855,6 +1889,14 @@ describe('PrometheusDatasource for POST', () => {
     });
 
     it('with direct access tracing headers should not be added', () => {
+      const instanceSettings = {
+        url: 'proxied',
+        directUrl: 'direct',
+        user: 'test',
+        password: 'mupp',
+        jsonData: { httpMethod: 'POST' },
+      } as unknown as DataSourceInstanceSettings<PromOptions>;
+
       const mockDs = new PrometheusDatasource(
         { ...instanceSettings, url: 'http://127.0.0.1:8000' },
         templateSrvStub as any,
@@ -1882,6 +1924,7 @@ function getPrepareTargetsContext({
   const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
+    access: 'proxy',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
@@ -1895,7 +1938,7 @@ function getPrepareTargetsContext({
     panelId,
     app,
     ...queryOptions,
-  } as any as DataQueryRequest<PromQuery>;
+  } as unknown as DataQueryRequest<PromQuery>;
 
   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
   if (languageProvider) {

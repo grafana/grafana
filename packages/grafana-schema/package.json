@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "9.3.0-pre",
+  "version": "9.4.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -23,30 +23,33 @@
   },
   "files": [
     "dist",
-    "CHANGELOG.md",
+    "./README.md",
+    "./CHANGELOG.md",
     "LICENSE_APACHE2"
   ],
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
-    "@rollup/plugin-commonjs": "22.0.1",
-    "@rollup/plugin-json": "4.1.0",
-    "@rollup/plugin-node-resolve": "13.3.0",
-    "@swc/helpers": "0.4.3",
-    "esbuild": "0.15.7",
+    "@rollup/plugin-commonjs": "23.0.2",
+    "@rollup/plugin-json": "5.0.1",
+    "@rollup/plugin-node-resolve": "15.0.1",
+    "@swc/helpers": "0.4.12",
+    "esbuild": "0.15.12",
     "rimraf": "3.0.2",
-    "rollup": "2.77.2",
-    "rollup-plugin-dts": "^4.2.2",
-    "rollup-plugin-esbuild": "^4.9.1",
-    "rollup-plugin-node-externals": "^4.1.0",
-    "typescript": "4.8.2"
+    "rollup": "2.79.1",
+    "rollup-plugin-dts": "^5.0.0",
+    "rollup-plugin-esbuild": "4.10.1",
+    "rollup-plugin-node-externals": "^5.0.0",
+    "typescript": "4.8.4"
   },
   "dependencies": {
-    "tslib": "2.4.0"
+    "tslib": "2.4.1"
   }
 }

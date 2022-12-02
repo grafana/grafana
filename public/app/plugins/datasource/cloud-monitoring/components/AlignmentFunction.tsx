@@ -37,6 +37,7 @@ export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableO
       ]}
       placeholder="Select Alignment"
       inputId={inputId}
+      menuPlacement="top"
     />
   );
 };

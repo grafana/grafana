@@ -1,13 +1,15 @@
 import Plain from 'slate-plain-serializer';
 
-import { AbstractLabelOperator } from '@grafana/data';
+import { AbstractLabelOperator, DataFrame } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import LanguageProvider, { LokiHistoryItem } from './LanguageProvider';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
+import { extractLogParserFromDataFrame, extractLabelKeysFromDataFrame } from './responseUtils';
 import { LokiQueryType } from './types';
+
+jest.mock('./responseUtils');
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -297,6 +299,52 @@ describe('Query imports', () => {
       });
     });
   });
+
+  describe('getParserAndLabelKeys()', () => {
+    let datasource: LokiDatasource, languageProvider: LanguageProvider;
+    const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
+    const extractedLabelKeys = ['extracted', 'label'];
+
+    beforeEach(() => {
+      datasource = createLokiDatasource();
+      languageProvider = new LanguageProvider(datasource);
+      jest.mocked(extractLabelKeysFromDataFrame).mockReturnValue(extractedLabelKeys);
+    });
+
+    it('identifies selectors with JSON parser data', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
+      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true });
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+        extractedLabelKeys,
+        hasJSON: true,
+        hasLogfmt: false,
+      });
+    });
+
+    it('identifies selectors with Logfmt parser data', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
+      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false });
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+        extractedLabelKeys,
+        hasJSON: false,
+        hasLogfmt: true,
+      });
+    });
+
+    it('correctly processes empty data', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+      extractLogParserFromDataFrameMock.mockClear();
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+        extractedLabelKeys: [],
+        hasJSON: false,
+        hasLogfmt: false,
+      });
+      expect(extractLogParserFromDataFrameMock).not.toHaveBeenCalled();
+    });
+  });
 });
 
 async function getLanguageProvider(datasource: LokiDatasource) {
@@ -334,7 +382,7 @@ function setup(
   labelsAndValues: Record<string, string[]>,
   series?: Record<string, Array<Record<string, string>>>
 ): LokiDatasource {
-  const datasource = createLokiDatasource({} as unknown as TemplateSrv);
+  const datasource = createLokiDatasource();
 
   const rangeMock = {
     start: 1560153109000,

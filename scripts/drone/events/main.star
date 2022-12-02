@@ -38,11 +38,6 @@ load(
 )
 
 load(
-    'scripts/drone/pipelines/publish.star',
-    'publish',
-)
-
-load(
     'scripts/drone/pipelines/trigger_downstream.star',
     'enterprise_downstream_pipeline',
 )
@@ -103,11 +98,10 @@ def main_pipelines(edition):
         name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
         template=drone_change_template, secret='drone-changes-webhook',
     ),
-    publish(trigger, ver_mode, edition),
     enterprise_downstream_pipeline(edition, ver_mode),
     notify_pipeline(
         name='main-notify', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
-        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows', 'main-publish'],
+        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows'],
         template=failure_template, secret='slack_webhook'
     )]
 

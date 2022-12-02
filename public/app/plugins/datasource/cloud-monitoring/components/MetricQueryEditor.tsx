@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/ui';
+import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
 import { getAlignmentPickerData } from '../functions';
@@ -46,7 +46,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => MetricQuer
   metricType: '',
   metricKind: MetricKind.GAUGE,
   valueType: '',
-  crossSeriesReducer: 'REDUCE_MEAN',
+  crossSeriesReducer: 'REDUCE_NONE',
   alignmentPeriod: 'cloud-monitoring-auto',
   perSeriesAligner: AlignmentTypes.ALIGN_MEAN,
   groupBys: [],

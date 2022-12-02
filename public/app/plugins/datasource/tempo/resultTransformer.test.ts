@@ -1,14 +1,28 @@
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 
-import { FieldType, MutableDataFrame, PluginType, DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import {
+  FieldType,
+  MutableDataFrame,
+  PluginType,
+  DataSourceInstanceSettings,
+  dateTime,
+  ArrayVector,
+} from '@grafana/data';
 
-import { createTableFrame, transformToOTLP, transformFromOTLP, createTableFrameFromSearch } from './resultTransformer';
+import {
+  createTableFrame,
+  transformToOTLP,
+  transformFromOTLP,
+  createTableFrameFromSearch,
+  createTableFrameFromTraceQlQuery,
+} from './resultTransformer';
 import {
   badOTLPResponse,
   otlpDataFrameToResponse,
   otlpDataFrameFromResponse,
   otlpResponse,
   tempoSearchResponse,
+  traceQlResponse,
 } from './testResponse';
 import { TraceSearchMetadata } from './types';
 
@@ -99,15 +113,38 @@ describe('createTableFrameFromSearch()', () => {
     expect(frame.fields[1].name).toBe('traceName');
     expect(frame.fields[1].values.get(0)).toBe('c10d7ca4e3a00354 ');
 
-    // expect time in ago format if startTime less than 1 hour
     expect(frame.fields[2].name).toBe('startTime');
-    expect(frame.fields[2].values.get(0)).toBe('15 minutes ago');
-
-    // expect time in format if startTime greater than 1 hour
+    expect(frame.fields[2].values.get(0)).toBe('2022-01-28 03:00:28');
     expect(frame.fields[2].values.get(1)).toBe('2022-01-27 22:56:06');
 
-    expect(frame.fields[3].name).toBe('duration');
+    expect(frame.fields[3].name).toBe('traceDuration');
     expect(frame.fields[3].values.get(0)).toBe(65);
+  });
+});
+
+describe('createTableFrameFromTraceQlQuery()', () => {
+  test('transforms TraceQL response to DataFrame', () => {
+    const frameList = createTableFrameFromTraceQlQuery(traceQlResponse.traces, defaultSettings);
+    const frame = frameList[0];
+    // Trace ID field
+    expect(frame.fields[0].name).toBe('traceID');
+    expect(frame.fields[0].values.get(0)).toBe('b1586c3c8c34d');
+    expect(frame.fields[0].config.unit).toBe('string');
+    expect(frame.fields[0].values).toBeInstanceOf(ArrayVector);
+    // Trace name field
+    expect(frame.fields[1].name).toBe('traceName');
+    expect(frame.fields[1].type).toBe('string');
+    expect(frame.fields[1].values.get(0)).toBe('lb HTTP Client');
+    expect(frame.fields[1].values).toBeInstanceOf(ArrayVector);
+    // Start time field
+    expect(frame.fields[2].name).toBe('startTime');
+    expect(frame.fields[2].type).toBe('string');
+    expect(frame.fields[2].values.get(1)).toBe('2022-01-27 22:56:06');
+    expect(frame.fields[2].values).toBeInstanceOf(ArrayVector);
+    // Duration field
+    expect(frame.fields[3].name).toBe('traceDuration');
+    expect(frame.fields[3].type).toBe('number');
+    expect(frame.fields[3].values.get(2)).toBe(44);
   });
 });
 

@@ -22,6 +22,10 @@ import {
   LoadingState,
   SplitOpen,
   DataQueryResponse,
+  CoreApp,
+  DataHoverEvent,
+  DataHoverClearEvent,
+  EventBus,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -65,6 +69,7 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
+  scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -74,9 +79,10 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
+  eventBus: EventBus;
 }
 
 interface State {
@@ -106,6 +112,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
+  logsVolumeEventBus: EventBus;
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -120,6 +127,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
     forceEscape: false,
   };
 
+  constructor(props: Props) {
+    super(props);
+    this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+  }
+
   componentWillUnmount() {
     if (this.flipOrderTimer) {
       window.clearTimeout(this.flipOrderTimer);
@@ -129,6 +141,20 @@ class UnthemedLogs extends PureComponent<Props, State> {
       window.clearTimeout(this.cancelFlippingTimer);
     }
   }
+
+  onLogRowHover = (row?: LogRowModel) => {
+    if (!row) {
+      this.props.eventBus.publish(new DataHoverClearEvent());
+    } else {
+      this.props.eventBus.publish(
+        new DataHoverEvent({
+          point: {
+            time: row.timeEpochMs,
+          },
+        })
+      );
+    }
+  };
 
   onChangeLogsSortOrder = () => {
     this.setState({ isFlipping: true });
@@ -317,6 +343,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       clearCache,
       addResultsToCache,
       exploreId,
+      scrollElement,
     } = this.props;
 
     const {
@@ -364,6 +391,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               splitOpen={splitOpen}
               onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
               onHiddenSeriesChanged={this.onToggleLogLevel}
+              eventBus={this.logsVolumeEventBus}
             />
           )}
         </Collapse>
@@ -475,6 +503,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 showDetectedFields={showDetectedFields}
                 onClickShowDetectedField={this.showDetectedField}
                 onClickHideDetectedField={this.hideDetectedField}
+                app={CoreApp.Explore}
+                scrollElement={scrollElement}
+                onLogRowHover={this.onLogRowHover}
               />
             </div>
             <LogsNavigation

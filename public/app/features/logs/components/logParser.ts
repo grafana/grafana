@@ -1,6 +1,8 @@
 import memoizeOne from 'memoize-one';
 
-import { Field, FieldType, getParser, LinkModel, LogRowModel } from '@grafana/data';
+import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
+
+import { getParser } from '../utils';
 
 import { MAX_CHARACTERS } from './LogRowMessage';
 
@@ -18,7 +20,10 @@ type FieldDef = {
  * found in the dataframe (they may contain links).
  */
 export const getAllFields = memoizeOne(
-  (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>) => {
+  (
+    row: LogRowModel,
+    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
+  ) => {
     const logMessageFields = parseMessage(row.entry);
     const dataframeFields = getDataframeFields(row, getFieldLinks);
     const fieldsMap = [...dataframeFields, ...logMessageFields].reduce((acc, field) => {
@@ -70,12 +75,15 @@ const parseMessage = memoizeOne((rowEntry): FieldDef[] => {
 
 // creates fields from the dataframe-fields, adding data-links, when field.config.links exists
 const getDataframeFields = memoizeOne(
-  (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>): FieldDef[] => {
+  (
+    row: LogRowModel,
+    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
+  ): FieldDef[] => {
     return row.dataFrame.fields
       .map((field, index) => ({ ...field, index }))
       .filter((field, index) => !shouldRemoveField(field, index, row))
       .map((field) => {
-        const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
+        const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
         return {
           key: field.name,
           value: field.values.get(row.rowIndex).toString(),

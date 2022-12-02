@@ -2,17 +2,14 @@
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
-import { createSelector } from 'reselect';
+import { useLocation, useRouteMatch } from 'react-router-dom';
 
-import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType } from '@grafana/data';
+import { config, locationSearchToObject } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
-import { PageProps } from 'app/core/components/Page/types';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { StoreState, useSelector } from 'app/types';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
@@ -20,46 +17,50 @@ import { buildPluginSectionNav } from '../utils';
 
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
-interface RouteParams {
+interface Props {
+  // The ID of the plugin we would like to load and display
   pluginId: string;
+  // The root navModelItem for the plugin (root = lives directly under 'home')
+  pluginNavSection: NavModelItem;
 }
-
-interface Props extends GrafanaRouteComponentProps<RouteParams> {}
 
 interface State {
   loading: boolean;
   plugin?: AppPlugin | null;
+  // Used to display a tab navigation (used before the new Top Nav)
   pluginNav: NavModel | null;
 }
 
 const initialState: State = { loading: true, pluginNav: null, plugin: null };
 
-export function AppRootPage({ match, queryParams, location }: Props) {
+export function AppRootPage({ pluginId, pluginNavSection }: Props) {
+  const match = useRouteMatch();
+  const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
+  const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, pluginNav } = state;
-  const sectionNav = useSelector(
-    createSelector(getNavIndex, (navIndex) => buildPluginSectionNav(location, pluginNav, navIndex))
-  );
-  const context = useMemo(() => buildPluginPageContext(sectionNav), [sectionNav]);
+  const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
+  const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
+  const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
 
   useEffect(() => {
-    loadAppPlugin(match.params.pluginId, dispatch);
-  }, [match.params.pluginId]);
+    loadAppPlugin(pluginId, dispatch);
+  }, [pluginId]);
 
   const onNavChanged = useCallback(
     (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),
     []
   );
 
-  if (!plugin || match.params.pluginId !== plugin.meta.id) {
-    return <Page {...getLoadingPageProps()}>{loading && <PageLoader />}</Page>;
+  if (!plugin || pluginId !== plugin.meta.id) {
+    return <Page navModel={navModel}>{loading && <PageLoader />}</Page>;
   }
 
   if (!plugin.root) {
     return (
-      <Page navModel={getWarningNav('Plugin load error')}>
-        <div>No root app page component found</div>;
+      <Page navModel={navModel ?? getWarningNav('Plugin load error')}>
+        <div>No root app page component found</div>
       </Page>
     );
   }
@@ -69,7 +70,7 @@ export function AppRootPage({ match, queryParams, location }: Props) {
       meta={plugin.meta}
       basename={match.url}
       onNavChanged={onNavChanged}
-      query={queryParams as KeyValue}
+      query={queryParams}
       path={location.pathname}
     />
   );
@@ -81,8 +82,8 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   return (
     <>
       <InPortal node={portalNode}>{pluginRoot}</InPortal>
-      {sectionNav ? (
-        <Page navModel={sectionNav} pageNav={pluginNav?.node}>
+      {navModel ? (
+        <Page navModel={navModel} pageNav={pluginNav?.node}>
           <Page.Contents isLoading={loading}>
             <OutPortal node={portalNode} />
           </Page.Contents>
@@ -120,18 +121,6 @@ const stateSlice = createSlice({
   },
 });
 
-function getLoadingPageProps(): Partial<PageProps> {
-  if (config.featureToggles.topnav) {
-    return { navId: 'apps' };
-  }
-
-  const loading = { text: 'Loading plugin' };
-
-  return {
-    navModel: { main: loading, node: loading },
-  };
-}
-
 async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
   try {
     const app = await getPluginSettings(pluginId).then((info) => {
@@ -153,10 +142,6 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       })
     );
   }
-}
-
-function getNavIndex(store: StoreState) {
-  return store.navIndex;
 }
 
 export function getAppPluginPageError(meta: AppPluginMeta) {

@@ -15,7 +15,9 @@ weight: 100
 
 # Grafana dashboard best practices
 
-This section provides information about best practices for intermediate Grafana administrators and users. Click on each of the links before for more information.
+This section provides information about best practices for intermediate Grafana administrators and users about how to build and maintain Grafana dashboards.
+
+For more information about the different kinds of dashboards you can create, refer to [Grafana dashboards: A complete guide to all the different types you can build](https://grafana.com/blog/2022/06/06/grafana-dashboards-a-complete-guide-to-all-the-different-types-you-can-build/?pg=webinar-getting-started-with-grafana-dashboard-design-amer&plcmt=related-content-1).
 
 ## Common observability strategies
 
@@ -107,7 +109,7 @@ How can you tell you are here?
 
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
 - Expressive charts with meaningful use of color and normalizing axes where you can.
-  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../../../panels/configure-thresholds/" >}}) can help with that.
+  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../../../panels-visualizations/configure-thresholds/" >}}) can help with that.
   - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because machines can have a different number of cores. Normalizing CPU usage by the number of cores reduces cognitive load because the viewer can trust that at 100% all cores are being used, without having to know the number of CPUs.
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.
@@ -175,7 +177,7 @@ Once you have a strategy or design guidelines, write them down to help maintain 
 - Avoid unnecessary dashboard refreshing to reduce the load on the network or backend. For example, if your data changes every hour, then you don't need to set the dashboard refresh rate to 30 seconds.
 - Use the left and right Y-axes when displaying time series with different units or ranges.
 - Add documentation to dashboards and panels.
-  - To add documentation to a dashboard, add a [Text panel visualization]({{< relref "../../../visualizations/text-panel/" >}}) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
+  - To add documentation to a dashboard, add a [Text panel visualization]({{< relref "../../../panels-visualizations/visualizations/text/" >}}) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
   - To add documentation to a panel, edit the panel settings and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
 - Reuse your dashboards and enforce consistency by using [templates and variables]({{< relref "../../variables" >}}).
 - Be careful with stacking graph data. The visualizations can be misleading, and hide important data. We recommend turning it off in most cases.
@@ -205,9 +207,9 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
   - If you create a temporary dashboard, perhaps to test something, prefix the name with `TEST: `. Delete the dashboard when you are finished.
 - Copying dashboards with no significant changes is not a good idea.
   - You miss out on updates to the original dashboard, such as documentation changes, bug fixes, or additions to metrics.
-  - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters]({{< relref "../../../panels/configure-data-links/#data-link-variables" >}}).
+  - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters]({{< relref "../../../panels-visualizations/configure-data-links/#data-link-variables" >}}).
 - When you must copy a dashboard, clearly rename it and _do not_ copy the dashboard tags. Tags are important metadata for dashboards that are used during search. Copying tags can result in false matches.
 - Maintain a dashboard of dashboards or cross-reference dashboards. This can be done in several ways:
   - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Manage dashboard links]({{< relref "../manage-dashboard-links/" >}}).
-  - Add a [Dashboard list panel]({{< relref "../../../visualizations/dashboard-list-panel/" >}}). You can then customize what you see by doing tag or folder searches.
-  - Add a [Text panel]({{< relref "../../../visualizations/text-panel/" >}}) and use markdown to customize the display.
+  - Add a [Dashboard list panel]({{< relref "../../../panels-visualizations/visualizations/dashboard-list/" >}}). You can then customize what you see by doing tag or folder searches.
+  - Add a [Text panel]({{< relref "../../../panels-visualizations/visualizations/text/" >}}) and use markdown to customize the display.

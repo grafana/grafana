@@ -3,11 +3,10 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
 import { StoreState } from '../../../types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableSectionHeader } from '../editor/VariableSectionHeader';
+import { VariableLegend } from '../editor/VariableLegend';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableTextField } from '../editor/VariableTextField';
 import { initialVariableEditorState } from '../editor/reducer';
@@ -103,48 +102,40 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     const typeValue = typeOptions.find((o) => o.value === variable.query) ?? typeOptions[0];
 
     return (
-      <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Data source options" />
-        <VerticalGroup spacing="md">
-          <VerticalGroup spacing="xs">
-            <InlineFieldRow>
-              <VariableSelectField
-                name="Type"
-                value={typeValue}
-                options={typeOptions}
-                onChange={this.onDataSourceTypeChanged}
-                labelWidth={10}
-                testId={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
-              />
-            </InlineFieldRow>
-            <InlineFieldRow>
-              <VariableTextField
-                value={this.props.variable.regex}
-                name="Instance name filter"
-                placeholder="/.*-(.*)-.*/"
-                onChange={this.onRegExChange}
-                onBlur={this.onRegExBlur}
-                labelWidth={20}
-                tooltip={
-                  <div>
-                    Regex filter for which data source instances to choose from in the variable value list. Leave empty
-                    for all.
-                    <br />
-                    <br />
-                    Example: <code>/^prod/</code>
-                  </div>
-                }
-              />
-            </InlineFieldRow>
-          </VerticalGroup>
+      <>
+        <VariableLegend>Data source options</VariableLegend>
+        <VariableSelectField
+          name="Type"
+          value={typeValue}
+          options={typeOptions}
+          onChange={this.onDataSourceTypeChanged}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
+        />
 
-          <SelectionOptionsEditor
-            variable={variable}
-            onPropChange={this.onSelectionOptionsChange}
-            onMultiChanged={changeVariableMultiValue}
-          />
-        </VerticalGroup>
-      </VerticalGroup>
+        <VariableTextField
+          value={this.props.variable.regex}
+          name="Instance name filter"
+          placeholder="/.*-(.*)-.*/"
+          onChange={this.onRegExChange}
+          onBlur={this.onRegExBlur}
+          description={
+            <div>
+              Regex filter for which data source instances to choose from in the variable value list. Leave empty for
+              all.
+              <br />
+              <br />
+              Example: <code>/^prod/</code>
+            </div>
+          }
+        />
+
+        <VariableLegend>Selection options</VariableLegend>
+        <SelectionOptionsEditor
+          variable={variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={changeVariableMultiValue}
+        />
+      </>
     );
   }
 }

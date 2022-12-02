@@ -218,21 +218,16 @@ describe('Wrapper', () => {
 
     it('can close a panel from a split', async () => {
       const urlParams = {
-        left: JSON.stringify(['now-1h', 'now', 'loki-uid', { refId: 'A' }]),
-        right: JSON.stringify(['now-1h', 'now', 'elastic-uid', { refId: 'A' }]),
+        left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
+        right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
       };
-      const { datasources } = setupExplore({ urlParams });
-      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-      jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeLogsQueryResponse());
-
-      await screen.findByText(/^loki Editor input:$/);
-
+      setupExplore({ urlParams });
       const closeButtons = await screen.findAllByLabelText(/Close split pane/i);
       await userEvent.click(closeButtons[1]);
 
       await waitFor(() => {
-        const logsPanels = screen.queryAllByLabelText(/Close split pane/i);
-        expect(logsPanels.length).toBe(0);
+        const postCloseButtons = screen.queryAllByLabelText(/Close split pane/i);
+        expect(postCloseButtons.length).toBe(0);
       });
     });
 

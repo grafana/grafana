@@ -7,8 +7,11 @@ import { alertStateToReadable, alertStateToState } from '../../utils/rules';
 import { StateTag } from '../StateTag';
 interface Props {
   state: PromAlertingRuleState | GrafanaAlertState | GrafanaAlertStateWithReason | AlertState;
+  size?: 'md' | 'sm';
 }
 
-export const AlertStateTag: FC<Props> = ({ state }) => (
-  <StateTag state={alertStateToState(state)}>{alertStateToReadable(state)}</StateTag>
+export const AlertStateTag: FC<Props> = ({ state, size = 'md' }) => (
+  <StateTag state={alertStateToState(state)} size={size}>
+    {alertStateToReadable(state)}
+  </StateTag>
 );

@@ -49,7 +49,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   const onModeChange = (newMode: SelectableValue<string>) => {
     onChange({
       ...value,
-      mode: newMode.value! as FieldColorModeId,
+      mode: newMode.value!,
     });
   };
 

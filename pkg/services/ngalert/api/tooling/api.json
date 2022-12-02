@@ -260,7 +260,7 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "labels": {
      "additionalProperties": {
@@ -364,11 +364,14 @@
    "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
    "properties": {
     "Error": {
-     "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+     "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
+    },
+    "Status": {
+     "$ref": "#/definitions/Status"
     }
    },
    "title": "DataResponse contains the results from a DataQuery.",
@@ -377,25 +380,6 @@
   "DataTopic": {
    "title": "DataTopic is used to identify which topic the frame should be assigned to.",
    "type": "string"
-  },
-  "DateTime": {
-   "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
-   "format": "date-time",
-   "type": "string"
-  },
-  "DayOfMonthRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
-   "type": "object"
   },
   "DiscoveryBase": {
    "properties": {
@@ -414,11 +398,6 @@
    ],
    "type": "object"
   },
-  "DsPermissionType": {
-   "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
-   "format": "int64",
-   "type": "integer"
-  },
   "Duration": {
    "format": "int64",
    "title": "Duration is a type used for marshalling durations.",
@@ -431,6 +410,9 @@
     },
     "auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "auth_password_file": {
+     "type": "string"
     },
     "auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -625,16 +607,12 @@
   "FieldConfig": {
    "properties": {
     "color": {
-     "additionalProperties": {
-      "type": "object"
-     },
+     "additionalProperties": {},
      "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
      "type": "object"
     },
     "custom": {
-     "additionalProperties": {
-      "type": "object"
-     },
+     "additionalProperties": {},
      "description": "Panel Specific Values",
      "type": "object"
     },
@@ -742,8 +720,7 @@
      "type": "string"
     },
     "custom": {
-     "description": "Custom datasource specific values.",
-     "type": "object"
+     "description": "Custom datasource specific values."
     },
     "dataTopic": {
      "$ref": "#/definitions/DataTopic"
@@ -939,7 +916,7 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "grafana_alert": {
      "$ref": "#/definitions/GettableGrafanaRule"
@@ -1067,12 +1044,6 @@
   },
   "GettableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -1185,6 +1156,9 @@
     "smtp_auth_password": {
      "$ref": "#/definitions/Secret"
     },
+    "smtp_auth_password_file": {
+     "type": "string"
+    },
     "smtp_auth_secret": {
      "$ref": "#/definitions/Secret"
     },
@@ -1239,6 +1213,10 @@
      "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
      "type": "string"
     },
+    "enable_http2": {
+     "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+     "type": "boolean"
+    },
     "follow_redirects": {
      "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
      "type": "boolean"
@@ -1266,20 +1244,6 @@
     }
    },
    "title": "HostPort represents a \"host:port\" network address.",
-   "type": "object"
-  },
-  "InclusiveRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
    "type": "object"
   },
   "InhibitRule": {
@@ -1501,20 +1465,6 @@
    },
    "type": "array"
   },
-  "MonthRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
-   "type": "object"
-  },
   "MultiStatus": {
    "type": "object"
   },
@@ -1604,6 +1554,9 @@
       "type": "string"
      },
      "type": "object"
+    },
+    "proxy_url": {
+     "$ref": "#/definitions/URL"
     },
     "scopes": {
      "items": {
@@ -1931,7 +1884,7 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "grafana_alert": {
      "$ref": "#/definitions/PostableGrafanaRule"
@@ -2023,12 +1976,6 @@
   },
   "PostableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -2220,7 +2167,7 @@
   "PushoverConfig": {
    "properties": {
     "expire": {
-     "$ref": "#/definitions/duration"
+     "type": "string"
     },
     "html": {
      "type": "boolean"
@@ -2235,7 +2182,7 @@
      "type": "string"
     },
     "retry": {
-     "$ref": "#/definitions/duration"
+     "type": "string"
     },
     "send_resolved": {
      "type": "boolean"
@@ -2265,16 +2212,12 @@
    "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
    "properties": {
     "color": {
-     "additionalProperties": {
-      "type": "object"
-     },
+     "additionalProperties": {},
      "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
      "type": "object"
     },
     "custom": {
-     "additionalProperties": {
-      "type": "object"
-     },
+     "additionalProperties": {},
      "description": "Panel Specific Values",
      "type": "object"
     },
@@ -2462,10 +2405,10 @@
      "type": "array"
     },
     "group_interval": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "group_wait": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "match": {
      "additionalProperties": {
@@ -2496,7 +2439,7 @@
      "type": "string"
     },
     "repeat_interval": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "routes": {
      "items": {
@@ -2876,6 +2819,10 @@
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "Status": {
+   "format": "int64",
+   "type": "integer"
+  },
   "Success": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -2897,6 +2844,9 @@
      "description": "The client key file for the targets.",
      "type": "string"
     },
+    "min_version": {
+     "$ref": "#/definitions/TLSVersion"
+    },
     "server_name": {
      "description": "Used to verify the hostname for the targets.",
      "type": "string"
@@ -2904,6 +2854,10 @@
    },
    "title": "TLSConfig configures the options for TLS connections.",
    "type": "object"
+  },
+  "TLSVersion": {
+   "format": "uint16",
+   "type": "integer"
   },
   "TelegramConfig": {
    "properties": {
@@ -3073,13 +3027,16 @@
    "properties": {
     "days_of_month": {
      "items": {
-      "$ref": "#/definitions/DayOfMonthRange"
+      "type": "string"
      },
      "type": "array"
     },
+    "location": {
+     "type": "string"
+    },
     "months": {
      "items": {
-      "$ref": "#/definitions/MonthRange"
+      "type": "string"
      },
      "type": "array"
     },
@@ -3091,13 +3048,13 @@
     },
     "weekdays": {
      "items": {
-      "$ref": "#/definitions/WeekdayRange"
+      "type": "string"
      },
      "type": "array"
     },
     "years": {
      "items": {
-      "$ref": "#/definitions/YearRange"
+      "type": "string"
      },
      "type": "array"
     }
@@ -3291,34 +3248,6 @@
    "title": "WechatConfig configures notifications via Wechat.",
    "type": "object"
   },
-  "WeekdayRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
-   "type": "object"
-  },
-  "YearRange": {
-   "properties": {
-    "Begin": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "End": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "A YearRange is a positive inclusive range.",
-   "type": "object"
-  },
   "alert": {
    "description": "Alert alert",
    "properties": {
@@ -3361,6 +3290,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3464,9 +3394,6 @@
    ],
    "type": "object"
   },
-  "duration": {
-   "$ref": "#/definitions/Duration"
-  },
   "gettableAlert": {
    "properties": {
     "annotations": {
@@ -3530,6 +3457,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3578,10 +3506,42 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
+  },
+  "integration": {
+   "description": "Integration integration",
+   "properties": {
+    "lastNotifyAttempt": {
+     "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+     "format": "date-time",
+     "type": "string"
+    },
+    "lastNotifyAttemptDuration": {
+     "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+     "type": "string"
+    },
+    "lastNotifyAttemptError": {
+     "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+     "type": "string"
+    },
+    "name": {
+     "description": "name",
+     "type": "string"
+    },
+    "sendResolved": {
+     "description": "send resolved",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "name",
+    "sendResolved"
+   ],
+   "type": "object"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3650,6 +3610,15 @@
    ],
    "type": "object"
   },
+  "postSilencesOKBody": {
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "postableAlert": {
    "description": "PostableAlert postable alert",
    "properties": {
@@ -3688,6 +3657,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3725,14 +3695,26 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
+    "active": {
+     "description": "active",
+     "type": "boolean"
+    },
+    "integrations": {
+     "description": "integrations",
+     "items": {
+      "$ref": "#/definitions/integration"
+     },
+     "type": "array"
+    },
     "name": {
      "description": "name",
      "type": "string"
     }
    },
    "required": [
+    "active",
+    "integrations",
     "name"
    ],
    "type": "object"
@@ -3845,6 +3827,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -3935,6 +3922,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -4483,6 +4475,17 @@
  "produces": [
   "application/json"
  ],
+ "responses": {
+  "receiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/receiver"
+    },
+    "type": "array"
+   }
+  }
+ },
  "schemes": [
   "http",
   "https"

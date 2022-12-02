@@ -93,6 +93,36 @@ describe('AzureMonitorDatasource', () => {
         },
       });
     });
+
+    it('should migrate resource URI template variable to resource object', () => {
+      const subscription = '44693801-6ee6-49de-9b2d-9106972f9572';
+      const resourceGroup = 'cloud-datasources';
+      const metricNamespace = 'microsoft.insights/components';
+      const resourceName = 'AppInsightsTestData';
+      templateSrv.init([
+        {
+          id: 'resourceUri',
+          name: 'resourceUri',
+          current: {
+            value: `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/${metricNamespace}/${resourceName}`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          resourceUri: '$resourceUri',
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        subscription,
+        azureMonitor: {
+          resourceGroup,
+          metricNamespace,
+          resourceName,
+        },
+      });
+    });
   });
 
   describe('When performing getMetricNamespaces', () => {
@@ -745,16 +775,16 @@ describe('AzureMonitorDatasource', () => {
           })
           .then((results: any) => {
             expect(results.dimensions).toMatchInlineSnapshot(`
-              Array [
-                Object {
+              [
+                {
                   "label": "Response type",
                   "value": "ResponseType",
                 },
-                Object {
+                {
                   "label": "Geo type",
                   "value": "GeoType",
                 },
-                Object {
+                {
                   "label": "API name",
                   "value": "ApiName",
                 },

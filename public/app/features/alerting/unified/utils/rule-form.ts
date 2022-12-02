@@ -14,8 +14,10 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertDataQuery,
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
@@ -57,7 +59,6 @@ export const getDefaultFormValues = (): RuleFormValues => {
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
-    evaluateEvery: '1m',
     evaluateFor: '5m',
 
     // cortex / loki
@@ -101,7 +102,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
-        data: queries,
+        data: queries.map(fixBothInstantAndRangeQuery),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -124,7 +125,6 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         type: RuleFormType.grafana,
         group: group.name,
         evaluateFor: rule.for || '0',
-        evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,
         execErrState: ga.exec_err_state,
         queries: ga.data,
@@ -198,7 +198,7 @@ export const getDefaultQueries = (): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
   if (!dataSource) {
-    return [getDefaultExpression('A')];
+    return [...getDefaultExpressions('A', 'B')];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
@@ -213,15 +213,18 @@ export const getDefaultQueries = (): AlertQuery[] => {
         hide: false,
       },
     },
-    getDefaultExpression('B'),
+    ...getDefaultExpressions('B', 'C'),
   ];
 };
 
-const getDefaultExpression = (refId: string): AlertQuery => {
-  const model: ExpressionQuery = {
-    refId,
+const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+  const refOne = refIds[0];
+  const refTwo = refIds[1];
+
+  const reduceExpression: ExpressionQuery = {
+    refId: refIds[0],
     hide: false,
-    type: ExpressionQueryType.classic,
+    type: ExpressionQueryType.reduce,
     datasource: {
       uid: ExpressionDatasourceUID,
       type: ExpressionDatasourceRef.type,
@@ -230,14 +233,14 @@ const getDefaultExpression = (refId: string): AlertQuery => {
       {
         type: 'query',
         evaluator: {
-          params: [3],
+          params: [],
           type: EvalFunction.IsAbove,
         },
         operator: {
           type: 'and',
         },
         query: {
-          params: ['A'],
+          params: [refOne],
         },
         reducer: {
           params: [],
@@ -245,15 +248,54 @@ const getDefaultExpression = (refId: string): AlertQuery => {
         },
       },
     ],
+    reducer: 'last',
     expression: 'A',
   };
 
-  return {
-    refId,
-    datasourceUid: ExpressionDatasourceUID,
-    queryType: '',
-    model,
+  const thresholdExpression: ExpressionQuery = {
+    refId: refTwo,
+    hide: false,
+    type: ExpressionQueryType.threshold,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [0],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refTwo],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    expression: refOne,
   };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: reduceExpression,
+    },
+    {
+      refId: refTwo,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: thresholdExpression,
+    },
+  ];
 };
 
 const dataQueriesToGrafanaQueries = async (
@@ -338,7 +380,14 @@ export const panelToRuleFormValues = async (
   }
 
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    queries.push(getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model))));
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    queries.push(reduceExpression);
+
+    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
+      reduceExpression.refId,
+      getNextRefIdChar(queries)
+    );
+    queries.push(thresholdExpression);
   }
 
   const { folderId, folderTitle } = dashboard.meta;
@@ -381,4 +430,23 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+export function fixBothInstantAndRangeQuery(query: AlertQuery) {
+  const model = query.model;
+
+  if (!isPromQuery(model)) {
+    return query;
+  }
+
+  const isBothInstantAndRange = model.instant && model.range;
+  if (isBothInstantAndRange) {
+    return { ...query, model: { ...model, range: true, instant: false } };
+  }
+
+  return query;
+}
+
+function isPromQuery(model: AlertDataQuery): model is PromQuery {
+  return 'expr' in model && 'instant' in model && 'range' in model;
 }

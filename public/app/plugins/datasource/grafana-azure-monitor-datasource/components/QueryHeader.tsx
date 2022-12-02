@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorHeader, InlineSelect } from '@grafana/ui';
+import { EditorHeader, InlineSelect } from '@grafana/experimental';
 
+import { selectors } from '../e2e/selectors';
 import { AzureMonitorQuery, AzureQueryType } from '../types';
 
 interface QueryTypeFieldProps {
@@ -29,7 +30,7 @@ export const QueryHeader: React.FC<QueryTypeFieldProps> = ({ query, onQueryChang
   );
 
   return (
-    <span data-testid="azure-monitor-experimental-header">
+    <span data-testid={selectors.components.queryEditor.header.select}>
       <EditorHeader>
         <InlineSelect
           label="Service"

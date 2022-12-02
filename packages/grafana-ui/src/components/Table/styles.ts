@@ -2,8 +2,6 @@ import { css, CSSObject } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { getScrollbarWidth } from '../../utils';
-
 export const getTableStyles = (theme: GrafanaTheme2) => {
   const { colors } = theme;
   const headerBg = theme.colors.background.secondary;
@@ -13,8 +11,8 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
   const lineHeight = theme.typography.body.lineHeight;
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
+  const rowHeight = cellHeight + 2;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-  const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
     const cellActionsOverflow: CSSObject = {
@@ -39,7 +37,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       label: ${overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow'};
       padding: ${cellPadding}px;
       width: 100%;
-      height: 100%;
+      height: ${rowHeight}px;
       display: flex;
       align-items: center;
       border-right: 1px solid ${borderColor};
@@ -50,7 +48,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       &:last-child:not(:only-child) {
         border-right: none;
-        padding-right: ${lastChildExtraPadding}px;
       }
 
       &:hover {
@@ -98,9 +95,8 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
-    lastChildExtraPadding,
     cellHeightInner: bodyFontSize * lineHeight,
-    rowHeight: cellHeight + 2,
+    rowHeight,
     table: css`
       height: 100%;
       width: 100%;
@@ -169,8 +165,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
     `,
     headerFilter: css`
+      background: transparent;
+      border: none;
       label: headerFilter;
-      cursor: pointer;
+      padding: 0;
     `,
     paginationWrapper: css`
       display: flex;
@@ -255,6 +253,13 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
       justify-content: center;
       width: 100%;
+    `,
+    expanderCell: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: ${rowHeight}px;
+      cursor: pointer;
     `,
   };
 };

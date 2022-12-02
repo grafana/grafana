@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -51,11 +50,11 @@ var (
 	)
 )
 
-func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
-	return newService(cfg, search, store)
+func ProvideService(search searchV2.SearchService, store store.StorageService) *Service {
+	return newService(search, store)
 }
 
-func newService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
+func newService(search searchV2.SearchService, store store.StorageService) *Service {
 	s := &Service{
 		search: search,
 		store:  store,

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -47,6 +48,40 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				Services:                map[string]types.DatasourceService{},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "creates an instance for customized cloud",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+				ID:                      50,
+			},
+			expectedModel: types.DatasourceInfo{
+				Cloud: "AzureCustomizedCloud",
+				Credentials: &azcredentials.AzureClientSecretCredentials{
+					AzureCloud:   "AzureCustomizedCloud",
+					ClientSecret: "secret",
+				},
+				Settings: types.AzureMonitorSettings{},
+				Routes: map[string]types.AzRoute{
+					"Route": {
+						URL: "url",
+					},
+				},
+				JSONData: map[string]interface{}{
+					"azureAuthType": "clientsecret",
+					"cloudName":     "customizedazuremonitor",
+					"customizedRoutes": map[string]interface{}{
+						"Route": map[string]interface{}{
+							"URL": "url",
+						},
+					},
+				},
+				DatasourceID:            50,
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
 				Services:                map[string]types.DatasourceService{},
 			},
 			Err: require.NoError,
@@ -100,8 +135,7 @@ type fakeExecutor struct {
 func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 }
 
-func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, logger log.Logger, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {
@@ -391,7 +425,7 @@ func TestCheckHealth(t *testing.T) {
 				Status:  backend.HealthStatusError,
 				Message: "One or more health checks failed. See details below.",
 				JSONDetails: []byte(
-					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: health check failed: Get \"https://management.azure.com/subscriptions?api-version=2018-01-01\": not found\n2. Error connecting to Azure Log Analytics endpoint: health check failed: Get \"https://management.azure.com/subscriptions//providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview\": not found\n3. Error connecting to Azure Resource Graph endpoint: health check failed: Post \"https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview\": not found" }`),
+					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: health check failed: Get \"https://management.azure.com/subscriptions?api-version=2020-01-01\": not found\n2. Error connecting to Azure Log Analytics endpoint: health check failed: Get \"https://management.azure.com/subscriptions//providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview\": not found\n3. Error connecting to Azure Resource Graph endpoint: health check failed: Post \"https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview\": not found" }`),
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {

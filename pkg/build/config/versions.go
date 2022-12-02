@@ -1,5 +1,7 @@
 package config
 
+const PublicBucket = "grafana-downloads"
+
 var Versions = VersionMap{
 	PullRequestMode: {
 		Variants: []Variant{

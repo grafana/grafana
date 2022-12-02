@@ -78,6 +78,7 @@ export interface LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels?: Labels;
+  datasourceType?: string;
 }
 
 export interface LogsModel {
@@ -110,6 +111,7 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
+/** @deprecated will be removed in the next major version */
 export interface LogsParser {
   /**
    * Value-agnostic matcher for a field label.

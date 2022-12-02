@@ -93,7 +93,7 @@ func TestTelegramNotifier(t *testing.T) {
 			},
 			expMsg: map[string]string{
 				"parse_mode": "html",
-				"text":       strings.Repeat("1", 4096-3) + "...",
+				"text":       strings.Repeat("1", 4096-1) + "…",
 			},
 			expMsgError: nil,
 		}, {

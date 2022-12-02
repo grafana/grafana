@@ -76,39 +76,6 @@
             }
           }
         }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RoutePostGrafanaAMAlerts",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
       }
     },
     "/api/alertmanager/grafana/api/v2/alerts/groups": {
@@ -281,9 +248,9 @@
         ],
         "responses": {
           "201": {
-            "description": "gettableSilence",
+            "description": "postSilencesOKBody",
             "schema": {
-              "$ref": "#/definitions/gettableSilence"
+              "$ref": "#/definitions/postSilencesOKBody"
             }
           },
           "400": {
@@ -388,6 +355,20 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          }
+        }
+      }
+    },
+    "/api/alertmanager/grafana/config/api/v1/receivers": {
+      "get": {
+        "description": "Get a list of all receivers",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetGrafanaReceivers",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/receiversResponse"
           }
         }
       }
@@ -803,9 +784,9 @@
         ],
         "responses": {
           "201": {
-            "description": "gettableSilence",
+            "description": "postSilencesOKBody",
             "schema": {
-              "$ref": "#/definitions/gettableSilence"
+              "$ref": "#/definitions/postSilencesOKBody"
             }
           },
           "400": {
@@ -973,75 +954,6 @@
             "description": "NotFound",
             "schema": {
               "$ref": "#/definitions/NotFound"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
-      "post": {
-        "tags": [
-          "alertmanager"
-        ],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "NotFound",
-            "schema": {
-              "$ref": "#/definitions/NotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
             }
           }
         }
@@ -1648,6 +1560,26 @@
         }
       }
     },
+    "/api/v1/ngalert": {
+      "get": {
+        "description": "Get the status of the alerting engine",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "configuration"
+        ],
+        "operationId": "RouteGetStatus",
+        "responses": {
+          "200": {
+            "description": "AlertingStatus",
+            "schema": {
+              "$ref": "#/definitions/AlertingStatus"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/ngalert/admin_config": {
       "get": {
         "produces": [
@@ -1757,26 +1689,6 @@
         }
       }
     },
-    "/api/v1/ngalert": {
-      "get": {
-        "description": "Get the status of the alerting engine",
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "configuration"
-        ],
-        "operationId": "RouteGetStatus",
-        "responses": {
-          "200": {
-            "description": "AlertingStatus",
-            "schema": {
-              "$ref": "#/definitions/AlertingStatus"
-            }
-          }
-        }
-      }
-    },
     "/api/v1/provisioning/alert-rules": {
       "post": {
         "consumes": [
@@ -1795,6 +1707,11 @@
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -1866,6 +1783,11 @@
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -2782,7 +2704,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -2887,36 +2809,20 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
     "DataTopic": {
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
-    },
-    "DateTime": {
-      "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
-      "type": "string",
-      "format": "date-time"
-    },
-    "DayOfMonthRange": {
-      "type": "object",
-      "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
     },
     "DiscoveryBase": {
       "type": "object",
@@ -2935,11 +2841,6 @@
         }
       }
     },
-    "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
-      "type": "integer",
-      "format": "int64"
-    },
     "Duration": {
       "type": "integer",
       "format": "int64",
@@ -2955,6 +2856,9 @@
         },
         "auth_password": {
           "$ref": "#/definitions/Secret"
+        },
+        "auth_password_file": {
+          "type": "string"
         },
         "auth_secret": {
           "$ref": "#/definitions/Secret"
@@ -3153,16 +3057,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": {}
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": {}
         },
         "decimals": {
           "type": "integer",
@@ -3268,8 +3168,7 @@
           "type": "string"
         },
         "custom": {
-          "description": "Custom datasource specific values.",
-          "type": "object"
+          "description": "Custom datasource specific values."
         },
         "dataTopic": {
           "$ref": "#/definitions/DataTopic"
@@ -3464,7 +3363,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
@@ -3592,12 +3491,6 @@
     "GettableNGalertConfig": {
       "type": "object",
       "properties": {
-        "alertmanagers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "alertmanagersChoice": {
           "type": "string",
           "enum": [
@@ -3710,6 +3603,9 @@
         "smtp_auth_password": {
           "$ref": "#/definitions/Secret"
         },
+        "smtp_auth_password_file": {
+          "type": "string"
+        },
         "smtp_auth_secret": {
           "$ref": "#/definitions/Secret"
         },
@@ -3765,6 +3661,10 @@
           "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
           "type": "string"
         },
+        "enable_http2": {
+          "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+          "type": "boolean"
+        },
         "follow_redirects": {
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
           "type": "boolean"
@@ -3789,20 +3689,6 @@
         },
         "Port": {
           "type": "string"
-        }
-      }
-    },
-    "InclusiveRange": {
-      "type": "object",
-      "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -4026,20 +3912,6 @@
         "$ref": "#/definitions/MessageTemplate"
       }
     },
-    "MonthRange": {
-      "type": "object",
-      "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "MultiStatus": {
       "type": "object"
     },
@@ -4131,6 +4003,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "proxy_url": {
+          "$ref": "#/definitions/URL"
         },
         "scopes": {
           "type": "array",
@@ -4457,7 +4332,7 @@
           "type": "string"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
@@ -4549,12 +4424,6 @@
     "PostableNGalertConfig": {
       "type": "object",
       "properties": {
-        "alertmanagers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "alertmanagersChoice": {
           "type": "string",
           "enum": [
@@ -4746,7 +4615,7 @@
       "type": "object",
       "properties": {
         "expire": {
-          "$ref": "#/definitions/duration"
+          "type": "string"
         },
         "html": {
           "type": "boolean"
@@ -4761,7 +4630,7 @@
           "type": "string"
         },
         "retry": {
-          "$ref": "#/definitions/duration"
+          "type": "string"
         },
         "send_resolved": {
           "type": "boolean"
@@ -4794,16 +4663,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": {}
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": {}
         },
         "decimals": {
           "type": "integer",
@@ -4988,10 +4853,10 @@
           }
         },
         "group_interval": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "group_wait": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "match": {
           "description": "Deprecated. Remove before v1.0 release.",
@@ -5022,7 +4887,7 @@
           "type": "string"
         },
         "repeat_interval": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "routes": {
           "type": "array",
@@ -5401,6 +5266,10 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Status": {
+      "type": "integer",
+      "format": "int64"
+    },
     "Success": {
       "$ref": "#/definitions/ResponseDetails"
     },
@@ -5424,11 +5293,18 @@
           "description": "The client key file for the targets.",
           "type": "string"
         },
+        "min_version": {
+          "$ref": "#/definitions/TLSVersion"
+        },
         "server_name": {
           "description": "Used to verify the hostname for the targets.",
           "type": "string"
         }
       }
+    },
+    "TLSVersion": {
+      "type": "integer",
+      "format": "uint16"
     },
     "TelegramConfig": {
       "type": "object",
@@ -5600,13 +5476,16 @@
         "days_of_month": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DayOfMonthRange"
+            "type": "string"
           }
+        },
+        "location": {
+          "type": "string"
         },
         "months": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MonthRange"
+            "type": "string"
           }
         },
         "times": {
@@ -5618,13 +5497,13 @@
         "weekdays": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WeekdayRange"
+            "type": "string"
           }
         },
         "years": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/YearRange"
+            "type": "string"
           }
         }
       }
@@ -5645,8 +5524,9 @@
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -5815,34 +5695,6 @@
         }
       }
     },
-    "WeekdayRange": {
-      "type": "object",
-      "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "YearRange": {
-      "type": "object",
-      "title": "A YearRange is a positive inclusive range.",
-      "properties": {
-        "Begin": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "End": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "alert": {
       "description": "Alert alert",
       "type": "object",
@@ -5861,6 +5713,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5989,11 +5842,7 @@
         }
       }
     },
-    "duration": {
-      "$ref": "#/definitions/Duration"
-    },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -6050,6 +5899,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -6057,6 +5907,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6106,12 +5957,42 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       },
       "$ref": "#/definitions/gettableSilences"
+    },
+    "integration": {
+      "type": "object",
+      "required": [
+        "name",
+        "sendResolved"
+      ],
+      "properties": {
+        "lastNotifyAttempt": {
+          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastNotifyAttemptDuration": {
+          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "type": "string"
+        },
+        "lastNotifyAttemptError": {
+          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "type": "string"
+        },
+        "name": {
+          "description": "name",
+          "type": "string"
+        },
+        "sendResolved": {
+          "description": "send resolved",
+          "type": "boolean"
+        }
+      },
+      "$ref": "#/definitions/integration"
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -6176,6 +6057,15 @@
         },
         "name": {
           "description": "name",
+          "type": "string"
+        }
+      }
+    },
+    "postSilencesOKBody": {
+      "type": "object",
+      "properties": {
+        "silenceID": {
+          "description": "silence ID",
           "type": "string"
         }
       }
@@ -6257,11 +6147,25 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
+        "active",
+        "integrations",
         "name"
       ],
       "properties": {
+        "active": {
+          "description": "active",
+          "type": "boolean"
+        },
+        "integrations": {
+          "description": "integrations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/integration"
+          }
+        },
         "name": {
           "description": "name",
           "type": "string"
@@ -6354,6 +6258,17 @@
         "version": {
           "description": "version",
           "type": "string"
+        }
+      }
+    }
+  },
+  "responses": {
+    "receiversResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/receiver"
         }
       }
     }

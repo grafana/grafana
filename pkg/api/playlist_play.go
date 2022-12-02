@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	_ "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -68,29 +70,36 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 
 // Deprecated -- the frontend can do this better
 func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
-	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistUID, orgID)
+	result := make(dtos.PlaylistDashboardsSlice, 0)
+	dto, err := hs.playlistService.Get(ctx,
+		&playlist.GetPlaylistByUidQuery{UID: playlistUID, OrgId: orgID})
+	if err != nil || dto == nil || dto.Items == nil {
+		return result, err
+	}
+
+	playlistItems := *dto.Items
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)
 	dashboardIDOrder := make(map[int64]int)
 	dashboardTagOrder := make(map[string]int)
 
-	for _, i := range playlistItems {
-		if i.Type == "dashboard_by_id" {
-			dashboardID, _ := strconv.ParseInt(i.Value, 10, 64)
+	for i, item := range playlistItems {
+		switch item.Type {
+		case "dashboard_by_id":
+			dashboardID, _ := strconv.ParseInt(item.Value, 10, 64)
 			dashboardByIDs = append(dashboardByIDs, dashboardID)
-			dashboardIDOrder[dashboardID] = i.Order
-		}
-
-		if i.Type == "dashboard_by_tag" {
-			dashboardByTag = append(dashboardByTag, i.Value)
-			dashboardTagOrder[i.Value] = i.Order
+			dashboardIDOrder[dashboardID] = i
+		case "dashboard_by_tag":
+			dashboardByTag = append(dashboardByTag, item.Value)
+			dashboardTagOrder[item.Value] = i
+		case "dashboard_by_uid":
+			return nil, errors.New("dashboard_by_uid not supported by this deprecated API")
+		default:
 		}
 	}
 
-	result := make(dtos.PlaylistDashboardsSlice, 0)
-
-	var k, _ = hs.populateDashboardsByID(ctx, dashboardByIDs, dashboardIDOrder)
+	k, _ := hs.populateDashboardsByID(ctx, dashboardByIDs, dashboardIDOrder)
 	result = append(result, k...)
 	result = append(result, hs.populateDashboardsByTag(ctx, orgID, signedInUser, dashboardByTag, dashboardTagOrder)...)
 

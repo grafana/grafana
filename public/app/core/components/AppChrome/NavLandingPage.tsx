@@ -6,6 +6,8 @@ import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
+import { getNavTitle, getNavSubTitle } from '../NavBar/navBarItem-translations';
+
 import { NavLandingPageCard } from './NavLandingPageCard';
 
 interface Props {
@@ -15,43 +17,24 @@ interface Props {
 export function NavLandingPage({ navId }: Props) {
   const { node } = useNavModel(navId);
   const styles = useStyles2(getStyles);
-  const directChildren = node.children?.filter((child) => !child.hideFromTabs && !child.children);
-  const nestedChildren = node.children?.filter((child) => child.children && child.children.length);
+  const children = node.children?.filter((child) => !child.hideFromTabs);
 
   return (
     <Page navId={node.id}>
       <Page.Contents>
         <div className={styles.content}>
-          {directChildren && directChildren.length > 0 && (
+          {children && children.length > 0 && (
             <section className={styles.grid}>
-              {directChildren?.map((child) => (
+              {children?.map((child) => (
                 <NavLandingPageCard
                   key={child.id}
-                  description={child.description}
-                  text={child.text}
+                  description={getNavSubTitle(child.id) ?? child.subTitle}
+                  text={getNavTitle(child.id) ?? child.text}
                   url={child.url ?? ''}
                 />
               ))}
             </section>
           )}
-          {nestedChildren?.map((child) => (
-            <section key={child.id}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <h2 className={styles.nestedTitle}>{child.text}</h2>
-              </div>
-              <div className={styles.nestedDescription}>{child.description}</div>
-              <div className={styles.grid}>
-                {child.children?.map((child) => (
-                  <NavLandingPageCard
-                    key={child.id}
-                    description={child.description}
-                    text={child.text}
-                    url={child.url ?? ''}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
         </div>
       </Page.Contents>
     </Page>
@@ -70,11 +53,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
     gridAutoRows: '130px',
     padding: theme.spacing(2, 0),
-  }),
-  nestedTitle: css({
-    margin: theme.spacing(2, 0),
-  }),
-  nestedDescription: css({
-    color: theme.colors.text.secondary,
   }),
 });

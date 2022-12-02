@@ -59,6 +59,8 @@ datasources:
     jsonData:
       manageAlerts: true
       alertmanagerUid: gdev-alertmanager
+      prometheusType: Prometheus #Cortex | Mimir | Prometheus | Thanos
+      prometheusVersion: 2.40.0
 
   - name: gdev-slow-prometheus
     type: prometheus
@@ -242,9 +244,10 @@ datasources:
         label: "Logs to metrics"
         description: "Related metrics stored in Prometheus"
         config:
+          type: query
           target:
             expr: "{ job=\"test\" }"
-          field: "labels"
+          field: "traceID"
     jsonData:
       manageAlerts: false
       derivedFields:

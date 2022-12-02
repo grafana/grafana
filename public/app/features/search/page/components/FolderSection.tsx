@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { useCallback } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, useStyles2 } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -32,7 +33,7 @@ interface SectionHeaderProps {
   tags?: string[];
 }
 
-export const FolderSection: FC<SectionHeaderProps> = ({
+export const FolderSection = ({
   section,
   selectionToggle,
   onClickItem,
@@ -40,10 +41,14 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   selection,
   renderStandaloneBody,
   tags,
-}) => {
+}: SectionHeaderProps) => {
   const editable = selectionToggle != null;
-  const theme = useTheme();
-  const styles = getSectionHeaderStyles(theme, section.selected, editable);
+  const styles = useStyles2(
+    useCallback(
+      (theme: GrafanaTheme2) => getSectionHeaderStyles(theme, section.selected, editable),
+      [section.selected, editable]
+    )
+  );
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(getSectionStorageKey(section.title), false);
 
   const results = useAsync(async () => {
@@ -77,11 +82,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       id: 666, // do not use me!
       isStarred: false,
       tags: item.tags ?? [],
-      folderUid,
-      folderTitle,
+      folderUid: folderUid || item.location,
+      folderTitle: folderTitle || raw.view.dataFrame.meta?.custom?.locationInfo[item.location].name,
     }));
     return v;
-  }, [sectionExpanded, section, tags]);
+  }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
@@ -157,6 +162,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   return (
     <CollapsableSection
+      headerDataTestId={selectors.components.Search.folderHeader(section.title)}
+      contentDataTestId={selectors.components.Search.folderContent(section.title)}
       isOpen={sectionExpanded ?? false}
       onToggle={onSectionExpand}
       className={styles.wrapper}
@@ -191,8 +198,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   );
 };
 
-const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = false, editable: boolean) => {
-  const { sm } = theme.spacing;
+const getSectionHeaderStyles = (theme: GrafanaTheme2, selected = false, editable: boolean) => {
+  const sm = theme.spacing(1);
   return {
     wrapper: cx(
       css`
@@ -200,7 +207,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
         font-size: ${theme.typography.size.base};
         padding: 12px;
         border-bottom: none;
-        color: ${theme.colors.textWeak};
+        color: ${theme.colors.text.secondary};
         z-index: 1;
 
         &:hover,
@@ -237,7 +244,7 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     `,
     link: css`
       padding: 2px 10px 0;
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
     `,
@@ -254,4 +261,4 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       padding-bottom: 1rem;
     `,
   };
-});
+};

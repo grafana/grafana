@@ -15,6 +15,7 @@ interface Props {
   width?: number;
   disabled?: boolean;
   'aria-label'?: string;
+  getOptionLabel?: ((item: SelectableValue<string>) => React.ReactNode) | undefined;
 }
 
 export const SelectWithAdd: FC<Props> = ({
@@ -29,13 +30,12 @@ export const SelectWithAdd: FC<Props> = ({
   disabled = false,
   addLabel = '+ Add new',
   'aria-label': ariaLabel,
+  getOptionLabel,
 }) => {
   const [isCustom, setIsCustom] = useState(custom);
 
   useEffect(() => {
-    if (custom) {
-      setIsCustom(custom);
-    }
+    setIsCustom(custom);
   }, [custom]);
 
   const _options = useMemo(
@@ -53,7 +53,7 @@ export const SelectWithAdd: FC<Props> = ({
         placeholder={placeholder}
         className={className}
         disabled={disabled}
-        onChange={(e) => onChange((e.target as HTMLInputElement).value)}
+        onChange={(e) => onChange(e.currentTarget.value)}
       />
     );
   } else {
@@ -65,6 +65,7 @@ export const SelectWithAdd: FC<Props> = ({
         value={value}
         className={className}
         placeholder={placeholder}
+        getOptionLabel={getOptionLabel}
         disabled={disabled}
         onChange={(val: SelectableValue) => {
           const value = val?.value;

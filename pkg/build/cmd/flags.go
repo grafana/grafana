@@ -37,4 +37,19 @@ var (
 		Name:  "sign",
 		Usage: "Enable plug-in signing (you must set GRAFANA_API_KEY)",
 	}
+	dryRunFlag = cli.BoolFlag{
+		Name:  "dry-run",
+		Usage: "Only simulate actions",
+	}
+	gcpKeyFlag = cli.StringFlag{
+		Name:     "gcp-key",
+		Usage:    "Google Cloud Platform key file",
+		Required: true,
+	}
+	gitHubTokenFlag = cli.StringFlag{
+		Name:    "github-token",
+		Value:   "",
+		EnvVars: []string{"GITHUB_TOKEN"},
+		Usage:   "GitHub token",
+	}
 )

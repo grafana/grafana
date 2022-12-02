@@ -107,7 +107,7 @@ export const PageToolbar: FC<Props> = React.memo(
               </>
             )}
 
-            {(title || leftItems?.length) && (
+            {(title || Boolean(leftItems?.length)) && (
               <div className={styles.titleWrapper}>
                 {title && (
                   <h1 className={styles.h1Styles}>
@@ -168,7 +168,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     pageIcon: css`
       display: none;
-      ${theme.breakpoints.up('md')} {
+      ${theme.breakpoints.up('sm')} {
         display: flex;
         padding-right: ${theme.spacing(1)};
         align-items: center;

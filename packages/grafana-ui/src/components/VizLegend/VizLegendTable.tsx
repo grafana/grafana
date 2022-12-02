@@ -21,7 +21,7 @@ export const VizLegendTable = <T extends unknown>({
   className,
   onToggleSort,
   onLabelClick,
-  onLabelMouseEnter,
+  onLabelMouseOver,
   onLabelMouseOut,
   readonly,
 }: VizLegendTableProps<T>): JSX.Element => {
@@ -57,7 +57,7 @@ export const VizLegendTable = <T extends unknown>({
         key={`${item.label}-${index}`}
         item={item}
         onLabelClick={onLabelClick}
-        onLabelMouseEnter={onLabelMouseEnter}
+        onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
       />

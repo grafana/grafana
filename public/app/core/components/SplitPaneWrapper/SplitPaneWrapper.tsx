@@ -1,31 +1,25 @@
 import { css, cx } from '@emotion/css';
-import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
-import SplitPane from 'react-split-pane';
+import React, { createRef, MutableRefObject, PureComponent } from 'react';
+import SplitPane, { Split } from 'react-split-pane';
 
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
 
-import { SplitView } from './SplitView';
-
-enum Pane {
-  Right,
-  Top,
-}
-
 interface Props {
-  leftPaneComponents: ReactNode[] | ReactNode;
-  rightPaneComponents: ReactNode;
-  uiState: { topPaneSize: number; rightPaneSize: number };
-  rightPaneVisible?: boolean;
-  updateUiState: (uiState: { topPaneSize?: number; rightPaneSize?: number }) => void;
+  splitOrientation?: Split;
+  paneSize: number;
+  splitVisible?: boolean;
+  minSize?: number;
+  maxSize?: number;
+  primary?: 'first' | 'second';
+  onDragFinished?: (size?: number) => void;
+  paneStyle?: React.CSSProperties;
+  secondaryPaneStyle?: React.CSSProperties;
 }
 
 export class SplitPaneWrapper extends PureComponent<Props> {
+  //requestAnimationFrame reference
   rafToken: MutableRefObject<number | null> = createRef();
-  static defaultProps = {
-    rightPaneVisible: true,
-  };
 
   componentDidMount() {
     window.addEventListener('resize', this.updateSplitPaneSize);
@@ -44,87 +38,79 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     });
   };
 
-  onDragFinished = (pane: Pane, size?: number) => {
+  onDragFinished = (size?: number) => {
     document.body.style.cursor = 'auto';
 
-    // When the drag handle is just clicked size is undefined
-    if (!size) {
-      return;
-    }
-
-    const { updateUiState } = this.props;
-    if (pane === Pane.Top) {
-      updateUiState({
-        topPaneSize: size / window.innerHeight,
-      });
-    } else {
-      updateUiState({
-        rightPaneSize: size / window.innerWidth,
-      });
+    if (this.props.onDragFinished && size !== undefined) {
+      this.props.onDragFinished(size);
     }
   };
 
   onDragStarted = () => {
-    document.body.style.cursor = 'row-resize';
+    document.body.style.cursor = this.props.splitOrientation === 'horizontal' ? 'row-resize' : 'col-resize';
   };
 
-  renderHorizontalSplit() {
-    const { leftPaneComponents, uiState } = this.props;
-    const styles = getStyles(config.theme);
-    const topPaneSize = uiState.topPaneSize >= 1 ? uiState.topPaneSize : uiState.topPaneSize * window.innerHeight;
-
-    /*
-      Guesstimate the height of the browser window minus
-      panel toolbar and editor toolbar (~120px). This is to prevent resizing
-      the preview window beyond the browser window.
-     */
-
-    if (Array.isArray(leftPaneComponents)) {
-      return (
-        <SplitPane
-          split="horizontal"
-          maxSize={-200}
-          primary="first"
-          size={topPaneSize}
-          pane2Style={{ minHeight: 0 }}
-          resizerClassName={styles.resizerH}
-          onDragStarted={this.onDragStarted}
-          onDragFinished={(size) => this.onDragFinished(Pane.Top, size)}
-        >
-          {leftPaneComponents}
-        </SplitPane>
-      );
-    }
-
-    return <div className={styles.singleLeftPane}>{leftPaneComponents}</div>;
-  }
-
   render() {
-    const { rightPaneVisible, rightPaneComponents, uiState } = this.props;
-    // Limit options pane width to 90% of screen.
-    // Need to handle when width is relative. ie a percentage of the viewport
-    const rightPaneSize =
-      uiState.rightPaneSize <= 1 ? uiState.rightPaneSize * window.innerWidth : uiState.rightPaneSize;
+    const {
+      children,
+      paneSize,
+      splitOrientation,
+      maxSize,
+      minSize,
+      primary,
+      paneStyle,
+      secondaryPaneStyle,
+      splitVisible = true,
+    } = this.props;
 
-    if (!rightPaneVisible) {
-      return this.renderHorizontalSplit();
+    let childrenArr = [];
+    if (Array.isArray(children)) {
+      childrenArr = children;
+    } else {
+      childrenArr.push(children);
     }
+
+    // Limit options pane width to 90% of screen.
+    const styles = getStyles(config.theme2, splitVisible);
+
+    // Need to handle when width is relative. ie a percentage of the viewport
+    const paneSizePx =
+      paneSize <= 1
+        ? paneSize * (splitOrientation === 'horizontal' ? window.innerHeight : window.innerWidth)
+        : paneSize;
+
+    // the react split pane library always wants 2 children. This logic ensures that happens, even if one child is passed in
+    const childrenFragments = [
+      <React.Fragment key="leftPane">{childrenArr[0]}</React.Fragment>,
+      <React.Fragment key="rightPane">{childrenArr[1] || undefined}</React.Fragment>,
+    ];
 
     return (
-      <SplitView uiState={{ rightPaneSize }}>
-        {this.renderHorizontalSplit()}
-        {rightPaneComponents}
-      </SplitView>
+      <SplitPane
+        split={splitOrientation}
+        minSize={minSize}
+        maxSize={maxSize}
+        size={splitVisible ? paneSizePx : 0}
+        primary={splitVisible ? primary : 'second'}
+        resizerClassName={splitOrientation === 'horizontal' ? styles.resizerH : styles.resizerV}
+        onDragStarted={() => this.onDragStarted()}
+        onDragFinished={(size) => this.onDragFinished(size)}
+        paneStyle={paneStyle}
+        pane2Style={secondaryPaneStyle}
+      >
+        {childrenFragments}
+      </SplitPane>
     );
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const handleColor = theme.palette.blue95;
-  const paneSpacing = theme.spacing.md;
+const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
+  const handleColor = theme.v1.palette.blue95;
+  const paneSpacing = theme.spacing(2);
 
   const resizer = css`
     position: relative;
+    display: ${hasSplit ? 'block' : 'none'};
 
     &::before {
       content: '';
@@ -133,7 +119,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     }
 
     &::after {
-      background: ${theme.colors.panelBorder};
+      background: ${theme.components.panel.borderColor};
       content: '';
       position: absolute;
       left: 50%;
@@ -201,4 +187,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       `
     ),
   };
-});
+};

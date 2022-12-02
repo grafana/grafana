@@ -5,26 +5,28 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, Icon } from '@grafana/ui';
 
+import { getNavTitle } from '../NavBar/navBarItem-translations';
+
 export interface Props {
   item: NavModelItem;
+  isSectionRoot?: boolean;
 }
 
-export function SectionNavItem({ item }: Props) {
+export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const styles = useStyles2(getStyles);
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
-  const isRoot = item.parentItem == null;
   const hasActiveChild = Boolean(children?.length && children.find((x) => x.active));
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
-  const noRootMargin = isRoot && Boolean(item.children![0].children?.length);
+  const noRootMargin = isSectionRoot && Boolean(item.children![0].children?.length);
 
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: Boolean(children?.length),
+    [styles.isSection]: Boolean(children?.length) || item.isSection,
     [styles.hasActiveChild]: hasActiveChild,
-    [styles.isRoot]: isRoot,
+    [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
   });
 
@@ -37,9 +39,9 @@ export function SectionNavItem({ item }: Props) {
         role="tab"
         aria-selected={item.active}
       >
-        {isRoot && item.icon && <Icon name={item.icon} />}
-        {isRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
-        {item.text}
+        {isSectionRoot && item.icon && <Icon name={item.icon} />}
+        {isSectionRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
+        {getNavTitle(item.id) ?? item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (
@@ -55,6 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 0, 1, 1.5)};
       display: flex;
       align-items: center;
+      border-radius: ${theme.shape.borderRadius(2)};
       gap: ${theme.spacing(1)};
       height: 100%;
       position: relative;
@@ -63,13 +66,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover,
       &:focus {
         text-decoration: underline;
+        z-index: 1;
       }
     `,
     activeStyle: css`
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
       background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-      border-radius: ${theme.shape.borderRadius(2)};
       font-weight: ${theme.typography.fontWeightMedium};
 
       &::before {
@@ -90,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     sectionImg: css({
       height: 18,
     }),
-    isRoot: css({
+    isSectionRoot: css({
       color: theme.colors.text.primary,
       fontSize: theme.typography.h4.fontSize,
       marginTop: 0,

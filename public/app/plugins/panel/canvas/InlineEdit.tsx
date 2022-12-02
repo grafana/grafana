@@ -20,16 +20,17 @@ const OFFSET_X = 10;
 const OFFSET_Y = 32;
 
 export function InlineEdit({ onClose, id, scene }: Props) {
-  const root = scene.root.div!.getBoundingClientRect();
+  const root = scene.root.div?.getBoundingClientRect();
   const windowHeight = window.innerHeight;
   const windowWidth = window.innerWidth;
   const ref = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
   const inlineEditKey = 'inlineEditPanel' + id.toString();
 
-  const defaultMeasurements = { width: 350, height: 400 };
-  const defaultX = root.x + root.width - defaultMeasurements.width - OFFSET_X;
-  const defaultY = root.y + OFFSET_Y;
+  const defaultMeasurements = { width: 400, height: 400 };
+  const widthOffset = root?.width ?? defaultMeasurements.width + OFFSET_X * 2;
+  const defaultX = root?.x ?? 0 + widthOffset - defaultMeasurements.width - OFFSET_X;
+  const defaultY = root?.y ?? 0 + OFFSET_Y;
 
   const savedPlacement = store.getObject(inlineEditKey, {
     x: defaultX,
@@ -102,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   inlineEditorContainer: css`
     display: flex;
     flex-direction: column;
-    background: ${theme.v1.colors.panelBg};
+    background: ${theme.components.panel.background};
     border: 1px solid ${theme.colors.border.strong};
     box-shadow: 5px 5px 20px -5px #000000;
     z-index: 1000;

@@ -16,7 +16,7 @@ type CookieOptions struct {
 	SameSiteMode     http.SameSite
 }
 
-func newCookieOptions() CookieOptions {
+func NewCookieOptions() CookieOptions {
 	path := "/"
 	if len(setting.AppSubUrl) > 0 {
 		path = setting.AppSubUrl
@@ -37,7 +37,7 @@ func DeleteCookie(w http.ResponseWriter, name string, getCookieOptions getCookie
 
 func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, getCookieOptions getCookieOptionsFunc) {
 	if getCookieOptions == nil {
-		getCookieOptions = newCookieOptions
+		getCookieOptions = NewCookieOptions
 	}
 
 	options := getCookieOptions()

@@ -34,13 +34,13 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 
 	matchers, err := parseFilter(filter)
 	if err != nil {
-		am.logger.Error("failed to parse matchers", "err", err)
+		am.logger.Error("failed to parse matchers", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
-		am.logger.Error("failed to parse receiver regex", "err", err)
+		am.logger.Error("failed to parse receiver regex", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
 	}
 
@@ -77,7 +77,7 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 	am.reloadConfigMtx.RUnlock()
 
 	if err != nil {
-		am.logger.Error("failed to iterate through the alerts", "err", err)
+		am.logger.Error("failed to iterate through the alerts", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsInternal)
 	}
 	sort.Slice(res, func(i, j int) bool {
@@ -90,13 +90,13 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 func (am *Alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.AlertGroups, error) {
 	matchers, err := parseFilter(filter)
 	if err != nil {
-		am.logger.Error("msg", "failed to parse matchers", "err", err)
+		am.logger.Error("msg", "failed to parse matchers", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
-		am.logger.Error("msg", "failed to compile receiver regex", "err", err)
+		am.logger.Error("msg", "failed to compile receiver regex", "error", err)
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
 	}
 

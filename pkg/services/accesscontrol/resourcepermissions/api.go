@@ -40,6 +40,7 @@ func (a *api) registerEndpoints() {
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
 		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
 		if a.service.options.Assignments.Users {
 			r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
@@ -135,6 +136,10 @@ type setPermissionCommand struct {
 	Permission string `json:"permission"`
 }
 
+type setPermissionsCommand struct {
+	Permissions []accesscontrol.SetResourcePermissionCommand `json:"permissions"`
+}
+
 func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":userID"], 10, 64)
 	if err != nil {
@@ -190,6 +195,22 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 	}
 
 	return permissionSetResponse(cmd)
+}
+
+func (a *api) setPermissions(c *models.ReqContext) response.Response {
+	resourceID := web.Params(c.Req)[":resourceID"]
+
+	cmd := setPermissionsCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	_, err := a.service.SetPermissions(c.Req.Context(), c.OrgID, resourceID, cmd.Permissions...)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "failed to set permissions", err)
+	}
+
+	return response.Success("Permissions updated")
 }
 
 func permissionSetResponse(cmd setPermissionCommand) response.Response {

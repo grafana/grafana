@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -24,59 +23,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 	}
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
-
-		t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
-			var err error
-			var cmd *models.CreateOrgCommand
-			ids := []int64{}
-
-			for i := 1; i < 4; i++ {
-				cmd = &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err = sqlStore.CreateOrg(context.Background(), cmd)
-				require.NoError(t, err)
-
-				ids = append(ids, cmd.Result.Id)
-			}
-
-			query := &models.SearchOrgsQuery{Ids: ids}
-			err = sqlStore.SearchOrgs(context.Background(), query)
-
-			require.NoError(t, err)
-			require.Equal(t, len(query.Result), 3)
-		})
-
-		t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
-			sqlStore = InitTestDB(t)
-			for i := 1; i < 4; i++ {
-				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err := sqlStore.CreateOrg(context.Background(), cmd)
-				require.NoError(t, err)
-			}
-
-			t.Run("Should be able to search with defaults", func(t *testing.T) {
-				query := &models.SearchOrgsQuery{}
-				err := sqlStore.SearchOrgs(context.Background(), query)
-
-				require.NoError(t, err)
-				require.Equal(t, len(query.Result), 3)
-			})
-
-			t.Run("Should be able to limit search", func(t *testing.T) {
-				query := &models.SearchOrgsQuery{Limit: 1}
-				err := sqlStore.SearchOrgs(context.Background(), query)
-
-				require.NoError(t, err)
-				require.Equal(t, len(query.Result), 1)
-			})
-
-			t.Run("Should be able to limit and paginate search", func(t *testing.T) {
-				query := &models.SearchOrgsQuery{Limit: 2, Page: 1}
-				err := sqlStore.SearchOrgs(context.Background(), query)
-
-				require.NoError(t, err)
-				require.Equal(t, len(query.Result), 1)
-			})
-		})
 
 		t.Run("Given single org mode", func(t *testing.T) {
 			sqlStore.Cfg.AutoAssignOrg = true
@@ -94,9 +40,9 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 				q1 := models.GetUserOrgListQuery{UserId: ac1.ID}
 				q2 := models.GetUserOrgListQuery{UserId: ac2.ID}
-				err = sqlStore.GetUserOrgList(context.Background(), &q1)
+				err = sqlStore.getUserOrgList(context.Background(), &q1)
 				require.NoError(t, err)
-				err = sqlStore.GetUserOrgList(context.Background(), &q2)
+				err = sqlStore.getUserOrgList(context.Background(), &q2)
 				require.NoError(t, err)
 
 				require.Equal(t, q1.Result[0].OrgId, q2.Result[0].OrgId)
@@ -120,30 +66,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 			_, err = sqlStore.CreateUser(context.Background(), serviceaccountcmd)
 			require.NoError(t, err)
 
-			t.Run("Should be able to read user info projection", func(t *testing.T) {
-				query := models.GetUserProfileQuery{UserId: ac1.ID}
-				err = sqlStore.GetUserProfile(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Equal(t, query.Result.Email, "ac1@test.com")
-				require.Equal(t, query.Result.Login, "ac1")
-			})
-
-			t.Run("Can search users", func(t *testing.T) {
-				query := models.SearchUsersQuery{Query: "", SignedInUser: &user.SignedInUser{
-					OrgID: 1,
-					Permissions: map[int64]map[string][]string{
-						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
-					},
-				}}
-				err := sqlStore.SearchUsers(context.Background(), &query)
-
-				require.NoError(t, err)
-				require.Len(t, query.Result.Users, 2)
-				require.Equal(t, query.Result.Users[0].Email, "ac1@test.com")
-				require.Equal(t, query.Result.Users[1].Email, "ac2@test.com")
-			})
-
 			t.Run("Given an added org user", func(t *testing.T) {
 				cmd := models.AddOrgUserCommand{
 					OrgId:  ac1.OrgID,
@@ -151,62 +73,17 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					Role:   org.RoleViewer,
 				}
 
-				err := sqlStore.AddOrgUser(context.Background(), &cmd)
+				err := sqlStore.addOrgUser(context.Background(), &cmd)
 				t.Run("Should have been saved without error", func(t *testing.T) {
 					require.NoError(t, err)
 				})
 
-				t.Run("Can get logged in user projection", func(t *testing.T) {
-					query := models.GetSignedInUserQuery{UserId: ac2.ID}
-					err := sqlStore.GetSignedInUser(context.Background(), &query)
-
-					require.NoError(t, err)
-					require.Equal(t, query.Result.Email, "ac2@test.com")
-					require.Equal(t, query.Result.OrgID, ac2.OrgID)
-					require.Equal(t, query.Result.Name, "ac2 name")
-					require.Equal(t, query.Result.Login, "ac2")
-					require.EqualValues(t, query.Result.OrgRole, "Admin")
-					require.Equal(t, query.Result.OrgName, "ac2@test.com")
-					require.Equal(t, query.Result.IsGrafanaAdmin, true)
-				})
-
 				t.Run("Can get user organizations", func(t *testing.T) {
 					query := models.GetUserOrgListQuery{UserId: ac2.ID}
-					err := sqlStore.GetUserOrgList(context.Background(), &query)
+					err := sqlStore.getUserOrgList(context.Background(), &query)
 
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
-				})
-
-				t.Run("Can set using org", func(t *testing.T) {
-					cmd := models.SetUsingOrgCommand{UserId: ac2.ID, OrgId: ac1.OrgID}
-					err := sqlStore.SetUsingOrg(context.Background(), &cmd)
-					require.NoError(t, err)
-
-					t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
-						query := models.GetSignedInUserQuery{UserId: ac2.ID}
-						err := sqlStore.GetSignedInUser(context.Background(), &query)
-
-						require.NoError(t, err)
-						require.Equal(t, query.Result.OrgID, ac1.OrgID)
-						require.Equal(t, query.Result.Email, "ac2@test.com")
-						require.Equal(t, query.Result.Name, "ac2 name")
-						require.Equal(t, query.Result.Login, "ac2")
-						require.Equal(t, query.Result.OrgName, "ac1@test.com")
-					})
-
-					// TODO: This test should be moved to user store
-					// t.Run("Should set last org as current when removing user from current", func(t *testing.T) {
-					// 	remCmd := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID}
-					// 	err := sqlStore.RemoveOrgUser(context.Background(), &remCmd)
-					// 	require.NoError(t, err)
-
-					// 	query := models.GetSignedInUserQuery{UserId: ac2.ID}
-					// 	err = sqlStore.GetSignedInUser(context.Background(), &query)
-
-					// 	require.NoError(t, err)
-					// 	require.Equal(t, query.Result.OrgID, ac2.OrgID)
-					// })
 				})
 
 				t.Run("Given an org user with dashboard permissions", func(t *testing.T) {
@@ -220,7 +97,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						Role:   org.RoleViewer,
 					}
 
-					err = sqlStore.AddOrgUser(context.Background(), &orgUserCmd)
+					err = sqlStore.addOrgUser(context.Background(), &orgUserCmd)
 					require.NoError(t, err)
 
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgID, 0, false, "prod", "webapp")
@@ -235,33 +112,6 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						DashboardID: dash2.Id, OrgID: ac3.OrgID, UserID: ac3.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
-
-					// TODO: should be moved to dashboard service
-					// t.Run("When org user is deleted", func(t *testing.T) {
-					// 	cmdRemove := models.RemoveOrgUserCommand{OrgId: ac1.OrgID, UserId: ac3.ID}
-					// 	err := sqlStore.RemoveOrgUser(context.Background(), &cmdRemove)
-					// 	require.NoError(t, err)
-
-					// 	t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-					// 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash1.Id, OrgID: ac1.OrgID}
-
-					// 		err = getDashboardACLInfoList(sqlStore, permQuery)
-					// 		require.NoError(t, err)
-
-					// 		require.Equal(t, len(permQuery.Result), 0)
-					// 	})
-
-					// 	t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
-					// 		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: dash2.Id, OrgID: ac3.OrgID}
-
-					// 		err = getDashboardACLInfoList(sqlStore, permQuery)
-					// 		require.NoError(t, err)
-
-					// 		require.Equal(t, len(permQuery.Result), 1)
-					// 		require.Equal(t, permQuery.Result[0].OrgId, ac3.OrgID)
-					// 		require.Equal(t, permQuery.Result[0].UserId, ac3.ID)
-					// 	})
-					// })
 				})
 			})
 		})
@@ -358,89 +208,4 @@ func updateDashboardACL(t *testing.T, sqlStore *SQLStore, dashboardID int64, ite
 		return err
 	})
 	return err
-}
-
-// This function was copied from pkg/services/dashboards/database to circumvent
-// import cycles. When this org-related code is refactored into a service the
-// tests can the real GetDashboardACLInfoList functions
-func getDashboardACLInfoList(s *SQLStore, query *models.GetDashboardACLInfoListQuery) error {
-	outerErr := s.WithDbSession(context.Background(), func(dbSession *DBSession) error {
-		query.Result = make([]*models.DashboardACLInfoDTO, 0)
-		falseStr := dialect.BooleanStr(false)
-
-		if query.DashboardID == 0 {
-			sql := `SELECT
-		da.id,
-		da.org_id,
-		da.dashboard_id,
-		da.user_id,
-		da.team_id,
-		da.permission,
-		da.role,
-		da.created,
-		da.updated,
-		'' as user_login,
-		'' as user_email,
-		'' as team,
-		'' as title,
-		'' as slug,
-		'' as uid,` +
-				falseStr + ` AS is_folder,` +
-				falseStr + ` AS inherited
-		FROM dashboard_acl as da
-		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
-		}
-
-		rawSQL := `
-			-- get permissions for the dashboard and its parent folder
-			SELECT
-				da.id,
-				da.org_id,
-				da.dashboard_id,
-				da.user_id,
-				da.team_id,
-				da.permission,
-				da.role,
-				da.created,
-				da.updated,
-				u.login AS user_login,
-				u.email AS user_email,
-				ug.name AS team,
-				ug.email AS team_email,
-				d.title,
-				d.slug,
-				d.uid,
-				d.is_folder,
-				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + dialect.BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
-			FROM dashboard as d
-				LEFT JOIN dashboard folder on folder.id = d.folder_id
-				LEFT JOIN dashboard_acl AS da ON
-				da.dashboard_id = d.id OR
-				da.dashboard_id = d.folder_id OR
-				(
-					-- include default permissions -->
-					da.org_id = -1 AND (
-					  (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
-					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
-					)
-				)
-				LEFT JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
-				LEFT JOIN team ug on ug.id = da.team_id
-			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
-			ORDER BY da.id ASC
-			`
-
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
-	})
-
-	if outerErr != nil {
-		return outerErr
-	}
-
-	for _, p := range query.Result {
-		p.PermissionName = p.Permission.String()
-	}
-
-	return nil
 }

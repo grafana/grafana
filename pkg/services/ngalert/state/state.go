@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -12,28 +13,56 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
 type State struct {
-	AlertRuleUID string
 	OrgID        int64
-	CacheId      string
+	AlertRuleUID string
 
-	StartsAt   time.Time
-	EndsAt     time.Time
-	LastSentAt time.Time
+	// CacheID is a unique, opaque identifier for the state, and is used to find the state
+	// in the state cache. It tends to be derived from the state's labels.
+	CacheID string
 
-	State                eval.State
-	StateReason          string
+	// State represents the current state.
+	State eval.State
+
+	// StateReason is a textual description to explain why the state has its current state.
+	StateReason string
+
+	// Results contains the result of the current and previous evaluations.
+	Results []Evaluation
+
+	// Error is set if the current evaluation returned an error. If error is non-nil results
+	// can still contain the results of previous evaluations.
+	Error error
+
+	// Resolved is set to true if this state is the transitional state between Firing and Normal.
+	// All subsequent states will be false until the next transition from Firing to Normal.
+	Resolved bool
+
+	// Image contains an optional image for the state. It tends to be included in notifications
+	// as a visualization to show why the alert fired.
+	Image *models.Image
+
+	// Annotations contains the annotations from the alert rule. If an annotation is templated
+	// then the template is first evaluated to derive the final annotation.
+	Annotations map[string]string
+
+	// Labels contain the labels from the query and any custom labels from the alert rule.
+	// If a label is templated then the template is first evaluated to derive the final label.
+	Labels data.Labels
+
+	// Values contains the values of any instant vectors, reduce and math expressions, or classic
+	// conditions.
+	Values map[string]float64
+
+	StartsAt             time.Time
+	EndsAt               time.Time
+	LastSentAt           time.Time
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
-	Results              []Evaluation
-	Resolved             bool
-	Annotations          map[string]string
-	Labels               data.Labels
-	Image                *models.Image
-	Error                error
 }
 
 func (a *State) GetRuleKey() models.AlertRuleKey {
@@ -41,6 +70,41 @@ func (a *State) GetRuleKey() models.AlertRuleKey {
 		OrgID: a.OrgID,
 		UID:   a.AlertRuleUID,
 	}
+}
+
+func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
+	instanceLabels := models.InstanceLabels(a.Labels)
+	_, labelsHash, err := instanceLabels.StringAndHash()
+	if err != nil {
+		return models.AlertInstanceKey{}, err
+	}
+	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
+}
+
+func (a *State) Resolve(reason string, endsAt time.Time) {
+	a.State = eval.Normal
+	a.StateReason = reason
+	a.EndsAt = endsAt
+	a.Resolved = true
+}
+
+// StateTransition describes the transition from one state to another.
+type StateTransition struct {
+	*State
+	PreviousState       eval.State
+	PreviousStateReason string
+}
+
+func (c StateTransition) Formatted() string {
+	return FormatStateAndReason(c.State.State, c.State.StateReason)
+}
+
+func (c StateTransition) PreviousFormatted() string {
+	return FormatStateAndReason(c.PreviousState, c.PreviousStateReason)
+}
+
+func (c StateTransition) changed() bool {
+	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
 }
 
 type Evaluation struct {
@@ -191,7 +255,7 @@ func (a *State) NeedsSending(resendDelay time.Duration) bool {
 func (a *State) Equals(b *State) bool {
 	return a.AlertRuleUID == b.AlertRuleUID &&
 		a.OrgID == b.OrgID &&
-		a.CacheId == b.CacheId &&
+		a.CacheID == b.CacheID &&
 		a.Labels.String() == b.Labels.String() &&
 		a.State.String() == b.State.String() &&
 		a.StartsAt == b.StartsAt &&
@@ -256,4 +320,36 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 	}
 
 	return r
+}
+
+// shouldTakeImage returns true if the state just has transitioned to alerting from another state,
+// transitioned to alerting in a previous evaluation but does not have a screenshot, or has just
+// been resolved.
+func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) bool {
+	return resolved ||
+		state == eval.Alerting && previousState != eval.Alerting ||
+		state == eval.Alerting && previousImage == nil
+}
+
+// takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
+// the rule is not associated with a dashboard panel.
+func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*models.Image, error) {
+	img, err := s.NewImage(ctx, r)
+	if err != nil {
+		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
+			errors.Is(err, models.ErrNoDashboard) ||
+			errors.Is(err, models.ErrNoPanel) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return img, nil
+}
+
+func FormatStateAndReason(state eval.State, reason string) string {
+	s := fmt.Sprintf("%v", state)
+	if len(reason) > 0 {
+		s += fmt.Sprintf(" (%v)", reason)
+	}
+	return s
 }

@@ -22,6 +22,7 @@ import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 
 import { createDefaultInitialState } from './helpers';
+import { saveCorrelationsAction } from './main';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -99,28 +100,31 @@ function setupQueryResponse(state: StoreState) {
 }
 
 describe('runQueries', () => {
-  it('should pass dataFrames to state even if there is error in response', async () => {
+  const setupTests = () => {
     setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
+    return configureStore({
       ...(defaultInitialState as any),
     });
+  };
+
+  it('should pass dataFrames to state even if there is error in response', async () => {
+    const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 
   it('should modify the request-id for log-volume queries', async () => {
-    setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
-      ...(defaultInitialState as any),
-    });
+    const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
 
     const state = getState().explore[ExploreId.left];
     expect(state.queryResponse.request?.requestId).toBe('explore_left');
-    const datasource = state.datasourceInstance as any as DataSourceWithLogsVolumeSupport<DataQuery>;
+    const datasource = state.datasourceInstance as unknown as DataSourceWithLogsVolumeSupport<DataQuery>;
     expect(datasource.getLogsVolumeDataProvider).toBeCalledWith(
       expect.objectContaining({
         requestId: 'explore_left_log_volume',
@@ -129,15 +133,22 @@ describe('runQueries', () => {
   });
 
   it('should set state to done if query completes without emitting', async () => {
-    setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
-      ...(defaultInitialState as any),
-    });
+    const { dispatch, getState } = setupTests();
     const leftDatasourceInstance = assertIsDefined(getState().explore[ExploreId.left].datasourceInstance);
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
+  });
+
+  it('shows results only after correlations are loaded', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+    await dispatch(runQueries(ExploreId.left));
+    expect(getState().explore[ExploreId.left].graphResult).not.toBeDefined();
+    await dispatch(saveCorrelationsAction([]));
+    expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 });
 

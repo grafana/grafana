@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -239,13 +238,11 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "editor request should succeed",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 			{
 				desc:      "admin request should succeed",
 				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
-				expBody:   `{"id":"0","message":"silence created"}`,
 			},
 		}
 
@@ -263,8 +260,10 @@ func TestAMConfigAccess(t *testing.T) {
 				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				if tc.expStatus == http.StatusAccepted {
-					re := regexp.MustCompile(`"id":"([\w|-]+)"`)
-					b = re.ReplaceAll(b, []byte(`"id":"0"`))
+					response := apimodels.PostSilencesOKBody{}
+					require.NoError(t, json.Unmarshal(b, &response))
+					require.NotEmpty(t, response.SilenceID)
+					return
 				}
 				require.Contains(t, string(b), tc.expBody)
 			})
@@ -799,10 +798,9 @@ func TestDeleteFolderWithRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := io.ReadAll(resp.Body)
+		_, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
-		require.JSONEq(t, `{"id":1,"message":"Folder default deleted","title":"default"}`, string(b))
 	}
 
 	// Finally, we ensure the rules were deleted.
@@ -1878,6 +1876,8 @@ func TestQuota(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
+		// needs permission to update org quota
+		IsAdmin:        true,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1918,30 +1918,10 @@ func TestQuota(t *testing.T) {
 	// check quota limits
 	t.Run("when quota limit exceed creating new rule should fail", func(t *testing.T) {
 		// get existing org quota
-		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
-		err = store.GetOrgQuotaByTarget(context.Background(), &query)
-		require.NoError(t, err)
-		used := query.Result.Used
-		limit := query.Result.Limit
-
-		// set org quota limit to equal used
-		orgCmd := models.UpdateOrgQuotaCmd{
-			OrgId:  1,
-			Target: "alert_rule",
-			Limit:  used,
-		}
-		err := store.UpdateOrgQuota(context.Background(), &orgCmd)
-		require.NoError(t, err)
-
+		limit, used := apiClient.GetOrgQuotaLimits(t, 1)
+		apiClient.UpdateAlertRuleOrgQuota(t, 1, used)
 		t.Cleanup(func() {
-			// reset org quota to original value
-			orgCmd := models.UpdateOrgQuotaCmd{
-				OrgId:  1,
-				Target: "alert_rule",
-				Limit:  limit,
-			}
-			err := store.UpdateOrgQuota(context.Background(), &orgCmd)
-			require.NoError(t, err)
+			apiClient.UpdateAlertRuleOrgQuota(t, 1, limit)
 		})
 
 		// try to create an alert rule
@@ -2368,6 +2348,7 @@ func TestEval(t *testing.T) {
 				return `{
 				"results": {
 				  "A": {
+					"status": 200,
 					"frames": [
 					  {
 						"schema": {
@@ -2424,6 +2405,7 @@ func TestEval(t *testing.T) {
 				return `{
 				"results": {
 				  "A": {
+					"status": 200,
 					"frames": [
 					  {
 						"schema": {
@@ -2483,7 +2465,7 @@ func TestEval(t *testing.T) {
 				if setting.IsEnterprise {
 					return "user is not authorized to query one or many data sources used by the rule"
 				}
-				return "Failed to evaluate queries and expressions: failed to execute conditions: failed to build query 'A': data source not found"
+				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
 			},
 		},
 	}
@@ -2555,12 +2537,6 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)
 	return u.ID
-}
-
-func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {
-	org, err := store.CreateOrgWithMember(name, userID)
-	require.NoError(t, err)
-	return org.Id
 }
 
 func getLongString(t *testing.T, n int) string {

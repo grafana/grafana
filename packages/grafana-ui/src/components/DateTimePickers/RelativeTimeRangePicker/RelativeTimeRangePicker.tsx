@@ -4,6 +4,7 @@ import React, { FormEvent, useCallback, useState } from 'react';
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { Trans, t } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
@@ -63,7 +64,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   };
 
   const onOpen = useCallback(
-    (event: FormEvent<HTMLDivElement>) => {
+    (event: FormEvent<HTMLButtonElement>) => {
       event.stopPropagation();
       event.preventDefault();
       setIsOpen(!isOpen);
@@ -94,7 +95,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
 
   return (
     <div className={styles.container}>
-      <div tabIndex={0} className={styles.pickerInput} onClick={onOpen}>
+      <button className={styles.pickerInput} onClick={onOpen}>
         <span className={styles.clockIcon}>
           <Icon name="clock-nine" />
         </span>
@@ -104,14 +105,14 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
         <span className={styles.caretIcon}>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
         </span>
-      </div>
+      </button>
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <div className={styles.content}>
             <div className={styles.body}>
               <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
                 <TimeRangeList
-                  title="Example time ranges"
+                  title={t('time-picker.time-range.example-title', 'Example time ranges')}
                   options={validOptions}
                   onChange={onChangeTimeOption}
                   value={timeOption}
@@ -122,7 +123,9 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                   <TimePickerTitle>
                     <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
                       <div>
-                        Specify time range <Icon name="info-circle" />
+                        <Trans i18nKey="time-picker.time-range.specify">
+                          Specify time range <Icon name="info-circle" />
+                        </Trans>
                       </div>
                     </Tooltip>
                   </TimePickerTitle>

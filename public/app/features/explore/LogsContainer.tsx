@@ -8,6 +8,9 @@ import {
   LoadingState,
   LogRowModel,
   RawTimeRange,
+  EventBus,
+  SplitOpen,
+  DataFrame,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -17,7 +20,6 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { splitOpen } from './state/main';
 import { addResultsToCache, clearCache, loadLogsVolumeData, setLogsVolumeEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
@@ -30,10 +32,13 @@ interface LogsContainerProps extends PropsFromRedux {
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
+  scrollElement?: HTMLDivElement;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
+  eventBus: EventBus;
+  splitOpenFn: SplitOpen;
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -67,9 +72,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     return false;
   };
 
-  getFieldLinks = (field: Field, rowIndex: number) => {
-    const { splitOpen: splitOpenFn, range } = this.props;
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range });
+  getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
+    const { splitOpenFn, range } = this.props;
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame });
   };
 
   render() {
@@ -92,11 +97,12 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       scanning,
       range,
       width,
-      splitOpen,
+      splitOpenFn,
       isLive,
       exploreId,
       addResultsToCache,
       clearCache,
+      scrollElement,
     } = this.props;
 
     if (!logRows) {
@@ -133,7 +139,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logsVolumeData={logsVolumeData}
             logsQueries={logsQueries}
             width={width}
-            splitOpen={splitOpen}
+            splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
             loadLogsVolumeData={loadLogsVolumeData}
@@ -152,6 +158,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             getFieldLinks={this.getFieldLinks}
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
+            scrollElement={scrollElement}
+            eventBus={this.props.eventBus}
           />
         </LogsCrossFadeTransition>
       </>
@@ -200,7 +208,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 
 const mapDispatchToProps = {
   updateTimeRange,
-  splitOpen,
   addResultsToCache,
   clearCache,
   loadLogsVolumeData,

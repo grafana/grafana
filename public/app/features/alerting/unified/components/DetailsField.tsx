@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -10,7 +10,7 @@ interface Props {
   horizontal?: boolean;
 }
 
-export const DetailsField: FC<Props> = ({ className, label, horizontal, children }) => {
+export const DetailsField = ({ className, label, horizontal, children }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
   return (

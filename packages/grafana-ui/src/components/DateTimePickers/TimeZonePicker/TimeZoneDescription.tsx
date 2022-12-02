@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, TimeZoneInfo } from '@grafana/data';
 
@@ -9,7 +9,7 @@ interface Props {
   info?: TimeZoneInfo;
 }
 
-export const TimeZoneDescription: React.FC<PropsWithChildren<Props>> = ({ info }) => {
+export const TimeZoneDescription = ({ info }: Props) => {
   const styles = useStyles2(getStyles);
   const description = useDescription(info);
 

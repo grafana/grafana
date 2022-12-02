@@ -1,13 +1,15 @@
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
+import { MISSING_LABEL_FILTER_ERROR_MESSAGE } from '../../../prometheus/querybuilder/shared/LabelFilters';
 import { LokiDatasource } from '../../datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
-import { MISSING_LABEL_FILTER_ERROR_MESSAGE, LokiQueryBuilder } from './LokiQueryBuilder';
+import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const defaultQuery: LokiVisualQuery = {
@@ -45,9 +47,26 @@ describe('LokiQueryBuilder', () => {
     render(<LokiQueryBuilder {...props} query={defaultQuery} />);
     await userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Label filters/);
-    const selects = getAllByRole(labels.parentElement!.parentElement!.parentElement!, 'combobox');
+    const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
+  });
+
+  it('does not show already existing label names as option in label filter', async () => {
+    const props = createDefaultProps();
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+    props.datasource.languageProvider.fetchSeriesLabels = jest
+      .fn()
+      .mockReturnValue({ job: ['a'], instance: ['b'], baz: ['bar'] });
+
+    render(<LokiQueryBuilder {...props} query={defaultQuery} />);
+    await userEvent.click(screen.getByLabelText('Add'));
+    const labels = screen.getByText(/Label filters/);
+    const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
+    await userEvent.click(selects[3]);
+    await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('instance')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText('baz')).toHaveLength(1));
   });
 
   it('shows error for query with operations and no stream selector', async () => {

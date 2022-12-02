@@ -7,6 +7,8 @@ import config from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { CommentManager } from 'app/features/comments/CommentManager';
 
+import { AnnotationsDataFrameViewDTO } from '../types';
+
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
   timeFormatter: (v: number) => string;
@@ -37,7 +39,7 @@ export const AnnotationTooltip = ({
   const ts = <span className={styles.time}>{Boolean(annotation.isRegion) ? `${time} - ${timeEnd}` : time}</span>;
 
   if (annotation.login && annotation.avatarUrl) {
-    avatar = <img className={styles.avatar} src={annotation.avatarUrl} />;
+    avatar = <img className={styles.avatar} alt="Annotation avatar" src={annotation.avatarUrl} />;
   }
 
   if (annotation.alertId !== undefined && annotation.newState) {

@@ -1,11 +1,20 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
 import { Editor } from 'slate-react';
 
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
-import { BracesPlugin, LegacyForms, QueryField, SlatePrism, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import {
+  BracesPlugin,
+  QueryField,
+  SlatePrism,
+  TypeaheadInput,
+  TypeaheadOutput,
+  Themeable2,
+  withTheme2,
+  clearButtonStyles,
+} from '@grafana/ui';
 import { ExploreId } from 'app/types';
 // Utils & Services
 // dom also includes Element polyfills
@@ -16,11 +25,12 @@ import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-import { LogGroupSelector } from './LogGroupSelector';
+import { LogGroupSelection } from './LogGroupSelection';
 import QueryHeader from './QueryHeader';
 
 export interface CloudWatchLogsQueryFieldProps
-  extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+  extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
+    Themeable2 {
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
@@ -28,10 +38,9 @@ export interface CloudWatchLogsQueryFieldProps
   query: CloudWatchLogsQuery;
 }
 
-const rowGap = css`
-  gap: 3px;
+const addPaddingToButton = css`
+  padding: 1px 4px;
 `;
-
 interface State {
   hint:
     | {
@@ -44,7 +53,7 @@ interface State {
     | undefined;
 }
 
-export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFieldProps, State> {
+class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFieldProps, State> {
   state: State = {
     hint: undefined,
   };
@@ -112,8 +121,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   render() {
-    const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource } = this.props;
-    const { region, refId, expression, logGroupNames } = query;
+    const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource, theme } = this.props;
+    const { expression } = query;
     const { hint } = this.state;
 
     const showError = data && data.error && data.error.refId === query.refId;
@@ -128,25 +137,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           onChange={onChange}
           sqlCodeEditorIsDirty={false}
         />
-        <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
-          <LegacyForms.FormField
-            label="Log Groups"
-            labelWidth={6}
-            className="flex-grow-1"
-            inputEl={
-              <LogGroupSelector
-                region={region}
-                selectedLogGroups={logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups}
-                datasource={datasource}
-                onChange={function (logGroups: string[]): void {
-                  onChange({ ...query, logGroupNames: logGroups });
-                }}
-                onRunQuery={onRunQuery}
-                refId={refId}
-              />
-            }
-          />
-        </div>
+        <LogGroupSelection datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery} />
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
@@ -158,7 +149,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               cleanText={cleanText}
               placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
               portalOrigin="cloudwatch"
-              disabled={!logGroupNames || logGroupNames.length === 0}
             />
           </div>
           {ExtraFieldElement}
@@ -167,9 +157,13 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="query-row-break">
             <div className="text-warning">
               {hint.message}
-              <a className="text-link muted" onClick={hint.fix.action}>
+              <button
+                type="button"
+                className={cx(clearButtonStyles(theme), 'text-link', 'muted', addPaddingToButton)}
+                onClick={hint.fix.action}
+              >
                 {hint.fix.label}
-              </a>
+              </button>
             </div>
           </div>
         )}
@@ -182,3 +176,5 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     );
   }
 }
+
+export default withTheme2(CloudWatchLogsQueryField);

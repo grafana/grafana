@@ -1,7 +1,6 @@
 package export
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -10,10 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 )
 
 func exportDashboards(helper *commitHelper, job *gitExportJob) error {
@@ -26,18 +25,18 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		folders[0] = job.cfg.GeneralFolderPath // "general"
 	}
 
-	lookup, err := dslookup.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
+	lookup, err := dashboard.LoadDatasourceLookup(helper.ctx, helper.orgID, job.sql)
 	if err != nil {
 		return err
 	}
 
-	rootDir := path.Join(helper.orgDir, "root")
+	rootDir := path.Join(helper.orgDir, "drive")
 	folderStructure := commitOptions{
 		when:    time.Now(),
 		comment: "Exported folder structure",
 	}
 
-	err = job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	err = job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type dashDataQueryResult struct {
 			Id       int64
 			UID      string `xorm:"uid"`
@@ -60,20 +59,22 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
+		reader := dashboard.NewStaticDashboardSummaryBuilder(lookup, false)
+
 		// Process all folders
 		for _, row := range rows {
 			if !row.IsFolder {
 				continue
 			}
-			dash, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+			dash, _, err := reader(helper.ctx, row.UID, row.Data)
 			if err != nil {
 				return err
 			}
 
 			dash.UID = row.UID
-			slug := cleanFileName(dash.Title)
+			slug := cleanFileName(dash.Name)
 			folder := map[string]string{
-				"title": dash.Title,
+				"title": dash.Name,
 			}
 
 			folderStructure.body = append(folderStructure.body, commitBody{
@@ -94,7 +95,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			if row.IsFolder {
 				continue
 			}
-			fname := row.Slug + "-dash.json"
+			fname := row.Slug + "-dashboard.json"
 			fpath, ok := folders[row.FolderID]
 			if ok {
 				fpath = path.Join(fpath, fname)
@@ -136,7 +137,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 	}
 
 	// Now walk the history
-	err = job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	err = job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type dashVersionResult struct {
 			DashId    int64     `xorm:"id"`
 			Version   int64     `xorm:"version"`

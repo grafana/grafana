@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -46,15 +45,17 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
-	// Set locale to the preference, otherwise fall back to the accept language header.
-	// In practice, because the preference has configuration-backed default, the header
-	// shouldn't frequently be used
+	// Locale is used for some number and date/time formatting, whereas language is used just for
+	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
 	locale := "en-US"
+	language := "" // frontend will set the default language
 
-	if hs.Features.IsEnabled(featuremgmt.FlagInternationalization) && prefs.JSONData.Locale != "" {
-		locale = prefs.JSONData.Locale
-	} else if len(acceptLangHeader) > 0 {
+	if hs.Features.IsEnabled(featuremgmt.FlagInternationalization) && prefs.JSONData.Language != "" {
+		language = prefs.JSONData.Language
+	}
+
+	if len(acceptLangHeader) > 0 {
 		parts := strings.Split(acceptLangHeader, ",")
 		locale = parts[0]
 	}
@@ -78,6 +79,11 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		settings["isPublicDashboardView"] = true
 	}
 
+	weekStart := ""
+	if prefs.WeekStart != nil {
+		weekStart = *prefs.WeekStart
+	}
+
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserID,
@@ -94,32 +100,34 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
-			WeekStart:                  prefs.WeekStart,
+			WeekStart:                  weekStart,
 			Locale:                     locale,
+			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 		},
-		Settings:                settings,
-		Theme:                   prefs.Theme,
-		AppUrl:                  appURL,
-		AppSubUrl:               appSubURL,
-		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:      setting.GoogleAnalytics4Id,
-		GoogleTagManagerId:      setting.GoogleTagManagerId,
-		BuildVersion:            setting.BuildVersion,
-		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       hs.grafanaUpdateChecker.LatestVersion(),
-		NewGrafanaVersionExists: hs.grafanaUpdateChecker.UpdateAvailable(),
-		AppName:                 setting.ApplicationName,
-		AppNameBodyClass:        "app-grafana",
-		FavIcon:                 "public/img/fav32.png",
-		AppleTouchIcon:          "public/img/apple-touch-icon.png",
-		AppTitle:                "Grafana",
-		NavTree:                 navTree,
-		Sentry:                  &hs.Cfg.Sentry,
-		Nonce:                   c.RequestNonce,
-		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
-		LoadingLogo:             "public/img/grafana_icon.svg",
+		Settings:                            settings,
+		Theme:                               prefs.Theme,
+		AppUrl:                              appURL,
+		AppSubUrl:                           appSubURL,
+		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
+		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
+		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
+		GoogleTagManagerId:                  setting.GoogleTagManagerId,
+		BuildVersion:                        setting.BuildVersion,
+		BuildCommit:                         setting.BuildCommit,
+		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),
+		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
+		AppName:                             setting.ApplicationName,
+		AppNameBodyClass:                    "app-grafana",
+		FavIcon:                             "public/img/fav32.png",
+		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
+		AppTitle:                            "Grafana",
+		NavTree:                             navTree,
+		Sentry:                              &hs.Cfg.Sentry,
+		Nonce:                               c.RequestNonce,
+		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
+		LoadingLogo:                         "public/img/grafana_icon.svg",
 	}
 
 	if !hs.AccessControl.IsDisabled() {
@@ -150,9 +158,9 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	sort.SliceStable(data.NavTree, func(i, j int) bool {
-		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
-	})
+	// This will remove empty cfg or admin sections and move sections around if topnav is enabled
+	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture(hs.Features.IsEnabled(featuremgmt.FlagTopnav))
+	data.NavTree.Sort()
 
 	return &data, nil
 }

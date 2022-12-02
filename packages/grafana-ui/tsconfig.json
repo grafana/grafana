@@ -12,7 +12,8 @@
   // override for storybook which uses ts-node to compile main.ts / preview.ts files.
   "ts-node": {
     "compilerOptions": {
-      "isolatedModules": false
+      "isolatedModules": false,
+      "module": "commonjs"
     }
   }
 }

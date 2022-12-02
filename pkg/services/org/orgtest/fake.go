@@ -6,6 +6,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
+type OrgListResponse []struct {
+	OrgID    int64
+	Response error
+}
+
 type FakeOrgService struct {
 	ExpectedOrgUserID            int64
 	ExpectedError                error
@@ -14,6 +19,7 @@ type FakeOrgService struct {
 	ExpectedOrg                  *org.Org
 	ExpectedOrgUsers             []*org.OrgUserDTO
 	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
+	ExpectedOrgListResponse      OrgListResponse
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -85,7 +91,9 @@ func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *org.GetOrgUsers
 }
 
 func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
-	return f.ExpectedError
+	testData := f.ExpectedOrgListResponse[0]
+	f.ExpectedOrgListResponse = f.ExpectedOrgListResponse[1:]
+	return testData.Response
 }
 
 func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {

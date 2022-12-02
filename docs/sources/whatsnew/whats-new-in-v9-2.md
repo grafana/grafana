@@ -1,6 +1,4 @@
 ---
-_build:
-  list: false
 aliases:
   - /docs/grafana/latest/guides/whats-new-in-v9-2/
 description: Feature and improvement highlights for Grafana v9.2
@@ -14,7 +12,7 @@ title: What's new in Grafana v9.2
 weight: -33
 ---
 
-# What's new in Grafana v9.2 (Beta)
+# What's new in Grafana v9.2
 
 Welcome to Grafana v9.2, a hefty minor release with a swath of improvements that help you create and share dashboards and alerts.
 Read on to learn about progress on public dashboards, our new panel help menu, custom branding in Grafana Enterprise, and improvements to access control.
@@ -32,6 +30,19 @@ See our [documentation](https://grafana.com/docs/grafana/latest/troubleshooting/
 For details, see [GitHub issue #55005](https://github.com/grafana/grafana/issues/55005) and ["Send a panel to Grafana Labs support"](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) in the documentation.
 
 {{< figure src="/static/img/docs/panels/panel-help-9-2.gif" max-width="750px" caption="Retrieving a panel's query response data and panel settings" >}}
+
+## Canvas panel
+
+_Available in beta in Grafana Open Source._
+
+Introducing the Canvas panel, a new panel that combines the power of Grafana with the flexibility of custom elements.
+Canvas visualizations are extensible form-built panels that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren't possible with standard Grafana panels, all within Grafana's UI. If you've used popular UI and web design tools, then designing Canvas panels will feel very familiar.
+
+For example, you can place image layers and then overlay text that's updated by Grafana data sources, and display icons that can change color conditionally based on data.
+
+We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Canvas panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas panel beta overview" >}}
 
 ## Support for Google Analytics 4 properties
 
@@ -65,6 +76,14 @@ This change does not update existing alert rules.
 
 For details on this change, see [GitHub pull request #55345](https://github.com/grafana/grafana/pull/55345).
 For more information about alerting states, see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/fundamentals/state-and-health/).
+
+## Configure external alertmanagers as data sources
+
+_Generally available in all editions._
+
+Starting with release 9.2, the URL configuration of external alertmanagers from the Admin tab on the Alerting page is deprecated. It will be removed in a future release.
+
+External alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials that were previously visible when configuring external alertmanagers by URL.
 
 ## Public dashboards
 
@@ -119,27 +138,14 @@ Previously, plugin developers needed to manually track which fields were labeled
 We have extended our plugins platform to simplify this, which means one less thing for developers to worry about and better security for all users' data.
 For details on using this functionality, see [GitHub pull request #55313](https://github.com/grafana/grafana/pull/55313) and our [plugin examples](https://github.com/grafana/grafana-plugin-examples) repository.
 
-## Transformations: outer joins and bug fixes
+## Transformations: INNER JOINs
 
-Transformations allow you to shape raw data from data sources, like metrics series or GitHub issues, so that you can visualize them as clearly as possible.
-We have extended the Join transformation to support both inner and outer JOINs, which work similarly to SQL inner and outer JOINs.
+Transformations allow you to shape raw data from data sources, like metrics series or GitHub issues, into a format that's appropriate for the chosen visualization.
+We have extended the Join transformation to support INNER JOINs in addition to OUTER JOINs. These work similarly to SQL JOINs.
 
 {{< figure src="/static/img/docs/transformations/transform-outer-join-9-2.png" max-width="750px" caption="Query builder groupings for Google Cloud monitoring" >}}
 
-Also, you can now click on the `x` to clear values in the select fields for the Outer Join and Grouping to Matrix transformations as expected.
-
-## Custom branding previews
-
-_Available in beta in Grafana Enterprise._
-
-Use custom branding to make Grafana _your_ observability tool by adding your own sign-in page, docs and help links, logo, application name, and more.
-Previously, you could configure custom branding only in Grafana's configuration files.
-In Grafana v9.1, we introduced a UI where you can update and upload content.
-In v9.2, you can preview what your customized Grafana will look like on the custom branding page before applying your changes.
-
-Turn on the custom branding configuration page and API with the `customBranding` [feature toggle](https://grafana.com/docs/grafana/latest/packages_api/data/featuretoggles/), and learn more about what you can do with custom branding in our [documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).
-
-{{< figure src="/static/img/docs/enterprise/custom-branding-preview-9-2.png" max-width="750px" caption="Previewing a custom branding configuration" >}}
+Also, you can now click on the `x` to clear values in the select fields for the OUTER JOIN and Grouping to Matrix transformations as expected.
 
 ## Simplified UI to create template variable queries for Loki data source
 
@@ -211,3 +217,19 @@ For more information, see the [SAML configuration documentation](https://grafana
 You can now map OAuth groups and roles to Server Admin for the GitLab, GitHub, AzureAD, Okta, and Generic OAuth integrations.
 To enable this functionality, set the `allow_assign_grafana_admin` configuration option to `true` in the desired OAuth integration section.
 For more information, see the [authentication configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/) for each OAuth client.
+
+## Match parameter support in prometheus labels API
+
+Prometheus users running Prometheus v2.24 and higher can use the [labels endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values) instead of the [series endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers) for the [`label_values` function]({{< relref "../datasources/prometheus/#query-variable" >}}).
+This decreases load times for templated high-cardinality Prometheus instances.
+
+If you want to benefit from this endpoint you must first configure the Prometheus type and version in any Prometheus data sources' [configuration]({{< relref "../datasources/prometheus/" >}}).
+
+## New Prometheus streaming parser
+
+In Grafana v9.2, you can enable the `prometheusStreamingJSONParser` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) to use a better-performing, memory-efficient streaming JSON client for Prometheus.
+We'll make this client the default in Grafana v9.3.
+
+When Prometheus returns `NaN` values, this new client doesn't change them, neither to the value `null` nor to `0` as in recent Grafana versions.
+If you use this new Prometheus streaming parser with Grafana Managed Alerts, this change in behavior might trigger alerts.
+To avoid this, select the "Drop non-numeric values" option in the Reduce expression to drop `NaN` values.

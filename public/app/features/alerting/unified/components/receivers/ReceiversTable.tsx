@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
+import pluralize from 'pluralize';
 import React, { FC, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
 
+import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
@@ -16,10 +19,215 @@ import { isReceiverUsed } from '../../utils/alertmanager';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
+
+interface UpdateActionProps extends ActionProps {
+  onClickDeleteReceiver: (receiverName: string) => void;
+}
+
+function UpdateActions({ permissions, alertManagerName, receiverName, onClickDeleteReceiver }: UpdateActionProps) {
+  return (
+    <>
+      <Authorize actions={[permissions.update]}>
+        <ActionIcon
+          aria-label="Edit"
+          data-testid="edit"
+          to={makeAMLink(
+            `/alerting/notifications/receivers/${encodeURIComponent(receiverName)}/edit`,
+            alertManagerName
+          )}
+          tooltip="Edit contact point"
+          icon="pen"
+        />
+      </Authorize>
+      <Authorize actions={[permissions.delete]}>
+        <ActionIcon
+          onClick={() => onClickDeleteReceiver(receiverName)}
+          tooltip="Delete contact point"
+          icon="trash-alt"
+        />
+      </Authorize>
+    </>
+  );
+}
+interface ActionProps {
+  permissions: {
+    read: AccessControlAction;
+    create: AccessControlAction;
+    update: AccessControlAction;
+    delete: AccessControlAction;
+  };
+  alertManagerName: string;
+  receiverName: string;
+}
+
+function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps) {
+  return (
+    <Authorize actions={[permissions.update]}>
+      <ActionIcon
+        data-testid="view"
+        to={makeAMLink(`/alerting/notifications/receivers/${encodeURIComponent(receiverName)}/edit`, alertManagerName)}
+        tooltip="View contact point"
+        icon="file-alt"
+      />
+    </Authorize>
+  );
+}
+interface ReceiverErrorProps {
+  errorCount: number;
+  errorDetail?: string;
+  showErrorCount: boolean;
+}
+
+function ReceiverError({ errorCount, errorDetail, showErrorCount }: ReceiverErrorProps) {
+  const text = showErrorCount ? `${errorCount} ${pluralize('error', errorCount)}` : 'Error';
+  return <Badge color="orange" icon="exclamation-triangle" text={text} tooltip={errorDetail ?? 'Error'} />;
+}
+interface NotifierHealthProps {
+  errorsByNotifier: number;
+  errorDetail?: string;
+  lastNotify: string;
+}
+
+function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierHealthProps) {
+  const noErrorsColor = isLastNotifyNullDate(lastNotify) ? 'orange' : 'green';
+  const noErrorsText = isLastNotifyNullDate(lastNotify) ? 'No attempts' : 'OK';
+  return errorsByNotifier > 0 ? (
+    <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} showErrorCount={false} />
+  ) : (
+    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
+  );
+}
+
+interface ReceiverHealthProps {
+  errorsByReceiver: number;
+  someWithNoAttempt: boolean;
+}
+
+function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthProps) {
+  const noErrorsColor = someWithNoAttempt ? 'orange' : 'green';
+  const noErrorsText = someWithNoAttempt ? 'No attempts' : 'OK';
+  return errorsByReceiver > 0 ? (
+    <ReceiverError errorCount={errorsByReceiver} showErrorCount={true} />
+  ) : (
+    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
+  );
+}
+
+const useContactPointsState = (alertManagerName: string) => {
+  const contactPointsState = useGetContactPointsState(alertManagerName);
+  const receivers: ReceiversState = contactPointsState?.receivers ?? {};
+  const errorStateAvailable = Object.keys(receivers).length > 0;
+  return { contactPointsState, errorStateAvailable };
+};
+interface ReceiverItem {
+  name: string;
+  types: string[];
+  provisioned?: boolean;
+}
+
+interface NotifierStatus {
+  lastError?: null | string;
+  lastNotify: string;
+  lastNotifyDuration: string;
+  type: string;
+  sendResolved?: boolean;
+}
+
+type RowTableColumnProps = DynamicTableColumnProps<ReceiverItem>;
+type RowItemTableProps = DynamicTableItemProps<ReceiverItem>;
+
+type NotifierTableColumnProps = DynamicTableColumnProps<NotifierStatus>;
+type NotifierItemTableProps = DynamicTableItemProps<NotifierStatus>;
+
+interface NotifiersTableProps {
+  notifiersState: NotifiersState;
+}
+const isLastNotifyNullDate = (lastNotify: string) => lastNotify === '0001-01-01T00:00:00.000Z';
+
+function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
+  if (isLastNotifyNullDate(lastNotifyDate)) {
+    return <>{'-'}</>;
+  } else {
+    return (
+      <Stack alignItems="center">
+        <div>{`${dateTime(lastNotifyDate).locale('en').fromNow(true)} ago`}</div>
+        <Icon name="clock-nine" />
+        <div>{`${dateTimeFormat(lastNotifyDate, { format: 'YYYY-MM-DD HH:mm:ss' })}`}</div>
+      </Stack>
+    );
+  }
+}
+
+const possibleNullDurations = ['', '0', '0ms', '0s', '0m', '0h', '0d', '0w', '0y'];
+const durationIsNull = (duration: string) => possibleNullDurations.includes(duration);
+
+function NotifiersTable({ notifiersState }: NotifiersTableProps) {
+  function getNotifierColumns(): NotifierTableColumnProps[] {
+    return [
+      {
+        id: 'health',
+        label: 'Health',
+        renderCell: ({ data: { lastError, lastNotify } }) => {
+          return (
+            <NotifierHealth
+              errorsByNotifier={lastError ? 1 : 0}
+              errorDetail={lastError ?? undefined}
+              lastNotify={lastNotify}
+            />
+          );
+        },
+        size: 0.5,
+      },
+      {
+        id: 'name',
+        label: 'Name',
+        renderCell: ({ data: { type }, id }) => <>{`${type}[${id}]`}</>,
+        size: 1,
+      },
+      {
+        id: 'lastNotify',
+        label: 'Last delivery attempt',
+        renderCell: ({ data: { lastNotify } }) => <LastNotify lastNotifyDate={lastNotify} />,
+        size: 3,
+      },
+      {
+        id: 'lastNotifyDuration',
+        label: 'Last duration',
+        renderCell: ({ data: { lastNotify, lastNotifyDuration } }) => (
+          <>{isLastNotifyNullDate(lastNotify) && durationIsNull(lastNotifyDuration) ? '-' : lastNotifyDuration}</>
+        ),
+        size: 1,
+      },
+      {
+        id: 'sendResolved',
+        label: 'Send resolved',
+        renderCell: ({ data: { sendResolved } }) => <>{String(Boolean(sendResolved))}</>,
+        size: 1,
+      },
+    ];
+  }
+  const notifierRows: NotifierItemTableProps[] = Object.entries(notifiersState).flatMap((typeState) =>
+    typeState[1].map((notifierStatus, index) => {
+      return {
+        id: index,
+        data: {
+          type: typeState[0],
+          lastError: notifierStatus.lastNotifyAttemptError,
+          lastNotify: notifierStatus.lastNotifyAttempt,
+          lastNotifyDuration: notifierStatus.lastNotifyAttemptDuration,
+          sendResolved: notifierStatus.sendResolved,
+        },
+      };
+    })
+  );
+
+  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} />;
+}
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -28,11 +236,12 @@ interface Props {
 
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
-  const tableStyles = useStyles2(getAlertTableStyles);
   const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
+
+  const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
@@ -53,21 +262,32 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     setReceiverToDelete(undefined);
   };
 
-  const rows = useMemo(
+  const rows: RowItemTableProps[] = useMemo(
     () =>
-      config.alertmanager_config.receivers?.map((receiver) => ({
-        name: receiver.name,
-        types: Object.entries(extractNotifierTypeCounts(receiver, grafanaNotifiers.result ?? [])).map(
-          ([type, count]) => {
-            if (count > 1) {
-              return `${type} (${count})`;
+      config.alertmanager_config.receivers?.map((receiver: Receiver) => ({
+        id: receiver.name,
+        data: {
+          name: receiver.name,
+          types: Object.entries(extractNotifierTypeCounts(receiver, grafanaNotifiers.result ?? [])).map(
+            ([type, count]) => {
+              if (count > 1) {
+                return `${type} (${count})`;
+              }
+              return type;
             }
-            return type;
-          }
-        ),
-        provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
+          ),
+          provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
+        },
       })) ?? [],
     [config, grafanaNotifiers.result]
+  );
+  const columns = useGetColumns(
+    alertManagerName,
+    errorStateAvailable,
+    contactPointsState,
+    onClickDeleteReceiver,
+    permissions,
+    isVanillaAM
   );
 
   return (
@@ -79,79 +299,18 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
       addButtonLabel="New contact point"
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
-      <table className={tableStyles.table} data-testid="receivers-table">
-        <colgroup>
-          <col />
-          <col />
-          <Authorize actions={[permissions.update, permissions.delete]}>
-            <col />
-          </Authorize>
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Contact point name</th>
-            <th>Type</th>
-            <Authorize actions={[permissions.update, permissions.delete]}>
-              <th>Actions</th>
-            </Authorize>
-          </tr>
-        </thead>
-        <tbody>
-          {!rows.length && (
-            <tr className={tableStyles.evenRow}>
-              <td colSpan={3}>No receivers defined.</td>
-            </tr>
-          )}
-          {rows.map((receiver, idx) => (
-            <tr key={receiver.name} className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
-              <td>
-                {receiver.name} {receiver.provisioned && <ProvisioningBadge />}
-              </td>
-              <td>{receiver.types.join(', ')}</td>
-              <Authorize actions={[permissions.update, permissions.delete]}>
-                <td className={tableStyles.actionsCell}>
-                  {!isVanillaAM && !receiver.provisioned && (
-                    <>
-                      <Authorize actions={[permissions.update]}>
-                        <ActionIcon
-                          aria-label="Edit"
-                          data-testid="edit"
-                          to={makeAMLink(
-                            `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                            alertManagerName
-                          )}
-                          tooltip="Edit contact point"
-                          icon="pen"
-                        />
-                      </Authorize>
-                      <Authorize actions={[permissions.delete]}>
-                        <ActionIcon
-                          onClick={() => onClickDeleteReceiver(receiver.name)}
-                          tooltip="Delete contact point"
-                          icon="trash-alt"
-                        />
-                      </Authorize>
-                    </>
-                  )}
-                  {(isVanillaAM || receiver.provisioned) && (
-                    <Authorize actions={[permissions.update]}>
-                      <ActionIcon
-                        data-testid="view"
-                        to={makeAMLink(
-                          `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                          alertManagerName
-                        )}
-                        tooltip="View contact point"
-                        icon="file-alt"
-                      />
-                    </Authorize>
-                  )}
-                </td>
-              </Authorize>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DynamicTable
+        items={rows}
+        cols={columns}
+        isExpandable={errorStateAvailable}
+        renderExpandedContent={
+          errorStateAvailable
+            ? ({ data: { name } }) => (
+                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
+              )
+            : undefined
+        }
+      />
       {!!showCannotDeleteReceiverModal && (
         <Modal
           isOpen={true}
@@ -182,9 +341,98 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     </ReceiversSection>
   );
 };
+const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: string) =>
+  contactPointsState?.receivers[receiverName]?.errorCount ?? 0;
+
+const someNotifiersWithNoAttempt = (contactPointsState: ContactPointsState, receiverName: string) => {
+  const notifiers = Object.values(contactPointsState?.receivers[receiverName]?.notifiers ?? {});
+  const hasSomeWitNoAttempt =
+    notifiers.length === 0 || notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
+  return hasSomeWitNoAttempt;
+};
+
+function useGetColumns(
+  alertManagerName: string,
+  errorStateAvailable: boolean,
+  contactPointsState: ContactPointsState | undefined,
+  onClickDeleteReceiver: (receiverName: string) => void,
+  permissions: {
+    read: AccessControlAction;
+    create: AccessControlAction;
+    update: AccessControlAction;
+    delete: AccessControlAction;
+  },
+  isVanillaAM: boolean
+): RowTableColumnProps[] {
+  const tableStyles = useStyles2(getAlertTableStyles);
+  const baseColumns: RowTableColumnProps[] = [
+    {
+      id: 'name',
+      label: 'Contact point name',
+      renderCell: ({ data: { name, provisioned } }) => (
+        <>
+          {name} {provisioned && <ProvisioningBadge />}
+        </>
+      ),
+      size: 1,
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      renderCell: ({ data: { types } }) => <>{types.join(', ')}</>,
+      size: 1,
+    },
+  ];
+  const healthColumn: RowTableColumnProps = {
+    id: 'health',
+    label: 'Health',
+    renderCell: ({ data: { name } }) => {
+      return (
+        contactPointsState && (
+          <ReceiverHealth
+            errorsByReceiver={errorsByReceiver(contactPointsState, name)}
+            someWithNoAttempt={someNotifiersWithNoAttempt(contactPointsState, name)}
+          />
+        )
+      );
+    },
+    size: 1,
+  };
+
+  return [
+    ...baseColumns,
+    ...(errorStateAvailable ? [healthColumn] : []),
+    {
+      id: 'actions',
+      label: 'Actions',
+      renderCell: ({ data: { provisioned, name } }) => (
+        <Authorize actions={[permissions.update, permissions.delete]}>
+          <div className={tableStyles.actionsCell}>
+            {!isVanillaAM && !provisioned && (
+              <UpdateActions
+                permissions={permissions}
+                alertManagerName={alertManagerName}
+                receiverName={name}
+                onClickDeleteReceiver={onClickDeleteReceiver}
+              />
+            )}
+            {(isVanillaAM || provisioned) && (
+              <ViewAction permissions={permissions} alertManagerName={alertManagerName} receiverName={name} />
+            )}
+          </div>
+        </Authorize>
+      ),
+      size: '100px',
+    },
+  ];
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   section: css`
     margin-top: ${theme.spacing(4)};
   `,
+  warning: css`
+    color: ${theme.colors.warning.text};
+  `,
+  countMessage: css``,
 });

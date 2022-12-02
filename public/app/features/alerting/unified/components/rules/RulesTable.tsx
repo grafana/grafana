@@ -15,6 +15,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 import { Tokenize } from '../Tokenize';
 
+import { RuleActionsButtons } from './RuleActionsButtons';
 import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
@@ -45,15 +46,9 @@ export const RulesTable: FC<Props> = ({
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
   const items = useMemo((): RuleTableItemProps[] => {
-    const seenKeys: string[] = [];
     return rules.map((rule, ruleIdx) => {
-      let key = JSON.stringify([rule.promRule?.type, rule.labels, rule.query, rule.name, rule.annotations]);
-      if (seenKeys.includes(key)) {
-        key += `-${ruleIdx}`;
-      }
-      seenKeys.push(key);
       return {
-        id: key,
+        id: `${rule.namespace.name}-${rule.group.name}-${rule.name}-${ruleIdx}`,
         data: rule,
       };
     });
@@ -194,6 +189,16 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: 5,
       });
     }
+    columns.push({
+      id: 'actions',
+      label: 'Actions',
+      // eslint-disable-next-line react/display-name
+      renderCell: ({ data: rule }) => {
+        return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
+      },
+      size: '200px',
+    });
+
     return columns;
-  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn]);
+  }, [showSummaryColumn, showGroupColumn, hasRuler, rulerRulesLoaded]);
 }
