@@ -12,6 +12,9 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["{projectRoot}/dist"]
+    },
+    "prettier:check": {
+      "dependsOn": ["prettier:checkDocs"]
     }
   }
 }

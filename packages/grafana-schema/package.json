@@ -34,7 +34,8 @@
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json",
+    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",

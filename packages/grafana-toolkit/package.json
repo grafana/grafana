@@ -36,7 +36,8 @@
     "clean": "rimraf ./dist ./compiled ./sass ./package.tgz",
     "prepack": "mv ./src ./src_bak && cp -r ./dist/src ./src",
     "postpack": "rimraf ./src && mv ./src_bak ./src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "main": "src/index.ts",
   "dependencies": {

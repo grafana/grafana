@@ -45,7 +45,8 @@
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json",
+    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.0.1",

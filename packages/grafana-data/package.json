@@ -33,7 +33,8 @@
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json",
+    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.1",

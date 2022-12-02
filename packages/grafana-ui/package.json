@@ -34,6 +34,7 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
+    "lint:sass": "yarn stylelint './**/*.scss' --cache",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "storybook": "start-storybook -p 9001 -c .storybook",
@@ -41,7 +42,8 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json",
+    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "browserslist": [
     "defaults",
