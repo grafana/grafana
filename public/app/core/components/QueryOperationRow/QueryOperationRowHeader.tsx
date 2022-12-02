@@ -46,7 +46,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           aria-controls={id}
         />
         {titleElement && (
-          <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
+          <div className={styles.titleWrapper} aria-label="Query operation row title">
             <div className={cx(styles.title, disabled && styles.disabled)}>{titleElement}</div>
           </div>
         )}
