@@ -93,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type Props = {
+export type Props = {
   color: string;
   onClick?: (evt: React.MouseEvent<any>) => void;
   viewEnd: number;

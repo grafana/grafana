@@ -15,12 +15,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TraceSpan } from 'src/types/trace';
 
 import { createTheme } from '@grafana/data';
 
 import spanAncestorIdsSpy from '../utils/span-ancestor-ids';
 
-import SpanTreeOffset, { getStyles } from './SpanTreeOffset';
+import SpanTreeOffset, { getStyles, TProps } from './SpanTreeOffset';
 
 jest.mock('../utils/span-ancestor-ids');
 
@@ -29,11 +30,11 @@ describe('SpanTreeOffset', () => {
   const parentSpanID = 'parentSpanID';
   const rootSpanID = 'rootSpanID';
   const specialRootID = 'root';
-  let props;
+  let props: TProps;
 
   beforeEach(() => {
     // Mock implementation instead of Mock return value so that each call returns a new array (like normal)
-    spanAncestorIdsSpy.mockImplementation(() => [parentSpanID, rootSpanID]);
+    (spanAncestorIdsSpy as jest.Mock).mockImplementation(() => [parentSpanID, rootSpanID]);
     props = {
       addHoverIndentGuideId: jest.fn(),
       hoverIndentGuideIds: new Set(),
@@ -41,13 +42,13 @@ describe('SpanTreeOffset', () => {
       span: {
         hasChildren: false,
         spanID: ownSpanID,
-      },
-    };
+      } as TraceSpan,
+    } as unknown as TProps;
   });
 
   describe('.SpanTreeOffset--indentGuide', () => {
     it('renders only one SpanTreeOffset--indentGuide for entire trace if span has no ancestors', () => {
-      spanAncestorIdsSpy.mockReturnValue([]);
+      (spanAncestorIdsSpy as jest.Mock).mockReturnValue([]);
       render(<SpanTreeOffset {...props} />);
       const indentGuide = screen.getByTestId('SpanTreeOffset--indentGuide');
       expect(indentGuide).toBeInTheDocument();
@@ -75,7 +76,7 @@ describe('SpanTreeOffset', () => {
     it('calls props.addHoverIndentGuideId on mouse enter', async () => {
       render(<SpanTreeOffset {...props} />);
       const span = document.querySelector(`[data-ancestor-id=${parentSpanID}]`);
-      await userEvent.hover(span);
+      await userEvent.hover(span!);
       expect(props.addHoverIndentGuideId).toHaveBeenCalledTimes(1);
       expect(props.addHoverIndentGuideId).toHaveBeenCalledWith(parentSpanID);
     });
@@ -83,7 +84,7 @@ describe('SpanTreeOffset', () => {
     it('calls props.removeHoverIndentGuideId on mouse leave', async () => {
       render(<SpanTreeOffset {...props} />);
       const span = document.querySelector(`[data-ancestor-id=${parentSpanID}]`);
-      await userEvent.unhover(span);
+      await userEvent.unhover(span!);
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledTimes(1);
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledWith(parentSpanID);
     });

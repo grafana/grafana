@@ -117,7 +117,7 @@ type TVirtualizedTraceViewOwnProps = {
   topOfViewRefType?: TopOfViewRefType;
 };
 
-type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
+export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
 
 // export for tests
 export const DEFAULT_HEIGHTS = {

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceSpan } from 'src/types/trace';
+
 import traceGenerator from '../demo/trace-generators';
 
 import {
@@ -22,7 +24,6 @@ import {
   isServerSpan,
   spanContainsErredSpan,
   spanHasTag,
-  formatNumber,
 } from './utils';
 
 describe('TraceTimelineViewer/utils', () => {
@@ -58,11 +59,11 @@ describe('TraceTimelineViewer/utils', () => {
 
   describe('spanHasTag() and variants', () => {
     it('returns true iff the key/value pair is found', () => {
-      const tags = traceGenerator.tags();
-      tags.push({ key: 'span.kind', value: 'server' });
-      expect(spanHasTag('span.kind', 'client', { tags })).toBe(false);
-      expect(spanHasTag('span.kind', 'client', { tags })).toBe(false);
-      expect(spanHasTag('span.kind', 'server', { tags })).toBe(true);
+      const span = traceGenerator.span;
+      span.tags = [{ key: 'span.kind', value: 'server' }];
+      expect(spanHasTag('span.kind', 'client', span)).toBe(false);
+      expect(spanHasTag('span.kind', 'client', span)).toBe(false);
+      expect(spanHasTag('span.kind', 'server', span)).toBe(true);
     });
 
     const spanTypeTestCases = [
@@ -75,7 +76,7 @@ describe('TraceTimelineViewer/utils', () => {
     spanTypeTestCases.forEach((testCase) => {
       const msg = `${testCase.name}() is true only when a ${testCase.key}=${testCase.value} tag is present`;
       it(msg, () => {
-        const span = { tags: traceGenerator.tags() };
+        const span = { tags: traceGenerator.tags() } as TraceSpan;
         expect(testCase.fn(span)).toBe(false);
         span.tags.push(testCase);
         expect(testCase.fn(span)).toBe(true);
@@ -86,7 +87,8 @@ describe('TraceTimelineViewer/utils', () => {
   describe('spanContainsErredSpan()', () => {
     it('returns true only when a descendant has an error tag', () => {
       const errorTag = { key: 'error', type: 'bool', value: true };
-      const getTags = (withError) => (withError ? traceGenerator.tags().concat(errorTag) : traceGenerator.tags());
+      const getTags = (withError: number) =>
+        withError ? traceGenerator.tags().concat(errorTag) : traceGenerator.tags();
 
       // Using a string to generate the test spans. Each line results in a span. The
       // left number indicates whether or not the generated span has a descendant
@@ -114,7 +116,7 @@ describe('TraceTimelineViewer/utils', () => {
       const spans = config.map((line) => ({
         depth: line.length,
         tags: getTags(+line.slice(-1)),
-      }));
+      })) as TraceSpan[];
 
       expectations.forEach((target, i) => {
         // include the index in the expect condition to know which span failed
@@ -126,7 +128,7 @@ describe('TraceTimelineViewer/utils', () => {
   });
 
   describe('findServerChildSpan()', () => {
-    let spans;
+    let spans: TraceSpan[];
 
     beforeEach(() => {
       spans = [
@@ -135,7 +137,7 @@ describe('TraceTimelineViewer/utils', () => {
         { depth: 1, tags: [{ key: 'span.kind', value: 'server' }] },
         { depth: 1, tags: [{ key: 'span.kind', value: 'third-kind' }] },
         { depth: 1, tags: [{ key: 'span.kind', value: 'server' }] },
-      ];
+      ] as TraceSpan[];
     });
 
     it('returns falsy if the frist span is not a client', () => {

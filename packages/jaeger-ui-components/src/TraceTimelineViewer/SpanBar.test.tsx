@@ -18,7 +18,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import SpanBar from './SpanBar';
+import SpanBar, { Props } from './SpanBar';
 
 describe('<SpanBar>', () => {
   const shortLabel = 'omg-so-awesome';
@@ -32,7 +32,7 @@ describe('<SpanBar>', () => {
     viewEnd: 1,
     viewStart: 0,
     theme: {},
-    getViewedBounds: (s) => {
+    getViewedBounds: (s: number) => {
       // Log entries
       if (s === 10) {
         return { start: 0.1, end: 0.1 };
@@ -76,7 +76,7 @@ describe('<SpanBar>', () => {
   };
 
   it('renders without exploding', async () => {
-    render(<SpanBar {...props} />);
+    render(<SpanBar {...(props as unknown as Props)} />);
     expect(screen.getByText(shortLabel)).toBeInTheDocument();
     expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
 
@@ -91,7 +91,7 @@ describe('<SpanBar>', () => {
 
   it('log markers count', () => {
     // 3 log entries, two grouped together with the same timestamp
-    render(<SpanBar {...props} />);
+    render(<SpanBar {...(props as unknown as Props)} />);
     expect(screen.getAllByTestId('SpanBar--logMarker')).toHaveLength(2);
   });
 });

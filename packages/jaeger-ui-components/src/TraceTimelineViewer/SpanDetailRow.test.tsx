@@ -19,7 +19,7 @@ import React from 'react';
 import { createTheme } from '@grafana/data';
 
 import DetailState from './SpanDetail/DetailState';
-import { UnthemedSpanDetailRow } from './SpanDetailRow';
+import { UnthemedSpanDetailRow, SpanDetailRowProps } from './SpanDetailRow';
 
 const testSpan = {
   spanID: 'testSpanID',
@@ -30,7 +30,7 @@ const testSpan = {
     tags: [{ key: 'tag-key', value: 'tag-value' }],
   },
 };
-const setup = (propOverrides) => {
+const setup = (propOverrides?: SpanDetailRowProps) => {
   const props = {
     color: 'some-color',
     columnDivision: 0.5,
@@ -48,7 +48,7 @@ const setup = (propOverrides) => {
     theme: createTheme(),
     ...propOverrides,
   };
-  return render(<UnthemedSpanDetailRow {...props} />);
+  return render(<UnthemedSpanDetailRow {...(props as SpanDetailRowProps)} />);
 };
 
 describe('SpanDetailRow tests', () => {
@@ -58,7 +58,7 @@ describe('SpanDetailRow tests', () => {
 
   it('calls toggle on click', async () => {
     const mockToggle = jest.fn();
-    setup({ onDetailToggled: mockToggle });
+    setup({ onDetailToggled: mockToggle } as unknown as SpanDetailRowProps);
     expect(mockToggle).not.toHaveBeenCalled();
 
     const detailRow = screen.getByTestId('detail-row-expanded-accent');

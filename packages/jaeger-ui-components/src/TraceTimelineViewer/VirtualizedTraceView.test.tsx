@@ -11,26 +11,32 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { shallow, mount } from 'enzyme';
+import { shallow, mount, ShallowWrapper } from 'enzyme';
 import React from 'react';
+import { TNil } from 'src/types';
+import { Trace, TraceKeyValuePair, TraceSpan } from 'src/types/trace';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
 
 import ListView from './ListView';
-import SpanBarRow from './SpanBarRow';
+import SpanBarRow, { SpanBarRowProps } from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
-import SpanDetailRow from './SpanDetailRow';
+import SpanDetailRow, { SpanDetailRowProps } from './SpanDetailRow';
 import SpanTreeOffset from './SpanTreeOffset';
-import VirtualizedTraceView, { DEFAULT_HEIGHTS } from './VirtualizedTraceView';
+import VirtualizedTraceView, {
+  DEFAULT_HEIGHTS,
+  UnthemedVirtualizedTraceView,
+  VirtualizedTraceViewProps,
+} from './VirtualizedTraceView';
 
 jest.mock('./SpanTreeOffset');
 
 describe('<VirtualizedTraceViewImpl>', () => {
-  let wrapper;
-  let instance;
+  let wrapper: ShallowWrapper<VirtualizedTraceViewProps, {}, UnthemedVirtualizedTraceView>;
+  let instance: UnthemedVirtualizedTraceView;
 
-  const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));
+  const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }))!;
   const topOfExploreViewRef = jest.fn();
   const props = {
     childrenHiddenIDs: new Set(),
@@ -53,9 +59,9 @@ describe('<VirtualizedTraceViewImpl>', () => {
     trace,
     uiFind: 'uiFind',
     topOfExploreViewRef,
-  };
+  } as unknown as VirtualizedTraceViewProps;
 
-  function expandRow(rowIndex) {
+  function expandRow(rowIndex: number) {
     const detailStates = new Map();
     const detailState = new DetailState();
     detailStates.set(trace.spans[rowIndex].spanID, detailState);
@@ -73,26 +79,30 @@ describe('<VirtualizedTraceViewImpl>', () => {
       { depth: 2 },
       { depth: 3 },
       ...trace.spans.slice(1),
-    ];
+    ] as TraceSpan[];
     const _trace = { ...trace, spans };
     wrapper.setProps({ childrenHiddenIDs, trace: _trace });
     return spans;
   }
 
-  function updateSpan(srcTrace, spanIndex, update) {
+  function updateSpan(
+    srcTrace: Trace,
+    spanIndex: number,
+    update: { tags: TraceKeyValuePair[] } | { logs: Array<{ timestamp: number; fields: any }> }
+  ) {
     const span = { ...srcTrace.spans[spanIndex], ...update };
     const spans = [...srcTrace.spans.slice(0, spanIndex), span, ...srcTrace.spans.slice(spanIndex + 1)];
     return { ...srcTrace, spans };
   }
 
   beforeEach(() => {
-    SpanTreeOffset.mockReturnValue(<div />);
+    (SpanTreeOffset as jest.Mock).mockReturnValue(<div />);
     Object.keys(props).forEach((key) => {
-      if (typeof props[key] === 'function') {
-        props[key].mockReset();
+      if (typeof props[key as keyof VirtualizedTraceViewProps] === 'function') {
+        (props[key as keyof VirtualizedTraceViewProps] as jest.Mock).mockReset();
       }
     });
-    wrapper = shallow(<VirtualizedTraceView {...props} />)
+    wrapper = shallow(<VirtualizedTraceView {...(props as unknown as VirtualizedTraceViewProps)} />)
       .dive()
       .dive();
     instance = wrapper.instance();
@@ -103,7 +113,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
   });
 
   it('renders when a trace is not set', () => {
-    wrapper.setProps({ trace: null });
+    wrapper.setProps({ trace: null as unknown as Trace });
     expect(wrapper).toBeDefined();
   });
 
@@ -116,17 +126,27 @@ describe('<VirtualizedTraceViewImpl>', () => {
   });
 
   it('sets the trace for global state.traceTimeline', () => {
-    expect(props.setTrace.mock.calls).toEqual([[trace, props.uiFind]]);
-    props.setTrace.mockReset();
+    expect((props.setTrace as jest.Mock).mock.calls).toEqual([[trace, props.uiFind]]);
+    (props.setTrace as jest.Mock).mockReset();
     const traceID = 'some-other-id';
     const _trace = { ...trace, traceID };
     wrapper.setProps({ trace: _trace });
-    expect(props.setTrace.mock.calls).toEqual([[_trace, props.uiFind]]);
+    expect((props.setTrace as jest.Mock).mock.calls).toEqual([[_trace, props.uiFind]]);
   });
 
   describe('props.registerAccessors', () => {
-    let lv;
-    let expectedArg;
+    let lv: ListView;
+    let expectedArg: {
+      getBottomRowIndexVisible: () => void;
+      getTopRowIndexVisible: () => void;
+      getViewHeight: () => number;
+      getRowPosition: (index: number) => { height: number; y: number };
+      getViewRange: () => [number, number];
+      getSearchedSpanIDs: () => Set<string> | TNil;
+      getCollapsedChildren: () => Set<string>;
+      mapRowIndexToSpanIndex: (index: number) => number;
+      mapSpanIndexToRowIndex: (index: number) => number;
+    };
 
     beforeEach(() => {
       const getBottomRowIndexVisible = () => {};
@@ -136,7 +156,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
         getBottomVisibleIndex: getBottomRowIndexVisible,
         getTopVisibleIndex: getTopRowIndexVisible,
         getRowPosition: () => {},
-      };
+      } as unknown as ListView;
       expectedArg = {
         getBottomRowIndexVisible,
         getTopRowIndexVisible,
@@ -151,9 +171,9 @@ describe('<VirtualizedTraceViewImpl>', () => {
     });
 
     it('invokes when the listView is set', () => {
-      expect(props.registerAccessors.mock.calls.length).toBe(0);
+      expect((props.registerAccessors as jest.Mock).mock.calls.length).toBe(0);
       instance.setListView(lv);
-      expect(props.registerAccessors.mock.calls).toEqual([[expectedArg]]);
+      expect((props.registerAccessors as jest.Mock).mock.calls).toEqual([[expectedArg]]);
     });
 
     it('invokes when registerAccessors changes', () => {
@@ -169,13 +189,13 @@ describe('<VirtualizedTraceViewImpl>', () => {
   });
 
   it('returns findMatchesIDs via getSearchedSpanIDs()', () => {
-    const findMatchesIDs = new Set();
+    const findMatchesIDs: Set<string> = new Set();
     wrapper.setProps({ findMatchesIDs });
     expect(instance.getSearchedSpanIDs()).toBe(findMatchesIDs);
   });
 
   it('returns childrenHiddenIDs via getCollapsedChildren()', () => {
-    const childrenHiddenIDs = new Set();
+    const childrenHiddenIDs: Set<string> = new Set();
     wrapper.setProps({ childrenHiddenIDs });
     expect(instance.getCollapsedChildren()).toBe(childrenHiddenIDs);
   });
@@ -228,7 +248,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
   });
 
   describe('getKeyFromIndex() generates a "key" from a row index', () => {
-    function verify(input, output) {
+    function verify(input: number, output: string) {
       expect(instance.getKeyFromIndex(input)).toBe(output);
     }
 
@@ -251,7 +271,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
   });
 
   describe('getIndexFromKey() converts a "key" to the corresponding row index', () => {
-    function verify(input, output) {
+    function verify(input: string, output: number) {
       expect(instance.getIndexFromKey(input)).toBe(output);
     }
 
@@ -301,23 +321,25 @@ describe('<VirtualizedTraceViewImpl>', () => {
     it('renders a SpanBarRow when it is not a detail', () => {
       const span = trace.spans[1];
       const row = instance.renderRow('some-key', {}, 1, {});
-      const rowWrapper = shallow(row);
+      const rowWrapper = shallow(row!);
 
       expect(
         rowWrapper.containsMatchingElement(
           <SpanBarRow
-            clippingLeft={instance.getClipping().left}
-            clippingRight={instance.getClipping().right}
-            columnDivision={props.spanNameColumnWidth}
-            isChildrenExpanded
-            isDetailExpanded={false}
-            isMatchingFilter={false}
-            numTicks={5}
-            onDetailToggled={props.detailToggle}
-            onChildrenToggled={props.childrenToggle}
-            rpc={undefined}
-            showErrorIcon={false}
-            span={span}
+            {...({
+              clippingLeft: instance.getClipping().left,
+              clippingRight: instance.getClipping().right,
+              columnDivision: props.spanNameColumnWidth,
+              isChildrenExpanded: true,
+              isDetailExpanded: false,
+              isMatchingFilter: false,
+              numTicks: 5,
+              onDetailToggled: props.detailToggle,
+              onChildrenToggled: props.childrenToggle,
+              rpc: undefined,
+              showErrorIcon: false,
+              span: span,
+            } as unknown as SpanBarRowProps)}
           />
         )
       ).toBe(true);
@@ -331,7 +353,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
       const childrenHiddenIDs = new Set([altTrace.spans[0].spanID]);
       wrapper.setProps({ childrenHiddenIDs, trace: altTrace });
 
-      const rowWrapper = mount(instance.renderRow('some-key', {}, 0, {}));
+      const rowWrapper = mount(instance.renderRow('some-key', {}, 0, {})!);
       const spanBarRow = rowWrapper.find(SpanBarRow);
       expect(spanBarRow.length).toBe(1);
       expect(spanBarRow.prop('rpc')).toBeDefined();
@@ -341,18 +363,20 @@ describe('<VirtualizedTraceViewImpl>', () => {
       const detailState = expandRow(1);
       const span = trace.spans[1];
       const row = instance.renderRow('some-key', {}, 2, {});
-      const rowWrapper = shallow(row);
+      const rowWrapper = shallow(row!);
       expect(
         rowWrapper.containsMatchingElement(
           <SpanDetailRow
-            columnDivision={props.spanNameColumnWidth}
-            onDetailToggled={props.detailToggle}
-            detailState={detailState}
-            logItemToggle={props.detailLogItemToggle}
-            logsToggle={props.detailLogsToggle}
-            processToggle={props.detailProcessToggle}
-            span={span}
-            tagsToggle={props.detailTagsToggle}
+            {...({
+              columnDivision: props.spanNameColumnWidth,
+              onDetailToggled: props.detailToggle,
+              detailState: detailState,
+              logItemToggle: props.detailLogItemToggle,
+              logsToggle: props.detailLogsToggle,
+              processToggle: props.detailProcessToggle,
+              span: span,
+              tagsToggle: props.detailTagsToggle,
+            } as unknown as SpanDetailRowProps)}
           />
         )
       ).toBe(true);
@@ -361,15 +385,15 @@ describe('<VirtualizedTraceViewImpl>', () => {
     it('renders a SpanBarRow with a client span and no instrumented server span', () => {
       const externServiceName = 'externalServiceTest';
       const leafSpan = trace.spans.find((span) => !span.hasChildren);
-      const leafSpanIndex = trace.spans.indexOf(leafSpan);
+      const leafSpanIndex = trace.spans.indexOf(leafSpan!);
       const clientTags = [
         { key: 'span.kind', value: 'client' },
         { key: 'peer.service', value: externServiceName },
-        ...leafSpan.tags,
+        ...leafSpan!.tags,
       ];
       const altTrace = updateSpan(trace, leafSpanIndex, { tags: clientTags });
       wrapper.setProps({ trace: altTrace });
-      const rowWrapper = mount(instance.renderRow('some-key', {}, leafSpanIndex, {}));
+      const rowWrapper = mount(instance.renderRow('some-key', {}, leafSpanIndex, {})!);
       const spanBarRow = rowWrapper.find(SpanBarRow);
       expect(spanBarRow.length).toBe(1);
       expect(spanBarRow.prop('noInstrumentedServer')).not.toBeNull();
@@ -380,8 +404,8 @@ describe('<VirtualizedTraceViewImpl>', () => {
     const propsWithTrueShouldScrollToFirstUiFindMatch = { ...props, shouldScrollToFirstUiFindMatch: true };
 
     beforeEach(() => {
-      props.scrollToFirstVisibleSpan.mockReset();
-      props.clearShouldScrollToFirstUiFindMatch.mockReset();
+      (props.scrollToFirstVisibleSpan as jest.Mock).mockReset();
+      (props.clearShouldScrollToFirstUiFindMatch as jest.Mock).mockReset();
     });
 
     it('calls props.scrollToFirstVisibleSpan if shouldScrollToFirstUiFindMatch is true', () => {
