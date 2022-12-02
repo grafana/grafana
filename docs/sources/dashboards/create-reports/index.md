@@ -59,7 +59,7 @@ Only organization administrators can create reports by default. You can customiz
      - Select an orientation for the report: **Portrait** or **Landscape**.
      - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
      - Click **Preview PDF** to view a rendered PDF with the options you selected.
-     - Move the **Zoom** slider if you want to zoom in or zoom out the panels in the PDF.
+     - Move the **Zoom** slider to zoom in or zoom out the panels in the PDF.
 1. Schedule report.
    - Enter scheduling information. Options vary depending on the frequency selected.
 1. Enter report information. All fields are required unless otherwise indicated.
