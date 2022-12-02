@@ -231,7 +231,7 @@ We've improved the design and functionality of email templates to make template 
 
 ### Support for Webex Teams
 
-You can now use Cisco Webex Teams as a contact point, to send alerts to a Webex Teams channel.
+You can now use Cisco Webex Teams as a contact point, to send alerts to a Webex Teams space.
 
 ### Edit alert rules created using the provisioning API
 
