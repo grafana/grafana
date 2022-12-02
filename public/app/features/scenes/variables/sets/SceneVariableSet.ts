@@ -40,7 +40,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     this.variablesToUpdate.clear();
 
     for (const update of this.updating.values()) {
-      update.subscription.unsubscribe();
+      update.subscription?.unsubscribe();
     }
   }
 
@@ -70,13 +70,14 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
         continue;
       }
 
-      console.log('updating, set', variable, this.updating);
-      this.updating.set(variable, {
+      const variableToUpdate: VariableUpdateInProgress = {
         variable,
-        subscription: variable.validateAndUpdate().subscribe({
-          next: () => this.validateAndUpdateCompleted(variable),
-          error: (err) => this.handleVariableError(variable, err),
-        }),
+      };
+
+      this.updating.set(variable, variableToUpdate);
+      variableToUpdate.subscription = variable.validateAndUpdate().subscribe({
+        next: () => this.validateAndUpdateCompleted(variable),
+        error: (err) => this.handleVariableError(variable, err),
       });
     }
   }
@@ -86,11 +87,9 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    */
   private validateAndUpdateCompleted(variable: SceneVariable) {
     const update = this.updating.get(variable);
-    update?.subscription.unsubscribe();
+    update?.subscription?.unsubscribe();
 
-    console.log('updating, delete', variable, this.updating);
     this.updating.delete(variable);
-    console.log('updating, post delete', this.updating);
     this.variablesToUpdate.delete(variable);
     this.updateNextBatch();
   }
@@ -190,5 +189,5 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
 
 export interface VariableUpdateInProgress {
   variable: SceneVariable;
-  subscription: Unsubscribable;
+  subscription?: Unsubscribable;
 }

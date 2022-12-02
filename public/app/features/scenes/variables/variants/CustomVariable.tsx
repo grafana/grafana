@@ -30,7 +30,6 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
 
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const match = this.state.query.match(/(?:\\,|[^,])+/g) ?? [];
-
     const options = match.map((text) => {
       text = text.replace(/\\,/g, ',');
       const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];

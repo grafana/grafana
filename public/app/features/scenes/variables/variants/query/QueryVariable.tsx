@@ -42,7 +42,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['regex'],
-    // TODO: add query support
+    // TODO: add query and datasource support
   });
 
   public constructor(initialState: Partial<QueryVariableState>) {
@@ -100,7 +100,6 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
           const runner = createQueryVariableRunner(ds);
           const target = runner.getTarget(this);
           const request = this.getRequest(target);
-
           runner
             .runRequest({}, request)
             .pipe(
