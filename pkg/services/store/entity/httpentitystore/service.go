@@ -26,12 +26,12 @@ type HTTPEntityStore interface {
 }
 
 type httpEntityStore struct {
-	store entity.EntityStoreServer
+	store entity.EntityStoreClient
 	log   log.Logger
 	kinds kind.KindRegistry
 }
 
-func ProvideHTTPEntityStore(store entity.EntityStoreServer, kinds kind.KindRegistry) HTTPEntityStore {
+func ProvideHTTPEntityStore(store entity.EntityStoreClient, kinds kind.KindRegistry) HTTPEntityStore {
 	return &httpEntityStore{
 		store: store,
 		log:   log.New("http-entity-store"),

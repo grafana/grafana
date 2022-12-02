@@ -21,7 +21,7 @@ import (
 type entityStoreImpl struct {
 	sess    *session.SessionDB
 	sqlimpl *Service
-	store   entity.EntityStoreServer
+	store   entity.EntityStoreClient
 }
 
 var _ playlist.Service = &entityStoreImpl{}

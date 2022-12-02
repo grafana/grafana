@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,7 +27,7 @@ import (
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 var _ entity.EntityStoreAdminServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.EntityReferenceResolver) entity.EntityStoreServer {
+func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.EntityReferenceResolver) *sqlEntityServer {
 	entityServer := &sqlEntityServer{
 		sess:     db.GetSqlxSession(),
 		log:      log.New("sql-entity-server"),
@@ -34,10 +35,12 @@ func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcs
 		resolver: resolver,
 	}
 	entity.RegisterEntityStoreServer(grpcServerProvider.GetServer(), entityServer)
+	entityServer.BasicService = services.NewBasicService(entityServer.start, entityServer.run, entityServer.stop)
 	return entityServer
 }
 
 type sqlEntityServer struct {
+	*services.BasicService
 	log      log.Logger
 	sess     *session.SessionDB
 	kinds    kind.KindRegistry
@@ -59,6 +62,23 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 		fields = append(fields, "name", "slug", "folder", "description", "labels", "fields")
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
+}
+
+func (s *sqlEntityServer) start(ctx context.Context) error {
+	s.log.Debug("Starting SQL Entity Server")
+	return nil
+}
+
+func (s *sqlEntityServer) run(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
+}
+
+func (s *sqlEntityServer) stop(failureCase error) error {
+	if failureCase != nil {
+		s.log.Error("SQL Entity Server failed", "error", failureCase)
+	}
+	return nil
 }
 
 func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {

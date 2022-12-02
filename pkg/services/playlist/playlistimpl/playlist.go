@@ -15,7 +15,7 @@ type Service struct {
 
 var _ playlist.Service = &Service{}
 
-func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver entity.EntityStoreServer) playlist.Service {
+func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver entity.EntityStoreClient) playlist.Service {
 	var sqlstore store
 
 	// 🐢🐢🐢 pick the store
