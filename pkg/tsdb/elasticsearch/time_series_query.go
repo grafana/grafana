@@ -181,7 +181,6 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	return nil
 }
 
-// Changes string values to float64 values in json
 func setFloatPath(settings *simplejson.Json, path ...string) {
 	if stringValue, err := settings.GetPath(path...).String(); err == nil {
 		if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
@@ -190,7 +189,6 @@ func setFloatPath(settings *simplejson.Json, path ...string) {
 	}
 }
 
-// Changes string values to int64 values in json
 func setIntPath(settings *simplejson.Json, path ...string) {
 	if stringValue, err := settings.GetPath(path...).String(); err == nil {
 		if value, err := strconv.ParseInt(stringValue, 10, 64); err == nil {
