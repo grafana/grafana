@@ -37,6 +37,7 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
+    "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "open": "cypress open",
     "start": "cypress run --browser=chrome",

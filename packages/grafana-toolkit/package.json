@@ -31,6 +31,7 @@
   ],
   "scripts": {
     "build": "yarn clean && tsc -p tsconfig.json && yarn copy-files",
+    "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "copy-files": "node ./scripts/copy-files.js",
     "clean": "rimraf ./dist ./compiled ./sass ./package.tgz",
     "prepack": "mv ./src ./src_bak && cp -r ./dist/src ./src",
