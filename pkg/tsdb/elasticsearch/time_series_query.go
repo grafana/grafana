@@ -227,11 +227,7 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 }
 
 func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
-	// TODO: This might also need to be applied to other bucket aggregations and other fields.
-	switch bucketAgg.Type {
-	case "date_histogram":
 		setIntPath(bucketAgg.Settings, "min_doc_count")
-	}
 
 	return bucketAgg.Settings.MustMap()
 }
