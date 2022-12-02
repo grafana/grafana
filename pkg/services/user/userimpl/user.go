@@ -82,7 +82,6 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		SkipOrgSetup: cmd.SkipOrgSetup,
 	}
 	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
-	cmd.OrgID = orgID
 	if err != nil {
 		return nil, err
 	}
@@ -353,4 +352,53 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 
 	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
 	return limits, nil
+}
+
+// CreateUserForTests creates a test user and optionally an organization. Unlike
+// Create, `cmd.SkipOrgSetup` toggles whether or not to create an org for the
+// test user if there isn't already an existing org. This must only be used in tests.
+func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	var usr user.User
+	var orgID int64 = -1
+	if !args.SkipOrgSetup {
+		var err error
+		orgID, err = ss.getOrgIDForNewUser(sess, args)
+		if err != nil {
+			return usr, err
+		}
+	}
+
+}
+
+func (s *Service) getOrCreateOrgForTestUser(ctx context.Context, cmd *user.CreateUserCommand) (*org.Org, error) {
+	// First see if a matching organization already exists
+	fmt.Printf("getOrCreate: cmd.OrgID = %d\n", cmd.OrgID)
+	foundOrg, err := s.orgService.GetByID(ctx, &org.GetOrgByIdQuery{ID: cmd.OrgID})
+	if err != nil {
+		if errors.Is(err, models.ErrOrgNotFound) {
+			fmt.Println("org not found")
+			// this is fine, we'll create the org in the next step
+		} else {
+			return nil, err
+		}
+	} else {
+		// Easy case, nothing to do!
+		fmt.Println("found org, all good!")
+		return foundOrg, nil
+	}
+
+	// If we're here, we need to create a new org for the (test) user.
+	orgName := cmd.OrgName
+	if orgName == "" {
+		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
+	}
+	fmt.Printf("orgName: %s\n", orgName)
+
+	org, err := s.orgService.GetOrCreate(ctx, orgName)
+
+	if err != nil {
+		return nil, err
+	} else {
+		return org, nil
+	}
 }
