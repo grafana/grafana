@@ -138,6 +138,22 @@ describe('createSpanLinkFactory', () => {
       );
     });
 
+    it('adds queryTags to the query', () => {
+      const createLink = setupSpanLinkFactory({
+        queryTags: ['index="prod"', 'dest="the moon"'],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\", index=\\"prod\\", dest=\\"the moon\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
     it('creates link from dataFrame', () => {
       const splitOpenFn = jest.fn();
       const createLink = createSpanLinkFactory({
@@ -302,6 +318,24 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" \\"7946b05c2e2e4e5a\\" \\"6605c7b08e715d6c\\"","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('formats query correctly if queryTags added to query', () => {
+      const createLink = setupSpanLinkFactory({
+        datasourceUid: splunkUID,
+        queryTags: ['index="prod"', 'dest="the moon"'],
+      });
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" index=\\"prod\\" dest=\\"the moon\\"","refId":""}],"panelsState":{}}'
         )}`
       );
     });
@@ -661,6 +695,27 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+        )}`
+      );
+    });
+
+    it('formats query correctly if queryTags added to query', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: searchUID,
+          queryTags: ['index="prod"', 'dest="the moon"'],
+        },
+        searchUID
+      );
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"cluster:\\"cluster1\\" AND hostname:\\"hostname1\\" AND index=\\"prod\\" AND dest=\\"the moon\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
         )}`
       );
     });
