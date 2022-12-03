@@ -262,17 +262,19 @@ function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSource
   if (!tags.length) {
     return undefined;
   }
-  let expr = `{${tags.join(', ')}}`;
+  let expr = '{';
+  expr += `${tags.join(', ')}`;
+  if (queryTags && queryTags.length > 0) {
+    for (const tag of queryTags) {
+      expr += `, ${tag}`;
+    }
+  }
+  expr += '}';
   if (filterByTraceID && span.traceID) {
     expr += ` |="${span.traceID}"`;
   }
   if (filterBySpanID && span.spanID) {
     expr += ` |="${span.spanID}"`;
-  }
-  if (queryTags && queryTags.length > 0) {
-    for (const tag of queryTags) {
-      expr += ` ${tag}`;
-    }
   }
 
   const dataLink: DataLink<LokiQuery> = {
@@ -327,16 +329,16 @@ function getLinkForElasticsearchOrOpensearch(
   if (tags.length > 0) {
     query += `${tags.join(' AND ')}`;
   }
+  if (queryTags && queryTags.length > 0) {
+    for (const tag of queryTags) {
+      query += ` AND ${tag}`;
+    }
+  }
   if (filterByTraceID && span.traceID) {
     query = `"${span.traceID}" AND ` + query;
   }
   if (filterBySpanID && span.spanID) {
     query = `"${span.spanID}" AND ` + query;
-  }
-  if (queryTags && queryTags.length > 0) {
-    for (const tag of queryTags) {
-      query += ` AND ${tag}`;
-    }
   }
 
   const dataLink: DataLink<ElasticsearchOrOpensearchQuery> = {
@@ -389,16 +391,16 @@ function getLinkForSplunk(
   if (tags.length > 0) {
     query += `${tags.join(' ')}`;
   }
+  if (queryTags && queryTags.length > 0) {
+    for (const tag of queryTags) {
+      query += ` ${tag}`;
+    }
+  }
   if (filterByTraceID && span.traceID) {
     query += ` "${span.traceID}"`;
   }
   if (filterBySpanID && span.spanID) {
     query += ` "${span.spanID}"`;
-  }
-  if (queryTags && queryTags.length > 0) {
-    for (const tag of queryTags) {
-      query += ` ${tag}`;
-    }
   }
 
   const dataLink: DataLink<DataQuery> = {
