@@ -23,6 +23,7 @@ export interface TraceToLogsOptions {
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
+  queryTags?: string[];
   lokiSearch?: boolean; // legacy
 }
 
@@ -210,6 +211,26 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 ...options.jsonData.tracesToLogs,
                 filterBySpanID: event.currentTarget.checked,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Query tags"
+          labelWidth={26}
+          grow
+          tooltip="Adds the tags to your query e.g. index='prod' for Splunk datasources."
+        >
+          <TagsInput
+            tags={options.jsonData.tracesToLogs?.queryTags}
+            width={40}
+            onChange={(tags) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                queryTags: tags,
               })
             }
           />
