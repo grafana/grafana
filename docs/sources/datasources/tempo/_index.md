@@ -70,6 +70,7 @@ The **Trace to logs** setting configures the [trace to logs feature]({{< relref 
 | **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default is 0.                                                                                     |
 | **Filter by Trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                       |
 | **Filter by Span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                        |
+| **Query tags**            | Adds the tags to your query e.g. index='prod' for Splunk datasources.                                                                                                                           |
 
 ### Configure trace to metrics
 
@@ -161,6 +162,7 @@ datasources:
         spanEndTimeShift: '1h'
         filterByTraceID: false
         filterBySpanID: false
+        queryTags: []
       tracesToMetrics:
         datasourceUid: 'prom'
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]

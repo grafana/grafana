@@ -59,6 +59,7 @@ Select a target data source, limited to Loki and Splunk \[logs\] data sources, a
 | **Span end time shift**   | Shifts the end time for the logs query based on the span end time. Use time interval units. Default is `0`.                                                                        |
 | **Filter by Trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                          |
 | **Filter by Span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                           |
+| **Query tags**            | Adds the tags to your query e.g. index='prod' for Splunk datasources.                                                                                                              |
 
 ### Configure trace to metrics
 
