@@ -10642,7 +10642,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/enzyme@npm:3.10.12, @types/enzyme@npm:^3.10.12":
+"@types/enzyme@npm:3.10.12":
   version: 3.10.12
   resolution: "@types/enzyme@npm:3.10.12"
   dependencies:
