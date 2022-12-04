@@ -53,7 +53,7 @@ export class CloudWatchDatasource
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    readonly templateSrv: TemplateSrv = getTemplateSrv(),
     timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
@@ -164,7 +164,7 @@ export class CloudWatchDatasource
 
   // public
   getVariables() {
-    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+    return this.api.getVariables();
   }
 
   getActualRegion(region?: string) {

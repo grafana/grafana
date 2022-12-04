@@ -68,7 +68,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
           onConfirm={onUninstall}
           onDismiss={hideConfirmModal}
         />
-        <HorizontalGroup height="auto">
+        <HorizontalGroup align="flex-start" width="auto" height="auto">
           <Button variant="destructive" disabled={isUninstalling} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
@@ -79,7 +79,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
 
   if (pluginStatus === PluginStatus.UPDATE) {
     return (
-      <HorizontalGroup height="auto">
+      <HorizontalGroup align="flex-start" width="auto" height="auto">
         <Button disabled={isInstalling} onClick={onUpdate}>
           {isInstalling ? 'Updating' : 'Update'}
         </Button>

@@ -1,1 +1,0 @@
-(import 'gen.libsonnet')

@@ -81,8 +81,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 			err = inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 			require.Equal(t, plugins.DuplicateError{
-				PluginID:          pluginV1.ID,
-				ExistingPluginDir: pluginV1.PluginDir,
+				PluginID: pluginV1.ID,
 			}, err)
 		})
 

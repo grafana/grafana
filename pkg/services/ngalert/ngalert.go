@@ -184,17 +184,21 @@ func (ng *AlertNG) init() error {
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:              ng.Cfg.UnifiedAlerting,
-		C:                clk,
-		EvaluatorFactory: evalFactory,
-		RuleStore:        store,
-		Metrics:          ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:      alertsRouter,
+		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		C:                    clk,
+		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
+		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
+		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		AppURL:               appUrl,
+		EvaluatorFactory:     evalFactory,
+		RuleStore:            store,
+		Metrics:              ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:          alertsRouter,
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
 	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, historian)
-	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
@@ -238,6 +242,19 @@ func (ng *AlertNG) init() error {
 		EvaluatorFactory:     evalFactory,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
+
+	defaultLimits, err := readQuotaConfig(ng.Cfg)
+	if err != nil {
+		return err
+	}
+
+	if err := ng.QuotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     models.QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      api.Usage,
+	}); err != nil {
+		return err
+	}
 
 	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
 		key, ok := models.RuleKeyFromContext(ctx)
@@ -307,4 +324,33 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.UnifiedAlerting.IsEnabled()
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	var alertOrgQuota int64
+	var alertGlobalQuota int64
+
+	if cfg.UnifiedAlerting.IsEnabled() {
+		alertOrgQuota = cfg.Quota.Org.AlertRule
+		alertGlobalQuota = cfg.Quota.Global.AlertRule
+	}
+
+	globalQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+	orgQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, alertGlobalQuota)
+	limits.Set(orgQuotaTag, alertOrgQuota)
+	return limits, nil
 }

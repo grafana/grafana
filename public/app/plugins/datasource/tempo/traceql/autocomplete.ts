@@ -124,17 +124,26 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return CompletionProvider.operators.map((key) => ({
           label: key,
           insertText: key,
-          type: 'OPERATOR' as CompletionType,
+          type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
         const tagName = this.overrideTagName(situation.tagName);
+        const tagsNoQuotesAroundValue: string[] = ['status'];
         const tagValues = await this.getTagValues(tagName);
         const items: Completion[] = [];
+
+        const getInsertionText = (val: SelectableValue<string>): string => {
+          if (situation.betweenQuotes) {
+            return val.label!;
+          }
+          return tagsNoQuotesAroundValue.includes(situation.tagName) ? val.label! : `"${val.label}"`;
+        };
+
         tagValues.forEach((val) => {
           if (val?.label) {
             items.push({
               label: val.label,
-              insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
+              insertText: getInsertionText(val),
               type: 'TAG_VALUE',
             });
           }
@@ -144,7 +153,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return CompletionProvider.logicalOps.concat('}').map((key) => ({
           label: key,
           insertText: key,
-          type: 'OPERATOR' as CompletionType,
+          type: 'OPERATOR',
         }));
       default:
         throw new Error(`Unexpected situation ${situation}`);
@@ -157,7 +166,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       .map((key) => ({
         label: key,
         insertText: (prepend || '') + key,
-        type: 'TAG_NAME' as CompletionType,
+        type: 'TAG_NAME',
       }));
   }
 
@@ -165,7 +174,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     return CompletionProvider.intrinsics.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
-      type: 'KEYWORD' as CompletionType,
+      type: 'KEYWORD',
     }));
   }
 
@@ -173,7 +182,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     return CompletionProvider.scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
-      type: 'SCOPE' as CompletionType,
+      type: 'SCOPE',
     }));
   }
 
@@ -185,17 +194,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
     // prettier-ignore
     const fullRegex = new RegExp(
-        '([\\s{])' +      // Space(s) or initial opening bracket {
-        '(' +                   // Open full set group
-        nameRegex.source +
-        '(?<space1>\\s*)' +     // Optional space(s) between name and operator
-        '(' +                   // Open operator + value group
-        opRegex.source +
-        '(?<space2>\\s*)' +     // Optional space(s) between operator and value
-        valueRegex.source +
-        ')?' +                  // Close operator + value group
-        ')' +                   // Close full set group
-        '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
+      '([\\s{])' +      // Space(s) or initial opening bracket {
+      '(' +                   // Open full set group
+      nameRegex.source +
+      '(?<space1>\\s*)' +     // Optional space(s) between name and operator
+      '(' +                   // Open operator + value group
+      opRegex.source +
+      '(?<space2>\\s*)' +     // Optional space(s) between operator and value
+      valueRegex.source +
+      ')?' +                  // Close operator + value group
+      ')' +                   // Close full set group
+      '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
     );
 
     const matched = textUntilCaret.match(fullRegex);

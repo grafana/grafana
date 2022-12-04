@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPlaylistSummary(t *testing.T) {
-	builder := GetObjectSummaryBuilder()
+	builder := GetEntitySummaryBuilder()
 
 	// Do not parse invalid input
 	_, _, err := builder(context.Background(), "abc", []byte("{invalid json"))
 	require.Error(t, err)
 
-	playlist := playlist.Model{
+	playlist := playlist.Playlist{
 		Interval: "30s",
 		Name:     "test",
 		Items: &[]playlist.PlaylistItem{

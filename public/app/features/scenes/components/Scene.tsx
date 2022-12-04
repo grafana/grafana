@@ -14,6 +14,7 @@ interface SceneState extends SceneObjectStatePlain {
   title: string;
   layout: SceneObject;
   actions?: SceneObject[];
+  subMenu?: SceneObject;
   isEditing?: boolean;
 }
 
@@ -24,6 +25,7 @@ export class Scene extends SceneObjectBase<SceneState> {
   public activate() {
     super.activate();
     this.urlSyncManager = new UrlSyncManager(this);
+    this.urlSyncManager.initSync();
   }
 
   public deactivate() {
@@ -33,13 +35,14 @@ export class Scene extends SceneObjectBase<SceneState> {
 }
 
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
-  const { title, layout, actions = [], isEditing, $editor } = model.useState();
+  const { title, layout, actions = [], isEditing, $editor, subMenu } = model.useState();
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if ($editor) {
     toolbarActions.push(
       <ToolbarButton
+        key="scene-settings"
         icon="cog"
         variant={isEditing ? 'primary' : 'default'}
         onClick={() => model.setState({ isEditing: !model.state.isEditing })}
@@ -55,9 +58,12 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
 
   return (
     <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
-      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-        <layout.Component model={layout} isEditing={isEditing} />
-        {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
+      <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {subMenu && <subMenu.Component model={subMenu} />}
+        <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
+          <layout.Component model={layout} isEditing={isEditing} />
+          {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
+        </div>
       </div>
     </Page>
   );
