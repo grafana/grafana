@@ -99,6 +99,39 @@ describe('datasource', () => {
       });
     });
 
+    it('should run a query with defaultLogGroups', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      datasource.logsQueryRunner.defaultLogGroups = ['some log group'];
+      await lastValueFrom(
+        datasource.query({
+          targets: [
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              expression: 'some query string',
+            },
+          ],
+          requestId: '',
+          interval: '',
+          intervalMs: 0,
+          range: timeRange,
+          scopedVars: {},
+          timezone: '',
+          app: '',
+          startTime: 0,
+        })
+      );
+
+      expect(fetchMock.mock.calls[0][0].data.queries).toHaveLength(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'some query string',
+        logGroupNames: ['some log group'],
+        region: 'us-west-1',
+      });
+    });
+
     it('should return empty response if queries are hidden', async () => {
       const { datasource } = setupMockedDataSource();
       const observable = datasource.query({

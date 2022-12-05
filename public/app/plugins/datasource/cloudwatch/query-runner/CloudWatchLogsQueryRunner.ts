@@ -84,7 +84,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validLogQueries = logQueries.filter(this.filterQuery);
+    const validLogQueries = logQueries.filter(this.filterQuery(this.defaultLogGroups.length > 0));
 
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression || '',
@@ -429,16 +429,18 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return getLogGroupFieldsResponse;
   }
 
-  private filterQuery(query: CloudWatchLogsQuery) {
-    const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length && this.defaultLogGroups.length === 0;
-    const hasMissingLogGroups = !query.logGroups?.length;
-    const hasMissingQueryString = !query.expression?.length;
+  private filterQuery(hasDefaultLogGroups: boolean) {
+    return (query: CloudWatchLogsQuery) => {
+      const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length && !hasDefaultLogGroups;
+      const hasMissingLogGroups = !query.logGroups?.length;
+      const hasMissingQueryString = !query.expression?.length;
 
-    if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
-      return false;
-    }
+      if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
+        return false;
+      }
 
-    return true;
+      return true;
+    };
   }
 }
 
