@@ -77,7 +77,12 @@ function createAwsConsoleLink(
     return [group.value.replace(/:\*$/, '')]; // remove `:*` from end of arn
   });
   const logGroupNames = target.logGroupNames;
-  const sources = arns ?? logGroupNames;
+  let sources = [''];
+  if (arns && arns.length > 0) {
+    sources = arns;
+  } else if (logGroupNames) {
+    sources = logGroupNames;
+  }
   const interpolatedExpression = target.expression ? replace(target.expression) : '';
   const interpolatedGroups = sources?.flatMap(getVariableValue) ?? [];
 
