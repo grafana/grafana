@@ -22060,6 +22060,7 @@ __metadata:
     jest-matcher-utils: 29.3.1
     lerna: 6.1.0
     lint-staged: 13.0.3
+    mini-css-extract-plugin: 2.6.1
     msw: 0.48.1
     mutationobserver-shim: 0.3.7
     node-notifier: 10.0.1
