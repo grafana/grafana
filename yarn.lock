@@ -13378,9 +13378,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app@link:./public/app::locator=grafana-app%40workspace%3Apublic%2Fapp":
+"app@link:../app::locator=grafana-app%40workspace%3Apublic%2Fapp":
   version: 0.0.0-use.local
-  resolution: "app@link:./public/app::locator=grafana-app%40workspace%3Apublic%2Fapp"
+  resolution: "app@link:../app::locator=grafana-app%40workspace%3Apublic%2Fapp"
   languageName: node
   linkType: soft
 
@@ -21769,7 +21769,7 @@ __metadata:
     angular-route: 1.8.3
     angular-sanitize: 1.8.3
     ansicolor: 1.1.100
-    app: "link:./public/app"
+    app: "link:../app"
     autoprefixer: 10.4.13
     babel-jest: 29.3.1
     babel-loader: 9.1.0
@@ -21925,7 +21925,7 @@ __metadata:
     stylelint-config-sass-guidelines: 9.0.1
     symbol-observable: 4.0.0
     terser-webpack-plugin: 5.3.6
-    test: "link:./public/test"
+    test: "link:../test"
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.4.2
@@ -21936,7 +21936,7 @@ __metadata:
     typescript: 4.8.4
     uplot: 1.6.23
     uuid: 9.0.0
-    vendor: "link:./public/vendor"
+    vendor: "link:../vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.1
     webpack: 5.74.0
@@ -22060,7 +22060,6 @@ __metadata:
     jest-matcher-utils: 29.3.1
     lerna: 6.1.0
     lint-staged: 13.0.3
-    mini-css-extract-plugin: 2.6.1
     msw: 0.48.1
     mutationobserver-shim: 0.3.7
     node-notifier: 10.0.1
@@ -36814,9 +36813,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"test@link:./public/test::locator=grafana-app%40workspace%3Apublic%2Fapp":
+"test@link:../test::locator=grafana-app%40workspace%3Apublic%2Fapp":
   version: 0.0.0-use.local
-  resolution: "test@link:./public/test::locator=grafana-app%40workspace%3Apublic%2Fapp"
+  resolution: "test@link:../test::locator=grafana-app%40workspace%3Apublic%2Fapp"
   languageName: node
   linkType: soft
 
@@ -38484,9 +38483,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vendor@link:./public/vendor::locator=grafana-app%40workspace%3Apublic%2Fapp":
+"vendor@link:../vendor::locator=grafana-app%40workspace%3Apublic%2Fapp":
   version: 0.0.0-use.local
-  resolution: "vendor@link:./public/vendor::locator=grafana-app%40workspace%3Apublic%2Fapp"
+  resolution: "vendor@link:../vendor::locator=grafana-app%40workspace%3Apublic%2Fapp"
   languageName: node
   linkType: soft
 
