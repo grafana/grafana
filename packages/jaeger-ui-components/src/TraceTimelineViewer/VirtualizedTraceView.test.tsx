@@ -96,7 +96,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
   }
 
   beforeEach(() => {
-    (SpanTreeOffset as jest.Mock).mockReturnValue(<div />);
+    jest.mocked(SpanTreeOffset).mockReturnValue(<div />);
     Object.keys(props).forEach((key) => {
       if (typeof props[key as keyof VirtualizedTraceViewProps] === 'function') {
         (props[key as keyof VirtualizedTraceViewProps] as jest.Mock).mockReset();
@@ -126,12 +126,13 @@ describe('<VirtualizedTraceViewImpl>', () => {
   });
 
   it('sets the trace for global state.traceTimeline', () => {
-    expect((props.setTrace as jest.Mock).mock.calls).toEqual([[trace, props.uiFind]]);
-    (props.setTrace as jest.Mock).mockReset();
+    expect(jest.mocked(props.setTrace).mock.calls).toEqual([[trace, props.uiFind]]);
+    expect(jest.mocked(props.setTrace).mock.calls).toEqual([[trace, props.uiFind]]);
+    jest.mocked(props.setTrace).mockReset();
     const traceID = 'some-other-id';
     const _trace = { ...trace, traceID };
     wrapper.setProps({ trace: _trace });
-    expect((props.setTrace as jest.Mock).mock.calls).toEqual([[_trace, props.uiFind]]);
+    expect(jest.mocked(props.setTrace).mock.calls).toEqual([[_trace, props.uiFind]]);
   });
 
   describe('props.registerAccessors', () => {
@@ -171,9 +172,9 @@ describe('<VirtualizedTraceViewImpl>', () => {
     });
 
     it('invokes when the listView is set', () => {
-      expect((props.registerAccessors as jest.Mock).mock.calls.length).toBe(0);
+      expect(jest.mocked(props.registerAccessors).mock.calls.length).toBe(0);
       instance.setListView(lv);
-      expect((props.registerAccessors as jest.Mock).mock.calls).toEqual([[expectedArg]]);
+      expect(jest.mocked(props.registerAccessors).mock.calls).toEqual([[expectedArg]]);
     });
 
     it('invokes when registerAccessors changes', () => {
@@ -404,8 +405,8 @@ describe('<VirtualizedTraceViewImpl>', () => {
     const propsWithTrueShouldScrollToFirstUiFindMatch = { ...props, shouldScrollToFirstUiFindMatch: true };
 
     beforeEach(() => {
-      (props.scrollToFirstVisibleSpan as jest.Mock).mockReset();
-      (props.clearShouldScrollToFirstUiFindMatch as jest.Mock).mockReset();
+      jest.mocked(props.scrollToFirstVisibleSpan).mockReset();
+      jest.mocked(props.clearShouldScrollToFirstUiFindMatch).mockReset();
     });
 
     it('calls props.scrollToFirstVisibleSpan if shouldScrollToFirstUiFindMatch is true', () => {

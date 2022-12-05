@@ -34,7 +34,7 @@ describe('SpanTreeOffset', () => {
 
   beforeEach(() => {
     // Mock implementation instead of Mock return value so that each call returns a new array (like normal)
-    (spanAncestorIdsSpy as jest.Mock).mockImplementation(() => [parentSpanID, rootSpanID]);
+    jest.mocked(spanAncestorIdsSpy).mockImplementation(() => [parentSpanID, rootSpanID]);
     props = {
       addHoverIndentGuideId: jest.fn(),
       hoverIndentGuideIds: new Set(),
@@ -48,7 +48,7 @@ describe('SpanTreeOffset', () => {
 
   describe('.SpanTreeOffset--indentGuide', () => {
     it('renders only one SpanTreeOffset--indentGuide for entire trace if span has no ancestors', () => {
-      (spanAncestorIdsSpy as jest.Mock).mockReturnValue([]);
+      jest.mocked(spanAncestorIdsSpy).mockReturnValue([]);
       render(<SpanTreeOffset {...props} />);
       const indentGuide = screen.getByTestId('SpanTreeOffset--indentGuide');
       expect(indentGuide).toBeInTheDocument();
