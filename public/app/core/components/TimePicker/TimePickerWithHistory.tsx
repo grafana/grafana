@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import React from 'react';
 
 import { TimeRange, isDateTime, rangeUtil } from '@grafana/data';
@@ -61,7 +62,6 @@ function onAppendToHistory(
   values: TimePickerHistoryItem[],
   onSaveToStore: (values: TimePickerHistoryItem[]) => void
 ) {
-  // TODO: Maybe we can save relative items?
   if (!isAbsolute(newTimeRange)) {
     return;
   }
@@ -81,5 +81,5 @@ function isAbsolute(value: TimeRange): boolean {
 }
 
 function limit(value: TimePickerHistoryItem[]): TimePickerHistoryItem[] {
-  return value.slice(0, 4);
+  return uniqBy(value, (v) => v.from + v.to).slice(0, 4);
 }
