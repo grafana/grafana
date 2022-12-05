@@ -221,14 +221,10 @@ interface LegendValueProps {
 function LegendValue({ value, valueName, asTable, onValueClick }: LegendValueProps) {
   if (asTable) {
     return (
-      <td role="gridcell" className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
+      <td role="gridcell" className={`graph-legend-value ${valueName}`}>
         {value}
       </td>
     );
   }
-  return (
-    <div className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
-      {value}
-    </div>
-  );
+  return <div className={`graph-legend-value ${valueName}`}>{value}</div>;
 }

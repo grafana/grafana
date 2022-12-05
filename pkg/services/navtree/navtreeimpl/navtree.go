@@ -561,8 +561,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 		// Datasources
 		Children: []*navtree.NavLink{{
 			Id:       "connections-your-connections-datasources",
-			Text:     "Datasources",
-			SubTitle: "Manage your existing datasource connections",
+			Text:     "Data sources",
+			SubTitle: "View and manage your connected data source connections",
 			Url:      baseUrl + "/your-connections/datasources",
 		}},
 	})

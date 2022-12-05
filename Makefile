@@ -69,7 +69,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
-	go generate ./public/app/plugins
+	go generate ./public/app/plugins/gen.go
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
@@ -158,12 +158,17 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev .
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--tag grafana/grafana:dev .
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev-ubuntu -f ./Dockerfile.ubuntu .
-
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--build-arg BASE_IMAGE=ubuntu:20.04 \
+	--build-arg GO_IMAGE=golang:1.19.3 \
+	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services
 

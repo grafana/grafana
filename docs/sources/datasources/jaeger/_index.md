@@ -53,8 +53,6 @@ You can also configure settings specific to the Jaeger data source:
 The **Trace to logs** section configures the [trace to logs feature]({{< relref "../../explore/trace-integration/" >}}).
 Select a target data source, limited to Loki and Splunk \[logs\] data sources, and which tags to use in the logs query.
 
-{{< figure src="/static/img/docs/explore/trace-to-log-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
-
 | Name                      | Description                                                                                                                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Data source**           | Sets the target data source.                                                                                                                                                       |

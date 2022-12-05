@@ -6,11 +6,11 @@ import { dateTime, Field } from '@grafana/data';
 import {
   fieldsVariable,
   logGroupNamesVariable,
-  setupMockedDataSource,
   regionVariable,
+  setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
 import { setupForLogs } from './__mocks__/logsTestContext';
-import { validLogsQuery, validMetricsQuery } from './__mocks__/queries';
+import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { timeRange } from './__mocks__/timeRange';
 import { CloudWatchLogsQuery, CloudWatchMetricsQuery, CloudWatchQuery } from './types';
 
@@ -62,9 +62,9 @@ describe('datasource', () => {
     const testTable: Array<{ query: CloudWatchQuery; valid: boolean }> = [
       { query: { ...validLogsQuery, hide: true }, valid: false },
       { query: { ...validLogsQuery, hide: false }, valid: true },
-      { query: { ...validMetricsQuery, hide: true }, valid: false },
-      { query: { ...validMetricsQuery, hide: true, id: 'queryA' }, valid: true },
-      { query: { ...validMetricsQuery, hide: false }, valid: true },
+      { query: { ...validMetricSearchBuilderQuery, hide: true }, valid: false },
+      { query: { ...validMetricSearchBuilderQuery, hide: true, id: 'queryA' }, valid: true },
+      { query: { ...validMetricSearchBuilderQuery, hide: false }, valid: true },
     ];
 
     test.each(testTable)('should filter out hidden queries unless id is provided', ({ query, valid }) => {
@@ -165,6 +165,7 @@ describe('datasource', () => {
             region: '',
             queryMode: 'Logs',
             logGroupNames: ['test'],
+            expression: 'some query',
             refId: 'a',
           },
         ],
@@ -195,7 +196,7 @@ describe('datasource', () => {
       expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
-          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
+          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
         },
       ]);
     });
@@ -205,13 +206,9 @@ describe('datasource', () => {
     it('should map resource response to metric response', async () => {
       const datasource = setupMockedDataSource({
         getMock: jest.fn().mockResolvedValue([
+          { value: { namespace: 'AWS/EC2', name: 'CPUUtilization' } },
           {
-            namespace: 'AWS/EC2',
-            name: 'CPUUtilization',
-          },
-          {
-            namespace: 'AWS/Redshift',
-            name: 'CPUPercentage',
+            value: { namespace: 'AWS/Redshift', name: 'CPUPercentage' },
           },
         ]),
       }).datasource;

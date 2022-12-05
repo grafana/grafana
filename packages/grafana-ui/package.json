@@ -38,7 +38,9 @@
     "storybook": "start-storybook -p 9001 -c .storybook",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js"
+    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "browserslist": [
     "defaults",
@@ -79,7 +81,7 @@
     "ol": "7.1.0",
     "prismjs": "1.29.0",
     "rc-cascader": "3.7.0",
-    "rc-drawer": "4.4.3",
+    "rc-drawer": "6.0.1",
     "rc-slider": "10.0.1",
     "rc-time-picker": "^3.7.3",
     "rc-tooltip": "5.2.2",
@@ -107,7 +109,7 @@
     "slate-react": "0.22.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
-    "uplot": "1.6.22",
+    "uplot": "1.6.23",
     "uuid": "9.0.0"
   },
   "devDependencies": {
@@ -145,7 +147,7 @@
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.7",
-    "@types/jest": "28.1.6",
+    "@types/jest": "29.2.3",
     "@types/jquery": "3.5.14",
     "@types/lodash": "4.14.187",
     "@types/mock-raf": "1.0.3",

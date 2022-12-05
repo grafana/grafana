@@ -7,7 +7,8 @@ import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';
 import { Scene } from '../Scene';
 
-import { SceneGridLayout, SceneGridRow } from './SceneGridLayout';
+import { SceneGridLayout } from './SceneGridLayout';
+import { SceneGridRow } from './SceneGridRow';
 
 // Mocking AutoSizer to allow testing of the SceneGridLayout component rendering
 jest.mock(

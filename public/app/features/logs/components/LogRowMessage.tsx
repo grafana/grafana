@@ -47,7 +47,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       display: inherit;
     `,
     horizontalScroll: css`
-      label: verticalScroll;
+      label: horizontalScroll;
       white-space: pre;
     `,
     contextNewline: css`
