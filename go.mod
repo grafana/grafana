@@ -58,7 +58,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/gosimple/slug v1.12.0
 	github.com/grafana/cuetsy v0.1.1
-	github.com/grafana/grafana-aws-sdk v0.12.0
+	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
 	github.com/grafana/grafana-plugin-sdk-go v0.142.0
 	github.com/grafana/thema v0.0.0-20221113112305-b441ed85a1fd
@@ -289,7 +289,6 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.0.0-20220520183353-fd19c99a87aa // indirect
 	github.com/googleapis/go-type-adapters v1.0.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
-	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/memberlist v0.4.0 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
@@ -360,7 +359,7 @@ require (
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
-replace github.com/crewjam/saml => github.com/grafana/saml v0.4.9-0.20230102094056-b61b9eb7c8b7
+replace github.com/crewjam/saml => github.com/grafana/saml v0.4.9-0.20221202084623-9d456850a65a
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
