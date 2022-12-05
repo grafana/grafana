@@ -11,7 +11,7 @@ module.exports = {
   },
   output: {
     clean: true,
-    path: path.resolve(__dirname, '../build'),
+    path: path.resolve(__dirname, '../../build'),
     filename: '[name].[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
