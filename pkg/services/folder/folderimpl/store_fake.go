@@ -7,9 +7,10 @@ import (
 )
 
 type FakeStore struct {
-	ExpectedFolders []*folder.Folder
-	ExpectedFolder  *folder.Folder
-	ExpectedError   error
+	ExpectedChildFolders  []*folder.Folder
+	ExpectedParentFolders []*folder.Folder
+	ExpectedFolder        *folder.Folder
+	ExpectedError         error
 
 	CreateCalled bool
 	DeleteCalled bool
@@ -44,9 +45,9 @@ func (f *FakeStore) Get(ctx context.Context, cmd folder.GetFolderQuery) (*folder
 }
 
 func (f *FakeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
-	return f.ExpectedFolders, f.ExpectedError
+	return f.ExpectedParentFolders, f.ExpectedError
 }
 
 func (f *FakeStore) GetChildren(ctx context.Context, cmd folder.GetTreeQuery) ([]*folder.Folder, error) {
-	return f.ExpectedFolders, f.ExpectedError
+	return f.ExpectedChildFolders, f.ExpectedError
 }

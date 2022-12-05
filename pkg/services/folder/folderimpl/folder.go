@@ -456,10 +456,62 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, err
 	}
 
+	// here we get the folder, we need to get the height of current folder
+	// and the depth of the new parent folder, the sum can't bypass 8
+	folderHeight, err := s.getHeight(ctx, foldr.UID, cmd.OrgID, &cmd.NewParentUID)
+	if err != nil {
+		return nil, err
+	}
+	parents, err := s.GetParents(ctx, &folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
+	if err != nil {
+		return nil, err
+	}
+
+	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
+	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
+		return nil, folder.ErrMaximumDepthReached
+	}
+
+	// if the current folder is already a parent of newparent, we should return error
+	for _, parent := range parents {
+		if parent.UID == foldr.UID {
+			return nil, folder.ErrCircularReference
+		}
+	}
+
+	// if the new parent is the same as the current parent, we don't need to do anything
+	if foldr.ParentUID == cmd.NewParentUID {
+		return foldr, nil
+	}
+
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
 		Folder: foldr,
-		// NewParentUID: &cmd.NewParentUID,
 	})
+}
+
+// getHeight is used to detect the height of the folder, when parentUID is not empty, it will verify that parentUID doesn't exist in the subtree
+func (s *Service) getHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
+	height := -1
+	queue := []string{foldrUID}
+	for len(queue) > 0 {
+		length := len(queue)
+		height++
+		for i := 0; i < length; i++ {
+			ele := queue[0]
+			queue = queue[1:]
+			folders, err := s.store.GetChildren(ctx, folder.GetTreeQuery{UID: ele, OrgID: orgID})
+			if err != nil {
+				return 0, err
+			}
+			for _, f := range folders {
+				if parentUID != nil && *parentUID == f.UID {
+					return 0, folder.ErrCircularReference
+				}
+				queue = append(queue, f.UID)
+			}
+		}
+	}
+	return height, nil
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
