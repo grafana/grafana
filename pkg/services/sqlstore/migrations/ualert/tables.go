@@ -257,6 +257,10 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Default:  "1",
 		},
 	))
+
+	mg.AddMigration("add index on group", migrator.NewAddIndexMigration(alertRule, &migrator.Index{
+		Cols: []string{"rule_group"},
+	}))
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
