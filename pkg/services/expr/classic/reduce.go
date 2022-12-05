@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/services/expr/mathexp"
 )
 
 type reducer string

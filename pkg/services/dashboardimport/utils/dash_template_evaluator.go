@@ -6,8 +6,8 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/expr"
 )
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)

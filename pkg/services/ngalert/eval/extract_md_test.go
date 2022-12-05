@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/services/expr/classic"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 )

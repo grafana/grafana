@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
-	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/services/expr/mathexp"
 	"github.com/grafana/grafana/pkg/util"
 )
 

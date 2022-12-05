@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/expr"
 )
 
 const defaultMaxDataPoints float64 = 43200 // 12 hours at 1sec interval

@@ -207,7 +207,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/alertmanager @grafana/alerting-squad
 
 # SSE - Server Side Expressions
-/pkg/expr @grafana/observability-metrics
+/pkg/services/expr @grafana/observability-metrics
 
 # Cloud middleware
 /grafana-mixin/ @grafana/hosted-grafana-team

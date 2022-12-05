@@ -9,7 +9,7 @@ import (
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/services/expr/mathexp"
 )
 
 func TestReducer(t *testing.T) {
