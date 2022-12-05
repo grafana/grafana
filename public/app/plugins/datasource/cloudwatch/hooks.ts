@@ -3,20 +3,17 @@ import { useAsyncFn, useDeepCompareEffect } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SelectCommonProps } from '@grafana/ui';
 
 import { CloudWatchAPI } from './api';
 import { CloudWatchDatasource } from './datasource';
 import { GetDimensionKeysRequest, GetMetricsRequest } from './types';
 import { appendTemplateVariables } from './utils/utils';
 
-export interface FieldDataState<T> {
-  options: Array<SelectableValue<T>>;
-  invalid: boolean;
-  isLoading: boolean;
-  isClearable: boolean;
-}
-
-// type FieldDataState = Pick<SelectCommonProps<string>, 'isLoading'>;
+type FieldDataState = Pick<
+  SelectCommonProps<string>,
+  'options' | 'isLoading' | 'invalid' | 'isLoading' | 'isClearable'
+>;
 
 export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {
   const [regionsIsLoading, setRegionsIsLoading] = useState<boolean>(false);
@@ -39,7 +36,7 @@ export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableV
   return [regions, regionsIsLoading];
 };
 
-export const useNamespaces = (datasource: CloudWatchDatasource, currentNamespace?: string): FieldDataState<string> => {
+export const useNamespaces = (datasource: CloudWatchDatasource, currentNamespace?: string): FieldDataState => {
   const [namespaces, setNamespaces] = useState<Array<SelectableValue<string>>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -66,7 +63,7 @@ export const useMetrics = (
   datasource: CloudWatchDatasource,
   { region, namespace, accountId }: GetMetricsRequest,
   currentMetricName?: string
-): FieldDataState<string> => {
+): FieldDataState => {
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -142,7 +139,7 @@ export const useDimensionKeys2 = (
   datasource: CloudWatchDatasource,
   { region, namespace, metricName, dimensionFilters, accountId }: GetDimensionKeysRequest,
   currentDimensionKey?: string
-): FieldDataState<string> => {
+): FieldDataState => {
   const [dimensionKeys, setDimensionKeys] = useState<Array<SelectableValue<string>>>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
