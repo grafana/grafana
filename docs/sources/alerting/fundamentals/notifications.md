@@ -29,8 +29,6 @@ A specific routing policy can have its own descendent policies, called nested po
 
 All alerts, irrespective of their labels, match the root policy. However, when the root policy receives an alert it looks at each specific routing policy and sends the alert to the first specific routing policy that matches the alert. If the specific routing policy has further descendent policies, then it can attempt to the match the alert against one of its nested policies. If no nested policies match the alert then the specific routing policy is the matching policy. If there are no specific routing policies, or no specific routing policies match the alert, then the root policy is the matching policy.
 
-More information on how to configure notification policies can be found [here]({{< relref "../../manage-notifications/create-notification-policy/" >}}).
-
 ## Contact points
 
 Contact points contain the configuration for sending notifications. A contact point is a list of integrations, each of which sends a notification to a particular email address, service or URL. Contact points can have multiple integrations of the same kind, or a combination of integrations of different kinds. For example, a contact point could contain a Pagerduty integration; an email and Slack integration; or a Pagerduty integration, a Slack integration, and two email integrations. You can also configure a contact point with no integrations; in which case no notifications are sent.
@@ -72,17 +70,6 @@ Templates are not limited to an individual integration or contact point, but ins
 
 All notifications templates are written in [Go's templating language](https://pkg.go.dev/text/template), and are in the Contact points tab on the Alerting page.
 
-More information on how to template notifications can be found [here]({{< relref "../../manage-notifications/create-message-template/" >}}).
-
 ## Silences
 
 You can use silences to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration which can be configured in minutes, hours, days, months or years.
-
-More information on how to configure silences can be found [here]({{< relref "../../manage-notifications/create-silence/" >}}).
-
-## Useful links
-
-- [Notification policies]({{< relref "../../manage-notifications/create-notification-policy/" >}})
-- [Contact points]({{< relref "../../manage-notifications/create-contact-point/" >}})
-- [Templating notifications]({{< relref "../../manage-notifications/create-message-template/" >}})
-- [Silences]({{< relref "../../manage-notifications/create-silence/" >}})
