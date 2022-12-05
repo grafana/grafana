@@ -108,14 +108,14 @@ func buildOpsgenieSettings(fc FactoryConfig) (*opsgenieSettings, error) {
 }
 
 func OpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
-	pdn, err := NewOpsgenieNotifier(fc)
+	notifier, err := NewOpsgenieNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return pdn, nil
+	return notifier, nil
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
