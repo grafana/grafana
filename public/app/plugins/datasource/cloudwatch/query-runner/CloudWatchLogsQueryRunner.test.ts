@@ -223,7 +223,7 @@ describe('CloudWatchLogsQueryRunner', () => {
   });
 
   describe('handleLogQueries', () => {
-    it('should return silently for missing log groups', async () => {
+    it('should not run queries with missing log groups', async () => {
       const { runner } = setupMockedLogsQueryRunner();
       const response = await lastValueFrom(
         runner.handleLogQueries(
@@ -236,15 +236,29 @@ describe('CloudWatchLogsQueryRunner', () => {
               refId: 'A',
               region: 'default',
             },
+            {
+              datasource: { type: 'cloudwatch', uid: 'Zne6OZIVk' },
+              id: '',
+              queryMode: 'Logs',
+              logGroupNames: ['some valid log group'],
+              expression: 'some query string',
+              refId: 'B',
+              region: 'default',
+            },
           ],
           { scopedVars: {} } as DataQueryRequest<CloudWatchQuery>
         )
       );
 
-      expect(response).toEqual({ data: [] });
+      expect(response).toEqual({
+        data: [],
+        error: undefined,
+        key: 'test-key',
+        state: 'Done',
+      });
     });
 
-    it('should return silently for an incomplete query', async () => {
+    it('should not run queries with an incomplete query string', async () => {
       const { runner } = setupMockedLogsQueryRunner();
       const response = await lastValueFrom(
         runner.handleLogQueries(
@@ -262,7 +276,12 @@ describe('CloudWatchLogsQueryRunner', () => {
         )
       );
 
-      expect(response).toEqual({ data: [] });
+      expect(response).toEqual({
+        data: [],
+        error: undefined,
+        key: 'test-key',
+        state: 'Done',
+      });
     });
   });
 });
