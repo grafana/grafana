@@ -15,9 +15,9 @@ import { DashboardSearchHit } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 import { backendSrv } from '../../../core/services/backend_srv';
 import { AccessControlAction } from '../../../types';
+import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
@@ -104,9 +104,7 @@ const ui = {
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 
-// Until flakiness is fixed
-// https://github.com/grafana/grafana/issues/58747
-describe('RuleEditor', () => {
+describe('RuleEditor cloud', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
@@ -206,112 +204,6 @@ describe('RuleEditor', () => {
     );
   });
 
-  it('can create new grafana managed alert', async () => {
-    const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          isDefault: true,
-        },
-        { alerting: false }
-      ),
-    };
-
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    mocks.api.fetchRulerRulesGroup.mockResolvedValue({
-      name: 'group2',
-      rules: [],
-    });
-    mocks.api.fetchRulerRules.mockResolvedValue({
-      'Folder A': [
-        {
-          name: 'group1',
-          rules: [],
-        },
-      ],
-      namespace2: [
-        {
-          name: 'group2',
-          rules: [],
-        },
-      ],
-    });
-    mocks.searchFolders.mockResolvedValue([
-      {
-        title: 'Folder A',
-        id: 1,
-      },
-      {
-        title: 'Folder B',
-        id: 2,
-      },
-      {
-        title: 'Folder / with slash',
-        id: 2,
-      },
-    ] as DashboardSearchHit[]);
-
-    mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Prometheus,
-      features: {
-        rulerApiEnabled: false,
-      },
-    });
-
-    renderRuleEditor();
-
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
-
-    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-
-    const folderInput = await ui.inputs.folder.find();
-    await clickSelectOption(folderInput, 'Folder A');
-    const groupInput = await ui.inputs.group.find();
-    await userEvent.click(byRole('combobox').get(groupInput));
-    await clickSelectOption(groupInput, 'group1 (1m)');
-
-    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
-
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(1).get()), 'team{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
-
-    // save and check what was sent to backend
-    await userEvent.click(ui.buttons.save.get());
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'Folder A',
-      {
-        interval: '1m',
-        name: 'group1',
-        rules: [
-          {
-            annotations: { description: 'some description', summary: 'some summary' },
-            labels: { severity: 'warn', team: 'the a-team' },
-            for: '5m',
-            grafana_alert: {
-              condition: 'B',
-              data: getDefaultQueries(),
-              exec_err_state: GrafanaAlertStateDecision.Error,
-              no_data_state: 'NoData',
-              title: 'my great new rule',
-            },
-          },
-        ],
-      }
-    );
-  });
-
   it('can create a new cloud recording rule', async () => {
     const dataSources = {
       default: mockDataSource(
@@ -404,137 +296,6 @@ describe('RuleEditor', () => {
             record: 'my:great:new:recording:rule',
             labels: { team: 'the a-team' },
             expr: 'up == 1',
-          },
-        ],
-      }
-    );
-  });
-
-  it('can edit grafana managed rule', async () => {
-    const uid = 'FOOBAR123';
-    const folder = {
-      title: 'Folder A',
-      uid: 'abcd',
-      id: 1,
-    };
-
-    const slashedFolder = {
-      title: 'Folder with /',
-      uid: 'abcde',
-      id: 2,
-    };
-
-    const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          isDefault: true,
-        },
-        { alerting: false }
-      ),
-    };
-
-    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
-      ...mockFolder(),
-      accessControl: {
-        [AccessControlAction.AlertingRuleUpdate]: true,
-      },
-    });
-
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    mocks.api.fetchRulerRules.mockResolvedValue({
-      [folder.title]: [
-        {
-          interval: '1m',
-          name: 'my great new rule',
-          rules: [
-            {
-              annotations: { description: 'some description', summary: 'some summary' },
-              labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
-              grafana_alert: {
-                uid,
-                namespace_uid: 'abcd',
-                namespace_id: 1,
-                condition: 'B',
-                data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Error,
-                no_data_state: GrafanaAlertStateDecision.NoData,
-                title: 'my great new rule',
-              },
-            },
-          ],
-        },
-      ],
-    });
-    mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
-
-    renderRuleEditor(uid);
-
-    // check that it's filled in
-    const nameInput = await ui.inputs.name.find();
-    expect(nameInput).toHaveValue('my great new rule');
-    //check that folder is in the list
-    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
-    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
-    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
-
-    //check that slashed folders are not in the list
-    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
-    expect(ui.inputs.folder.get()).not.toHaveTextContent(new RegExp(slashedFolder.title));
-
-    //check that slashes warning is only shown once user search slashes
-    const folderInput = await ui.inputs.folderContainer.find();
-    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
-    await userEvent.type(within(folderInput).getByRole('combobox'), 'new slashed //');
-    expect(within(folderInput).getByText("Folders with '/' character are not allowed.")).toBeInTheDocument();
-    await userEvent.keyboard('{backspace} {backspace}{backspace}');
-    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
-
-    // add an annotation
-    await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
-    await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
-    await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
-
-    //add a label
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(2).get()), 'custom{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(2).get()), 'value{enter}');
-
-    // save and check what was sent to backend
-    await userEvent.click(ui.buttons.save.get());
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
-
-    //check that '+ Add new' option is in folders drop down even if we don't have values
-    const emptyFolderInput = await ui.inputs.folderContainer.find();
-    mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
-    await renderRuleEditor(uid);
-    await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
-    expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
-
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'Folder A',
-      {
-        interval: '1m',
-        name: 'my great new rule',
-        rules: [
-          {
-            annotations: { description: 'some description', summary: 'some summary', custom: 'value' },
-            labels: { severity: 'warn', team: 'the a-team', custom: 'value' },
-            for: '5m',
-            grafana_alert: {
-              uid,
-              condition: 'B',
-              data: getDefaultQueries(),
-              exec_err_state: GrafanaAlertStateDecision.Error,
-              no_data_state: 'NoData',
-              title: 'my great new rule',
-            },
           },
         ],
       }
