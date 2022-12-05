@@ -25,6 +25,7 @@ export function PageTabs({ navItem }: Props) {
                 icon={icon}
                 href={child.url}
                 suffix={child.tabSuffix}
+                onChangeTab={child.onClick}
               />
             )
           );
