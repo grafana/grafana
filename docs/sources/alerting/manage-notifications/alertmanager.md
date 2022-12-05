@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana/latest/alerting/metrics/
   - /docs/grafana/latest/alerting/unified-alerting/fundamentals/alertmanager/
 title: Alertmanager
-weight: 116
+weight: 460
 ---
 
 # Alertmanager

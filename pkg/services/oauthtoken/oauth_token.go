@@ -79,7 +79,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
 func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
-	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
+	return IsOAuthPassThruEnabled(ds)
 }
 
 // HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
@@ -202,6 +202,11 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.Us
 	}
 
 	return token, nil
+}
+
+// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
+func IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
+	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 
 // tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in
