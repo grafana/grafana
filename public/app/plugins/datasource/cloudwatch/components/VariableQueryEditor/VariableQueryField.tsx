@@ -15,6 +15,7 @@ interface VariableQueryFieldProps<T> {
   inputId?: string;
   allowCustomValue?: boolean;
   isLoading?: boolean;
+  invalid?: boolean;
 }
 
 export const VariableQueryField = <T extends string | VariableQueryType>({
@@ -25,10 +26,12 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   allowCustomValue = false,
   isLoading = false,
   inputId = label,
+  invalid = false,
 }: VariableQueryFieldProps<T>) => {
   return (
     <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={inputId}>
       <Select
+        invalid={invalid}
         aria-label={label}
         width={25}
         allowCustomValue={allowCustomValue}

@@ -7,6 +7,7 @@ import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
+import { useDimensionKeys2 } from '../../hooks';
 import { Dimensions, MetricStat } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
 
@@ -36,7 +37,7 @@ export const FilterItem: FunctionComponent<Props> = ({
   filter,
   metricStat: { region, namespace, metricName, dimensions, accountId },
   datasource,
-  dimensionKeys,
+  // dimensionKeys,
   disableExpressions,
   onChange,
   onDelete,
@@ -44,6 +45,18 @@ export const FilterItem: FunctionComponent<Props> = ({
   const dimensionsExcludingCurrentKey = useMemo(
     () => excludeCurrentKey(dimensions ?? {}, filter.key),
     [dimensions, filter]
+  );
+
+  const dimensionKeys = useDimensionKeys2(
+    datasource,
+    {
+      region,
+      namespace,
+      metricName,
+      accountId,
+      dimensionFilters: dimensionsExcludingCurrentKey,
+    },
+    filter.key
   );
 
   const loadDimensionValues = async () => {
@@ -88,7 +101,8 @@ export const FilterItem: FunctionComponent<Props> = ({
           width="auto"
           value={filter.key ? toOption(filter.key) : null}
           allowCustomValue
-          options={dimensionKeys}
+          // options={dimensionKeys}
+          {...dimensionKeys}
           onChange={(change) => {
             if (change.label) {
               onChange({ key: change.label, value: undefined });

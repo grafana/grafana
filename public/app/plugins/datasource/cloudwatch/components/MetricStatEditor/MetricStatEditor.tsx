@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
@@ -28,9 +27,10 @@ export function MetricStatEditor({
   disableExpressions = false,
   onChange,
 }: React.PropsWithChildren<Props>) {
-  const namespaces = useNamespaces(datasource);
-  const metrics = useMetrics(datasource, metricStat);
+  const namespaceFieldState = useNamespaces(datasource, metricStat.namespace);
+  const metricFieldState = useMetrics(datasource, metricStat, metricStat.metricName);
   const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
+  console.log({ dimensionKeys });
   const accountState = useAccountOptions(datasource.api, metricStat.region);
 
   useEffect(() => {
@@ -44,24 +44,6 @@ export function MetricStatEditor({
       }
     });
   }, [accountState, metricStat, onChange, datasource.api]);
-
-  const onNamespaceChange = async (metricStat: MetricStat) => {
-    const validatedQuery = await validateMetricName(metricStat);
-    onChange(validatedQuery);
-  };
-
-  const validateMetricName = async (metricStat: MetricStat) => {
-    let { metricName, namespace, region } = metricStat;
-    if (!metricName) {
-      return metricStat;
-    }
-    await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
-      if (!result.find((metric) => metric.value === metricName)) {
-        metricName = '';
-      }
-    });
-    return { ...metricStat, metricName };
-  };
 
   return (
     <EditorRows>
@@ -78,23 +60,21 @@ export function MetricStatEditor({
         <EditorFieldGroup>
           <EditorField label="Namespace" width={26}>
             <Select
+              {...namespaceFieldState}
               aria-label="Namespace"
               value={metricStat?.namespace && toOption(metricStat.namespace)}
               allowCustomValue
-              options={namespaces}
               onChange={({ value: namespace }) => {
-                if (namespace) {
-                  onNamespaceChange({ ...metricStat, namespace });
-                }
+                namespace && onChange({ ...metricStat, namespace });
               }}
             />
           </EditorField>
           <EditorField label="Metric name" width={16}>
             <Select
+              {...metricFieldState}
               aria-label="Metric name"
               value={metricStat?.metricName && toOption(metricStat.metricName)}
               allowCustomValue
-              options={metrics}
               onChange={({ value: metricName }) => {
                 if (metricName) {
                   onChange({ ...metricStat, metricName });

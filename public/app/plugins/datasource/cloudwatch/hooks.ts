@@ -9,6 +9,14 @@ import { CloudWatchDatasource } from './datasource';
 import { GetDimensionKeysRequest, GetMetricsRequest } from './types';
 import { appendTemplateVariables } from './utils/utils';
 
+export interface FieldDataState<T> {
+  options: Array<SelectableValue<T>>;
+  isValid: boolean;
+  isLoading: boolean;
+}
+
+// type FieldDataState = Pick<SelectCommonProps<string>, 'isLoading'>;
+
 export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {
   const [regionsIsLoading, setRegionsIsLoading] = useState<boolean>(false);
   const [regions, setRegions] = useState<Array<SelectableValue<string>>>([{ label: 'default', value: 'default' }]);
@@ -30,19 +38,34 @@ export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableV
   return [regions, regionsIsLoading];
 };
 
-export const useNamespaces = (datasource: CloudWatchDatasource) => {
+export const useNamespaces = (datasource: CloudWatchDatasource, currentNamespace?: string): FieldDataState<string> => {
   const [namespaces, setNamespaces] = useState<Array<SelectableValue<string>>>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   useEffect(() => {
-    datasource.api.getNamespaces().then((namespaces) => {
-      setNamespaces(appendTemplateVariables(datasource, namespaces));
-    });
+    setIsLoading(true);
+    datasource.api
+      .getNamespaces()
+      .then((namespaces) => {
+        setNamespaces(appendTemplateVariables(datasource, namespaces));
+      })
+      .finally(() => setIsLoading(false));
   }, [datasource]);
 
-  return namespaces;
+  return {
+    isLoading,
+    options: namespaces,
+    isValid: isLoading || namespaces.some((n) => n.value === currentNamespace),
+  };
 };
 
-export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace, accountId }: GetMetricsRequest) => {
+export const useMetrics = (
+  datasource: CloudWatchDatasource,
+  { region, namespace, accountId }: GetMetricsRequest,
+  currentMetricName?: string
+): FieldDataState<string> => {
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // need to ensure dependency array below recieves the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
@@ -56,12 +79,20 @@ export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace
     accountId = datasource.templateSrv.replace(accountId, {});
   }
   useEffect(() => {
-    datasource.api.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
-      setMetrics(appendTemplateVariables(datasource, result));
-    });
+    setIsLoading(true);
+    datasource.api
+      .getMetrics({ namespace, region, accountId })
+      .then((result: Array<SelectableValue<string>>) => {
+        setMetrics(appendTemplateVariables(datasource, result));
+      })
+      .finally(() => setIsLoading(false));
   }, [datasource, region, namespace, accountId]);
 
-  return metrics;
+  return {
+    isLoading,
+    options: metrics,
+    isValid: isLoading || metrics.some((metric) => metric.value === currentMetricName),
+  };
 };
 
 export const useDimensionKeys = (
@@ -100,6 +131,53 @@ export const useDimensionKeys = (
   }, [datasource, namespace, region, metricName, accountId, dimensionFilters]);
 
   return dimensionKeys;
+};
+
+export const useDimensionKeys2 = (
+  datasource: CloudWatchDatasource,
+  { region, namespace, metricName, dimensionFilters, accountId }: GetDimensionKeysRequest,
+  currentDimensionKey?: string
+): FieldDataState<string> => {
+  const [dimensionKeys, setDimensionKeys] = useState<Array<SelectableValue<string>>>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // need to ensure dependency array below revieves the interpolated value so that the effect is triggered when a variable is changed
+  if (region) {
+    region = datasource.templateSrv.replace(region, {});
+  }
+  if (namespace) {
+    namespace = datasource.templateSrv.replace(namespace, {});
+  }
+
+  if (metricName) {
+    metricName = datasource.templateSrv.replace(metricName, {});
+  }
+
+  if (accountId) {
+    accountId = datasource.templateSrv.replace(accountId, {});
+  }
+
+  if (dimensionFilters) {
+    dimensionFilters = datasource.api.convertDimensionFormat(dimensionFilters, {});
+  }
+
+  // doing deep comparison to avoid making new api calls to list metrics unless dimension filter object props changes
+  useDeepCompareEffect(() => {
+    setIsLoading(true);
+    datasource.api
+      .getDimensionKeys({ namespace, region, metricName, accountId, dimensionFilters })
+      .then((result: Array<SelectableValue<string>>) => {
+        console.log(useDimensionKeys2);
+        setDimensionKeys(appendTemplateVariables(datasource, result));
+      })
+      .finally(() => setIsLoading(false));
+  }, [datasource, namespace, region, metricName, accountId, dimensionFilters]);
+
+  return {
+    isLoading,
+    options: dimensionKeys,
+    isValid: isLoading || dimensionKeys.some((dk) => dk.value === currentDimensionKey),
+  };
 };
 
 export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {

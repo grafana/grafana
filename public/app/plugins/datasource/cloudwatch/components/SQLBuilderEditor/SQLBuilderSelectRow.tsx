@@ -47,8 +47,8 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   const schemaLabels = getSchemaLabels(sql.from);
   const withSchemaEnabled = isUsingWithSchema(sql.from);
 
-  const namespaceOptions = useNamespaces(datasource);
-  const metricOptions = useMetrics(datasource, { region: query.region, namespace });
+  const namespaceFieldState = useNamespaces(datasource, namespace);
+  const metricFieldState = useMetrics(datasource, { region: query.region, namespace }, metricName);
   const existingFilters = useMemo(() => stringArrayToDimensions(schemaLabels ?? []), [schemaLabels]);
   const unusedDimensionKeys = useDimensionKeys(datasource, {
     region: query.region,
@@ -84,7 +84,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             aria-label="Namespace"
             value={namespace ? toOption(namespace) : null}
             inputId={`${query.refId}-cloudwatch-sql-namespace`}
-            options={namespaceOptions}
+            {...namespaceFieldState}
             allowCustomValue
             onChange={({ value }) => value && onNamespaceChange(setNamespace(query, value))}
           />
@@ -118,9 +118,9 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
       <EditorFieldGroup>
         <EditorField label="Metric name" width={16}>
           <Select
+            {...metricFieldState}
             aria-label="Metric name"
             value={metricName ? toOption(metricName) : null}
-            options={metricOptions}
             allowCustomValue
             onChange={({ value }) => value && onQueryChange(setMetricName(query, value))}
           />

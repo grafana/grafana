@@ -37,8 +37,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
 
   const { region, namespace, metricName, dimensionKey, dimensionFilters } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
-  const namespaces = useNamespaces(datasource);
-  const metrics = useMetrics(datasource, { region, namespace });
+  const namespaceFieldState = useNamespaces(datasource, namespace);
+  const metricFieldState = useMetrics(datasource, { region, namespace }, metricName);
   const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
   const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
 
@@ -122,8 +122,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       )}
       {hasNamespaceField && (
         <VariableQueryField
+          {...namespaceFieldState}
           value={namespace}
-          options={namespaces}
           onChange={(value: string) => onNamespaceChange(value)}
           label="Namespace"
           inputId={`variable-query-namespace-${query.refId}`}
@@ -134,7 +134,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         <>
           <VariableQueryField
             value={metricName || null}
-            options={metrics}
+            {...metricFieldState}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, metricName: value })}
             label="Metric"
             inputId={`variable-query-metric-${query.refId}`}
