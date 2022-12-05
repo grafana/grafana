@@ -29,7 +29,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `commandPalette`             | Enable command palette                                                                                          | Yes                |
 | `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                                           | Yes                |
 | `prometheusBufferedClient`   | Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new) |                    |
-| `internationalization`       | Enables internationalization                                                                                    |                    |
+| `internationalization`       | Enables internationalization                                                                                    | Yes                |
 | `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token                            |                    |
 
 ## Beta feature toggles

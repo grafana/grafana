@@ -5,7 +5,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import 'whatwg-fetch';
-import { BootData } from '@grafana/data/src';
+import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
@@ -192,6 +192,23 @@ describe('SharePublic - New config setup', () => {
   it('when modal is opened, then save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
+  });
+  it('when dashboard has unsupported datasources, warning is shown', async () => {
+    const panelModel = {
+      targets: [
+        {
+          datasource: { type: 'notSupportedDatasource', uid: 'abc123' },
+        } as DataQuery,
+      ] as DataQuery[],
+    } as PanelModel;
+    const dashboard = new DashboardModel({
+      id: 1,
+      panels: [panelModel],
+    });
+
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard, onDismiss: () => {} });
+
+    expect(screen.queryByTestId(selectors.UnsupportedDatasourcesWarningAlert)).toBeInTheDocument();
   });
   it('when fetch is done, then no loader spinner appears, inputs are enabled and save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
