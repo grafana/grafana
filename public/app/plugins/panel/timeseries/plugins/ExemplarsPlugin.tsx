@@ -34,11 +34,14 @@ export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[]
       if (frameIndex !== undefined && fieldIndex !== undefined) {
         const field = frames[frameIndex].fields[fieldIndex];
         if (field.labels) {
+          // Note that this may be an empty object
           visibleLabels.push(field.labels);
         }
       }
     });
   }
+
+  console.log('getVisibleLabels', visibleLabels);
 
   return visibleLabels;
 };
@@ -97,12 +100,18 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
         const labelKeys = Object.keys(visibleLabel);
         const labelValues = Object.values(visibleLabel);
 
-        const field = dataFrame.fields.find((field) => labelKeys.find((labelKey) => labelKey === field.name));
+        // If there aren't any labels, the graph is only displaying a single source of exemplars, let's show them
+        if (Object.keys(visibleLabel).length === 0) {
+          showMarker = true;
+        } else {
+          // If there are labels, lets only show the labels associated with series that are currently visible
+          const field = dataFrame.fields.find((field) => labelKeys.find((labelKey) => labelKey === field.name));
 
-        if (field) {
-          const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-          if (labelValues.includes(value)) {
-            showMarker = true;
+          if (field) {
+            const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+            if (labelValues.includes(value)) {
+              showMarker = true;
+            }
           }
         }
       });
