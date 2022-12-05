@@ -114,7 +114,7 @@ export enum LoadingState {
   Done = 'Done',
   Error = 'Error',
   Loading = 'Loading',
-  NonStarted = 'NonStarted',
+  NotStarted = 'NotStarted',
   Streaming = 'Streaming',
 }
 

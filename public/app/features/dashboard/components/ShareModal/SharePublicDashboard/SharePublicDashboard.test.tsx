@@ -8,6 +8,7 @@ import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { setEchoSrv } from '@grafana/runtime/src';
+import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -200,8 +201,8 @@ describe('SharePublic - New config setup', () => {
           datasource: { type: 'notSupportedDatasource', uid: 'abc123' },
         } as DataQuery,
       ] as DataQuery[],
-    } as PanelModel;
-    const dashboard = new DashboardModel({
+    } as unknown as Panel;
+    const dashboard = createDashboardModelFixture({
       id: 1,
       panels: [panelModel],
     });

@@ -91,7 +91,7 @@ const (
 
 	LoadingStateLoading LoadingState = "Loading"
 
-	LoadingStateNonStarted LoadingState = "NonStarted"
+	LoadingStateNotStarted LoadingState = "NotStarted"
 
 	LoadingStateStreaming LoadingState = "Streaming"
 )
@@ -201,7 +201,7 @@ const (
 
 	VariableModelStateLoading VariableModelState = "Loading"
 
-	VariableModelStateNonStarted VariableModelState = "NonStarted"
+	VariableModelStateNotStarted VariableModelState = "NotStarted"
 
 	VariableModelStateStreaming VariableModelState = "Streaming"
 )

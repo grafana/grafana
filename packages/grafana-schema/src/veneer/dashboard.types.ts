@@ -11,22 +11,13 @@ export enum VariableHide {
   hideVariable,
 }
 
-export enum LoadingState {
-  NotStarted = 'NotStarted',
-  Loading = 'Loading',
-  Streaming = 'Streaming',
-  Done = 'Done',
-  Error = 'Error',
-}
-
 export interface VariableModel
-  extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'state' | 'datasource'> {
+  extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'datasource'> {
   // Overrides nullable properties because CUE doesn't support null values
   rootStateKey: string | null;
   error: any | null;
   description: string | null;
   hide: VariableHide;
-  state: LoadingState;
   datasource: raw.DataSourceRef | null;
 }
 
@@ -52,7 +43,7 @@ export const defaultVariableModel = {
   error: null,
   description: null,
   hide: VariableHide.dontHide,
-  state: LoadingState.NotStarted,
+  state: raw.LoadingState.NotStarted,
   datasource: null,
 } as VariableModel;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;

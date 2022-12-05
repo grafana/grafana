@@ -37,6 +37,7 @@ export type {
 export {
   defaultAnnotationTarget,
   defaultAnnotationQuery,
+  LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
   defaultGridPos,
@@ -80,7 +81,6 @@ export {
   defaultDashboard,
   defaultVariableModel,
   VariableHide,
-  LoadingState,
   defaultPanel,
   defaultFieldConfigSource,
   defaultFieldConfig
@@ -96,7 +96,7 @@ export type {
 export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 
 // Raw generated types from Team kind.
-export type {
-  Team,
-  Permission
-} from './raw/team/x/team_types.gen';
+export type { Team } from './raw/team/x/team_types.gen';
+
+// Raw generated enums and default consts from team kind.
+export { Permission } from './raw/team/x/team_types.gen';
