@@ -303,7 +303,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   async getProvider(providerName: string) {
-    return await this.getResource<AzureMonitorProvidersResponse>(
+    return await this.getResource(
       `${routeNames.azureMonitor}/providers/${providerName}?api-version=${this.providerApiVersion}`
     );
   }
@@ -312,7 +312,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const locationMap = new Map<string, AzureMonitorLocations>();
     for (const subscription of subscriptions) {
       const subLocations = ResponseParser.parseLocations(
-        await this.getResource<AzureMonitorLocationsResponse>(
+        await this.getResource(
           `${routeNames.azureMonitor}/subscriptions/${subscription}/locations?api-version=${this.locationsApiVersion}`
         )
       );

@@ -15,6 +15,7 @@ import {
   AzureMonitorQuery,
   AzureResourceGraphOptions,
   AzureResourceSummaryItem,
+  ProviderResourceType,
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
   RawAzureSubscriptionItem,
@@ -371,13 +372,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const subscriptionIds = subscriptions.map((sub) => sub.id);
     const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
     const insightsProvider = await this.azureMonitorDatasource.getProvider('Microsoft.Insights');
-    const logsProvider = insightsProvider?.resourceTypes.find((provider) => provider.resourceType === 'logs');
+    const logsProvider = insightsProvider?.resourceTypes.find(
+      (provider: ProviderResourceType) => provider.resourceType === 'logs'
+    );
 
     if (!logsProvider) {
       return locations;
     }
 
-    const logsLocations = logsProvider.locations.map((location) => ({
+    const logsLocations = logsProvider.locations.map((location: AzureMonitorLocations) => ({
       displayName: location,
       name: '',
       supportsLogs: true,
