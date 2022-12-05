@@ -59,8 +59,8 @@ _sharedKind: {
 	// grouped lineage, each top-level field in the schema specifies a discrete
 	// object that is expected to exist in the wild
 	//
-	// This field is set at the framework level, and cannot be in the declaration of
-	// any individual kind.
+	// This field is set by the kindsys framework, and cannot be overridden in the
+	// declaration of any individual kind.
 	//
 	// This is likely to eventually become a first-class property in Thema:
 	// https://github.com/grafana/thema/issues/62
@@ -75,6 +75,19 @@ _sharedKind: {
 
 	// form indicates whether the kind has a schema ("structured") or not ("raw")
 	form: "structured" | "raw"
+}
+
+// properties shared by all kinds that represent a complete object from root (i.e., not composable)
+_rootKind: {
+	// mimeType is the MIME type that will be indicated for entities of this kind by default.
+	// This is used only in contexts where indicating a MIME type is expected, such as
+	// in HTTP requests and responses.
+	mimeType: nonEmptyString | *"application/json"
+
+	// description is a brief narrative description of the nature and purpose of the kind.
+	// The contents of this field is shown to end users. Prefer clear, concise wording
+	// with minimal jargon.
+	description: nonEmptyString
 }
 
 // Maturity indicates the how far a given kind declaration is in its initial
@@ -108,10 +121,11 @@ _sharedKind: {
 // through metadata such as file extension.
 #Raw: {
 	_sharedKind
+	_rootKind
 	form: "raw"
 
 	// TODO docs
-	extensions?: [...string]
+	extensions?: [...nonEmptyString]
 
 	lineageIsGroup: false
 
@@ -123,14 +137,17 @@ _sharedKind: {
 // TODO
 #CustomStructured: {
 	#Structured
+	_rootKind
 
 	lineageIsGroup: false
 	...
 }
 
-// TODO
+// CoreStructured specifies the Kind category for core types that are declared with schemas.
+// This includes Grafana's most common types, such as dashboards and datasources.
 #CoreStructured: {
 	#Structured
+	_rootKind
 
 	lineageIsGroup: false
 }
@@ -163,3 +180,5 @@ _sharedKind: {
 	// It is required that lineage.name is the same as the [machineName].
 	lineage: thema.#Lineage & { name: S.machineName }
 }
+
+nonEmptyString: string & strings.MinRunes(1)
