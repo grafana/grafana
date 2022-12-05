@@ -101,9 +101,12 @@ func (f *fakeJWTAuth) IsEnabled() bool {
 }
 
 func (f *fakeJWTAuth) Generate(string, string) (string, error) {
-	return "", nil
+	return "hi", nil
 }
 
-func (f *fakeJWTAuth) Verify(context.Context, string) (models.JWTClaims, error) {
-	return models.JWTClaims{}, nil
+func (f *fakeJWTAuth) Verify(ctx context.Context, token string) (models.JWTClaims, error) {
+	if token == "hi" {
+		return models.JWTClaims{}, nil
+	}
+	return models.JWTClaims{}, errors.New("invalid token")
 }
