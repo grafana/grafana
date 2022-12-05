@@ -25,7 +25,7 @@ func main() {
 		return kinds[i].Name < kinds[j].Name
 	})
 
-	out := elsedie(json.MarshalIndent(kinds, "", "    "))("error generating json output")
+	out := elsedie(json.MarshalIndent(kinds, "", "  "))("error generating json output")
 
 	path := filepath.Join(kindsys.DeclParentPath, "report.json")
 	file := codejen.NewFile(path, out, reportJenny{})
