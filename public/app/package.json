@@ -12,7 +12,7 @@
     "directory": "public/app"
   },
   "scripts": {
-    "build": "NODE_ENV=production webpack --config ./webpack/webpack.prod.js",
+    "build": "NODE_ENV=production webpack --config ./webpack/webpack.prod.js --env noMinify=1",
     "build:nominify": "yarn run build --env noMinify=1",
     "lint": "yarn eslint . --ext .js,.tsx,.ts --cache",
     "lint:sass": "yarn stylelint '../sass/**/*.scss' --cache",

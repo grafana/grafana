@@ -23,7 +23,7 @@ module.exports = {
       // we want to have same Prism object in core and in grafana/ui
       prismjs: require.resolve('prismjs'),
     },
-    modules: ['node_modules', '../'],
+    modules: [path.resolve(__dirname, '../../')],
     fallback: {
       buffer: false,
       fs: false,

@@ -3,7 +3,10 @@
   "name": "grafana-app",
   "root": "public/app",
   "namedInputs": {
-    "themes": ["{projectRoot}/../../packages/grafana-ui/src/themes/*.tmpl.ts"]
+    "themes": [
+      "{projectRoot}/../../packages/grafana-ui/src/themes/*.tmpl.ts",
+      "{projectRoot}/../../scripts/generateSassVariableFiles.ts"
+    ]
   },
   "targets": {
     "build": {
@@ -11,31 +14,45 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["themes:generate"],
-      "outputs": ["{projectRoot}/../build"]
+      "dependsOn": [
+        "generateThemes"
+      ],
+      "outputs": [
+        "{projectRoot}/../build"
+      ]
     },
     "lint": {
       "executor": "nx:run-script",
       "options": {
         "script": "lint"
       },
-      "dependsOn": ["lint:sass"]
+      "dependsOn": [
+        "lint:sass"
+      ]
     },
     "start": {
       "executor": "nx:run-script",
       "options": {
         "script": "start"
       },
-      "dependsOn": ["themes:generate"],
-      "outputs": ["{projectRoot}/../build"]
+      "dependsOn": [
+        "generateThemes"
+      ],
+      "outputs": [
+        "{projectRoot}/../build"
+      ]
     },
     "generateThemes": {
       "executor": "nx:run-script",
       "options": {
-        "script": "themes:generate"
+        "script": "generateThemes"
       },
-      "inputs": ["themes"],
-      "outputs": ["{projectRoot}/../sass/_variables.*.scss"]
+      "inputs": [
+        "themes"
+      ],
+      "outputs": [
+        "{projectRoot}/../sass/_variables.*.scss"
+      ]
     }
   }
 }
