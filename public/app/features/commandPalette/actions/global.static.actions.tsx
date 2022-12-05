@@ -4,6 +4,7 @@ import React from 'react';
 import { isIconName, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
+import { changeTheme } from 'app/core/services/toggleTheme';
 
 const SECTION_PAGES = 'Pages';
 const SECTION_ACTIONS = 'Actions';
@@ -82,10 +83,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Dark',
       keywords: 'dark theme',
       section: '',
-      perform: () => {
-        locationService.push({ search: '?theme=dark' });
-        location.reload();
-      },
+      perform: () => changeTheme('dark'),
       parent: 'preferences/theme',
     },
     {
@@ -93,10 +91,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Light',
       keywords: 'light theme',
       section: '',
-      perform: () => {
-        locationService.push({ search: '?theme=light' });
-        location.reload();
-      },
+      perform: () => changeTheme('light'),
       parent: 'preferences/theme',
     },
   ];
