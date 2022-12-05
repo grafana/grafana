@@ -184,17 +184,21 @@ func (ng *AlertNG) init() error {
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:              ng.Cfg.UnifiedAlerting,
-		C:                clk,
-		EvaluatorFactory: evalFactory,
-		RuleStore:        store,
-		Metrics:          ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:      alertsRouter,
+		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		C:                    clk,
+		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
+		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
+		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		AppURL:               appUrl,
+		EvaluatorFactory:     evalFactory,
+		RuleStore:            store,
+		Metrics:              ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:          alertsRouter,
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
 	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, historian)
-	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
