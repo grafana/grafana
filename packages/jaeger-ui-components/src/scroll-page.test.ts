@@ -25,8 +25,8 @@ describe('scroll-by', () => {
   beforeEach(() => {
     window.scrollY = 100;
     tweenInstances.length = 0;
-    (Tween as jest.Mock).mockClear();
-    (Tween as jest.Mock).mockImplementation((opts) => {
+    jest.mocked(Tween).mockClear();
+    jest.mocked(Tween).mockImplementation((opts) => {
       const rv = { to: opts.to, onUpdate: opts.onUpdate } as Tween;
       Object.keys(Tween.prototype).forEach((name) => {
         if (name !== 'constructor') {
@@ -49,7 +49,7 @@ describe('scroll-by', () => {
         const yDelta = 10;
         scrollBy(yDelta);
         const spec = expect.objectContaining({ to: window.scrollY + yDelta });
-        expect((Tween as jest.Mock).mock.calls).toEqual([[spec]]);
+        expect(jest.mocked(Tween).mock.calls).toEqual([[spec]]);
       });
     });
 
@@ -57,9 +57,9 @@ describe('scroll-by', () => {
       it('is the same as `appendToLast === false` without an in-progress scroll', () => {
         const yDelta = 10;
         scrollBy(yDelta, true);
-        expect((Tween as jest.Mock).mock.calls.length).toBe(1);
+        expect(jest.mocked(Tween).mock.calls.length).toBe(1);
         scrollBy(yDelta, false);
-        expect((Tween as jest.Mock).mock.calls[0]).toEqual((Tween as jest.Mock).mock.calls[1]);
+        expect(jest.mocked(Tween).mock.calls[0]).toEqual(jest.mocked(Tween).mock.calls[1]);
       });
 
       it('is additive when an in-progress scroll is the same direction', () => {
@@ -67,8 +67,8 @@ describe('scroll-by', () => {
         const spec = expect.objectContaining({ to: window.scrollY + 2 * yDelta });
         scrollBy(yDelta);
         scrollBy(yDelta, true);
-        expect((Tween as jest.Mock).mock.calls.length).toBe(2);
-        expect((Tween as jest.Mock).mock.calls[1]).toEqual([spec]);
+        expect(jest.mocked(Tween).mock.calls.length).toBe(2);
+        expect(jest.mocked(Tween).mock.calls[1]).toEqual([spec]);
       });
 
       it('ignores the in-progress scroll is the other direction', () => {
@@ -76,8 +76,8 @@ describe('scroll-by', () => {
         const spec = expect.objectContaining({ to: window.scrollY - yDelta });
         scrollBy(yDelta);
         scrollBy(-yDelta, true);
-        expect((Tween as jest.Mock).mock.calls.length).toBe(2);
-        expect((Tween as jest.Mock).mock.calls[1]).toEqual([spec]);
+        expect(jest.mocked(Tween).mock.calls.length).toBe(2);
+        expect(jest.mocked(Tween).mock.calls[1]).toEqual([spec]);
       });
     });
   });
@@ -87,7 +87,7 @@ describe('scroll-by', () => {
       const to = 10;
       const spec = expect.objectContaining({ to });
       scrollTo(to);
-      expect((Tween as jest.Mock).mock.calls).toEqual([[spec]]);
+      expect(jest.mocked(Tween).mock.calls).toEqual([[spec]]);
     });
 
     it('ignores the in-progress scroll', () => {
@@ -95,8 +95,8 @@ describe('scroll-by', () => {
       const spec = expect.objectContaining({ to });
       scrollTo(Math.random());
       scrollTo(to);
-      expect((Tween as jest.Mock).mock.calls.length).toBe(2);
-      expect((Tween as jest.Mock).mock.calls[1]).toEqual([spec]);
+      expect(jest.mocked(Tween).mock.calls.length).toBe(2);
+      expect(jest.mocked(Tween).mock.calls[1]).toEqual([spec]);
     });
   });
 
@@ -107,7 +107,7 @@ describe('scroll-by', () => {
       expect(tweenInstances.length).toBe(1);
       const tw = tweenInstances[0];
       cancel();
-      expect((tw.cancel as jest.Mock).mock.calls).toEqual([[]]);
+      expect(jest.mocked(tw.cancel).mock.calls).toEqual([[]]);
     });
 
     it('is a noop if there is not an in-progress scroll', () => {
@@ -116,11 +116,11 @@ describe('scroll-by', () => {
       expect(tweenInstances.length).toBe(1);
       const tw = tweenInstances[0];
       cancel();
-      expect((tw.cancel as jest.Mock).mock.calls).toEqual([[]]);
-      (tw.cancel as jest.Mock).mockReset();
+      expect(jest.mocked(tw.cancel).mock.calls).toEqual([[]]);
+      jest.mocked(tw.cancel).mockReset();
       // now, we check to see if `cancel()` has an effect on the last created tween
       cancel();
-      expect((tw.cancel as jest.Mock).mock.calls.length).toBe(0);
+      expect(jest.mocked(tw.cancel).mock.calls.length).toBe(0);
     });
   });
 
@@ -145,8 +145,8 @@ describe('scroll-by', () => {
       scrollTo(10);
       const { onUpdate } = tweenInstances[0];
       onUpdate?.({ value, done: false });
-      expect((window.scrollTo as jest.Mock).mock.calls.length).toBe(1);
-      expect((window.scrollTo as jest.Mock).mock.calls[0][1]).toBe(value);
+      expect(jest.mocked(window.scrollTo).mock.calls.length).toBe(1);
+      expect(jest.mocked(window.scrollTo).mock.calls[0][1]).toBe(value);
     });
 
     it('discards the in-progress scroll if the scroll is done', () => {
@@ -156,7 +156,7 @@ describe('scroll-by', () => {
       onUpdate?.({ value: 123, done: true });
       // if the tween is not discarded, `cancel()` will cancel it
       cancel();
-      expect((twCancel as jest.Mock).mock.calls.length).toBe(0);
+      expect(jest.mocked(twCancel).mock.calls.length).toBe(0);
     });
   });
 });
