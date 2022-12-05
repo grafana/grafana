@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,14 +57,14 @@ var WireExtensionSet = wire.NewSet(
 
 func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService)
+	oAuthTokenService oauthtoken.OAuthTokenService, pluginAuthService jwt.PluginAuthService) (*client.Decorator, error) {
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, pluginAuthService)
 }
 
 func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
-	c := client.ProvideService(pluginRegistry, pCfg, nil)
+	oAuthTokenService oauthtoken.OAuthTokenService, pluginAuthService jwt.PluginAuthService) (*client.Decorator, error) {
+	c := client.ProvideService(pluginRegistry, pCfg, pluginAuthService)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService)
 
 	return client.NewDecorator(c, middlewares...)
