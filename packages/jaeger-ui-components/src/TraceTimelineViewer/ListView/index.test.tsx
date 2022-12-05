@@ -49,7 +49,18 @@ describe('<ListView>', () => {
     return <div {...rest}>{children}</div>;
   }
 
-  function renderItem(itemKey, styles, itemIndex, attrs) {
+  function renderItem(
+    itemKey: string,
+    styles: {
+      height: number;
+      top: number;
+      position: string;
+    },
+    itemIndex: number,
+    attrs: {
+      'data-item-key': string;
+    }
+  ) {
     return (
       <Item key={itemKey} style={styles} {...attrs}>
         {itemIndex}
@@ -75,7 +86,7 @@ describe('<ListView>', () => {
 
   describe('shallow tests', () => {
     beforeEach(() => {
-      wrapper = shallow(<ListView {...props} />);
+      wrapper = shallow(<ListView {...(props as unknown as TListViewProps)} />);
     });
 
     it('renders without exploding', () => {
@@ -149,7 +160,7 @@ describe('<ListView>', () => {
 
       beforeEach(() => {
         initWrapperMock.mockClear();
-        wrapper = mount(<ListView {...props} />);
+        wrapper = mount(<ListView {...(props as unknown as TListViewProps)} />);
         instance = wrapper.instance();
       });
 
@@ -180,7 +191,7 @@ describe('<ListView>', () => {
         windowAddListenerSpy = jest.spyOn(window, 'addEventListener');
         windowRmListenerSpy = jest.spyOn(window, 'removeEventListener');
         const wsProps = { ...props, windowScroller: true };
-        wrapper = mount(<ListView {...wsProps} />);
+        wrapper = mount(<ListView {...(wsProps as unknown as TListViewProps)} />);
         instance = wrapper.instance();
       });
 
