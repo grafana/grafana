@@ -57,7 +57,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
+	rp := newResponseParser(res.Responses, queries)
 	return rp.getTimeSeries()
 }
 
