@@ -94,10 +94,6 @@ export function RuleViewerVisualization({
           return (
             <div style={{ width, height }}>
               <div className={styles.header}>
-                <div>
-                  {`Query ${refId}`}
-                  <span className={styles.dataSource}>({dsSettings.name})</span>
-                </div>
                 <div className={styles.actions}>
                   {!isExpressionQuery(model) && relativeTimeRange ? (
                     <DateTimePicker
@@ -162,7 +158,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: ${theme.spacing(headerHeight)};
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       white-space: nowrap;
     `,
     refId: css`

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -19,12 +20,11 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
 import { AlertQuery } from '../../../types/unified-alerting-dto';
 
-import { GrafanaRuleViewer } from './GrafanaRuleViewer';
+import { GrafanaRuleQueryViewer, QueryPreview } from './GrafanaRuleQueryViewer';
 import { AlertLabels } from './components/AlertLabels';
 import { DetailsField } from './components/DetailsField';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';
-import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { RuleDetailsActionButtons } from './components/rules/RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
 import { RuleDetailsDataSources } from './components/rules/RuleDetailsDataSources';
@@ -209,27 +209,30 @@ export function RuleViewer({ match }: RuleViewerProps) {
         collapsible={true}
         className={styles.collapse}
       >
-        {isGrafanaRulerRule(rule.rulerRule) && (
-          <GrafanaRuleViewer rule={rule.rulerRule} evalDataByQuery={data} onTimeRangeChange={onQueryTimeRangeChange} />
+        {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
+          <GrafanaRuleQueryViewer
+            rule={rule.rulerRule}
+            evalDataByQuery={data}
+            onTimeRangeChange={onQueryTimeRangeChange}
+          />
         )}
-        {!isFederatedRule && data && Object.keys(data).length > 0 && (
-          <>
-            <RuleViewerLayoutContent padding={0}>
-              <div className={styles.queries}>
-                {queries.map((query) => {
-                  return (
-                    <div key={query.refId} className={styles.query}>
-                      <RuleViewerVisualization
-                        {...query}
-                        data={data && data[query.refId]}
-                        onTimeRangeChange={(timeRange) => onChangeQuery({ ...query, relativeTimeRange: timeRange })}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </RuleViewerLayoutContent>
-          </>
+
+        {!isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && data && Object.keys(data).length > 0 && (
+          <div className={styles.queries}>
+            {queries.map((query) => {
+              return (
+                <QueryPreview
+                  key={query.refId}
+                  isAlertCondition={false}
+                  onTimeRangeChange={(timeRange) => onChangeQuery({ ...query, relativeTimeRange: timeRange })}
+                  refId={query.refId}
+                  model={query.model}
+                  queryData={data[query.refId]}
+                  dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
+                />
+              );
+            })}
+          </div>
         )}
         {!isFederatedRule && !allDataSourcesAvailable && (
           <Alert title="Query not available" severity="warning" className={styles.queryWarning}>
@@ -255,7 +258,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 100%;
     `,
     collapse: css`
-      border: 1px solid ${theme.colors.border.weak};
+      margin-top: ${theme.spacing(2)};
+      border-color: ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
     `,
     queriesTitle: css`
       padding: ${theme.spacing(2, 0.5)};

@@ -32,7 +32,7 @@ interface GrafanaRuleViewerProps {
   onTimeRangeChange: (queryRef: string, timeRange: RelativeTimeRange) => void;
 }
 
-export function GrafanaRuleViewer({ rule, evalDataByQuery = {}, onTimeRangeChange }: GrafanaRuleViewerProps) {
+export function GrafanaRuleQueryViewer({ rule, evalDataByQuery = {}, onTimeRangeChange }: GrafanaRuleViewerProps) {
   // const styles = useStyles2(getGrafanaRuleViewerStyles);
 
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
@@ -92,7 +92,7 @@ interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRang
   onTimeRangeChange: (timeRange: RelativeTimeRange) => void;
 }
 
-function QueryPreview({
+export function QueryPreview({
   refId,
   relativeTimeRange,
   model,
