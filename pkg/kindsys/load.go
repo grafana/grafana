@@ -108,9 +108,21 @@ func ToKindMeta[T KindProperties](v cue.Value) (T, error) {
 	}
 
 	item := v.Unify(kdef)
-	if err := item.Validate(cue.Concrete(false), cue.All()); err != nil {
-		return *props, ewrap(item.Err(), ErrValueNotAKind)
+	if err := item.Validate(cue.Concrete(false), cue.All(), cue.Final()); err != nil {
+		return *props, ewrap(err, ErrValueNotAKind)
 	}
+	iter, err := item.Fields(cue.Optional(true))
+	if err != nil {
+		panic(err)
+	}
+	for iter.Next() {
+		if iter.Selector().String() != "lineage" {
+			if err := iter.Value().Validate(cue.Concrete(true), cue.Final()); err != nil {
+				return *props, ewrap(err, ErrValueNotAKind)
+			}
+		}
+	}
+
 	if err := item.Decode(props); err != nil {
 		// Should only be reachable if CUE and Go framework types have diverged
 		panic(errors.Details(err, nil))

@@ -10,6 +10,8 @@ type CommonProperties struct {
 	PluralMachineName string   `json:"pluralMachineName"`
 	LineageIsGroup    bool     `json:"lineageIsGroup"`
 	Maturity          Maturity `json:"maturity"`
+	Description       string   `json:"description"`
+	MimeType          string   `json:"mimeType"`
 }
 
 // RawProperties represents the static properties in a #Raw kind declaration that are
