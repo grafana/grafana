@@ -9,14 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetEntityKindInfo() models.EntityKindInfo {
-	return models.EntityKindInfo{
-		ID:          models.StandardKindPlaylist,
-		Name:        "Playlist",
-		Description: "Cycle though a collection of dashboards automatically",
-	}
-}
-
 func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 	return summaryBuilder
 }

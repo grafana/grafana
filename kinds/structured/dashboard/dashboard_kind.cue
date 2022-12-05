@@ -4,6 +4,7 @@ import "strings"
 
 name:     "Dashboard"
 maturity: "merged"
+description: "A Grafana dashboard."
 
 lineage: seqs: [
 	{

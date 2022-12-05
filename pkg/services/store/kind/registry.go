@@ -1,11 +1,14 @@
 package kind
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dataframe"
@@ -29,14 +32,29 @@ type KindRegistry interface {
 
 func NewKindRegistry() KindRegistry {
 	kinds := make(map[string]*kindValues)
-	kinds[models.StandardKindPlaylist] = &kindValues{
-		info:    playlist.GetEntityKindInfo(),
-		builder: playlist.GetEntitySummaryBuilder(),
+	for _, k := range corekind.NewBase(nil).All() {
+		kv := &kindValues{
+			info: makeEKI(k.Props()),
+		}
+
+		// FIXME horrible hack, undermines SSoT, do this in kindsys/codegen
+		switch k.Props().Common().MachineName {
+		case "playlist":
+			kv.builder = playlist.GetEntitySummaryBuilder()
+		case "dashboard":
+			kv.builder = dashboard.GetEntitySummaryBuilder()
+		default:
+			// FIXME a generic implementation is needed, but this is piss-poor
+			kv.builder = func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
+				return &models.EntitySummary{
+					UID:  uid,
+					Kind: k.Props().Common().Name,
+				}, nil, nil
+			}
+		}
+		kinds[k.Props().Common().MachineName] = kv
 	}
-	kinds[models.StandardKindDashboard] = &kindValues{
-		info:    dashboard.GetEntityKindInfo(),
-		builder: dashboard.GetEntitySummaryBuilder(),
-	}
+
 	kinds[models.StandardKindSnapshot] = &kindValues{
 		info:    snapshot.GetEntityKindInfo(),
 		builder: snapshot.GetEntitySummaryBuilder(),
@@ -71,12 +89,23 @@ func NewKindRegistry() KindRegistry {
 	return reg
 }
 
+func makeEKI(meta kindsys.SomeKindMeta) models.EntityKindInfo {
+	eki := models.EntityKindInfo{
+		ID:          meta.Common().MachineName,
+		Name:        meta.Common().Name,
+		Description: meta.Common().Description,
+		MimeType:    meta.Common().MimeType,
+	}
+	_, eki.IsRaw = meta.(kindsys.RawMeta)
+	return eki
+}
+
 // TODO? This could be a zero dependency service that others are responsible for configuring
 func ProvideService(cfg *setting.Cfg, renderer rendering.Service) KindRegistry {
 	reg := NewKindRegistry()
 
 	// Register SVG support
-	//-----------------------
+	// -----------------------
 	info := svg.GetEntityKindInfo()
 	allowUnsanitizedSvgUpload := cfg != nil && cfg.Storage.AllowUnsanitizedSvgUpload
 	support := svg.GetEntitySummaryBuilder(allowUnsanitizedSvgUpload, renderer)

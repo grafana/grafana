@@ -12,14 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func GetEntityKindInfo() models.EntityKindInfo {
-	return models.EntityKindInfo{
-		ID:          models.StandardKindDashboard,
-		Name:        "Dashboard",
-		Description: "Define a grafana dashboard layout",
-	}
-}
-
 // This summary does not resolve old name as UID
 func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 	builder := NewStaticDashboardSummaryBuilder(&directLookup{}, true)
