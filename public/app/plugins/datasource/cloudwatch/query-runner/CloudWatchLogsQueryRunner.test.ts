@@ -1,18 +1,10 @@
 import { interval, lastValueFrom, of } from 'rxjs';
 
-import {
-  dataFrameToJSON,
-  DataQueryErrorType,
-  DataQueryRequest,
-  FieldType,
-  LogLevel,
-  LogRowModel,
-  MutableDataFrame,
-} from '@grafana/data';
+import { dataFrameToJSON, DataQueryErrorType, FieldType, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import { genMockFrames, setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { validLogsQuery } from '../__mocks__/queries';
-import { CloudWatchQuery, LogAction } from '../types';
+import { LogAction } from '../types';
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
@@ -219,69 +211,6 @@ describe('CloudWatchLogsQueryRunner', () => {
         state: 'Done',
       });
       expect(i).toBe(3);
-    });
-  });
-
-  describe('handleLogQueries', () => {
-    it('should not run queries with missing log groups', async () => {
-      const { runner } = setupMockedLogsQueryRunner();
-      const response = await lastValueFrom(
-        runner.handleLogQueries(
-          [
-            {
-              datasource: { type: 'cloudwatch', uid: 'Zne6OZIVk' },
-              id: '',
-              queryMode: 'Logs',
-              expression: 'some query string',
-              refId: 'A',
-              region: 'default',
-            },
-            {
-              datasource: { type: 'cloudwatch', uid: 'Zne6OZIVk' },
-              id: '',
-              queryMode: 'Logs',
-              logGroupNames: ['some valid log group'],
-              expression: 'some query string',
-              refId: 'B',
-              region: 'default',
-            },
-          ],
-          { scopedVars: {} } as DataQueryRequest<CloudWatchQuery>
-        )
-      );
-
-      expect(response).toEqual({
-        data: [],
-        error: undefined,
-        key: 'test-key',
-        state: 'Done',
-      });
-    });
-
-    it('should not run queries with an incomplete query string', async () => {
-      const { runner } = setupMockedLogsQueryRunner();
-      const response = await lastValueFrom(
-        runner.handleLogQueries(
-          [
-            {
-              datasource: { type: 'cloudwatch', uid: 'Zne6OZIVk' },
-              id: '',
-              logGroups: [{ label: '', text: '', value: '' }],
-              queryMode: 'Logs',
-              refId: 'A',
-              region: 'default',
-            },
-          ],
-          { scopedVars: {} } as DataQueryRequest<CloudWatchQuery>
-        )
-      );
-
-      expect(response).toEqual({
-        data: [],
-        error: undefined,
-        key: 'test-key',
-        state: 'Done',
-      });
     });
   });
 });
