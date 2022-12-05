@@ -25,7 +25,7 @@ To switch between Grafana and any configured Alertmanager data sources, you can 
 
 The data source supports [Prometheus](https://prometheus.io/) and [Grafana Mimir](https://grafana.com/docs/mimir/latest/) (default) implementations of Alertmanager.
 You can specify the implementation in the data source's Settings page.
-When using Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI because it doesn't support updating the configuration via HTTP API.
+When using Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI, because it doesn't support updates to the configuration using HTTP API.
 
 ## Provision the Alertmanager data source
 
