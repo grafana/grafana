@@ -41,8 +41,6 @@ export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[]
     });
   }
 
-  console.log('getVisibleLabels', visibleLabels);
-
   return visibleLabels;
 };
 
