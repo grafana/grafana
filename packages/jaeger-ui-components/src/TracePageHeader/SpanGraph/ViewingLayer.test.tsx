@@ -109,13 +109,13 @@ describe('<SpanGraph>', () => {
       it('handles mousemove', () => {
         const value = 0.5;
         wrapper.instance()._handleReframeMouseMove({ value } as DraggingUpdate);
-        const calls = (props.updateNextViewRangeTime as jest.Mock).mock.calls;
+        const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
         expect(calls).toEqual([[{ cursor: value }]]);
       });
 
       it('handles mouseleave', () => {
         wrapper.instance()._handleReframeMouseLeave();
-        const calls = (props.updateNextViewRangeTime as jest.Mock).mock.calls;
+        const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
         expect(calls).toEqual([[{ cursor: null }]]);
       });
 
@@ -123,7 +123,7 @@ describe('<SpanGraph>', () => {
         it('handles sans anchor', () => {
           const value = 0.5;
           wrapper.instance()._handleReframeDragUpdate({ value } as DraggingUpdate);
-          const calls = (props.updateNextViewRangeTime as jest.Mock).mock.calls;
+          const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
           expect(calls).toEqual([[{ reframe: { anchor: value, shift: value } }]]);
         });
 
@@ -136,7 +136,7 @@ describe('<SpanGraph>', () => {
             .dive()
             .dive();
           wrapper.instance()._handleReframeDragUpdate({ value } as DraggingUpdate);
-          const calls = (props.updateNextViewRangeTime as jest.Mock).mock.calls;
+          const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
           expect(calls).toEqual([[{ reframe: { anchor, shift: value } }]]);
         });
       });
