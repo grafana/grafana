@@ -1,27 +1,41 @@
 {
+  "$schema": "https://raw.githubusercontent.com/nrwl/nx/master/packages/nx/schemas/project-schema.json",
   "name": "grafana-app",
   "root": "public/app",
+  "namedInputs": {
+    "themes": ["{projectRoot}/../../packages/grafana-ui/src/themes/*.tmpl.ts"]
+  },
   "targets": {
     "build": {
-      "dependsOn": [
-        "themes:generate"
-      ],
-      "outputs": [
-        "{workspaceRoot}/../build"
-      ]
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      },
+      "dependsOn": ["themes:generate"],
+      "outputs": ["{projectRoot}/../build"]
     },
     "lint": {
-      "dependsOn": [
-        "lint:sass"
-      ]
+      "executor": "nx:run-script",
+      "options": {
+        "script": "lint"
+      },
+      "dependsOn": ["lint:sass"]
     },
     "start": {
-      "dependsOn": [
-        "themes:generate"
-      ],
-      "outputs": [
-        "{workspaceRoot}/../build"
-      ]
+      "executor": "nx:run-script",
+      "options": {
+        "script": "start"
+      },
+      "dependsOn": ["themes:generate"],
+      "outputs": ["{projectRoot}/../build"]
+    },
+    "generateThemes": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "themes:generate"
+      },
+      "inputs": ["themes"],
+      "outputs": ["{projectRoot}/../sass/_variables.*.scss"]
     }
   }
 }

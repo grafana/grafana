@@ -21,7 +21,7 @@
     "start": "yarn webpack --progress --color --config ../../scripts/webpack/webpack.dev.js --watch --env noTsCheck=1",
     "start:tsCheck": "yarn start --env noTsCheck=0",
     "stats": "yarn webpack --mode production --config ../../scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
-    "themes:generate": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/generateSassVariableFiles.ts",
+    "generateThemes": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/generateSassVariableFiles.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
