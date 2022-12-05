@@ -20,8 +20,6 @@ import {
   GetMetricMetadataQuery,
   AzureMetricQuery,
   AzureMonitorLocations,
-  AzureMonitorProvidersResponse,
-  AzureMonitorLocationsResponse,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
