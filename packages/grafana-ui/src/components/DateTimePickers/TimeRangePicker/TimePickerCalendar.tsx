@@ -17,7 +17,7 @@ import { Header } from './CalendarHeader';
 export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
   return {
     container: css`
-      top: -1px;
+      top: 0px;
       position: absolute;
       ${isReversed ? 'left' : 'right'}: 544px;
       box-shadow: ${theme.shadows.z3};
