@@ -11,8 +11,9 @@ import { appendTemplateVariables } from './utils/utils';
 
 export interface FieldDataState<T> {
   options: Array<SelectableValue<T>>;
-  isValid: boolean;
+  invalid: boolean;
   isLoading: boolean;
+  isClearable: boolean;
 }
 
 // type FieldDataState = Pick<SelectCommonProps<string>, 'isLoading'>;
@@ -52,10 +53,12 @@ export const useNamespaces = (datasource: CloudWatchDatasource, currentNamespace
       .finally(() => setIsLoading(false));
   }, [datasource]);
 
+  const invalid = !isLoading && !namespaces.some((n) => n.value === currentNamespace);
   return {
     isLoading,
     options: namespaces,
-    isValid: isLoading || namespaces.some((n) => n.value === currentNamespace),
+    invalid,
+    isClearable: invalid,
   };
 };
 
@@ -88,10 +91,12 @@ export const useMetrics = (
       .finally(() => setIsLoading(false));
   }, [datasource, region, namespace, accountId]);
 
+  const invalid = !isLoading && !metrics.some((metric) => metric.value === currentMetricName);
   return {
     isLoading,
     options: metrics,
-    isValid: isLoading || metrics.some((metric) => metric.value === currentMetricName),
+    invalid,
+    isClearable: invalid,
   };
 };
 
@@ -173,10 +178,12 @@ export const useDimensionKeys2 = (
       .finally(() => setIsLoading(false));
   }, [datasource, namespace, region, metricName, accountId, dimensionFilters]);
 
+  const invalid = !isLoading && !dimensionKeys.some((dk) => dk.value === currentDimensionKey);
   return {
     isLoading,
     options: dimensionKeys,
-    isValid: isLoading || dimensionKeys.some((dk) => dk.value === currentDimensionKey),
+    invalid,
+    isClearable: invalid,
   };
 };
 

@@ -47,7 +47,7 @@ export const FilterItem: FunctionComponent<Props> = ({
     [dimensions, filter]
   );
 
-  const dimensionKeys = useDimensionKeys2(
+  const dimensionKeyFieldState = useDimensionKeys2(
     datasource,
     {
       region,
@@ -81,6 +81,8 @@ export const FilterItem: FunctionComponent<Props> = ({
       });
   };
 
+  console.log('isValid', dimensionKeyFieldState.invalid);
+
   const [state, loadOptions] = useAsyncFn(loadDimensionValues, [
     filter.key,
     dimensions,
@@ -96,17 +98,14 @@ export const FilterItem: FunctionComponent<Props> = ({
     <div data-testid="cloudwatch-dimensions-filter-item">
       <InputGroup>
         <Select
+          {...dimensionKeyFieldState}
           aria-label="Dimensions filter key"
           inputId="cloudwatch-dimensions-filter-item-key"
           width="auto"
           value={filter.key ? toOption(filter.key) : null}
           allowCustomValue
-          // options={dimensionKeys}
-          {...dimensionKeys}
           onChange={(change) => {
-            if (change.label) {
-              onChange({ key: change.label, value: undefined });
-            }
+            onChange({ key: change?.label, value: undefined });
           }}
         />
 

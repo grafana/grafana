@@ -30,7 +30,6 @@ export function MetricStatEditor({
   const namespaceFieldState = useNamespaces(datasource, metricStat.namespace);
   const metricFieldState = useMetrics(datasource, metricStat, metricStat.metricName);
   const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
-  console.log({ dimensionKeys });
   const accountState = useAccountOptions(datasource.api, metricStat.region);
 
   useEffect(() => {
@@ -64,8 +63,8 @@ export function MetricStatEditor({
               aria-label="Namespace"
               value={metricStat?.namespace && toOption(metricStat.namespace)}
               allowCustomValue
-              onChange={({ value: namespace }) => {
-                namespace && onChange({ ...metricStat, namespace });
+              onChange={(option) => {
+                onChange({ ...metricStat, namespace: option?.value ?? '' });
               }}
             />
           </EditorField>
@@ -75,11 +74,7 @@ export function MetricStatEditor({
               aria-label="Metric name"
               value={metricStat?.metricName && toOption(metricStat.metricName)}
               allowCustomValue
-              onChange={({ value: metricName }) => {
-                if (metricName) {
-                  onChange({ ...metricStat, metricName });
-                }
-              }}
+              onChange={({ value: metricName }) => metricName && onChange({ ...metricStat, metricName })}
             />
           </EditorField>
 
