@@ -41,6 +41,10 @@ func (m Maturity) Less(om Maturity) bool {
 	return maturityIdx(m) < maturityIdx(om)
 }
 
+func (m Maturity) String() string {
+	return string(m)
+}
+
 // TODO docs
 type Interface interface {
 	// TODO docs

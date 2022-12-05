@@ -1,0 +1,25 @@
+[
+  {
+    "name": "dashboard",
+    "maturity": "merged",
+    "type": "structured",
+    "latest": "0.0"
+  },
+  {
+    "name": "playlist",
+    "maturity": "merged",
+    "type": "structured",
+    "latest": "0.0"
+  },
+  {
+    "name": "svg",
+    "maturity": "merged",
+    "type": "raw"
+  },
+  {
+    "name": "team",
+    "maturity": "merged",
+    "type": "structured",
+    "latest": "0.0"
+  }
+]
