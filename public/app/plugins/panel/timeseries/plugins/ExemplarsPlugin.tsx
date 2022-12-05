@@ -112,7 +112,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
             // If there are labels, lets only show the exemplars with labels associated with series that are currently visible
             const fields = dataFrame.fields.filter((field) => labelKeys.find((labelKey) => labelKey === field.name));
 
-            if (fields.length > 1) {
+            if (fields.length) {
               showMarker = fields.every((field) => {
                 const value = field.values.get(dataFrameFieldIndex.fieldIndex);
                 if (labelValues.includes(value)) {
