@@ -29,6 +29,7 @@ func main() {
 
 	path := filepath.Join(kindsys.DeclParentPath, "report.json")
 	file := codejen.NewFile(path, out, reportJenny{})
+	file.Data = []byte(fmt.Sprintln(string(file.Data))) // new line at the end of the file
 	filesystem := elsedie(file.ToFS())("error building in-memory file system")
 
 	cwd := elsedie(os.Getwd())("error getting working directory")
