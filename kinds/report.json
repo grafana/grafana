@@ -1,25 +1,38 @@
 [
   {
-    "name": "dashboard",
+    "name": "Dashboard",
+    "pluralName": "Dashboards",
+    "machineName": "dashboard",
+    "pluralMachineName": "dashboards",
+    "lineageIsGroup": false,
     "maturity": "merged",
-    "type": "structured",
-    "latest": "0.0"
+    "currentVersion": [0, 0]
   },
   {
-    "name": "playlist",
+    "name": "Playlist",
+    "pluralName": "Playlists",
+    "machineName": "playlist",
+    "pluralMachineName": "playlists",
+    "lineageIsGroup": false,
     "maturity": "merged",
-    "type": "structured",
-    "latest": "0.0"
+    "currentVersion": [0, 0]
   },
   {
-    "name": "svg",
+    "name": "SVG",
+    "pluralName": "SVGs",
+    "machineName": "svg",
+    "pluralMachineName": "svgs",
+    "lineageIsGroup": false,
     "maturity": "merged",
-    "type": "raw"
+    "extensions": ["svg"]
   },
   {
-    "name": "team",
+    "name": "Team",
+    "pluralName": "Teams",
+    "machineName": "team",
+    "pluralMachineName": "teams",
+    "lineageIsGroup": false,
     "maturity": "merged",
-    "type": "structured",
-    "latest": "0.0"
+    "currentVersion": [0, 0]
   }
 ]

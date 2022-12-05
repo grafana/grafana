@@ -19,10 +19,10 @@ import (
 )
 
 func main() {
-	kinds := loadKinds()
+	kinds := loadKindMetas()
 
 	sort.Slice(kinds, func(i, j int) bool {
-		return kinds[i].Name < kinds[j].Name
+		return kinds[i].Common().MachineName < kinds[j].Common().MachineName
 	})
 
 	out := elsedie(json.MarshalIndent(kinds, "", "  "))("error generating json output")
@@ -44,45 +44,29 @@ func main() {
 	}
 }
 
-type kind struct {
-	Name     string `json:"name"`
-	Maturity string `json:"maturity"`
-	Type     string `json:"type"`
-	Latest   string `json:"latest,omitempty"`
-}
-
-func loadKinds() []kind {
+func loadKindMetas() []kindsys.SomeKindMeta {
 	return append(loadStructuredKinds(), loadRawKinds()...)
 }
 
-func loadStructuredKinds() []kind {
+func loadStructuredKinds() []kindsys.SomeKindMeta {
 	b := corekind.NewBase(nil)
 	allStructured := b.AllStructured()
-	kinds := make([]kind, 0, len(allStructured))
+	kinds := make([]kindsys.SomeKindMeta, 0, len(allStructured))
 
 	for _, k := range allStructured {
-		kinds = append(kinds, kind{
-			Name:     k.MachineName(),
-			Maturity: k.Maturity().String(),
-			Type:     "structured",
-			Latest:   k.Lineage().Latest().Version().String(),
-		})
+		kinds = append(kinds, k.Decl().Meta)
 	}
 
 	return kinds
 }
 
-func loadRawKinds() []kind {
+func loadRawKinds() []kindsys.SomeKindMeta {
 	b := corekind.NewBase(nil)
 	allRaw := b.AllRaw()
-	kinds := make([]kind, 0, len(allRaw))
+	kinds := make([]kindsys.SomeKindMeta, 0, len(allRaw))
 
 	for _, k := range allRaw {
-		kinds = append(kinds, kind{
-			Name:     k.MachineName(),
-			Maturity: k.Maturity().String(),
-			Type:     "raw",
-		})
+		kinds = append(kinds, k.Decl().Meta)
 	}
 
 	return kinds
