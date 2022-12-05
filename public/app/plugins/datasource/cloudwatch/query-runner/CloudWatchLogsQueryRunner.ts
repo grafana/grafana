@@ -84,7 +84,9 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const startQueryRequests: StartQueryRequest[] = logQueries.map((target: CloudWatchLogsQuery) => ({
+    const validLogQueries = logQueries.filter(this.filterQuery);
+
+    const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression || '',
       refId: target.refId,
       logGroupNames: target.logGroupNames || this.defaultLogGroups,
@@ -96,8 +98,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         'region'
       ),
     }));
-
-    const validLogQueries = startQueryRequests.filter(this.filterQuery);
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -112,7 +112,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
           skipCache: true,
         });
       },
-      validLogQueries,
+      startQueryRequests,
       timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
@@ -429,10 +429,10 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return getLogGroupFieldsResponse;
   }
 
-  private filterQuery(request: StartQueryRequest) {
-    const hasMissingLegacyLogGroupNames = request.logGroupNames?.length === 0;
-    const hasMissingLogGroups = request.logGroups?.length === 0;
-    const hasMissingQueryString = request.queryString?.length === 0;
+  private filterQuery(query: CloudWatchLogsQuery) {
+    const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length && this.defaultLogGroups.length === 0;
+    const hasMissingLogGroups = !query.logGroups?.length;
+    const hasMissingQueryString = !query.expression?.length;
 
     if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
       return false;

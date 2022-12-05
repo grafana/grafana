@@ -29,7 +29,7 @@ describe('datasource', () => {
               id: '',
               refId: '',
               region: '',
-              expression: 'some query string', // missing log group, this query will be not be run
+              expression: 'some query string', // missing logGroups and logGroupNames, this query will be not be run
             },
             {
               queryMode: 'Logs',
