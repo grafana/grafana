@@ -1,21 +1,20 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { NavModelItem } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { useGetSingle } from './api';
+import { DetailsOverview } from './components';
+import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
 
 const navId = 'connections-plugin-recipes';
 
 export function PluginRecipeDetailsPage() {
   const params = useParams<{ id: string }>();
   const { status, error, data } = useGetSingle(params.id);
-  const tabs = usePluginRecipeDetailsPageTabs();
+  const { tabId, tabs } = usePluginRecipeDetailsPageTabs(data);
 
-  // Loading
   if (status === 'loading') {
     return (
       <Page navId={navId} pageNav={{ text: '', subTitle: '', active: true }}>
@@ -26,7 +25,6 @@ export function PluginRecipeDetailsPage() {
     );
   }
 
-  // Error
   if (status === 'error') {
     return (
       <Page navId={navId} pageNav={{ text: 'Error', subTitle: '', active: true }}>
@@ -37,7 +35,6 @@ export function PluginRecipeDetailsPage() {
     );
   }
 
-  // Not Found
   if (status === 'success' && !data) {
     return (
       <Page navId={navId} pageNav={{ text: '', subTitle: '', active: true }}>
@@ -48,27 +45,7 @@ export function PluginRecipeDetailsPage() {
 
   return (
     <Page navId={navId} pageNav={{ text: data.name, subTitle: data.description, active: true, children: tabs }}>
-      <Page.Contents>
-        <div>{params.id}</div>
-      </Page.Contents>
+      <Page.Contents>{tabId === tabIds.overview && <DetailsOverview recipe={data} />}</Page.Contents>
     </Page>
   );
-}
-
-function usePluginRecipeDetailsPageTabs(): NavModelItem[] {
-  const [query, setQueryParams] = useQueryParams();
-  const { page } = query;
-
-  return useMemo((): NavModelItem[] => {
-    const current = page || 'overview';
-
-    return [
-      {
-        id: 'overview',
-        text: 'Overview',
-        onClick: () => setQueryParams({ page: 'overview' }),
-        active: current === 'overview',
-      },
-    ];
-  }, [page, setQueryParams]);
 }

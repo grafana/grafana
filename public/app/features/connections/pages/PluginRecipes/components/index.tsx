@@ -1,1 +1,1 @@
-export * from './PluginRecipesList';
+export * from './DetailsOverview';
