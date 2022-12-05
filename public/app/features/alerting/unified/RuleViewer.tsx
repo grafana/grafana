@@ -9,7 +9,6 @@ import {
   Collapse,
   Icon,
   LoadingPlaceholder,
-  PanelChromeLoadingIndicator,
   useStyles2,
   VerticalGroup,
   withErrorBoundary,
@@ -204,9 +203,9 @@ export function RuleViewer({ match }: RuleViewerProps) {
                   return (
                     <div key={query.refId} className={styles.query}>
                       <RuleViewerVisualization
-                        query={query}
+                        {...query}
                         data={data && data[query.refId]}
-                        onChangeQuery={onChangeQuery}
+                        onTimeRangeChange={(timeRange) => onChangeQuery({ ...query, relativeTimeRange: timeRange })}
                       />
                     </div>
                   );

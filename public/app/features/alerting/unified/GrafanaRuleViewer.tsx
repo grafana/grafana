@@ -1,7 +1,7 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { dump } from 'js-yaml';
 import { keyBy, startCase } from 'lodash';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { PanelData, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -15,6 +15,7 @@ import {
   downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
+  ReducerMode,
   reducerMode,
   reducerTypes,
   thresholdFunctions,
@@ -23,8 +24,7 @@ import {
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 import { ExpressionResult } from './components/expressions/Expression';
-import { VizWrapper } from './components/rule-editor/VizWrapper';
-import { TIMESERIES } from './utils/constants';
+import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 
 export function GrafanaRuleViewer({
   rule,
@@ -93,18 +93,29 @@ interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRang
 function QueryPreview({ refId, relativeTimeRange, model, dataSource, queryData }: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
 
+  const [timeRange, setTimeRange] = useState(relativeTimeRange);
+
   const headerItems = [dataSource?.name ?? '[[Data source not found]]'];
   if (relativeTimeRange) {
     headerItems.push(mapRelativeTimeRangeToOption(relativeTimeRange).display);
   }
 
   return (
-    <QueryBox refId={refId} headerItems={headerItems}>
+    <QueryBox refId={refId} headerItems={headerItems} className={styles.contentBox}>
       <pre className={styles.code}>
         <code>{dump(model)}</code>
       </pre>
-      {queryData && <VizWrapper data={queryData} currentPanel={TIMESERIES} changePanel={() => null} />}
-      {/*<PanelRenderer height={200} width={400} data={queryData} pluginId={TIMESERIES} title="" />*/}
+      {dataSource && (
+        <RuleViewerVisualization
+          refId={refId}
+          datasourceUid={dataSource.uid}
+          model={model}
+          data={queryData}
+          relativeTimeRange={timeRange}
+          onTimeRangeChange={setTimeRange}
+          className={styles.visualization}
+        />
+      )}
     </QueryBox>
   );
 }
@@ -112,6 +123,13 @@ function QueryPreview({ refId, relativeTimeRange, model, dataSource, queryData }
 const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
   code: css`
     margin: ${theme.spacing(1)};
+  `,
+  contentBox: css`
+    flex: 1 0 100%; // RuleViewerVisualization uses AutoSizer which doesn't expand the box
+  `,
+  visualization: css`
+    //width: auto;
+    padding: ${theme.spacing(1)};
   `,
 });
 
@@ -157,13 +175,14 @@ interface QueryBoxProps extends React.PropsWithChildren<unknown> {
   refId: string;
   headerItems?: string[];
   isAlertCondition?: boolean;
+  className?: string;
 }
 
-function QueryBox({ refId, headerItems = [], children, isAlertCondition }: QueryBoxProps) {
+function QueryBox({ refId, headerItems = [], children, isAlertCondition, className }: QueryBoxProps) {
   const styles = useStyles2(getQueryBoxStyles);
 
   return (
-    <div className={styles.container}>
+    <div className={cx(styles.container, className)}>
       <header className={styles.header}>
         <span className={styles.refId}>{refId}</span>
         {headerItems.map((item, index) => (
@@ -184,6 +203,7 @@ function QueryBox({ refId, headerItems = [], children, isAlertCondition }: Query
 
 const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
   container: css`
+    flex: 1 0 25%;
     border: 1px solid ${theme.colors.border.strong};
   `,
   header: css`
@@ -254,7 +274,7 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 
   const { reducer, expression, settings } = model;
   const reducerType = reducerTypes.find((rt) => rt.value === reducer);
-  const modeName = reducerMode.find((rm) => rm.value === settings?.mode);
+  const modeName = reducerMode.find((rm) => rm.value === settings?.mode ?? ReducerMode.Strict);
 
   return (
     <div className={styles.container}>
