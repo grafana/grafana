@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -21,9 +22,12 @@ import (
 const (
 	pagerDutyEventTrigger = "trigger"
 	pagerDutyEventResolve = "resolve"
+
+	defaultSeverity = "critical"
 )
 
 var (
+	knownSeverity        = map[string]struct{}{defaultSeverity: {}, "error": {}, "warning": {}, "info": {}}
 	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
@@ -80,7 +84,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 		images: fc.ImageStore,
 		settings: pagerdutySettings{
 			Key:      key,
-			Severity: fc.Config.Settings.Get("severity").MustString("critical"),
+			Severity: fc.Config.Settings.Get("severity").MustString(defaultSeverity),
 			customDetails: map[string]string{
 				"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 				"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
@@ -152,6 +156,12 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		details[k] = detail
 	}
 
+	severity := strings.ToLower(tmpl(pn.settings.Severity))
+	if _, ok := knownSeverity[severity]; !ok {
+		pn.log.Warn("Severity is not in the list of known values - using default severity", "actualSeverity", severity, "defaultSeverity", defaultSeverity)
+		severity = defaultSeverity
+	}
+
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
 		ClientURL:   pn.tmpl.ExternalURL.String(),
@@ -165,7 +175,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.settings.Component),
 			Summary:       tmpl(pn.settings.Summary),
-			Severity:      tmpl(pn.settings.Severity),
+			Severity:      severity,
 			CustomDetails: details,
 			Class:         tmpl(pn.settings.Class),
 			Group:         tmpl(pn.settings.Group),

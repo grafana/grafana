@@ -3749,6 +3749,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -5553,6 +5554,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5643,6 +5649,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {

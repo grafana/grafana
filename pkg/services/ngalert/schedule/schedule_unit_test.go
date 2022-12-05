@@ -54,20 +54,22 @@ func TestProcessTicks(t *testing.T) {
 	notifier := &AlertsSenderMock{}
 	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
 
-	schedCfg := SchedulerCfg{
-		Cfg:         cfg,
-		C:           mockedClock,
-		RuleStore:   ruleStore,
-		Metrics:     testMetrics.GetSchedulerMetrics(),
-		AlertSender: notifier,
-	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
-
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := NewScheduler(schedCfg, appUrl, st)
+
+	schedCfg := SchedulerCfg{
+		BaseInterval: cfg.BaseInterval,
+		C:            mockedClock,
+		AppURL:       appUrl,
+		RuleStore:    ruleStore,
+		Metrics:      testMetrics.GetSchedulerMetrics(),
+		AlertSender:  notifier,
+	}
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
+
+	sched := NewScheduler(schedCfg, st)
 
 	evalAppliedCh := make(chan evalAppliedInfo, 1)
 	stopAppliedCh := make(chan models.AlertRuleKey, 1)
@@ -673,8 +675,10 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	schedCfg := SchedulerCfg{
-		Cfg:              cfg,
+		BaseInterval:     cfg.BaseInterval,
+		MaxAttempts:      cfg.MaxAttempts,
 		C:                mockedClock,
+		AppURL:           appUrl,
 		EvaluatorFactory: evaluator,
 		RuleStore:        rs,
 		Metrics:          m.GetSchedulerMetrics(),
@@ -682,7 +686,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
-	return NewScheduler(schedCfg, appUrl, st)
+	return NewScheduler(schedCfg, st)
 }
 
 func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {

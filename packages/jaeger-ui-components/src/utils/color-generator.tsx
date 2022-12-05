@@ -45,11 +45,38 @@ class ColorGenerator {
     let i = this.cache.get(key);
     if (i == null) {
       const hash = this.hashCode(key.toLowerCase());
-      const hashIndex = Math.abs(hash % this.colorsHex.length);
-      i = hashIndex === 4 ? hashIndex + 1 : hashIndex;
+      i = Math.abs(hash % this.colorsHex.length);
+
+      const prevCacheItem = Array.from(this.cache).pop();
+      if (prevCacheItem && prevCacheItem[1]) {
+        // disallow a color that is the same as the previous color
+        if (prevCacheItem[1] === i) {
+          i = this.getNextIndex(i);
+        }
+
+        // disallow a color that looks very similar to the previous color
+        const prevColor = this.colorsHex[prevCacheItem[1]];
+        if (tinycolor.readability(prevColor, this.colorsHex[i]) < 1.5) {
+          let newIndex = i;
+          for (let j = 0; j < this.colorsHex.length; j++) {
+            newIndex = this.getNextIndex(newIndex);
+
+            if (tinycolor.readability(prevColor, this.colorsHex[newIndex]) > 1.5) {
+              i = newIndex;
+              break;
+            }
+          }
+        }
+      }
+
       this.cache.set(key, i);
     }
     return i;
+  }
+
+  getNextIndex(i: number) {
+    // get next index or go back to 0
+    return i + 1 < this.colorsHex.length ? i + 1 : 0;
   }
 
   hashCode(key: string) {
@@ -109,6 +136,10 @@ export function getFilteredColors(colorsHex: string[], theme: GrafanaTheme2) {
   const redIndex = colorsHex.indexOf('#E24D42');
   if (redIndex > -1) {
     colorsHex.splice(redIndex, 1);
+  }
+  const redIndex2 = colorsHex.indexOf('#BF1B00');
+  if (redIndex2 > -1) {
+    colorsHex.splice(redIndex2, 1);
   }
 
   // Only add colors that have a contrast ratio >= 3 for the current theme

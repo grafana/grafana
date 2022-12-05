@@ -28,7 +28,6 @@ When you create a library panel, the panel on the source dashboard is converted 
 1. In the panel display options, click the down arrow option to bring changes to the visualization.
    {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "800px" caption="Screenshot of the edit panel" >}}
 1. Click the **Library panels** option, and then click **Create library panel** to open the create dialog.
-   {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "500px" caption="Screenshot of the create library panel dialog" >}}
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel.
 1. Click **Create library panel** to save your changes.

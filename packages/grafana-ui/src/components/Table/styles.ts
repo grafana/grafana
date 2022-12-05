@@ -11,6 +11,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
   const lineHeight = theme.typography.body.lineHeight;
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
+  const rowHeight = cellHeight + 2;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
@@ -36,7 +37,8 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       label: ${overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow'};
       padding: ${cellPadding}px;
       width: 100%;
-      height: 100%;
+      // Cell height need to account for row border
+      height: ${rowHeight - 1}px;
       display: flex;
       align-items: center;
       border-right: 1px solid ${borderColor};
@@ -95,7 +97,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     buildCellContainerStyle,
     cellPadding,
     cellHeightInner: bodyFontSize * lineHeight,
-    rowHeight: cellHeight + 2,
+    rowHeight,
     table: css`
       height: 100%;
       width: 100%;
@@ -252,6 +254,13 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
       justify-content: center;
       width: 100%;
+    `,
+    expanderCell: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: ${rowHeight}px;
+      cursor: pointer;
     `,
   };
 };

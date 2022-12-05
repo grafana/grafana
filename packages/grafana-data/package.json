@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "9.3.0-pre",
+  "version": "9.4.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -30,11 +30,13 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.1",
-    "@grafana/schema": "9.3.0-pre",
+    "@grafana/schema": "9.4.0-pre",
     "@types/d3-interpolate": "^1.4.0",
     "d3-interpolate": "1.4.0",
     "date-fns": "2.29.3",
@@ -51,7 +53,7 @@
     "rxjs": "7.5.7",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
-    "uplot": "1.6.22",
+    "uplot": "1.6.23",
     "xss": "1.0.14"
   },
   "devDependencies": {
@@ -66,7 +68,7 @@
     "@testing-library/react-hooks": "8.0.1",
     "@testing-library/user-event": "14.4.3",
     "@types/history": "4.7.11",
-    "@types/jest": "28.1.6",
+    "@types/jest": "29.2.3",
     "@types/jquery": "3.5.14",
     "@types/lodash": "4.14.187",
     "@types/marked": "4.0.7",

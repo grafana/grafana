@@ -119,9 +119,10 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 				m.mapPermission(d.ID, models.PERMISSION_VIEW, d.IsFolder)...,
 			)
 		} else {
-			for _, a := range acls {
-				permissionMap[d.OrgID][getRoleName(a)] = append(
-					permissionMap[d.OrgID][getRoleName(a)],
+			for _, a := range deduplicateAcl(acls) {
+				roleName := getRoleName(a)
+				permissionMap[d.OrgID][roleName] = append(
+					permissionMap[d.OrgID][roleName],
 					m.mapPermission(d.ID, a.Permission, d.IsFolder)...,
 				)
 			}
@@ -222,6 +223,39 @@ func getRoleName(p models.DashboardACL) string {
 		return fmt.Sprintf("managed:teams:%d:permissions", p.TeamID)
 	}
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(string(*p.Role)))
+}
+
+func deduplicateAcl(acl []models.DashboardACL) []models.DashboardACL {
+	output := make([]models.DashboardACL, 0, len(acl))
+	uniqueACL := map[string]models.DashboardACL{}
+	for _, item := range acl {
+		// acl items with userID or teamID is enforced to be unique by sql constraint, so we can skip those
+		if item.UserID > 0 || item.TeamID > 0 {
+			output = append(output, item)
+			continue
+		}
+
+		// better to make sure so we don't panic
+		if item.Role == nil {
+			continue
+		}
+
+		current, ok := uniqueACL[string(*item.Role)]
+		if !ok {
+			uniqueACL[string(*item.Role)] = item
+			continue
+		}
+
+		if current.Permission < item.Permission {
+			uniqueACL[string(*item.Role)] = item
+		}
+	}
+
+	for _, item := range uniqueACL {
+		output = append(output, item)
+	}
+
+	return output
 }
 
 var _ migrator.CodeMigration = new(dashboardUidPermissionMigrator)

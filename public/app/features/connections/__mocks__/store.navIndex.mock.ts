@@ -1169,7 +1169,7 @@ export const navIndex: NavIndex = {
     id: 'help',
     text: 'Help',
     section: NavSection.Config,
-    subTitle: 'Grafana v9.3.0-pre (8f5dc47e87)',
+    subTitle: 'Grafana v9.4.0-pre (8f5dc47e87)',
     icon: 'question-circle',
     url: '#',
     sortWeight: -500,

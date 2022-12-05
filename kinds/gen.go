@@ -12,16 +12,14 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
+
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
 )
-
-const sep = string(filepath.Separator)
 
 func main() {
 	if len(os.Args) > 1 {
@@ -31,22 +29,17 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from raw and structured core kinds.
-	coreKindsGen := codejen.JennyListWithNamer[*codegen.DeclForGen](func(decl *codegen.DeclForGen) string {
+	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
 		return decl.Meta.Common().MachineName
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.GoTypesJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
 		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.TSTypesJenny(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
-			GenDirName: func(decl *codegen.DeclForGen) string {
-				// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
-				return filepath.Join(decl.Meta.Common().MachineName, "x")
-			},
-		}),
+		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 	)
 
@@ -57,8 +50,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
 		os.Exit(1)
 	}
-	grootp := strings.Split(cwd, sep)
-	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-1]...))
+	groot := filepath.Dir(cwd)
 
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []*codegen.DeclForGen
@@ -105,13 +97,10 @@ func main() {
 		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
 	})
 
-	jfs, err := coreKindsGen.GenerateFS(all)
+	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
-	// for _, f := range jfs.AsFiles() {
-	// 	fmt.Println(filepath.Join(groot, f.RelativePath))
-	// }
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {

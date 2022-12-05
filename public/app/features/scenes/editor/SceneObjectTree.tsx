@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { sceneGraph } from '../core/sceneGraph';
 import { SceneObject, isSceneObject, SceneLayoutChild } from '../core/types';
 
 export interface Props {
@@ -31,7 +32,7 @@ export function SceneObjectTree({ node, selectedObject }: Props) {
 
   const name = node.constructor.name;
   const isSelected = selectedObject === node;
-  const onSelectNode = () => node.getSceneEditor().onSelectObject(node);
+  const onSelectNode = () => sceneGraph.getSceneEditor(node).onSelectObject(node);
 
   return (
     <div className={styles.node}>
