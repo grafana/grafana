@@ -14,8 +14,8 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/index.test.js:186764954": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:1734982398": [
-      [14, 26, 13, "RegExp match", "2409514259"]
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.tsx:3415459311": [
+      [14, 42, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:989353473": [
       [15, 17, 13, "RegExp match", "2409514259"]

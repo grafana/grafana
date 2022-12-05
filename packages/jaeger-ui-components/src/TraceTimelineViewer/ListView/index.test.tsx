@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { mount, shallow } from 'enzyme';
+import { mount, shallow, ShallowWrapper } from 'enzyme';
 import React from 'react';
 
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
-import ListView from './index';
+import ListView, { TListViewProps } from './index';
 
 // Util to get list of all callbacks added to an event emitter by event type.
 // jest adds "error" event listeners to window, this util makes it easier to
 // ignore those calls.
-function getListenersByType(mockFn) {
+function getListenersByType(mockFn: jest.MockContext<void, []>) {
   const rv = {};
   mockFn.calls.forEach(([eventType, callback]) => {
     if (!rv[eventType]) {
@@ -40,7 +40,7 @@ describe('<ListView>', () => {
 
   const DATA_LENGTH = 40;
 
-  function getHeight(index) {
+  function getHeight(index: number) {
     return index * 2 + 2;
   }
 
@@ -57,8 +57,8 @@ describe('<ListView>', () => {
     );
   }
 
-  let wrapper;
-  let instance;
+  let wrapper: ShallowWrapper<TListViewProps, {}, ListView>;
+  let instance: ListView;
 
   const props = {
     dataLength: DATA_LENGTH,
@@ -92,7 +92,7 @@ describe('<ListView>', () => {
 
     it('sets the height of the items according to the height func', () => {
       const items = wrapper.find(Item);
-      const expectedHeights = [];
+      const expectedHeights: number[] = [];
       const heights = items.map((node, i) => {
         expectedHeights.push(getHeight(i));
         return node.prop('style').height;
@@ -173,8 +173,8 @@ describe('<ListView>', () => {
     });
 
     describe('windowScroller', () => {
-      let windowAddListenerSpy;
-      let windowRmListenerSpy;
+      let windowAddListenerSpy: jest.SpyInstance;
+      let windowRmListenerSpy: jest.SpyInstance;
 
       beforeEach(() => {
         windowAddListenerSpy = jest.spyOn(window, 'addEventListener');
