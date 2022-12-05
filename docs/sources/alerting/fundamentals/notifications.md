@@ -23,11 +23,11 @@ Notification policies control when and where notifications are sent. A notificat
 
 Notification policies are organized in a tree structure where at the root of the tree there is a notification policy called the root policy. There can be only one root policy and the root policy cannot be deleted.
 
-Specific routing policies are descendents of the root policy and can be used to match either all alerts or a subset of alerts based on a set of matching labels. A notification policy matches an alert when its matching labels match the labels in the alert.
+Specific routing policies are children of the root policy and can be used to match either all alerts or a subset of alerts based on a set of matching labels. A notification policy matches an alert when its matching labels match the labels in the alert.
 
-A specific routing policy can have its own descendent policies, called nested policies, which allow for additional matching of alerts. An example of a specific routing policy could be sending infrastructure alerts to the Ops team; while a descendent policy might send high priority alerts to Pagerduty and low priority alerts as emails.
+A specific routing policy can have its own child policies, called nested policies, which allow for additional matching of alerts. An example of a specific routing policy could be sending infrastructure alerts to the Ops team; while a child policy might send high priority alerts to Pagerduty and low priority alerts as emails.
 
-All alerts, irrespective of their labels, match the root policy. However, when the root policy receives an alert it looks at each specific routing policy and sends the alert to the first specific routing policy that matches the alert. If the specific routing policy has further descendent policies, then it can attempt to the match the alert against one of its nested policies. If no nested policies match the alert then the specific routing policy is the matching policy. If there are no specific routing policies, or no specific routing policies match the alert, then the root policy is the matching policy.
+All alerts, irrespective of their labels, match the root policy. However, when the root policy receives an alert it looks at each specific routing policy and sends the alert to the first specific routing policy that matches the alert. If the specific routing policy has further child policies, then it can attempt to the match the alert against one of its nested policies. If no nested policies match the alert then the specific routing policy is the matching policy. If there are no specific routing policies, or no specific routing policies match the alert, then the root policy is the matching policy.
 
 ## Contact points
 
