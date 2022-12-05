@@ -329,7 +329,7 @@ function addFilterAsLabelFilter(
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
 
-    const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
+    const labelFilter = ` | ${filter.label}${filter.op}"${filter.value}"`;
     newQuery += start + labelFilter + end;
     prev = match.to;
   }
