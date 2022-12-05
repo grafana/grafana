@@ -1,4 +1,4 @@
-import { Matcher, render, waitFor, screen, within } from '@testing-library/react';
+import { Matcher, render, waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -99,6 +99,10 @@ const ui = {
     grafanaManagedAlert: byRole('button', { name: /Grafana managed/ }),
     lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
     lotexRecordingRule: byRole('button', { name: /Mimir or Loki recording rule/ }),
+  },
+  loadingIndicators: {
+    loadingFolderIndicator: byText('Loading folders...'),
+    loadingGroupIndicator: byText('Loading...'),
   },
 };
 
@@ -207,7 +211,7 @@ describe('RuleEditor', () => {
     );
   });
 
-  it.skip('can create new grafana managed alert', async () => {
+  it('can create new grafana managed alert', async () => {
     const dataSources = {
       default: mockDataSource(
         {
@@ -263,10 +267,9 @@ describe('RuleEditor', () => {
       },
     });
 
-    // fill out the form
-    await renderRuleEditor();
-    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    // await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
+    renderRuleEditor();
+
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
 
@@ -477,9 +480,7 @@ describe('RuleEditor', () => {
     });
     mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
 
-    await renderRuleEditor(uid);
-    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    renderRuleEditor(uid);
 
     // check that it's filled in
     const nameInput = await ui.inputs.name.find();
