@@ -4,7 +4,7 @@ import React from 'react';
 import { isIconName, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
-import { changeTheme } from 'app/core/services/toggleTheme';
+import { changeTheme } from 'app/core/services/theme';
 
 const SECTION_PAGES = 'Pages';
 const SECTION_ACTIONS = 'Actions';
