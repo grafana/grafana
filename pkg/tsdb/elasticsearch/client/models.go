@@ -3,20 +3,8 @@ package es
 import (
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
-
-type SearchRequestInfo struct {
-	Method string `json:"method"`
-	Url    string `json:"url"`
-	Data   string `json:"data"`
-}
-
-type SearchResponseInfo struct {
-	Status int              `json:"status"`
-	Data   *simplejson.Json `json:"data"`
-}
 
 // SearchRequest represents a search request
 type SearchRequest struct {
