@@ -78,7 +78,7 @@ function createAwsConsoleLink(
   });
   const logGroupNames = target.logGroupNames;
   let sources = [''];
-  if (arns && arns.length > 0) {
+  if (arns?.length) {
     sources = arns;
   } else if (logGroupNames) {
     sources = logGroupNames;
