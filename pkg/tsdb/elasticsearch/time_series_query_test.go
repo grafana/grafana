@@ -1713,8 +1713,6 @@ func newFakeClient() *fakeClient {
 	}
 }
 
-func (c *fakeClient) EnableDebug() {}
-
 func (c *fakeClient) GetTimeField() string {
 	return c.timeField
 }
