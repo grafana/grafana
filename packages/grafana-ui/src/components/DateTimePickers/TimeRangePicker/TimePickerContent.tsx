@@ -267,10 +267,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRang
     container: css`
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-      position: absolute;
-      z-index: ${theme.zIndex.dropdown};
       width: ${isFullscreen ? '546px' : '262px'};
-      top: 116%;
       border-radius: 2px;
       border: 1px solid ${theme.colors.border.weak};
       ${isReversed ? 'left' : 'right'}: 0;
