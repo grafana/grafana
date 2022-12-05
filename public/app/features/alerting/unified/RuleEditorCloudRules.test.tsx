@@ -1,33 +1,27 @@
-import { Matcher, render, waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
-import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
+import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import { backendSrv } from '../../../core/services/backend_srv';
-import { AccessControlAction } from '../../../types';
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { getDefaultQueries } from './utils/rule-form';
+import { DataSourceType } from './utils/datasource';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -303,7 +297,7 @@ describe('RuleEditor cloud', () => {
   });
 
   it('for cloud alerts, should only allow to select editable rules sources', async () => {
-    const dataSources: Record<string, DataSourceInstanceSettings<any>> = {
+    const dataSources = {
       // can edit rules
       loki: mockDataSource(
         {
@@ -434,8 +428,3 @@ describe('RuleEditor cloud', () => {
     expect(byText('loki disabled for alerting').query()).not.toBeInTheDocument();
   });
 });
-
-const clickSelectOption = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
-  await userEvent.click(byRole('combobox').get(selectElement));
-  await selectOptionInTest(selectElement, optionText as string);
-};

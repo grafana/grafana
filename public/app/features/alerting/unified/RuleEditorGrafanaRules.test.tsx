@@ -1,9 +1,9 @@
-import { Matcher, render, waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -349,8 +349,3 @@ describe('RuleEditor grafana managed rules', () => {
     );
   });
 });
-
-const clickSelectOption = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
-  await userEvent.click(byRole('combobox').get(selectElement));
-  await selectOptionInTest(selectElement, optionText as string);
-};
