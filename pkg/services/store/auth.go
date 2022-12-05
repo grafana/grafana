@@ -2,8 +2,6 @@ package store
 
 import (
 	"encoding/json"
-	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -16,32 +14,13 @@ type UserInfo struct {
 }
 
 func UserInfoFromString(raw string) *UserInfo {
-	var orgID, userID int64
-	login := ""
+	var userInfo UserInfo
 
-	split := strings.Split(raw, ":")
-	if len(split) < 3 {
+	if err := json.Unmarshal([]byte(raw), &userInfo); err != nil {
 		return nil
 	}
 
-	if i, err := strconv.ParseInt(split[1], 10, 64); err == nil {
-		orgID = i
-	}
-
-	if i, err := strconv.ParseInt(split[2], 10, 64); err == nil {
-		userID = i
-	}
-
-	if len(split) > 3 {
-		login = split[3]
-	}
-
-	return &UserInfo{
-		UserID:   userID,
-		OrgID:    orgID,
-		Login:    login,
-		UserType: split[0],
-	}
+	return &userInfo
 }
 
 func (u *UserInfo) String() string {

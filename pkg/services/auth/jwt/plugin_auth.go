@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -105,7 +104,8 @@ func (s *pluginAuthService) Generate(subject, audience string) (string, error) {
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
 
-	return jwt.Signed(s.signer).Claims(claims).CompactSerialize()
+	t, err := jwt.Signed(s.signer).Claims(claims).CompactSerialize()
+	return t, err
 }
 
 func (s *pluginAuthService) init() error {
@@ -115,7 +115,6 @@ func (s *pluginAuthService) init() error {
 		return err
 	}
 	pubKey := privKey.Public()
-	pubKey.KeyID = privKey.KeyID
 	set.Keys = append(set.Keys, pubKey)
 	s.keySet = keySetJWKS{set}
 
@@ -128,29 +127,29 @@ func (s *pluginAuthService) init() error {
 	return nil
 }
 
-func (s *pluginAuthService) getPrivateKey(ctx context.Context) (privKey *jose.JSONWebKey, err error) {
+func (s *pluginAuthService) getPrivateKey(ctx context.Context) (*jose.JSONWebKey, error) {
+	var privKey = &jose.JSONWebKey{}
 	raw, ok, err := s.secretsKVStore.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	if ok {
-		if err = json.Unmarshal([]byte(raw), privKey); err != nil {
-			s.log.Debug("Failed to unmarshal private key from KV store", "err", err)
+		if err = privKey.UnmarshalJSON([]byte(raw)); err != nil {
+			return nil, err
 		}
+		return privKey, nil
 	}
 
-	if privKey == nil {
-		if privKey, err = generateJWK(); err != nil {
-			return nil, err
-		}
-		keyJson, err := json.Marshal(privKey)
-		if err != nil {
-			return nil, err
-		}
-		if err = s.secretsKVStore.Set(ctx, string(keyJson)); err != nil {
-			return nil, err
-		}
+	if privKey, err = generateJWK(); err != nil {
+		return nil, err
+	}
+	keyJson, err := privKey.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	if err = s.secretsKVStore.Set(ctx, string(keyJson)); err != nil {
+		return nil, err
 	}
 
 	return privKey, nil
