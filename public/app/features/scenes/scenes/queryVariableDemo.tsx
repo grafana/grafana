@@ -24,19 +24,18 @@ export function getQueryVariableDemo(): Scene {
         new DataSourceVariable({
           name: 'datasource',
           query: 'prometheus',
-          isMulti: true,
+        }),
+        new QueryVariable({
+          name: 'instance (using datasource variable)',
+          refresh: VariableRefresh.onTimeRangeChanged,
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
+          datasource: '${datasource}',
         }),
         new QueryVariable({
           name: 'label values (on time range refresh)',
           refresh: VariableRefresh.onTimeRangeChanged,
           query: { query: 'label_values(go_gc_duration_seconds, ${label})' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
-        }),
-        new QueryVariable({
-          name: 'instance (using datasource variable)',
-          refresh: VariableRefresh.onTimeRangeChanged,
-          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
-          datasource: 'datasource',
         }),
       ],
     }),
