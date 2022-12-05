@@ -7,11 +7,10 @@ import { contextSrv } from '../core';
 
 import { PreferencesService } from './PreferencesService';
 
-export async function toggleTheme(runtimeOnly: boolean) {
-  const currentTheme = config.theme2;
+export async function changeTheme(mode: 'dark' | 'light', runtimeOnly?: boolean) {
   const newTheme = createTheme({
     colors: {
-      mode: currentTheme.isDark ? 'light' : 'dark',
+      mode: mode,
     },
   });
 
@@ -54,4 +53,9 @@ export async function toggleTheme(runtimeOnly: boolean) {
     ...currentPref,
     theme: newTheme.colors.mode,
   });
+}
+
+export async function toggleTheme(runtimeOnly: boolean) {
+  const currentTheme = config.theme2;
+  changeTheme(currentTheme.isDark ? 'light' : 'dark', runtimeOnly);
 }
