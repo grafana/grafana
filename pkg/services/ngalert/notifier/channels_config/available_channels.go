@@ -243,7 +243,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Placeholder:  "critical",
-					Description:  "Severity of the event (e.g. critical, error, warning, info). You can use templates",
+					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is critical. You can use templates",
 					PropertyName: "severity",
 				},
 				{ // New in 8.0.
