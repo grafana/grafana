@@ -31,6 +31,7 @@ docs_paths = {
     ],
 }
 
+
 def docs_pipelines(edition, ver_mode, trigger):
     environment = {'EDITION': edition}
     steps = [
@@ -43,8 +44,14 @@ def docs_pipelines(edition, ver_mode, trigger):
     ]
 
     return pipeline(
-        name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps, environment=environment,
+        name='{}-docs'.format(ver_mode),
+        edition=edition,
+        trigger=trigger,
+        services=[],
+        steps=steps,
+        environment=environment,
     )
+
 
 def lint_docs():
     return {
@@ -70,6 +77,7 @@ def trigger_docs_main():
         ],
         'paths': docs_paths,
     }
+
 
 def trigger_docs_pr():
     return {

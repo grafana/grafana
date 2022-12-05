@@ -22,6 +22,7 @@ load(
     'pipeline',
 )
 
+
 def integration_tests(trigger, ver_mode, edition):
     environment = {'EDITION': edition}
     services = integration_test_services(edition)
@@ -40,6 +41,11 @@ def integration_tests(trigger, ver_mode, edition):
     ]
 
     return pipeline(
-        name='{}-integration-tests'.format(ver_mode), edition="oss", trigger=trigger, services=services, steps=init_steps + test_steps,
-        environment=environment, volumes=volumes
+        name='{}-integration-tests'.format(ver_mode),
+        edition="oss",
+        trigger=trigger,
+        services=services,
+        steps=init_steps + test_steps,
+        environment=environment,
+        volumes=volumes,
     )

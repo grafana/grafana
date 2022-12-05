@@ -66,13 +66,69 @@ trigger = {
 
 def pr_pipelines(edition):
     return [
-        verify_drone(get_pr_trigger(include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']), ver_mode),
-        test_frontend(get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), ver_mode),
-        lint_frontend_pipeline(get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), ver_mode),
-        test_backend(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json', 'devenv/**']), ver_mode),
-        lint_backend_pipeline(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json', 'devenv/**']), ver_mode),
+        verify_drone(
+            get_pr_trigger(
+                include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']
+            ),
+            ver_mode,
+        ),
+        test_frontend(
+            get_pr_trigger(
+                exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']
+            ),
+            ver_mode,
+        ),
+        lint_frontend_pipeline(
+            get_pr_trigger(
+                exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']
+            ),
+            ver_mode,
+        ),
+        test_backend(
+            get_pr_trigger(
+                include_paths=[
+                    'pkg/**',
+                    'packaging/**',
+                    '.drone.yml',
+                    'conf/**',
+                    'go.sum',
+                    'go.mod',
+                    'public/app/plugins/**/plugin.json',
+                    'devenv/**',
+                ]
+            ),
+            ver_mode,
+        ),
+        lint_backend_pipeline(
+            get_pr_trigger(
+                include_paths=[
+                    'pkg/**',
+                    'packaging/**',
+                    'conf/**',
+                    'go.sum',
+                    'go.mod',
+                    'public/app/plugins/**/plugin.json',
+                    'devenv/**',
+                ]
+            ),
+            ver_mode,
+        ),
         build_e2e(trigger, ver_mode, edition),
-        integration_tests(get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), ver_mode, edition),
+        integration_tests(
+            get_pr_trigger(
+                include_paths=[
+                    'pkg/**',
+                    'packaging/**',
+                    '.drone.yml',
+                    'conf/**',
+                    'go.sum',
+                    'go.mod',
+                    'public/app/plugins/**/plugin.json',
+                ]
+            ),
+            ver_mode,
+            edition,
+        ),
         docs_pipelines(edition, ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
     ]
@@ -96,4 +152,3 @@ def get_pr_trigger(include_paths=None, exclude_paths=None):
             'include': paths_in,
         },
     }
-

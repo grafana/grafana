@@ -57,7 +57,9 @@ load('scripts/drone/vault.star', 'from_secret')
 
 ver_mode = 'main'
 trigger = {
-    'event': ['push',],
+    'event': [
+        'push',
+    ],
     'branch': 'main',
     'paths': {
         'exclude': [
@@ -68,9 +70,12 @@ trigger = {
     },
 }
 
+
 def main_pipelines(edition):
     drone_change_trigger = {
-        'event': ['push',],
+        'event': [
+            'push',
+        ],
         'branch': 'main',
         'repo': [
             'grafana/grafana',
@@ -94,15 +99,28 @@ def main_pipelines(edition):
         build_e2e(trigger, ver_mode, edition),
         integration_tests(trigger, ver_mode, edition),
         windows(trigger, edition, ver_mode),
-    notify_pipeline(
-        name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
-        template=drone_change_template, secret='drone-changes-webhook',
-    ),
-    enterprise_downstream_pipeline(edition, ver_mode),
-    notify_pipeline(
-        name='main-notify', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
-        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows'],
-        template=failure_template, secret='slack_webhook'
-    )]
+        notify_pipeline(
+            name='notify-drone-changes',
+            slack_channel='slack-webhooks-test',
+            trigger=drone_change_trigger,
+            template=drone_change_template,
+            secret='drone-changes-webhook',
+        ),
+        enterprise_downstream_pipeline(edition, ver_mode),
+        notify_pipeline(
+            name='main-notify',
+            slack_channel='grafana-ci-notifications',
+            trigger=dict(trigger, status=['failure']),
+            depends_on=[
+                'main-test-frontend',
+                'main-test-backend',
+                'main-build-e2e-publish',
+                'main-integration-tests',
+                'main-windows',
+            ],
+            template=failure_template,
+            secret='slack_webhook',
+        ),
+    ]
 
     return pipelines
