@@ -100,10 +100,6 @@ const ui = {
     lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
     lotexRecordingRule: byRole('button', { name: /Mimir or Loki recording rule/ }),
   },
-  loadingIndicators: {
-    loadingFolderIndicator: byText('Loading folders...'),
-    loadingGroupIndicator: byText('Loading...'),
-  },
 };
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
@@ -119,7 +115,7 @@ describe('RuleEditor', () => {
 
   disableRBAC();
 
-  it.skip('can create a new cloud alert', async () => {
+  it('can create a new cloud alert', async () => {
     const dataSources = {
       default: mockDataSource(
         {
@@ -162,9 +158,8 @@ describe('RuleEditor', () => {
       },
     });
 
-    await renderRuleEditor();
-    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
+    renderRuleEditor();
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     await userEvent.click(await ui.buttons.lotexAlert.find());
 
@@ -317,7 +312,7 @@ describe('RuleEditor', () => {
     );
   });
 
-  it.skip('can create a new cloud recording rule', async () => {
+  it('can create a new cloud recording rule', async () => {
     const dataSources = {
       default: mockDataSource(
         {
@@ -360,9 +355,8 @@ describe('RuleEditor', () => {
       },
     });
 
-    await renderRuleEditor();
-    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
+    renderRuleEditor();
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
     await userEvent.click(await ui.buttons.lotexRecordingRule.get());
 
@@ -547,7 +541,7 @@ describe('RuleEditor', () => {
     );
   });
 
-  it.skip('for cloud alerts, should only allow to select editable rules sources', async () => {
+  it('for cloud alerts, should only allow to select editable rules sources', async () => {
     const dataSources: Record<string, DataSourceInstanceSettings<any>> = {
       // can edit rules
       loki: mockDataSource(
@@ -662,9 +656,8 @@ describe('RuleEditor', () => {
     mocks.searchFolders.mockResolvedValue([]);
 
     // render rule editor, select mimir/loki managed alerts
-    await renderRuleEditor();
-    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    renderRuleEditor();
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     await ui.inputs.name.find();
     await userEvent.click(await ui.buttons.lotexAlert.get());
