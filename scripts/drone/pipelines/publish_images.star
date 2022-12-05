@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'identify_runner_step',
     'download_grabpl_step',
     'publish_images_step',
     'compile_build_cmd',
@@ -17,6 +18,7 @@ def publish_image_steps(edition, mode, docker_repo):
     if edition == 'oss':
         additional_docker_repo='grafana/grafana-oss'
     steps = [
+        identify_runner_step(),
         download_grabpl_step(),
         compile_build_cmd(),
         fetch_images_step(edition),
