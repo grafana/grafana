@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { dump } from 'js-yaml';
 import { keyBy, startCase } from 'lodash';
-import React, { useState } from 'react';
+import React from 'react';
 
-import { PanelData, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { PanelData, DataSourceInstanceSettings, GrafanaTheme2, RelativeTimeRange } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Badge, useStyles2 } from '@grafana/ui';
@@ -26,13 +26,13 @@ import alertDef, { EvalFunction } from '../state/alertDef';
 import { ExpressionResult } from './components/expressions/Expression';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 
-export function GrafanaRuleViewer({
-  rule,
-  evalDataByQuery = {},
-}: {
+interface GrafanaRuleViewerProps {
   rule: RulerGrafanaRuleDTO;
   evalDataByQuery?: Record<string, PanelData>;
-}) {
+  onTimeRangeChange: (queryRef: string, timeRange: RelativeTimeRange) => void;
+}
+
+export function GrafanaRuleViewer({ rule, evalDataByQuery = {}, onTimeRangeChange }: GrafanaRuleViewerProps) {
   // const styles = useStyles2(getGrafanaRuleViewerStyles);
 
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
@@ -55,6 +55,7 @@ export function GrafanaRuleViewer({
               relativeTimeRange={relativeTimeRange}
               dataSource={dataSource}
               queryData={evalDataByQuery[refId]}
+              onTimeRangeChange={(timeRange) => onTimeRangeChange(refId, timeRange)}
             />
           );
         })}
@@ -88,12 +89,20 @@ interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRang
   isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
   queryData?: PanelData;
+  onTimeRangeChange: (timeRange: RelativeTimeRange) => void;
 }
 
-function QueryPreview({ refId, relativeTimeRange, model, dataSource, queryData }: QueryPreviewProps) {
+function QueryPreview({
+  refId,
+  relativeTimeRange,
+  model,
+  dataSource,
+  queryData,
+  onTimeRangeChange,
+}: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
 
-  const [timeRange, setTimeRange] = useState(relativeTimeRange);
+  // const [timeRange, setTimeRange] = useState(relativeTimeRange);
 
   const headerItems = [dataSource?.name ?? '[[Data source not found]]'];
   if (relativeTimeRange) {
@@ -111,8 +120,8 @@ function QueryPreview({ refId, relativeTimeRange, model, dataSource, queryData }
           datasourceUid={dataSource.uid}
           model={model}
           data={queryData}
-          relativeTimeRange={timeRange}
-          onTimeRangeChange={setTimeRange}
+          relativeTimeRange={relativeTimeRange}
+          onTimeRangeChange={onTimeRangeChange}
           className={styles.visualization}
         />
       )}

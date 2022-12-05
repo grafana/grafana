@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import produce from 'immer';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
 import {
   Alert,
   Button,
@@ -91,6 +92,20 @@ export function RuleViewer({ match }: RuleViewerProps) {
       })
     );
   }, []);
+
+  const onQueryTimeRangeChange = useCallback(
+    (refId: string, timeRange: RelativeTimeRange) => {
+      setQueries(
+        produce((draftQueries) => {
+          const queryToChange = draftQueries.find((q) => q.refId === refId);
+          if (queryToChange) {
+            queryToChange.relativeTimeRange = timeRange;
+          }
+        })
+      );
+    },
+    [setQueries]
+  );
 
   if (!identifier?.ruleSourceName) {
     return (
@@ -194,7 +209,9 @@ export function RuleViewer({ match }: RuleViewerProps) {
         collapsible={true}
         className={styles.collapse}
       >
-        {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleViewer rule={rule.rulerRule} evalDataByQuery={data} />}
+        {isGrafanaRulerRule(rule.rulerRule) && (
+          <GrafanaRuleViewer rule={rule.rulerRule} evalDataByQuery={data} onTimeRangeChange={onQueryTimeRangeChange} />
+        )}
         {!isFederatedRule && data && Object.keys(data).length > 0 && (
           <>
             <RuleViewerLayoutContent padding={0}>
