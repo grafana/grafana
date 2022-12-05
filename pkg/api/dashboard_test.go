@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -1093,6 +1094,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
 			Kinds:                 corekind.NewBase(nil),
+			accesscontrolService:  actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1201,6 +1203,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
 			Kinds:                   corekind.NewBase(nil),
+			accesscontrolService:    actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)

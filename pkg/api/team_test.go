@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
@@ -213,6 +215,8 @@ func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
 		hs.teamService = teamtest.NewFakeService()
+		hs.AccessControl = acimpl.ProvideAccessControl(setting.NewCfg())
+		hs.accesscontrolService = actest.FakeService{}
 	})
 
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))

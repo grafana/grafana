@@ -110,9 +110,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
 
         if (scale.distr === 4) {
-          // TODO: switch to `, true)` after updating uPlot to 1.6.23+
-          // see https://github.com/leeoniya/uPlot/issues/749
-          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, logBase, false);
+          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, logBase, true);
         } else {
           // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
           minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);

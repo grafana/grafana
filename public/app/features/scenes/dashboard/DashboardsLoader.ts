@@ -1,12 +1,9 @@
-import { getDefaultTimeRange } from '@grafana/data';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
+import { VizPanel, SceneTimePicker, SceneGridLayout, SceneGridRow } from '../components';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneObject } from '../core/types';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -54,9 +51,13 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
       layout: new SceneGridLayout({
         children: this.buildSceneObjectsFromDashboard(oldModel),
       }),
-      $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+      $timeRange: new SceneTimeRange(),
       actions: [new SceneTimePicker({})],
     });
+
+    // We initialize URL sync here as it better to do that before mounting and doing any rendering.
+    // But would be nice to have a conditional around this so you can pre-load dashboards without url sync.
+    dashboard.initUrlSync();
 
     this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });
@@ -83,26 +84,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
                 size: {
                   y: panel.gridPos.y,
                 },
-                children: panel.panels
-                  ? panel.panels.map(
-                      (p) =>
-                        new VizPanel({
-                          title: p.title,
-                          pluginId: p.type,
-                          size: {
-                            x: p.gridPos.x,
-                            y: p.gridPos.y,
-                            width: p.gridPos.w,
-                            height: p.gridPos.h,
-                          },
-                          options: p.options,
-                          fieldConfig: p.fieldConfig,
-                          $data: new SceneQueryRunner({
-                            queries: p.targets,
-                          }),
-                        })
-                    )
-                  : [],
+                children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
               })
             );
           } else {
@@ -128,21 +110,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
           }
         }
       } else {
-        const panelObject = new VizPanel({
-          title: panel.title,
-          pluginId: panel.type,
-          size: {
-            x: panel.gridPos.x,
-            y: panel.gridPos.y,
-            width: panel.gridPos.w,
-            height: panel.gridPos.h,
-          },
-          options: panel.options,
-          fieldConfig: panel.fieldConfig,
-          $data: new SceneQueryRunner({
-            queries: panel.targets,
-          }),
-        });
+        const panelObject = createVizPanelFromPanelModel(panel);
 
         // when processing an expanded row, collect its panels
         if (currentRow) {
@@ -168,6 +136,25 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
     return panels;
   }
+}
+
+function createVizPanelFromPanelModel(panel: PanelModel) {
+  return new VizPanel({
+    title: panel.title,
+    pluginId: panel.type,
+    size: {
+      x: panel.gridPos.x,
+      y: panel.gridPos.y,
+      width: panel.gridPos.w,
+      height: panel.gridPos.h,
+    },
+    options: panel.options,
+    fieldConfig: panel.fieldConfig,
+    pluginVersion: panel.pluginVersion,
+    $data: new SceneQueryRunner({
+      queries: panel.targets,
+    }),
+  });
 }
 
 let loader: DashboardLoader | null = null;

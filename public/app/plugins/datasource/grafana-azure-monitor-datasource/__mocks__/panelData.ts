@@ -46,5 +46,5 @@ export default function createMockPanelData(overrides?: DeepPartial<PanelData>) 
 
   const mockPanelData = _mockPanelData as PanelData;
 
-  return jest.mocked(mockPanelData, true);
+  return jest.mocked(mockPanelData);
 }
