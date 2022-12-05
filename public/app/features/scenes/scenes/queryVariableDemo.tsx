@@ -9,6 +9,7 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { CustomVariable } from '../variables/variants/CustomVariable';
+import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 export function getQueryVariableDemo(): Scene {
@@ -20,11 +21,22 @@ export function getQueryVariableDemo(): Scene {
           name: 'label',
           query: 'job : job, instance : instance',
         }),
+        new DataSourceVariable({
+          name: 'datasource',
+          query: 'prometheus',
+          isMulti: true,
+        }),
         new QueryVariable({
           name: 'label values (on time range refresh)',
           refresh: VariableRefresh.onTimeRangeChanged,
           query: { query: 'label_values(go_gc_duration_seconds, ${label})' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+        }),
+        new QueryVariable({
+          name: 'instance (using datasource variable)',
+          refresh: VariableRefresh.onTimeRangeChanged,
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
+          datasource: 'datasource',
         }),
       ],
     }),

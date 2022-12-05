@@ -22,6 +22,7 @@ import { sceneGraph } from '../../../core/sceneGraph';
 import { SceneComponentProps } from '../../../core/types';
 import { VariableDependencyConfig } from '../../VariableDependencyConfig';
 import { VariableValueSelect } from '../../components/VariableValueSelect';
+import { CustomFormatterFn } from '../../interpolation/sceneInterpolator';
 import { VariableValueOption } from '../../types';
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from '../MultiValueVariable';
 
@@ -29,7 +30,7 @@ import { createQueryVariableRunner } from './createQueryVariableRunner';
 import { metricNamesToVariableValues } from './utils';
 
 export interface QueryVariableState extends MultiValueVariableState {
-  datasource: DataSourceRef | null;
+  datasource: DataSourceRef | string | null;
   query: any;
   regex: string;
   refresh: VariableRefresh;
@@ -41,7 +42,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
   private dataSourceSubject?: Subject<DataSourceApi>;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    statePaths: ['regex', 'query'],
+    statePaths: ['regex', 'query', 'datasource'],
     // TODO: add query and datasource support
   });
 
@@ -92,7 +93,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
       return of([]);
     }
 
-    return from(getDataSourceSrv().get(this.state.datasource ?? '')).pipe(
+    return from(this.getDataSource()).pipe(
       mergeMap((ds) => {
         const runner = createQueryVariableRunner(ds);
         const target = runner.getTarget(this);
@@ -123,6 +124,21 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
         );
       })
     );
+  }
+
+  private async getDataSource(): Promise<DataSourceApi> {
+    if (typeof this.state.datasource === 'string') {
+      const variables = sceneGraph.getVariables(this);
+      if (variables) {
+        const ds = variables.getByName(this.state.datasource)?.getValue() ?? '';
+        if (Array.isArray(ds) && ds.length > 0) {
+          return getDataSourceSrv().get(String(ds[0]));
+        }
+        return getDataSourceSrv().get(String(ds));
+      }
+    }
+
+    return getDataSourceSrv().get(this.state.datasource ?? '');
   }
 
   private getRequest(target: DataQuery) {
