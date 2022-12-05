@@ -38,6 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -348,6 +350,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)),
 	tagimpl.ProvideService,
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
+	authnimpl.ProvideService,
+	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 )
 
 var wireSet = wire.NewSet(

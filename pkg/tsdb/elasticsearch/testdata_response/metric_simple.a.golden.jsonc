@@ -1,8 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "custom": null
-//  }
+//  Frame[0] 
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+--------------------+
@@ -18,9 +16,7 @@
 //  
 //  
 //  
-//  Frame[1] {
-//      "custom": null
-//  }
+//  Frame[1] 
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+--------------------+
@@ -36,9 +32,7 @@
 //  
 //  
 //  
-//  Frame[2] {
-//      "custom": null
-//  }
+//  Frame[2] 
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+--------------------+
@@ -59,9 +53,6 @@
   "frames": [
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
         "fields": [
           {
             "name": "time",
@@ -108,9 +99,6 @@
     },
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
         "fields": [
           {
             "name": "time",
@@ -157,9 +145,6 @@
     },
     {
       "schema": {
-        "meta": {
-          "custom": null
-        },
         "fields": [
           {
             "name": "time",
