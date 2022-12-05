@@ -6,7 +6,7 @@ import (
 	"golang.org/x/tools/go/ast/astutil"
 )
 
-// GoTypesJenny creates a [OneToOne] that produces Go types for the provided
+// GoTypesJenny is a [OneToOne] that produces Go types for the provided
 // [thema.Schema].
 type GoTypesJenny struct{}
 

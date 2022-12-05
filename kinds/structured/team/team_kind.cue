@@ -2,6 +2,7 @@ package kind
 
 name: "Team"
 maturity: "merged"
+description: "A team is a named grouping of Grafana users to which access control rules may be assigned."
 
 lineage: seqs: [
 	{
