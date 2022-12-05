@@ -158,7 +158,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 
 	severity := strings.ToLower(tmpl(pn.settings.Severity))
 	if _, ok := knownSeverity[severity]; !ok {
-		pn.log.Warn("Severity is not in the list of known values. Fallback to the default severity because otherwise API will reject the request", "actualSeverity", severity, "fallbackSeverity", defaultSeverity)
+		pn.log.Warn("Severity is not in the list of known values - using default severity", "actualSeverity", severity, "defaultSeverity", defaultSeverity)
 		severity = defaultSeverity
 	}
 
