@@ -20,10 +20,13 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  visibleLabels: Labels[];
+  visibleLabels: { labels: Labels[]; totalSeriesCount: number };
 }
 
-export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[] | null) => {
+export const getVisibleLabels = (
+  config: UPlotConfigBuilder,
+  frames: DataFrame[] | null
+): { labels: Labels[]; totalSeriesCount: number } => {
   const visibleSeries = config.series.filter((series) => series.props.show);
   const visibleLabels: Labels[] = [];
   if (frames?.length) {
@@ -41,7 +44,7 @@ export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[]
     });
   }
 
-  return visibleLabels;
+  return { labels: visibleLabels, totalSeriesCount: config.series.length };
 };
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -94,25 +97,33 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       let showMarker = false;
 
-      visibleLabels.forEach((visibleLabel) => {
-        const labelKeys = Object.keys(visibleLabel);
-        const labelValues = Object.values(visibleLabel);
+      // If all series are visible, don't filter any exemplars
+      if (visibleLabels.labels.length === visibleLabels.totalSeriesCount) {
+        showMarker = true;
+      } else {
+        visibleLabels.labels.forEach((visibleLabel) => {
+          const labelKeys = Object.keys(visibleLabel);
+          const labelValues = Object.values(visibleLabel);
 
-        // If there aren't any labels, the graph is only displaying a single source of exemplars, let's show them
-        if (Object.keys(visibleLabel).length === 0) {
-          showMarker = true;
-        } else {
-          // If there are labels, lets only show the labels associated with series that are currently visible
-          const field = dataFrame.fields.find((field) => labelKeys.find((labelKey) => labelKey === field.name));
+          // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
+          if (Object.keys(visibleLabel).length === 0) {
+            showMarker = true;
+          } else {
+            // If there are labels, lets only show the exemplars with labels associated with series that are currently visible
+            const fields = dataFrame.fields.filter((field) => labelKeys.find((labelKey) => labelKey === field.name));
 
-          if (field) {
-            const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-            if (labelValues.includes(value)) {
-              showMarker = true;
+            if (fields.length > 1) {
+              showMarker = fields.every((field) => {
+                const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+                if (labelValues.includes(value)) {
+                  return true;
+                }
+                return false;
+              });
             }
           }
-        }
-      });
+        });
+      }
 
       if (!showMarker) {
         return <></>;
