@@ -14,7 +14,7 @@ export function useRecipesFilteredBySearch(
     const result = [];
 
     for (const recipe of source) {
-      if (term && recipe.name.indexOf(term) > -1) {
+      if (!term) {
         result.push({
           id: recipe.id,
           name: recipe.name,
@@ -24,12 +24,15 @@ export function useRecipesFilteredBySearch(
         continue;
       }
 
-      result.push({
-        id: recipe.id,
-        name: recipe.name,
-        logo: 'https://grafana.com/api/plugins/simpod-json-datasource/versions/0.5.0/logos/small', // Temporary logo, replace later from META data
-        url: ROUTES.PluginRecipeDetails.replace(':id', recipe.id),
-      });
+      if (recipe.name.toLowerCase().indexOf(term) > -1) {
+        result.push({
+          id: recipe.id,
+          name: recipe.name,
+          logo: 'https://grafana.com/api/plugins/simpod-json-datasource/versions/0.5.0/logos/small', // Temporary logo, replace later from META data
+          url: ROUTES.PluginRecipeDetails.replace(':id', recipe.id),
+        });
+        continue;
+      }
     }
 
     return result;
