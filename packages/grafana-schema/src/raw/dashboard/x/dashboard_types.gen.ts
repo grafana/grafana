@@ -87,7 +87,7 @@ export interface VariableModel {
   /**
    * TODO: Move this into a separated QueryVariableModel type
    */
-  query?: string;
+  query?: (string | Record<string, unknown>);
   rootStateKey?: string;
   skipUrlSync: boolean;
   state: LoadingState;

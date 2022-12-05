@@ -970,7 +970,7 @@ type VariableModel struct {
 	Name        string                  `json:"name"`
 
 	// TODO: Move this into a separated QueryVariableModel type
-	Query        *string            `json:"query,omitempty"`
+	Query        *interface{}       `json:"query,omitempty"`
 	RootStateKey *string            `json:"rootStateKey,omitempty"`
 	SkipUrlSync  bool               `json:"skipUrlSync"`
 	State        VariableModelState `json:"state"`

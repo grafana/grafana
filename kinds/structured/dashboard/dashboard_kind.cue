@@ -137,7 +137,7 @@ lineage: seqs: [
 					error?: {...}
 					description?: string
 					// TODO: Move this into a separated QueryVariableModel type
-					query?: string
+					query?: string | {...}
 					datasource?: #DataSourceRef
 					...
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
