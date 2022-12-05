@@ -1,10 +1,8 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel, SceneGridRow } from '../components';
 import { Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
 import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
+import { SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
@@ -83,7 +81,7 @@ export function getGridWithRowsTest(): Scene {
       children: [cell1, cell2, row1, row2],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });

@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -69,7 +69,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
-	go generate ./public/app/plugins
+	go generate ./public/app/plugins/gen.go
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
@@ -81,6 +81,10 @@ gen-jsonnet:
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-backend: ## Build Grafana backend.
+	@echo "build backend"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
 
 build-server: ## Build Grafana server.
 	@echo "build server"
@@ -154,12 +158,17 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev .
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--tag grafana/grafana:dev .
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev-ubuntu -f ./Dockerfile.ubuntu .
-
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--build-arg BASE_IMAGE=ubuntu:20.04 \
+	--build-arg GO_IMAGE=golang:1.19.3 \
+	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services
 

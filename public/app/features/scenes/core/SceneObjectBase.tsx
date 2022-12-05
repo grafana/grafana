@@ -9,7 +9,7 @@ import { SceneVariableDependencyConfigLike } from '../variables/types';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
-import { SceneObject, SceneComponent, SceneObjectState } from './types';
+import { SceneObject, SceneComponent, SceneObjectState, SceneObjectUrlSyncHandler } from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
@@ -26,13 +26,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   protected _subs = new Subscription();
 
   protected _variableDependency: SceneVariableDependencyConfigLike | undefined;
+  protected _urlSync: SceneObjectUrlSyncHandler<TState> | undefined;
 
   public constructor(state: TState) {
     if (!state.key) {
       state.key = uuidv4();
     }
 
-    this._state = state;
+    this._state = Object.freeze(state);
     this._subject.next(state);
     this.setParent();
   }
@@ -55,6 +56,11 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   /** Returns variable dependency config */
   public get variableDependency(): SceneVariableDependencyConfigLike | undefined {
     return this._variableDependency;
+  }
+
+  /** Returns url sync config */
+  public get urlSync(): SceneObjectUrlSyncHandler<TState> | undefined {
+    return this._urlSync;
   }
 
   /**
@@ -92,19 +98,21 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
 
   public setState(update: Partial<TState>) {
     const prevState = this._state;
-    this._state = {
+    const newState: TState = {
       ...this._state,
       ...update,
     };
 
+    this._state = Object.freeze(newState);
+
     this.setParent();
-    this._subject.next(this._state);
+    this._subject.next(newState);
 
     // Bubble state change event. This is event is subscribed to by UrlSyncManager and UndoManager
     this.publishEvent(
       new SceneObjectStateChangedEvent({
         prevState,
-        newState: this._state,
+        newState,
         partialUpdate: update,
         changedObject: this,
       }),

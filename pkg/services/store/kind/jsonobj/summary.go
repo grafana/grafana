@@ -8,16 +8,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 )
 
-func GetObjectKindInfo() models.ObjectKindInfo {
-	return models.ObjectKindInfo{
+func GetEntityKindInfo() models.EntityKindInfo {
+	return models.EntityKindInfo{
 		ID:          models.StandardKindJSONObj,
 		Name:        "JSON Object",
 		Description: "JSON Object",
 	}
 }
 
-func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
 		v := make(map[string]interface{})
 		err := json.Unmarshal(body, &v)
 		if err != nil {
@@ -28,7 +28,7 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 		if err != nil {
 			return nil, nil, err
 		}
-		return &models.ObjectSummary{
+		return &models.EntitySummary{
 			Kind: models.StandardKindJSONObj,
 			Name: store.GuessNameFromUID(uid),
 			UID:  uid,

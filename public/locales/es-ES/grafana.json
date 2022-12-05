@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Por defecto"
@@ -81,23 +86,32 @@
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
-      "create": "Crear panel de biblioteca",
-      "error": "Ya existe un panel de biblioteca con este nombre",
+      "create": "Crear panel de librería",
+      "error": "Ya existe un panel de librería con este nombre",
       "folder": "Guardar en carpeta",
-      "folder-description": "Los permisos del panel de biblioteca se derivan de los permisos de la carpeta",
-      "name": "Nombre del panel de biblioteca"
+      "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
+      "name": "Nombre del panel de librería"
     }
   },
   "library-panels": {
     "save": {
-      "error": "Error al guardar el panel de la biblioteca: «{{errorMsg}}»",
-      "success": "Panel de biblioteca guardado"
+      "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
+      "success": "Panel de librería guardado"
     }
   },
   "nav": {
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
+    },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -184,7 +198,8 @@
     },
     "global-users": {
       "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "Usuarios"
+      "title": "",
+      "titleBeforeTopnav": "Usuarios"
     },
     "help": {
       "title": "Ayuda"
@@ -198,7 +213,7 @@
     },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
-      "title": "Paneles de la biblioteca"
+      "title": "Paneles de la librería"
     },
     "live": {
       "title": "Transmisión de eventos"
@@ -227,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "Preferencias"
+      "title": "",
+      "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -302,6 +318,10 @@
   "news": {
     "title": "Últimas entradas del blog"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
       "hide-legend": "",
@@ -316,7 +336,7 @@
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "",
+      "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
       "duration-selected": ""
     },
     "live-option": {
@@ -324,8 +344,8 @@
       "label": ""
     },
     "off-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Desactivar actualización automática",
+      "label": "Apagado"
     },
     "select-button": {
       "auto-refresh": ""
@@ -352,7 +372,7 @@
       "view-button": "Ver JSON"
     },
     "library": {
-      "info": "Cree un panel de biblioteca."
+      "info": "Cree un panel de librería."
     },
     "link": {
       "copy-link-button": "Copiar",
@@ -392,7 +412,7 @@
     "tab-title": {
       "embed": "Incrustar",
       "export": "Exportar",
-      "library-panel": "Panel de biblioteca",
+      "library-panel": "Panel de librería",
       "link": "Enlace",
       "snapshot": "Vista rápida"
     },
@@ -401,6 +421,9 @@
       "dark": "Oscuro",
       "field-name": "Tema",
       "light": "Claro"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -431,7 +454,7 @@
     },
     "calendar": {
       "apply-button": "",
-      "cancel-button": "",
+      "cancel-button": "Cancelar",
       "select-time": ""
     },
     "content": {

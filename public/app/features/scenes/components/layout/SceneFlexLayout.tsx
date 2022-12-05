@@ -60,6 +60,7 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
     flexDirection: direction,
     minWidth: sizing.minWidth,
     minHeight: sizing.minHeight,
+    position: 'relative',
   };
 
   if (direction === 'column') {

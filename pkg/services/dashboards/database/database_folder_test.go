@@ -42,7 +42,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")
 			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, folder.Id, false, "prod", "webapp")
 			insertTestDashboard(t, dashboardStore, "test dash 45", 1, folder.Id, false, "prod")
-			currentUser = CreateUser(t, sqlStore, "viewer", "Viewer", false)
+			currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 		}
 
 		t.Run("Given one dashboard folder with two dashboards and one dashboard in the root folder", func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				childDash1 = insertTestDashboard(t, dashboardStore, "child dash 1", 1, folder1.Id, false, "prod")
 				childDash2 = insertTestDashboard(t, dashboardStore, "child dash 2", 1, folder2.Id, false, "prod")
 
-				currentUser = CreateUser(t, sqlStore, "viewer", "Viewer", false)
+				currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 			}
 
 			setup2()
@@ -304,9 +304,9 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				insertTestDashboard(t, dashboardStore, "folder in another org", 2, 0, true, "prod")
 
-				adminUser = CreateUser(t, sqlStore, "admin", "Admin", true)
-				editorUser = CreateUser(t, sqlStore, "editor", "Editor", false)
-				viewerUser = CreateUser(t, sqlStore, "viewer", "Viewer", false)
+				adminUser = createUser(t, sqlStore, "admin", "Admin", true)
+				editorUser = createUser(t, sqlStore, "editor", "Editor", false)
+				viewerUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 			}
 
 			setup3()
