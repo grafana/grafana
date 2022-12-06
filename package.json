@@ -26,7 +26,7 @@
     "lint:fix": "yarn lint:ts --fix",
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "lint:ts": "yarn eslint ./public --ignore-pattern 'public/app/**' --ext .js,.tsx,.ts --cache",
-    "packages:build": "nx run-many --target=build --exclude @grafana-plugins/input-datasource",
+    "packages:build": "nx run-many --target=build --exclude @grafana-plugins/input-datasource --exclude=grafana-app",
     "packages:clean": "nx run-many --target=clean --parallel",
     "packages:lint": "nx run-many --target=lint",
     "packages:pack": "lerna exec --no-private -- yarn pack",
