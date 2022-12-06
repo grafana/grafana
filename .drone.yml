@@ -3858,6 +3858,10 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.17/grabpl
   - chmod +x bin/grabpl
@@ -3950,6 +3954,10 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.17/grabpl
   - chmod +x bin/grabpl
@@ -4024,6 +4032,10 @@ platform:
   os: linux
 services: []
 steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
 - commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.17/grabpl
@@ -6306,6 +6318,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: afb6f61069b34e09710aa14f9d84a4cd5a982ceb315f18d8d4b4dbb145f45293
+hmac: 57184b9e5686630c0dde2552e1de5d474b9cbe46aece25b679a76785531ad1e4
 
 ...

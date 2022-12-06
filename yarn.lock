@@ -5012,6 +5012,7 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
+    "@types/enzyme": 3.10.12
     "@types/hoist-non-react-statics": ^3.3.1
     "@types/jest": 29.2.3
     "@types/lodash": 4.14.187

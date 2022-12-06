@@ -12,22 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { shallow, ShallowWrapper } from 'enzyme';
 import React from 'react';
 
 import { createTheme } from '@grafana/data';
 
-import { EUpdateTypes } from '../../utils/DraggableManager';
+import { ViewRangeTime } from '../../TraceTimelineViewer/types';
+import DraggableManager, { DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 import GraphTicks from './GraphTicks';
-import Scrubber from './Scrubber';
-import ViewingLayer, { dragTypes, getStyles } from './ViewingLayer';
+import Scrubber, { ScrubberProps } from './Scrubber';
+import ViewingLayer, { dragTypes, getStyles, ViewingLayerProps, UnthemedViewingLayer } from './ViewingLayer';
 
-function getViewRange(viewStart, viewEnd) {
+function getViewRange(viewStart: number, viewEnd: number) {
   return {
     time: {
-      current: [viewStart, viewEnd],
+      current: [viewStart, viewEnd] as [number, number],
     },
   };
 }
@@ -35,8 +36,8 @@ function getViewRange(viewStart, viewEnd) {
 describe('<SpanGraph>', () => {
   polyfillAnimationFrame(window);
 
-  let props;
-  let wrapper;
+  let props: ViewingLayerProps;
+  let wrapper: ShallowWrapper<ViewingLayerProps, {}, UnthemedViewingLayer>;
 
   beforeEach(() => {
     props = {
@@ -45,7 +46,8 @@ describe('<SpanGraph>', () => {
       updateNextViewRangeTime: jest.fn(),
       updateViewRangeTime: jest.fn(),
       viewRange: getViewRange(0, 1),
-    };
+    } as unknown as ViewingLayerProps;
+
     wrapper = shallow(<ViewingLayer {...props} />)
       .dive()
       .dive();
@@ -57,11 +59,12 @@ describe('<SpanGraph>', () => {
       wrapper = shallow(<ViewingLayer {...props} />)
         .dive()
         .dive();
+
       wrapper.instance()._setRoot({
         getBoundingClientRect() {
           return { left: 10, width: 100 };
         },
-      });
+      } as SVGElement);
     });
 
     it('throws if _root is not set', () => {
@@ -105,81 +108,81 @@ describe('<SpanGraph>', () => {
     describe('reframe', () => {
       it('handles mousemove', () => {
         const value = 0.5;
-        wrapper.instance()._handleReframeMouseMove({ value });
-        const calls = props.updateNextViewRangeTime.mock.calls;
+        wrapper.instance()._handleReframeMouseMove({ value } as DraggingUpdate);
+        const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
         expect(calls).toEqual([[{ cursor: value }]]);
       });
 
       it('handles mouseleave', () => {
         wrapper.instance()._handleReframeMouseLeave();
-        const calls = props.updateNextViewRangeTime.mock.calls;
+        const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
         expect(calls).toEqual([[{ cursor: null }]]);
       });
 
       describe('drag update', () => {
         it('handles sans anchor', () => {
           const value = 0.5;
-          wrapper.instance()._handleReframeDragUpdate({ value });
-          const calls = props.updateNextViewRangeTime.mock.calls;
+          wrapper.instance()._handleReframeDragUpdate({ value } as DraggingUpdate);
+          const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
           expect(calls).toEqual([[{ reframe: { anchor: value, shift: value } }]]);
         });
 
         it('handles the existing anchor', () => {
           const value = 0.5;
           const anchor = 0.1;
-          const time = { ...props.viewRange.time, reframe: { anchor } };
+          const time = { ...props.viewRange.time, reframe: { anchor } } as ViewRangeTime;
           props = { ...props, viewRange: { time } };
           wrapper = shallow(<ViewingLayer {...props} />)
             .dive()
             .dive();
-          wrapper.instance()._handleReframeDragUpdate({ value });
-          const calls = props.updateNextViewRangeTime.mock.calls;
+          wrapper.instance()._handleReframeDragUpdate({ value } as DraggingUpdate);
+          const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
           expect(calls).toEqual([[{ reframe: { anchor, shift: value } }]]);
         });
       });
 
       describe('drag end', () => {
-        let manager;
+        let manager: DraggableManager;
 
         beforeEach(() => {
-          manager = { resetBounds: jest.fn() };
+          manager = { resetBounds: jest.fn() } as unknown as DraggableManager;
         });
 
         it('handles sans anchor', () => {
           const value = 0.5;
-          wrapper.instance()._handleReframeDragEnd({ manager, value });
-          expect(manager.resetBounds.mock.calls).toEqual([[]]);
-          const calls = props.updateViewRangeTime.mock.calls;
+          wrapper.instance()._handleReframeDragEnd({ manager, value } as DraggingUpdate);
+          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
+          const calls = (props.updateViewRangeTime as jest.Mock).mock.calls;
           expect(calls).toEqual([[value, value, 'minimap']]);
         });
 
         it('handles dragged left (anchor is greater)', () => {
           const value = 0.5;
           const anchor = 0.6;
-          const time = { ...props.viewRange.time, reframe: { anchor } };
+          const time = { ...props.viewRange.time, reframe: { anchor } } as ViewRangeTime;
           props = { ...props, viewRange: { time } };
           wrapper = shallow(<ViewingLayer {...props} />)
             .dive()
             .dive();
-          wrapper.instance()._handleReframeDragEnd({ manager, value });
+          wrapper.instance()._handleReframeDragEnd({ manager, value } as DraggingUpdate);
 
-          expect(manager.resetBounds.mock.calls).toEqual([[]]);
-          const calls = props.updateViewRangeTime.mock.calls;
+          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
+          const calls = (props.updateViewRangeTime as jest.Mock).mock.calls;
           expect(calls).toEqual([[value, anchor, 'minimap']]);
         });
 
         it('handles dragged right (anchor is less)', () => {
           const value = 0.5;
           const anchor = 0.4;
-          const time = { ...props.viewRange.time, reframe: { anchor } };
+          const time = { ...props.viewRange.time, reframe: { anchor } } as ViewRangeTime;
           props = { ...props, viewRange: { time } };
           wrapper = shallow(<ViewingLayer {...props} />)
             .dive()
             .dive();
-          wrapper.instance()._handleReframeDragEnd({ manager, value });
+          wrapper.instance()._handleReframeDragEnd({ manager, value } as DraggingUpdate);
 
-          expect(manager.resetBounds.mock.calls).toEqual([[]]);
-          const calls = props.updateViewRangeTime.mock.calls;
+          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
+          const calls = (props.updateViewRangeTime as jest.Mock).mock.calls;
           expect(calls).toEqual([[anchor, value, 'minimap']]);
         });
       });
@@ -187,12 +190,12 @@ describe('<SpanGraph>', () => {
 
     describe('scrubber', () => {
       it('prevents the cursor from being drawn on scrubber mouseover', () => {
-        wrapper.instance()._handleScrubberEnterLeave({ type: EUpdateTypes.MouseEnter });
+        wrapper.instance()._handleScrubberEnterLeave({ type: EUpdateTypes.MouseEnter } as DraggingUpdate);
         expect(wrapper.state('preventCursorLine')).toBe(true);
       });
 
       it('prevents the cursor from being drawn on scrubber mouseleave', () => {
-        wrapper.instance()._handleScrubberEnterLeave({ type: EUpdateTypes.MouseLeave });
+        wrapper.instance()._handleScrubberEnterLeave({ type: EUpdateTypes.MouseLeave } as DraggingUpdate);
         expect(wrapper.state('preventCursorLine')).toBe(false);
       });
 
@@ -203,7 +206,7 @@ describe('<SpanGraph>', () => {
             event: { stopPropagation },
             type: EUpdateTypes.DragStart,
           };
-          wrapper.instance()._handleScrubberDragUpdate(update);
+          wrapper.instance()._handleScrubberDragUpdate(update as unknown as DraggingUpdate);
           expect(stopPropagation.mock.calls).toEqual([[]]);
         });
 
@@ -229,7 +232,7 @@ describe('<SpanGraph>', () => {
             },
           ];
           cases.forEach((_case) => {
-            instance._handleScrubberDragUpdate(_case.dragUpdate);
+            instance._handleScrubberDragUpdate(_case.dragUpdate as DraggingUpdate);
             expect(props.updateNextViewRangeTime).lastCalledWith(_case.viewRangeUpdate);
           });
         });
@@ -261,9 +264,9 @@ describe('<SpanGraph>', () => {
           const { manager } = _case.dragUpdate;
           wrapper.setState({ preventCursorLine: true });
           expect(wrapper.state('preventCursorLine')).toBe(true);
-          instance._handleScrubberDragEnd(_case.dragUpdate);
+          instance._handleScrubberDragEnd(_case.dragUpdate as unknown as DraggingUpdate);
           expect(wrapper.state('preventCursorLine')).toBe(false);
-          expect(manager.resetBounds.mock.calls).toEqual([[]]);
+          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
           expect(props.updateViewRangeTime).lastCalledWith(..._case.viewRangeUpdate, 'minimap');
         });
       });
@@ -315,7 +318,7 @@ describe('<SpanGraph>', () => {
 
     const leftBox = wrapper.find(`.${getStyles(createTheme()).ViewingLayerInactive}`);
     expect(leftBox.length).toBe(1);
-    const width = Number(leftBox.prop('width').slice(0, -1));
+    const width = Number(leftBox.prop('width')?.toString().slice(0, -1));
     const x = leftBox.prop('x');
     expect(Math.round(width)).toBe(20);
     expect(x).toBe(0);
@@ -329,17 +332,17 @@ describe('<SpanGraph>', () => {
 
     const rightBox = wrapper.find(`.${getStyles(createTheme()).ViewingLayerInactive}`);
     expect(rightBox.length).toBe(1);
-    const width = Number(rightBox.prop('width').slice(0, -1));
-    const x = Number(rightBox.prop('x').slice(0, -1));
+    const width = Number(rightBox.prop('width')?.toString().slice(0, -1));
+    const x = Number(rightBox.prop('x')?.toString().slice(0, -1));
     expect(Math.round(width)).toBe(20);
     expect(x).toBe(80);
   });
 
   it('renders handles for the timeRangeFilter', () => {
     const [viewStart, viewEnd] = props.viewRange.time.current;
-    let scrubber = <Scrubber position={viewStart} />;
+    let scrubber = <Scrubber {...({ position: viewStart } as ScrubberProps)} />;
     expect(wrapper.containsMatchingElement(scrubber)).toBeTruthy();
-    scrubber = <Scrubber position={viewEnd} />;
+    scrubber = <Scrubber {...({ position: viewEnd } as ScrubberProps)} />;
     expect(wrapper.containsMatchingElement(scrubber)).toBeTruthy();
   });
 });
