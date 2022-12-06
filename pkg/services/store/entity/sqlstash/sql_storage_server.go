@@ -669,13 +669,13 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		for labelKey, labelValue := range r.Labels {
 			args = append(args, labelKey)
 			args = append(args, labelValue)
-			conditions = append(conditions, "(LABEL = ? AND VALUE = ?)")
+			conditions = append(conditions, "(label = ? AND value = ?)")
 		}
 		joinedConditions := strings.Join(conditions, " OR ")
-		query := "SELECT GRN FROM ENTITY_LABELS WHERE " + joinedConditions + " GROUP BY GRN HAVING COUNT(LABEL) = ?"
+		query := "SELECT grn FROM entity_labels WHERE " + joinedConditions + " GROUP BY grn HAVING COUNT(label) = ?"
 		args = append(args, len(r.Labels))
 
-		entityQuery.addWhereInSubquery("GRN", query, args)
+		entityQuery.addWhereInSubquery("grn", query, args)
 	}
 
 	query, args := entityQuery.toQuery()
