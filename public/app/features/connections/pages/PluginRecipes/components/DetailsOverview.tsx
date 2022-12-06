@@ -28,7 +28,7 @@ export function DetailsOverview({ recipe }: Props): ReactElement {
   const dashboardSteps = useSetupDashboardsSteps(recipe.steps);
   const agentSteps = useInstallAgentSteps(recipe.steps);
   const alertSteps = useSetupAlertsSteps(recipe.steps);
-  console.log('description', recipe.meta.description);
+
   return (
     <div className={styles.overview}>
       <section>
