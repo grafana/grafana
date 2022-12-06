@@ -250,7 +250,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/drone/drone-cli v1.6.1
 	github.com/getkin/kin-openapi v0.103.0
-	github.com/golang-migrate/migrate/v4 v4.7.0
+	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/codejen v0.0.3
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
