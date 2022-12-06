@@ -16,10 +16,10 @@ module.exports = (env = {}) =>
     mode: 'production',
     devtool: 'source-map',
 
-    // entry: {
-    //   dark: '../sass/grafana.dark.scss',
-    //   light: '../sass/grafana.light.scss',
-    // },
+    entry: {
+      dark: '../sass/grafana.dark.scss',
+      light: '../sass/grafana.light.scss',
+    },
 
     module: {
       // Note: order is bottom-to-top and/or right-to-left
