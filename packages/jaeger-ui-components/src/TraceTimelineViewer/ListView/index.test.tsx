@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { mount, shallow, ShallowWrapper } from 'enzyme';
+import { mount, ReactWrapper, shallow, ShallowWrapper } from 'enzyme';
 import React from 'react';
 
+import { TNil } from '../../types';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 import ListView, { TListViewProps } from './index';
@@ -22,8 +23,19 @@ import ListView, { TListViewProps } from './index';
 // Util to get list of all callbacks added to an event emitter by event type.
 // jest adds "error" event listeners to window, this util makes it easier to
 // ignore those calls.
-function getListenersByType(mockFn: jest.MockContext<void, []>) {
-  const rv = {};
+function getListenersByType(
+  mockFn: jest.MockContext<
+    void,
+    [
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions | undefined
+    ]
+  >
+) {
+  const rv: {
+    [eventType: string]: EventListenerOrEventListenerObject[];
+  } = {};
   mockFn.calls.forEach(([eventType, callback]) => {
     if (!rv[eventType]) {
       rv[eventType] = [callback];
@@ -44,31 +56,19 @@ describe('<ListView>', () => {
     return index * 2 + 2;
   }
 
-  function Item(props) {
+  function Item(props: React.HTMLProps<HTMLDivElement>) {
     const { children, ...rest } = props;
     return <div {...rest}>{children}</div>;
   }
 
-  function renderItem(
-    itemKey: string,
-    styles: {
-      height: number;
-      top: number;
-      position: string;
-    },
-    itemIndex: number,
-    attrs: {
-      'data-item-key': string;
-    }
-  ) {
+  const renderItem: TListViewProps['itemRenderer'] = (itemKey, styles, itemIndex, attrs) => {
     return (
       <Item key={itemKey} style={styles} {...attrs}>
         {itemIndex}
       </Item>
     );
-  }
+  };
 
-  let wrapper: ShallowWrapper<TListViewProps, {}, ListView>;
   let instance: ListView;
 
   const props = {
@@ -85,8 +85,9 @@ describe('<ListView>', () => {
   };
 
   describe('shallow tests', () => {
+    let wrapper: ShallowWrapper<TListViewProps, {}, ListView>;
     beforeEach(() => {
-      wrapper = shallow(<ListView {...(props as unknown as TListViewProps)} />);
+      wrapper = shallow(<ListView {...props} />);
     });
 
     it('renders without exploding', () => {
@@ -106,7 +107,7 @@ describe('<ListView>', () => {
       const expectedHeights: number[] = [];
       const heights = items.map((node, i) => {
         expectedHeights.push(getHeight(i));
-        return node.prop('style').height;
+        return node.prop('style')?.height;
       });
       expect(heights.length).toBe(props.initialDraw);
       expect(heights).toEqual(expectedHeights);
@@ -120,12 +121,13 @@ describe('<ListView>', () => {
   });
 
   describe('mount tests', () => {
+    let wrapper: ReactWrapper<TListViewProps, {}, ListView>;
     describe('accessor functions', () => {
       const clientHeight = 2;
       const scrollTop = 3;
 
-      let oldRender;
-      let oldInitWrapper;
+      let oldRender: () => JSX.Element;
+      let oldInitWrapper: (elm: HTMLElement | TNil) => void;
       const initWrapperMock = jest.fn((elm) => {
         if (elm != null) {
           // jsDom requires `defineProperties` instead of just setting the props
@@ -184,8 +186,22 @@ describe('<ListView>', () => {
     });
 
     describe('windowScroller', () => {
-      let windowAddListenerSpy: jest.SpyInstance;
-      let windowRmListenerSpy: jest.SpyInstance;
+      let windowAddListenerSpy: jest.SpyInstance<
+        void,
+        [
+          type: string,
+          listener: EventListenerOrEventListenerObject,
+          options?: boolean | AddEventListenerOptions | undefined
+        ]
+      >;
+      let windowRmListenerSpy: jest.SpyInstance<
+        void,
+        [
+          type: string,
+          listener: EventListenerOrEventListenerObject,
+          options?: boolean | AddEventListenerOptions | undefined
+        ]
+      >;
 
       beforeEach(() => {
         windowAddListenerSpy = jest.spyOn(window, 'addEventListener');
