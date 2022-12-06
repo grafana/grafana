@@ -200,7 +200,7 @@ function showExemplar(
   } else {
     visibleSeries.labels.forEach((visibleLabel) => {
       // Get the label names
-      const labelKeys = Object.keys(visibleLabel);
+      const labelKeys = Object.keys(visibleLabel.labels);
 
       // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
       if (Object.keys(visibleLabel.labels).length === 0) {
