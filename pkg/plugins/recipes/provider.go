@@ -91,7 +91,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 				newSetupDashboardStep(dashboardStepMeta{
 					RecipeStepMeta: RecipeStepMeta{
 						Name:        "Setup dashboards to view docker metrics",
-						Description: "This dashboard will let you visualize the metrics gathered by the Grafana agent running on your server.",
+						Description: "Dashboard to visualize metrics gathered by this recipe",
 					},
 					Screenshots: []RecipeStepScreenshot{
 						{
@@ -103,7 +103,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 				newSetupDashboardStep(dashboardStepMeta{
 					RecipeStepMeta: RecipeStepMeta{
 						Name:        "Setup dashboard to view docker logs",
-						Description: "This dashboard will let you visualize the logs gathered by the Grafana agent running on your server.",
+						Description: "Dashboard to visualize logs gathered by this recipe.",
 					},
 					Screenshots: []RecipeStepScreenshot{
 						{
