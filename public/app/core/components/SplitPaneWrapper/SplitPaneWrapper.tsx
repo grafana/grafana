@@ -95,6 +95,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
         resizerClassName={splitOrientation === 'horizontal' ? styles.resizerH : styles.resizerV}
         onDragStarted={() => this.onDragStarted()}
         onDragFinished={(size) => this.onDragFinished(size)}
+        style={{ height: 'auto' }}
         paneStyle={paneStyle}
         pane2Style={secondaryPaneStyle}
       >

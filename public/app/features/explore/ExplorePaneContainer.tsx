@@ -37,7 +37,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
-      overflow: scroll;
       min-width: 600px;
       & + & {
         border-left: 1px dotted ${theme.colors.border.medium};
