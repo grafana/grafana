@@ -5,9 +5,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -33,6 +35,8 @@ type Service struct {
 	userAuthService    userauth.Service
 	quotaService       quota.Service
 	accessControlStore accesscontrol.Service
+	remoteCache        *remotecache.RemoteCache
+	features           *featuremgmt.FeatureManager
 	// TODO remove sqlstore
 	sqlStore *sqlstore.SQLStore
 
@@ -51,6 +55,8 @@ func ProvideService(
 	accessControlStore accesscontrol.Service,
 	cfg *setting.Cfg,
 	ss *sqlstore.SQLStore,
+	remoteCache *remotecache.RemoteCache,
+	features *featuremgmt.FeatureManager,
 ) user.Service {
 	return &Service{
 		store: &sqlStore{
@@ -67,6 +73,8 @@ func ProvideService(
 		accessControlStore: accessControlStore,
 		cfg:                cfg,
 		sqlStore:           ss,
+		remoteCache:        remoteCache,
+		features:           features,
 	}
 }
 
@@ -309,6 +317,16 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 
 // TODO: remove wrapper around sqlstore
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	// Fetching from remote cache first otherwise fallback to in memory cache
+	if s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
+		res, errCache := s.remoteCache.Get(ctx, sqlstore.NewSignedInUserCacheKey(query.OrgID, query.UserID))
+		if errCache == nil {
+			if signedInUser, ok := res.(user.SignedInUser); ok {
+				return &signedInUser, nil
+			}
+		}
+	}
+
 	q := &models.GetSignedInUserQuery{
 		UserId: query.UserID,
 		Login:  query.Login,
