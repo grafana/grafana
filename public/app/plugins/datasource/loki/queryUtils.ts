@@ -108,7 +108,7 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   return { ...rest, queryType: LokiQueryType.Range };
 }
 
-export function parseToArray(query: string): string[] {
+export function parseToNodeNamesArray(query: string): string[] {
   const queryParts: string[] = [];
   const tree = parser.parse(query);
   tree.iterate({

@@ -30,7 +30,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
-import { parseToArray } from './queryUtils';
+import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
@@ -180,7 +180,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToArray('{a="b"}'),
+          parsed_query: parseToNodeNamesArray('{a="b"}'),
         })
       );
     });

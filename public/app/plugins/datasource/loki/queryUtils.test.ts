@@ -5,7 +5,7 @@ import {
   isQueryWithLabelFormat,
   isQueryWithParser,
   isValidQuery,
-  parseToArray,
+  parseToNodeNamesArray,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -169,10 +169,10 @@ describe('isValidQuery', () => {
 
 describe('parseToArray', () => {
   it('returns on empty query', () => {
-    expect(parseToArray('{}')).toEqual(['LogQL', 'Expr', 'LogExpr', 'Selector', '⚠']);
+    expect(parseToNodeNamesArray('{}')).toEqual(['LogQL', 'Expr', 'LogExpr', 'Selector', '⚠']);
   });
   it('returns on invalid query', () => {
-    expect(parseToArray('{job="grafana"')).toEqual([
+    expect(parseToNodeNamesArray('{job="grafana"')).toEqual([
       'LogQL',
       'Expr',
       'LogExpr',
@@ -186,7 +186,7 @@ describe('parseToArray', () => {
     ]);
   });
   it('returns on valid query', () => {
-    expect(parseToArray('{job="grafana"}')).toEqual([
+    expect(parseToNodeNamesArray('{job="grafana"}')).toEqual([
       'LogQL',
       'Expr',
       'LogExpr',

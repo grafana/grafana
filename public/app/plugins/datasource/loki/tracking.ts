@@ -1,7 +1,7 @@
 import { DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { isLogsQuery, parseToArray } from './queryUtils';
+import { isLogsQuery, parseToNodeNamesArray } from './queryUtils';
 import { LokiQuery } from './types';
 
 export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], app: string): void {
@@ -13,7 +13,7 @@ export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], ap
       has_error: response.error !== undefined,
       legend: query.legendFormat,
       line_limit: query.maxLines,
-      parsed_query: parseToArray(query.expr),
+      parsed_query: parseToNodeNamesArray(query.expr).join(','),
       query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,
       resolution: query.resolution,
