@@ -16,9 +16,8 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { createTheme } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 
-import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
+import TracePageSearchBar, { getStyles, TracePageSearchBarProps } from './TracePageSearchBar';
 
 const defaultProps = {
   forwardedRef: React.createRef(),
@@ -30,8 +29,8 @@ const defaultProps = {
 describe('<TracePageSearchBar>', () => {
   describe('truthy textFilter', () => {
     it('renders UiFindInput with correct props', () => {
-      render(<TracePageSearchBar {...defaultProps} />);
-      expect(screen.getByPlaceholderText('Find...')['value']).toEqual('value');
+      render(<TracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
+      expect((screen.getByPlaceholderText('Find...') as HTMLInputElement)['value']).toEqual('value');
       const suffix = screen.getByLabelText('Search bar suffix');
       const theme = createTheme();
       expect(suffix['className']).toBe(getStyles(theme).TracePageSearchBarSuffix);
@@ -39,13 +38,13 @@ describe('<TracePageSearchBar>', () => {
     });
 
     it('renders buttons', () => {
-      render(<TracePageSearchBar {...defaultProps} />);
+      render(<TracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
       const nextResButton = screen.queryByRole('button', { name: 'Next results button' });
       const prevResButton = screen.queryByRole('button', { name: 'Prev results button' });
       expect(nextResButton).toBeInTheDocument();
       expect(prevResButton).toBeInTheDocument();
-      expect(nextResButton['disabled']).toBe(false);
-      expect(prevResButton['disabled']).toBe(false);
+      expect((nextResButton as HTMLButtonElement)['disabled']).toBe(false);
+      expect((prevResButton as HTMLButtonElement)['disabled']).toBe(false);
     });
 
     it('only shows navigable buttons when navigable is true', () => {
@@ -53,7 +52,7 @@ describe('<TracePageSearchBar>', () => {
         ...defaultProps,
         navigable: false,
       };
-      render(<TracePageSearchBar {...props} />);
+      render(<TracePageSearchBar {...(props as unknown as TracePageSearchBarProps)} />);
       expect(screen.queryByRole('button', { name: 'Next results button' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Prev results button' })).not.toBeInTheDocument();
     });
@@ -65,7 +64,7 @@ describe('<TracePageSearchBar>', () => {
         ...defaultProps,
         searchValue: '',
       };
-      render(<TracePageSearchBar {...props} />);
+      render(<TracePageSearchBar {...(props as unknown as TracePageSearchBarProps)} />);
     });
 
     it('does not render suffix', () => {
