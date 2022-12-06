@@ -56,6 +56,12 @@ export function PluginRecipeDetailsPage() {
       pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}
       actions={<DetailsHeaderActions onInstall={onStartInstall} />}
       info={info}
+      renderTitle={(title) => (
+        <div className={styles.pageTitleContainer}>
+          <img className={styles.pageTitleImage} src={data.meta.logo} alt={`Logo of ${data.name}`} />
+          <h1 className={styles.pageTitle}>{title}</h1>
+        </div>
+      )}
     >
       <Page.Contents>
         <div className={styles.content}>
@@ -71,5 +77,18 @@ const getStyles = () => ({
   content: css`
     min-width: 900px;
     width: 60%;
+  `,
+  pageTitleContainer: css`
+    display: flex;
+    align-items: center;
+  `,
+  pageTitleImage: css`
+    width: 40px;
+    height: 40px;
+    margin-left: 5px;
+    margin-right: 10px;
+  `,
+  pageTitle: css`
+    margin-bottom: 0;
   `,
 });
