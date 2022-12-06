@@ -2,17 +2,27 @@ package recipes
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
+func newInstructionStep(meta InstructionStepMeta) *InstructionStep {
+	return &InstructionStep{
+		Action: "display-info",
+		Meta:   meta,
+	}
+}
+
 type InstructionStep struct {
-	Meta                                RecipeStepMeta   `json:"meta"`
-	Status                              RecipeStepStatus `json:"status"`
-	InstructionText                     string           `json:"instructionText"`                     // The instruction as Markdown text
-	InstructionTestURL                  string           `json:"instructionTestURL"`                  // The URL to test if the requested changes are configured. If left empty then no test button will be added.
-	InstructionTestExpectedHttpResponse string           `json:"instructionTestExpectedHttpResponse"` // E.g. "200"
-	cfg                                 *setting.Cfg
+	Action string              `json:"action"`
+	Meta   InstructionStepMeta `json:"meta"`
+	Status RecipeStepStatus    `json:"status"`
+}
+
+type InstructionStepMeta struct {
+	Name                                string `json:"name"`
+	Description                         string `json:"name"`
+	InstructionText                     string `json:"instructionText"`                     // The instruction as Markdown text
+	InstructionTestURL                  string `json:"instructionTestURL"`                  // The URL to test if the requested changes are configured. If left empty then no test button will be added.
+	InstructionTestExpectedHttpResponse string `json:"instructionTestExpectedHttpResponse"` // E.g. "200"
 }
 
 func (s *InstructionStep) Apply(c context.Context) error {

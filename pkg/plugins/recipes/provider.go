@@ -48,16 +48,15 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 						Version: "1.0.9",
 					},
 				),
-				&InstructionStep{
-					Meta: RecipeStepMeta{
-						Name:        "Some instruction",
-						Description: "Some description here...",
+				newInstructionStep(
+					InstructionStepMeta{
+						Name:                                "Some instruction",
+						Description:                         "Some description here...",
+						InstructionText:                     "Some markdown here...",
+						InstructionTestURL:                  "http://my-service.com/api/health",
+						InstructionTestExpectedHttpResponse: "200",
 					},
-					InstructionText:                     "Some markdown here...",
-					InstructionTestURL:                  "http://my-service.com/api/health",
-					InstructionTestExpectedHttpResponse: "200",
-					cfg:                                 cfg,
-				},
+				),
 			},
 		},
 
@@ -80,16 +79,15 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 						Version: "1.0.9",
 					},
 				),
-				&InstructionStep{
-					Meta: RecipeStepMeta{
-						Name:        "Some instruction",
-						Description: "Some description here...",
+				newInstructionStep(
+					InstructionStepMeta{
+						Name:                                "Some instruction",
+						Description:                         "Some description here...",
+						InstructionText:                     "Some markdown here...",
+						InstructionTestURL:                  "http://my-service.com/api/health",
+						InstructionTestExpectedHttpResponse: "200",
 					},
-					InstructionText:                     "Some markdown here...",
-					InstructionTestURL:                  "http://my-service.com/api/health",
-					InstructionTestExpectedHttpResponse: "200",
-					cfg:                                 cfg,
-				},
+				),
 				newSetupDashboardStep(dashboardStepMeta{
 					RecipeStepMeta: RecipeStepMeta{
 						Name:        "Setup dashboards to view docker metrics",
@@ -136,16 +134,15 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 						Version: "1.0.9",
 					},
 				),
-				&InstructionStep{
-					Meta: RecipeStepMeta{
-						Name:        "Some instruction",
-						Description: "Some description here...",
+				newInstructionStep(
+					InstructionStepMeta{
+						Name:                                "Some instruction",
+						Description:                         "Some description here...",
+						InstructionText:                     "Some markdown here...",
+						InstructionTestURL:                  "http://my-service.com/api/health",
+						InstructionTestExpectedHttpResponse: "200",
 					},
-					InstructionText:                     "Some markdown here...",
-					InstructionTestURL:                  "http://my-service.com/api/health",
-					InstructionTestExpectedHttpResponse: "200",
-					cfg:                                 cfg,
-				},
+				),
 				newPluginInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
@@ -186,16 +183,15 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 						Version: "1.0.9",
 					},
 				),
-				&InstructionStep{
-					Meta: RecipeStepMeta{
-						Name:        "Some instruction",
-						Description: "Some description here...",
+				newInstructionStep(
+					InstructionStepMeta{
+						Name:                                "Some instruction",
+						Description:                         "Some description here...",
+						InstructionText:                     "Some markdown here...",
+						InstructionTestURL:                  "http://my-service.com/api/health",
+						InstructionTestExpectedHttpResponse: "200",
 					},
-					InstructionText:                     "Some markdown here...",
-					InstructionTestURL:                  "http://my-service.com/api/health",
-					InstructionTestExpectedHttpResponse: "200",
-					cfg:                                 cfg,
-				},
+				),
 				newPluginInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
