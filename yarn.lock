@@ -4335,7 +4335,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@9.4.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
@@ -4401,7 +4401,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.4.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -4546,7 +4546,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@9.4.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -4591,7 +4591,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@9.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -4611,7 +4611,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/toolkit@9.4.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -4711,7 +4711,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@9.4.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:

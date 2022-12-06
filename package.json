@@ -83,7 +83,14 @@
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "node-fetch": "2.6.7",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
-    "storybook-dark-mode@1.1.2": "patch:storybook-dark-mode@npm%3A1.1.2#./.yarn/patches/storybook-dark-mode-npm-1.1.2-ecc4605688.patch"
+    "storybook-dark-mode@1.1.2": "patch:storybook-dark-mode@npm%3A1.1.2#./.yarn/patches/storybook-dark-mode-npm-1.1.2-ecc4605688.patch",
+    "@grafana/data": "workspace:*",
+    "@grafana/e2e-selectors": "workspace:*",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/schema": "workspace:*",
+    "@grafana/toolkit": "workspace:*",
+    "@grafana/ui": "workspace:*",
+    "@jaegertracing/jaeger-ui-components": "workspace:*"
   },
   "dependencies": {
     "@daybrush/utils": "1.10.0",
