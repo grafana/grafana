@@ -9,5 +9,5 @@ func Summarizer() kindsys.Summarizer {
   return kindsys.GenericSummarizer("{{ .Properties.Name }}")
   {{- else -}}
   return getSummarizer()
-  {{ end }}
+  {{- end }}
 }

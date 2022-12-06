@@ -6,3 +6,4 @@ extensions: ["svg"]
 
 // TODO this is overridden elsewhere, because svg needs dependency injection for sanitize
 summaryHandler: "generic"
+mimeType: "image/svg+xml"
