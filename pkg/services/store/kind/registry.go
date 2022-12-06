@@ -89,14 +89,14 @@ func NewKindRegistry() KindRegistry {
 	return reg
 }
 
-func makeEKI(meta kindsys.SomeKindMeta) models.EntityKindInfo {
+func makeEKI(props kindsys.SomeKindProperties) models.EntityKindInfo {
 	eki := models.EntityKindInfo{
-		ID:          meta.Common().MachineName,
-		Name:        meta.Common().Name,
-		Description: meta.Common().Description,
-		MimeType:    meta.Common().MimeType,
+		ID:          props.Common().MachineName,
+		Name:        props.Common().Name,
+		Description: props.Common().Description,
+		MimeType:    props.Common().MimeType,
 	}
-	_, eki.IsRaw = meta.(kindsys.RawMeta)
+	_, eki.IsRaw = props.(kindsys.RawProperties)
 	return eki
 }
 
