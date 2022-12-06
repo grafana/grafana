@@ -77,15 +77,15 @@ function attachReferences(spans: TraceSpanData[], depth: number, spansPerLevel: 
     const parentSpanId = getParentSpanId(span, levels);
     return parentSpanId
       ? {
-        ...span,
-        references: [
-          {
-            refType: 'CHILD_OF',
-            traceID: span.traceID,
-            spanID: parentSpanId,
-          },
-        ],
-      }
+          ...span,
+          references: [
+            {
+              refType: 'CHILD_OF',
+              traceID: span.traceID,
+              spanID: parentSpanId,
+            },
+          ],
+        }
       : span;
   });
 }
@@ -119,7 +119,8 @@ export default chance.mixin({
     });
     spans = attachReferences(spans, maxDepth, spansPerLevel);
     if (spans.length > 1) {
-      spans = setupParentSpan(spans, { startTime: timestamp, duration } as TraceSpanData);
+      // @ts-ignore
+      spans = setupParentSpan(spans, { startTime: timestamp, duration });
     }
 
     return {
