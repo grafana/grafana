@@ -109,8 +109,17 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsgError: nil,
 		},
 		{
-			name:     "Should expand templates in fields",
-			settings: `{"integrationKey": "abcdefgh0123456789", "severity" : "{{ .CommonLabels.severity }}", "class": "{{ .CommonLabels.class }}",  "component": "{{ .CommonLabels.component }}", "group" : "{{ .CommonLabels.group }}", "source": "{{ .CommonLabels.source }}" }`,
+			name: "Should expand templates in fields",
+			settings: `{
+				"integrationKey": "abcdefgh0123456789", 
+				"severity" : "{{ .CommonLabels.severity }}", 
+				"class": "{{ .CommonLabels.class }}",  
+				"component": "{{ .CommonLabels.component }}", 
+				"group" : "{{ .CommonLabels.group }}", 
+				"source": "{{ .CommonLabels.source }}",
+				"client": "client-{{ .CommonLabels.source }}",
+				"client_url": "http://localhost:20200/{{ .CommonLabels.group }}"
+			}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -137,8 +146,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 						"resolved":     "",
 					},
 				},
-				Client:    "Grafana",
-				ClientURL: "http://localhost",
+				Client:    "client-test-source",
+				ClientURL: "http://localhost:20200/test-group",
 				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
 			},
 			expMsgError: nil,
