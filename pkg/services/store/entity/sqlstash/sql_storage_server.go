@@ -664,13 +664,18 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	if len(r.Labels) > 0 {
+		var args []interface{}
+		var conditions []string
 		for labelKey, labelValue := range r.Labels {
-			// FIXME: optimize - group by grn + having count = len(r.Labels)
-			entityQuery.addWhereInSubquery(
-				"grn",
-				"select grn from entity_labels where (label = ? AND value = ?)",
-				[]interface{}{labelKey, labelValue})
+			args = append(args, labelKey)
+			args = append(args, labelValue)
+			conditions = append(conditions, "(label = ? AND value = ?)")
 		}
+		joinedConditions := strings.Join(conditions, " OR ")
+		query := "select grn from entity_labels where " + joinedConditions + " group by grn having count(distinct label) = ?"
+		args = append(args, len(r.Labels))
+
+		entityQuery.addWhereInSubquery("grn", query, args)
 	}
 
 	query, args := entityQuery.toQuery()
