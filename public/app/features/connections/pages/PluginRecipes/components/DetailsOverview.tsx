@@ -91,5 +91,8 @@ const getStyles = () => ({
       aspect-ratio: 16 / 9;
       object-fit: cover;
     }
+    ul {
+      padding-left: 25px;
+    }
   `,
 });
