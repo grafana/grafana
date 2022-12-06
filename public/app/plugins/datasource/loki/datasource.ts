@@ -1,8 +1,9 @@
-import { cloneDeep, concat, map as lodashMap } from 'lodash';
+import { cloneDeep, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, concatMap, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
+  AbstractQuery,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
@@ -19,21 +20,20 @@ import {
   dateMath,
   DateTime,
   FieldCache,
-  AbstractQuery,
   FieldType,
+  getDefaultTimeRange,
   Labels,
   LoadingState,
   LogLevel,
   LogRowModel,
+  QueryFixAction,
+  QueryHint,
+  rangeUtil,
   ScopedVars,
   TimeRange,
-  rangeUtil,
   toUtc,
-  QueryHint,
-  getDefaultTimeRange,
-  QueryFixAction,
 } from '@grafana/data';
-import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
+import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
