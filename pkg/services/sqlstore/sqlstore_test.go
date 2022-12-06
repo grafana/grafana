@@ -5,8 +5,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlStoreTest struct {
@@ -66,6 +67,20 @@ var sqlStoreTestCases = []sqlStoreTest{
 		dbType:        "postgres",
 		dbHost:        "[::1]",
 		connStrValues: []string{"host=::1", "port=5432"},
+	},
+	{
+		name:          "Postgres Unix socket for CloudSQL",
+		dbType:        "postgres",
+		dbHost:        "/cloudsql/development-mycompany:northamerica-northeast2:company-db",
+		connStrValues: []string{"host=/cloudsql/development-mycompany:northamerica-northeast2:company-db", "port=5432"},
+	},
+	{
+		name:   "Postgres Unix socket for CloudSQL (URL)",
+		dbType: "postgres",
+		dbURL: "postgres:///grafana?host=/cloudsql/development-mycompany:northamerica-northeast2:company-db&" +
+			"user=grafana@development-mycompany.iam&password=apassword&port=5432",
+		connStrValues: []string{"host=/cloudsql/development-mycompany:northamerica-northeast2:company-db", "port=5432",
+			"user=grafana@development-mycompany.iam", "password=apassword"},
 	},
 	{
 		name:  "Invalid database URL",

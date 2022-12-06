@@ -23,6 +23,7 @@ func TestSplitHostPortDefault_Valid(t *testing.T) {
 		{input: "xyz.rds.amazonaws.com", defaultHost: "", defaultPort: "123", host: "xyz.rds.amazonaws.com", port: "123"},
 		{input: "xyz.rds.amazonaws.com:123", defaultHost: "", defaultPort: "", host: "xyz.rds.amazonaws.com", port: "123"},
 		{input: "", defaultHost: "localhost", defaultPort: "1433", host: "localhost", port: "1433"},
+		{input: "/cloudsql/development-flahmingo:northamerica-northeast1:flahmingo-dev-14", defaultHost: "127.0.0.1", defaultPort: "5432", host: "/cloudsql/development-flahmingo:northamerica-northeast1:flahmingo-dev-14", port: "5432"},
 	}
 
 	for _, testcase := range tests {
