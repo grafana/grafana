@@ -33,7 +33,7 @@
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
     "@babel/plugin-transform-react-constant-elements": "7.18.12",
     "@babel/plugin-transform-runtime": "7.19.6",
-    "@babel/plugin-transform-typescript": "7.20.0",
+    "@babel/plugin-transform-typescript": "^7.20.2",
     "@babel/preset-env": "7.19.4",
     "@babel/preset-react": "7.18.6",
     "@babel/preset-typescript": "7.18.6",
@@ -345,5 +345,8 @@
     "vendor": "link:../vendor",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.6.2"
+  },
+  "engines": {
+    "node": ">= 16"
   }
 }
