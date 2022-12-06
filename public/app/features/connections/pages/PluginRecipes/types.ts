@@ -16,7 +16,7 @@ export type Screenshot = { name: string; url: string };
 // Step - General
 // --------------
 export type PluginRecipeStep = {
-  action: 'install-plugin' | 'display-info' | 'setup-dashboard' | 'prompt';
+  action: 'install-plugin' | 'display-info' | 'setup-dashboard' | 'prompt' | 'setup-alerts' | 'install-agent';
 
   // Meta information about the step (Optional)
   meta?: PluginRecipeStepMeta;
@@ -90,6 +90,33 @@ export type PluginRecipeSetupDashboardStepMeta = PluginRecipeStepMeta & {
   screenshots: Screenshot[];
 };
 
+// Step - Alerts
+// -----------------
+
+export type RecipeAlertRule = {
+  namespace: string;
+  group: string;
+  name: string;
+  summary: string;
+};
+
+export type PluginRecipeSetupAlertsStep = PluginRecipeStep & {
+  alerts: RecipeAlertRule[];
+};
+
+// Step - Agent
+// -----------------
+
+export type RecipeMetric = {
+  name: string;
+  type?: string;
+  description?: string;
+};
+
+export type PluginRecipeInstallAgentStep = PluginRecipeStep & {
+  metrics: RecipeMetric[];
+};
+
 export function isSetupDashboardStep(step: PluginRecipeStep): step is PluginRecipeSetupDashboardStep {
   return step.action === 'setup-dashboard';
 }
@@ -104,4 +131,12 @@ export function isPromptStep(step: PluginRecipeStep): step is PluginRecipePrompt
 
 export function isInstallPluginStep(step: PluginRecipeStep): step is PluginRecipeInstallPluginStep {
   return step.action === 'install-plugin';
+}
+
+export function isSetupAlertsStep(step: PluginRecipeStep): step is PluginRecipeSetupAlertsStep {
+  return step.action === 'setup-alerts';
+}
+
+export function isInstallAgentStep(step: PluginRecipeStep): step is PluginRecipeInstallAgentStep {
+  return step.action === 'install-agent';
 }

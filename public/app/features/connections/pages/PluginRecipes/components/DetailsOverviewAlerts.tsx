@@ -1,0 +1,63 @@
+import React, { ReactElement, useMemo } from 'react';
+
+import { PluginRecipeSetupAlertsStep, RecipeAlertRule } from '../types';
+
+type Props = {
+  steps: PluginRecipeSetupAlertsStep[];
+};
+
+export function DetailsOverviewAlerts({ steps }: Props): ReactElement {
+  const { fields, alerts } = useConfiguredAlerts(steps);
+
+  return (
+    <section>
+      <h2>Alerts</h2>
+      <hr />
+      <p>
+        The following pre-built dashboards are included in this recipe. You can either use them as they are or customize
+        them to your specific needs.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            {fields['summary'] && <th>Summary</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {alerts.map((alert, i) => (
+            <tr key={i}>
+              <td>{alert.name}</td>
+              {fields['summary'] && <td>{alert.summary}</td>}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+type ConfiguredAlerts = {
+  fields: Record<string, boolean>;
+  alerts: RecipeAlertRule[];
+};
+
+function useConfiguredAlerts(steps: PluginRecipeSetupAlertsStep[]): ConfiguredAlerts {
+  return useMemo(() => {
+    return steps.reduce<ConfiguredAlerts>(
+      (result, step) => {
+        for (const alert of step.alerts) {
+          if (alert.name) {
+            result.fields['name'] = true;
+          }
+          if (alert.summary) {
+            result.fields['summary'] = true;
+          }
+          result.alerts.push(alert);
+        }
+        return result;
+      },
+      { fields: {}, alerts: [] }
+    );
+  }, [steps]);
+}
