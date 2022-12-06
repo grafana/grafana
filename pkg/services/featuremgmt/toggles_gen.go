@@ -212,5 +212,6 @@ const (
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
 
 	// FlagSessionRemoteCache
-	// Enable using remote cacse for users and seFlagSessionRemoteCache = "sessionRemoteCache"
+	// Enable using remote cache for users and sessions
+	FlagSessionRemoteCache = "sessionRemoteCache"
 )
