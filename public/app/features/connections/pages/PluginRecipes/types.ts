@@ -6,6 +6,7 @@ export type PluginRecipe = {
 };
 
 export type PluginRecipeMeta = {
+  logo?: string;
   summary?: string;
   description?: string;
 };

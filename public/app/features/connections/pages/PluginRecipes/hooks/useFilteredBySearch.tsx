@@ -5,6 +5,9 @@ import { ROUTES } from 'app/features/connections/constants';
 
 import { PluginRecipe } from '../types';
 
+// TODO: remove this, or load it from the public/ folder
+const DEFAULT_LOGO = 'https://grafana.com/api/plugins/simpod-json-datasource/versions/0.5.0/logos/small';
+
 export function useRecipesFilteredBySearch(
   recipes: PluginRecipe[] | undefined,
   term: string | undefined
@@ -14,21 +17,23 @@ export function useRecipesFilteredBySearch(
     const result = [];
 
     for (const recipe of source) {
+      // No search term, show all
       if (!term) {
         result.push({
           id: recipe.id,
           name: recipe.name,
-          logo: 'https://grafana.com/api/plugins/simpod-json-datasource/versions/0.5.0/logos/small', // Temporary logo, replace later from META data
+          logo: recipe.logo || DEFAULT_LOGO,
           url: ROUTES.PluginRecipeDetails.replace(':id', recipe.id),
         });
         continue;
       }
 
+      // Only show if it matches the search term
       if (recipe.name.toLowerCase().indexOf(term) > -1) {
         result.push({
           id: recipe.id,
           name: recipe.name,
-          logo: 'https://grafana.com/api/plugins/simpod-json-datasource/versions/0.5.0/logos/small', // Temporary logo, replace later from META data
+          logo: recipe.logo || DEFAULT_LOGO,
           url: ROUTES.PluginRecipeDetails.replace(':id', recipe.id),
         });
         continue;
