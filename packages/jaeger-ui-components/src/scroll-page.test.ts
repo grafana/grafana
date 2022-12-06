@@ -125,10 +125,7 @@ describe('scroll-by', () => {
   });
 
   describe('_onTweenUpdate', () => {
-    let oldScrollTo: { (options?: ScrollToOptions | undefined): void; (x: number, y: number): void } & {
-      (options?: ScrollToOptions | undefined): void;
-      (x: number, y: number): void;
-    };
+    let oldScrollTo: { (options?: ScrollToOptions | undefined): void; (x: number, y: number): void; };
 
     beforeEach(() => {
       oldScrollTo = window.scrollTo;
