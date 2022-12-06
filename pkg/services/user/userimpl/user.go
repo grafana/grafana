@@ -58,7 +58,7 @@ func ProvideService(
 	remoteCache *remotecache.RemoteCache,
 	features *featuremgmt.FeatureManager,
 ) user.Service {
-	if features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
+	if features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
 		remotecache.Register(user.SignedInUser{})
 	}
 
@@ -323,7 +323,7 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	// Fetching from remote cache first otherwise fallback to in memory cache
 	cacheKey := sqlstore.NewSignedInUserCacheKey(query.OrgID, query.UserID)
-	if s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
+	if s.features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
 		res, errCache := s.remoteCache.Get(ctx, cacheKey)
 		if errCache == nil {
 			if signedInUser, ok := res.(user.SignedInUser); ok {
@@ -344,7 +344,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	}
 
 	// Remember user in remote cache
-	if s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
+	if s.features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
 		_ = s.remoteCache.Set(ctx, cacheKey, *(q.Result), time.Second*5)
 	}
 	return q.Result, nil
