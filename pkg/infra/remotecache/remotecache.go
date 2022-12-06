@@ -97,20 +97,24 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) (CacheStorage, error) {
-	if opts.Name == redisCacheType {
-		return newRedisStorage(opts)
+func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) (cache CacheStorage, err error) {
+	switch opts.Name {
+	case redisCacheType:
+		cache, err = newRedisStorage(opts)
+	case memcachedCacheType:
+		cache = newMemcachedStorage(opts)
+	case databaseCacheType:
+		cache = newDatabaseCache(sqlstore)
+	default:
+		return nil, ErrInvalidCacheType
 	}
-
-	if opts.Name == memcachedCacheType {
-		return newMemcachedStorage(opts), nil
+	if err != nil {
+		return cache, err
 	}
-
-	if opts.Name == databaseCacheType {
-		return newDatabaseCache(sqlstore), nil
+	if opts.Prefix != "" {
+		cache = &prefixCacheStorage{cache: cache, prefix: opts.Prefix}
 	}
-
-	return nil, ErrInvalidCacheType
+	return cache, nil
 }
 
 // Register records a type, identified by a value for that type, under its
@@ -136,4 +140,19 @@ func encodeGob(item *cachedItem) ([]byte, error) {
 func decodeGob(data []byte, out *cachedItem) error {
 	buf := bytes.NewBuffer(data)
 	return gob.NewDecoder(buf).Decode(&out)
+}
+
+type prefixCacheStorage struct {
+	cache  CacheStorage
+	prefix string
+}
+
+func (pcs *prefixCacheStorage) Get(ctx context.Context, key string) (interface{}, error) {
+	return pcs.cache.Get(ctx, pcs.prefix+key)
+}
+func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
+	return pcs.cache.Set(ctx, pcs.prefix+key, value, expire)
+}
+func (pcs *prefixCacheStorage) Delete(ctx context.Context, key string) error {
+	return pcs.cache.Delete(ctx, pcs.prefix+key)
 }

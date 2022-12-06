@@ -98,10 +98,6 @@ type ProvisionedAlertRule struct {
 }
 
 func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
-	forDur, err := time.ParseDuration(a.For.String())
-	if err != nil {
-		return models.AlertRule{}, err
-	}
 	return models.AlertRule{
 		ID:           a.ID,
 		UID:          a.UID,
@@ -114,7 +110,7 @@ func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
 		Updated:      a.Updated,
 		NoDataState:  a.NoDataState,
 		ExecErrState: a.ExecErrState,
-		For:          forDur,
+		For:          time.Duration(a.For),
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
 	}, nil

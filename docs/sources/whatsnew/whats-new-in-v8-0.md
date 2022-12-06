@@ -304,7 +304,7 @@ This results in faster average load times for dashboards and fewer duplicate que
 
 You can enable caching per data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
 
-For more information, refer to the [Data source query caching docs]({{< relref "../enterprise/query-caching/" >}}).
+For more information, refer to the [Data source query caching docs]({{< relref "../administration/data-source-management/#query-caching" >}}).
 
 ### Reporting updates
 

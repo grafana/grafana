@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -236,6 +237,71 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 					}
 				}
 			}
+		})
+	}
+}
+
+func TestPermissionCacheKey(t *testing.T) {
+	testcases := []struct {
+		name         string
+		signedInUser *user.SignedInUser
+		expected     string
+		expectedErr  error
+	}{
+		{
+			name: "should return correct key for user",
+			signedInUser: &user.SignedInUser{
+				OrgID:  1,
+				UserID: 1,
+			},
+			expected:    "rbac-permissions-1-user-1",
+			expectedErr: nil,
+		},
+		{
+			name: "should return correct key for api key",
+			signedInUser: &user.SignedInUser{
+				OrgID:            1,
+				ApiKeyID:         1,
+				IsServiceAccount: false,
+			},
+			expected:    "rbac-permissions-1-apikey-1",
+			expectedErr: nil,
+		},
+		{
+			name: "should return correct key for service account",
+			signedInUser: &user.SignedInUser{
+				OrgID:            1,
+				UserID:           1,
+				IsServiceAccount: true,
+			},
+			expected:    "rbac-permissions-1-service-1",
+			expectedErr: nil,
+		},
+		{
+			name: "should return correct key for matching a service account with userId -1",
+			signedInUser: &user.SignedInUser{
+				OrgID:            1,
+				UserID:           -1,
+				IsServiceAccount: true,
+			},
+			expected:    "rbac-permissions-1-service--1",
+			expectedErr: nil,
+		},
+		{
+			name: "should return error if not matching any",
+			signedInUser: &user.SignedInUser{
+				OrgID:  1,
+				UserID: -1,
+			},
+			expected:    "",
+			expectedErr: user.ErrNoUniqueID,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			str, err := permissionCacheKey(tc.signedInUser)
+			require.Equal(t, tc.expectedErr, err)
+			assert.Equal(t, tc.expected, str)
 		})
 	}
 }

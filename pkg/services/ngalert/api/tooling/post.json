@@ -3302,7 +3302,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3463,6 +3462,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3668,7 +3668,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3872,39 +3871,6 @@
       "description": "gettableAlerts",
       "schema": {
        "$ref": "#/definitions/gettableAlerts"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "tags": [
-     "alertmanager"
-    ]
-   },
-   "post": {
-    "description": "create alertmanager alerts",
-    "operationId": "RoutePostGrafanaAMAlerts",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "PostableAlerts",
-      "schema": {
-       "items": {
-        "$ref": "#/definitions/postableAlert"
-       },
-       "type": "array"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
       }
      },
      "400": {
@@ -4795,75 +4761,6 @@
       }
      }
     },
-    "tags": [
-     "alertmanager"
-    ]
-   }
-  },
-  "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
-   "post": {
-    "operationId": "RoutePostTestReceivers",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/TestReceiversConfigBodyParams"
-      }
-     },
-     {
-      "description": "DatasoureUID should be the datasource UID identifier",
-      "in": "path",
-      "name": "DatasourceUID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "207": {
-      "description": "MultiStatus",
-      "schema": {
-       "$ref": "#/definitions/MultiStatus"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     },
-     "408": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
-      }
-     },
-     "409": {
-      "description": "AlertManagerNotReady",
-      "schema": {
-       "$ref": "#/definitions/AlertManagerNotReady"
-      }
-     }
-    },
-    "summary": "Test Grafana managed receivers without saving them.",
     "tags": [
      "alertmanager"
     ]

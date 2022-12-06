@@ -659,6 +659,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   getDisplayTitle(): string {
     return this.replaceVariables(this.title, undefined, 'text');
   }
+
+  unlinkLibraryPanel() {
+    delete this.libraryPanel;
+    this.configRev++;
+    this.render();
+  }
 }
 
 function getPluginVersion(plugin: PanelPlugin): string {

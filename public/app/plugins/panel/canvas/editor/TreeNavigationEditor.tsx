@@ -141,7 +141,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     }
   };
 
-  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes);
+  const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
     <>

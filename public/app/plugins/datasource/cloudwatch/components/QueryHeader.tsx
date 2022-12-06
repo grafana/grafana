@@ -2,7 +2,7 @@ import { pick } from 'lodash';
 import React from 'react';
 
 import { SelectableValue, ExploreMode } from '@grafana/data';
-import { EditorHeader, InlineSelect } from '@grafana/ui';
+import { EditorHeader, InlineSelect } from '@grafana/experimental';
 
 import { CloudWatchDatasource } from '../datasource';
 import { useRegions } from '../hooks';

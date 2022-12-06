@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
 var ResendDelay = 30 * time.Second
@@ -182,7 +180,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheID] = s
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	resolvedStates := st.staleResultsHandler(ctx, alertRule, processedResults, evaluatedAt)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
 		for _, state := range states {
@@ -192,37 +190,6 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		}
 	}
 	return append(states, resolvedStates...)
-}
-
-// Maybe take a screenshot. Do it if:
-// 1. The alert state is transitioning into the "Alerting" state from something else.
-// 2. The alert state has just transitioned to the resolved state.
-// 3. The state is alerting and there is no screenshot annotation on the alert state.
-func (st *Manager) maybeTakeScreenshot(
-	ctx context.Context,
-	alertRule *ngModels.AlertRule,
-	state *State,
-	oldState eval.State,
-) error {
-	shouldScreenshot := state.Resolved ||
-		state.State == eval.Alerting && oldState != eval.Alerting ||
-		state.State == eval.Alerting && state.Image == nil
-	if !shouldScreenshot {
-		return nil
-	}
-
-	img, err := st.imageService.NewImage(ctx, alertRule)
-	if err != nil &&
-		errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
-		errors.Is(err, image.ErrNoDashboard) ||
-		errors.Is(err, image.ErrNoPanel) {
-		// It's not an error if screenshots are disabled, or our rule isn't allowed to generate screenshots.
-		return nil
-	} else if err != nil {
-		return err
-	}
-	state.Image = img
-	return nil
 }
 
 // Set the current state based on evaluation results
@@ -268,13 +235,16 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
-	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
-	if err != nil {
-		st.log.Warn("failed to generate a screenshot for an alert instance",
-			"alert_rule", alertRule.UID,
-			"dashboard", alertRule.DashboardUID,
-			"panel", alertRule.PanelID,
-			"err", err)
+	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
+		image, err := takeImage(ctx, st.imageService, alertRule)
+		if err != nil {
+			st.log.Warn("Failed to take an image",
+				"dashboard", alertRule.GetDashboardUID(),
+				"panel", alertRule.GetPanelID(),
+				"error", err)
+		} else if image != nil {
+			currentState.Image = image
+		}
 	}
 
 	st.set(currentState)
@@ -404,12 +374,24 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) []*State {
-	var resolvedStates []*State
-	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
-	for _, s := range allStates {
+func (st *Manager) staleResultsHandler(ctx context.Context, r *ngModels.AlertRule, states map[string]*State, evaluatedAt time.Time) []*State {
+	var (
+		// resolvedImage contains the image for all stale states that are resolved. The resolved image is shared between
+		// all resolved states as the alert rule is the same. TODO: We will need to change this when we support images
+		// without screenshots as each state will have a different image
+		resolvedImage *ngModels.Image
+
+		// resolvedStates contains the stale states that were resolved
+		resolvedStates []*State
+
+		// knownStates contains the current set of states in the state cache
+		knownStates []*State
+	)
+
+	knownStates = st.GetStatesForRuleUID(r.OrgID, r.UID)
+	for _, s := range knownStates {
 		_, ok := states[s.CacheID]
-		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, r.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheID)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheID)
 			ilbs := ngModels.InstanceLabels(s.Labels)
@@ -424,14 +406,25 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 
 			if s.State == eval.Alerting {
 				previousState := InstanceStateAndReason{State: s.State, Reason: s.StateReason}
-				s.State = eval.Normal
-				s.StateReason = ngModels.StateReasonMissingSeries
-				s.EndsAt = evaluatedAt
-				s.Resolved = true
-				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
+				s.Resolve(ngModels.StateReasonMissingSeries, evaluatedAt)
+				st.annotateState(ctx, r, s.Labels, evaluatedAt,
 					InstanceStateAndReason{State: eval.Normal, Reason: s.StateReason},
 					previousState,
 				)
+
+				// If there is no resolved image for this rule then take one
+				if resolvedImage == nil {
+					image, err := takeImage(ctx, st.imageService, r)
+					if err != nil {
+						st.log.Warn("Failed to take an image",
+							"dashboard", r.GetDashboardUID(),
+							"panel", r.GetPanelID(),
+							"error", err)
+					} else if image != nil {
+						resolvedImage = image
+					}
+				}
+				s.Image = resolvedImage
 				resolvedStates = append(resolvedStates, s)
 			}
 		}

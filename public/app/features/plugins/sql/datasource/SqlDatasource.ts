@@ -24,15 +24,16 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
+import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, ResponseParser, SqlQueryModel, QueryFormat } from '../types';
+import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat, ResponseParser } from '../types';
+import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
   name: string;
   interval: string;
   db: DB;
-  annotations = {};
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -44,6 +45,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
+    this.annotations = {
+      prepareAnnotation: migrateAnnotation,
+      QueryEditor: SqlQueryEditor,
+    };
   }
 
   abstract getDB(dsID?: number): DB;
@@ -160,9 +165,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {
+    const refId = 'A';
     return lastValueFrom(
       getBackendSrv()
-        .fetch({
+        .fetch<BackendDataSourceResponse>({
           url: '/api/ds/query',
           method: 'POST',
           data: {
@@ -170,7 +176,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
             to: 'now',
             queries: [
               {
-                refId: 'A',
+                refId: refId,
                 intervalMs: 1,
                 maxDataPoints: 1,
                 datasource: this.getRef(),
@@ -182,7 +188,13 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           },
         })
         .pipe(
-          map(() => ({ status: 'success', message: 'Database Connection OK' })),
+          map((r) => {
+            const error = r.data.results[refId].error;
+            if (error) {
+              return { status: 'error', message: error };
+            }
+            return { status: 'success', message: 'Database Connection OK' };
+          }),
           catchError((err) => {
             return of(toTestingStatus(err));
           })

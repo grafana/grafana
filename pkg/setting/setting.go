@@ -1072,10 +1072,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cacheServer := iniFile.Section("remote_cache")
 	dbName := valueAsString(cacheServer, "type", "database")
 	connStr := valueAsString(cacheServer, "connstr", "")
+	prefix := valueAsString(cacheServer, "prefix", "")
 
 	cfg.RemoteCacheOptions = &RemoteCacheOptions{
 		Name:    dbName,
 		ConnStr: connStr,
+		Prefix:  prefix,
 	}
 
 	geomapSection := iniFile.Section("geomap")
@@ -1111,6 +1113,7 @@ func valueAsString(section *ini.Section, keyName string, defaultValue string) st
 type RemoteCacheOptions struct {
 	Name    string
 	ConnStr string
+	Prefix  string
 }
 
 func (cfg *Cfg) readLDAPConfig() {

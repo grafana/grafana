@@ -64,7 +64,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -100,7 +99,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -136,7 +134,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -180,7 +177,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "2 firing, 0 resolved",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{
@@ -229,7 +225,6 @@ func TestSlackNotifier(t *testing.T) {
 			},
 			expMsg: &slackMessage{
 				Channel:   "#testchannel",
-				Text:      "[FIRING:1]  (val1)",
 				Username:  "Grafana",
 				IconEmoji: ":emoji:",
 				Attachments: []attachment{

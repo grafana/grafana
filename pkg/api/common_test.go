@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -250,15 +251,16 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 
 	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
-		Cfg:                cfg,
-		Live:               newTestLive(t, store),
-		License:            &licensing.OSSLicensingService{},
-		Features:           featuremgmt.WithFeatures(),
-		QuotaService:       &quotaimpl.Service{Cfg: cfg},
-		RouteRegister:      routing.NewRouteRegister(),
-		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
-		ldapGroups:         ldap.ProvideGroupsService(),
+		Cfg:                  cfg,
+		Live:                 newTestLive(t, store),
+		License:              &licensing.OSSLicensingService{},
+		Features:             featuremgmt.WithFeatures(),
+		QuotaService:         &quotaimpl.Service{Cfg: cfg},
+		RouteRegister:        routing.NewRouteRegister(),
+		AccessControl:        accesscontrolmock.New().WithPermissions(permissions),
+		searchUsersService:   searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
+		ldapGroups:           ldap.ProvideGroupsService(),
+		accesscontrolService: actest.FakeService{},
 	}
 
 	sc := setupScenarioContext(t, url)

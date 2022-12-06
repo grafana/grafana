@@ -69,7 +69,7 @@ func PublishPackages(c *cli.Context) error {
 	// In test release mode, the operator should configure different GCS buckets for the package repos,
 	// so should be safe.
 	if cfg.ReleaseMode.Mode == config.TagMode {
-		workDir, err := fsutil.CreateTempFile("")
+		workDir, err := fsutil.CreateTempDir("")
 		if err != nil {
 			return err
 		}

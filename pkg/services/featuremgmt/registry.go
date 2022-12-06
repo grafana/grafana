@@ -288,5 +288,9 @@ var (
 			Description: "Enable using remote cache for users and sessions",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
 	}
 )

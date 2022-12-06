@@ -1,27 +1,20 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.14'
-build_image = 'grafana/build-container:1.6.3'
+grabpl_version = 'v3.0.15'
+build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.2'
+go_image = 'golang:1.19.3'
 
 disable_tests = False
 trigger_oss = {
     'repo': [
         'grafana/grafana',
     ]
-}
-trigger_storybook = {
-    'paths': {
-        'include': [
-            'packages/grafana-ui/**',
-        ],
-    }
 }
 
 
@@ -259,7 +252,7 @@ def build_storybook_step(edition, ver_mode):
             'yarn storybook:build',
             './bin/grabpl verify-storybook',
         ],
-        'when': trigger_storybook,
+        'when': get_trigger_storybook(ver_mode),
     }
 
 
@@ -287,7 +280,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': commands,
-        'when': trigger_storybook,
+        'when': get_trigger_storybook(ver_mode),
     }
     if trigger and ver_mode in ("release-branch", "main"):
         # no dict merge operation available, https://github.com/harness/drone-cli/pull/220
@@ -829,7 +822,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {}'.format(
         mode, docker_repo)
 
     if ver_mode == 'release':
@@ -1040,6 +1033,7 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+            'GCP_KEY': from_secret('gcp_key'),
         },
         'commands': [
             cmd,
@@ -1061,7 +1055,7 @@ def publish_linux_packages_step(edition, package_manager='deb'):
             'secret_access_key': from_secret('packages_secret_access_key'),
             'service_account_json': from_secret('packages_service_account'),
             'target_bucket': 'grafana-packages',
-            'deb_distribution': 'stable',
+            'deb_distribution': 'auto',
             'gpg_passphrase': from_secret('packages_gpg_passphrase'),
             'gpg_public_key': from_secret('packages_gpg_public_key'),
             'gpg_private_key': from_secret('packages_gpg_private_key'),
@@ -1275,3 +1269,19 @@ def compile_build_cmd(edition='oss'):
             'CGO_ENABLED': 0,
     },
 }
+
+def get_trigger_storybook(ver_mode):
+    trigger_storybook = ''
+    if ver_mode == 'release':
+        trigger_storybook = {
+            'event': ['tag']
+        }
+    else:
+        trigger_storybook = {
+            'paths': {
+                'include': [
+                    'packages/grafana-ui/**',
+                ],
+            }
+        }
+    return trigger_storybook

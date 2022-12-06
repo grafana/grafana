@@ -384,7 +384,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"-a", string(options.packageArch),
 	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
-		args = append(args, "--replaces", "grafana")
+		args = append(args, "--conflicts", "grafana")
 	}
 	if options.edition == config.EditionOSS {
 		args = append(args, "--license", "\"AGPLv3\"")

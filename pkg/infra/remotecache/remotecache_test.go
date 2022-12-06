@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -86,4 +87,28 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	// should not be able to read that value since its expired
 	_, err = client.Get(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
+}
+
+func TestCachePrefix(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	cache := &databaseCache{
+		SQLStore: db,
+		log:      log.New("remotecache.database"),
+	}
+	prefixCache := &prefixCacheStorage{cache: cache, prefix: "test/"}
+
+	// Set a value (with a prefix)
+	err := prefixCache.Set(context.Background(), "foo", "bar", time.Hour)
+	require.NoError(t, err)
+	// Get a value (with a prefix)
+	v, err := prefixCache.Get(context.Background(), "foo")
+	require.NoError(t, err)
+	require.Equal(t, "bar", v)
+	// Get a value directly from the underlying cache, ensure the prefix is in the key
+	v, err = cache.Get(context.Background(), "test/foo")
+	require.NoError(t, err)
+	require.Equal(t, "bar", v)
+	// Get a value directly from the underlying cache without a prefix, should not be there
+	_, err = cache.Get(context.Background(), "foo")
+	require.Error(t, err)
 }

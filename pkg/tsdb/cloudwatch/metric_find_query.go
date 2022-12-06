@@ -699,11 +699,15 @@ func (e *cloudWatchExecutor) handleGetAllLogGroups(pluginCtx backend.PluginConte
 	var response *cloudwatchlogs.DescribeLogGroupsOutput
 	result := make([]suggestData, 0)
 	for {
-		response, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{
-			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
-			NextToken:          nextToken,
-			Limit:              aws.Int64(defaultLogGroupLimit),
-		})
+		input := &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:     aws.Int64(defaultLogGroupLimit),
+			NextToken: nextToken,
+		}
+		if len(logGroupNamePrefix) > 0 {
+			input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
+		}
+		response, err = logsClient.DescribeLogGroups(input)
+
 		if err != nil || response == nil {
 			return nil, err
 		}

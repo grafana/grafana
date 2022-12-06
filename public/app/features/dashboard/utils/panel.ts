@@ -87,10 +87,7 @@ export const unlinkLibraryPanel = (panel: PanelModel) => {
     new ShowModalReactEvent({
       component: UnlinkModal,
       props: {
-        onConfirm: () => {
-          delete panel.libraryPanel;
-          panel.render();
-        },
+        onConfirm: () => panel.unlinkLibraryPanel(),
         isOpen: true,
       },
     })

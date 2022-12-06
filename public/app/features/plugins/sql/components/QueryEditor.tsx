@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
-import { Space } from '@grafana/ui';
+import { EditorMode, Space } from '@grafana/experimental';
 
 import { SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
-import { SQLQuery, QueryRowFilter, SQLOptions, EditorMode } from '../types';
+import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
 import { QueryHeader } from './QueryHeader';
