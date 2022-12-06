@@ -55,7 +55,6 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 
 		if pluginCtx.User != nil {
 			logParams = append(logParams, "uname", pluginCtx.User.Login)
-			logParams = append(logParams, "user.name", pluginCtx.User.Name)
 		}
 
 		traceID := tracing.TraceIDFromContext(ctx, false)
