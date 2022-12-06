@@ -86,7 +86,7 @@ func UploadPackages(c *cli.Context) error {
 		distDir:     distDir,
 	}
 
-	if cfg.edition == config.EditionEnterprise2 {
+	if cfg.edition == config.EditionEnterprise2 || c.Bool("enterprise2") {
 		if releaseModeConfig.Buckets.ArtifactsEnterprise2 != "" {
 			cfg.Config.Bucket = releaseModeConfig.Buckets.ArtifactsEnterprise2
 		} else {
