@@ -454,7 +454,16 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 		metric.Hide = metricJSON.Get("hide").MustBool(false)
 		metric.ID = metricJSON.Get("id").MustString()
 		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
-		metric.Settings = simplejson.NewFromAny(metricJSON.Get("settings").MustMap())
+		// In legacy editors, we were storing empty settings values as "null"
+		// The new editor doesn't store empty strings at all
+		// We need to ensures backward compatibility with old queries and remove empty fields
+		settings := metricJSON.Get("settings").MustMap()
+		for k, v := range settings {
+			if v == "null" {
+				delete(settings, k)
+			}
+		}
+		metric.Settings = simplejson.NewFromAny(settings)
 		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
 		metric.Type, err = metricJSON.Get("type").String()
 		if err != nil {
