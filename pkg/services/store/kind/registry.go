@@ -1,7 +1,6 @@
 package kind
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"sync"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
+	"github.com/grafana/grafana/pkg/services/store/kind/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,25 +32,21 @@ type KindRegistry interface {
 
 func NewKindRegistry() KindRegistry {
 	kinds := make(map[string]*kindValues)
+	// FIXME horrible hack, undermines SSoT; codegen this
 	for _, k := range corekind.NewBase(nil).All() {
 		kv := &kindValues{
 			info: makeEKI(k.Props()),
 		}
 
-		// FIXME horrible hack, undermines SSoT, do this in kindsys/codegen
 		switch k.Props().Common().MachineName {
 		case "playlist":
-			kv.builder = playlist.GetEntitySummaryBuilder()
+			kv.builder = playlist.Summarizer()
 		case "dashboard":
-			kv.builder = dashboard.GetEntitySummaryBuilder()
+			kv.builder = dashboard.Summarizer()
+		case "team":
+			kv.builder = team.Summarizer()
 		default:
-			// FIXME a generic implementation is needed, but this is piss-poor
-			kv.builder = func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
-				return &models.EntitySummary{
-					UID:  uid,
-					Kind: k.Props().Common().Name,
-				}, nil, nil
-			}
+			kv.builder = kindsys.GenericSummarizer(k.Props().Common().Name)
 		}
 		kinds[k.Props().Common().MachineName] = kv
 	}
