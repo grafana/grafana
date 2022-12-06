@@ -70,6 +70,50 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/docker.png",
 			},
 			Steps: []RecipeStep{
+				newInstallAgentStep(RecipeStepMeta{
+					Name:        "Install Grafana Agent",
+					Description: "Install the Grafana Agent to collect metrics from your server",
+				}, []AgentMetrics{
+					{
+						Name: "container_last_seen",
+					},
+					{
+						Name: "container_memory_usage_bytes",
+					},
+					{
+						Name: "container_fs_inodes_total",
+					},
+					{
+						Name: "container_cpu_usage_seconds_total",
+					},
+					{
+						Name: "machine_memory_bytes",
+					},
+					{
+						Name: "container_fs_usage_bytes",
+					},
+					{
+						Name: "container_network_receive_bytes_total",
+					},
+					{
+						Name: "machine_scrape_error",
+					},
+					{
+						Name: "container_spec_memory_reservation_limit_bytes",
+					},
+					{
+						Name: "container_network_transmit_bytes_total",
+					},
+					{
+						Name: "container_network_tcp_usage_total",
+					},
+					{
+						Name: "container_fs_limit_bytes",
+					},
+					{
+						Name: "container_fs_inodes_free",
+					},
+				}),
 				newPluginInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing Jira",
