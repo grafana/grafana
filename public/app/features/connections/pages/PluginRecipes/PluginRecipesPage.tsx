@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { CardGrid, CategoryHeader, NoResults, Search } from '../../components';
+import { CardGrid, NoResults, Search } from '../../components';
 
 import { useGetAll } from './api';
 import { useRecipesFilteredBySearch } from './hooks';
@@ -27,8 +27,6 @@ export function PluginRecipesPage() {
 
         {/* We need this extra spacing when there are no filters */}
         <div className={styles.spacer} />
-
-        <CategoryHeader iconName="database" label="Plugin Recipes" />
 
         {/* Loading */}
         {isFetching && <LoadingPlaceholder text="Loading..." />}
