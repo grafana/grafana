@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
-import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { clickSelectOptionMatch } from 'test/helpers/selectOptionInTest';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -199,7 +199,7 @@ describe('RuleEditor grafana managed rules', () => {
     // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
-    await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
+    await clickSelectOptionMatch(ui.inputs.annotationKey(2).get(), /Add new/);
     await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
     await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
 

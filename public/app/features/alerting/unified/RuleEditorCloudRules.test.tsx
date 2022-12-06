@@ -4,7 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
@@ -21,7 +21,6 @@ import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor
 import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
-import { DataSourceType } from './utils/datasource';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -90,7 +89,6 @@ const ui = {
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     // alert type buttons
-    grafanaManagedAlert: byRole('button', { name: /Grafana managed/ }),
     lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
     lotexRecordingRule: byRole('button', { name: /Mimir or Loki recording rule/ }),
   },
@@ -174,8 +172,6 @@ describe('RuleEditor cloud', () => {
 
     await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
     await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(1).get()), 'team{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(1).get()), 'the a-team{enter}');
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
@@ -189,144 +185,12 @@ describe('RuleEditor cloud', () => {
           {
             alert: 'my great new rule',
             annotations: { description: 'some description', summary: 'some summary' },
-            labels: { severity: 'warn', team: 'the a-team' },
+            labels: { severity: 'warn' },
             expr: 'up == 1',
             for: '1m',
           },
         ],
       }
     );
-  });
-
-  it('for cloud alerts, should only allow to select editable rules sources', async () => {
-    const dataSources = {
-      // can edit rules
-      loki: mockDataSource(
-        {
-          type: DataSourceType.Loki,
-          name: 'loki with ruler',
-        },
-        { alerting: true }
-      ),
-      loki_disabled: mockDataSource(
-        {
-          type: DataSourceType.Loki,
-          name: 'loki disabled for alerting',
-          jsonData: {
-            manageAlerts: false,
-          },
-        },
-        { alerting: true }
-      ),
-      // can edit rules
-      prom: mockDataSource(
-        {
-          type: DataSourceType.Prometheus,
-          name: 'cortex with ruler',
-        },
-        { alerting: true }
-      ),
-      // cannot edit rules
-      loki_local_rule_store: mockDataSource(
-        {
-          type: DataSourceType.Loki,
-          name: 'loki with local rule store',
-        },
-        { alerting: true }
-      ),
-      // cannot edit rules
-      prom_no_ruler_api: mockDataSource(
-        {
-          type: DataSourceType.Loki,
-          name: 'cortex without ruler api',
-        },
-        { alerting: true }
-      ),
-      // not a supported datasource type
-      splunk: mockDataSource(
-        {
-          type: 'splunk',
-          name: 'splunk',
-        },
-        { alerting: true }
-      ),
-    };
-
-    mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
-      if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
-        return {
-          application: PromApplication.Cortex,
-          features: {
-            rulerApiEnabled: true,
-            alertManagerConfigApi: false,
-            federatedRules: false,
-            querySharding: false,
-          },
-        };
-      }
-      if (dataSourceName === 'loki with local rule store') {
-        return {
-          application: PromApplication.Cortex,
-          features: {
-            rulerApiEnabled: false,
-            alertManagerConfigApi: false,
-            federatedRules: false,
-            querySharding: false,
-          },
-        };
-      }
-      if (dataSourceName === 'cortex without ruler api') {
-        return {
-          application: PromApplication.Cortex,
-          features: {
-            rulerApiEnabled: false,
-            alertManagerConfigApi: false,
-            federatedRules: false,
-            querySharding: false,
-          },
-        };
-      }
-
-      throw new Error(`${dataSourceName} not handled`);
-    });
-
-    mocks.api.fetchRulerRulesGroup.mockImplementation(async ({ dataSourceName }) => {
-      if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
-        return null;
-      }
-      if (dataSourceName === 'loki with local rule store') {
-        throw {
-          status: 400,
-          data: {
-            message: 'GetRuleGroup unsupported in rule local store',
-          },
-        };
-      }
-      if (dataSourceName === 'cortex without ruler api') {
-        throw new Error('404 from rules config endpoint. Perhaps ruler API is not enabled?');
-      }
-      return null;
-    });
-
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    mocks.searchFolders.mockResolvedValue([]);
-
-    // render rule editor, select mimir/loki managed alerts
-    renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
-
-    await ui.inputs.name.find();
-    await userEvent.click(await ui.buttons.lotexAlert.get());
-
-    // check that only rules sources that have ruler available are there
-    const dataSourceSelect = ui.inputs.dataSource.get();
-    await userEvent.click(byRole('combobox').get(dataSourceSelect));
-    expect(await byText('loki with ruler').query()).toBeInTheDocument();
-    expect(byText('cortex with ruler').query()).toBeInTheDocument();
-    expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
-    expect(byText('prom without ruler api').query()).not.toBeInTheDocument();
-    expect(byText('splunk').query()).not.toBeInTheDocument();
-    expect(byText('loki disabled for alerting').query()).not.toBeInTheDocument();
   });
 });
