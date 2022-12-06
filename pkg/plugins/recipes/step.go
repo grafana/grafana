@@ -18,3 +18,8 @@ type RecipeStepStatus struct {
 	Status        string `json:"status"`
 	StatusMessage string `json:"statusMessage"`
 }
+
+type RecipeStepScreenshot struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}

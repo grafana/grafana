@@ -12,13 +12,10 @@ export type PluginRecipeMeta = {
 };
 
 export type PluginRecipeStep = {
-  action: string;
+  action: 'install-plugin' | 'display-info' | 'setup-dashboard';
 
   // Meta information about the step (Optional)
-  meta?: {
-    name?: string;
-    description?: string;
-  };
+  meta?: PluginRecipeStepMeta;
 
   // Information about the plugin to be installed (Only needed if the step is for installing a plugin)
   plugin?: {
@@ -32,3 +29,21 @@ export type PluginRecipeStep = {
     statusMessage: string;
   };
 };
+
+export type PluginRecipeStepMeta = {
+  name?: string;
+  description?: string;
+};
+
+// Setup dashboard step specifics
+export type PluginRecipeSetupDashboardStepMeta = PluginRecipeStepMeta & {
+  screenshots: Array<{ name: string; url: string }>;
+};
+
+export type PluginRecipeSetupDashboardStep = PluginRecipeStep & {
+  meta?: PluginRecipeSetupDashboardStepMeta;
+};
+
+export function isSetupDashboardStep(step: PluginRecipeStep): step is PluginRecipeSetupDashboardStep {
+  return step.action === 'setup-dashboard';
+}

@@ -9,7 +9,7 @@ import (
 
 func newInstructionStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, instructionText string) *instructionStep {
 	return &instructionStep{
-		Action:          "install-plugin",
+		Action:          "display-info",
 		Meta:            meta,
 		InstructionText: instructionText,
 		installer:       installer,
