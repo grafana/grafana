@@ -96,7 +96,8 @@ func (f *fakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query
 
 func setupContext(pluginAuth jwt.PluginAuthService) (context.Context, error) {
 	ctx := context.Background()
-	token, err := pluginAuth.Generate("user:1:1:", "test")
+	usr := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin}
+	token, err := pluginAuth.Generate(usr, "test")
 	if err != nil {
 		return nil, err
 	}

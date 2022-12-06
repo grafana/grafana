@@ -2,13 +2,13 @@ package interceptors
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
 
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
@@ -95,17 +95,27 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, status.Error(codes.Unauthenticated, "token missing subject claim")
 	}
 
-	userInfo := store.UserInfoFromString(subject)
+	orgID := int64(0)
+	if id, ok := claims["orgID"].(string); ok {
+		if orgID, err = strconv.ParseInt(id, 10, 64); err != nil {
+			return nil, status.Error(codes.Unauthenticated, "invalid orgID claim")
+		}
+	}
+
+	userID, err := strconv.ParseInt(subject, 10, 64)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "unable to parse subject claim")
+	}
 
 	// TODO: figure out how to handle users with ID 0
-	if userInfo == nil || userInfo.UserID == 0 {
+	if userID == 0 {
 		if a.cfg.AnonymousEnabled {
 			return a.UserService.NewAnonymousSignedInUser(ctx)
 		}
 		return nil, status.Error(codes.Unauthenticated, "invalid subject claim")
 	}
 
-	querySignedInUser := user.GetSignedInUserQuery{UserID: userInfo.UserID, OrgID: userInfo.OrgID}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: userID, OrgID: orgID}
 	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err

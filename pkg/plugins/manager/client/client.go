@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
-	"github.com/grafana/grafana/pkg/services/store"
 )
 
 var _ plugins.Client = (*Service)(nil)
@@ -232,7 +231,10 @@ func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext
 		return ctx
 	}
 
-	token, err := s.jwtAuthService.Generate(store.GetUserIDString(user), pluginCtx.PluginID)
+	// TODO: pull tenant from context
+	tenantID := 0
+
+	token, err := s.jwtAuthService.Generate(user, int64(tenantID), pluginCtx.PluginID)
 	if err != nil {
 		return ctx
 	}
