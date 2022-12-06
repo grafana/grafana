@@ -58,6 +58,10 @@ func ProvideService(
 	remoteCache *remotecache.RemoteCache,
 	features *featuremgmt.FeatureManager,
 ) user.Service {
+	if features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
+		remotecache.Register(&user.SignedInUser{})
+	}
+
 	return &Service{
 		store: &sqlStore{
 			db:      db,
@@ -336,6 +340,11 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	err := s.sqlStore.GetSignedInUserWithCacheCtx(ctx, q)
 	if err != nil {
 		return nil, err
+	}
+	// Remember user in remote cache
+	if s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
+		var obj interface{} = *(q.Result)
+		_ = s.remoteCache.Set(ctx, sqlstore.NewSignedInUserCacheKey(query.OrgID, query.UserID), obj, time.Second*5)
 	}
 	return q.Result, nil
 }
