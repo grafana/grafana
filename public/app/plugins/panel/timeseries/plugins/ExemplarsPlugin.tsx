@@ -7,9 +7,9 @@ import {
   Field,
   Labels,
   LinkModel,
-  TimeZone,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
+  TimeZone,
 } from '@grafana/data';
 import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
 
@@ -37,7 +37,7 @@ export const getVisibleLabels = (
       if (frameIndex !== undefined && fieldIndex !== undefined) {
         const field = frames[frameIndex].fields[fieldIndex];
         if (field.labels) {
-          // Note that this may be an empty object
+          // Note that this may be an empty object in the case of a metric being rendered with no labels
           visibleLabels.push(field.labels);
         }
       }
@@ -93,6 +93,24 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
     };
   }, []);
 
+  // Merge values from objects with same props
+  const getUniqueValuesFromLabels = (labels: Labels[]) => {
+    const labelToSet: { [index: string]: Set<string> } = {};
+
+    Object.values(labels).forEach((labelObject) => {
+      return Object.keys(labelObject).forEach((labelName) => {
+        const labelValue: string = labelObject[labelName];
+        if (typeof labelToSet[labelName] === 'undefined') {
+          labelToSet[labelName] = new Set<string>().add(labelValue);
+        } else {
+          labelToSet[labelName].add(labelValue);
+        }
+      });
+    });
+
+    return labelToSet;
+  };
+
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       let showMarker = false;
@@ -103,22 +121,24 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
       } else {
         visibleLabels.labels.forEach((visibleLabel) => {
           const labelKeys = Object.keys(visibleLabel);
-          const labelValues = Object.values(visibleLabel);
+          const labelsAndUniqueValuesFromActiveFilters = getUniqueValuesFromLabels(visibleLabels.labels);
 
           // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
           if (Object.keys(visibleLabel).length === 0) {
             showMarker = true;
           } else {
             // If there are labels, lets only show the exemplars with labels associated with series that are currently visible
-            const fields = dataFrame.fields.filter((field) => labelKeys.find((labelKey) => labelKey === field.name));
+            const fields = dataFrame.fields.filter((field) => {
+              return labelKeys.find((labelKey) => labelKey === field.name);
+            });
 
+            // Check to see if at least one value matches each field
             if (fields.length) {
               showMarker = fields.every((field) => {
                 const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-                if (labelValues.includes(value)) {
-                  return true;
-                }
-                return false;
+                const allValues = labelsAndUniqueValuesFromActiveFilters[field.name];
+
+                return [...allValues].includes(value);
               });
             }
           }
