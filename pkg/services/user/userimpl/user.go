@@ -102,7 +102,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Company:          cmd.Company,
 		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
-		OrgID:            cmd.OrgID,
+		OrgID:            orgID,
 		EmailVerified:    cmd.EmailVerified,
 		Created:          time.Now(),
 		Updated:          time.Now(),
