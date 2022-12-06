@@ -28,7 +28,7 @@ export function DetailsOverview({ recipe }: Props): ReactElement {
   const dashboardSteps = useSetupDashboardsSteps(recipe.steps);
   const agentSteps = useInstallAgentSteps(recipe.steps);
   const alertSteps = useSetupAlertsSteps(recipe.steps);
-
+  console.log('description', recipe.meta.description);
   return (
     <div className={styles.overview}>
       <section>
@@ -63,6 +63,9 @@ function useSetupDashboardsSteps(steps: PluginRecipeStep[]): PluginRecipeSetupDa
 
 const getStyles = (theme: GrafanaTheme2) => ({
   overview: css`
+    p {
+      white-space: pre-wrap;
+    }
     hr {
       margin-top: 12px;
     }
