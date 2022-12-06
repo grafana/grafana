@@ -1,8 +1,13 @@
 export type PluginRecipe = {
   id: string;
   name: string;
-  description?: string;
+  meta: PluginRecipeMeta;
   steps: PluginRecipeStep[];
+};
+
+export type PluginRecipeMeta = {
+  summary?: string;
+  description?: string;
 };
 
 export type PluginRecipeStep = {

@@ -18,10 +18,3 @@ type RecipeStepStatus struct {
 	Status        string `json:"status"`
 	StatusMessage string `json:"statusMessage"`
 }
-
-type Recipe struct {
-	Id          string       `json:"id"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Steps       []RecipeStep `json:"steps"`
-}

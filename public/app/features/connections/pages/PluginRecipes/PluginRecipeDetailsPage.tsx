@@ -1,11 +1,12 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { useGetSingle } from './api';
-import { DetailsOverview } from './components';
+import { DetailsOverview, DetailsStatus } from './components';
 import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
 
 const navId = 'connections-plugin-recipes';
@@ -14,6 +15,7 @@ export function PluginRecipeDetailsPage() {
   const params = useParams<{ id: string }>();
   const { status, error, data } = useGetSingle(params.id);
   const { tabId, tabs } = usePluginRecipeDetailsPageTabs(data);
+  const styles = useStyles2(getStyles);
 
   if (status === 'loading') {
     return (
@@ -44,8 +46,20 @@ export function PluginRecipeDetailsPage() {
   }
 
   return (
-    <Page navId={navId} pageNav={{ text: data.name, subTitle: data.description, active: true, children: tabs }}>
-      <Page.Contents>{tabId === tabIds.overview && <DetailsOverview recipe={data} />}</Page.Contents>
+    <Page navId={navId} pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}>
+      <Page.Contents>
+        <div className={styles.content}>
+          {tabId === tabIds.overview && <DetailsOverview recipe={data} />}
+          {tabId === tabIds.status && <DetailsStatus recipe={data} />}
+        </div>
+      </Page.Contents>
     </Page>
   );
 }
+
+const getStyles = () => ({
+  content: css`
+    min-width: 900px;
+    width: 60%;
+  `,
+});

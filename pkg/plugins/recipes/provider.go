@@ -30,9 +30,12 @@ func (s *staticRecipesProvider) GetAll() []*Recipe {
 func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 	recipes := []*Recipe{
 		{
-			Id:          "special-mix-of-plugins",
-			Name:        "Special mix of plugins",
-			Description: "This recipe will contain a special mix of awesome plugins",
+			Id:   "special-mix-of-plugins",
+			Name: "Special mix of plugins",
+			Meta: RecipeMeta{
+				Summary:     "This recipe will contain a special mix of awesome plugins",
+				Description: "",
+			},
 			Steps: []RecipeStep{
 				newInstallStep(i, cfg,
 					RecipeStepMeta{
