@@ -10,7 +10,7 @@ const DEFAULT_LOGO = 'https://grafana.com/api/plugins/simpod-json-datasource/ver
 
 export function useRecipesFilteredBySearch(
   recipes: PluginRecipe[] | undefined,
-  term: string | undefined
+  searchTerm: string | undefined
 ): CardGridProps['items'] {
   return useMemo(() => {
     const source = recipes || [];
@@ -18,7 +18,7 @@ export function useRecipesFilteredBySearch(
 
     for (const recipe of source) {
       // No search term, show all
-      if (!term) {
+      if (!searchTerm) {
         result.push({
           id: recipe.id,
           name: recipe.name,
@@ -29,7 +29,7 @@ export function useRecipesFilteredBySearch(
       }
 
       // Only show if it matches the search term
-      if (recipe.name.toLowerCase().indexOf(term) > -1) {
+      if (recipe.name.toLowerCase().indexOf(searchTerm) > -1) {
         result.push({
           id: recipe.id,
           name: recipe.name,
@@ -41,5 +41,5 @@ export function useRecipesFilteredBySearch(
     }
 
     return result;
-  }, [recipes, term]);
+  }, [recipes, searchTerm]);
 }
