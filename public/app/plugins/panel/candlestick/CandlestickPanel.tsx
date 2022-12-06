@@ -313,7 +313,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
             )}
             {data.annotations && (
               <ExemplarsPlugin
-                visibleLabels={getVisibleLabels(config, [info.frame])}
+                visibleSeries={getVisibleLabels(config, [info.frame])}
                 config={config}
                 exemplars={data.annotations}
                 timeZone={timeZone}
