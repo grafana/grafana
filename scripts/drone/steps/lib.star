@@ -249,7 +249,7 @@ def build_storybook_step(edition, ver_mode):
             'NODE_OPTIONS': '--max_old_space_size=4096',
         },
         'commands': [
-            'yarn storybook:build',
+            'yarn storybookBuild',
             './bin/grabpl verify-storybook',
         ],
         'when': get_trigger_storybook(ver_mode),

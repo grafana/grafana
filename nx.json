@@ -26,7 +26,7 @@
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": ["build", "typecheck", "lint", "generateThemes", "lint:sass"],
+        "cacheableOperations": ["build", "typecheck", "lint", "generateThemes", "lint:sass", "storybookBuild"],
         "accessToken": "ZjBjMmFhMGQtZGZjNS00NjI0LTliZDMtNWExN2RjYWQ5MGM1fHJlYWQtd3JpdGU="
       }
     }

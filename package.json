@@ -44,7 +44,7 @@
     "start:noTsCheck": "yarn start --env noTsCheck=1",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook --ci",
-    "storybook:build": "yarn workspace @grafana/ui storybook:build",
+    "storybookBuild": "nx run @grafana/ui:storybookBuild",
     "test": "jest --notify --watch",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",
     "test:ci": "yarn i18n:compile && mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
