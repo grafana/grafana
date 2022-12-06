@@ -3,7 +3,7 @@ import { dump } from 'js-yaml';
 import { keyBy, startCase } from 'lodash';
 import React from 'react';
 
-import { PanelData, DataSourceInstanceSettings, GrafanaTheme2, RelativeTimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, RelativeTimeRange } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Badge, useStyles2 } from '@grafana/ui';
@@ -15,8 +15,8 @@ import {
   downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
+  reducerModes,
   ReducerMode,
-  reducerMode,
   reducerTypes,
   thresholdFunctions,
   upsamplingTypes,
@@ -283,7 +283,9 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 
   const { reducer, expression, settings } = model;
   const reducerType = reducerTypes.find((rt) => rt.value === reducer);
-  const modeName = reducerMode.find((rm) => rm.value === settings?.mode ?? ReducerMode.Strict);
+
+  const reducerMode = settings?.mode ?? ReducerMode.Strict;
+  const modeName = reducerModes.find((rm) => rm.value === reducerMode);
 
   return (
     <div className={styles.container}>
