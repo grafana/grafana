@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	jwtgrpc "github.com/grafana/grafana/pkg/services/auth/jwt/grpc"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -77,7 +79,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
-	"github.com/grafana/grafana/pkg/services/mtctx"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -120,8 +121,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -160,6 +161,8 @@ import (
 )
 
 var wireBasicSet = wire.NewSet(
+	New,
+	modules.ProvideService,
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
 	annotationsimpl.ProvideService,
@@ -168,7 +171,6 @@ var wireBasicSet = wire.NewSet(
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	setting.NewCfgFromArgs,
-	New,
 	api.ProvideHTTPServer,
 	query.ProvideService,
 	bus.ProvideBus,
@@ -227,8 +229,10 @@ var wireBasicSet = wire.NewSet(
 	live.ProvideService,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
-	jwt.ProvideService,
-	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
+	jwt.ProvideUserAuthService,
+	jwt.ProvidePluginAuthService,
+	wire.Bind(new(models.JWTService), new(*jwt.UserAuthService)),
+	jwtgrpc.ProvidePluginAuthServer,
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
@@ -329,13 +333,12 @@ var wireBasicSet = wire.NewSet(
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideService,
-	grpcserver.ProvideHealthService,
-	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
 	kind.ProvideService, // The registry of known kinds
-	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
 	httpentitystore.ProvideHTTPEntityStore,
+	entity.ProvideEntityStoreClient,
+	wire.Bind(new(entity.EntityStoreClient), new((*entity.Client))),
 	teamimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
@@ -353,7 +356,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
-	mtctx.ProvideService,
 )
 
 var wireSet = wire.NewSet(

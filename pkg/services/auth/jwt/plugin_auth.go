@@ -53,7 +53,7 @@ func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager
 
 type PluginAuthService interface {
 	Verify(context.Context, string) (models.JWTClaims, error)
-	Generate(*user.SignedInUser, int64, string) (string, error)
+	Generate(*user.SignedInUser, string) (string, error)
 	IsEnabled() bool
 	UnaryClientInterceptor(string) grpc.UnaryClientInterceptor
 	StreamClientInterceptor(string) grpc.StreamClientInterceptor
