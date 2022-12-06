@@ -153,7 +153,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
           <ErrorBoundaryAlert style="page">
             <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
           </ErrorBoundaryAlert>
-          {hasSplit && (
+          {hasSplit ? (
             <ErrorBoundaryAlert style="page">
               <ExplorePaneContainer
                 exploreId={ExploreId.right}
@@ -161,7 +161,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
                 eventBus={eventBus.current}
               />
             </ErrorBoundaryAlert>
-          )}
+          ) : undefined}
         </SplitPaneWrapper>
       </div>
     </div>

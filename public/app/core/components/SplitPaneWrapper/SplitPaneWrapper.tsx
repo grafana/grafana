@@ -65,7 +65,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
 
     let childrenArr = [];
     if (Array.isArray(children)) {
-      childrenArr = children;
+      childrenArr = children.filter((child) => child !== undefined);
     } else {
       childrenArr.push(children);
     }
