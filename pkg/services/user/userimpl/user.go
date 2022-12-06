@@ -341,6 +341,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	if err != nil {
 		return nil, err
 	}
+
 	// Remember user in remote cache
 	if s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
 		var obj interface{} = *(q.Result)
