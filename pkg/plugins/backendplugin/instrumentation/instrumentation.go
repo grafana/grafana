@@ -53,6 +53,11 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 			"endpoint", endpoint,
 		}
 
+		if pluginCtx.User != nil {
+			logParams = append(logParams, "user.login", pluginCtx.User.Login)
+			logParams = append(logParams, "user.name", pluginCtx.User.Name)
+		}
+
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			logParams = append(logParams, "traceID", traceID)
