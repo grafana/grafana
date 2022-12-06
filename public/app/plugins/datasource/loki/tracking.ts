@@ -4,9 +4,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { isLogsQuery, parseToArray } from './queryUtils';
 import { LokiQuery } from './types';
 
-export function trackQuery(response: DataQueryResponse, queries: LokiQuery[]): void {
+export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], app: string): void {
   for (const query of queries) {
-    reportInteraction('grafana_loki_query_executed', {
+    console.log('grafana_loki_query_executed', {
+      app,
       editor_mode: query.editorMode,
       has_data: response.data.some((frame) => frame.length > 0),
       has_error: response.error !== undefined,

@@ -197,7 +197,7 @@ export class LokiDatasource
           transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
         ),
         tap((response) => {
-          trackQuery(response, fixedRequest.targets);
+          trackQuery(response, fixedRequest.targets, fixedRequest.app);
         })
       );
     }
