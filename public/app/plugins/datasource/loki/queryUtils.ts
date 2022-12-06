@@ -108,6 +108,17 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   return { ...rest, queryType: LokiQueryType.Range };
 }
 
+export function parseToArray(query: string): string[] {
+  const queryParts: string[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ name }): false | void => {
+      queryParts.push(name);
+    },
+  });
+  return queryParts;
+}
+
 export function isValidQuery(query: string): boolean {
   let isValid = true;
   const tree = parser.parse(query);

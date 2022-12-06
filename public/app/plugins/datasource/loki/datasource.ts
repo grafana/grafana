@@ -1,6 +1,6 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -62,6 +62,7 @@ import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
+import { trackQuery } from './tracking';
 import {
   LokiOptions,
   LokiQuery,
@@ -191,13 +192,14 @@ export class LokiDatasource
     if (fixedRequest.liveStreaming) {
       return this.runLiveQueryThroughBackend(fixedRequest);
     } else {
-      return super
-        .query(fixedRequest)
-        .pipe(
-          map((response) =>
-            transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
-          )
-        );
+      return super.query(fixedRequest).pipe(
+        map((response) =>
+          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+        ),
+        tap((response) => {
+          trackQuery(response, fixedRequest.targets);
+        })
+      );
     }
   }
 
