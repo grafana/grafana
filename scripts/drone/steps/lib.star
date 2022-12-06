@@ -1,10 +1,10 @@
 load(
     'scripts/drone/vault.star',
+    'drone_token',
     'from_secret',
     'github_token',
-    'pull_secret',
-    'drone_token',
     'prerelease_bucket',
+    'pull_secret',
 )
 
 grabpl_version = 'v3.0.17'
@@ -784,7 +784,9 @@ def copy_packages_for_docker_step(edition=None):
     }
 
 
-def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+def build_docker_images_step(
+    edition, ver_mode, archs=None, ubuntu=False, publish=False
+):
     cmd = './bin/build build-docker --edition {}'.format(edition)
     if publish:
         cmd += ' --shouldSave'
@@ -1072,6 +1074,7 @@ def get_windows_steps(edition, ver_mode):
             ]
         )
     steps = [
+        identify_runner_step('windows'),
         {
             'name': 'windows-init',
             'image': wix_image,
@@ -1173,7 +1176,7 @@ def get_windows_steps(edition, ver_mode):
             ]
         )
         steps.insert(
-            0,
+            1,
             {
                 'name': 'clone',
                 'image': wix_image,
@@ -1183,10 +1186,10 @@ def get_windows_steps(edition, ver_mode):
                 'commands': download_grabpl_step_cmds + clone_cmds,
             },
         )
-        steps[1]['depends_on'] = [
+        steps[2]['depends_on'] = [
             'clone',
         ]
-        steps[1]['commands'].extend(
+        steps[2]['commands'].extend(
             [
                 # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
                 'cp -r grafana-enterprise C:\\App\\grafana-enterprise',
@@ -1197,10 +1200,10 @@ def get_windows_steps(edition, ver_mode):
                 'cp C:\\App\\grabpl.exe grabpl.exe',
             ]
         )
-        if 'environment' in steps[1]:
-            steps[1]['environment'] + {'GITHUB_TOKEN': from_secret(github_token)}
+        if 'environment' in steps[2]:
+            steps[2]['environment'] + {'GITHUB_TOKEN': from_secret(github_token)}
         else:
-            steps[1]['environment'] = {'GITHUB_TOKEN': from_secret(github_token)}
+            steps[2]['environment'] = {'GITHUB_TOKEN': from_secret(github_token)}
 
     return steps
 
