@@ -160,7 +160,7 @@ func (s *UserAuthTokenService) lookupTokenWithCache(ctx context.Context, unhashe
 	// only cache tokens until their rotation time
 	nextRotation := time.Unix(token.RotatedAt, 0).Add(time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute)
 	if now := getTime(); now.Before(nextRotation) {
-		if ttlSet := min(ttl, nextRotation.Sub(now)); ttlSet >= 1 {
+		if ttlSet := min(ttl, nextRotation.Sub(now)); ttlSet >= time.Second {
 			if err := s.remoteCache.Set(ctx, cacheKey, *token, ttlSet); err != nil {
 				s.log.Warn("could not cache token", "error", err, "cacheKey", cacheKey, "userId", token.UserId)
 			}
