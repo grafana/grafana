@@ -32,7 +32,7 @@
     "jsx-a11y"
   ],
   "settings": {
-    "import/internal-regex": "^(app/)|(@grafana)",
+    "import/internal-regex": "^app/|@grafana|jaegertracing/jaeger-ui-components",
     "import/external-module-folders": [
       "node_modules",
       ".yarn"
