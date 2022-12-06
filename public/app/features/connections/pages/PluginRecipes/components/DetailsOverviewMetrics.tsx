@@ -13,10 +13,7 @@ export function DetailsOverviewMetrics({ steps }: Props): ReactElement {
     <section>
       <h2>Metrics</h2>
       <hr />
-      <p>
-        The following pre-built dashboards are included in this recipe. You can either use them as they are or customize
-        them to your specific needs.
-      </p>
+      <p>The following metrics are collected from the server where you install the agent in this recipe.</p>
       <table>
         <thead>
           <tr>

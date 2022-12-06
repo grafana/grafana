@@ -13,10 +13,7 @@ export function DetailsOverviewAlerts({ steps }: Props): ReactElement {
     <section>
       <h2>Alerts</h2>
       <hr />
-      <p>
-        The following pre-built dashboards are included in this recipe. You can either use them as they are or customize
-        them to your specific needs.
-      </p>
+      <p>The following alerts are automatically setup for you when installing this recipe.</p>
       <table>
         <thead>
           <tr>
