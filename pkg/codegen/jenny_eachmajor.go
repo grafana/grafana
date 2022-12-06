@@ -33,7 +33,7 @@ func (j *lmox) Generate(decl *DeclForGen) (codejen.Files, error) {
 	if decl.IsRaw() {
 		return nil, nil
 	}
-	comm := decl.Meta.Common()
+	comm := decl.Properties.Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,
 		IsGroup: comm.LineageIsGroup,
@@ -42,7 +42,7 @@ func (j *lmox) Generate(decl *DeclForGen) (codejen.Files, error) {
 	do := func(sfg SchemaForGen, infix string) (codejen.Files, error) {
 		f, err := j.inner.Generate(sfg)
 		if err != nil {
-			return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), decl.Meta.Common().Name, err)
+			return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), decl.Properties.Common().Name, err)
 		}
 		if f == nil || !f.Exists() {
 			return nil, nil

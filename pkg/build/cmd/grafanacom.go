@@ -146,7 +146,7 @@ func publishPackages(cfg packaging.PublishConfig) error {
 	}
 
 	switch cfg.ReleaseMode.Mode {
-	case config.MainMode, config.CustomMode, config.CronjobMode:
+	case config.MainMode, config.DownstreamMode, config.CronjobMode:
 		pth = path.Join(pth, packaging.MainFolder)
 	default:
 		pth = path.Join(pth, packaging.ReleaseFolder)

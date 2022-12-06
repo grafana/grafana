@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -307,7 +308,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = logSection.NewKey("enabled", "false")
 			require.NoError(t, err)
+		} else {
+			serverSection, err := getOrCreateSection("server")
+			require.NoError(t, err)
+			_, err = serverSection.NewKey("router_logging", "true")
+			require.NoError(t, err)
 		}
+
 		if o.GRPCServerAddress != "" {
 			logSection, err := getOrCreateSection("grpc_server")
 			require.NoError(t, err)
@@ -363,4 +370,15 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+}
+
+func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
+	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
+
+	u, err := store.CreateUser(context.Background(), cmd)
+	require.NoError(t, err)
+	return u.ID
 }

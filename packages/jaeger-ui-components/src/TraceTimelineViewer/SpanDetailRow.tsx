@@ -13,10 +13,11 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import React from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
-import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { SpanLinkFunc } from '../types';
@@ -143,14 +144,13 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
           />
-          <span>
-            <span
-              className={styles.expandedAccent}
-              onClick={this._detailToggle}
-              style={{ borderColor: color }}
-              data-testid="detail-row-expanded-accent"
-            />
-          </span>
+          <Button
+            fill="text"
+            onClick={this._detailToggle}
+            className={classNames(styles.expandedAccent, clearButtonStyles(theme))}
+            style={{ borderColor: color }}
+            data-testid="detail-row-expanded-accent"
+          ></Button>
         </TimelineRow.Cell>
         <TimelineRow.Cell width={1 - columnDivision}>
           <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
