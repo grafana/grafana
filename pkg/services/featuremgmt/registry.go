@@ -283,5 +283,10 @@ var (
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
 		},
+		{
+			Name:        "sessionRemoteCache",
+			Description: "Enable using remote cache for users and sessions",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
