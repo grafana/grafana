@@ -162,7 +162,8 @@ describe('<ListView>', () => {
 
       beforeEach(() => {
         initWrapperMock.mockClear();
-        wrapper = mount(<ListView {...(props as unknown as TListViewProps)} />);
+        let wrapper: ReactWrapper<TListViewProps, {}, ListView>;
+        wrapper = mount(<ListView {...props} />);
         instance = wrapper.instance();
       });
 
