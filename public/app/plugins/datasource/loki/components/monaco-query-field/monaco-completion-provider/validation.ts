@@ -40,8 +40,9 @@ export function validateQuery(
   let parseErrors: ParseError[] = interpolatedErrors;
   if (query !== interpolatedQuery) {
     const queryErrors: ParseError[] = parseQuery(query);
-    parseErrors = queryErrors.filter((queryError) =>
-      interpolatedErrors.find((interpolatedError) => interpolatedError.text === queryError.text)
+    parseErrors = interpolatedErrors.flatMap(
+      (interpolatedError) =>
+        queryErrors.filter((queryError) => interpolatedError.text === queryError.text) || interpolatedError
     );
   }
 
