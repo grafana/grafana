@@ -2,6 +2,7 @@ package mtctx
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -10,7 +11,9 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type Service interface{}
+type Service interface {
+	Middleware(next http.Handler) http.Handler
+}
 
 var _ Service = (*serviceImpl)(nil)
 

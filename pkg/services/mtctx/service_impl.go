@@ -3,6 +3,7 @@ package mtctx
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -42,46 +43,49 @@ func (s *serviceImpl) GetStackConfigWatcher(ctx context.Context, stackID int64) 
 }
 
 // MIDDLEWARE: Adds TenantInfo
-func (s *serviceImpl) InitializeTenantConfig(ctx context.Context) context.Context {
-	// TODO
-	// get user from context
-	// stackID is on context
+func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
-	var stackID int64 = 0000
+		// TODO
+		// get user from context
+		// stackID is on context
 
-	if info, ok := s.cache[stackID]; ok {
-		return ContextWithTenantInfo(ctx, info)
-	}
+		var stackID int64 = 0000
 
-	// get the initial config map
-	config, err := s.clientset.CoreV1().ConfigMaps("hosted-grafana").Get(context.TODO(), stackName(stackID), metav1.GetOptions{})
-	if err != nil {
-		fmt.Println("Error getting config map:", err)
-	}
+		if info, ok := s.cache[stackID]; ok {
+			//	r.WithContext(ContextWithTenantInfo(ctx, info))
+			return
+		}
 
-	ti := buildTenantInfoFromConfig(stackID, config)
-	ctx = ContextWithTenantInfo(ctx, ti)
+		// get the initial config map
+		config, err := s.clientset.CoreV1().ConfigMaps("hosted-grafana").Get(context.TODO(), stackName(stackID), metav1.GetOptions{})
+		if err != nil {
+			fmt.Println("Error getting config map:", err)
+		}
 
-	// Get config watcher
-	w, err := s.GetStackConfigWatcher(context.TODO(), stackID)
-	if err != nil {
-		fmt.Println("Error getting watcher for stackID:", stackID)
-	}
+		ti := buildTenantInfoFromConfig(stackID, config)
+		ctx = ContextWithTenantInfo(ctx, ti)
 
-	// TODO should we check to see if we already have a watcher?
-	// Also, we don't currently have a scenario where we remove a watcher, but we
-	// should think through this.
-	if cachedWatcher, ok := s.watchers[stackID]; ok {
-		// this should never happen
+		// Get config watcher
+		w, err := s.GetStackConfigWatcher(context.TODO(), stackID)
+		if err != nil {
+			fmt.Println("Error getting watcher for stackID:", stackID)
+		}
 
-		cachedWatcher.Stop() // make sure we stop listening
-		fmt.Println("WARNING: we found a watcher for a tenant that was missing tenantInfo")
-	}
+		// TODO should we check to see if we already have a watcher?
+		// Also, we don't currently have a scenario where we remove a watcher, but we
+		// should think through this.
+		if cachedWatcher, ok := s.watchers[stackID]; ok {
+			// this should never happen
 
-	// queue watcher
-	s.watchers[stackID] = w
+			cachedWatcher.Stop() // make sure we stop listening
+			fmt.Println("WARNING: we found a watcher for a tenant that was missing tenantInfo")
+		}
 
-	return ctx
+		// queue watcher
+		s.watchers[stackID] = w
+	})
 }
 
 // TODO: Finish me. Don't need for demo.
