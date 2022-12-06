@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,6 +33,7 @@ const (
 func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore,
 	serverLockService *serverlock.ServerLockService,
 	remoteCache *remotecache.RemoteCache,
+	features *featuremgmt.FeatureManager,
 	cfg *setting.Cfg) *UserAuthTokenService {
 	s := &UserAuthTokenService{
 		SQLStore:          sqlStore,
@@ -39,6 +41,7 @@ func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore,
 		Cfg:               cfg,
 		log:               log.New("auth"),
 		remoteCache:       remoteCache,
+		features:          features,
 	}
 
 	remotecache.Register(models.UserToken{})
@@ -52,6 +55,7 @@ type UserAuthTokenService struct {
 	Cfg               *setting.Cfg
 	log               log.Logger
 	remoteCache       *remotecache.RemoteCache
+	features          *featuremgmt.FeatureManager
 }
 
 type ActiveAuthTokenService struct {
@@ -153,13 +157,13 @@ func (s *UserAuthTokenService) lookupTokenWithCache(ctx context.Context, unhashe
 		return nil, err
 	}
 
-	// only cache tokens if they are not going to be rotated soon
+	// only cache tokens until their rotation time
 	nextRotation := time.Unix(token.RotatedAt, 0).Add(time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute)
-	now := getTime()
-	if now.Before(nextRotation) {
-		ttlSet := min(ttl, nextRotation.Sub(now))
-		if err := s.remoteCache.Set(ctx, cacheKey, *token, ttlSet); err != nil {
-			s.log.Warn("could not cache token", "error", err, "cacheKey", cacheKey, "userId", token.UserId)
+	if now := getTime(); now.Before(nextRotation) {
+		if ttlSet := min(ttl, nextRotation.Sub(now)); ttlSet >= 1 {
+			if err := s.remoteCache.Set(ctx, cacheKey, *token, ttlSet); err != nil {
+				s.log.Warn("could not cache token", "error", err, "cacheKey", cacheKey, "userId", token.UserId)
+			}
 		}
 	}
 
@@ -175,10 +179,10 @@ func min(x, y time.Duration) time.Duration {
 }
 
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-	// replace with feature flag
-	if true {
+	if s.features != nil && s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
 		return s.lookupTokenWithCache(ctx, unhashedToken)
 	}
+
 	return s.lookupToken(ctx, unhashedToken)
 }
 
