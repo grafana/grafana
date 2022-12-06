@@ -12,7 +12,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -104,9 +106,7 @@ func TestBuildConflictBlock(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
-			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
-			require.NoError(t, err)
-
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -115,7 +115,7 @@ func TestBuildConflictBlock(t *testing.T) {
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := usrSvc.Create(context.Background(), &cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -211,9 +211,7 @@ conflict: test2
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
-			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
-			require.NoError(t, err)
-
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -222,7 +220,7 @@ conflict: test2
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := usrSvc.Create(context.Background(), &cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 
@@ -391,9 +389,7 @@ func TestGetConflictingUsers(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
-			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
-			require.NoError(t, err)
-
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -403,7 +399,7 @@ func TestGetConflictingUsers(t *testing.T) {
 						OrgID:            int64(testOrgID),
 						IsServiceAccount: u.IsServiceAccount,
 					}
-					_, err := usrSvc.Create(context.Background(), &cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -502,9 +498,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
-			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
-			require.NoError(t, err)
-
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -513,7 +507,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := usrSvc.Create(context.Background(), &cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -555,8 +549,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 	t.Run("should validate file thats gets created", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
-		usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
-		require.NoError(t, err)
+		usrSvc := setupTestUserService(t, sqlStore)
 
 		const testOrgID int64 = 1
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
@@ -603,9 +596,8 @@ func TestIntegrationMergeUser(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
 		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
-		usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, teamSvc, nil, &quotatest.FakeQuotaService{})
-		require.NoError(t, err)
 		require.Nil(t, err)
+		usrSvc := setupTestUserService(t, sqlStore)
 		const testOrgID int64 = 1
 
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
@@ -763,8 +755,7 @@ conflict: test2
 		for _, tc := range testCases {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
-			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
-			require.NoError(t, err)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -773,7 +764,7 @@ conflict: test2
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := usrSvc.Create(context.Background(), &cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				// add additional user with conflicting login where DOMAIN is upper case
@@ -858,4 +849,14 @@ func TestMarshalConflictUser(t *testing.T) {
 			require.Equal(t, tc.expectedUser.ConflictLogin, user.ConflictLogin)
 		})
 	}
+}
+
+func setupTestUserService(t *testing.T, sqlStore *sqlstore.SQLStore) user.Service {
+	t.Helper()
+	orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, &quotatest.FakeQuotaService{})
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+	require.NoError(t, err)
+
+	return usrSvc
 }

@@ -32,10 +32,14 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserComm
 	return ss.getOrCreateOrg(sess, orgName)
 }
 
-// createUser creates a user in the database if autoAssignOrg is enabled then
-// args.OrgID will be used to add to an existing Org with id=args.OrgID if
-// autoAssignOrg is disabled then args.OrgName will be used to create a new Org
-// with name=args.OrgName. If a org already exists with that name, it will error
+// createUser creates a user in the database. It will also create a default
+// organization, if none exists. This should only be used by the sqlstore
+// Reset() function.
+//
+// If AutoAssignOrg is enabled then args.OrgID will be used to add to an
+// existing Org with id=args.OrgID. If AutoAssignOrg is disabled then
+// args.OrgName will be used to create a new Org with name=args.OrgName. If an
+// org already exists with that name, it will error.
 func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.CreateUserCommand) (user.User, error) {
 	var usr user.User
 	orgID, err := ss.getOrgIDForNewUser(sess, args)
