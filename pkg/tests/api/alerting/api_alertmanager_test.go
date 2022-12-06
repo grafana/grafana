@@ -32,9 +32,7 @@ type Response struct {
 }
 
 func TestIntegrationAMConfigAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -394,9 +392,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 }
 
 func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -555,9 +551,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestIntegrationRulerAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -674,9 +668,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 }
 
 func TestIntegrationDeleteFolderWithRules(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -838,9 +830,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCRUD(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1820,9 +1810,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerStatus(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1887,9 +1875,7 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 }
 
 func TestIntegrationQuota(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -2090,9 +2076,7 @@ func TestIntegrationQuota(t *testing.T) {
 }
 
 func TestIntegrationEval(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

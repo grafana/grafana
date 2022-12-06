@@ -23,9 +23,7 @@ import (
 )
 
 func TestIntegrationAlertRulePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -316,9 +314,7 @@ func createRule(t *testing.T, client apiClient, folder string) {
 }
 
 func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -391,9 +387,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 }
 
 func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
@@ -732,9 +726,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestIntegrationRuleGroupSequence(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -832,9 +824,7 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

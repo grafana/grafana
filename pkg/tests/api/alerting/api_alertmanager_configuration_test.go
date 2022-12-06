@@ -21,9 +21,7 @@ import (
 )
 
 func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:                 true,
@@ -142,9 +140,7 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,

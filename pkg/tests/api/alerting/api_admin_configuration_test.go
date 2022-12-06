@@ -26,9 +26,7 @@ import (
 )
 
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testinfra.SQLiteIntegrationTest(t)
 
 	const disableOrgID int64 = 3
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
