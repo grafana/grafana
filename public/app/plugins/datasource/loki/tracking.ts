@@ -14,7 +14,7 @@ export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], ap
       legend: query.legendFormat,
       line_limit: query.maxLines,
       parsed_query: parseToArray(query.expr),
-      query_type: isLogsQuery(query.expr) ? 'logs' : 'metrics',
+      query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,
       resolution: query.resolution,
       simultaneously_sent_query_count: queries.length,
