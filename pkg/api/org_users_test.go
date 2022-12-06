@@ -339,8 +339,6 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, o
 	t.Helper()
 
 	quotaService := quotaimpl.ProvideService(db, db.Cfg)
-	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotaService)
-	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
 	require.NoError(t, err)
 

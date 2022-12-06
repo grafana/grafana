@@ -2,6 +2,7 @@ package orgimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -148,7 +149,7 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 	var err error
 	if s.cfg.AutoAssignOrg {
 		got, err := s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
-		if err != nil && err != org.ErrOrgNotFound {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return 0, err
 		} else if err == nil {
 			return got.ID, nil

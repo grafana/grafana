@@ -565,5 +565,4 @@ func setupTestServices(t *testing.T, db *sqlstore.SQLStore) services {
 		SAService:     svcmock,
 		APIKeyService: apiKeyService,
 	}
-
 }

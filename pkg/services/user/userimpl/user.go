@@ -2,6 +2,7 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -366,7 +367,7 @@ func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCo
 	}
 
 	usr, err := s.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: cmd.Login})
-	if err != nil && err != user.ErrUserNotFound {
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		return usr, err
 	} else if err == nil { // user exists
 		return usr, err
