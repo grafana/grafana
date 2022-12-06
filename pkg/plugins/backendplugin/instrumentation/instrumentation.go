@@ -54,7 +54,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 		}
 
 		if pluginCtx.User != nil {
-			logParams = append(logParams, "user.login", pluginCtx.User.Login)
+			logParams = append(logParams, "uname", pluginCtx.User.Login)
 			logParams = append(logParams, "user.name", pluginCtx.User.Name)
 		}
 
