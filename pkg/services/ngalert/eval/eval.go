@@ -37,7 +37,7 @@ type ConditionEvaluator interface {
 	// EvaluateRaw evaluates the condition and returns raw backend response backend.QueryDataResponse
 	EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error)
 	// Evaluate evaluates the condition and converts the response to Results
-	Evaluate(ctx context.Context, now time.Time) (Results, error)
+	Evaluate(ctx context.Context, now time.Time) EvaluationResult
 }
 
 type conditionEvaluator struct {
@@ -70,13 +70,15 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 }
 
 // Evaluate evaluates the condition and converts the response to Results
-func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Results, error) {
+func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) EvaluationResult {
 	response, err := r.EvaluateRaw(ctx, now)
 	if err != nil {
-		return nil, err
+		return EvaluationResult{
+			Error: err,
+		}
 	}
 	execResults := queryDataResponseToExecutionResults(r.condition, response)
-	return evaluateExecutionResult(execResults, now), nil
+	return evaluateExecutionResult(execResults, now)
 }
 
 type evaluatorImpl struct {
@@ -130,16 +132,39 @@ type ExecutionResults struct {
 	Error error
 }
 
-// Results is a slice of evaluated alert instances states.
 type Results []Result
 
-func (evalResults Results) HasErrors() bool {
-	for _, r := range evalResults {
-		if r.State == Error {
-			return true
-		}
+type EvaluationResult struct {
+	Error error
+	// NoData contains the DatasourceUID for RefIDs that returned no data.
+	NoData *NoDataResult
+
+	EvaluatedAt        time.Time
+	EvaluationDuration time.Duration
+
+	Results Results
+}
+
+type NoDataResult struct {
+	DatasourceToRefID map[string][]string
+}
+
+func (n NoDataResult) String() string {
+	if n.DatasourceToRefID == nil || len(n.DatasourceToRefID) > 0 {
+		return ""
 	}
-	return false
+	sb := strings.Builder{}
+	for dsUID, refIDs := range n.DatasourceToRefID {
+		if sb.Len() > 0 {
+			sb.WriteString(",")
+		}
+		sb.WriteString("[Datasource UID:")
+		sb.WriteString(dsUID)
+		sb.WriteString(" RefID: [")
+		sb.WriteString(strings.Join(refIDs, ","))
+		sb.WriteString("]]")
+	}
+	return sb.String()
 }
 
 // Result contains the evaluated State of an alert instance
@@ -165,15 +190,6 @@ type Result struct {
 	// as EvalMatches (from "classic condition"), and in the future from operations
 	// like SSE "math".
 	EvaluationString string
-}
-
-func NewResultFromError(err error, evaluatedAt time.Time, duration time.Duration) Result {
-	return Result{
-		State:              Error,
-		Error:              err,
-		EvaluatedAt:        evaluatedAt,
-		EvaluationDuration: duration,
-	}
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -430,101 +446,54 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 //   - Nonzero (e.g 1.2, NaN) results in Alerting.
 //   - nil results in noData.
 //   - unsupported Frame schemas results in Error.
-func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
+func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) EvaluationResult {
 	evalResults := make([]Result, 0)
 
-	appendErrRes := func(e error) {
-		evalResults = append(evalResults, NewResultFromError(e, ts, time.Since(ts)))
-	}
-
-	appendNoData := func(labels data.Labels) {
-		evalResults = append(evalResults, Result{
-			State:              NoData,
-			Instance:           labels,
-			EvaluatedAt:        ts,
-			EvaluationDuration: time.Since(ts),
-		})
+	result := EvaluationResult{
+		EvaluatedAt:        ts,
+		EvaluationDuration: time.Since(ts),
 	}
 
 	if execResults.Error != nil {
-		appendErrRes(execResults.Error)
-		return evalResults
+		result.Error = execResults.Error
+		return result
 	}
 
 	if len(execResults.NoData) > 0 {
-		noData := datasourceUIDsToRefIDs(execResults.NoData)
-		for datasourceUID, refIDs := range noData {
-			appendNoData(data.Labels{
-				"datasource_uid": datasourceUID,
-				"ref_id":         strings.Join(refIDs, ","),
-			})
-		}
-		return evalResults
+		result.NoData = &NoDataResult{DatasourceToRefID: datasourceUIDsToRefIDs(execResults.NoData)}
+		return result
 	}
 
 	if len(execResults.Condition) == 0 {
-		appendNoData(nil)
-		return evalResults
+		result.NoData = &NoDataResult{}
+		return result
 	}
 
+	var noDataCount, errorsCount = 0, 0
 	for _, f := range execResults.Condition {
-		rowLen, err := f.RowLen()
+		r, err := frameToResult(f)
+		r.EvaluatedAt = result.EvaluatedAt
+		r.EvaluationDuration = result.EvaluationDuration
 		if err != nil {
-			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err})
+			errorsCount++
+			evalResults = append(evalResults, Result{State: Error, Error: err})
 			continue
 		}
-
-		if len(f.TypeIndices(data.FieldTypeTime, data.FieldTypeNullableTime)) > 0 {
-			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "looks like time series data, only reduced data can be alerted on."})
-			continue
+		if r.State == NoData && r.Instance == nil {
+			noDataCount++
 		}
-
-		if rowLen == 0 {
-			if len(f.Fields) == 0 {
-				appendNoData(nil)
-				continue
-			}
-			if len(f.Fields) == 1 {
-				appendNoData(f.Fields[0].Labels)
-				continue
-			}
-		}
-
-		if rowLen > 1 {
-			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected row length: %d instead of 0 or 1", rowLen)})
-			continue
-		}
-
-		if len(f.Fields) > 1 {
-			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected field length: %d instead of 1", len(f.Fields))})
-			continue
-		}
-
-		if f.Fields[0].Type() != data.FieldTypeNullableFloat64 {
-			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("invalid field type: %s", f.Fields[0].Type())})
-			continue
-		}
-
-		val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
-
-		r := Result{
-			Instance:           f.Fields[0].Labels,
-			EvaluatedAt:        ts,
-			EvaluationDuration: time.Since(ts),
-			EvaluationString:   extractEvalString(f),
-			Values:             extractValues(f),
-		}
-
-		switch {
-		case val == nil:
-			r.State = NoData
-		case *val == 0:
-			r.State = Normal
-		default:
-			r.State = Alerting
-		}
-
 		evalResults = append(evalResults, r)
+	}
+
+	// if all frames are no data without labels declare global no-data status (otherwise it may be error because of duplicated labels)
+	if len(evalResults) == noDataCount {
+		result.NoData = &NoDataResult{}
+		return result
+	}
+	// if conversion of all frames resulted in error, pick the first and report as error
+	if len(evalResults) == errorsCount {
+		result.Error = evalResults[0].Error
+		return result
 	}
 
 	seenLabels := make(map[string]bool)
@@ -532,20 +501,96 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		labelsStr := res.Instance.String()
 		_, ok := seenLabels[labelsStr]
 		if ok {
-			return Results{
-				Result{
-					State:              Error,
-					Instance:           res.Instance,
-					EvaluatedAt:        ts,
-					EvaluationDuration: time.Since(ts),
-					Error:              &invalidEvalResultFormatError{reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: has duplicate results with labels {%s}", labelsStr)},
-				},
+			return EvaluationResult{
+				Error: &invalidEvalResultFormatError{reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: has duplicate results with labels {%s}", labelsStr)},
 			}
 		}
 		seenLabels[labelsStr] = true
 	}
 
-	return evalResults
+	result.Results = evalResults
+	return result
+}
+
+func frameToResult(f *data.Frame) (Result, error) {
+	rowLen, err := f.RowLen()
+	if err != nil {
+		return Result{}, &invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err}
+	}
+
+	if len(f.TypeIndices(data.FieldTypeTime, data.FieldTypeNullableTime)) > 0 {
+		return Result{}, &invalidEvalResultFormatError{refID: f.RefID, reason: "looks like time series data, only reduced data can be alerted on."}
+	}
+
+	if rowLen == 0 {
+		var labels data.Labels
+		if len(f.Fields) == 1 {
+			labels = f.Fields[0].Labels
+		}
+		return Result{
+			State:    NoData,
+			Instance: labels,
+		}, nil
+	}
+
+	if rowLen > 1 {
+		return Result{}, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected row length: %d instead of 0 or 1", rowLen)}
+	}
+
+	if len(f.Fields) > 1 {
+		return Result{}, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected field length: %d instead of 1", len(f.Fields))}
+	}
+
+	if f.Fields[0].Type() != data.FieldTypeNullableFloat64 {
+		return Result{}, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("invalid field type: %s", f.Fields[0].Type())}
+	}
+
+	val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
+
+	r := Result{
+		Instance:         f.Fields[0].Labels,
+		Values:           extractValues(f),
+		EvaluationString: extractEvalString(f),
+	}
+
+	switch {
+	case val == nil:
+		r.State = NoData
+	case *val == 0:
+		r.State = Normal
+	default:
+		r.State = Alerting
+	}
+	return r, nil
+}
+
+func (r EvaluationResult) AsDataFrame() data.Frame {
+	if r.Error != nil {
+		return *data.NewFrame("evaluation results", data.NewField("State", nil, []string{Error.String()}), data.NewField("Info", nil, []string{r.Error.Error()}))
+	}
+	if r.NoData != nil {
+		return r.NoData.AsDataFrame()
+	}
+	return r.Results.AsDataFrame()
+}
+
+func (n NoDataResult) AsDataFrame() data.Frame {
+	if n.DatasourceToRefID != nil && len(n.DatasourceToRefID) > 0 {
+		length := len(n.DatasourceToRefID)
+		state := data.NewField("State", nil, make([]string, length))
+		ds := data.NewField("datasource_uid", nil, make([]string, length))
+		refid := data.NewField("ref_id", nil, make([]string, length))
+		frame := data.NewFrame("evaluation results", state, ds, refid)
+		idx := 0
+		for datasourceUID, refIDs := range n.DatasourceToRefID {
+			state.Set(idx, NoData.String())
+			ds.Set(idx, datasourceUID)
+			refid.Set(idx, strings.Join(refIDs, ","))
+			idx++
+		}
+		return *frame
+	}
+	return *data.NewFrame("evaluation results", data.NewField("State", nil, []string{NoData.String()}))
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
