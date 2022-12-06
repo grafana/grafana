@@ -672,7 +672,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 			conditions = append(conditions, "(label = ? AND value = ?)")
 		}
 		joinedConditions := strings.Join(conditions, " OR ")
-		query := "select grn from entity_labels where " + joinedConditions + " group by grn having count(distinct label) = ?"
+		query := "select grn from entity_labels where " + joinedConditions + " group by grn having count(label) = ?"
 		args = append(args, len(r.Labels))
 
 		entityQuery.addWhereInSubquery("grn", query, args)
