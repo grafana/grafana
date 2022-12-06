@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -100,7 +101,7 @@ func (f *fakeJWTAuth) IsEnabled() bool {
 	return true
 }
 
-func (f *fakeJWTAuth) Generate(string, string) (string, error) {
+func (f *fakeJWTAuth) Generate(*user.SignedInUser, string) (string, error) {
 	return "hi", nil
 }
 
