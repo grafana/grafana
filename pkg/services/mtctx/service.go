@@ -34,7 +34,7 @@ func ProvideMultiTenantInfo(router routing.RouteRegister) Service {
 	}
 
 	//
-	router.Get("hack/hello", middleware.ReqOrgAdmin, routing.Wrap(svc.doGetEntity))
+	router.Get("/api/hack/hello", middleware.ReqOrgAdmin, routing.Wrap(svc.doGetEntity))
 
 	return svc
 }
