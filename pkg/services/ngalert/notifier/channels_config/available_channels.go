@@ -292,6 +292,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "Grafana",
 					PropertyName: "client",
 				},
+				{ // New in 9.4.
+					Label:        "Client URL",
+					Description:  "The URL of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "{{ .ExternalURL }}",
+					PropertyName: "client_url",
+				},
 			},
 		},
 		{

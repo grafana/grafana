@@ -55,6 +55,7 @@ type pagerdutySettings struct {
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Source        string `json:"source,omitempty" yaml:"source,omitempty"`
 	Client        string `json:"client,omitempty" yaml:"client,omitempty"`
+	ClientURL     string `json:"client_url,omitempty" yaml:"client_url,omitempty"`
 }
 
 func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
@@ -93,6 +94,9 @@ func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
 	}
 	if settings.Client == "" {
 		settings.Client = defaultClient
+	}
+	if settings.ClientURL == "" {
+		settings.ClientURL = "{{ .ExternalURL }}"
 	}
 	if settings.Source == "" {
 		source, err := os.Hostname()
@@ -203,7 +207,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 
 	msg := &pagerDutyMessage{
 		Client:      tmpl(pn.settings.Client),
-		ClientURL:   pn.tmpl.ExternalURL.String(),
+		ClientURL:   tmpl(pn.settings.ClientURL),
 		RoutingKey:  pn.settings.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
