@@ -22,7 +22,8 @@ type CommonProperties struct {
 // in CUE for #Raw kinds.
 type RawProperties struct {
 	CommonProperties
-	Extensions []string `json:"extensions"`
+	Extensions     []string `json:"extensions"`
+	SummaryHandler string   `json:"summaryHandler"`
 }
 
 func (m RawProperties) _private() {}
@@ -40,6 +41,7 @@ func (m RawProperties) Common() CommonProperties {
 type CoreStructuredProperties struct {
 	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
+	SummaryHandler string                 `json:"summaryHandler"`
 }
 
 func (m CoreStructuredProperties) _private() {}
@@ -53,6 +55,7 @@ func (m CoreStructuredProperties) Common() CommonProperties {
 type CustomStructuredProperties struct {
 	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
+	SummaryHandler string                 `json:"summaryHandler"`
 }
 
 func (m CustomStructuredProperties) _private() {}

@@ -8,9 +8,14 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
+
+func getSummarizer() kindsys.Summarizer {
+	return GetEntitySummaryBuilder()
+}
 
 // This summary does not resolve old name as UID
 func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
