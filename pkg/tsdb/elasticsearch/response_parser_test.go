@@ -1216,5 +1216,5 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 		return nil, err
 	}
 
-	return newResponseParser(response.Responses, queries, nil), nil
+	return newResponseParser(response.Responses, queries), nil
 }

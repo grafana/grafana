@@ -142,7 +142,7 @@ func uploadPackages(cfg uploadConfig) error {
 	switch cfg.versionMode {
 	case config.TagMode:
 		versionFolder = releaseFolder
-	case config.MainMode, config.CustomMode:
+	case config.MainMode, config.DownstreamMode:
 		versionFolder = mainFolder
 	case config.ReleaseBranchMode:
 		versionFolder = releaseBranchFolder
