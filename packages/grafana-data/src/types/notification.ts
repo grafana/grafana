@@ -8,6 +8,7 @@ export interface AppNotification {
   component?: React.ReactElement;
   showing: boolean;
   timestamp: number;
+  type?: AppNotificationType;
 }
 
 export enum AppNotificationSeverity {
@@ -15,4 +16,12 @@ export enum AppNotificationSeverity {
   Warning = 'warning',
   Error = 'error',
   Info = 'info',
+}
+
+export enum AppNotificationType {
+  Update = 'update',
+  ProductAnnouncement = 'productAnnouncement',
+  Permissions = 'permissions',
+  Access = 'access',
+  SystemMessage = 'systemMessage',
 }
