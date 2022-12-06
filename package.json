@@ -390,7 +390,7 @@
     "jest-fail-on-console": "3.0.2",
     "jest-junit": "14.0.1",
     "jest-matcher-utils": "29.3.1",
-    "lerna": "5.5.4",
+    "lerna": "6.1.0",
     "lint-staged": "13.0.3",
     "mini-css-extract-plugin": "2.6.1",
     "msw": "0.48.1",
