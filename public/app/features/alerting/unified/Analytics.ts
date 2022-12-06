@@ -1,5 +1,5 @@
 import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
-import { config } from '@grafana/runtime/src';
+import { config, reportInteraction } from '@grafana/runtime/src';
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -39,3 +39,16 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
     return response;
   };
 }
+
+export const trackAlertRuleCreation = (props: AlertRuleTrackingProps) => {
+  reportInteraction('grafana_alerting_rule_creation', props);
+};
+
+export const trackAlertRuleAborted = (props: AlertRuleTrackingProps) => {
+  reportInteraction('grafana_alerting_rule_aborted', props);
+};
+
+export type AlertRuleTrackingProps = {
+  grafana_version?: string;
+  org_id?: number;
+};

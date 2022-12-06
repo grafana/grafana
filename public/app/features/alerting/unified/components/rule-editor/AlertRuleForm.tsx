@@ -4,15 +4,16 @@ import { FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { logInfo } from '@grafana/runtime';
+import { logInfo, config } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup, Field, Input } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages } from '../../Analytics';
+import { LogMessages, trackAlertRuleAborted } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -161,6 +162,11 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
+  const cancelRuleCreation = () => {
+    logInfo(LogMessages.cancelSavingAlertRule);
+    trackAlertRuleAborted({ grafana_version: config.buildInfo.version, org_id: contextSrv.user.orgId });
+  };
+
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
@@ -171,7 +177,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
               disabled={submitState.loading}
               type="button"
               fill="outline"
-              onClick={() => logInfo(LogMessages.cancelSavingAlertRule)}
+              onClick={cancelRuleCreation}
             >
               Cancel
             </Button>
