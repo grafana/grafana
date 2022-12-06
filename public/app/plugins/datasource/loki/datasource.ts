@@ -1,8 +1,9 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
+  AbstractQuery,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
@@ -19,21 +20,20 @@ import {
   dateMath,
   DateTime,
   FieldCache,
-  AbstractQuery,
   FieldType,
+  getDefaultTimeRange,
   Labels,
   LoadingState,
   LogLevel,
   LogRowModel,
+  QueryFixAction,
+  QueryHint,
+  rangeUtil,
   ScopedVars,
   TimeRange,
-  rangeUtil,
   toUtc,
-  QueryHint,
-  getDefaultTimeRange,
-  QueryFixAction,
 } from '@grafana/data';
-import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
+import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -62,6 +62,7 @@ import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
+import { trackQuery } from './tracking';
 import {
   LokiOptions,
   LokiQuery,
@@ -191,13 +192,13 @@ export class LokiDatasource
     if (fixedRequest.liveStreaming) {
       return this.runLiveQueryThroughBackend(fixedRequest);
     } else {
-      return super
-        .query(fixedRequest)
-        .pipe(
-          map((response) =>
-            transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
-          )
-        );
+      return super.query(fixedRequest).pipe(
+        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
+        map((response) =>
+          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+        ),
+        tap((response) => trackQuery(response, fixedRequest.targets, fixedRequest.app))
+      );
     }
   }
 

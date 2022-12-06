@@ -1,11 +1,11 @@
-import { DashboardLoadedEvent } from '@grafana/data';
+import { DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
 import pluginJson from './plugin.json';
-import { getNormalizedLokiQuery, isLogsQuery } from './queryUtils';
+import { getNormalizedLokiQuery, isLogsQuery, parseToNodeNamesArray } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
@@ -116,3 +116,21 @@ const isQueryWithChangedLegend = (query: LokiQuery): boolean => {
   }
   return query.legendFormat !== '';
 };
+
+export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], app: string): void {
+  for (const query of queries) {
+    reportInteraction('grafana_loki_query_executed', {
+      app,
+      editor_mode: query.editorMode,
+      has_data: response.data.some((frame) => frame.length > 0),
+      has_error: response.error !== undefined,
+      legend: query.legendFormat,
+      line_limit: query.maxLines,
+      parsed_query: parseToNodeNamesArray(query.expr).join(','),
+      query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
+      query_vector_type: query.queryType,
+      resolution: query.resolution,
+      simultaneously_sent_query_count: queries.length,
+    });
+  }
+}
