@@ -88,6 +88,7 @@ export function StoredNotifications() {
               title={notif.title}
               timestamp={notif.timestamp}
               traceId={notif.traceId}
+              type={notif.type}
             >
               <span>{notif.text}</span>
             </StoredNotificationItem>

@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { formatDistanceToNow } from 'date-fns';
 import React, { ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { AppNotificationType, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Card, Checkbox, useTheme2 } from '@grafana/ui';
+import { Card, Checkbox, Tag, useTheme2 } from '@grafana/ui';
+import { tagColorMap } from 'app/types';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -17,6 +18,7 @@ export interface Props {
   title: string;
   timestamp?: number;
   traceId?: string;
+  type?: AppNotificationType;
 }
 
 export const StoredNotificationItem = ({
@@ -28,10 +30,12 @@ export const StoredNotificationItem = ({
   title,
   traceId,
   timestamp,
+  type,
 }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const showTraceId = config.featureToggles.tracing && traceId;
+  const tagType = type ?? AppNotificationType.SystemMessage;
 
   return (
     <Card className={className} onClick={onClick}>
@@ -41,6 +45,7 @@ export const StoredNotificationItem = ({
         <Checkbox onChange={onClick} tabIndex={-1} value={isSelected} />
       </Card.Figure>
       <Card.Tags className={styles.trace}>
+        <Tag name={tagType} colorIndex={tagColorMap[tagType]} />
         {showTraceId && <span>{`Trace ID: ${traceId}`}</span>}
         {timestamp && formatDistanceToNow(timestamp, { addSuffix: true })}
       </Card.Tags>
