@@ -22,7 +22,7 @@ type Service interface {
 	GetStackConfigWatcher(ctx context.Context, stackId int64) (watch.Interface, error)
 }
 
-func ProvideK8SInfo(router routing.RouteRegister) Service {
+func ProvideMultiTenantInfo(router routing.RouteRegister) Service {
 	svc := &theService{}
 	config, err := rest.InClusterConfig()
 	if err == nil {
@@ -42,7 +42,7 @@ func ProvideK8SInfo(router routing.RouteRegister) Service {
 type theService struct {
 	clientset *kubernetes.Clientset
 
-	cache map[int64]string
+	cache map[int64]TenantInfo
 }
 
 func (s *theService) doGetEntity(c *models.ReqContext) response.Response {

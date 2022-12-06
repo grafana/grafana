@@ -77,6 +77,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/mtctx"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -258,6 +259,7 @@ var wireBasicSet = wire.NewSet(
 	secretsDatabase.ProvideSecretsStore,
 	querylibraryimpl.ProvideService,
 	querylibraryimpl.ProvideHTTPService,
+	mtctx.ProvideMultiTenantInfo,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
