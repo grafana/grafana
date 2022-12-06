@@ -1,6 +1,7 @@
 export type PluginRecipe = {
   id: string;
   name: string;
+  logo?: string;
   description?: string;
   steps: PluginRecipeStep[];
 };

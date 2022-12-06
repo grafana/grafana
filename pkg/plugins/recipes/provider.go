@@ -29,12 +29,14 @@ func (s *staticRecipesProvider) GetAll() []*Recipe {
 
 func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 	recipes := []*Recipe{
+		// Linux Server
 		{
-			Id:          "special-mix-of-plugins",
-			Name:        "Special mix of plugins",
-			Description: "This recipe will contain a special mix of awesome plugins",
+			Id:          "linux-server",
+			Name:        "Linux Server",
+			Description: "The Linux integration uses the agent to collect metrics related to the operating system running on a node, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports logs being scraped by the agent using promtail. Supported files are syslog, auth.log, kern.log and journal logs. An accompanying dashboard is provided to visualize these metrics and logs.",
+			Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/linux.png",
 			Steps: []RecipeStep{
-				newInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
@@ -43,7 +45,11 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 						Version: "1.0.9",
 					},
 				),
-				newInstallStep(i, cfg,
+				newInstructionStep(i, cfg, RecipeStepMeta{
+					Name:        "Show instructions",
+					Description: "...",
+				}, "Some instruction"),
+				newPluginInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
 						Description: "Some description here...",
@@ -52,7 +58,165 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 						Version: "0.4.1",
 					},
 				),
-				newInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Anodot panel",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "anodot-panel",
+						Version: "2.0.1",
+					},
+				),
+			},
+		},
+
+		// Docker
+		{
+			Id:          "docker",
+			Name:        "Docker",
+			Description: "Docker is an open platform for developing, shipping, and running applications. Docker enables you to separate your applications from your infrastructure so you can deliver software quickly.",
+			Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/docker.png",
+			Steps: []RecipeStep{
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Jira",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-jira-datasource",
+						Version: "1.0.9",
+					},
+				),
+				newInstructionStep(i, cfg, RecipeStepMeta{
+					Name:        "Show instructions",
+					Description: "...",
+				}, "Some instruction"),
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing K6 app",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-k6-app",
+						Version: "0.4.1",
+					},
+				),
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Anodot panel",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "anodot-panel",
+						Version: "2.0.1",
+					},
+				),
+			},
+		},
+
+		// MySQL
+		{
+			Id:          "mysql",
+			Name:        "MySQL",
+			Description: "MySQL is a managed, open source relational database that is widely used. The MySQL Integration enables the Grafana Agent to send metrics and logs to Grafana Cloud and includes useful dashboards, alerts, and recording rules.",
+			Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/mysql.png",
+			Steps: []RecipeStep{
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Jira",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-jira-datasource",
+						Version: "1.0.9",
+					},
+				),
+				newInstructionStep(i, cfg, RecipeStepMeta{
+					Name:        "Show instructions",
+					Description: "...",
+				}, "Some instruction"),
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing K6 app",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-k6-app",
+						Version: "0.4.1",
+					},
+				),
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Anodot panel",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "anodot-panel",
+						Version: "2.0.1",
+					},
+				),
+			},
+		},
+
+		// Mac OS
+		{
+			Id:          "macos",
+			Name:        "MacOS",
+			Description: "The macOS integration uses the agent to collect metrics related to the operating system, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports system logs being scraped by the agent using promtail. An accompanying dashboard is provided to visualize these metrics and logs.",
+			Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/apple.svg",
+			Steps: []RecipeStep{
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Jira",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-jira-datasource",
+						Version: "1.0.9",
+					},
+				),
+				newInstructionStep(i, cfg, RecipeStepMeta{
+					Name:        "Show instructions",
+					Description: "...",
+				}, "Some instruction"),
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing K6 app",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-k6-app",
+						Version: "0.4.1",
+					},
+				),
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Anodot panel",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "anodot-panel",
+						Version: "2.0.1",
+					},
+				),
+			},
+		},
+
+		{
+			Id:          "special-mix-of-plugins",
+			Name:        "Special mix of plugins",
+			Description: "This recipe will contain a special mix of awesome plugins",
+			Steps: []RecipeStep{
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing Jira",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-jira-datasource",
+						Version: "1.0.9",
+					},
+				),
+				newPluginInstallStep(i, cfg,
+					RecipeStepMeta{
+						Name:        "Installing K6 app",
+						Description: "Some description here...",
+					}, recipePluginStep{
+						Id:      "grafana-k6-app",
+						Version: "0.4.1",
+					},
+				),
+				newPluginInstallStep(i, cfg,
 					RecipeStepMeta{
 						Name:        "Installing Anodot panel",
 						Description: "Some description here...",

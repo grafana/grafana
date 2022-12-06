@@ -16,7 +16,7 @@ type recipePluginStep struct {
 	Version string `json:"version"`
 }
 
-func newInstallStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, plugin recipePluginStep) *installPluginRecipeStep {
+func newPluginInstallStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, plugin recipePluginStep) *installPluginRecipeStep {
 	return &installPluginRecipeStep{
 		Action:    "install-plugin",
 		Meta:      meta,
