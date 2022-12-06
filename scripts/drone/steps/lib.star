@@ -121,7 +121,7 @@ def init_enterprise_step(ver_mode):
             'mv grafana-enterprise /tmp/',
             '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(
                 token, source_commit
-            ),
+            ).rstrip(),
             'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
             'mkdir bin',
             'mv /tmp/grabpl bin/',
@@ -652,6 +652,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     else:
         sign_args = ''
         env = None
+        # TODO: env vars no longer needed by build if not signing
         test_args = '. scripts/build/gpg-test-vars.sh && '
 
     # TODO: Use percentage for jobs
@@ -853,11 +854,10 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
         mode, docker_repo
     )
 
+    deps = ['build-docker-images', 'build-docker-images-ubuntu']
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
         cmd += ' --version-tag ${DRONE_TAG}'
-    else:
-        deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
     if edition == 'enterprise2':
         name = edition

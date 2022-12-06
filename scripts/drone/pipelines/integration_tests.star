@@ -24,10 +24,10 @@ load(
 
 
 def integration_tests(trigger, prefix):
+    environment = {'EDITION': 'oss'}
+
     services = integration_test_services(edition="oss")
     volumes = integration_test_services_volumes()
-
-    environment = {'EDITION': 'oss'}
 
     init_steps = [
         download_grabpl_step(),

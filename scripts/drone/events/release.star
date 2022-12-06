@@ -606,10 +606,10 @@ def publish_packages_pipeline():
     ]
 
 
-def publish_npm_pipelines(mode):
+def publish_npm_pipelines():
     trigger = {
         'event': ['promote'],
-        'target': [mode],
+        'target': ['public'],
     }
     steps = [
         download_grabpl_step(),
@@ -620,7 +620,7 @@ def publish_npm_pipelines(mode):
 
     return [
         pipeline(
-            name='publish-npm-packages-{}'.format(mode),
+            name='publish-npm-packages-public',
             trigger=trigger,
             steps=steps,
             edition="all",

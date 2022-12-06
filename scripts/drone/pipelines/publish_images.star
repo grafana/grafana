@@ -14,9 +14,6 @@ load(
 
 
 def publish_image_steps(edition, mode, docker_repo):
-    additional_docker_repo = ""
-    if edition == 'oss':
-        additional_docker_repo = 'grafana/grafana-oss'
     steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -24,9 +21,10 @@ def publish_image_steps(edition, mode, docker_repo):
         fetch_images_step(edition),
         publish_images_step(edition, 'release', mode, docker_repo),
     ]
-    if additional_docker_repo != "":
-        steps.extend(
-            [publish_images_step(edition, 'release', mode, additional_docker_repo)]
+
+    if edition == 'oss':
+        steps.append(
+            publish_images_step(edition, 'release', mode, 'grafana/grafana-oss')
         )
 
     return steps

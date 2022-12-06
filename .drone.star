@@ -42,7 +42,7 @@ def main(ctx):
         + publish_image_pipelines_security()
         + publish_artifacts_pipelines('security')
         + publish_artifacts_pipelines('public')
-        + publish_npm_pipelines('public')
+        + publish_npm_pipelines()
         + publish_packages_pipeline()
         + artifacts_page_pipeline()
         + version_branch_pipelines()
