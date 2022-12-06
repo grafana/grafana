@@ -168,6 +168,10 @@ func main() {
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&editionFlag,
+				&cli.BoolFlag{
+					Name:  "enterprise2",
+					Usage: "Declare if the edition is enterprise2",
+				},
 			},
 		},
 		{

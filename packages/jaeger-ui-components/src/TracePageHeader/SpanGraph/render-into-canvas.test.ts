@@ -15,7 +15,6 @@
 import { range as _range } from 'lodash';
 
 import renderIntoCanvas, {
-  BG_COLOR,
   ITEM_ALPHA,
   MIN_ITEM_HEIGHT,
   MAX_TOTAL_HEIGHT,
@@ -24,8 +23,10 @@ import renderIntoCanvas, {
   MAX_ITEM_HEIGHT,
 } from './render-into-canvas';
 
+const BG_COLOR = '#FFFFFF';
+
 const getCanvasWidth = () => window.innerWidth * 2;
-const getBgFillRect = (items) => ({
+const getBgFillRect = (items?: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>) => ({
   fillStyle: BG_COLOR,
   height: !items || items.length < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(MAX_TOTAL_HEIGHT, items.length),
   width: getCanvasWidth(),
@@ -37,12 +38,15 @@ describe('renderIntoCanvas()', () => {
   const basicItem = { valueWidth: 100, valueOffset: 50, serviceName: 'some-name' };
 
   class CanvasContext {
+    fillStyle: undefined;
+    fillRectAccumulator: Array<{ fillStyle: undefined; height: number; width: number; x: number; y: number }> = [];
+
     constructor() {
       this.fillStyle = undefined;
       this.fillRectAccumulator = [];
     }
 
-    fillRect(x, y, width, height) {
+    fillRect(x: number, y: number, width: number, height: number) {
       const fillStyle = this.fillStyle;
       this.fillRectAccumulator.push({
         fillStyle,
@@ -55,6 +59,11 @@ describe('renderIntoCanvas()', () => {
   }
 
   class Canvas {
+    height: number;
+    width: number;
+    contexts: CanvasContext[];
+    getContext: jest.Mock;
+
     constructor() {
       this.contexts = [];
       this.height = NaN;
@@ -71,13 +80,13 @@ describe('renderIntoCanvas()', () => {
 
   function getColorFactory() {
     let i = 0;
-    const inputOutput = [];
-    function getFakeColor(str) {
-      const rv = [i, i, i];
+    const inputOutput: Array<{ input: string; output: [number, number, number] }> = [];
+    function getFakeColor(str: string) {
+      const rv: [number, number, number] = [i, i, i];
       i++;
       inputOutput.push({
         input: str,
-        output: rv.slice(),
+        output: rv.slice() as [number, number, number],
       });
       return rv;
     }
@@ -88,7 +97,7 @@ describe('renderIntoCanvas()', () => {
   it('sets the width', () => {
     const canvas = new Canvas();
     expect(canvas.width !== canvas.width).toBe(true);
-    renderIntoCanvas(canvas, [basicItem], 150, getColorFactory());
+    renderIntoCanvas(canvas as unknown as HTMLCanvasElement, [basicItem], 150, getColorFactory(), BG_COLOR);
     expect(canvas.width).toBe(getCanvasWidth());
   });
 
@@ -96,18 +105,18 @@ describe('renderIntoCanvas()', () => {
     it('sets the height', () => {
       const canvas = new Canvas();
       expect(canvas.height !== canvas.height).toBe(true);
-      renderIntoCanvas(canvas, [basicItem], 150, getColorFactory());
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, [basicItem], 150, getColorFactory(), BG_COLOR);
       expect(canvas.height).toBe(MIN_TOTAL_HEIGHT);
     });
 
     it('draws the background', () => {
       const expectedDrawing = [getBgFillRect()];
       const canvas = new Canvas();
-      const items = [];
+      const items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }> = [];
       const totalValueWidth = 4000;
       const getFillColor = getColorFactory();
-      renderIntoCanvas(canvas, items, totalValueWidth, getFillColor);
-      expect(canvas.getContext.mock.calls).toEqual([['2d', { alpha: false }]]);
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, totalValueWidth, getFillColor, BG_COLOR);
+      expect((canvas.getContext as jest.Mock).mock.calls).toEqual([['2d', { alpha: false }]]);
       expect(canvas.contexts.length).toBe(1);
       expect(canvas.contexts[0].fillRectAccumulator).toEqual(expectedDrawing);
     });
@@ -141,7 +150,7 @@ describe('renderIntoCanvas()', () => {
       ];
       const canvas = new Canvas();
       const getFillColor = getColorFactory();
-      renderIntoCanvas(canvas, items, totalValueWidth, getFillColor);
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, totalValueWidth, getFillColor, BG_COLOR);
       expect(getFillColor.inputOutput).toEqual(expectedColors);
       expect(canvas.getContext.mock.calls).toEqual([['2d', { alpha: false }]]);
       expect(canvas.contexts.length).toBe(1);
@@ -157,7 +166,7 @@ describe('renderIntoCanvas()', () => {
         items.push(basicItem);
       }
       expect(canvas.height !== canvas.height).toBe(true);
-      renderIntoCanvas(canvas, items, 150, getColorFactory());
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 150, getColorFactory(), BG_COLOR);
       expect(canvas.height).toBe(items.length);
     });
 
@@ -187,9 +196,9 @@ describe('renderIntoCanvas()', () => {
       ];
       const canvas = new Canvas();
       const getFillColor = getColorFactory();
-      renderIntoCanvas(canvas, items, totalValueWidth, getFillColor);
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, totalValueWidth, getFillColor, BG_COLOR);
       expect(getFillColor.inputOutput).toEqual(expectedColors);
-      expect(canvas.getContext.mock.calls).toEqual([['2d', { alpha: false }]]);
+      expect((canvas.getContext as jest.Mock).mock.calls).toEqual([['2d', { alpha: false }]]);
       expect(canvas.contexts.length).toBe(1);
       expect(canvas.contexts[0].fillRectAccumulator).toEqual(expectedDrawings);
     });
