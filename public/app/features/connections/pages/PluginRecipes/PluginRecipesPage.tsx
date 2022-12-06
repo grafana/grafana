@@ -12,18 +12,13 @@ import { useRecipesFilteredBySearch } from './hooks';
 export function PluginRecipesPage() {
   const [searchTerm, setSearchTerm] = useState<string | undefined>();
   const styles = useStyles2(getStyles);
-
-  const handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
-    setSearchTerm(e.currentTarget.value.toLowerCase());
-  };
-
   const { data, error, isFetching } = useGetAll();
   const recipes = useRecipesFilteredBySearch(data, searchTerm);
 
   return (
     <Page navId={'connections-plugin-recipes'}>
       <Page.Contents>
-        <Search onChange={handleSearchChange} />
+        <Search onChange={setSearchTerm} />
 
         {/* We need this extra spacing when there are no filters */}
         <div className={styles.spacer} />

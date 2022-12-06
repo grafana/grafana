@@ -16,11 +16,6 @@ const getStyles = () => ({
 export function ConnectData() {
   const [searchTerm, setSearchTerm] = useState('');
   const styles = useStyles2(getStyles);
-
-  const handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
-    setSearchTerm(e.currentTarget.value.toLowerCase());
-  };
-
   const { isLoading, error, plugins } = useGetAllWithFilters({ query: searchTerm, filterBy: '' });
 
   const cardGridItems = useMemo(
@@ -37,7 +32,7 @@ export function ConnectData() {
 
   return (
     <>
-      <Search onChange={handleSearchChange} />
+      <Search onChange={setSearchTerm} />
       {/* We need this extra spacing when there are no filters */}
       <div className={styles.spacer} />
       <CategoryHeader iconName="database" label="Data sources" />

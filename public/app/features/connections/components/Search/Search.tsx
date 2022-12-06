@@ -12,25 +12,22 @@ const getStyles = () => ({
   `,
 });
 
-export const Search: FC<{ onChange: (e: React.FormEvent<HTMLInputElement>) => void }> = ({ onChange }) => {
+export const Search: FC<{ onChange: (searchTerm: string) => void }> = ({ onChange }) => {
   const styles = useStyles2(getStyles);
-  const [inputEvent, setInputEvent] = useState<React.FormEvent<HTMLInputElement> | undefined>();
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   useDebounce(
     () => {
-      if (!inputEvent) {
-        return;
-      }
-      onChange(inputEvent);
+      onChange(searchTerm);
     },
-    500,
-    [inputEvent]
+    200,
+    [searchTerm]
   );
 
   return (
     <div className={styles.searchContainer}>
       <Input
-        onChange={setInputEvent}
+        onChange={(e) => setSearchTerm(e.currentTarget.value)}
         prefix={<Icon name="search" />}
         placeholder="Search all"
         aria-label="Search all"
