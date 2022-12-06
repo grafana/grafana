@@ -3,6 +3,7 @@ package remotecache
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func NewFakeStore(t *testing.T) *RemoteCache {
 
 	dc, err := ProvideService(&setting.Cfg{
 		RemoteCacheOptions: opts,
-	}, sqlStore)
+	}, sqlStore, fakes.NewFakeSecretsService())
 	require.NoError(t, err, "Failed to init remote cache for test")
 
 	return dc
