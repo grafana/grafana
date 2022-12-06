@@ -4,6 +4,24 @@ import (
 	"context"
 )
 
+func newPromptStep(meta PromptStepMeta) *PromptStep {
+	return &PromptStep{
+		Action: "prompt",
+		Meta:   meta,
+	}
+}
+
+// A step used to prompt information from the user
+type PromptStep struct {
+	Action string           `json:"action"`
+	Meta   PromptStepMeta   `json:"meta"`
+	Status RecipeStepStatus `json:"status"`
+}
+
+type PromptStepMeta struct {
+	RecipeStepMeta
+	Prompts []Prompt `json:"prompts"` // The list of prompts
+}
 type PromptOption struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
@@ -16,13 +34,6 @@ type Prompt struct {
 	Placeholder  string         `json:"placeholder"` //
 	DefaultValue string         `json:"defaultValue"`
 	Options      []PromptOption `json:"options"` // Only for "radio", "select" or "multiselect" fields
-}
-
-// A step used to prompt information from the user
-type PromptStep struct {
-	Meta    RecipeStepMeta   `json:"meta"`
-	Status  RecipeStepStatus `json:"status"`
-	Prompts []Prompt         `json:"prompts"` // The list of prompts
 }
 
 func (s *PromptStep) Apply(c context.Context) error {
