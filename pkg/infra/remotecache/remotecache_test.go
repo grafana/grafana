@@ -96,6 +96,7 @@ func TestCachePrefix(t *testing.T) {
 	cache := &databaseCache{
 		SQLStore: db,
 		log:      log.New("remotecache.database"),
+		codec:    &gobCodec{},
 	}
 	prefixCache := &prefixCacheStorage{cache: cache, prefix: "test/"}
 
