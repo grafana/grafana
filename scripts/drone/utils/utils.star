@@ -7,9 +7,7 @@ load(
 load(
     'scripts/drone/vault.star',
     'from_secret',
-    'github_token',
     'pull_secret',
-    'drone_token',
 )
 
 failure_template = 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}'

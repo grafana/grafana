@@ -76,7 +76,6 @@ load(
 load(
     'scripts/drone/vault.star',
     'from_secret',
-    'github_token',
     'pull_secret',
     'drone_token',
     'prerelease_bucket',

@@ -58,6 +58,7 @@ def build_e2e(trigger, ver_mode):
     ]
 
     build_steps = []
+    variants = None
 
     if ver_mode == 'pr':
         build_steps.extend(
@@ -67,36 +68,20 @@ def build_e2e(trigger, ver_mode):
             ]
         )
 
-    build_steps.extend(
-        [
-            build_backend_step(edition=edition, ver_mode=ver_mode),
-            build_frontend_step(edition=edition, ver_mode=ver_mode),
-            build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-            build_plugins_step(edition=edition, ver_mode=ver_mode),
-        ]
-    )
-
-    if ver_mode == 'main':
-        build_steps.extend(
-            [
-                package_step(edition=edition, ver_mode=ver_mode),
-            ]
-        )
-    elif ver_mode == 'pr':
         variants = [
             'linux-amd64',
             'linux-amd64-musl',
             'darwin-amd64',
             'windows-amd64',
         ]
-        build_steps.extend(
-            [
-                package_step(edition=edition, ver_mode=ver_mode, variants=variants),
-            ]
-        )
 
     build_steps.extend(
         [
+            build_backend_step(edition=edition, ver_mode=ver_mode),
+            build_frontend_step(edition=edition, ver_mode=ver_mode),
+            build_frontend_package_step(edition=edition, ver_mode=ver_mode),
+            build_plugins_step(edition=edition, ver_mode=ver_mode),
+            package_step(edition=edition, ver_mode=ver_mode, variants=variants),
             grafana_server_step(edition=edition),
             e2e_tests_step('dashboards-suite'),
             e2e_tests_step('smoke-tests-suite'),
@@ -113,6 +98,7 @@ def build_e2e(trigger, ver_mode):
             test_a11y_frontend_step(ver_mode=ver_mode),
         ]
     )
+
     if ver_mode == 'main':
         build_steps.extend(
             [
@@ -122,7 +108,7 @@ def build_e2e(trigger, ver_mode):
                     edition=edition, ver_mode=ver_mode, publish=False
                 ),
                 build_docker_images_step(
-                    edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False
+                    edition=edition, ver_mode=ver_mode, publish=False, ubuntu=True
                 ),
                 publish_images_step(
                     edition=edition,

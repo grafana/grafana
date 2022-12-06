@@ -1,8 +1,6 @@
 load(
     'scripts/drone/vault.star',
-    'drone_token',
     'from_secret',
-    'github_token',
     'prerelease_bucket',
     'pull_secret',
 )
@@ -84,7 +82,7 @@ def clone_enterprise_step(committish='${DRONE_COMMIT}'):
         'name': 'clone-enterprise',
         'image': build_image,
         'environment': {
-            'GITHUB_TOKEN': from_secret(github_token),
+            'GITHUB_TOKEN': from_secret('github_token'),
         },
         'commands': [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
@@ -99,12 +97,12 @@ def init_enterprise_step(ver_mode):
     if ver_mode == 'release':
         source_commit = ' ${DRONE_TAG}'
         environment = {
-            'GITHUB_TOKEN': from_secret(github_token),
+            'GITHUB_TOKEN': from_secret('github_token'),
         }
         token = "--github-token $${GITHUB_TOKEN}"
     elif ver_mode == 'release-branch':
         environment = {
-            'GITHUB_TOKEN': from_secret(github_token),
+            'GITHUB_TOKEN': from_secret('github_token'),
         }
         token = "--github-token $${GITHUB_TOKEN}"
     else:
@@ -182,7 +180,7 @@ def enterprise_downstream_step(ver_mode):
         'image': 'grafana/drone-downstream',
         'settings': {
             'server': 'https://drone.grafana.net',
-            'token': from_secret(drone_token),
+            'token': from_secret('drone_token'),
             'repositories': [
                 repo,
             ],
@@ -1060,27 +1058,79 @@ def publish_linux_packages_step(edition, package_manager='deb'):
 
 
 def get_windows_steps(edition, ver_mode):
-    init_cmds = []
-    sfx = ''
-    if edition in ('enterprise', 'enterprise2'):
-        sfx = '-{}'.format(edition)
-    else:
-        init_cmds.extend(
-            [
-                '$$ProgressPreference = "SilentlyContinue"',
-                'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
-                    grabpl_version
-                ),
-            ]
-        )
     steps = [
         identify_runner_step('windows'),
-        {
-            'name': 'windows-init',
-            'image': wix_image,
-            'commands': init_cmds,
-        },
     ]
+
+    if edition in ('enterprise', 'enterprise2'):
+        if ver_mode == 'release':
+            committish = '${DRONE_TAG}'
+        elif ver_mode == 'release-branch':
+            committish = '$$env:DRONE_BRANCH'
+        else:
+            committish = '$$env:DRONE_COMMIT'
+
+        # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
+        download_grabpl_cmds = [
+            '$$ProgressPreference = "SilentlyContinue"',
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+                grabpl_version
+            ),
+        ]
+
+        clone_cmds = [
+            'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
+            'cd grafana-enterprise',
+            'git checkout {}'.format(committish),
+        ]
+
+        init_cmds = [
+            # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
+            'cp -r grafana-enterprise C:\\App\\grafana-enterprise',
+            'rm -r -force grafana-enterprise',
+            'cp grabpl.exe C:\\App\\grabpl.exe',
+            'rm -force grabpl.exe',
+            'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise',
+            'cp C:\\App\\grabpl.exe grabpl.exe',
+        ]
+
+        steps.extend(
+            [
+                {
+                    'name': 'clone',
+                    'image': wix_image,
+                    'environment': {
+                        'GITHUB_TOKEN': from_secret('github_token'),
+                    },
+                    'commands': download_grabpl_cmds + clone_cmds,
+                },
+                {
+                    'name': 'windows-init',
+                    'image': wix_image,
+                    'commands': init_cmds,
+                    'depends_on': ['clone'],
+                    'environment': {'GITHUB_TOKEN': from_secret('github_token')},
+                },
+            ]
+        )
+    else:
+        init_cmds = [
+            '$$ProgressPreference = "SilentlyContinue"',
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+                grabpl_version
+            ),
+        ]
+
+        steps.extend(
+            [
+                {
+                    'name': 'windows-init',
+                    'image': wix_image,
+                    'commands': init_cmds,
+                },
+            ]
+        )
+
     if (
         ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2'))
     ) or ver_mode in (
@@ -1151,59 +1201,6 @@ def get_windows_steps(edition, ver_mode):
                 'commands': installer_commands,
             }
         )
-
-    if edition in ('enterprise', 'enterprise2'):
-        if ver_mode == 'release':
-            committish = '${DRONE_TAG}'
-        elif ver_mode == 'release-branch':
-            committish = '$$env:DRONE_BRANCH'
-        else:
-            committish = '$$env:DRONE_COMMIT'
-        # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
-        download_grabpl_step_cmds = [
-            '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
-                grabpl_version
-            ),
-        ]
-        clone_cmds = [
-            'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
-        ]
-        clone_cmds.extend(
-            [
-                'cd grafana-enterprise',
-                'git checkout {}'.format(committish),
-            ]
-        )
-        steps.insert(
-            1,
-            {
-                'name': 'clone',
-                'image': wix_image,
-                'environment': {
-                    'GITHUB_TOKEN': from_secret(github_token),
-                },
-                'commands': download_grabpl_step_cmds + clone_cmds,
-            },
-        )
-        steps[2]['depends_on'] = [
-            'clone',
-        ]
-        steps[2]['commands'].extend(
-            [
-                # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
-                'cp -r grafana-enterprise C:\\App\\grafana-enterprise',
-                'rm -r -force grafana-enterprise',
-                'cp grabpl.exe C:\\App\\grabpl.exe',
-                'rm -force grabpl.exe',
-                'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise',
-                'cp C:\\App\\grabpl.exe grabpl.exe',
-            ]
-        )
-        if 'environment' in steps[2]:
-            steps[2]['environment'] + {'GITHUB_TOKEN': from_secret(github_token)}
-        else:
-            steps[2]['environment'] = {'GITHUB_TOKEN': from_secret(github_token)}
 
     return steps
 
