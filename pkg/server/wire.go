@@ -259,7 +259,6 @@ var wireBasicSet = wire.NewSet(
 	secretsDatabase.ProvideSecretsStore,
 	querylibraryimpl.ProvideService,
 	querylibraryimpl.ProvideHTTPService,
-	mtctx.ProvideMultiTenantInfo,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
@@ -354,6 +353,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
+	mtctx.ProvideService,
 )
 
 var wireSet = wire.NewSet(

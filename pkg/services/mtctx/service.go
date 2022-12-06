@@ -16,42 +16,42 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var _ Service = &theService{}
+var _ Service = (*ServiceImpl)(nil)
 
 type Service interface {
 	GetStackConfigWatcher(ctx context.Context, stackId int64) (watch.Interface, error)
 }
 
-func ProvideMultiTenantInfo(router routing.RouteRegister) Service {
-	svc := &theService{}
+func ProvideService(router routing.RouteRegister) Service {
+	svc := &ServiceImpl{}
+	router.Get("/api/hack/hello", middleware.ReqOrgAdmin, routing.Wrap(svc.doGetEntity))
+
 	config, err := rest.InClusterConfig()
 	if err == nil {
 		svc.clientset, err = kubernetes.NewForConfig(config)
 	}
+
 	// creates the clientset
 	if err != nil {
-		log.Fatal("DOOOH, the config watcher client can not run: " + err.Error())
+		log.Println("DOOOH, the config watcher client can not run: " + err.Error())
 	}
-
-	//
-	router.Get("/api/hack/hello", middleware.ReqOrgAdmin, routing.Wrap(svc.doGetEntity))
 
 	return svc
 }
 
-type theService struct {
+type ServiceImpl struct {
 	clientset *kubernetes.Clientset
 
 	cache map[int64]TenantInfo
 }
 
-func (s *theService) doGetEntity(c *models.ReqContext) response.Response {
+func (s *ServiceImpl) doGetEntity(c *models.ReqContext) response.Response {
 	return response.JSON(200, map[string]interface{}{
 		"hello": "world",
 	})
 }
 
-func (s *theService) GetStackConfigWatcher(ctx context.Context, stackId int64) (watch.Interface, error) {
+func (s *ServiceImpl) GetStackConfigWatcher(ctx context.Context, stackId int64) (watch.Interface, error) {
 	if s.clientset == nil {
 		return nil, fmt.Errorf("missing error")
 	}

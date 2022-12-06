@@ -211,6 +211,7 @@ type HTTPServer struct {
 	tagService             tag.Service
 	oauthTokenService      oauthtoken.OAuthTokenService
 	statsService           stats.Service
+	mtctxService           mtctx.Service
 }
 
 type ServerOptions struct {
@@ -254,6 +255,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service,
+	mtctxService mtctx.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -359,6 +361,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryLibraryService:          queryLibraryService,
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
+		mtctxService:                 mtctxService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
