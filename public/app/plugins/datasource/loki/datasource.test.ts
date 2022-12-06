@@ -180,7 +180,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToNodeNamesArray('{a="b"}'),
+          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
         })
       );
     });
