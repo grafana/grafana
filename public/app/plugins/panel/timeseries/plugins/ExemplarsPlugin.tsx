@@ -194,16 +194,13 @@ function showExemplar(
   dataFrame: DataFrame,
   dataFrameFieldIndex: DataFrameFieldIndex
 ) {
-  const labelsAndUniqueValuesFromActiveFilters = getUniqueValuesFromLabels(visibleSeries.labels);
   // If all series are visible, don't filter any exemplars
-
   if (visibleSeries.labels.length === visibleSeries.totalSeriesCount) {
     showMarker = true;
   } else {
-    // Iterate through all of the visible series
     visibleSeries.labels.forEach((visibleLabel) => {
       // Get the label names
-      const labelKeys = Object.keys(visibleLabel.labels);
+      const labelKeys = Object.keys(visibleLabel);
 
       // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
       if (Object.keys(visibleLabel.labels).length === 0) {
@@ -216,11 +213,11 @@ function showExemplar(
 
         if (fields.length) {
           // Check to see if at least one value matches each field
-          showMarker = fields.every((field) => {
-            const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-            const allValues = labelsAndUniqueValuesFromActiveFilters[field.name];
-
-            return [...allValues].includes(value);
+          showMarker = visibleSeries.labels.some((series) => {
+            return Object.keys(series.labels).every((label) => {
+              const value = series.labels[label];
+              return fields.find((field) => field.values.get(dataFrameFieldIndex.fieldIndex) === value);
+            });
           });
         }
       }
