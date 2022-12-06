@@ -11,6 +11,8 @@ function renderComponent({ initialValue = '', onRunQuery = jest.fn(), onBlur = j
   const datasource = createLokiDatasource();
   const languageProvider = new LokiLanguageProvider(datasource);
 
+  console.log('test');
+
   render(
     <MonacoQueryField
       languageProvider={languageProvider}
