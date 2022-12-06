@@ -45,7 +45,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
+import { PanelHeaderNotices } from './PanelHeader/PanelHeaderNotices';
 import { PanelHeaderState } from './PanelHeader/PanelHeaderState';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -583,17 +583,24 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     });
 
     // for new panel header design
-    const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
+    // const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
     const title = panel.getDisplayTitle();
     const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-    const leftItems = [
-      <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
-    ];
-    const headerState = <PanelHeaderState errorMessage={errorMessage} data={data} key="state" />;
-
+    // const leftItems = [
+    //   <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
+    // ];
+    const headerState = <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} data={data} key="state" />;
+    const titleItemsNodes = [<PanelHeaderNotices frames={data.series} panelId={panel.id} key="notices" />];
     if (config.featureToggles.newPanelChromeUI) {
       return (
-        <PanelChrome state={headerState} width={width} height={height} title={title} padding={noPadding}>
+        <PanelChrome
+          state={headerState}
+          titleItemsNodes={titleItemsNodes}
+          width={width}
+          height={height}
+          title={title}
+          padding={noPadding}
+        >
           {(innerWidth, innerHeight) => (
             <>
               <ErrorBoundary

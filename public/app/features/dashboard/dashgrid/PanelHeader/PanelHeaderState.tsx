@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback } from 'react';
 
-import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { ToolbarButtonVariant } from '@grafana/ui/src/components/ToolbarButton';
+import { InspectTab } from 'app/features/inspector/types';
 
 enum InfoMode {
   Error = 'Error',
@@ -12,20 +14,48 @@ enum InfoMode {
 }
 
 interface Props {
-  data?: PanelData;
-  errorMessage?: string;
+  data?: PanelData; // for getting notices
+  errorMessage?: string; // when data fails
+  panelId: number; //for opening inspector
 }
 
 export function PanelHeaderState(props: Props) {
-  // TODO Fancy logic to determine if the panel is in an error state or if has notices to show
-  const state = 'warning';
-  const styles = useStyles2(getStyles(state));
-
+  const { data, errorMessage, panelId } = props;
+  const state = getGeneralPanelState(data, errorMessage);
+  const styles = useStyles2(getStyles);
   const mode = getInfoMode(state);
+  const iconName = getInfoMode(state) === InfoMode.Info ? 'info-circle' : 'exclamation-triangle';
+
+  const openInspect = useCallback(
+    (e: React.SyntheticEvent, tab: string) => {
+      e.stopPropagation();
+      locationService.partial({ inspect: panelId, inspectTab: tab });
+    },
+    [panelId]
+  );
+  let variantType: ToolbarButtonVariant = 'default';
   if (!mode) {
     return null;
   }
 
+  variantType = getVariantType(mode);
+  const tooltipMessage = InfoMode.Error && errorMessage;
+  const onClick = mode === InfoMode.Info ? undefined : (e: React.SyntheticEvent) => openInspect(e, InspectTab.Error);
+
+  return (
+    <div className={styles.container}>
+      <ToolbarButton
+        onClick={onClick}
+        variant={variantType}
+        className={styles.buttonStyles}
+        icon={iconName}
+        tooltip={tooltipMessage}
+      />
+    </div>
+  );
+}
+
+function getVariantType(mode: InfoMode) {
   let variantType: ToolbarButtonVariant;
   switch (mode) {
     case InfoMode.Error:
@@ -40,30 +70,35 @@ export function PanelHeaderState(props: Props) {
     default:
       variantType = 'default';
   }
+  return variantType;
+}
 
-  const iconName = getInfoMode(state) === InfoMode.Info ? 'info-circle' : 'exclamation-triangle';
-
-  return (
-    <div className={styles.container}>
-      <ToolbarButton variant={variantType} className={styles.buttonStyles} icon={iconName} tooltip="default message" />
-    </div>
-  );
+function getGeneralPanelState(data: PanelData | undefined, errorMessage: string | undefined) {
+  let state;
+  if (errorMessage) {
+    state = InfoMode.Error;
+  } else if (data?.state === LoadingState.Warning) {
+    state = InfoMode.Warning;
+  } else {
+    state = '';
+  }
+  return state;
 }
 
 const getInfoMode = (state: string) => {
   switch (state) {
-    case 'error':
+    case 'Error':
       return InfoMode.Error;
-    case 'info':
+    case 'Info':
       return InfoMode.Info;
-    case 'warning':
+    case 'Warning':
       return InfoMode.Warning;
     default:
       return undefined;
   }
 };
 
-const getStyles = (state: string) => (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
@@ -80,6 +115,15 @@ const getStyles = (state: string) => (theme: GrafanaTheme2) => {
       width: '32px',
       height: '32px',
       borderRadius: 0,
+    }),
+    containerMultipleStates: css({
+      display: 'flex',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      backgroundColor: theme.colors.background.secondary,
+      padding: theme.spacing(1),
+      width: '100%',
     }),
   };
 };

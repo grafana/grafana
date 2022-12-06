@@ -32,6 +32,7 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   titleItems?: PanelChromeInfoState[];
+  titleItemsNodes?: React.ReactElement[];
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
@@ -62,6 +63,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   title = '',
   titleItems = [],
   menu,
+  titleItemsNodes, // titleItems is very strict with the type, and for cases like PanelNotices where we have a component doesn't make sense
   // dragClass,
   hoverHeader = false,
   loadingState,
@@ -118,6 +120,11 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
                     )}
                   </div>
                 ))}
+            </div>
+          )}
+          {titleItemsNodes && (
+            <div className={styles.items} data-testid="title-items-container">
+              {itemsRenderer(titleItemsNodes, (item) => item)}
             </div>
           )}
 

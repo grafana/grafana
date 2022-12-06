@@ -18,6 +18,7 @@ export enum LoadingState {
   Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
+  Warning = 'Warning',
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
