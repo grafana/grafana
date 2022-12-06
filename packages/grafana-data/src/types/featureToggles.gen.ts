@@ -67,12 +67,5 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
-  interFont?: boolean;
-  newPanelChromeUI?: boolean;
-  queryLibrary?: boolean;
-  showDashboardValidationWarnings?: boolean;
-  mysqlAnsiQuotes?: boolean;
   datasourceLogger?: boolean;
-  accessControlOnCall?: boolean;
-  nestedFolders?: boolean;
 }
