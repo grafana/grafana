@@ -1,11 +1,15 @@
 package channels_config
 
 import (
+	"os"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
+	hostname, _ := os.Hostname()
+
 	pushoverSoundOptions := []SelectOption{
 		{
 			Value: "default",
@@ -281,7 +285,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "<hostname>",
+					Placeholder:  hostname,
 					PropertyName: "source",
 				},
 				{ // New in 9.4.
