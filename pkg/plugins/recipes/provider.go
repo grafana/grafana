@@ -34,8 +34,8 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 			Id:   "linux-server",
 			Name: "Linux Server",
 			Meta: RecipeMeta{
-				Summary:     "The Linux integration uses the agent to collect metrics related to the operating system running on a node, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports logs being scraped by the agent using promtail. Supported files are syslog, auth.log, kern.log and journal logs. An accompanying dashboard is provided to visualize these metrics and logs.",
-				Description: "The Linux integration uses the agent to collect metrics related to the operating system running on a node, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports logs being scraped by the agent using promtail. Supported files are syslog, auth.log, kern.log and journal logs. An accompanying dashboard is provided to visualize these metrics and logs.",
+				Summary:     "Collect metrics and logs related to the linux operating system",
+				Description: "The Linux integration uses the agent to collect metrics related to the operating system running on a node, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. \nIt also supports logs being scraped by the agent using promtail. Supported files are syslog, auth.log, kern.log and journal logs. An accompanying dashboard is provided to visualize these metrics and logs.",
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/linux.png",
 			},
 			Steps: []RecipeStep{
@@ -78,7 +78,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 			Id:   "docker",
 			Name: "Docker",
 			Meta: RecipeMeta{
-				Summary:     "Docker is an open platform for developing, shipping, and running applications. Docker enables you to separate your applications from your infrastructure so you can deliver software quickly.",
+				Summary:     "Collect metrics and logs for containers running in docker",
 				Description: "Docker is an open platform for developing, shipping, and running applications. Docker enables you to separate your applications from your infrastructure so you can deliver software quickly.",
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/docker.png",
 			},
@@ -122,7 +122,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 			Id:   "mysql",
 			Name: "MySQL",
 			Meta: RecipeMeta{
-				Summary:     "MySQL is a managed, open source relational database that is widely used. The MySQL Integration enables the Grafana Agent to send metrics and logs to Grafana Cloud and includes useful dashboards, alerts, and recording rules.",
+				Summary:     "Collects metrics and logs from the MySQL server",
 				Description: "MySQL is a managed, open source relational database that is widely used. The MySQL Integration enables the Grafana Agent to send metrics and logs to Grafana Cloud and includes useful dashboards, alerts, and recording rules.",
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/mysql.png",
 			},
@@ -166,7 +166,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 			Id:   "macos",
 			Name: "MacOS",
 			Meta: RecipeMeta{
-				Summary:     "The macOS integration uses the agent to collect metrics related to the operating system, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports system logs being scraped by the agent using promtail. An accompanying dashboard is provided to visualize these metrics and logs.",
+				Summary:     "Collect metrics and logs related to the macOS operating system",
 				Description: "The macOS integration uses the agent to collect metrics related to the operating system, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports system logs being scraped by the agent using promtail. An accompanying dashboard is provided to visualize these metrics and logs.",
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/apple.svg",
 			},
