@@ -264,12 +264,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           }
         }}
       >
+        {panelPane}
         <div
           className={styles.tabsWrapper}
           aria-label={selectors.components.PanelEditor.DataPane.content}
           key="panel-editor-tabs"
         >
-          {panelPane}
           <PanelEditorTabs
             key={panel.key}
             panel={panel}
