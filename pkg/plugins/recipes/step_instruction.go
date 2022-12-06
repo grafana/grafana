@@ -19,7 +19,7 @@ type InstructionStep struct {
 
 type InstructionStepMeta struct {
 	Name                                string `json:"name"`
-	Description                         string `json:"name"`
+	Description                         string `json:"description"`
 	InstructionText                     string `json:"instructionText"`                     // The instruction as Markdown text
 	InstructionTestURL                  string `json:"instructionTestURL"`                  // The URL to test if the requested changes are configured. If left empty then no test button will be added.
 	InstructionTestExpectedHttpResponse string `json:"instructionTestExpectedHttpResponse"` // E.g. "200"

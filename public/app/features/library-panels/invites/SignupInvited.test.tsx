@@ -5,8 +5,8 @@ import { Provider } from 'react-redux';
 
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
-import { backendSrv } from '../../core/services/backend_srv';
-import { configureStore } from '../../store/configureStore';
+import { backendSrv } from '../../../core/services/backend_srv';
+import { configureStore } from '../../../store/configureStore';
 
 import { SignupInvitedPage, Props } from './SignupInvited';
 

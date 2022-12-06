@@ -2,7 +2,7 @@ import { keyBy } from 'lodash';
 
 import { getMockInvitees } from 'app/features/users/__mocks__/userMocks';
 
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 
 import { fetchInvitees, revokeInvite } from './actions';
 import { initialState, invitesReducer } from './reducers';

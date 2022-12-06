@@ -5,7 +5,7 @@ import { RadioButtonGroup, LinkButton, FilterInput } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, StoreState } from 'app/types';
 
-import { selectTotal } from '../invites/state/selectors';
+import { selectTotal } from '../library-panels/invites/state/selectors';
 
 import { setUsersSearchQuery } from './state/reducers';
 import { getUsersSearchQuery } from './state/selectors';

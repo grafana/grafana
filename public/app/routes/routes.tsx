@@ -386,7 +386,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/invite/:code',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
+        () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/library-panels/invites/SignupInvited')
       ),
       pageClass: 'sidemenu-hidden',
       chromeless: true,
