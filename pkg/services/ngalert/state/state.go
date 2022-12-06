@@ -198,6 +198,11 @@ func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 		// is unavailable or queries against the datasource returns errors, and is
 		// then resolved as soon as the datasource is available and queries return
 		// without error
+		if a.State != execErrState {
+			// Set the start time if the state changes from Alerting to Error or from
+			// Error to Alerting
+			a.StartsAt = result.EvaluatedAt
+		}
 		a.State = execErrState
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
