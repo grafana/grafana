@@ -34,6 +34,7 @@ export function initPanelState(panel: PanelModel): ThunkResult<void> {
       panel.pluginLoaded(plugin);
     }
 
+    console.log('initPanelState', { key: panel.key, plugin });
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
   };
 }
