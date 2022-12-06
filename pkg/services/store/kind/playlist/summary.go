@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/playlist"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
+func getSummarizer() kindsys.Summarizer {
 	return summaryBuilder
 }
 

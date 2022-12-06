@@ -106,6 +106,7 @@ _rootKind: {
 // potentially untrusted third parties.
 #Structured: S={
 	_sharedKind
+	_rootKind
 	form: "structured"
 
 	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
@@ -120,6 +121,7 @@ _rootKind: {
 // kinds: the byte sequence is a black box to Grafana, and type is determined
 // through metadata such as file extension.
 #Raw: {
+	#SummaryCore
 	_sharedKind
 	_rootKind
 	form: "raw"
@@ -137,7 +139,7 @@ _rootKind: {
 // TODO
 #CustomStructured: {
 	#Structured
-	_rootKind
+	#SummaryCustom
 
 	lineageIsGroup: false
 	...
@@ -146,8 +148,8 @@ _rootKind: {
 // CoreStructured specifies the Kind category for core types that are declared with schemas.
 // This includes Grafana's most common types, such as dashboards and datasources.
 #CoreStructured: {
+	#SummaryCore
 	#Structured
-	_rootKind
 
 	lineageIsGroup: false
 }

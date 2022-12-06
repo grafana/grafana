@@ -1,6 +1,8 @@
 package kindsys
 
-import "context"
+import (
+	"context"
+)
 
 // EntitySummary represents common data derived from a raw object bytes.
 // The values should not depend on system state, and are derived from the raw object.
@@ -66,6 +68,21 @@ type EntityExternalReference struct {
 	UID string `json:"UID,omitempty"`
 }
 
-// EntitySummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
-// This should not include values that depend on system state, only the raw object
-type EntitySummaryBuilder = func(ctx context.Context, uid string, body []byte) (*EntitySummary, []byte, error)
+// A Summarizer reads the raw bytes representing an object, validates it, and
+// return a summary, sanitized payload, or an error. This should not include
+// values that depend on system state, only the raw object
+//
+// TODO decouple summaries from validation
+// TODO decouple summaries from sanitization
+type Summarizer = func(ctx context.Context, uid string, body []byte) (*EntitySummary, []byte, error)
+
+// GenericSummarizer provides a simple generic [Summarizer] that only extracts
+// the generically knowable properties of an entity.
+func GenericSummarizer(kindname string) Summarizer {
+	return func(ctx context.Context, uid string, body []byte) (*EntitySummary, []byte, error) {
+		return &EntitySummary{
+			UID:  uid,
+			Kind: kindname,
+		}, nil, nil
+	}
+}

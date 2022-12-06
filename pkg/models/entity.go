@@ -86,4 +86,4 @@ type EntityKindInfo struct {
 type EntitySummary = kindsys.EntitySummary
 type EntityErrorInfo = kindsys.EntityErrorInfo
 type EntityExternalReference = kindsys.EntityExternalReference
-type EntitySummaryBuilder = kindsys.EntitySummaryBuilder
+type EntitySummaryBuilder = kindsys.Summarizer
