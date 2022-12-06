@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
+    "betterer": "betterer --config ../../.betterer.ts",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",

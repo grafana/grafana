@@ -29,6 +29,7 @@
   ],
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
+    "betterer": "betterer --config ../../.betterer.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",

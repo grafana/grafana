@@ -7,6 +7,7 @@
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "betterer": "betterer --config ../../.betterer.ts",
     "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "devDependencies": {
