@@ -21,6 +21,12 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 		return addr, nil
 	}
 
+	// Determine if it's a file path for unix sockets
+	if strings.HasPrefix(input, "/") {
+		addr.Host = input
+		return addr, nil
+	}
+
 	start := 0
 	// Determine if IPv6 address, in which case IP address will be enclosed in square brackets
 	if strings.Index(input, "[") == 0 {
