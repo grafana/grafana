@@ -638,33 +638,42 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		fields = append(fields, "body")
 	}
 
-	// FIXME: The `|| len(r.Labels) > 0` condition is required only because label filtering is happening _after_ retrieving the entities from the Database
-	if r.WithLabels || len(r.Labels) > 0 {
+	if r.WithLabels {
 		fields = append(fields, "labels")
 	}
 	if r.WithFields {
 		fields = append(fields, "fields")
 	}
 
-	selectQuery := selectQuery{
+	entityQuery := selectQuery{
 		fields:   fields,
 		from:     "entity", // the table
 		args:     []interface{}{},
 		limit:    int(r.Limit),
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
-	selectQuery.addWhere("tenant_id", user.OrgID)
+	entityQuery.addWhere("tenant_id", user.OrgID)
 
 	if len(r.Kind) > 0 {
-		selectQuery.addWhereIn("kind", r.Kind)
+		entityQuery.addWhereIn("kind", r.Kind)
 	}
 
 	// Folder UID or OID?
 	if r.Folder != "" {
-		selectQuery.addWhere("folder", r.Folder)
+		entityQuery.addWhere("folder", r.Folder)
 	}
 
-	query, args := selectQuery.toQuery()
+	if len(r.Labels) > 0 {
+		for labelKey, labelValue := range r.Labels {
+			// FIXME: optimize - group by grn + having count = len(r.Labels)
+			entityQuery.addWhereInSubquery(
+				"grn",
+				"select grn from entity_labels where (label = ? AND value = ?)",
+				[]interface{}{labelKey, labelValue})
+		}
+	}
+
+	query, args := entityQuery.toQuery()
 
 	fmt.Printf("\n\n-------------\n")
 	fmt.Printf("%s\n", query)
@@ -706,7 +715,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		}
 
 		// found one more than requested
-		if len(rsp.Results) >= selectQuery.limit {
+		if len(rsp.Results) >= entityQuery.limit {
 			// TODO? should this encode start+offset?
 			rsp.NextPageToken = oid
 			break
@@ -733,27 +742,6 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		}
 
 		rsp.Results = append(rsp.Results, result)
-	}
-
-	// FIXME: Filter through SQL rather than in memory
-	if len(r.Labels) > 0 {
-		filteredResults := make([]*entity.EntitySearchResult, 0)
-		for _, ent := range rsp.Results {
-			match := true
-			for labelKey, labelValue := range r.Labels {
-				val, ok := ent.Labels[labelKey]
-				if !ok || val != labelValue {
-					match = false
-					break
-				}
-			}
-
-			if match {
-				filteredResults = append(filteredResults, ent)
-				rsp.NextPageToken = ent.GRN.ToGRNString()
-			}
-		}
-		rsp.Results = filteredResults
 	}
 
 	return rsp, err

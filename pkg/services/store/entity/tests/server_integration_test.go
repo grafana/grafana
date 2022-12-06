@@ -426,6 +426,32 @@ func TestIntegrationEntityServer(t *testing.T) {
 			WithBody:   false,
 			WithLabels: true,
 			Labels: map[string]string{
+				"red":   "",
+				"green": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 1)
+		require.Equal(t, search.Results[0].GRN.UID, "red-green")
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"red": "invalid",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 0)
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
 				"green": "",
 			},
 		})
