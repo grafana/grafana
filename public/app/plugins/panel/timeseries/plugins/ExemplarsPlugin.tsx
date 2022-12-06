@@ -23,57 +23,6 @@ interface ExemplarsPluginProps {
   visibleLabels: { labels: Labels[]; totalSeriesCount: number };
 }
 
-export const getVisibleLabels = (
-  config: UPlotConfigBuilder,
-  frames: DataFrame[] | null
-): { labels: Labels[]; totalSeriesCount: number } => {
-  const visibleSeries = config.series.filter((series) => series.props.show);
-  const visibleLabels: Labels[] = [];
-  if (frames?.length) {
-    visibleSeries.forEach((plotInstance) => {
-      const frameIndex = plotInstance.props?.dataFrameFieldIndex?.frameIndex;
-      const fieldIndex = plotInstance.props?.dataFrameFieldIndex?.fieldIndex;
-
-      if (frameIndex !== undefined && fieldIndex !== undefined) {
-        const field = frames[frameIndex].fields[fieldIndex];
-        if (field.labels) {
-          // Note that this may be an empty object in the case of a metric being rendered with no labels
-          visibleLabels.push({ ...field.labels, __color__: plotInstance.props?.lineColor ?? '' });
-        }
-      }
-    });
-  }
-
-  return { labels: visibleLabels, totalSeriesCount: config.series.length };
-};
-
-// Get color of active series in legend
-const getExemplarColor = (
-  dataFrame: DataFrame,
-  dataFrameFieldIndex: DataFrameFieldIndex,
-  visibleLabels: { labels: Labels[]; totalSeriesCount: number }
-) => {
-  let exemplarColor;
-  visibleLabels.labels.forEach((visibleLabel) => {
-    const labelKeys = Object.keys(visibleLabel);
-    const fields = dataFrame.fields.filter((field) => {
-      return labelKeys.find((labelKey) => labelKey === field.name);
-    });
-    if (fields.length) {
-      const hasMatch = fields.every((field) => {
-        const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-        return visibleLabel[field.name] === value;
-      });
-
-      if (hasMatch) {
-        exemplarColor = visibleLabel['__color__'];
-        return;
-      }
-    }
-  });
-  return exemplarColor;
-};
-
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   exemplars,
   timeZone,
@@ -141,38 +90,10 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       let showMarker = false;
-      const labelsAndUniqueValuesFromActiveFilters = getUniqueValuesFromLabels(visibleLabels.labels);
 
       const markerColor = getExemplarColor(dataFrame, dataFrameFieldIndex, visibleLabels);
 
-      // If all series are visible, don't filter any exemplars
-      if (visibleLabels.labels.length === visibleLabels.totalSeriesCount) {
-        showMarker = true;
-      } else {
-        visibleLabels.labels.forEach((visibleLabel) => {
-          const labelKeys = Object.keys(visibleLabel);
-
-          // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
-          if (Object.keys(visibleLabel).length === 0) {
-            showMarker = true;
-          } else {
-            // If there are labels, lets only show the exemplars with labels associated with series that are currently visible
-            const fields = dataFrame.fields.filter((field) => {
-              return labelKeys.find((labelKey) => labelKey === field.name);
-            });
-
-            // Check to see if at least one value matches each field
-            if (fields.length) {
-              showMarker = fields.every((field) => {
-                const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-                const allValues = labelsAndUniqueValuesFromActiveFilters[field.name];
-
-                return [...allValues].includes(value);
-              });
-            }
-          }
-        });
-      }
+      showMarker = showExemplar(getUniqueValuesFromLabels, visibleLabels, showMarker, dataFrame, dataFrameFieldIndex);
 
       if (!showMarker) {
         return <></>;
@@ -202,3 +123,101 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
     />
   );
 };
+
+/**
+ *
+ */
+export const getVisibleLabels = (
+  config: UPlotConfigBuilder,
+  frames: DataFrame[] | null
+): { labels: Labels[]; totalSeriesCount: number } => {
+  const visibleSeries = config.series.filter((series) => series.props.show);
+  const visibleLabels: Labels[] = [];
+  if (frames?.length) {
+    visibleSeries.forEach((plotInstance) => {
+      const frameIndex = plotInstance.props?.dataFrameFieldIndex?.frameIndex;
+      const fieldIndex = plotInstance.props?.dataFrameFieldIndex?.fieldIndex;
+
+      if (frameIndex !== undefined && fieldIndex !== undefined) {
+        const field = frames[frameIndex].fields[fieldIndex];
+        if (field.labels) {
+          // Note that this may be an empty object in the case of a metric being rendered with no labels
+          visibleLabels.push({ ...field.labels, __color__: plotInstance.props?.lineColor ?? '' });
+        }
+      }
+    });
+  }
+
+  return { labels: visibleLabels, totalSeriesCount: config.series.length };
+};
+
+/**
+ * Get color of active series in legend
+ */
+const getExemplarColor = (
+  dataFrame: DataFrame,
+  dataFrameFieldIndex: DataFrameFieldIndex,
+  visibleLabels: { labels: Labels[]; totalSeriesCount: number }
+) => {
+  let exemplarColor;
+  visibleLabels.labels.forEach((visibleLabel) => {
+    const labelKeys = Object.keys(visibleLabel);
+    const fields = dataFrame.fields.filter((field) => {
+      return labelKeys.find((labelKey) => labelKey === field.name);
+    });
+    if (fields.length) {
+      const hasMatch = fields.every((field) => {
+        const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+        return visibleLabel[field.name] === value;
+      });
+
+      if (hasMatch) {
+        exemplarColor = visibleLabel['__color__'];
+        return;
+      }
+    }
+  });
+  return exemplarColor;
+};
+
+/**
+ *
+ */
+function showExemplar(
+  getUniqueValuesFromLabels: (labels: Labels[]) => { [p: string]: Set<string> },
+  visibleLabels: { labels: Labels[]; totalSeriesCount: number },
+  showMarker: boolean,
+  dataFrame: DataFrame,
+  dataFrameFieldIndex: DataFrameFieldIndex
+) {
+  const labelsAndUniqueValuesFromActiveFilters = getUniqueValuesFromLabels(visibleLabels.labels);
+  // If all series are visible, don't filter any exemplars
+  if (visibleLabels.labels.length === visibleLabels.totalSeriesCount) {
+    showMarker = true;
+  } else {
+    visibleLabels.labels.forEach((visibleLabel) => {
+      const labelKeys = Object.keys(visibleLabel);
+
+      // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
+      if (Object.keys(visibleLabel).length === 0) {
+        showMarker = true;
+      } else {
+        // If there are labels, lets only show the exemplars with labels associated with series that are currently visible
+        const fields = dataFrame.fields.filter((field) => {
+          return labelKeys.find((labelKey) => labelKey === field.name);
+        });
+
+        // Check to see if at least one value matches each field
+        if (fields.length) {
+          showMarker = fields.every((field) => {
+            const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+            const allValues = labelsAndUniqueValuesFromActiveFilters[field.name];
+
+            return [...allValues].includes(value);
+          });
+        }
+      }
+    });
+  }
+  return showMarker;
+}
