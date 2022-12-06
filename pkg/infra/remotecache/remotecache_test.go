@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,7 +29,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore d
 	cfg := &setting.Cfg{
 		RemoteCacheOptions: opts,
 	}
-	dc, err := ProvideService(cfg, sqlstore)
+	dc, err := ProvideService(cfg, sqlstore, fakes.NewFakeSecretsService())
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc
@@ -46,7 +47,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil)
+	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil, &gobCodec{})
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
