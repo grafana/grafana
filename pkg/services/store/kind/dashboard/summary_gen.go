@@ -15,5 +15,4 @@ import "github.com/grafana/grafana/pkg/kindsys"
 // and constructs a [kindsys.EntitySummary].
 func Summarizer() kindsys.Summarizer {
 	return getSummarizer()
-
 }
