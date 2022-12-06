@@ -2,7 +2,6 @@ package userimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -85,21 +84,17 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	if err != nil {
 		return nil, err
 	}
-
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
 	}
-	usr := &user.User{
-		Login: cmd.Login,
-		Email: cmd.Email,
-	}
-	usr, err = s.store.Get(ctx, usr)
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		return usr, err
+
+	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	if err != nil {
+		return nil, user.ErrUserAlreadyExists
 	}
 
 	// create user
-	usr = &user.User{
+	usr := &user.User{
 		Email:            cmd.Email,
 		Name:             cmd.Name,
 		Login:            cmd.Login,
@@ -133,7 +128,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		usr.Password = encodedPassword
 	}
 
-	userID, err := s.store.Insert(ctx, usr)
+	_, err = s.store.Insert(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
@@ -157,11 +152,10 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		}
 		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
 		if err != nil {
-			err := s.store.Delete(ctx, userID)
+			err := s.store.Delete(ctx, usr.ID)
 			return usr, err
 		}
 	}
-
 	return usr, nil
 }
 
@@ -358,47 +352,193 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 // Create, `cmd.SkipOrgSetup` toggles whether or not to create an org for the
 // test user if there isn't already an existing org. This must only be used in tests.
 func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	var usr user.User
 	var orgID int64 = -1
-	if !args.SkipOrgSetup {
-		var err error
-		orgID, err = ss.getOrgIDForNewUser(sess, args)
+	var err error
+	if !cmd.SkipOrgSetup {
+		orgID, err = s.getOrgIDForNewUser(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	usr, err := s.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: cmd.Login})
+	if err != nil && err != user.ErrUserNotFound {
+		return usr, err
+	} else if err == nil { // user exists
+		return usr, err
+	}
+
+	// create user
+	usr = &user.User{
+		Email:            cmd.Email,
+		Name:             cmd.Name,
+		Login:            cmd.Login,
+		Company:          cmd.Company,
+		IsAdmin:          cmd.IsAdmin,
+		IsDisabled:       cmd.IsDisabled,
+		OrgID:            orgID,
+		EmailVerified:    cmd.EmailVerified,
+		Created:          timeNow(),
+		Updated:          timeNow(),
+		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
+		IsServiceAccount: cmd.IsServiceAccount,
+	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Rands = rands
+
+	if len(cmd.Password) > 0 {
+		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
 		if err != nil {
 			return usr, err
 		}
+		usr.Password = encodedPassword
 	}
 
-}
-
-func (s *Service) getOrCreateOrgForTestUser(ctx context.Context, cmd *user.CreateUserCommand) (*org.Org, error) {
-	// First see if a matching organization already exists
-	fmt.Printf("getOrCreate: cmd.OrgID = %d\n", cmd.OrgID)
-	foundOrg, err := s.orgService.GetByID(ctx, &org.GetOrgByIdQuery{ID: cmd.OrgID})
+	_, err = s.store.Insert(ctx, usr)
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
-			fmt.Println("org not found")
-			// this is fine, we'll create the org in the next step
-		} else {
+		return usr, err
+	}
+
+	// create org user link
+	if !cmd.SkipOrgSetup {
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     orgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleAdmin,
+			AllowAddingServiceAccount: true,
+		}
+
+		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			if len(cmd.DefaultOrgRole) > 0 {
+				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
+			} else {
+				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+			}
+		}
+
+		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
 			return nil, err
 		}
-	} else {
-		// Easy case, nothing to do!
-		fmt.Println("found org, all good!")
-		return foundOrg, nil
 	}
 
-	// If we're here, we need to create a new org for the (test) user.
+	return usr, nil
+}
+
+func (s *Service) getOrgIDForNewUser(ctx context.Context, cmd *user.CreateUserCommand) (int64, error) {
+	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
+		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIdQuery{ID: cmd.OrgID}); err != nil {
+			return -1, err
+		}
+		return cmd.OrgID, nil
+	}
+
 	orgName := cmd.OrgName
 	if orgName == "" {
 		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
 	}
-	fmt.Printf("orgName: %s\n", orgName)
 
-	org, err := s.orgService.GetOrCreate(ctx, orgName)
+	orgID, err := s.orgService.GetOrCreate(ctx, orgName)
+	if err != nil {
+		return 0, err
+	}
+	return orgID, err
+}
 
+// CreateServiceAccount is a copy of Create with a single difference; it will create the OrgUser service account.
+func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	cmdOrg := org.GetOrgIDForNewUserCommand{
+		Email:        cmd.Email,
+		Login:        cmd.Login,
+		OrgID:        cmd.OrgID,
+		OrgName:      cmd.OrgName,
+		SkipOrgSetup: cmd.SkipOrgSetup,
+	}
+	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
 	if err != nil {
 		return nil, err
-	} else {
-		return org, nil
 	}
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	if err != nil {
+		return nil, user.ErrUserAlreadyExists
+	}
+
+	// create user
+	usr := &user.User{
+		Email:            cmd.Email,
+		Name:             cmd.Name,
+		Login:            cmd.Login,
+		Company:          cmd.Company,
+		IsAdmin:          cmd.IsAdmin,
+		IsDisabled:       cmd.IsDisabled,
+		OrgID:            cmd.OrgID,
+		EmailVerified:    cmd.EmailVerified,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		IsServiceAccount: cmd.IsServiceAccount,
+	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Rands = rands
+
+	if len(cmd.Password) > 0 {
+		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		if err != nil {
+			return nil, err
+		}
+		usr.Password = encodedPassword
+	}
+
+	_, err = s.store.Insert(ctx, usr)
+	if err != nil {
+		return nil, err
+	}
+
+	// create org user link
+	if !cmd.SkipOrgSetup {
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     orgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleAdmin,
+			AllowAddingServiceAccount: true,
+		}
+
+		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			if len(cmd.DefaultOrgRole) > 0 {
+				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
+			} else {
+				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+			}
+		}
+
+		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+			return nil, err
+		}
+	}
+	return usr, nil
 }

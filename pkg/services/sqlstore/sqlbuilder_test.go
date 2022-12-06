@@ -2,17 +2,22 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationSQLBuilder(t *testing.T) {
@@ -196,22 +201,28 @@ func createDummyUser(t *testing.T, sqlStore *SQLStore) *user.User {
 	t.Helper()
 
 	uid := strconv.Itoa(rand.Intn(9999999))
-	createUserCmd := user.CreateUserCommand{
-		Email:          uid + "@example.com",
-		Login:          uid,
-		Name:           uid,
-		Company:        "",
-		OrgName:        "",
-		Password:       uid,
-		EmailVerified:  true,
-		IsAdmin:        false,
-		SkipOrgSetup:   false,
-		DefaultOrgRole: string(org.RoleViewer),
+	usr := &user.User{
+		Email:         uid + "@example.com",
+		Login:         uid,
+		Name:          uid,
+		Company:       "",
+		Password:      uid,
+		EmailVerified: true,
+		IsAdmin:       false,
+		Created:       time.Now(),
+		Updated:       time.Now(),
 	}
-	user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
-	require.NoError(t, err)
 
-	return user
+	var id int64
+	err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		sess.UseBool("is_admin")
+		var err error
+		id, err = sess.Insert(usr)
+		return err
+	})
+	require.NoError(t, err)
+	usr.ID = id
+	return usr
 }
 
 func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps DashboardProps) *models.Dashboard {
@@ -316,4 +327,96 @@ func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID in
 	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	require.NoError(t, err)
 	return res
+}
+
+// TODO: Use FakeDashboardStore when org has its own service
+func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
+	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	t.Helper()
+	cmd := models.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+
+	var dash *models.Dashboard
+	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		dash = cmd.GetDashboardModel()
+		dash.SetVersion(1)
+		dash.Created = time.Now()
+		dash.Updated = time.Now()
+		dash.Uid = util.GenerateShortUID()
+		_, err := sess.Insert(dash)
+		return err
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
+
+	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
+			ParentVersion: dash.Version,
+			RestoredFrom:  cmd.RestoredFrom,
+			Version:       dash.Version,
+			Created:       time.Now(),
+			CreatedBy:     dash.UpdatedBy,
+			Message:       cmd.Message,
+			Data:          dash.Data,
+		}
+		require.NoError(t, err)
+
+		if affectedRows, err := sess.Insert(dashVersion); err != nil {
+			return err
+		} else if affectedRows == 0 {
+			return dashboards.ErrDashboardNotFound
+		}
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	return dash
+}
+
+// TODO: Use FakeDashboardStore when org has its own service
+func updateDashboardACL(t *testing.T, sqlStore *SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+	t.Helper()
+
+	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
+		if err != nil {
+			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
+		}
+
+		for _, item := range items {
+			item.Created = time.Now()
+			item.Updated = time.Now()
+			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
+				return models.ErrDashboardACLInfoMissing
+			}
+
+			if item.DashboardID == 0 {
+				return models.ErrDashboardPermissionDashboardEmpty
+			}
+
+			sess.Nullable("user_id", "team_id")
+			if _, err := sess.Insert(item); err != nil {
+				return err
+			}
+		}
+
+		// Update dashboard HasACL flag
+		dashboard := models.Dashboard{HasACL: true}
+		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
+		return err
+	})
+	return err
 }

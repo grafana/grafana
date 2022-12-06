@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 func TestIntegrationDashboardACLDataAccess(t *testing.T) {
@@ -276,9 +277,11 @@ func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role str
 
 	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaimpl.ProvideService(sqlStore, sqlStore.Cfg))
 	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	require.NoError(t, err)
 
 	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
+	currentUser, err := usrSvc.CreateUserForTests(context.Background(), &currentUserCmd)
 	require.NoError(t, err)
 	orgs, err := orgService.GetUserOrgList(context.Background(), &org.GetUserOrgListQuery{UserID: currentUser.ID})
 	require.NoError(t, err)

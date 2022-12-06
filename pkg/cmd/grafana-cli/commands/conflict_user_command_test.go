@@ -12,9 +12,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -102,6 +104,8 @@ func TestBuildConflictBlock(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+			require.NoError(t, err)
 
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
@@ -111,7 +115,7 @@ func TestBuildConflictBlock(t *testing.T) {
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.Create(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -207,6 +211,8 @@ conflict: test2
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+			require.NoError(t, err)
 
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
@@ -216,7 +222,7 @@ conflict: test2
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.Create(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 
@@ -385,6 +391,9 @@ func TestGetConflictingUsers(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+			require.NoError(t, err)
+
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -394,7 +403,7 @@ func TestGetConflictingUsers(t *testing.T) {
 						OrgID:            int64(testOrgID),
 						IsServiceAccount: u.IsServiceAccount,
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.Create(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -493,6 +502,9 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+			require.NoError(t, err)
+
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -501,7 +513,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.Create(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -543,6 +555,9 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 	t.Run("should validate file thats gets created", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
+		usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+		require.NoError(t, err)
+
 		const testOrgID int64 = 1
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 			// add additional user with conflicting login where DOMAIN is upper case
@@ -551,14 +566,14 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 				Login: "user_duplicate_test_1_login",
 				OrgID: testOrgID,
 			}
-			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+			_, err := usrSvc.Create(context.Background(), &dupUserLogincmd)
 			require.NoError(t, err)
 			dupUserEmailcmd := user.CreateUserCommand{
 				Email: "USERDUPLICATETEST1@TEST.COM",
 				Login: "USER_DUPLICATE_TEST_1_LOGIN",
 				OrgID: testOrgID,
 			}
-			_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+			_, err = usrSvc.Create(context.Background(), &dupUserEmailcmd)
 			require.NoError(t, err)
 
 			// get users
@@ -588,6 +603,8 @@ func TestIntegrationMergeUser(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
 		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
+		usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, teamSvc, nil, &quotatest.FakeQuotaService{})
+		require.NoError(t, err)
 		require.Nil(t, err)
 		const testOrgID int64 = 1
 
@@ -601,7 +618,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 				Login: "user_duplicate_test_1_login",
 				OrgID: testOrgID,
 			}
-			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+			_, err := usrSvc.Create(context.Background(), &dupUserLogincmd)
 			require.NoError(t, err)
 			dupUserEmailcmd := user.CreateUserCommand{
 				Email: "USERDUPLICATETEST1@TEST.COM",
@@ -609,7 +626,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 				Login: "USER_DUPLICATE_TEST_1_LOGIN",
 				OrgID: testOrgID,
 			}
-			userWithUpperCase, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+			userWithUpperCase, err := usrSvc.Create(context.Background(), &dupUserEmailcmd)
 			require.NoError(t, err)
 			// this is the user we want to update to another team
 			err = teamSvc.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.Id, false, 0)
@@ -746,6 +763,8 @@ conflict: test2
 		for _, tc := range testCases {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc, err := userimpl.ProvideService(sqlStore, nil, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+			require.NoError(t, err)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -754,7 +773,7 @@ conflict: test2
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.Create(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				// add additional user with conflicting login where DOMAIN is upper case

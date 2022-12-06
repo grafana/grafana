@@ -14,9 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 const (
@@ -137,7 +140,10 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 	teamSvc := teamimpl.ProvideService(db, db.Cfg)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
-
+	orgSvc, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
+	require.NoError(b, err)
+	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)
 	for i := 0; i < numberOfTeams; i++ {
@@ -155,7 +161,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 			userEmail := fmt.Sprintf("%s@example.org", userName)
 			createUserCmd := user.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgID: 1}
 
-			user, err := db.CreateUser(context.Background(), createUserCmd)
+			user, err := usrSvc.Create(context.Background(), &createUserCmd)
 			require.NoError(b, err)
 			userId := user.ID
 			globalUserId++
