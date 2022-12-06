@@ -27,13 +27,7 @@ describe('scroll-by', () => {
     tweenInstances.length = 0;
     jest.mocked(Tween).mockClear();
     jest.mocked(Tween).mockImplementation((opts) => {
-      const rv = { to: opts.to, onUpdate: opts.onUpdate } as Tween;
-      Object.keys(Tween.prototype).forEach((name) => {
-        if (name !== 'constructor') {
-          // @ts-ignore
-          rv[name] = jest.fn();
-        }
-      });
+      const rv = { to: opts.to, onUpdate: opts.onUpdate, cancel: jest.fn(), getCurrent: jest.fn() } as unknown as Tween;
       tweenInstances.push(rv);
       return rv;
     });
@@ -125,7 +119,7 @@ describe('scroll-by', () => {
   });
 
   describe('_onTweenUpdate', () => {
-    let oldScrollTo: { (options?: ScrollToOptions | undefined): void; (x: number, y: number): void; };
+    let oldScrollTo: { (options?: ScrollToOptions | undefined): void; (x: number, y: number): void };
 
     beforeEach(() => {
       oldScrollTo = window.scrollTo;
