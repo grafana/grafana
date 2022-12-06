@@ -43,7 +43,7 @@
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
     "postpack": "mv package.json.bak package.json",
-    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
+    "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "browserslist": [
     "defaults",
@@ -182,6 +182,7 @@
     "esbuild": "0.15.12",
     "expose-loader": "4.0.0",
     "mock-raf": "1.0.1",
+    "prettier": "2.7.1",
     "process": "^0.11.10",
     "react": "17.0.2",
     "react-dom": "17.0.2",

@@ -4379,6 +4379,7 @@ __metadata:
     moment-timezone: 0.5.38
     ol: 7.1.0
     papaparse: 5.3.2
+    prettier: 2.7.1
     react: 17.0.2
     react-dom: 17.0.2
     react-test-renderer: 17.0.2
@@ -4410,6 +4411,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.0.1
     "@types/node": 18.11.9
     esbuild: 0.15.12
+    prettier: 2.7.1
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
@@ -4446,6 +4448,7 @@ __metadata:
     execa: 5.1.1
     lodash: 4.17.21
     mocha: 10.1.0
+    prettier: 2.7.1
     resolve-as-bin: 2.1.0
     rimraf: 3.0.2
     rollup: 2.79.1
@@ -4572,6 +4575,7 @@ __metadata:
     esbuild: 0.15.12
     history: 4.10.1
     lodash: 4.17.21
+    prettier: 2.7.1
     react: 17.0.2
     react-dom: 17.0.2
     rimraf: 3.0.2
@@ -4601,6 +4605,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.0.1
     "@swc/helpers": 0.4.12
     esbuild: 0.15.12
+    prettier: 2.7.1
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
@@ -4813,6 +4818,7 @@ __metadata:
     moment: 2.29.4
     monaco-editor: 0.34.0
     ol: 7.1.0
+    prettier: 2.7.1
     prismjs: 1.29.0
     process: ^0.11.10
     rc-cascader: 3.7.0
@@ -5030,6 +5036,7 @@ __metadata:
     memoize-one: 6.0.0
     moment: 2.29.4
     moment-timezone: 0.5.38
+    prettier: 2.7.1
     prop-types: 15.8.1
     react: 17.0.2
     react-dom: 17.0.2

@@ -35,7 +35,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
     "postpack": "mv package.json.bak package.json",
-    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
+    "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
@@ -44,6 +44,7 @@
     "@rollup/plugin-node-resolve": "15.0.1",
     "@swc/helpers": "0.4.12",
     "esbuild": "0.15.12",
+    "prettier": "2.7.1",
     "rimraf": "3.0.2",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",

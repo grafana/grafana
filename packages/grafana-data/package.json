@@ -34,7 +34,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
     "postpack": "mv package.json.bak package.json",
-    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
+    "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.1",
@@ -85,6 +85,7 @@
     "@types/tinycolor2": "1.4.3",
     "esbuild": "0.15.12",
     "eslint": "^8.28.0",
+    "prettier": "2.7.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",

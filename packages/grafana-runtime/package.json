@@ -36,7 +36,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
     "postpack": "mv package.json.bak package.json",
-    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
+    "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "dependencies": {
     "@grafana/data": "9.4.0-pre",
@@ -67,6 +67,7 @@
     "@types/systemjs": "^0.20.6",
     "esbuild": "0.15.12",
     "lodash": "4.17.21",
+    "prettier": "2.7.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "rimraf": "3.0.2",

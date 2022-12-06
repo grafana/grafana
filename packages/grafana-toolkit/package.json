@@ -37,7 +37,7 @@
     "prepack": "mv ./src ./src_bak && cp -r ./dist/src ./src",
     "postpack": "rimraf ./src && mv ./src_bak ./src",
     "typecheck": "tsc --noEmit",
-    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
+    "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "main": "src/index.ts",
   "dependencies": {

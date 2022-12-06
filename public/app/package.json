@@ -21,7 +21,7 @@
     "start": "yarn webpack --progress --color --config ../../scripts/webpack/webpack.dev.js --watch --env noTsCheck=1",
     "start:tsCheck": "yarn start --env noTsCheck=0",
     "stats": "yarn webpack --mode production --config ../../scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
-    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\"",
+    "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
