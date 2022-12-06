@@ -193,6 +193,23 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 	return err
 }
 
+// CheckHealth pings the connected SQL database
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dsHandler.Ping()
+
+	if err != nil {
+		logger.Error("Check health failed", "error", err)
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
+	}
+
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
+}
+
 func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
 	return []sqlutil.StringConverter{
 		{

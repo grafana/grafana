@@ -45,7 +45,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/go-stack/stack v1.8.1
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v4.3.0+incompatible

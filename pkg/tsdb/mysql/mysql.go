@@ -134,6 +134,24 @@ func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng
 	return instance, nil
 }
 
+// CheckHealth pings the connected SQL database
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dsHandler.Ping()
+
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
+		logger.Error("Check health failed", "error", err)
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: driverErr.Message}, nil
+	}
+
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
 	if err != nil {

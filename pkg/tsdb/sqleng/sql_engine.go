@@ -172,6 +172,10 @@ func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("Engine disposed")
 }
 
+func (e *DataSourceHandler) Ping() error {
+	return e.engine.Ping()
+}
+
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	ch := make(chan DBDataResponse, len(req.Queries))
