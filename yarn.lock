@@ -4970,7 +4970,6 @@ __metadata:
     "@types/prop-types": 15.7.5
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
-    "@types/reselect": 2.2.0
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
@@ -11590,15 +11589,6 @@ __metadata:
   version: 0.2.29
   resolution: "@types/relateurl@npm:0.2.29"
   checksum: 33226abf47dc03523f88dacb6c2acd185285e754a8e64dd832156fcfbeee053b3c9c63dcb01c06aa263f6e7cb1e53f819718d41dbf7ede38b9d00893cec4a6f6
-  languageName: node
-  linkType: hard
-
-"@types/reselect@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@types/reselect@npm:2.2.0"
-  dependencies:
-    reselect: "*"
-  checksum: 034b5796c16316b60561fca01503111ecddde638178efc20c7293f07ef7d9cbc2bffce267899381f630fa9ffef3bfed54384fe87756e97132b4dc2881f585e19
   languageName: node
   linkType: hard
 
@@ -21569,7 +21559,6 @@ __metadata:
     "@types/react-window": 1.8.5
     "@types/react-window-infinite-loader": ^1
     "@types/redux-mock-store": 1.0.3
-    "@types/reselect": 2.2.0
     "@types/semver": 7.3.13
     "@types/slate": 0.47.11
     "@types/slate-plain-serializer": 0.7.2
@@ -33607,13 +33596,6 @@ __metadata:
   version: 1.0.0
   resolution: "requires-port@npm:1.0.0"
   checksum: eee0e303adffb69be55d1a214e415cf42b7441ae858c76dfc5353148644f6fd6e698926fc4643f510d5c126d12a705e7c8ed7e38061113bdf37547ab356797ff
-  languageName: node
-  linkType: hard
-
-"reselect@npm:*":
-  version: 4.1.0
-  resolution: "reselect@npm:4.1.0"
-  checksum: ef150c3cccf8c43f7e5f9f35b0f826f82287e84fb5219928b1c7a4c8e99297f004ecd27e4888334115d35c82ab20bc2c95987244d12253480d256a1241495ad2
   languageName: node
   linkType: hard
 

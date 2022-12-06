@@ -20,7 +20,6 @@
     "@types/prop-types": "15.7.5",
     "@types/react": "17.0.42",
     "@types/react-icons": "2.2.7",
-    "@types/reselect": "2.2.0",
     "@types/slate-react": "0.22.9",
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",

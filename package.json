@@ -150,7 +150,6 @@
     "@types/react-window": "1.8.5",
     "@types/react-window-infinite-loader": "^1",
     "@types/redux-mock-store": "1.0.3",
-    "@types/reselect": "2.2.0",
     "@types/semver": "7.3.13",
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.2",
