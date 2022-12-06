@@ -13,7 +13,9 @@ func newInstallAgentStep(meta RecipeStepMeta, metrics []AgentMetrics) *installAg
 }
 
 type AgentMetrics struct {
-	Name string `json:"name"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
 }
 
 type installAgentStep struct {
