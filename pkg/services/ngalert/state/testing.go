@@ -15,6 +15,11 @@ type FakeInstanceStore struct {
 	RecordedOps []interface{}
 }
 
+type FakeInstanceStoreOp struct {
+	Name string
+	Args []interface{}
+}
+
 func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -33,7 +38,15 @@ func (f *FakeInstanceStore) SaveAlertInstances(_ context.Context, q ...models.Al
 
 func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
 
-func (f *FakeInstanceStore) DeleteAlertInstances(_ context.Context, _ ...models.AlertInstanceKey) error {
+func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...models.AlertInstanceKey) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, FakeInstanceStoreOp{
+		Name: "DeleteAlertInstances", Args: []interface{}{
+			ctx,
+			q,
+		},
+	})
 	return nil
 }
 

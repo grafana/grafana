@@ -167,7 +167,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	var states []StateTransition
@@ -185,18 +185,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	if st.historian != nil {
 		st.historian.RecordStatesAsync(ctx, alertRule, allChanges)
 	}
-
-	nextStates := make([]*State, 0, len(states))
-	for _, s := range states {
-		nextStates = append(nextStates, s.State)
-	}
-	// TODO refactor further. Do not filter because it will be filtered downstream
-	for _, s := range staleStates {
-		if s.PreviousState == eval.Alerting {
-			nextStates = append(nextStates, s.State)
-		}
-	}
-	return nextStates
+	return allChanges
 }
 
 // Set the current state based on evaluation results
