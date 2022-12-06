@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -15,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -52,7 +53,7 @@ func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager
 
 type PluginAuthService interface {
 	Verify(context.Context, string) (models.JWTClaims, error)
-	Generate(string, string) (string, error)
+	Generate(*user.SignedInUser, int64, string) (string, error)
 	IsEnabled() bool
 	UnaryClientInterceptor(string) grpc.UnaryClientInterceptor
 	StreamClientInterceptor(string) grpc.StreamClientInterceptor
@@ -90,13 +91,13 @@ func (s *pluginAuthService) Verify(ctx context.Context, token string) (models.JW
 	return Verify(ctx, s.keySet, expectedClaims, additionalClaims, token)
 }
 
-func (s *pluginAuthService) Generate(subject, audience string) (string, error) {
+func (s *pluginAuthService) Generate(usr *user.SignedInUser, tenantID int64, audience string) (string, error) {
 	if !s.IsEnabled() {
 		return "", errors.New("JWT token generation is disabled")
 	}
 
 	claims := jwt.Claims{
-		Subject:   subject,
+		Subject:   strconv.FormatInt(usr.UserID, 10),
 		Issuer:    s.Cfg.AppURL,
 		Audience:  jwt.Audience{audience},
 		NotBefore: jwt.NewNumericDate(time.Now()),
@@ -104,7 +105,19 @@ func (s *pluginAuthService) Generate(subject, audience string) (string, error) {
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
 
-	t, err := jwt.Signed(s.signer).Claims(claims).CompactSerialize()
+	customClaims := struct {
+		orgID       int64
+		tenantID    int64
+		login       string
+		displayName string
+	}{
+		orgID:       usr.OrgID,
+		tenantID:    tenantID,
+		login:       usr.Login,
+		displayName: usr.Name,
+	}
+
+	t, err := jwt.Signed(s.signer).Claims(claims).Claims(customClaims).CompactSerialize()
 	return t, err
 }
 
@@ -167,7 +180,10 @@ func (s *pluginAuthService) UnaryClientInterceptor(namespace string) grpc.UnaryC
 			return invoker(ctx, method, req, reply, cc, opts...)
 		}
 
-		token, err := s.Generate(store.GetUserIDString(usr), namespace)
+		// TODO: Pull tenant ID from context
+		tenantID := int64(0)
+
+		token, err := s.Generate(usr, tenantID, namespace)
 		if err != nil {
 			return err
 		}
@@ -189,7 +205,10 @@ func (s *pluginAuthService) StreamClientInterceptor(namespace string) grpc.Strea
 			return streamer(ctx, desc, cc, method, opts...)
 		}
 
-		token, err := s.Generate(store.GetUserIDString(usr), namespace)
+		// TODO: Pull tenant ID from context
+		tenantID := int64(0)
+
+		token, err := s.Generate(usr, tenantID, namespace)
 		if err != nil {
 			return nil, err
 		}
