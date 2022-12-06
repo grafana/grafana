@@ -11,6 +11,11 @@ interface ParserErrorBoundary {
   error: string;
 }
 
+interface ParseError {
+  text: string;
+  node: SyntaxNode;
+}
+
 export function validateQuery(
   query: string,
   interpolatedQuery: string,
@@ -27,47 +32,44 @@ export function validateQuery(
    * have different lengths. With this, we also exclude irrelevant parser errors that are produced by
    * lezer not understanding $variables and $__variables, which usually generate 2 or 3 error SyntaxNode.
    */
-  const interpolatedErrorNodes: SyntaxNode[] = [];
-  const tree = parser.parse(interpolatedQuery);
-  tree.iterate({
-    enter: (node): false | void => {
-      if (node.type.id === ErrorId) {
-        interpolatedErrorNodes.push(node.node);
-      }
-    },
-  });
-
-  if (!interpolatedErrorNodes.length) {
+  const interpolatedErrors: ParseError[] = parseQuery(interpolatedQuery);
+  if (!interpolatedErrors.length) {
     return false;
   }
 
-  let queryErrorNodes: SyntaxNode[] = [];
+  let parseErrors: ParseError[] = interpolatedErrors;
   if (query !== interpolatedQuery) {
-    const tree = parser.parse(query);
-    tree.iterate({
-      enter: (node): false | void => {
-        if (node.type.id === ErrorId) {
-          queryErrorNodes.push(node.node);
-        }
-      },
-    });
-  } else {
-    queryErrorNodes = interpolatedErrorNodes;
+    const queryErrors: ParseError[] = parseQuery(query);
+    parseErrors = queryErrors.filter((queryError) =>
+      interpolatedErrors.find((interpolatedError) => interpolatedError.text === queryError.text)
+    );
   }
 
-  return interpolatedErrorNodes
-    .map((node) => {
-      const queryNode = queryErrorNodes.find((queryNode) => queryNode.from === node.from);
-
-      return findErrorBoundary(query, queryLines, queryNode || node);
-    })
-    .filter(isErrorBoundary);
+  return parseErrors.map((parseError) => findErrorBoundary(query, queryLines, parseError)).filter(isErrorBoundary);
 }
 
-function findErrorBoundary(query: string, queryLines: string[], node: SyntaxNode): ParserErrorBoundary | null {
+function parseQuery(query: string) {
+  const parseErrors: ParseError[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (nodeRef): false | void => {
+      if (nodeRef.type.id === ErrorId) {
+        const node = nodeRef.node;
+        parseErrors.push({
+          node: node,
+          text: query.substring(node.from, node.to),
+        });
+      }
+    },
+  });
+  return parseErrors;
+}
+
+function findErrorBoundary(query: string, queryLines: string[], parseError: ParseError): ParserErrorBoundary | null {
   if (queryLines.length === 1) {
-    const errorNode = node.from === node.to && node.parent ? node.parent : node;
-    const error = query.substring(errorNode.from, errorNode.to);
+    const isEmptyString = parseError.node.from === parseError.node.to;
+    const errorNode = isEmptyString && parseError.node.parent ? parseError.node.parent : parseError.node;
+    const error = isEmptyString ? query.substring(errorNode.from, errorNode.to) : parseError.text;
     return {
       startLineNumber: 1,
       startColumn: errorNode.from + 1,
@@ -77,24 +79,22 @@ function findErrorBoundary(query: string, queryLines: string[], node: SyntaxNode
     };
   }
 
-  const error = query.substring(node.from, node.to);
-
   let startPos = 0,
     endPos = 0;
   for (let line = 0; line < queryLines.length; line++) {
     endPos = startPos + queryLines[line].length;
 
-    if (node.from > endPos) {
+    if (parseError.node.from > endPos) {
       startPos += queryLines[line].length + 1;
       continue;
     }
 
     return {
       startLineNumber: line + 1,
-      startColumn: node.from - startPos + 1,
+      startColumn: parseError.node.from - startPos + 1,
       endLineNumber: line + 1,
-      endColumn: node.to - startPos + 1,
-      error,
+      endColumn: parseError.node.to - startPos + 1,
+      error: parseError.text,
     };
   }
 
