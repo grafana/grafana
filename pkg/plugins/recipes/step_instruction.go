@@ -3,44 +3,31 @@ package recipes
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func newInstructionStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, instructionText string) *instructionStep {
-	return &instructionStep{
-		Action:          "install-plugin",
-		Meta:            meta,
-		InstructionText: instructionText,
-		installer:       installer,
-		cfg:             cfg,
-	}
+type InstructionStep struct {
+	Meta                                RecipeStepMeta   `json:"meta"`
+	Status                              RecipeStepStatus `json:"status"`
+	InstructionText                     string           `json:"instructionText"`                     // The instruction as Markdown text
+	InstructionTestURL                  string           `json:"instructionTestURL"`                  // The URL to test if the requested changes are configured. If left empty then no test button will be added.
+	InstructionTestExpectedHttpResponse string           `json:"instructionTestExpectedHttpResponse"` // E.g. "200"
+	cfg                                 *setting.Cfg
 }
 
-type instructionStep struct {
-	Action          string           `json:"action"`
-	Meta            RecipeStepMeta   `json:"meta"`
-	InstructionText string           `json:"instructionText"`
-	Status          RecipeStepStatus `json:"status"`
-	installer       plugins.Installer
-	cfg             *setting.Cfg
-}
-
-func (s *instructionStep) Apply(c context.Context) error {
-	// TODO: figure out what to do when applying an instruction?
-
+func (s *InstructionStep) Apply(c context.Context) error {
 	s.Status = RecipeStepStatus{
-		Status:        "Shown",
-		StatusMessage: "Instructions shown successfully.",
+		Status:        "Visible",
+		StatusMessage: "Please follow the instructions.",
 	}
 
 	return nil
 }
 
-func (s *instructionStep) Revert(c context.Context) error {
+func (s *InstructionStep) Revert(c context.Context) error {
 	s.Status = RecipeStepStatus{
-		Status:        "NotShown",
-		StatusMessage: "The instruction message was not shown yet.",
+		Status:        "NotCompleted",
+		StatusMessage: "",
 	}
 
 	return nil
