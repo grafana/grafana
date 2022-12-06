@@ -99,7 +99,8 @@ func TestCachePrefix(t *testing.T) {
 	prefixCache := &prefixCacheStorage{cache: cache, prefix: "test/"}
 
 	// Set a value (with a prefix)
-	prefixCache.Set(context.Background(), "foo", "bar", time.Hour)
+	err := prefixCache.Set(context.Background(), "foo", "bar", time.Hour)
+	require.NoError(t, err)
 	// Get a value (with a prefix)
 	v, err := prefixCache.Get(context.Background(), "foo")
 	require.NoError(t, err)
