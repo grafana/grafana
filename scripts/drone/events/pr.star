@@ -64,7 +64,7 @@ trigger = {
 }
 
 
-def pr_pipelines(edition):
+def pr_pipelines():
     return [
         verify_drone(
             get_pr_trigger(
@@ -77,6 +77,7 @@ def pr_pipelines(edition):
                 exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']
             ),
             ver_mode,
+            committish='${DRONE_COMMIT}',
         ),
         lint_frontend_pipeline(
             get_pr_trigger(
@@ -98,6 +99,7 @@ def pr_pipelines(edition):
                 ]
             ),
             ver_mode,
+            committish='${DRONE_COMMIT}',
         ),
         lint_backend_pipeline(
             get_pr_trigger(
@@ -113,7 +115,7 @@ def pr_pipelines(edition):
             ),
             ver_mode,
         ),
-        build_e2e(trigger, ver_mode, edition),
+        build_e2e(trigger, ver_mode),
         integration_tests(
             get_pr_trigger(
                 include_paths=[
@@ -126,10 +128,9 @@ def pr_pipelines(edition):
                     'public/app/plugins/**/plugin.json',
                 ]
             ),
-            ver_mode,
-            edition,
+            prefix=ver_mode,
         ),
-        docs_pipelines(edition, ver_mode, trigger_docs_pr()),
+        docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
     ]
 

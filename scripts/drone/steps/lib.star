@@ -17,7 +17,6 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 go_image = 'golang:1.19.3'
 
-disable_tests = False
 trigger_oss = {
     'repo': [
         'grafana/grafana',
@@ -37,17 +36,14 @@ def slack_step(channel, template, secret):
     }
 
 
-def yarn_install_step(edition="oss"):
-    deps = []
-    if edition == 'enterprise':
-        deps = ['init-enterprise']
+def yarn_install_step():
     return {
         'name': 'yarn-install',
         'image': build_image,
         'commands': [
             'yarn install --immutable',
         ],
-        'depends_on': deps,
+        'depends_on': [],
     }
 
 
@@ -65,15 +61,7 @@ def wire_install_step():
 
 
 def identify_runner_step(platform='linux'):
-    if platform == 'windows':
-        return {
-            'name': 'identify-runner',
-            'image': windows_image,
-            'commands': [
-                'echo $env:DRONE_RUNNER_NAME',
-            ],
-        }
-    else:
+    if platform == 'linux':
         return {
             'name': 'identify-runner',
             'image': alpine_image,
@@ -81,15 +69,17 @@ def identify_runner_step(platform='linux'):
                 'echo $DRONE_RUNNER_NAME',
             ],
         }
-
-
-def clone_enterprise_step(ver_mode):
-    if ver_mode == 'release':
-        committish = '${DRONE_TAG}'
-    elif ver_mode == 'release-branch':
-        committish = '${DRONE_BRANCH}'
     else:
-        committish = '${DRONE_COMMIT}'
+        return {
+            'name': 'identify-runner',
+            'image': windows_image,
+            'commands': [
+                'echo $env:DRONE_RUNNER_NAME',
+            ],
+        }
+
+
+def clone_enterprise_step(committish='${DRONE_COMMIT}'):
     return {
         'name': 'clone-enterprise',
         'image': build_image,
@@ -180,10 +170,7 @@ def lint_drone_step():
     }
 
 
-def enterprise_downstream_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2'):
-        return None
-
+def enterprise_downstream_step(ver_mode):
     repo = 'grafana/grafana-enterprise@'
     if ver_mode == 'pr':
         repo += '${DRONE_SOURCE_BRANCH}'
@@ -213,9 +200,10 @@ def enterprise_downstream_step(edition, ver_mode):
     return step
 
 
-def lint_backend_step(edition):
+def lint_backend_step():
     return {
         'name': 'lint-backend',
+        # TODO: build_image or go_image?
         'image': go_image,
         'environment': {
             # We need CGO because of go-sqlite3
@@ -246,10 +234,7 @@ def benchmark_ldap_step():
     }
 
 
-def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2'):
-        return None
-
+def build_storybook_step(ver_mode):
     return {
         'name': 'build-storybook',
         'image': build_image,
@@ -269,10 +254,7 @@ def build_storybook_step(edition, ver_mode):
     }
 
 
-def store_storybook_step(edition, ver_mode, trigger=None):
-    if edition in ('enterprise', 'enterprise2'):
-        return None
-
+def store_storybook_step(ver_mode, trigger=None):
     commands = []
     if ver_mode == 'release':
         commands.extend(
@@ -318,9 +300,9 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     return step
 
 
-def e2e_tests_artifacts(edition):
+def e2e_tests_artifacts():
     return {
-        'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
+        'name': 'e2e-tests-artifacts-upload',
         'image': 'google/cloud-sdk:406.0.0',
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
@@ -501,7 +483,7 @@ def build_plugins_step(edition, ver_mode):
     }
 
 
-def test_backend_step(edition):
+def test_backend_step():
     return {
         'name': 'test-backend',
         'image': build_image,
@@ -514,7 +496,7 @@ def test_backend_step(edition):
     }
 
 
-def test_backend_integration_step(edition):
+def test_backend_integration_step():
     return {
         'name': 'test-backend-integration',
         'image': build_image,
@@ -579,7 +561,7 @@ def lint_frontend_step():
     }
 
 
-def test_a11y_frontend_step(ver_mode, edition, port=3001):
+def test_a11y_frontend_step(ver_mode, port=3001):
     commands = [
         'yarn wait-on http://$HOST:$PORT',
     ]
@@ -599,14 +581,15 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
         )
 
     return {
-        'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
+        'name': 'test-a11y-frontend',
+        # TODO which image should be used?
         'image': 'grafana/docker-puppeteer:1.1.0',
         'depends_on': [
-            'grafana-server' + enterprise2_suffix(edition),
+            'grafana-server',
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
-            'HOST': 'grafana-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server',
             'PORT': port,
         },
         'failure': failure,
@@ -614,15 +597,12 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     }
 
 
-def frontend_metrics_step(edition, trigger=None):
-    if edition in ('enterprise', 'enterprise2'):
-        return None
-
+def frontend_metrics_step(trigger=None):
     step = {
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
-            'test-a11y-frontend' + enterprise2_suffix(edition),
+            'test-a11y-frontend',
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
@@ -699,18 +679,12 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
 
 
 def grafana_server_step(edition, port=3001):
-    package_file_pfx = ''
-    if edition == 'enterprise2':
-        package_file_pfx = 'grafana' + enterprise2_suffix(edition)
-    elif edition == 'enterprise':
-        package_file_pfx = 'grafana-' + edition
-
     environment = {'PORT': port, 'ARCH': 'linux-amd64'}
-    if package_file_pfx:
-        environment['RUNDIR'] = 'scripts/grafana-server/tmp-{}'.format(package_file_pfx)
+    if edition == 'enterprise':
+        environment['RUNDIR'] = 'scripts/grafana-server/tmp-grafana-enterprise'
 
     return {
-        'name': 'grafana-server' + enterprise2_suffix(edition),
+        'name': 'grafana-server',
         'image': build_image,
         'detach': True,
         'depends_on': [
@@ -726,18 +700,18 @@ def grafana_server_step(edition, port=3001):
     }
 
 
-def e2e_tests_step(suite, edition, port=3001, tries=None):
+def e2e_tests_step(suite, port=3001, tries=None):
     cmd = './bin/build e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
-        'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
+        'name': 'end-to-end-tests-{}'.format(suite),
         'image': 'cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97',
         'depends_on': [
             'grafana-server',
         ],
         'environment': {
-            'HOST': 'grafana-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server',
         },
         'commands': [
             'apt-get install -y netcat',
@@ -746,9 +720,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
     }
 
 
-def cloud_plugins_e2e_tests_step(
-    suite, edition, cloud, port=3001, video="false", trigger=None
-):
+def cloud_plugins_e2e_tests_step(suite, cloud, port=3001, video="false", trigger=None):
     environment = {}
     when = {}
     if trigger:
@@ -756,7 +728,7 @@ def cloud_plugins_e2e_tests_step(
     if cloud == 'azure':
         environment = {
             'CYPRESS_CI': 'true',
-            'HOST': 'grafana-server' + enterprise2_suffix(edition),
+            'HOST': 'grafana-server',
             'GITHUB_TOKEN': from_secret('github_token_pr'),
             'AZURE_SP_APP_ID': from_secret('azure_sp_app_id'),
             'AZURE_SP_PASSWORD': from_secret('azure_sp_app_pw'),
@@ -773,8 +745,7 @@ def cloud_plugins_e2e_tests_step(
         )
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
-        'name': 'end-to-end-tests-{}-{}'.format(suite, cloud)
-        + enterprise2_suffix(edition),
+        'name': 'end-to-end-tests-{}-{}'.format(suite, cloud),
         'image': 'us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest',
         'depends_on': [
             'grafana-server',
@@ -813,9 +784,7 @@ def copy_packages_for_docker_step(edition=None):
     }
 
 
-def build_docker_images_step(
-    edition, ver_mode, archs=None, ubuntu=False, publish=False
-):
+def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
     cmd = './bin/build build-docker --edition {}'.format(edition)
     if publish:
         cmd += ' --shouldSave'
@@ -917,7 +886,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     return step
 
 
-def postgres_integration_tests_step(edition, ver_mode):
+def postgres_integration_tests_step():
     cmds = [
         'apt-get update',
         'apt-get install -yq postgresql-client',
@@ -941,7 +910,7 @@ def postgres_integration_tests_step(edition, ver_mode):
     }
 
 
-def mysql_integration_tests_step(edition, ver_mode):
+def mysql_integration_tests_step():
     cmds = [
         'apt-get update',
         'apt-get install -yq default-mysql-client',
@@ -993,10 +962,7 @@ def memcached_integration_tests_step():
     }
 
 
-def release_canary_npm_packages_step(edition, trigger=None):
-    if edition in ('enterprise', 'enterprise2'):
-        return None
-
+def release_canary_npm_packages_step(trigger=None):
     step = {
         'name': 'release-canary-npm-packages',
         'image': build_image,
@@ -1020,23 +986,10 @@ def enterprise2_suffix(edition):
 
 
 def upload_packages_step(edition, ver_mode, trigger=None):
-    if ver_mode == 'main' and edition in ('enterprise', 'enterprise2'):
-        return None
-
-    deps = []
-    if edition in 'enterprise2' or not end_to_end_tests_deps():
-        deps.extend(
-            [
-                'package' + enterprise2_suffix(edition),
-            ]
-        )
-    else:
-        deps.extend(end_to_end_tests_deps())
-
     step = {
         'name': 'upload-packages' + enterprise2_suffix(edition),
         'image': publish_image,
-        'depends_on': deps,
+        'depends_on': end_to_end_tests_deps(),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
@@ -1252,14 +1205,11 @@ def get_windows_steps(edition, ver_mode):
     return steps
 
 
-def verify_gen_cue_step(edition):
-    deps = []
-    if edition in ('enterprise', 'enterprise2'):
-        deps.extend(['init-enterprise'])
+def verify_gen_cue_step():
     return {
         'name': 'verify-gen-cue',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': [],
         'commands': [
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
@@ -1268,14 +1218,11 @@ def verify_gen_cue_step(edition):
     }
 
 
-def verify_gen_jsonnet_step(edition):
-    deps = []
-    if edition in ('enterprise', 'enterprise2'):
-        deps.extend(['init-enterprise'])
+def verify_gen_jsonnet_step():
     return {
         'name': 'verify-gen-jsonnet',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': [],
         'commands': [
             '# It is required that generated jsonnet is committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
@@ -1336,8 +1283,6 @@ def artifacts_page_step():
 
 
 def end_to_end_tests_deps():
-    if disable_tests:
-        return []
     return [
         'end-to-end-tests-dashboards-suite',
         'end-to-end-tests-panels-suite',

@@ -1,6 +1,5 @@
 load(
     'scripts/drone/steps/lib.star',
-    'disable_tests',
     'clone_enterprise_step',
     'download_grabpl_step',
     'yarn_install_step',
@@ -59,6 +58,7 @@ load(
     'notify_pipeline',
     'failure_template',
     'drone_change_template',
+    'set_deps',
 )
 
 load(
@@ -136,9 +136,14 @@ def release_npm_packages_step():
 
 
 def oss_pipelines(ver_mode=ver_mode, trigger=release_trigger):
+    if ver_mode == 'release':
+        committish = '${DRONE_TAG}'
+    elif ver_mode == 'release-branch':
+        committish = '${DRONE_BRANCH}'
+    else:
+        committish = '${DRONE_COMMIT}'
     environment = {'EDITION': 'oss'}
-    edition = 'oss'
-    services = integration_test_services(edition=edition)
+    services = integration_test_services(edition='oss')
     volumes = integration_test_services_volumes()
     package_steps = []
     publish_steps = []
@@ -147,352 +152,298 @@ def oss_pipelines(ver_mode=ver_mode, trigger=release_trigger):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
-        verify_gen_cue_step(edition),
+        verify_gen_cue_step(),
         wire_install_step(),
         yarn_install_step(),
         compile_build_cmd(),
     ]
 
     build_steps = [
-        build_backend_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, ver_mode=ver_mode),
+        build_backend_step(edition='oss', ver_mode=ver_mode),
+        build_frontend_step(edition='oss', ver_mode=ver_mode),
+        build_frontend_package_step(edition='oss', ver_mode=ver_mode),
+        build_plugins_step(edition='oss', ver_mode=ver_mode),
     ]
 
     integration_test_steps = [
-        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
-        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
     ]
 
     # Insert remaining steps
     build_steps.extend(
         [
-            package_step(edition=edition, ver_mode=ver_mode),
+            package_step(edition='oss', ver_mode=ver_mode),
             copy_packages_for_docker_step(),
-            build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=True),
-            build_docker_images_step(
-                edition=edition, ver_mode=ver_mode, ubuntu=True, publish=True
-            ),
-            grafana_server_step(edition=edition),
+            build_docker_images_step(edition='oss', ver_mode=ver_mode, publish=True),
+            build_docker_images_step(edition='oss', ver_mode=ver_mode, publish=True, ubuntu=True),
+            grafana_server_step(edition='oss'),
+            e2e_tests_step('dashboards-suite', tries=3),
+            e2e_tests_step('smoke-tests-suite', tries=3),
+            e2e_tests_step('panels-suite', tries=3),
+            e2e_tests_step('various-suite', tries=3),
+            e2e_tests_artifacts(),
+            build_storybook_step(ver_mode=ver_mode),
         ]
     )
 
-    if not disable_tests:
-        build_steps.extend(
+    if should_upload:
+        publish_steps.extend(
             [
-                e2e_tests_step('dashboards-suite', edition=edition, tries=3),
-                e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
-                e2e_tests_step('panels-suite', edition=edition, tries=3),
-                e2e_tests_step('various-suite', edition=edition, tries=3),
-                e2e_tests_artifacts(edition=edition),
+                upload_cdn_step(edition='oss', ver_mode=ver_mode, trigger=trigger_oss),
+                upload_packages_step(edition='oss', ver_mode=ver_mode, trigger=trigger_oss),
             ]
         )
 
-    build_storybook = build_storybook_step(edition=edition, ver_mode=ver_mode)
-    if build_storybook:
-        build_steps.append(build_storybook)
-
-    if should_upload:
-        publish_steps.append(
-            upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)
-        )
-        publish_steps.append(
-            upload_packages_step(
-                edition=edition, ver_mode=ver_mode, trigger=trigger_oss
-            )
-        )
     if should_publish:
-        publish_step = store_storybook_step(edition=edition, ver_mode=ver_mode)
+        publish_steps.append(store_storybook_step(ver_mode=ver_mode))
         store_npm_step = store_npm_packages_step()
-        if publish_step:
-            publish_steps.append(publish_step)
         if store_npm_step:
             publish_steps.append(store_npm_step)
-    windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
+
+    windows_package_steps = get_windows_steps(edition='oss', ver_mode=ver_mode)
 
     windows_pipeline = pipeline(
         name='{}-oss-windows'.format(ver_mode),
-        edition=edition,
+        edition='oss',
         trigger=trigger,
         steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows',
         depends_on=[
-            'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
+            # 'oss-build-e2e-publish-{}'.format(ver_mode),
+            '{}-oss-build-e2e-publish'.format(ver_mode),
+            '{}-oss-test-frontend'.format(ver_mode),
+            '{}-oss-test-backend'.format(ver_mode),
+            '{}-oss-integration-tests'.format(ver_mode),
         ],
         environment=environment,
     )
+
     pipelines = [
         pipeline(
-            name='{}-oss-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-            edition=edition,
+            name='{}-oss-build-e2e-publish'.format(ver_mode),
+            edition='oss',
             trigger=trigger,
             services=[],
             steps=init_steps + build_steps + package_steps + publish_steps,
             environment=environment,
             volumes=volumes,
         ),
+        test_frontend(trigger, ver_mode, committish=committish),
+        test_backend(trigger, ver_mode, committish=committish),
+        pipeline(
+            name='{}-oss-integration-tests'.format(ver_mode),
+            edition='oss',
+            trigger=trigger,
+            services=services,
+            steps=[
+                download_grabpl_step(),
+                identify_runner_step(),
+                verify_gen_cue_step(),
+                verify_gen_jsonnet_step(),
+                wire_install_step(),
+            ]
+            + integration_test_steps,
+            environment=environment,
+            volumes=volumes,
+        ),
+        windows_pipeline,
     ]
-    if not disable_tests:
-        pipelines.extend(
-            [
-                test_frontend(trigger, ver_mode),
-                test_backend(trigger, ver_mode),
-                pipeline(
-                    name='{}-oss-integration-tests'.format(ver_mode),
-                    edition=edition,
-                    trigger=trigger,
-                    services=services,
-                    steps=[
-                        download_grabpl_step(),
-                        identify_runner_step(),
-                        verify_gen_cue_step(edition),
-                        verify_gen_jsonnet_step(edition),
-                        wire_install_step(),
-                    ]
-                    + integration_test_steps,
-                    environment=environment,
-                    volumes=volumes,
-                ),
-            ]
-        )
-        deps = {
-            'depends_on': [
-                '{}-oss-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-                '{}-oss-test-frontend'.format(ver_mode),
-                '{}-oss-test-backend'.format(ver_mode),
-                '{}-oss-integration-tests'.format(ver_mode),
-            ]
-        }
-        windows_pipeline.update(deps)
 
-    pipelines.extend([windows_pipeline])
     return pipelines
 
 
 def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
+    if ver_mode == 'release':
+        committish = '${DRONE_TAG}'
+    elif ver_mode == 'release-branch':
+        committish = '${DRONE_BRANCH}'
+    else:
+        committish = '${DRONE_COMMIT}'
     environment = {'EDITION': 'enterprise'}
-    edition = 'enterprise'
-    services = integration_test_services(edition=edition)
+    services = integration_test_services(edition='enterprise')
     volumes = integration_test_services_volumes()
     package_steps = []
     publish_steps = []
     should_publish = ver_mode == 'release'
     should_upload = should_publish or ver_mode in ('release-branch',)
-    include_enterprise = edition == 'enterprise'
-    edition2 = 'enterprise2'
     init_steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        clone_enterprise_step(ver_mode),
+        clone_enterprise_step(committish=committish),
         init_enterprise_step(ver_mode),
-        compile_build_cmd(edition),
+        compile_build_cmd('enterprise'),
     ]
 
     build_steps = [
-        build_backend_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, ver_mode=ver_mode),
+        build_backend_step(edition='enterprise', ver_mode=ver_mode),
+        build_frontend_step(edition='enterprise', ver_mode=ver_mode),
+        build_frontend_package_step(edition='enterprise', ver_mode=ver_mode),
+        build_plugins_step(edition='enterprise', ver_mode=ver_mode),
+        build_backend_step(
+            edition='enterprise2', ver_mode=ver_mode, variants=['linux-amd64']
+        ),
+        package_step(
+            edition='enterprise',
+            ver_mode=ver_mode,
+            include_enterprise2=True,
+        ),
+        copy_packages_for_docker_step(),
+        build_docker_images_step(edition='enterprise', ver_mode=ver_mode, publish=True),
+        build_docker_images_step(edition='enterprise', ver_mode=ver_mode, publish=True, ubuntu=True),
+        grafana_server_step(edition='enterprise'),
+        e2e_tests_step('dashboards-suite', tries=3),
+        e2e_tests_step('smoke-tests-suite', tries=3),
+        e2e_tests_step('panels-suite', tries=3),
+        e2e_tests_step('various-suite', tries=3),
+        e2e_tests_artifacts(),
     ]
 
     integration_test_steps = [
-        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
-        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
     ]
 
-    if include_enterprise:
-        build_steps.extend(
-            [
-                build_backend_step(
-                    edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']
-                ),
-            ]
-        )
-
-    # Insert remaining steps
-    build_steps.extend(
-        [
-            package_step(
-                edition=edition,
-                ver_mode=ver_mode,
-                include_enterprise2=include_enterprise,
-            ),
-            copy_packages_for_docker_step(),
-            build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=True),
-            build_docker_images_step(
-                edition=edition, ver_mode=ver_mode, ubuntu=True, publish=True
-            ),
-            grafana_server_step(edition=edition),
-        ]
-    )
-
-    if not disable_tests:
-        build_steps.extend(
-            [
-                e2e_tests_step('dashboards-suite', edition=edition, tries=3),
-                e2e_tests_step('smoke-tests-suite', edition=edition, tries=3),
-                e2e_tests_step('panels-suite', edition=edition, tries=3),
-                e2e_tests_step('various-suite', edition=edition, tries=3),
-                e2e_tests_artifacts(edition=edition),
-            ]
-        )
-
-    build_storybook = build_storybook_step(edition=edition, ver_mode=ver_mode)
-    if build_storybook:
-        build_steps.append(build_storybook)
-
     if should_upload:
+        upload_packages_enterprise = upload_packages_step(edition='enterprise', ver_mode=ver_mode, trigger=trigger_oss)
+        upload_packages_enterprise['depends_on'] = ['package']
+
+        upload_packages_enterprise2 = upload_packages_step(edition='enterprise2', ver_mode=ver_mode)
+        upload_packages_enterprise2['depends_on'] = ['package-enterprise2']
+
         publish_steps.extend(
             [
-                upload_cdn_step(
-                    edition=edition, ver_mode=ver_mode, trigger=trigger_oss
-                ),
-                upload_packages_step(
-                    edition=edition, ver_mode=ver_mode, trigger=trigger_oss
-                ),
+                upload_cdn_step(edition='enterprise', ver_mode=ver_mode, trigger=trigger_oss),
+                upload_packages_enterprise,
                 package_step(
-                    edition=edition2,
+                    edition='enterprise2',
                     ver_mode=ver_mode,
-                    include_enterprise2=include_enterprise,
+                    include_enterprise2=True,
                     variants=['linux-amd64'],
                 ),
-                upload_cdn_step(edition=edition2, ver_mode=ver_mode),
+                upload_cdn_step(edition='enterprise2', ver_mode=ver_mode),
+                upload_packages_enterprise2,
             ]
         )
-    if should_publish:
-        publish_step = store_storybook_step(edition=edition, ver_mode=ver_mode)
-        if publish_step:
-            publish_steps.append(publish_step)
-    windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
-    if should_upload:
-        step = upload_packages_step(edition=edition2, ver_mode=ver_mode)
-        if step:
-            publish_steps.append(step)
 
-    deps_on_clone_enterprise_step = {
-        'depends_on': [
-            'init-enterprise',
-        ]
-    }
+    init_steps.extend(
+        set_deps(
+            [
+                wire_install_step(),
+                yarn_install_step(),
+                verify_gen_cue_step(),
+                verify_gen_jsonnet_step(),
+            ],
+            [
+                'init-enterprise',
+            ],
+        )
+    )
 
-    for step in [
-        wire_install_step(),
-        yarn_install_step(edition),
-        verify_gen_cue_step(edition),
-        verify_gen_jsonnet_step(edition),
-    ]:
-        step.update(deps_on_clone_enterprise_step)
-        init_steps.extend([step])
+    windows_package_steps = get_windows_steps(edition='enterprise', ver_mode=ver_mode)
 
     windows_pipeline = pipeline(
         name='{}-enterprise-windows'.format(ver_mode),
-        edition=edition,
+        edition='enterprise',
         trigger=trigger,
         steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows',
         depends_on=[
-            'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
+            # 'enterprise-build-e2e-publish-{}'.format(ver_mode),
+            '{}-enterprise-build-e2e-publish'.format(ver_mode),
+            '{}-enterprise-test-frontend'.format(ver_mode),
+            '{}-enterprise-test-backend'.format(ver_mode),
+            '{}-enterprise-integration-tests'.format(ver_mode),
         ],
         environment=environment,
     )
+
     pipelines = [
         pipeline(
-            name='{}-enterprise-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-            edition=edition,
+            name='{}-enterprise-build-e2e-publish'.format(ver_mode),
+            edition='enterprise',
             trigger=trigger,
             services=[],
             steps=init_steps + build_steps + package_steps + publish_steps,
             environment=environment,
             volumes=volumes,
         ),
+        test_frontend(trigger, ver_mode, committish=committish, edition='enterprise'),
+        test_backend(trigger, ver_mode, committish=committish, edition='enterprise'),
+        pipeline(
+            name='{}-enterprise-integration-tests'.format(ver_mode),
+            edition='enterprise',
+            trigger=trigger,
+            services=services,
+            steps=[
+                download_grabpl_step(),
+                identify_runner_step(),
+                clone_enterprise_step(committish=committish),
+                init_enterprise_step(ver_mode),
+            ]
+            + set_deps(
+                [
+                    verify_gen_cue_step(),
+                    verify_gen_jsonnet_step(),
+                ],
+                [
+                    'init-enterprise',
+                ],
+            )
+            + [
+                wire_install_step(),
+            ]
+            + integration_test_steps
+            + [
+                redis_integration_tests_step(),
+                memcached_integration_tests_step(),
+            ],
+            environment=environment,
+            volumes=volumes,
+        ),
+        windows_pipeline,
     ]
-    if not disable_tests:
-        pipelines.extend(
-            [
-                test_frontend(trigger, ver_mode, edition),
-                test_backend(trigger, ver_mode, edition),
-                pipeline(
-                    name='{}-enterprise-integration-tests'.format(ver_mode),
-                    edition=edition,
-                    trigger=trigger,
-                    services=services,
-                    steps=[
-                        download_grabpl_step(),
-                        identify_runner_step(),
-                        clone_enterprise_step(ver_mode),
-                        init_enterprise_step(ver_mode),
-                        verify_gen_cue_step(edition),
-                        verify_gen_jsonnet_step(edition),
-                        wire_install_step(),
-                    ]
-                    + integration_test_steps
-                    + [
-                        redis_integration_tests_step(),
-                        memcached_integration_tests_step(),
-                    ],
-                    environment=environment,
-                    volumes=volumes,
-                ),
-            ]
-        )
-        deps = {
-            'depends_on': [
-                '{}-enterprise-build{}-publish'.format(ver_mode, get_e2e_suffix()),
-                '{}-enterprise-test-frontend'.format(ver_mode),
-                '{}-enterprise-test-backend'.format(ver_mode),
-                '{}-enterprise-integration-tests'.format(ver_mode),
-            ]
-        }
-        windows_pipeline.update(deps)
-
-    pipelines.extend([windows_pipeline])
 
     return pipelines
 
 
 def enterprise2_pipelines(prefix='', ver_mode=ver_mode, trigger=release_trigger):
+    if ver_mode == 'release':
+        committish = '${DRONE_TAG}'
+    elif ver_mode == 'release-branch':
+        committish = '${DRONE_BRANCH}'
+    else:
+        committish = '${DRONE_COMMIT}'
     environment = {
         'EDITION': 'enterprise2',
     }
-    edition = 'enterprise'
-    services = integration_test_services(edition=edition)
+    services = integration_test_services(edition='enterprise')
     volumes = integration_test_services_volumes()
     package_steps = []
     publish_steps = []
     should_publish = ver_mode == 'release'
     should_upload = should_publish or ver_mode in ('release-branch',)
-    include_enterprise = edition == 'enterprise'
-    edition2 = 'enterprise2'
     init_steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        clone_enterprise_step(ver_mode),
+        clone_enterprise_step(committish=committish),
         init_enterprise_step(ver_mode),
-        compile_build_cmd(edition),
+        compile_build_cmd('enterprise'),
     ]
 
     build_steps = [
-        build_frontend_step(edition=edition, ver_mode=ver_mode),
-        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_step(edition='enterprise', ver_mode=ver_mode),
+        build_frontend_package_step(edition='enterprise', ver_mode=ver_mode),
+        build_plugins_step(edition='enterprise', ver_mode=ver_mode),
+        build_backend_step(edition='enterprise2', ver_mode=ver_mode, variants=['linux-amd64']),
     ]
 
-    if include_enterprise:
-        build_steps.extend(
-            [
-                build_backend_step(
-                    edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']
-                ),
-            ]
-        )
-
-    fetch_images = fetch_images_step(edition2)
+    fetch_images = fetch_images_step('enterprise2')
     fetch_images.update(
         {'depends_on': ['build-docker-images', 'build-docker-images-ubuntu']}
     )
-    upload_cdn = upload_cdn_step(edition=edition2, ver_mode=ver_mode)
+    upload_cdn = upload_cdn_step(edition='enterprise2', ver_mode=ver_mode)
     upload_cdn['environment'].update(
         {'ENTERPRISE2_CDN_PATH': from_secret('enterprise2-cdn-path')}
     )
@@ -500,52 +451,47 @@ def enterprise2_pipelines(prefix='', ver_mode=ver_mode, trigger=release_trigger)
     build_steps.extend(
         [
             package_step(
-                edition=edition2,
+                edition='enterprise2',
                 ver_mode=ver_mode,
-                include_enterprise2=include_enterprise,
+                include_enterprise2=True,
                 variants=['linux-amd64'],
             ),
             upload_cdn,
-            copy_packages_for_docker_step(edition=edition2),
-            build_docker_images_step(edition=edition2, ver_mode=ver_mode, publish=True),
-            build_docker_images_step(
-                edition=edition2, ver_mode=ver_mode, ubuntu=True, publish=True
-            ),
+            copy_packages_for_docker_step(edition='enterprise2'),
+            build_docker_images_step(edition='enterprise2', ver_mode=ver_mode, publish=True),
+            build_docker_images_step(edition='enterprise2', ver_mode=ver_mode, publish=True, ubuntu=True),
             fetch_images,
             publish_images_step(
-                edition2,
+                'enterprise2',
                 'release',
-                mode=edition2,
+                mode='enterprise2',
                 docker_repo='${{DOCKER_ENTERPRISE2_REPO}}',
             ),
         ]
     )
 
     if should_upload:
-        step = upload_packages_step(edition=edition2, ver_mode=ver_mode)
-        if step:
-            publish_steps.append(step)
+        step = upload_packages_step(edition='enterprise2', ver_mode=ver_mode)
+        step['depends_on'] = ['package-enterprise2']
+        publish_steps.append(step)
 
-    deps_on_clone_enterprise_step = {
-        'depends_on': [
-            'init-enterprise',
-        ]
-    }
-
-    for step in [
-        wire_install_step(),
-        yarn_install_step(),
-        verify_gen_cue_step(edition),
-    ]:
-        step.update(deps_on_clone_enterprise_step)
-        init_steps.extend([step])
+    init_steps.extend(
+        set_deps(
+            [
+                wire_install_step(),
+                yarn_install_step(),
+                verify_gen_cue_step(),
+            ],
+            [
+                'init-enterprise',
+            ],
+        )
+    )
 
     pipelines = [
         pipeline(
-            name='{}{}-enterprise2-build{}-publish'.format(
-                prefix, ver_mode, get_e2e_suffix()
-            ),
-            edition=edition,
+            name='{}{}-enterprise2-build-e2e-publish'.format(prefix, ver_mode),
+            edition='enterprise',
             trigger=trigger,
             services=[],
             steps=init_steps + build_steps + package_steps + publish_steps,
@@ -681,9 +627,3 @@ def artifacts_page_pipeline():
             environment={'EDITION': 'all'},
         )
     ]
-
-
-def get_e2e_suffix():
-    if not disable_tests:
-        return '-e2e'
-    return ''

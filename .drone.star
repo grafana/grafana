@@ -28,10 +28,9 @@ load('scripts/drone/vault.star', 'secrets')
 
 
 def main(ctx):
-    edition = 'oss'
     return (
-        pr_pipelines(edition=edition)
-        + main_pipelines(edition=edition)
+        pr_pipelines()
+        + main_pipelines()
         + oss_pipelines()
         + enterprise_pipelines()
         + enterprise2_pipelines()
@@ -47,6 +46,6 @@ def main(ctx):
         + publish_packages_pipeline()
         + artifacts_page_pipeline()
         + version_branch_pipelines()
-        + cronjobs(edition=edition)
+        + cronjobs()
         + secrets()
     )

@@ -104,3 +104,11 @@ def notify_pipeline(
         },
         'depends_on': depends_on,
     }
+
+
+# TODO: this overrides any existing dependencies because we're following the existing logic
+# it should be renamed to add_deps and append to any existing dependencies
+def set_deps(steps, deps=[]):
+    for step in steps:
+        step['depends_on'] = deps
+    return steps

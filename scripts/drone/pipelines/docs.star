@@ -32,8 +32,8 @@ docs_paths = {
 }
 
 
-def docs_pipelines(edition, ver_mode, trigger):
-    environment = {'EDITION': edition}
+def docs_pipelines(ver_mode, trigger):
+    environment = {'EDITION': 'oss'}
     steps = [
         download_grabpl_step(),
         identify_runner_step(),
@@ -45,7 +45,7 @@ def docs_pipelines(edition, ver_mode, trigger):
 
     return pipeline(
         name='{}-docs'.format(ver_mode),
-        edition=edition,
+        edition='oss',
         trigger=trigger,
         services=[],
         steps=steps,

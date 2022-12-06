@@ -23,13 +23,18 @@ trigger = {
 }
 
 
-def enterprise_downstream_pipeline(edition, ver_mode):
-    environment = {'EDITION': edition}
-    steps = [enterprise_downstream_step(edition, ver_mode)]
-    deps = ['main-build-e2e-publish', 'main-integration-tests']
+def enterprise_downstream_pipeline():
+    environment = {'EDITION': 'oss'}
+    steps = [
+        enterprise_downstream_step(ver_mode='main'),
+    ]
+    deps = [
+        'main-build-e2e-publish',
+        'main-integration-tests',
+    ]
     return pipeline(
         name='main-trigger-downstream',
-        edition=edition,
+        edition='oss',
         trigger=trigger,
         services=[],
         steps=steps,

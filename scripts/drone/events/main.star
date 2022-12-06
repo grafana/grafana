@@ -71,7 +71,7 @@ trigger = {
 }
 
 
-def main_pipelines(edition):
+def main_pipelines():
     drone_change_trigger = {
         'event': [
             'push',
@@ -91,14 +91,14 @@ def main_pipelines(edition):
     }
 
     pipelines = [
-        docs_pipelines(edition, ver_mode, trigger_docs_main()),
-        test_frontend(trigger, ver_mode),
+        docs_pipelines(ver_mode, trigger_docs_main()),
+        test_frontend(trigger, ver_mode, committish='${DRONE_COMMIT}'),
         lint_frontend_pipeline(trigger, ver_mode),
-        test_backend(trigger, ver_mode),
+        test_backend(trigger, ver_mode, committish='${DRONE_COMMIT}'),
         lint_backend_pipeline(trigger, ver_mode),
-        build_e2e(trigger, ver_mode, edition),
-        integration_tests(trigger, ver_mode, edition),
-        windows(trigger, edition, ver_mode),
+        build_e2e(trigger, ver_mode),
+        integration_tests(trigger, prefix=ver_mode),
+        windows(trigger, edition='oss', ver_mode=ver_mode),
         notify_pipeline(
             name='notify-drone-changes',
             slack_channel='slack-webhooks-test',
@@ -106,7 +106,7 @@ def main_pipelines(edition):
             template=drone_change_template,
             secret='drone-changes-webhook',
         ),
-        enterprise_downstream_pipeline(edition, ver_mode),
+        enterprise_downstream_pipeline(),
         notify_pipeline(
             name='main-notify',
             slack_channel='grafana-ci-notifications',

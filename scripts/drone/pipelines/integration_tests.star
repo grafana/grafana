@@ -1,13 +1,13 @@
 load(
     'scripts/drone/steps/lib.star',
-    'identify_runner_step',
+    'compile_build_cmd',
     'download_grabpl_step',
+    'identify_runner_step',
     'verify_gen_cue_step',
     'verify_gen_jsonnet_step',
     'wire_install_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
-    'compile_build_cmd',
 )
 
 load(
@@ -23,29 +23,32 @@ load(
 )
 
 
-def integration_tests(trigger, ver_mode, edition):
-    environment = {'EDITION': edition}
-    services = integration_test_services(edition)
+def integration_tests(trigger, prefix):
+    services = integration_test_services(edition="oss")
     volumes = integration_test_services_volumes()
+
+    environment = {'EDITION': 'oss'}
+
     init_steps = [
         download_grabpl_step(),
         compile_build_cmd(),
         identify_runner_step(),
-        verify_gen_cue_step(edition="oss"),
-        verify_gen_jsonnet_step(edition="oss"),
+        verify_gen_cue_step(),
+        verify_gen_jsonnet_step(),
         wire_install_step(),
     ]
+
     test_steps = [
-        postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
-        mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
     ]
 
     return pipeline(
-        name='{}-integration-tests'.format(ver_mode),
-        edition="oss",
+        name='{}-integration-tests'.format(prefix),
+        edition='oss',
         trigger=trigger,
-        services=services,
-        steps=init_steps + test_steps,
         environment=environment,
+        services=services,
         volumes=volumes,
+        steps=init_steps + test_steps,
     )
