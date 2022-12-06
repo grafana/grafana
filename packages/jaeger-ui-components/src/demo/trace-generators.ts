@@ -119,8 +119,8 @@ export default chance.mixin({
     });
     spans = attachReferences(spans, maxDepth, spansPerLevel);
     if (spans.length > 1) {
-      // @ts-ignore
-      spans = setupParentSpan(spans, { startTime: timestamp, duration });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      spans = setupParentSpan(spans, { startTime: timestamp, duration } as TraceSpanData);
     }
 
     return {
