@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { ReactElement, useMemo } from 'react';
 
-import { HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
+import { HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import {
   isSetupDashboardStep,
