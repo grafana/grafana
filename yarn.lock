@@ -4544,7 +4544,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/toolkit@9.4.0-pre, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@9.4.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -20191,6 +20191,7 @@ __metadata:
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
+    "@grafana/toolkit": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.2.0
