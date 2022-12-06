@@ -46,8 +46,7 @@ type sqlEntityServer struct {
 func getReadSelect(r *entity.ReadEntityRequest) string {
 	fields := []string{
 		"tenant_id", "kind", "uid", // The PK
-		"version", "slug", "folder",
-		"size", "etag", "errors", // errors are always returned
+		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
 		"origin", "origin_key", "origin_ts"}
@@ -56,23 +55,21 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 		fields = append(fields, `body`)
 	}
 	if r.WithSummary {
-		fields = append(fields, `name`, `description`, `labels`, `fields`)
+		fields = append(fields, "name", "slug", "folder", "description", "labels", "fields")
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
 
-func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
+func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	raw := &entity.Entity{
 		GRN:    &entity.GRN{},
 		Origin: &entity.EntityOriginInfo{},
 	}
-	slug := ""
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
 		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID,
-		&raw.Version, &slug, &raw.Folder,
-		&raw.Size, &raw.ETag, &summaryjson.errors,
+		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
 		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
@@ -81,7 +78,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		args = append(args, &raw.Body)
 	}
 	if r.WithSummary {
-		args = append(args, &summaryjson.name, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
+		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.folder, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
 	}
 
 	err := rows.Scan(args...)
@@ -91,10 +88,6 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 
 	if raw.Origin.Source == "" {
 		raw.Origin = nil
-	}
-
-	rsp := &entity.ReadEntityResponse{
-		Entity: raw,
 	}
 
 	if r.WithSummary || summaryjson.errors != nil {
@@ -107,9 +100,9 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		if err != nil {
 			return nil, err
 		}
-		rsp.SummaryJson = js
+		raw.SummaryJson = js
 	}
-	return rsp, nil
+	return raw, nil
 }
 
 func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*entity.GRN, error) {
@@ -138,7 +131,7 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 	return grn, nil
 }
 
-func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
+func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	if r.Version != "" {
 		return s.readFromHistory(ctx, r)
 	}
@@ -157,13 +150,13 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
-		return &entity.ReadEntityResponse{}, nil
+		return &entity.Entity{}, nil
 	}
 
 	return s.rowToReadEntityResponse(ctx, rows, r)
 }
 
-func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
+func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -185,14 +178,11 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 
 	// Version or key not found
 	if !rows.Next() {
-		return &entity.ReadEntityResponse{}, nil
+		return &entity.Entity{}, nil
 	}
 
 	raw := &entity.Entity{
 		GRN: r.GRN,
-	}
-	rsp := &entity.ReadEntityResponse{
-		Entity: raw,
 	}
 	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &raw.UpdatedAt, &raw.UpdatedBy)
 	if err != nil {
@@ -210,7 +200,7 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 			val, out, err := builder(ctx, r.GRN.UID, raw.Body)
 			if err == nil {
 				raw.Body = out // cleaned up
-				rsp.SummaryJson, err = json.Marshal(val)
+				raw.SummaryJson, err = json.Marshal(val)
 				if err != nil {
 					return nil, err
 				}
@@ -220,10 +210,10 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 
 	// Clear the body if not requested
 	if !r.WithBody {
-		rsp.Entity.Body = nil
+		raw.Body = nil
 	}
 
-	return rsp, err
+	return raw, err
 }
 
 func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
@@ -306,12 +296,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		return nil, err
 	}
 
-	t := summary.name
-	if t == "" {
-		t = r.GRN.UID
-	}
-
-	slug := slugify.Slugify(t)
 	etag := createContentsHash(body)
 	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
@@ -479,8 +463,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			" ?, ?, ?)",
 			oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
 			versionInfo.Size, body, etag, versionInfo.Version,
-			updatedAt, createdBy, createdAt, createdBy, // created + updated are the same
-			summary.model.Name, summary.model.Description, slug,
+			updatedAt, createdBy, createdAt, createdBy,
+			summary.model.Name, summary.model.Description, summary.model.Slug,
 			summary.labels, summary.fields, summary.errors,
 			origin.Source, origin.Key, origin.Time,
 		)
@@ -550,6 +534,16 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Update a summary based on the name (unless the root suggested one)
+	if summary.Slug == "" {
+		t := summary.Name
+		if t == "" {
+			t = r.GRN.UID
+		}
+		summary.Slug = slugify.Slugify(t)
+	}
+
 	return summaryjson, body, nil
 }
 

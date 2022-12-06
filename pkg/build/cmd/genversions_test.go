@@ -16,6 +16,7 @@ const (
 	DroneTag              = "DRONE_TAG"
 	DroneSemverPrerelease = "DRONE_SEMVER_PRERELEASE"
 	DroneBuildNumber      = "DRONE_BUILD_NUMBER"
+	Edition               = "EDITION"
 )
 
 const (
@@ -33,7 +34,8 @@ func TestGetMetadata(t *testing.T) {
 		{map[string]string{DroneBuildEvent: config.Push, DroneTargetBranch: versionedBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, config.ReleaseMode{Mode: config.ReleaseBranchMode}},
 		{map[string]string{DroneBuildEvent: config.Push, DroneTargetBranch: config.MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, config.ReleaseMode{Mode: config.MainMode}},
 		{map[string]string{DroneBuildEvent: config.Custom, DroneTargetBranch: versionedBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, config.ReleaseMode{Mode: config.ReleaseBranchMode}},
-		{map[string]string{DroneBuildEvent: config.Custom, DroneTargetBranch: config.MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, config.ReleaseMode{Mode: config.Custom}},
+		{map[string]string{DroneBuildEvent: config.Custom, DroneTargetBranch: config.MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, config.ReleaseMode{Mode: config.DownstreamMode}},
+		{map[string]string{DroneBuildEvent: config.Custom, DroneTargetBranch: config.MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345", Edition: "enterprise2"}, hashedGrafanaVersion, config.ReleaseMode{Mode: config.Enterprise2Mode}},
 		{map[string]string{DroneBuildEvent: config.Tag, DroneTargetBranch: "", DroneTag: "v9.2.0", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, "9.2.0", config.ReleaseMode{Mode: config.TagMode, IsBeta: false, IsTest: false}},
 		{map[string]string{DroneBuildEvent: config.Tag, DroneTargetBranch: "", DroneTag: "v9.2.0-beta", DroneSemverPrerelease: "beta", DroneBuildNumber: "12345"}, "9.2.0-beta", config.ReleaseMode{Mode: config.TagMode, IsBeta: true, IsTest: false}},
 		{map[string]string{DroneBuildEvent: config.Tag, DroneTargetBranch: "", DroneTag: "v9.2.0-test", DroneSemverPrerelease: "test", DroneBuildNumber: "12345"}, "9.2.0-test", config.ReleaseMode{Mode: config.TagMode, IsBeta: false, IsTest: true}},

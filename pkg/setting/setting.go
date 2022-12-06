@@ -456,8 +456,12 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// Grafana.com URL
+	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
+	// Grafana.com API URL. Can be set separately to GrafanaComURL
+	// in case API is not publicly accessible.
+	// Defaults to GrafanaComURL setting + "/api" if unset.
+	GrafanaComAPIURL string
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
@@ -1104,6 +1108,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 	cfg.GrafanaComURL = GrafanaComUrl
 
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", GrafanaComUrl+"/api")
+
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 	ImageUploadProvider = cfg.ImageUploadProvider
@@ -1114,10 +1120,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cacheServer := iniFile.Section("remote_cache")
 	dbName := valueAsString(cacheServer, "type", "database")
 	connStr := valueAsString(cacheServer, "connstr", "")
+	prefix := valueAsString(cacheServer, "prefix", "")
 
 	cfg.RemoteCacheOptions = &RemoteCacheOptions{
 		Name:    dbName,
 		ConnStr: connStr,
+		Prefix:  prefix,
 	}
 
 	geomapSection := iniFile.Section("geomap")
@@ -1153,6 +1161,7 @@ func valueAsString(section *ini.Section, keyName string, defaultValue string) st
 type RemoteCacheOptions struct {
 	Name    string
 	ConnStr string
+	Prefix  string
 }
 
 func (cfg *Cfg) readLDAPConfig() {

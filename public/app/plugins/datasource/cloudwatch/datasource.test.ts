@@ -6,8 +6,8 @@ import { dateTime, Field } from '@grafana/data';
 import {
   fieldsVariable,
   logGroupNamesVariable,
-  setupMockedDataSource,
   regionVariable,
+  setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
 import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
@@ -165,6 +165,7 @@ describe('datasource', () => {
             region: '',
             queryMode: 'Logs',
             logGroupNames: ['test'],
+            expression: 'some query',
             refId: 'a',
           },
         ],
@@ -195,7 +196,7 @@ describe('datasource', () => {
       expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
-          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
+          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
         },
       ]);
     });
