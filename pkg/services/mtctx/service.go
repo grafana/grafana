@@ -18,7 +18,9 @@ type Service interface {
 var _ Service = (*serviceImpl)(nil)
 
 func ProvideService(router routing.RouteRegister) Service {
-	svc := &serviceImpl{}
+	svc := &serviceImpl{
+		cache: make(map[int64]*TenantInfo, 0),
+	}
 
 	// attach kubernetes client to service
 	config, err := rest.InClusterConfig()
@@ -32,9 +34,8 @@ func ProvideService(router routing.RouteRegister) Service {
 		}
 	}
 
-	// add middleware to push tenant info to request
 	// require admin
-	router.Get("/api/hack/hello", svc.InitializeTenantConfig, middleware.ReqOrgAdmin, routing.Wrap(svc.showTenantInfo))
+	router.Get("/api/hack/hello", middleware.ReqOrgAdmin, routing.Wrap(svc.showTenantInfo))
 
 	return svc
 }

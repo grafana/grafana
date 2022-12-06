@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -16,7 +18,7 @@ import (
 type serviceImpl struct {
 	clientset *kubernetes.Clientset
 	cache     map[int64]*TenantInfo
-	watchers  map[int64]watch.Interface
+	//watchers  map[int64]watch.Interface
 }
 
 // POC: shows stackID of tenant in current request
@@ -24,6 +26,9 @@ func (s *serviceImpl) showTenantInfo(c *models.ReqContext) response.Response {
 	t, err := TenantInfoFromContext(c.Req.Context())
 	if err != nil {
 		fmt.Println("Could not find tenant info", err)
+		return response.JSON(500, map[string]interface{}{
+			"nope": "nope",
+		})
 	}
 
 	return response.JSON(200, map[string]interface{}{
@@ -45,46 +50,64 @@ func (s *serviceImpl) GetStackConfigWatcher(ctx context.Context, stackID int64) 
 // MIDDLEWARE: Adds TenantInfo
 func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// TODO
-		// get user from context
-		// stackID is on context
-
-		var stackID int64 = 0000
-
-		if info, ok := s.cache[stackID]; ok {
-			//	r.WithContext(ContextWithTenantInfo(ctx, info))
+		// only run if on api
+		if !strings.HasPrefix(r.RequestURI, "/api") {
+			next.ServeHTTP(w, r)
 			return
 		}
 
-		// get the initial config map
-		config, err := s.clientset.CoreV1().ConfigMaps("hosted-grafana").Get(context.TODO(), stackName(stackID), metav1.GetOptions{})
+		fmt.Println("POTATO", r.RequestURI)
+		ctx := r.Context()
+
+		// Get stack ID
+		stackID, err := StackIDFromContext(ctx)
 		if err != nil {
-			fmt.Println("Error getting config map:", err)
+			fmt.Println("No stackID on context:", err)
+			fmt.Println("StackID on context:", stackID)
 		}
 
-		ti := buildTenantInfoFromConfig(stackID, config)
-		ctx = ContextWithTenantInfo(ctx, ti)
+		// Check cache for config by stackID
+		info, ok := s.cache[stackID]
 
-		// Get config watcher
-		w, err := s.GetStackConfigWatcher(context.TODO(), stackID)
-		if err != nil {
-			fmt.Println("Error getting watcher for stackID:", stackID)
+		// If no config, get one
+		if !ok {
+			var config *v1.ConfigMap
+
+			// get the initial config map
+			if s.clientset != nil {
+				config, err = s.clientset.CoreV1().ConfigMaps("hosted-grafana").Get(context.TODO(), stackName(stackID), metav1.GetOptions{})
+				if err != nil {
+					fmt.Println("Error getting config map:", err)
+				}
+			}
+
+			// build tenant info and add to context
+			info = buildTenantInfoFromConfig(stackID, config)
+			fmt.Println("POTATO: context set")
+			s.cache[stackID] = info
+
+			// Get config watcher
+			//w, err := s.GetStackConfigWatcher(context.TODO(), stackID)
+			//if err != nil {
+			//fmt.Println("Error getting watcher for stackID:", stackID)
+			//}
+
+			// TODO should we check to see if we already have a watcher?
+			// Also, we don't currently have a scenario where we remove a watcher, but we
+			// should think through this.
+			//if cachedWatcher, ok := s.watchers[stackID]; ok {
+			//  // this should never happen
+
+			//  cachedWatcher.Stop() // make sure we stop listening
+			//  fmt.Println("WARNING: we found a watcher for a tenant that was missing tenantInfo")
+			//}
+
+			//// queue watcher
+			//s.watchers[stackID] = w
 		}
 
-		// TODO should we check to see if we already have a watcher?
-		// Also, we don't currently have a scenario where we remove a watcher, but we
-		// should think through this.
-		if cachedWatcher, ok := s.watchers[stackID]; ok {
-			// this should never happen
-
-			cachedWatcher.Stop() // make sure we stop listening
-			fmt.Println("WARNING: we found a watcher for a tenant that was missing tenantInfo")
-		}
-
-		// queue watcher
-		s.watchers[stackID] = w
+		ctx = ContextWithTenantInfo(ctx, info)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
