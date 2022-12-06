@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
@@ -36,7 +36,7 @@ type scenarioContext struct {
 	handlerFunc          handlerFunc
 	defaultHandler       web.Handler
 	url                  string
-	userAuthTokenService *auth.FakeUserAuthTokenService
+	userAuthTokenService *authtest.FakeUserAuthTokenService
 	jwtAuthService       *models.FakeJWTService
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
@@ -46,7 +46,7 @@ type scenarioContext struct {
 	loginService         *loginservice.LoginServiceMock
 	apiKeyService        *apikeytest.Service
 	userService          *usertest.FakeUserService
-	oauthTokenService    *auth.FakeOAuthTokenService
+	oauthTokenService    *authtest.FakeOAuthTokenService
 	orgService           *orgtest.FakeOrgService
 
 	req *http.Request

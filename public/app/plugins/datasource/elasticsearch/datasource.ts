@@ -7,7 +7,6 @@ import {
   DataLink,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithQueryImportSupport,
@@ -24,8 +23,9 @@ import {
   TimeRange,
   toUtc,
   QueryFixAction,
+  CoreApp,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -68,7 +68,7 @@ const ELASTIC_META_FIELDS = [
 ];
 
 export class ElasticDatasource
-  extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions>
+  extends DataSourceWithBackend<ElasticsearchQuery, ElasticsearchOptions>
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
@@ -632,9 +632,14 @@ export class ElasticDatasource
     });
   }
 
-  query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+    const shouldRunTroughBackend =
+      request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
+    if (shouldRunTroughBackend) {
+      return super.query(request);
+    }
     let payload = '';
-    const targets = this.interpolateVariablesInQueries(cloneDeep(options.targets), options.scopedVars);
+    const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
@@ -667,7 +672,7 @@ export class ElasticDatasource
       } else {
         logLimits.push();
         if (target.alias) {
-          target.alias = this.interpolateLuceneQuery(target.alias, options.scopedVars);
+          target.alias = this.interpolateLuceneQuery(target.alias, request.scopedVars);
         }
 
         queryObj = this.queryBuilder.build(target, adhocFilters);
@@ -676,7 +681,7 @@ export class ElasticDatasource
       const esQuery = JSON.stringify(queryObj);
 
       const searchType = 'query_then_fetch';
-      const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+      const header = this.getQueryHeader(searchType, request.range.from, request.range.to);
       payload += header + '\n';
 
       payload += esQuery + '\n';
@@ -692,9 +697,9 @@ export class ElasticDatasource
     // it as an integer not as string with digits. This is because elastic will convert the string only if the time
     // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
     // and then sending string will error out.
-    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
-    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
-    payload = this.templateSrv.replace(payload, options.scopedVars);
+    payload = payload.replace(/"\$timeFrom"/g, request.range.from.valueOf().toString());
+    payload = payload.replace(/"\$timeTo"/g, request.range.to.valueOf().toString());
+    payload = this.templateSrv.replace(payload, request.scopedVars);
 
     const url = this.getMultiSearchUrl();
 

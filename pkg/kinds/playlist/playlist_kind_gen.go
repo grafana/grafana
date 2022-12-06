@@ -26,7 +26,7 @@ type Kind struct {
 	lin    thema.ConvergentLineage[*Playlist]
 	jcodec vmux.Codec
 	valmux vmux.ValueMux[*Playlist]
-	decl   kindsys.Decl[kindsys.CoreStructuredMeta]
+	decl   kindsys.Decl[kindsys.CoreStructuredProperties]
 }
 
 // type guard
@@ -34,7 +34,7 @@ var _ kindsys.Structured = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
-	decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredMeta](rootrel, rt.Context(), nil)
+	decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredProperties](rootrel, rt.Context(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
 
 	// Get the thema.Schema that the meta says is in the current version (which
 	// codegen ensures is always the latest)
-	cursch := thema.SchemaP(lin, k.decl.Meta.CurrentVersion)
+	cursch := thema.SchemaP(lin, k.decl.Properties.CurrentVersion)
 	tsch, err := thema.BindType[*Playlist](cursch, &Playlist{})
 	if err != nil {
 		// Should be unreachable, modulo bugs in the Thema->Go code generator
@@ -95,10 +95,20 @@ func (k *Kind) JSONValueMux(b []byte) (*Playlist, thema.TranslationLacunas, erro
 
 // TODO standard generated docs
 func (k *Kind) Maturity() kindsys.Maturity {
-	return k.decl.Meta.Maturity
+	return k.decl.Properties.Maturity
 }
 
-// TODO standard generated docs
-func (k *Kind) Meta() kindsys.CoreStructuredMeta {
-	return k.decl.Meta
+// Decl returns the [kindsys.Decl] containing both CUE and Go representations of the
+// playlist declaration in .cue files.
+func (k *Kind) Decl() *kindsys.Decl[kindsys.CoreStructuredProperties] {
+	d := k.decl
+	return &d
+}
+
+// Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.CoreStructuredProperties],
+// representing the static properties declared in the playlist kind.
+//
+// This method is identical to calling Decl().Props. It is provided to satisfy [kindsys.Interface].
+func (k *Kind) Props() kindsys.SomeKindProperties {
+	return k.decl.Properties
 }

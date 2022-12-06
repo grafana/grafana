@@ -62,7 +62,7 @@ func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRu
 
 type FakeHistorian struct{}
 
-func (f *FakeHistorian) RecordStates(ctx context.Context, rule *models.AlertRule, states []StateTransition) {
+func (f *FakeHistorian) RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []StateTransition) {
 }
 
 // NotAvailableImageService is a service that returns ErrScreenshotsUnavailable.

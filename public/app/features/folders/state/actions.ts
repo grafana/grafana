@@ -143,9 +143,9 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
   };
 }
 
-export function createNewFolder(folderName: string): ThunkResult<void> {
+export function createNewFolder(folderName: string, uid?: string): ThunkResult<void> {
   return async (dispatch) => {
-    const newFolder = await getBackendSrv().post('/api/folders', { title: folderName });
+    const newFolder = await getBackendSrv().post('/api/folders', { title: folderName, parentUid: uid });
     await contextSrv.fetchUserPermissions();
     dispatch(notifyApp(createSuccessNotification('Folder Created', 'OK')));
     locationService.push(locationUtil.stripBaseFromUrl(newFolder.url));

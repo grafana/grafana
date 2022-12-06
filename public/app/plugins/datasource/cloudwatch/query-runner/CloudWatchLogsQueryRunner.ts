@@ -1,20 +1,20 @@
-import { isEmpty, set } from 'lodash';
+import { set } from 'lodash';
 import {
-  Observable,
-  of,
-  mergeMap,
-  map,
-  from,
+  catchError,
   concatMap,
   finalize,
+  from,
+  lastValueFrom,
+  map,
+  mergeMap,
+  Observable,
+  of,
   repeat,
   scan,
   share,
   takeWhile,
   tap,
   zip,
-  catchError,
-  lastValueFrom,
 } from 'rxjs';
 
 import {
@@ -89,6 +89,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       queryString: target.expression || '',
       refId: target.refId,
       logGroupNames: target.logGroupNames || this.defaultLogGroups,
+      logGroups: target.logGroups || [], //todo handle defaults
       region: super.replaceVariableAndDisplayWarningIfMulti(
         this.getActualRegion(target.region),
         options.scopedVars,
@@ -97,14 +98,22 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       ),
     }));
 
-    const validLogQueries = queryParams.filter((item) => item.logGroupNames?.length);
-    if (logQueries.length > validLogQueries.length) {
+    const hasQueryWithMissingLogGroupSelection = queryParams.some((qp) => {
+      const missingLogGroupNames = qp.logGroupNames.length === 0;
+      const missingLogGroups = qp.logGroups.length === 0;
+      return missingLogGroupNames && missingLogGroups;
+    });
+
+    if (hasQueryWithMissingLogGroupSelection) {
       return of({ data: [], error: { message: 'Log group is required' } });
     }
 
-    // No valid targets, return the empty result to save a round trip.
-    if (isEmpty(validLogQueries)) {
-      return of({ data: [], state: LoadingState.Done });
+    const hasQueryWithMissingQueryString = queryParams.some((qp) => {
+      return qp.queryString.length === 0;
+    });
+
+    if (hasQueryWithMissingQueryString) {
+      return of({ data: [], error: { message: 'Query is required' } });
     }
 
     const startTime = new Date();

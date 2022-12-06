@@ -15,12 +15,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
-	"github.com/grafana/grafana/pkg/services/userauth"
+	"github.com/grafana/grafana/pkg/services/stats"
+	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -120,7 +121,7 @@ type HTTPServer struct {
 	navTreeService               navtree.Service
 	CacheService                 *localcache.CacheService
 	DataSourceCache              datasources.CacheService
-	AuthTokenService             models.UserTokenService
+	AuthTokenService             auth.UserTokenService
 	QuotaService                 quota.Service
 	RemoteCacheService           *remotecache.RemoteCache
 	ProvisioningService          provisioning.ProvisioningService
@@ -144,7 +145,7 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
-	httpObjectStore              httpobjectstore.HTTPObjectStore
+	httpEntityStore              httpentitystore.HTTPEntityStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
 	QueryLibraryHTTPService      querylibrary.HTTPService
 	QueryLibraryService          querylibrary.Service
@@ -206,8 +207,8 @@ type HTTPServer struct {
 	accesscontrolService   accesscontrol.Service
 	annotationsRepo        annotations.Repository
 	tagService             tag.Service
-	userAuthService        userauth.Service
 	oauthTokenService      oauthtoken.OAuthTokenService
+	statsService           stats.Service
 }
 
 type ServerOptions struct {
@@ -220,7 +221,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
-	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
+	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
@@ -233,7 +234,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService, httpObjectStore httpobjectstore.HTTPObjectStore,
+	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
@@ -249,8 +250,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
-	userAuthService userauth.Service, queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service,
-	oauthTokenService oauthtoken.OAuthTokenService,
+	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
+	statsService stats.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -311,7 +312,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		secretsMigrator:              secretsMigrator,
 		secretsPluginMigrator:        secretsPluginMigrator,
 		secretsStore:                 secretsStore,
-		httpObjectStore:              httpObjectStore,
+		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
@@ -352,10 +353,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
-		userAuthService:              userAuthService,
 		QueryLibraryHTTPService:      queryLibraryHTTPService,
 		QueryLibraryService:          queryLibraryService,
 		oauthTokenService:            oauthTokenService,
+		statsService:                 statsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -489,11 +490,11 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 func (hs *HTTPServer) configureHttps() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
+		return errors.New("cert_file cannot be empty when using HTTPS")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
+		return errors.New("cert_key cannot be empty when using HTTPS")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
@@ -529,19 +530,19 @@ func (hs *HTTPServer) configureHttps() error {
 
 func (hs *HTTPServer) configureHttp2() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+		return errors.New("cert_file cannot be empty when using HTTP2")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+		return errors.New("cert_key cannot be empty when using HTTP2")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+		return fmt.Errorf("cannot find SSL cert_file at %q", hs.Cfg.CertFile)
 	}
 
 	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+		return fmt.Errorf("cannot find SSL key_file at %q", hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -595,6 +596,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	if hs.Cfg.ImageUploadProvider == "local" {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
+	}
+
+	if len(hs.Cfg.CustomResponseHeaders) > 0 {
+		m.Use(middleware.AddCustomResponseHeaders(hs.Cfg))
 	}
 
 	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
@@ -659,9 +664,8 @@ func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 		return
 	}
 
-	ctx.Resp.WriteHeader(200)
-	_, err := ctx.Resp.Write([]byte("Ok"))
-	if err != nil {
+	ctx.Resp.WriteHeader(http.StatusOK)
+	if _, err := ctx.Resp.Write([]byte("Ok")); err != nil {
 		hs.log.Error("could not write to response", "err", err)
 	}
 }
@@ -685,10 +689,10 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(503)
+		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	} else {
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(200)
+		ctx.Resp.WriteHeader(http.StatusOK)
 	}
 
 	dataBytes, err := data.EncodePretty()

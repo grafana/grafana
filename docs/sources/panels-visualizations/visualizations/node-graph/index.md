@@ -85,9 +85,27 @@ Click on the node and select "Show in Graph layout" option to switch back to gra
 
 This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
 
-Data source needs to return two data frames, one for nodes and one for edges. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
+Node Graph at minimum requires a data frame describing the edges of the graph. By default, node graph will compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent in case there is need to show more node specific metadata. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
 
-### Node parameters
+### Edges data frame structure
+
+Required fields:
+
+| Field name | Type   | Description                    |
+| ---------- | ------ | ------------------------------ |
+| id         | string | Unique identifier of the edge. |
+| source     | string | Id of the source node.         |
+| target     | string | Id of the target.              |
+
+Optional fields:
+
+| Field name    | Type          | Description                                                                                                                                                                                         |
+| ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mainstat      | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown |
+| secondarystat | string/number | Same as mainStat, but shown right under it.                                                                                                                                                         |
+| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                    |
+
+### Nodes data frame structure
 
 Required fields:
 
@@ -105,21 +123,3 @@ Optional fields:
 | secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                          |
 | arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`. |
 | detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                               |
-
-### Edge parameters
-
-Required fields:
-
-| Field name | Type   | Description                    |
-| ---------- | ------ | ------------------------------ |
-| id         | string | Unique identifier of the edge. |
-| source     | string | Id of the source node.         |
-| target     | string | Id of the target.              |
-
-Optional fields:
-
-| Field name    | Type          | Description                                                                                                                                                                                         |
-| ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| mainstat      | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown |
-| secondarystat | string/number | Same as mainStat, but shown right under it.                                                                                                                                                         |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                    |

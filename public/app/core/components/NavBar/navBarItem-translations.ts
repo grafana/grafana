@@ -69,6 +69,12 @@ export function getNavTitle(navId: string | undefined) {
       return config.featureToggles.topnav
         ? t('nav.config.title', 'Administration')
         : t('nav.config.titleBeforeTopnav', 'Configuration');
+    case 'admin/general':
+      return t('nav.admin-general.title', 'General');
+    case 'admin/plugins':
+      return t('nav.admin-plugins.title', 'Plugins and data');
+    case 'admin/access':
+      return t('nav.admin-access.title', 'Users and access');
     case 'datasources':
       return t('nav.datasources.title', 'Data sources');
     case 'correlations':
@@ -80,7 +86,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugins':
       return t('nav.plugins.title', 'Plugins');
     case 'org-settings':
-      return t('nav.org-settings.title', 'Preferences');
+      return config.featureToggles.topnav
+        ? t('nav.org-settings.title', 'Default preferences')
+        : t('nav.org-settings.titleBeforeTopnav', 'Preferences');
     case 'apikeys':
       return t('nav.api-keys.title', 'API keys');
     case 'serviceaccounts':
@@ -88,7 +96,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'admin':
       return t('nav.admin.title', 'Server admin');
     case 'global-users':
-      return t('nav.global-users.title', 'Users');
+      return config.featureToggles.topnav
+        ? t('nav.global-users.title', 'Users')
+        : t('nav.global-users.titleBeforeTopnav', 'Users');
     case 'global-orgs':
       return t('nav.global-orgs.title', 'Organizations');
     case 'server-settings':
@@ -174,7 +184,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
     case 'global-users':
-      return t('nav.global-users.subtitle', 'Manage and create users across the whole Grafana server');
+      return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':
       return t('nav.global-orgs.subtitle', 'Isolated instances of Grafana running on the same server');
     case 'server-settings':

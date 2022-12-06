@@ -193,11 +193,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.toggleTableView();
   };
 
-  onTogglePanelOptions = () => {
-    const { uiState, updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
-  };
-
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
     const { dashboard, panel, uiState, tableViewEnabled, theme } = this.props;
 
@@ -246,32 +241,45 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderPanelAndEditor(styles: EditorStyles) {
+  renderPanelAndEditor(uiState: PanelEditorUIState, styles: EditorStyles) {
     const { panel, dashboard, plugin, tab } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
     const isOnlyPanel = tabs.length === 0;
     const panelPane = this.renderPanel(styles, isOnlyPanel);
 
     if (tabs.length === 0) {
-      return panelPane;
+      return <div className={styles.onlyPanel}>{panelPane}</div>;
     }
 
-    return [
-      panelPane,
-      <div
-        className={styles.tabsWrapper}
-        aria-label={selectors.components.PanelEditor.DataPane.content}
-        key="panel-editor-tabs"
+    return (
+      <SplitPaneWrapper
+        splitOrientation="horizontal"
+        maxSize={-200}
+        paneSize={uiState.topPaneSize}
+        primary="first"
+        secondaryPaneStyle={{ minHeight: 0 }}
+        onDragFinished={(size) => {
+          if (size) {
+            updatePanelEditorUIState({ topPaneSize: size / window.innerHeight });
+          }
+        }}
       >
-        <PanelEditorTabs
-          key={panel.key}
-          panel={panel}
-          dashboard={dashboard}
-          tabs={tabs}
-          onChangeTab={this.onChangeTab}
-        />
-      </div>,
-    ];
+        {panelPane}
+        <div
+          className={styles.tabsWrapper}
+          aria-label={selectors.components.PanelEditor.DataPane.content}
+          key="panel-editor-tabs"
+        >
+          <PanelEditorTabs
+            key={panel.key}
+            panel={panel}
+            dashboard={dashboard}
+            tabs={tabs}
+            onChangeTab={this.onChangeTab}
+          />
+        </div>
+      </SplitPaneWrapper>
+    );
   }
 
   renderTemplateVariables(styles: EditorStyles) {
@@ -438,25 +446,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderHorizontalSplit(uiState: PanelEditorUIState, styles: EditorStyles) {
-    return (
-      <SplitPaneWrapper
-        splitOrientation="horizontal"
-        maxSize={-200}
-        paneSize={uiState.topPaneSize}
-        primary="first"
-        secondaryPaneStyle={{ minHeight: 0 }}
-        onDragFinished={(size) => {
-          if (size) {
-            updatePanelEditorUIState({ topPaneSize: size / window.innerHeight });
-          }
-        }}
-      >
-        {this.renderPanelAndEditor(styles)}
-      </SplitPaneWrapper>
-    );
-  }
-
   render() {
     const { initDone, uiState, theme, sectionNav, pageNav, className, updatePanelEditorUIState } = this.props;
     const styles = getStyles(theme, this.props);
@@ -477,7 +466,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>
             {!uiState.isPanelOptionsVisible ? (
-              this.renderHorizontalSplit(uiState, styles)
+              this.renderPanelAndEditor(uiState, styles)
             ) : (
               <SplitPaneWrapper
                 splitOrientation="vertical"
@@ -490,7 +479,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                   }
                 }}
               >
-                {this.renderHorizontalSplit(uiState, styles)}
+                {this.renderPanelAndEditor(uiState, styles)}
                 {this.renderOptionsPane()}
               </SplitPaneWrapper>
             )}
@@ -498,7 +487,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {this.state.showSaveLibraryPanelModal && (
             <SaveLibraryPanelModal
               panel={this.props.panel as PanelModelWithLibraryPanel}
-              folderId={this.props.dashboard.meta.folderId as number}
+              folderUid={this.props.dashboard.meta.folderUid ?? ''}
               onConfirm={this.onConfirmAndDismissLibarayPanelModel}
               onDiscard={this.onDiscard}
               onDismiss={this.onConfirmAndDismissLibarayPanelModel}
@@ -573,6 +562,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
       align-items: center;
       position: relative;
       flex-direction: column;
+    `,
+    onlyPanel: css`
+      height: 100%;
+      position: absolute;
+      overflow: hidden;
+      width: 100%;
     `,
   };
 });

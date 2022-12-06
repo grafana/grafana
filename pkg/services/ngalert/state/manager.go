@@ -180,9 +180,11 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	st.deleteAlertStates(ctx, logger, staleStates)
 
 	st.saveAlertStates(ctx, logger, states...)
-	allChanges := append(states, staleStates...)
-	st.logStateTransitions(ctx, alertRule, states, staleStates)
 
+	allChanges := append(states, staleStates...)
+	if st.historian != nil {
+		st.historian.RecordStatesAsync(ctx, alertRule, allChanges)
+	}
 	return allChanges
 }
 
@@ -304,26 +306,6 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		}
 		logger.Error("Failed to save alert states", "states", debug, "error", err)
 	}
-}
-
-func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.AlertRule, newStates, staleStates []StateTransition) {
-	if st.historian == nil {
-		return
-	}
-	changedStates := make([]StateTransition, 0, len(staleStates))
-	for _, s := range newStates {
-		if s.changed() {
-			changedStates = append(changedStates, s)
-		}
-	}
-
-	// TODO refactor further. Let historian decide what to log. Current logic removes states `Normal (reason-X) -> Normal (reason-Y)`
-	for _, t := range staleStates {
-		if t.PreviousState == eval.Alerting {
-			changedStates = append(changedStates, t)
-		}
-	}
-	st.historian.RecordStates(ctx, alertRule, changedStates)
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {

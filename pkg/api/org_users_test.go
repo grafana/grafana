@@ -328,7 +328,7 @@ var (
 // setupOrgUsersDBForAccessControlTests creates three users placed in two orgs
 // Org1: testServerAdminViewer, testEditorOrg1
 // Org2: testServerAdminViewer, testAdminOrg2
-func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore) {
+func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, orgService org.Service) {
 	t.Helper()
 
 	var err error
@@ -341,14 +341,14 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore) {
 	require.NoError(t, err)
 
 	// Create both orgs with server admin
-	_, err = db.CreateOrgWithMember(testServerAdminViewer.OrgName, testServerAdminViewer.UserID)
+	_, err = orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: testServerAdminViewer.OrgName, UserID: testServerAdminViewer.UserID})
 	require.NoError(t, err)
-	_, err = db.CreateOrgWithMember(testAdminOrg2.OrgName, testServerAdminViewer.UserID)
+	_, err = orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: testAdminOrg2.OrgName, UserID: testServerAdminViewer.UserID})
 	require.NoError(t, err)
 
-	err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgId: testAdminOrg2.OrgID, UserId: testAdminOrg2.UserID})
+	err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgID: testAdminOrg2.OrgID, UserID: testAdminOrg2.UserID})
 	require.NoError(t, err)
-	err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: testEditorOrg1.Login, Role: testEditorOrg1.OrgRole, OrgId: testEditorOrg1.OrgID, UserId: testEditorOrg1.UserID})
+	err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{LoginOrEmail: testEditorOrg1.Login, Role: testEditorOrg1.OrgRole, OrgID: testEditorOrg1.OrgID, UserID: testEditorOrg1.UserID})
 	require.NoError(t, err)
 }
 
@@ -377,10 +377,11 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			enableAccessControl: true,
 			expectedCode:        http.StatusOK,
 			expectedMetadata: map[string]bool{
-				"org.users:write":  true,
-				"org.users:add":    true,
-				"org.users:read":   true,
-				"org.users:remove": true},
+				"org.users:write":        true,
+				"org.users:add":          true,
+				"org.users:read":         true,
+				"org.users:remove":       true,
+				"users.permissions:read": true},
 			user:      testServerAdminViewer,
 			targetOrg: testServerAdminViewer.OrgID,
 		},
@@ -398,7 +399,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotatest.New(false, nil))
 				require.NoError(t, err)
 			})
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			// Perform test
@@ -506,7 +507,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				require.NoError(t, err)
 			})
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 
 			// Perform test
 			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
@@ -606,12 +607,14 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			cfg.RBACEnabled = tc.enableAccessControl
 			var err error
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotatest.New(false, nil))
+				require.NoError(t, err)
 				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotatest.New(false, nil))
+					hs.SQLStore, hs.orgService, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotatest.New(false, nil))
 				require.NoError(t, err)
 			})
 
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			// Perform request
@@ -726,12 +729,13 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			var err error
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, setting.NewCfg(), quotatest.New(false, nil))
 				hs.userService, err = userimpl.ProvideService(
 					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(), quotatest.New(false, nil))
 				require.NoError(t, err)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
 			input := strings.NewReader(test.input)
@@ -852,7 +856,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotaService)
 				require.NoError(t, err)
 			})
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			// Perform request
@@ -982,7 +986,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotaService)
 				require.NoError(t, err)
 			})
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
 			response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(url, tc.targetOrg, tc.targetUserId), nil, t)

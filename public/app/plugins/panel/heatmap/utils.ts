@@ -749,8 +749,6 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
       ) => {
         //console.time('heatmapPathsSparse');
 
-        [dataX, dataY] = dataY as unknown as number[][];
-
         let points = new Path2D();
         let fillPaths = [points];
         let fillPalette = [exemplarColor ?? 'rgba(255,0,255,0.7)'];

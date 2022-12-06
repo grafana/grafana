@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -34,7 +35,7 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := h.buildAnnotations(rule, states, logger)
@@ -45,6 +46,9 @@ func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, rule *ngmod
 func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
+		if !shouldAnnotate(state) {
+			continue
+		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
 		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
@@ -153,4 +157,12 @@ func removePrivateLabels(labels data.Labels) data.Labels {
 		}
 	}
 	return result
+}
+
+func shouldAnnotate(transition state.StateTransition) bool {
+	// Do not log not transitioned states normal states if it was marked as stale
+	if !transition.Changed() || transition.StateReason == ngmodels.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
+		return false
+	}
+	return true
 }
