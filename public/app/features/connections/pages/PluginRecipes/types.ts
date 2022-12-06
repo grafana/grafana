@@ -36,8 +36,10 @@ export type PluginRecipeStepMeta = {
 };
 
 // Setup dashboard step specifics
+export type Screenshot = { name: string; url: string };
+
 export type PluginRecipeSetupDashboardStepMeta = PluginRecipeStepMeta & {
-  screenshots: Array<{ name: string; url: string }>;
+  screenshots: Screenshot[];
 };
 
 export type PluginRecipeSetupDashboardStep = PluginRecipeStep & {
