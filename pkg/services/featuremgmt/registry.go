@@ -284,9 +284,13 @@ var (
 			Description: "Enable more in memory caching for database queries",
 		},
 		{
-			Name:        "sessionRemoteCache",
-			Description: "Enable using remote cache for users and sessions",
+			Name:        "userRemoteCache",
+			Description: "Enable using remote cache for users",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
 		},
 	}
 )

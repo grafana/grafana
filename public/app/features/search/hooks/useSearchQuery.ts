@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { FormEvent } from 'react';
+import { FormEvent, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -16,6 +16,7 @@ import {
   clearFilters,
   toggleSort,
   layoutChange,
+  initStateFromUrl,
 } from '../reducers/searchQueryReducer';
 import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters } from '../utils';
@@ -25,6 +26,10 @@ const updateLocation = debounce((query) => locationService.partial(query, true),
 export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
   const query = useSelector((state) => state.searchQuery);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(initStateFromUrl(locationService.getSearchObject()));
+  }, [dispatch]);
 
   const onQueryChange = (query: string) => {
     dispatch(queryChange(query));

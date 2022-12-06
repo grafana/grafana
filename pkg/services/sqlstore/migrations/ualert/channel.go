@@ -177,9 +177,22 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
 func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaReceiver, error) {
-	uid, err := m.generateChannelUID()
-	if err != nil {
-		return nil, err
+	uid := c.Uid
+	if uid == "" {
+		new, err := m.generateChannelUID()
+		if err != nil {
+			return nil, err
+		}
+		m.mg.Logger.Info("Legacy notification had an empty uid, generating a new one", "id", c.ID, "uid", new)
+		uid = new
+	}
+	if _, seen := m.seenChannelUIDs[uid]; seen {
+		new, err := m.generateChannelUID()
+		if err != nil {
+			return nil, err
+		}
+		m.mg.Logger.Warn("Legacy notification had a UID that collides with a migrated record, generating a new one", "id", c.ID, "old", uid, "new", new)
+		uid = new
 	}
 
 	settings, secureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)

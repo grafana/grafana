@@ -159,7 +159,6 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 		// copy the frame metadata to the new exemplar frame
 		exemplarFrame.Meta = frame.Meta
 		exemplarFrame.RefID = frame.RefID
-		frame.Meta.Type = data.FrameTypeTimeSeriesMany
 
 		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
 		seriesLabels := getSeriesLabels(frame)

@@ -2,7 +2,6 @@ package serverlock
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -184,7 +183,7 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 		if len(lockRows) > 0 {
 			result := lockRows[0]
 			if sl.isLockWithinInterval(result, maxInterval) {
-				return errors.New("there is already a lock for this actionName: " + actionName)
+				return &ServerLockExistsError{actionName: actionName}
 			} else {
 				// lock has timeouted, so we update the timestamp
 				result.LastExecution = time.Now().Unix()

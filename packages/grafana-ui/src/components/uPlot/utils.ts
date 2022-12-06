@@ -116,8 +116,7 @@ export function getStackingGroups(frame: DataFrame) {
     // will this be stacked up or down after any transforms applied
     let vals = values.toArray();
     let transform = custom.transform;
-    let firstValue = vals.find((v) => v != null);
-    let stackDir = getStackDirection(transform, firstValue);
+    let stackDir = getStackDirection(transform, vals);
 
     let drawStyle = custom.drawStyle as GraphDrawStyle;
     let drawStyle2 =
@@ -341,13 +340,48 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
   return y;
 }
 
-function getStackDirection(transform: GraphTransform, firstValue: number) {
-  // Check if first value is negative zero. This can happen with a binary operation transform.
-  const isNegativeZero = Object.is(firstValue, -0);
+function getStackDirection(transform: GraphTransform, data: unknown[]) {
+  const hasNegSamp = hasNegSample(data);
+
   if (transform === GraphTransform.NegativeY) {
-    return !isNegativeZero && firstValue >= 0 ? StackDirection.Neg : StackDirection.Pos;
+    return hasNegSamp ? StackDirection.Pos : StackDirection.Neg;
   }
-  return !isNegativeZero && firstValue >= 0 ? StackDirection.Pos : StackDirection.Neg;
+  return hasNegSamp ? StackDirection.Neg : StackDirection.Pos;
+}
+
+// similar to isLikelyAscendingVector()
+function hasNegSample(data: unknown[], samples = 50) {
+  const len = data.length;
+
+  if (len === 0) {
+    return false;
+  }
+
+  // skip leading & trailing nullish
+  let firstIdx = 0;
+  let lastIdx = len - 1;
+
+  while (firstIdx <= lastIdx && data[firstIdx] == null) {
+    firstIdx++;
+  }
+
+  while (lastIdx >= firstIdx && data[lastIdx] == null) {
+    lastIdx--;
+  }
+
+  if (lastIdx >= firstIdx) {
+    const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
+
+    for (let i = firstIdx; i <= lastIdx; i += stride) {
+      const v = data[i];
+
+      if (v != null && (v < 0 || Object.is(v, -0))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 // Dev helpers

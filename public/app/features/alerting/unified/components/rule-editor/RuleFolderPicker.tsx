@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { FolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/FolderPicker';
 import { PermissionLevelString } from 'app/types';
 

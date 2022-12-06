@@ -1,17 +1,13 @@
-import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
   ColumnDefinition,
-  CompletionItemKind,
-  CompletionItemPriority,
-  DB,
+  getStandardSQLCompletionProvider,
   LanguageCompletionProvider,
   LinkedToken,
-  SQLQuery,
-  StatementPlacementProvider,
-  SuggestionKindProvider,
   TableDefinition,
+  TableIdentifier,
   TokenType,
-} from 'app/features/plugins/sql/types';
+} from '@grafana/experimental';
+import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
@@ -20,13 +16,17 @@ interface CompletionProviderGetterArgs {
 
 export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
   ({ getColumns, getTables }) =>
-  () => ({
-    triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
+  (monaco, language) => ({
+    ...(language && getStandardSQLCompletionProvider(monaco, language)),
     tables: {
-      resolve: async () => {
-        return await getTables.current();
+      resolve: async (identifier) => {
+        return await getTables.current(identifier.table);
       },
       parseName: (token: LinkedToken) => {
+        if (!token) {
+          return { table: '' };
+        }
+
         let processedToken = token;
         let tablePath = processedToken.value;
 
@@ -35,83 +35,25 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
           processedToken = processedToken.next;
         }
 
-        return tablePath;
+        if (processedToken.value.endsWith('.')) {
+          tablePath = processedToken.value.slice(0, processedToken.value.length - 1);
+        }
+
+        return { table: tablePath };
       },
     },
 
     columns: {
-      resolve: async (t: string) => {
-        const [database, schema, tableName] = t.split('.');
+      resolve: async (t: TableIdentifier | undefined) => {
+        if (!t?.table) {
+          return [];
+        }
+        // TODO: Use schema instead of table
+        const [database, schema, tableName] = t.table.split('.');
         return await getColumns.current({ table: `${schema}.${tableName}`, dataset: database, refId: 'A' });
       },
     },
-    supportedFunctions: () => AGGREGATE_FNS,
-    supportedOperators: () => OPERATORS,
-    customSuggestionKinds: customSuggestionKinds(getTables, getColumns),
-    customStatementPlacement,
   });
-
-export enum CustomStatementPlacement {
-  AfterDatabase = 'afterDatabase',
-}
-
-export enum CustomSuggestionKind {
-  TablesWithinDatabase = 'tablesWithinDatabase',
-}
-
-export const customStatementPlacement: StatementPlacementProvider = () => [
-  {
-    id: CustomStatementPlacement.AfterDatabase,
-    resolve: (currentToken, previousKeyword) => {
-      return Boolean(
-        currentToken?.is(TokenType.Delimiter, '.') ||
-          (currentToken?.is(TokenType.Whitespace) && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
-          (currentToken?.isNumber() && currentToken.value.endsWith('.'))
-      );
-    },
-  },
-];
-
-export const customSuggestionKinds: (
-  getTables: CompletionProviderGetterArgs['getTables'],
-  getFields: CompletionProviderGetterArgs['getColumns']
-) => SuggestionKindProvider = (getTables) => () =>
-  [
-    {
-      id: CustomSuggestionKind.TablesWithinDatabase,
-      applyTo: [CustomStatementPlacement.AfterDatabase],
-      suggestionsResolver: async (ctx) => {
-        const tablePath = ctx.currentToken ? getDatabaseName(ctx.currentToken) : '';
-        const t = await getTables.current(tablePath);
-
-        return t.map((table) => ({
-          label: table.name,
-          insertText: table.completion ?? table.name,
-          command: { id: 'editor.action.triggerSuggest', title: '' },
-          kind: CompletionItemKind.Field,
-          sortText: CompletionItemPriority.High,
-          range: {
-            ...ctx.range,
-            startColumn: ctx.range.endColumn,
-            endColumn: ctx.range.endColumn,
-          },
-        }));
-      },
-    },
-  ];
-
-export function getDatabaseName(token: LinkedToken) {
-  let processedToken = token;
-  let database = '';
-  while (processedToken?.previous && !processedToken.previous.isWhiteSpace()) {
-    processedToken = processedToken.previous;
-    database = processedToken.value + database;
-  }
-
-  database = database.trim();
-
-  return database;
-}
 
 export async function fetchColumns(db: DB, q: SQLQuery) {
   const cols = await db.fields(q);
@@ -125,6 +67,6 @@ export async function fetchColumns(db: DB, q: SQLQuery) {
 }
 
 export async function fetchTables(db: DB, dataset?: string) {
-  const tables = await db.lookup(dataset);
-  return tables;
+  const tables = await db.lookup?.(dataset);
+  return tables || [];
 }

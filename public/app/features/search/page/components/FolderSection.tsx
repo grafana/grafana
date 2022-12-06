@@ -77,11 +77,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       id: 666, // do not use me!
       isStarred: false,
       tags: item.tags ?? [],
-      folderUid,
-      folderTitle,
+      folderUid: folderUid || item.location,
+      folderTitle: folderTitle || raw.view.dataFrame.meta?.custom?.locationInfo[item.location].name,
     }));
     return v;
-  }, [sectionExpanded, section, tags]);
+  }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);

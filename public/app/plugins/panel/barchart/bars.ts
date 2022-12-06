@@ -15,7 +15,7 @@ import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBui
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
+import { findRect, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -437,7 +437,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            hRect = o;
+            if (isStacked) {
+              // choose the smallest hovered rect (when stacked bigger ones overlap smaller ones)
+              if (hRect == null || o.h * o.w < hRect.h * hRect.w) {
+                hRect = o;
+              }
+            } else {
+              hRect = o;
+            }
           }
         });
       }
@@ -449,11 +456,23 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       bbox: (u, seriesIdx) => {
         let isHovered = hRect && seriesIdx === hRect.sidx;
 
+        let heightReduce = 0;
+        let widthReduce = 0;
+
+        // get height of bar rect at same index of the series below the hovered one
+        if (isStacked && isHovered && hRect!.sidx > 1) {
+          if (isXHorizontal) {
+            heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
+          } else {
+            widthReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.w;
+          }
+        }
+
         return {
-          left: isHovered ? hRect!.x / devicePixelRatio : -10,
+          left: isHovered ? (hRect!.x + widthReduce) / devicePixelRatio : -10,
           top: isHovered ? hRect!.y / devicePixelRatio : -10,
-          width: isHovered ? hRect!.w / devicePixelRatio : 0,
-          height: isHovered ? hRect!.h / devicePixelRatio : 0,
+          width: isHovered ? (hRect!.w - widthReduce) / devicePixelRatio : 0,
+          height: isHovered ? (hRect!.h - heightReduce) / devicePixelRatio : 0,
         };
       },
     },

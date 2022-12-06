@@ -1,29 +1,24 @@
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
+import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import {
-  CompletionItemKind,
-  DB,
-  LanguageCompletionProvider,
-  ResponseParser,
-  SQLQuery,
-} from 'app/features/plugins/sql/types';
+import { DB, ResponseParser, SQLQuery } from 'app/features/plugins/sql/types';
+import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
 import MySQLQueryModel from './MySqlQueryModel';
 import MySqlResponseParser from './MySqlResponseParser';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
-import { fetchColumns, fetchTables, getFunctions, getSqlCompletionProvider } from './sqlCompletionProvider';
+import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
   responseParser: MySqlResponseParser;
-  completionProvider: LanguageCompletionProvider | undefined;
+  sqlLanguageDefinition: LanguageDefinition | undefined;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
     this.responseParser = new MySqlResponseParser();
-    this.completionProvider = undefined;
   }
 
   getQueryModel(target?: Partial<SQLQuery>, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
@@ -34,19 +29,20 @@ export class MySqlDatasource extends SqlDatasource {
     return this.responseParser;
   }
 
-  getSqlCompletionProvider(db: DB): LanguageCompletionProvider {
-    if (this.completionProvider !== undefined) {
-      return this.completionProvider;
+  getSqlLanguageDefinition(db: DB): LanguageDefinition {
+    if (this.sqlLanguageDefinition !== undefined) {
+      return this.sqlLanguageDefinition;
     }
 
     const args = {
-      getColumns: { current: (query: SQLQuery) => fetchColumns(db, query) },
-      getTables: { current: (dataset?: string) => fetchTables(db, { dataset }) },
-      fetchMeta: { current: (path?: string) => this.fetchMeta(path) },
-      getFunctions: { current: () => getFunctions() },
+      getMeta: { current: (identifier?: TableIdentifier) => this.fetchMeta(identifier) },
     };
-    this.completionProvider = getSqlCompletionProvider(args);
-    return this.completionProvider;
+    this.sqlLanguageDefinition = {
+      id: 'sql',
+      completionProvider: getSqlCompletionProvider(args),
+      formatter: formatSQL,
+    };
+    return this.sqlLanguageDefinition;
   }
 
   async fetchDatasets(): Promise<string[]> {
@@ -69,28 +65,20 @@ export class MySqlDatasource extends SqlDatasource {
     return mapFieldsToTypes(fields);
   }
 
-  async fetchMeta(path?: string) {
+  async fetchMeta(identifier?: TableIdentifier) {
     const defaultDB = this.instanceSettings.jsonData.database;
-    path = path?.trim();
-    if (!path && defaultDB) {
+    if (!identifier?.schema && defaultDB) {
       const tables = await this.fetchTables(defaultDB);
-      return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
-    } else if (!path) {
+      return tables.map((t) => ({ name: t, completion: `${defaultDB}.${t}`, kind: CompletionItemKind.Class }));
+    } else if (!identifier?.schema && !defaultDB) {
       const datasets = await this.fetchDatasets();
       return datasets.map((d) => ({ name: d, completion: `${d}.`, kind: CompletionItemKind.Module }));
     } else {
-      const parts = path.split('.').filter((s: string) => s);
-      if (parts.length > 2) {
-        return [];
-      }
-      if (parts.length === 1 && !defaultDB) {
-        const tables = await this.fetchTables(parts[0]);
+      if (!identifier?.table && !defaultDB) {
+        const tables = await this.fetchTables(identifier?.schema);
         return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
-      } else if (parts.length === 1 && defaultDB) {
-        const fields = await this.fetchFields({ dataset: defaultDB, table: parts[0] });
-        return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
-      } else if (parts.length === 2 && !defaultDB) {
-        const fields = await this.fetchFields({ dataset: parts[0], table: parts[1] });
+      } else if (identifier?.table && identifier.schema) {
+        const fields = await this.fetchFields({ dataset: identifier.schema, table: identifier.table });
         return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
       } else {
         return [];
@@ -109,9 +97,8 @@ export class MySqlDatasource extends SqlDatasource {
       validateQuery: (query: SQLQuery, range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
       dsID: () => this.id,
-      lookup: (path?: string) => this.fetchMeta(path),
-      getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
-      functions: async () => getFunctions(),
+      functions: () => ['VARIANCE', 'STDDEV'],
+      getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(this.db),
     };
   }
 }

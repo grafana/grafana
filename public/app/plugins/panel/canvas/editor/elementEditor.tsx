@@ -63,8 +63,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
     // Dynamically fill the selected element
     build: (builder, context) => {
       const { options } = opts.element;
-      const current = options?.type ? [options.type] : [DEFAULT_CANVAS_ELEMENT_CONFIG.type];
-      const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current);
+      const current = options?.type ? options.type : DEFAULT_CANVAS_ELEMENT_CONFIG.type;
+      const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current).options;
 
       const isUnsupported =
         !opts.scene.shouldShowAdvancedTypes && !defaultElementItems.filter((item) => item.id === options?.type).length;

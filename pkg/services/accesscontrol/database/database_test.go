@@ -25,7 +25,6 @@ type getUserPermissionsTestCase struct {
 	userPermissions    []string
 	teamPermissions    []string
 	builtinPermissions []string
-	actions            []string
 	expected           int
 }
 
@@ -57,16 +56,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			teamPermissions:    []string{"100", "2"},
 			builtinPermissions: []string{"5", "6"},
 			expected:           5,
-		},
-		{
-			desc:               "Should filter on actions",
-			orgID:              1,
-			role:               "",
-			userPermissions:    []string{"1", "2", "10"},
-			teamPermissions:    []string{"100", "2"},
-			builtinPermissions: []string{"5", "6"},
-			expected:           3,
-			actions:            []string{"dashboards:write"},
 		},
 		{
 			desc:               "should only get br permissions for anonymous user",
@@ -132,7 +121,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 				OrgID:   tt.orgID,
 				UserID:  userID,
 				Roles:   roles,
-				Actions: tt.actions,
 				TeamIDs: teamIDs,
 			})
 

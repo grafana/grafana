@@ -89,8 +89,8 @@ def build_e2e(trigger, ver_mode, edition):
         build_steps.extend([
             build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
             build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
-            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', trigger=trigger_oss),
-            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', trigger=trigger_oss),
+            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana/grafana', trigger=trigger_oss),
+            publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana/grafana-oss', trigger=trigger_oss),
             release_canary_npm_packages_step(edition, trigger=trigger_oss),
             upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss),
             upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)

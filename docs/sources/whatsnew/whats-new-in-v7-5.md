@@ -123,7 +123,7 @@ Query caching advantages:
 
 Caching currently works for all backend data sources. You can enable the cache globally or per data source, and you can configure the cache duration per data source. The cache is currently in-memory.
 
-For more information, refer to [Query caching]({{< relref "../enterprise/query-caching/" >}}).
+For more information, refer to [Query caching]({{< relref "../administration/data-source-management/#query-caching" >}}).
 
 ### Use template variable in reports
 

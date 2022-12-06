@@ -32,7 +32,7 @@ func UpdateRPMRepo(cfg PublishConfig, workDir string) error {
 		return err
 	}
 
-	repoRoot, err := fsutil.CreateTempFile("rpm-repo")
+	repoRoot, err := fsutil.CreateTempDir("rpm-repo")
 	if err != nil {
 		return err
 	}

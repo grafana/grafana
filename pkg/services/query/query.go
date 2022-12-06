@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -112,9 +111,16 @@ func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.Signe
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
-		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 	}
+
+	if user != nil { // for passthrough authentication, SSE does not authenticate
+		exprReq.User = adapters.BackendUserFromSignedInUser(user)
+		exprReq.OrgId = user.OrgID
+	}
+
+	disallowedCookies := []string{s.cfg.LoginCookieName}
+	queryEnrichers := parsedReq.createDataSourceQueryEnrichers(ctx, user, s.oAuthTokenService, disallowedCookies)
 
 	for _, pq := range parsedReq.parsedQueries {
 		if pq.datasource == nil {
@@ -136,6 +142,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
 			},
+			QueryEnricher: queryEnrichers[pq.datasource.Uid],
 		})
 	}
 
@@ -168,10 +175,11 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 		Queries: []backend.DataQuery{},
 	}
 
+	disallowedCookies := []string{s.cfg.LoginCookieName}
 	middlewares := []httpclient.Middleware{}
 	if parsedReq.httpRequest != nil {
 		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), disallowedCookies),
 		)
 	}
 
@@ -188,7 +196,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 	}
 
 	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), disallowedCookies)
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
 			req.Headers["Cookie"] = cookieStr
 		}
@@ -203,17 +211,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 	return s.pluginClient.QueryData(ctx, req)
 }
 
-type parsedQuery struct {
-	datasource *datasources.DataSource
-	query      backend.DataQuery
-}
-
-type parsedRequest struct {
-	hasExpression bool
-	parsedQueries []parsedQuery
-	httpRequest   *http.Request
-}
-
+// parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound

@@ -70,16 +70,10 @@ export default class PrometheusMetricFindQuery {
   labelValuesQuery(label: string, metric?: string) {
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const params = { ...(metric && { 'match[]': metric }), start: start.toString(), end: end.toString() };
 
-    let url: string;
-
-    if (!metric) {
-      const params = {
-        start: start.toString(),
-        end: end.toString(),
-      };
-      // return label values globally
-      url = `/api/v1/label/${label}/values`;
+    if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
+      const url = `/api/v1/label/${label}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result: any) => {
         return _map(result.data.data, (value) => {
@@ -87,12 +81,7 @@ export default class PrometheusMetricFindQuery {
         });
       });
     } else {
-      const params = {
-        'match[]': metric,
-        start: start.toString(),
-        end: end.toString(),
-      };
-      url = `/api/v1/series`;
+      const url = `/api/v1/series`;
 
       return this.datasource.metadataRequest(url, params).then((result: any) => {
         const _labels = _map(result.data.data, (metric) => {

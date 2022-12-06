@@ -69,7 +69,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   onOpenSplitView = () => {
     const { split } = this.props;
     split();
-    reportInteraction('grafana_explore_split_view_opened');
+    reportInteraction('grafana_explore_split_view_opened', { origin: 'menu' });
   };
 
   onCloseSplitView = () => {

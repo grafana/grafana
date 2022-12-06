@@ -146,7 +146,7 @@ describe('RuleEditor', () => {
     mocks.searchFolders.mockResolvedValue([]);
 
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -345,7 +345,7 @@ describe('RuleEditor', () => {
     mocks.searchFolders.mockResolvedValue([]);
 
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -598,7 +598,7 @@ describe('RuleEditor', () => {
     mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return {
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
             alertManagerConfigApi: false,
@@ -609,7 +609,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'loki with local rule store') {
         return {
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,
@@ -620,7 +620,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'cortex without ruler api') {
         return {
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,

@@ -325,6 +325,73 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 			"group_a", "group_b", "group_c", "group_x", "group_y", "group_z",
 		}), suggestDataResponse)
 	})
+
+	t.Run("Should call api with LogGroupNamePrefix if passed in resource call", func(t *testing.T) {
+		cli = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{LogGroups: []*cloudwatchlogs.LogGroup{}},
+			},
+		}
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   "/all-log-groups?logGroupNamePrefix=test",
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					ID: 0,
+				},
+				PluginID: "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+
+		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
+			{
+				Limit:              aws.Int64(defaultLogGroupLimit),
+				LogGroupNamePrefix: aws.String("test"),
+			},
+		}, cli.calls.describeLogGroups)
+	})
+
+	t.Run("Should call api without LogGroupNamePrefix when an empty string is passed in resource call", func(t *testing.T) {
+		cli = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{LogGroups: []*cloudwatchlogs.LogGroup{}},
+			},
+		}
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   "/all-log-groups?logGroupNamePrefix=",
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					ID: 0,
+				},
+				PluginID: "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+
+		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
+			{
+				Limit: aws.Int64(50),
+			},
+		}, cli.calls.describeLogGroups)
+	})
 }
 
 func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {

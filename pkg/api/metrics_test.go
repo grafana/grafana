@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -277,7 +278,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					nil,
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
-					pluginClient.ProvideService(r),
+					pluginClient.ProvideService(r, &config.Cfg{}),
 					&fakeOAuthTokenService{},
 				)
 				hs.QuotaService = quotatest.NewQuotaServiceFake()

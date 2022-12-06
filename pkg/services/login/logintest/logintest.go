@@ -23,6 +23,7 @@ func (l *LoginServiceFake) SetTeamSyncFunc(login.TeamSyncFunc) {}
 
 type AuthInfoServiceFake struct {
 	LatestUserID         int64
+	ExpectedUserAuth     *models.UserAuth
 	ExpectedUser         *user.User
 	ExpectedExternalUser *models.ExternalUserInfo
 	ExpectedError        error
@@ -39,6 +40,7 @@ func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models
 
 func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	a.LatestUserID = query.UserId
+	query.Result = a.ExpectedUserAuth
 	return a.ExpectedError
 }
 

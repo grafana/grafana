@@ -1,17 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { SEARCH_SELECTED_LAYOUT } from '../constants';
-import { DashboardQuery, SearchQueryParams, SearchLayout } from '../types';
+import { DashboardQuery, SearchLayout, SearchQueryParams } from '../types';
 import { parseRouteParams } from '../utils';
 
-export const defaultQuery: DashboardQuery = {
+export const initialState: DashboardQuery = {
   query: '',
   tag: [],
-  starred: false,
   sort: null,
+  starred: false,
   layout: SearchLayout.Folders,
   prevSort: null,
 };
@@ -25,8 +25,8 @@ export const defaultQueryParams: SearchQueryParams = {
 };
 
 const queryParams = parseRouteParams(locationService.getSearchObject());
-const initialState = { ...defaultQuery, ...queryParams };
 const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
+
 if (!queryParams.layout?.length && selectedLayout?.length) {
   initialState.layout = selectedLayout;
 }
@@ -35,6 +35,10 @@ const searchQuerySlice = createSlice({
   name: 'searchQuery',
   initialState,
   reducers: {
+    initStateFromUrl(state, action: PayloadAction<UrlQueryMap>) {
+      const queryParams = parseRouteParams(action.payload);
+      Object.assign(state, queryParams);
+    },
     queryChange: (state, action: PayloadAction<string>) => {
       state.query = action.payload;
     },
@@ -99,6 +103,7 @@ export const {
   clearFilters,
   toggleSort,
   layoutChange,
+  initStateFromUrl,
 } = searchQuerySlice.actions;
 export const searchQueryReducer = searchQuerySlice.reducer;
 

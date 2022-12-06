@@ -4,7 +4,8 @@ import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { useStyles2, Field, Input, InputControl, Label, Tooltip, Icon } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
