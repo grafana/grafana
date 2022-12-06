@@ -11321,16 +11321,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/rc-time-picker@npm:3.4.1":
-  version: 3.4.1
-  resolution: "@types/rc-time-picker@npm:3.4.1"
-  dependencies:
-    "@types/react": "*"
-    moment: ^2.19.4
-  checksum: 26d43beb8c5fdbd1932996bee63d3f854ca8e931915463106cbb382d98efcc81a1140f7fda004b6652ca12e87b211b1b70302b854c5ce41e3f87e68537181c06
-  languageName: node
-  linkType: hard
-
 "@types/react-beautiful-dnd@npm:13.1.2":
   version: 13.1.2
   resolution: "@types/react-beautiful-dnd@npm:13.1.2"
@@ -21564,7 +21554,6 @@ __metadata:
     "@types/papaparse": 5.3.5
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
-    "@types/rc-time-picker": 3.4.1
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-dom": 17.0.14
@@ -27841,7 +27830,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.4":
+"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.20.1, moment@npm:^2.29.4":
   version: 2.29.4
   resolution: "moment@npm:2.29.4"
   checksum: 0ec3f9c2bcba38dc2451b1daed5daded747f17610b92427bebe1d08d48d8b7bdd8d9197500b072d14e326dd0ccf3e326b9e3d07c5895d3d49e39b6803b76e80e

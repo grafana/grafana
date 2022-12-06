@@ -136,7 +136,6 @@
     "@types/papaparse": "5.3.5",
     "@types/pluralize": "^0.0.29",
     "@types/prismjs": "1.26.0",
-    "@types/rc-time-picker": "3.4.1",
     "@types/react": "17.0.42",
     "@types/react-beautiful-dnd": "13.1.2",
     "@types/react-dom": "17.0.14",
