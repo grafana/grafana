@@ -7,9 +7,9 @@ import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { OrgUser, OrgRole, StoreState } from 'app/types';
 
-import InviteesTable from '../invites/InviteesTable';
-import { fetchInvitees } from '../invites/state/actions';
-import { selectInvitesMatchingQuery } from '../invites/state/selectors';
+import InviteesTable from '../library-panels/invites/InviteesTable';
+import { fetchInvitees } from '../library-panels/invites/state/actions';
+import { selectInvitesMatchingQuery } from '../library-panels/invites/state/selectors';
 
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';

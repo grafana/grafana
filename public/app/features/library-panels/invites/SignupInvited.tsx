@@ -8,7 +8,7 @@ import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { w3cStandardEmailValidator } from '../admin/utils';
+import { w3cStandardEmailValidator } from '../../admin/utils';
 
 interface FormModel {
   email: string;

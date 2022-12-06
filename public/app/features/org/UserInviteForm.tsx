@@ -7,7 +7,7 @@ import { Button, LinkButton, Input, Switch, RadioButtonGroup, Form, Field, Input
 import { getConfig } from 'app/core/config';
 import { OrgRole, useDispatch } from 'app/types';
 
-import { addInvitee } from '../invites/state/actions';
+import { addInvitee } from '../library-panels/invites/state/actions';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },

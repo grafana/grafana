@@ -19,8 +19,9 @@ type PromptStep struct {
 }
 
 type PromptStepMeta struct {
-	RecipeStepMeta
-	Prompts []Prompt `json:"prompts"` // The list of prompts
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Prompts     []Prompt `json:"prompts"` // The list of prompts
 }
 type PromptOption struct {
 	Name  string `json:"name"`

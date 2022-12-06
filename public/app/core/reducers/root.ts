@@ -10,7 +10,7 @@ import dashboardReducers from 'app/features/dashboard/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
 import foldersReducers from 'app/features/folders/state/reducers';
-import invitesReducers from 'app/features/invites/state/reducers';
+import invitesReducers from 'app/features/library-panels/invites/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
