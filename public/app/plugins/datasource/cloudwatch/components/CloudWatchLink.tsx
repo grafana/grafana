@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { PanelData } from '@grafana/data';
 import { Icon } from '@grafana/ui';
 
-import { encodeUrl, AwsUrl } from '../aws_url';
+import { AwsUrl, encodeUrl } from '../aws_url';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLogsQuery } from '../types';
 
@@ -32,6 +32,11 @@ export default class CloudWatchLink extends Component<Props, State> {
 
   getExternalLink(): string {
     const { query, panelData, datasource } = this.props;
+    const arns = (query.logGroups ?? [])
+      .filter((group) => group?.value)
+      .map((group) => (group.value ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
+    const logGroupNames = query.logGroupNames;
+    let sources = arns?.length ? arns : logGroupNames;
 
     const range = panelData?.request?.range;
 
@@ -49,7 +54,7 @@ export default class CloudWatchLink extends Component<Props, State> {
       tz: 'UTC',
       editorString: query.expression ?? '',
       isLiveTail: false,
-      source: query.logGroupNames ?? [],
+      source: sources ?? [],
     };
 
     return encodeUrl(urlProps, datasource.api.getActualRegion(query.region));
