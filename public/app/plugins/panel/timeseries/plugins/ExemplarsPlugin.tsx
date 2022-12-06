@@ -125,7 +125,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 };
 
 /**
- *
+ * Function to get labels that are currently displayed in the legend
  */
 export const getVisibleLabels = (
   config: UPlotConfigBuilder,
@@ -181,7 +181,7 @@ const getExemplarColor = (
 };
 
 /**
- *
+ * Determine if the current exemplar marker is filtered by what series are selected in the legend UI
  */
 function showExemplar(
   getUniqueValuesFromLabels: (labels: Labels[]) => { [p: string]: Set<string> },
