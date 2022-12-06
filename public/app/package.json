@@ -12,6 +12,7 @@
   },
   "main": "index.js",
   "scripts": {
+    "betterer": "betterer --config ../../.betterer.ts",
     "build": "NODE_ENV=production webpack --config ./webpack/webpack.prod.js --env noMinify=1",
     "build:nominify": "yarn run build --env noMinify=1",
     "generateThemes": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/generateSassVariableFiles.ts",
