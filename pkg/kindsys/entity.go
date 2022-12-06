@@ -79,6 +79,7 @@ type Summarizer = func(ctx context.Context, uid string, body []byte) (*EntitySum
 // GenericSummarizer provides a simple generic [Summarizer] that only extracts
 // the generically knowable properties of an entity.
 func GenericSummarizer(kindname string) Summarizer {
+	// FIXME a generic implementation is needed, but this is piss-poor
 	return func(ctx context.Context, uid string, body []byte) (*EntitySummary, []byte, error) {
 		return &EntitySummary{
 			UID:  uid,
