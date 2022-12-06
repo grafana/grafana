@@ -38,13 +38,40 @@ export const getVisibleLabels = (
         const field = frames[frameIndex].fields[fieldIndex];
         if (field.labels) {
           // Note that this may be an empty object in the case of a metric being rendered with no labels
-          visibleLabels.push(field.labels);
+          visibleLabels.push({ ...field.labels, __color__: plotInstance.props?.lineColor ?? '' });
         }
       }
     });
   }
 
   return { labels: visibleLabels, totalSeriesCount: config.series.length };
+};
+
+// Get color of active series in legend
+const getExemplarColor = (
+  dataFrame: DataFrame,
+  dataFrameFieldIndex: DataFrameFieldIndex,
+  visibleLabels: { labels: Labels[]; totalSeriesCount: number }
+) => {
+  let exemplarColor;
+  visibleLabels.labels.forEach((visibleLabel) => {
+    const labelKeys = Object.keys(visibleLabel);
+    const fields = dataFrame.fields.filter((field) => {
+      return labelKeys.find((labelKey) => labelKey === field.name);
+    });
+    if (fields.length) {
+      const hasMatch = fields.every((field) => {
+        const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+        return visibleLabel[field.name] === value;
+      });
+
+      if (hasMatch) {
+        exemplarColor = visibleLabel['__color__'];
+        return;
+      }
+    }
+  });
+  return exemplarColor;
 };
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -114,6 +141,9 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       let showMarker = false;
+      const labelsAndUniqueValuesFromActiveFilters = getUniqueValuesFromLabels(visibleLabels.labels);
+
+      const markerColor = getExemplarColor(dataFrame, dataFrameFieldIndex, visibleLabels);
 
       // If all series are visible, don't filter any exemplars
       if (visibleLabels.labels.length === visibleLabels.totalSeriesCount) {
@@ -121,7 +151,6 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
       } else {
         visibleLabels.labels.forEach((visibleLabel) => {
           const labelKeys = Object.keys(visibleLabel);
-          const labelsAndUniqueValuesFromActiveFilters = getUniqueValuesFromLabels(visibleLabels.labels);
 
           // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
           if (Object.keys(visibleLabel).length === 0) {
@@ -156,6 +185,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
           dataFrame={dataFrame}
           dataFrameFieldIndex={dataFrameFieldIndex}
           config={config}
+          exemplarColor={markerColor}
         />
       );
     },
