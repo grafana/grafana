@@ -1,6 +1,7 @@
 package entity_server_tests
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -13,6 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+)
+
+var (
+	//go:embed testdata/dashboard-with-tags-b-g.json
+	dashboardWithTagsBlueGreen string
+	//go:embed testdata/dashboard-with-tags-r-g.json
+	dashboardWithTagsRedGreen string
 )
 
 type rawEntityMatcher struct {
@@ -378,5 +386,63 @@ func TestIntegrationEntityServer(t *testing.T) {
 			w1.Entity.Version,
 			w2.Entity.Version,
 		}, version)
+	})
+
+	t.Run("should be able to filter objects based on their labels", func(t *testing.T) {
+		kind := models.StandardKindDashboard
+		_, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
+				Kind: kind,
+				UID:  "blue-green",
+			},
+			Body: []byte(dashboardWithTagsBlueGreen),
+		})
+		require.NoError(t, err)
+
+		_, err = testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
+				Kind: kind,
+				UID:  "red-green",
+			},
+			Body: []byte(dashboardWithTagsRedGreen),
+		})
+		require.NoError(t, err)
+
+		search, err := testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"red": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 1)
+		require.Equal(t, search.Results[0].GRN.UID, "red-green")
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"green": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 2)
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"yellow": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 0)
 	})
 }

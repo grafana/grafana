@@ -623,7 +623,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		return nil, fmt.Errorf("missing user in context")
 	}
 
-	if r.NextPageToken != "" || len(r.Sort) > 0 || len(r.Labels) > 0 {
+	if r.NextPageToken != "" || len(r.Sort) > 0 {
 		return nil, fmt.Errorf("not yet supported")
 	}
 
@@ -637,7 +637,9 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	if r.WithBody {
 		fields = append(fields, "body")
 	}
-	if r.WithLabels {
+
+	// FIXME: The `|| len(r.Labels) > 0` condition is required only because label filtering is happening _after_ retrieving the entities from the Database
+	if r.WithLabels || len(r.Labels) > 0 {
 		fields = append(fields, "labels")
 	}
 	if r.WithFields {
@@ -732,5 +734,27 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 
 		rsp.Results = append(rsp.Results, result)
 	}
+
+	// FIXME: Filter through SQL rather than in memory
+	if len(r.Labels) > 0 {
+		filteredResults := make([]*entity.EntitySearchResult, 0)
+		for _, ent := range rsp.Results {
+			match := true
+			for labelKey, labelValue := range r.Labels {
+				val, ok := ent.Labels[labelKey]
+				if !ok || val != labelValue {
+					match = false
+					break
+				}
+			}
+
+			if match {
+				filteredResults = append(filteredResults, ent)
+				rsp.NextPageToken = ent.GRN.ToGRNString()
+			}
+		}
+		rsp.Results = filteredResults
+	}
+
 	return rsp, err
 }
