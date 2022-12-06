@@ -283,5 +283,9 @@ var (
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
 		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
 	}
 )

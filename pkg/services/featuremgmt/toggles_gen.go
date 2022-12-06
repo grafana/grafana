@@ -210,4 +210,8 @@ const (
 	// FlagIncreaseInMemDatabaseQueryCache
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
+
+	// FlagDatasourceLogger
+	// Logs all datasource requests
+	FlagDatasourceLogger = "datasourceLogger"
 )
