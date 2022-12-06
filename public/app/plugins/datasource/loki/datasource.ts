@@ -1,6 +1,6 @@
-import { cloneDeep, map as lodashMap } from 'lodash';
+import { cloneDeep, concat, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, concatMap, map, share, switchMap, tap } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -193,12 +193,11 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     } else {
       return super.query(fixedRequest).pipe(
+        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
         map((response) =>
           transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
         ),
-        tap((response) => {
-          trackQuery(response, fixedRequest.targets, fixedRequest.app);
-        })
+        tap((response) => trackQuery(response, fixedRequest.targets, fixedRequest.app))
       );
     }
   }
