@@ -224,7 +224,7 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 
 	homeNode := &navtree.NavLink{
 		Text:       "Home",
-		Id:         "home",
+		Id:         "__home__",
 		Url:        homeUrl,
 		Icon:       "home-alt",
 		Section:    navtree.NavSectionCore,

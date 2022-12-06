@@ -4,20 +4,19 @@ import { cloneDeep } from 'lodash';
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
-export const HOME_NAV_ID = 'home';
+export const HOME_NAV_ID = '__home__';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
   const rootNodes = cloneDeep(config.bootData.navTree);
   const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
+  const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
 
-  // set home as parent for the rootNodes
-  buildNavIndex(navIndex, rootNodes, homeNav);
-
-  // remove circular parent reference on the home node
-  if (navIndex[HOME_NAV_ID]) {
-    delete navIndex[HOME_NAV_ID].parentItem;
+  if (homeNav) {
+    buildNavIndex(navIndex, [homeNav]);
   }
+  // set home as parent for the other rootNodes
+  buildNavIndex(navIndex, otherRootNodes, homeNav);
 
   return navIndex;
 }
@@ -26,7 +25,9 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
   for (const node of children) {
     node.parentItem = parentItem;
 
-    navIndex[node.id!] = node;
+    if (node.id) {
+      navIndex[node.id] = node;
+    }
 
     if (node.children) {
       buildNavIndex(navIndex, node.children, node);
