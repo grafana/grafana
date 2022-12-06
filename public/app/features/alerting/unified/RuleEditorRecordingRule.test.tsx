@@ -156,7 +156,6 @@ describe('RuleEditor recording rules', () => {
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
 
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
-    await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
