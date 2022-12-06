@@ -73,17 +73,15 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     // Limit options pane width to 90% of screen.
     const styles = getStyles(config.theme2, splitVisible);
 
+    if (childrenArr.length === 1) {
+      return <div className={styles.singleLeftPane}>{childrenArr[0]}</div>;
+    }
+
     // Need to handle when width is relative. ie a percentage of the viewport
     const paneSizePx =
       paneSize <= 1
         ? paneSize * (splitOrientation === 'horizontal' ? window.innerHeight : window.innerWidth)
         : paneSize;
-
-    // the react split pane library always wants 2 children. This logic ensures that happens, even if one child is passed in
-    const childrenFragments = [
-      <React.Fragment key="leftPane">{childrenArr[0]}</React.Fragment>,
-      <React.Fragment key="rightPane">{childrenArr[1] || undefined}</React.Fragment>,
-    ];
 
     return (
       <SplitPane
@@ -98,7 +96,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
         paneStyle={paneStyle}
         pane2Style={secondaryPaneStyle}
       >
-        {childrenFragments}
+        {children}
       </SplitPane>
     );
   }
