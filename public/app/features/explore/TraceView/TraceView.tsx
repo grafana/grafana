@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { RefObject, useCallback, useMemo, useState } from 'react';
 
 import {
@@ -24,6 +23,7 @@ import {
   TraceTimelineViewer,
   TTraceTimeline,
 } from '@jaegertracing/jaeger-ui-components';
+import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

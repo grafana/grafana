@@ -1,9 +1,9 @@
-import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { RefObject, useMemo, useState } from 'react';
 
 import { DataFrame, SplitOpen, PanelData } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
+import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
+import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import { StoreState, useSelector } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 

@@ -1,4 +1,3 @@
-import { SpanLinks } from '@jaegertracing/jaeger-ui-components/src/types/links';
 import React from 'react';
 
 import {
@@ -19,6 +18,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
+import { SpanLinks } from '@jaegertracing/jaeger-ui-components/src/types/links';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

@@ -4,7 +4,7 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "typecheck", "lint", "generateThemes"]
+        "cacheableOperations": ["build", "typecheck", "lint", "generateThemes", "lint:sass"]
       }
     }
   },
