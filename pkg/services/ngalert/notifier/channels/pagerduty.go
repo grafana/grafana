@@ -54,6 +54,7 @@ type pagerdutySettings struct {
 	Group         string `json:"group,omitempty" yaml:"group,omitempty"`
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Source        string `json:"source,omitempty" yaml:"source,omitempty"`
+	Client        string `json:"client,omitempty" yaml:"client,omitempty"`
 }
 
 func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
@@ -90,12 +91,15 @@ func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
 	if settings.Summary == "" {
 		settings.Summary = DefaultMessageTitleEmbed
 	}
+	if settings.Client == "" {
+		settings.Client = defaultClient
+	}
 	if settings.Source == "" {
-		hostname, err := os.Hostname()
+		source, err := os.Hostname()
 		if err != nil {
-			hostname = defaultClient
+			source = settings.Client
 		}
-		settings.Source = hostname
+		settings.Source = source
 	}
 	return &settings, nil
 }
@@ -198,7 +202,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	msg := &pagerDutyMessage{
-		Client:      defaultClient,
+		Client:      tmpl(pn.settings.Client),
 		ClientURL:   pn.tmpl.ExternalURL.String(),
 		RoutingKey:  pn.settings.Key,
 		EventAction: eventType,

@@ -284,6 +284,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "<hostname>",
 					PropertyName: "source",
 				},
+				{ // New in 9.4.
+					Label:        "Client",
+					Description:  "The name of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "Grafana",
+					PropertyName: "client",
+				},
 			},
 		},
 		{
