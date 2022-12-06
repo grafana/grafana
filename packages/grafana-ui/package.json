@@ -203,5 +203,23 @@
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0",
     "react-dom": "^16.8.0 || ^17.0.0"
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "nx:run-script",
+        "options": {
+          "script": "build"
+        },
+        "inputs": [
+          "sharedGlobals",
+          "publicFiles",
+          "^default"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      }
+    }
   }
 }

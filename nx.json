@@ -1,5 +1,27 @@
 {
   "$schema": "https://raw.githubusercontent.com/nrwl/nx/master/packages/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "sharedGlobals": [
+      "{workspaceRoot}/babel.config.json",
+      "{workspaceRoot}/tsconfig.json",
+      "{workspaceRoot}/package.json"
+    ],
+    "publicFiles": [
+      "{workspaceRoot}/public/gazetteer/**/*",
+      "{workspaceRoot}/public/img/**/*",
+      "{workspaceRoot}/public/lib/**/*",
+      "{workspaceRoot}/public/locales/**/*",
+      "{workspaceRoot}/public/maps/**/*",
+      "{workspaceRoot}/public/sass/**/*",
+      "{workspaceRoot}/public/vendor/**/*",
+      "{workspaceRoot}/public/views/**/*"
+    ],
+    "production": ["!{projectRoot}/**/*.spec.{ts,tsx}", "!{projectRoot}/**/*.{md,mdx}", "!{projectRoot}/.eslintrc"],
+    "themes": [
+      "{workspaceRoot}/packages/grafana-ui/src/themes/*.tmpl.ts",
+      "{workspaceRoot}/scripts/generateSassVariableFiles.ts"
+    ]
+  },
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/nx-cloud",
