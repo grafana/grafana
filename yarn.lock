@@ -4326,7 +4326,6 @@ __metadata:
     "@types/react-dom": 17.0.14
     "@types/sinon": 10.0.13
     "@types/testing-library__jest-dom": 5.14.5
-    "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 1.4.0
     date-fns: 2.29.3
@@ -4746,7 +4745,6 @@ __metadata:
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
-    "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
     "@wojtekmaj/enzyme-adapter-react-17": 0.7.0
@@ -11479,7 +11477,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:*, @types/react-test-renderer@npm:17.0.1":
+"@types/react-test-renderer@npm:17.0.1":
   version: 17.0.1
   resolution: "@types/react-test-renderer@npm:17.0.1"
   dependencies:
@@ -11777,15 +11775,6 @@ __metadata:
   dependencies:
     "@types/jest": "*"
   checksum: 77fe7ad3a9d49250972a0e3289b6d536942f95f0d539f32a917cf78c9422113d55c00de53b53dd4de1de49b68c8b500faea62e3017c4a64736cfbfbade749e04
-  languageName: node
-  linkType: hard
-
-"@types/testing-library__react-hooks@npm:^3.2.0":
-  version: 3.4.1
-  resolution: "@types/testing-library__react-hooks@npm:3.4.1"
-  dependencies:
-    "@types/react-test-renderer": "*"
-  checksum: f32a5659330a7c2e555bffa74807f7331b1d2fcdd5fe4c08cc9130a0a12826f5f1c5bdf3210e7b2b4c9b774bddecc283171a347f78dc98d28836b0f773583a03
   languageName: node
   linkType: hard
 
@@ -21564,7 +21553,6 @@ __metadata:
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
-    "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
     "@types/webpack-env": 1.18.0
