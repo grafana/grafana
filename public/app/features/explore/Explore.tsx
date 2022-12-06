@@ -387,7 +387,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showTrace,
       showNodeGraph,
       showFlameGraph,
-      splitted,
       timeZone,
       isFromCompactUrl,
     } = this.props;

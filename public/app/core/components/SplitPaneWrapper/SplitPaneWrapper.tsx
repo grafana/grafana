@@ -15,6 +15,7 @@ interface Props {
   onDragFinished?: (size?: number) => void;
   paneStyle?: React.CSSProperties;
   secondaryPaneStyle?: React.CSSProperties;
+  style?: React.CSSProperties;
 }
 
 export class SplitPaneWrapper extends PureComponent<Props> {
@@ -59,6 +60,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       minSize,
       primary,
       paneStyle,
+      style,
       secondaryPaneStyle,
       splitVisible = true,
     } = this.props;
@@ -95,7 +97,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
         resizerClassName={splitOrientation === 'horizontal' ? styles.resizerH : styles.resizerV}
         onDragStarted={() => this.onDragStarted()}
         onDragFinished={(size) => this.onDragFinished(size)}
-        style={{ height: 'auto' }}
+        style={style}
         paneStyle={paneStyle}
         pane2Style={secondaryPaneStyle}
       >

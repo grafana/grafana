@@ -132,6 +132,7 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
         primary="second"
         splitVisible={hasSplit}
         paneStyle={{ display: 'flex', flexDirection: 'column' }}
+        style={{ left: '16px', right: '16px' }}
         onDragFinished={(size) => {
           if (size) {
             updateSplitSize(size);
