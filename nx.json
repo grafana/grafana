@@ -26,15 +26,7 @@
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "typecheck",
-          "lint",
-          "generateThemes",
-          "lint:sass",
-          "storybookBuild",
-          "betterer"
-        ],
+        "cacheableOperations": ["build", "typecheck", "lint", "generateThemes", "lint:sass", "storybookBuild"],
         "accessToken": "ZjBjMmFhMGQtZGZjNS00NjI0LTliZDMtNWExN2RjYWQ5MGM1fHJlYWQtd3JpdGU="
       }
     }
@@ -49,10 +41,6 @@
     },
     "lint": {
       "dependsOn": ["lint:sass"]
-    },
-    "betterer": {
-      "inputs": ["{projectRoot}/**/*.{ts,tsx}", "{projectRoot}/**/*.test.*", "{projectRoot}/**/*.story.tsx"],
-      "outputs": ["{projectRoot}/.betterer.results"]
     }
   }
 }
