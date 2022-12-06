@@ -6,7 +6,7 @@ import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { useGetSingle } from './api';
-import { DetailsOverview, DetailsStatus } from './components';
+import { DetailsOverview, DetailsStatus, DetailsHeaderActions } from './components';
 import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
 
 const navId = 'connections-plugin-recipes';
@@ -16,6 +16,11 @@ export function PluginRecipeDetailsPage() {
   const { status, error, data } = useGetSingle(params.id);
   const { tabId, tabs } = usePluginRecipeDetailsPageTabs(data);
   const styles = useStyles2(getStyles);
+  const onStartInstall = () => {}; // called when the user clicks on "Install"
+  const info = [
+    { label: 'Version', value: 'v1.0.0' },
+    { label: 'Rating', value: '4/5' },
+  ];
 
   if (status === 'loading') {
     return (
@@ -46,7 +51,12 @@ export function PluginRecipeDetailsPage() {
   }
 
   return (
-    <Page navId={navId} pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}>
+    <Page
+      navId={navId}
+      pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}
+      actions={<DetailsHeaderActions onInstall={onStartInstall} />}
+      info={info}
+    >
       <Page.Contents>
         <div className={styles.content}>
           {tabId === tabIds.overview && <DetailsOverview recipe={data} />}
