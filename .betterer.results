@@ -8,11 +8,11 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:2976628669": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/ViewingLayer.test.js:1676554632": [
-      [14, 19, 13, "RegExp match", "2409514259"]
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/ViewingLayer.test.tsx:793800575": [
+      [14, 35, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/index.test.js:186764954": [
-      [14, 19, 13, "RegExp match", "2409514259"]
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/index.test.tsx:596989456": [
+      [14, 35, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:1734982398": [
       [14, 26, 13, "RegExp match", "2409514259"]
