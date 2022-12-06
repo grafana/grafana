@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -23,12 +24,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -185,50 +188,46 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
-	// ctx := context.Background()
-	// err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-	// 	ss.log.Debug("Ensuring main org and admin user exist")
-	// 	var stats models.SystemUserCountStats
-	// 	// TODO: Should be able to rename "Count" to "count", for more standard SQL style
-	// 	// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-	// 	rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-	// 	if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
-	// 		return fmt.Errorf("could not determine if admin user exists: %w", err)
-	// 	}
+	ctx := context.Background()
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		ss.log.Debug("Ensuring main org and admin user exist")
+		var stats models.SystemUserCountStats
+		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
+		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
+		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+			return fmt.Errorf("could not determine if admin user exists: %w", err)
+		}
+		if stats.Count > 0 {
+			return nil
+		}
 
-	// 	if stats.Count > 0 {
-	// 		return nil
-	// 	}
+		// ensure admin user
+		if !ss.Cfg.DisableInitAdminCreation {
+			ss.log.Debug("Creating default admin user")
 
-	// 	// ensure admin user
-	// 	if !ss.Cfg.DisableInitAdminCreation {
-	// 		ss.log.Debug("Creating default admin user")
-	// 		if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
-	// 			Login:    ss.Cfg.AdminUser,
-	// 			Email:    ss.Cfg.AdminEmail,
-	// 			Password: ss.Cfg.AdminPassword,
-	// 			IsAdmin:  true,
-	// 		}); err != nil {
-	// 			return fmt.Errorf("failed to create admin user: %s", err)
-	// 		}
+			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
+				Login:    ss.Cfg.AdminUser,
+				Email:    ss.Cfg.AdminEmail,
+				Password: ss.Cfg.AdminPassword,
+				IsAdmin:  true,
+			}); err != nil {
+				return fmt.Errorf("failed to create admin user: %s", err)
+			}
 
-	// 		ss.log.Info("Created default admin", "user", ss.Cfg.AdminUser)
-	// 		// Why should we return and not create the default org in this case?
-	// 		// Returning here breaks tests using anonymous access
-	// 		// return nil
-	// 	}
+			ss.log.Info("Created default admin", "user", ss.Cfg.AdminUser)
+		}
 
-	// 	ss.log.Debug("Creating default org", "name", mainOrgName)
-	// 	if _, err := ss.getOrCreateOrg(sess, mainOrgName); err != nil {
-	// 		return fmt.Errorf("failed to create default organization: %w", err)
-	// 	}
+		ss.log.Debug("Creating default org", "name", mainOrgName)
+		if _, err := ss.getOrCreateOrg(sess, mainOrgName); err != nil {
+			return fmt.Errorf("failed to create default organization: %w", err)
+		}
 
-	// 	ss.log.Info("Created default organization")
-	// 	return nil
-	// })
+		ss.log.Info("Created default organization")
+		return nil
+	})
 
-	// return err
-	return nil
+	return err
 }
 
 func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
