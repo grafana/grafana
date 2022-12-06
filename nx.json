@@ -2,9 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/nrwl/nx/master/packages/nx/schemas/nx-schema.json",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
+      "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": ["build", "typecheck", "lint", "generateThemes", "lint:sass"]
+        "cacheableOperations": ["build", "typecheck", "lint", "generateThemes", "lint:sass"],
+        "accessToken": "ZjBjMmFhMGQtZGZjNS00NjI0LTliZDMtNWExN2RjYWQ5MGM1fHJlYWQtd3JpdGU="
       }
     }
   },

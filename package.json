@@ -284,6 +284,7 @@
     "@grafana/eslint-config": "5.0.0",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
+    "@nrwl/nx-cloud": "latest",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.8",
     "@react-types/button": "3.6.2",
     "@react-types/menu": "3.7.2",
