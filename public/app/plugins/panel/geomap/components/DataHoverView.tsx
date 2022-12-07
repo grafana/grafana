@@ -22,15 +22,19 @@ export interface Props {
 }
 
 export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: Props) => {
+  console.log('ismail simsek here 5555555555555555555555555');
   const styles = useStyles2(getStyles);
 
   if (!data || rowIndex == null) {
     return null;
   }
 
+  // Put the traceID field in front.
   const visibleFields = data.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
+  const traceIDField = visibleFields.find((field) => field.name === 'traceID') || data.fields[0];
+  const orderedVisibleFields = [traceIDField, ...visibleFields.filter((field) => traceIDField !== field)];
 
-  if (visibleFields.length === 0) {
+  if (orderedVisibleFields.length === 0) {
     return null;
   }
 
@@ -38,7 +42,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: 
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  for (const f of visibleFields) {
+  for (const f of orderedVisibleFields) {
     const v = f.values.get(rowIndex);
     const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
     if (f.getLinks) {
