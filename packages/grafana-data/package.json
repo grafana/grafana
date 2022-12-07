@@ -31,6 +31,7 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "betterer": "betterer --config ../../.betterer.ts",
     "bettererMerge": "betterer --config ../../.betterer.ts merge",
+    "bettererStats": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/reportBettererStats.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",

@@ -14,6 +14,7 @@
   "scripts": {
     "betterer": "betterer --config ../../.betterer.ts",
     "bettererMerge": "betterer --config ../../.betterer.ts merge",
+    "bettererStats": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/reportBettererStats.ts",
     "build": "NODE_ENV=production webpack --config ./webpack/webpack.prod.js --env noMinify=1",
     "build:nominify": "yarn run build --env noMinify=1",
     "generateThemes": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/generateSassVariableFiles.ts",
