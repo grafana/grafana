@@ -1868,7 +1868,7 @@ func TestProcessEvalResults(t *testing.T) {
 							Values:          make(map[string]*float64),
 						},
 					},
-					StartsAt:           evaluationTime.Add(20 * time.Second),
+					StartsAt:           evaluationTime.Add(30 * time.Second),
 					EndsAt:             evaluationTime.Add(50 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(50 * time.Second),
 					EvaluationDuration: evaluationDuration,
@@ -2309,7 +2309,18 @@ func TestStaleResults(t *testing.T) {
 		return key
 	}
 
-	checkExpectedStates := func(t *testing.T, actual []*state.State, expected map[string]struct{}) {
+	checkExpectedStates := func(t *testing.T, actual []*state.State, expected map[string]struct{}) map[string]*state.State {
+		t.Helper()
+		result := make(map[string]*state.State)
+		require.Len(t, actual, len(expected))
+		for _, currentState := range actual {
+			_, ok := expected[currentState.CacheID]
+			result[currentState.CacheID] = currentState
+			require.Truef(t, ok, "State %s is not expected. States: %v", currentState.CacheID, expected)
+		}
+		return result
+	}
+	checkExpectedStateTransitions := func(t *testing.T, actual []state.StateTransition, expected map[string]struct{}) {
 		t.Helper()
 		require.Len(t, actual, len(expected))
 		for _, currentState := range actual {
@@ -2318,75 +2329,83 @@ func TestStaleResults(t *testing.T) {
 		}
 	}
 
+	ctx := context.Background()
+	clk := clock.NewMock()
+
+	store := &state.FakeInstanceStore{}
+
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, store, &state.NoopImageService{}, clk, &state.FakeHistorian{})
+
+	rule := models.AlertRuleGen(models.WithFor(0))()
+
+	initResults := eval.Results{
+		eval.ResultGen(eval.WithEvaluatedAt(clk.Now()))(),
+		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
+		eval.ResultGen(eval.WithState(eval.Normal), eval.WithEvaluatedAt(clk.Now()))(),
+	}
+
+	state1 := getCacheID(t, rule, initResults[0])
+	state2 := getCacheID(t, rule, initResults[1])
+	state3 := getCacheID(t, rule, initResults[2])
+
+	initStates := map[string]struct{}{
+		state1: {},
+		state2: {},
+		state3: {},
+	}
+
+	// Init
+	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
+	checkExpectedStateTransitions(t, processed, initStates)
+
+	currentStates := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+	statesMap := checkExpectedStates(t, currentStates, initStates)
+	require.Equal(t, eval.Alerting, statesMap[state2].State) // make sure the state is alerting because we need it to be resolved later
+
+	staleDuration := 2 * time.Duration(rule.IntervalSeconds) * time.Second
+	clk.Add(staleDuration)
+	result := initResults[0]
+	result.EvaluatedAt = clk.Now()
+	results := eval.Results{
+		result,
+	}
+
+	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
-		// init
-		ctx := context.Background()
-		_, dbstore := tests.SetupTestEnv(t, 1)
-		clk := clock.NewMock()
-		clk.Set(time.Now())
-
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clk, &state.FakeHistorian{})
-
-		orgID := rand.Int63()
-		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)
-
-		initResults := eval.Results{
-			eval.Result{
-				Instance:    data.Labels{"test1": "testValue1"},
-				State:       eval.Alerting,
-				EvaluatedAt: clk.Now(),
-			},
-			eval.Result{
-				Instance:    data.Labels{"test1": "testValue2"},
-				State:       eval.Alerting,
-				EvaluatedAt: clk.Now(),
-			},
-			eval.Result{
-				Instance:    data.Labels{"test1": "testValue3"},
-				State:       eval.Normal,
-				EvaluatedAt: clk.Now(),
-			},
-		}
-
-		initStates := map[string]struct{}{
-			getCacheID(t, rule, initResults[0]): {},
-			getCacheID(t, rule, initResults[1]): {},
-			getCacheID(t, rule, initResults[2]): {},
-		}
-
-		// Init
-		processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
-		checkExpectedStates(t, processed, initStates)
-		currentStates := st.GetStatesForRuleUID(orgID, rule.UID)
-		checkExpectedStates(t, currentStates, initStates)
-
-		staleDuration := 2 * time.Duration(rule.IntervalSeconds) * time.Second
-		clk.Add(staleDuration)
-		results := eval.Results{
-			eval.Result{
-				Instance:    data.Labels{"test1": "testValue1"},
-				State:       eval.Alerting,
-				EvaluatedAt: clk.Now(),
-			},
-		}
-		clk.Add(time.Nanosecond) // we use time now when calculate stale states. Evaluation tick and real time are not the same. usually, difference is way greater than nanosecond.
-		expectedStaleReturned := getCacheID(t, rule, initResults[1])
 		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
-		checkExpectedStates(t, processed, map[string]struct{}{
-			getCacheID(t, rule, results[0]): {},
-			expectedStaleReturned:           {},
-		})
+		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
-			if s.CacheID == expectedStaleReturned {
-				assert.Truef(t, s.Resolved, "Returned stale state should have Resolved set to true")
-				assert.Equal(t, eval.Normal, s.State)
-				assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)
-				break
+			if s.CacheID == state1 {
+				continue
 			}
+			assert.Equal(t, eval.Normal, s.State.State)
+			assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)
+			assert.Equal(t, clk.Now(), s.EndsAt)
+			if s.CacheID == state2 {
+				assert.Truef(t, s.Resolved, "Returned stale state should have Resolved set to true")
+			}
+			key, err := s.GetAlertInstanceKey()
+			require.NoError(t, err)
+			expectedStaleKeys = append(expectedStaleKeys, key)
 		}
-		currentStates = st.GetStatesForRuleUID(orgID, rule.UID)
+	})
+
+	t.Run("should remove stale states from cache", func(t *testing.T) {
+		currentStates = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		checkExpectedStates(t, currentStates, map[string]struct{}{
 			getCacheID(t, rule, results[0]): {},
 		})
+	})
+
+	t.Run("should delete stale states from the database", func(t *testing.T) {
+		for _, op := range store.RecordedOps {
+			switch q := op.(type) {
+			case state.FakeInstanceStoreOp:
+				keys, ok := q.Args[1].([]models.AlertInstanceKey)
+				require.Truef(t, ok, "Failed to parse fake store operations")
+				require.Len(t, keys, 2)
+				require.EqualValues(t, expectedStaleKeys, keys)
+			}
+		}
 	})
 }
