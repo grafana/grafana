@@ -424,13 +424,13 @@ export class LokiDatasource
     const lokiLogsQuery: LokiQuery = {
       expr: query.expr,
       queryType: LokiQueryType.Range,
-      refId: 'log-samples',
+      refId: REF_ID_DATA_SAMPLES,
       maxLines: 10,
     };
 
     // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
     const timeRange = getDefaultTimeRange();
-    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Explore, 'log-samples', true);
+    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
