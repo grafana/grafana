@@ -76,7 +76,7 @@ function createAwsConsoleLink(
 const logGroupNames = target.logGroupNames ?? [];
   const sources = arns?.length ? arns : logGroupNames;
   const interpolatedExpression = target.expression ? replace(target.expression) : '';
-  const interpolatedGroups = sources?.flatMap(getVariableValue) ?? [];
+const interpolatedGroups = sources?.flatMap(getVariableValue);
 
   const urlProps: AwsUrl = {
     end: range.to.toISOString(),
