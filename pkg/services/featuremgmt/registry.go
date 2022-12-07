@@ -344,7 +344,7 @@ var (
 		{
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quote to escape keyword in Mysql query",
-			State: FeatureStateAlpha,
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "userRemoteCache",
