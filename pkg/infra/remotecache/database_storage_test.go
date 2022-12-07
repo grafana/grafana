@@ -16,6 +16,7 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    &gobCodec{},
 		log:      log.New("remotecache.database"),
 	}
 
@@ -64,6 +65,7 @@ func TestSecondSet(t *testing.T) {
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    &gobCodec{},
 		log:      log.New("remotecache.database"),
 	}
 
