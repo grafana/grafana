@@ -229,13 +229,13 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 	})
 }
 
-func NewSignedInUserCacheKey(orgID, userID int64) string {
+func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
 // deprecated method, use only for tests
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	cacheKey := NewSignedInUserCacheKey(query.OrgId, query.UserId)
+	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		cachedUser := cached.(user.SignedInUser)
 		query.Result = &cachedUser
@@ -247,7 +247,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 		return err
 	}
 
-	cacheKey = NewSignedInUserCacheKey(query.Result.OrgID, query.UserId)
+	cacheKey = newSignedInUserCacheKey(query.Result.OrgID, query.UserId)
 	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
 	return nil
 }
