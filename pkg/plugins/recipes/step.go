@@ -7,6 +7,7 @@ import (
 type RecipeStep interface {
 	Apply(c context.Context) error
 	Revert(c context.Context) error
+	Status(c context.Context) (RecipeStepStatus, error)
 }
 
 type RecipeStepMeta struct {
