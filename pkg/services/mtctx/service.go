@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Service interface {
@@ -19,11 +20,19 @@ var _ Service = (*serviceImpl)(nil)
 
 func ProvideService(router routing.RouteRegister) Service {
 	svc := &serviceImpl{
-		cache: make(map[int64]*TenantInfo, 0),
+		cache:     make(map[int64]*TenantInfo, 0),
+		namespace: "default", // "hosted-grafana"
 	}
 
-	// attach kubernetes client to service
-	config, err := rest.InClusterConfig()
+	kubeconfig := "/Users/ryan/.kube/config"
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+
+	if err != nil {
+		// attach kubernetes client to service
+		svc.namespace = "hosted-grafana"
+		config, err = rest.InClusterConfig()
+	}
+
 	if err != nil {
 		log.Println("could not get kubernetes config", err)
 	} else if config != nil {

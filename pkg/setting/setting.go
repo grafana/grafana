@@ -969,6 +969,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 // Load Cfg from a string map rather than a real ini file
 func FromJSON(config map[string]map[string]string) (*Cfg, error) {
 	inifile := ini.Empty()
+	// TODO... gettting all defaults will be essential :grimmice:
+
 	for section, vals := range config {
 		s, err := inifile.NewSection(section)
 		if err != nil {
