@@ -18,9 +18,9 @@ func InitstartTime(ctx context.Context, now time.Time) context.Context {
 func TimeSinceStart(ctx context.Context, now time.Time) time.Duration {
 	val := ctx.Value(requestStartTime)
 	if val != nil {
-		starTime, ok := val.(time.Time)
+		startTime, ok := val.(time.Time)
 		if ok {
-			return now.Sub(starTime)
+			return now.Sub(startTime)
 		}
 	}
 
