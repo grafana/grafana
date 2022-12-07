@@ -195,6 +195,30 @@ var adminCommands = []*cli.Command{
 		},
 	},
 	{
+		Name:  "migrate",
+		Usage: "Runs migrations",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "version",
+				Usage:  "Print current database migration version",
+				Action: runDbCommand(getMigrationsVersion),
+			},
+			{
+				Name:   "run",
+				Usage:  "It will migrate up if steps > 0, and down if steps < 0.",
+				Action: runDbCommand(runMigrationsSteps),
+				Flags: []cli.Flag{
+					&cli.Int64Flag{
+						Name:     "steps",
+						Usage:    "Number of steps",
+						Required: false,
+						Value:    0,
+					},
+				},
+			},
+		},
+	},
+	{
 		Name:  "user-manager",
 		Usage: "Runs different helpful user commands",
 		Subcommands: []*cli.Command{
