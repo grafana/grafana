@@ -6,7 +6,7 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { PromApplication } from 'app/types/unified-alerting-dto';
+import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
@@ -50,6 +50,19 @@ const mocks = {
     fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
+
+function getDiscoverFeaturesMock(application: PromApplication, features?: Partial<PromApiFeatures['features']>) {
+  return {
+    application: application,
+    features: {
+      rulerApiEnabled: false,
+      alertManagerConfigApi: false,
+      federatedRules: false,
+      querySharding: false,
+      ...features,
+    },
+  };
+}
 
 describe('RuleEditor cloud: checking editable data sources', () => {
   beforeEach(() => {
@@ -116,37 +129,13 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
-        return {
-          application: PromApplication.Cortex,
-          features: {
-            rulerApiEnabled: true,
-            alertManagerConfigApi: false,
-            federatedRules: false,
-            querySharding: false,
-          },
-        };
+        return getDiscoverFeaturesMock(PromApplication.Cortex, { rulerApiEnabled: true });
       }
       if (dataSourceName === 'loki with local rule store') {
-        return {
-          application: PromApplication.Cortex,
-          features: {
-            rulerApiEnabled: false,
-            alertManagerConfigApi: false,
-            federatedRules: false,
-            querySharding: false,
-          },
-        };
+        return getDiscoverFeaturesMock(PromApplication.Cortex);
       }
       if (dataSourceName === 'cortex without ruler api') {
-        return {
-          application: PromApplication.Cortex,
-          features: {
-            rulerApiEnabled: false,
-            alertManagerConfigApi: false,
-            federatedRules: false,
-            querySharding: false,
-          },
-        };
+        return getDiscoverFeaturesMock(PromApplication.Cortex);
       }
 
       throw new Error(`${dataSourceName} not handled`);

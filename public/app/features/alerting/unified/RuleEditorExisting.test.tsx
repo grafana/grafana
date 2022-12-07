@@ -5,9 +5,8 @@ import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOptionMatch } from 'test/helpers/selectOptionInTest';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
