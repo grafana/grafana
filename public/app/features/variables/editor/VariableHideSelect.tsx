@@ -13,6 +13,7 @@ const HIDE_OPTIONS = [
   { label: 'Label and value', value: VariableHide.dontHide },
   { label: 'Value', value: VariableHide.hideLabel },
   { label: 'Nothing', value: VariableHide.hideVariable },
+  { label: 'Expandable', value: VariableHide.hideExpandable },
 ];
 
 export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<Props>) {

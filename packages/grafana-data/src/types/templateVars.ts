@@ -42,6 +42,7 @@ export enum VariableHide {
   dontHide,
   hideLabel,
   hideVariable,
+  hideExpandable,
 }
 
 export interface AdHocVariableFilter {
