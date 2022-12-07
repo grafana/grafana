@@ -510,6 +510,15 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
+    {
+      path: '/system-notifications',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "NotificationsPage"*/ 'app/core/components/SystemNotifications/SystemNotificationsPage'
+          )
+      ),
+    },
     ...getBrowseStorageRoutes(),
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
