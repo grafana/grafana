@@ -67,5 +67,6 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
+  userRemoteCache?: boolean;
   datasourceLogger?: boolean;
 }

@@ -211,6 +211,10 @@ const (
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
 
+	// FlagUserRemoteCache
+	// Enable using remote cache for users
+	FlagUserRemoteCache = "userRemoteCache"
+
 	// FlagDatasourceLogger
 	// Logs all datasource requests
 	FlagDatasourceLogger = "datasourceLogger"
