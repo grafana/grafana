@@ -134,24 +134,6 @@ export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[]
   return { labels: visibleLabels, totalSeriesCount: config.series.length };
 };
 
-// Merge values from objects with same props
-const getUniqueValuesFromLabels = (labels: LabelWithExemplarUIData[]) => {
-  const labelToSet: { [index: string]: Set<string> } = {};
-
-  Object.values(labels).forEach((labelObject) => {
-    return Object.keys(labelObject.labels).forEach((labelName) => {
-      const labelValue: string = labelObject.labels[labelName];
-      if (typeof labelToSet[labelName] === 'undefined') {
-        labelToSet[labelName] = new Set<string>().add(labelValue);
-      } else {
-        labelToSet[labelName].add(labelValue);
-      }
-    });
-  });
-
-  return labelToSet;
-};
-
 interface LabelWithExemplarUIData {
   labels: Labels;
   color?: string;
