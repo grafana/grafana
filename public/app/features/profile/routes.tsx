@@ -1,6 +1,7 @@
 import { uniq } from 'lodash';
 
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import SystemNotificationsPage from 'app/core/components/SystemNotifications/SystemNotificationsPage';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 
@@ -25,9 +26,7 @@ const profileRoutes: RouteDescriptor[] = [
   },
   {
     path: '/profile/notifications',
-    component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
-    ),
+    component: SystemNotificationsPage,
   },
 ];
 

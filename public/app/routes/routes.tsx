@@ -4,6 +4,7 @@ import { Redirect } from 'react-router-dom';
 import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
+import SystemNotificationsPage from 'app/core/components/SystemNotifications/SystemNotificationsPage';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
@@ -50,6 +51,10 @@ export function getAppRoutes(): RouteDescriptor[] {
         {
           path: '/admin/access',
           component: () => <NavLandingPage navId="admin/access" />,
+        },
+        {
+          path: '/system-notifications',
+          component: () => <NavLandingPage navId="system-notifications" />,
         },
       ]
     : [];
@@ -304,6 +309,11 @@ export function getAppRoutes(): RouteDescriptor[] {
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
+    // SYSTEM NOTIFICATIONS
+    {
+      path: '/system-notfications',
+      component: SystemNotificationsPage,
+    },
     // ADMIN
     {
       path: '/admin',
@@ -494,7 +504,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/notifications',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
+        () =>
+          import(
+            /* webpackChunkName: "NotificationsPage"*/ 'app/core/components/SystemNotifications/SystemNotificationsPage'
+          )
       ),
     },
     ...getBrowseStorageRoutes(),
