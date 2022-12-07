@@ -14,8 +14,7 @@ import "github.com/grafana/grafana/pkg/kindsys"
 // Summarizer returns a func that takes raw bytes representing a Team
 // and constructs a [kindsys.EntitySummary].
 func Summarizer() kindsys.Summarizer {
-	// This func is a gateway. The generated body depends on the value of handleSummary.
-	// in the Team kind declaration.
+	// This func is a gateway. The generated body depends on the kind's handleSummary value.
 
 	// handleSummary is "generic" for the Team kind. The generic summary
 	// extractor is used.
