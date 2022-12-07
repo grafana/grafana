@@ -1,21 +1,4 @@
-export interface AppNotification {
-  id: string;
-  severity: AppNotificationSeverity;
-  icon: string;
-  title: string;
-  text: string;
-  traceId?: string;
-  component?: React.ReactElement;
-  showing: boolean;
-  timestamp: number;
-}
-
-export enum AppNotificationSeverity {
-  Success = 'success',
-  Warning = 'warning',
-  Error = 'error',
-  Info = 'info',
-}
+import { AppNotification, AppNotificationSeverity, AppNotificationType } from '@grafana/data';
 
 export enum AppNotificationTimeout {
   Success = 3000,
@@ -28,6 +11,14 @@ export const timeoutMap = {
   [AppNotificationSeverity.Warning]: AppNotificationTimeout.Warning,
   [AppNotificationSeverity.Error]: AppNotificationTimeout.Error,
   [AppNotificationSeverity.Info]: AppNotificationTimeout.Success,
+};
+
+export const tagColorMap = {
+  [AppNotificationType.Access]: 0,
+  [AppNotificationType.Permissions]: 1,
+  [AppNotificationType.ProductAnnouncement]: 2,
+  [AppNotificationType.SystemMessage]: 3,
+  [AppNotificationType.Update]: 4,
 };
 
 export interface AppNotificationsState {

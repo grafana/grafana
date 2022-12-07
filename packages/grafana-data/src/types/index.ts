@@ -52,3 +52,4 @@ export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
+export * from './notification';

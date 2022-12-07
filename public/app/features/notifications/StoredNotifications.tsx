@@ -9,14 +9,14 @@ import {
   clearAllNotifications,
   clearNotification,
   readAllNotifications,
-  selectWarningsAndErrors,
+  selectAll,
   selectLastReadTimestamp,
 } from 'app/core/reducers/appNotification';
 import { useDispatch, useSelector } from 'app/types';
 
 export function StoredNotifications() {
   const dispatch = useDispatch();
-  const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
+  const notifications = useSelector((state) => selectAll(state.appNotifications));
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);
   const allNotificationsSelected = notifications.every((notification) =>
     selectedNotificationIds.includes(notification.id)
@@ -88,6 +88,7 @@ export function StoredNotifications() {
               title={notif.title}
               timestamp={notif.timestamp}
               traceId={notif.traceId}
+              type={notif.type}
             >
               <span>{notif.text}</span>
             </StoredNotificationItem>

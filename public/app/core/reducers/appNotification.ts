@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/';
+import { AppNotification, AppNotificationSeverity } from '@grafana/data';
+import { AppNotificationsState } from 'app/types/';
 
 const MAX_STORED_NOTIFICATIONS = 25;
 export const STORAGE_KEY = 'notifications';

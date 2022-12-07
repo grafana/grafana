@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents } from '@grafana/data';
+import { AppNotificationEvent } from '@grafana/runtime';
 import { VerticalGroup } from '@grafana/ui';
 import { notifyApp, hideAppNotification } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
@@ -38,6 +39,8 @@ export class AppNotificationListUnConnected extends PureComponent<Props> {
     appEvents.on(AppEvents.alertWarning, (payload) => notifyApp(createWarningNotification(...payload)));
     appEvents.on(AppEvents.alertSuccess, (payload) => notifyApp(createSuccessNotification(...payload)));
     appEvents.on(AppEvents.alertError, (payload) => notifyApp(createErrorNotification(...payload)));
+
+    appEvents.subscribe(AppNotificationEvent, (event) => notifyApp(event.payload));
   }
 
   onClearAppNotification = (id: string) => {

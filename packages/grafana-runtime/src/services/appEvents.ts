@@ -1,4 +1,12 @@
-import { BusEventBase, BusEventWithPayload, EventBus, GrafanaTheme2, PanelModel, TimeRange } from '@grafana/data';
+import {
+  AppNotification,
+  BusEventBase,
+  BusEventWithPayload,
+  EventBus,
+  GrafanaTheme2,
+  PanelModel,
+  TimeRange,
+} from '@grafana/data';
 
 /**
  * Called when a dashboard is refreshed
@@ -34,6 +42,15 @@ export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
  */
 export class CopyPanelEvent extends BusEventWithPayload<PanelModel> {
   static type = 'copy-panel';
+}
+
+/**
+ * Called to show a toast notification
+ *
+ * @public
+ */
+export class AppNotificationEvent extends BusEventWithPayload<AppNotification> {
+  static type = 'app-notification';
 }
 
 // Internal singleton instance
