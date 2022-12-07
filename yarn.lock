@@ -13412,15 +13412,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app@link:../app::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "app@link:../app::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
-
 "app@link:../app::locator=grafana-app%40workspace%3Apublic%2Fapp":
   version: 0.0.0-use.local
   resolution: "app@link:../app::locator=grafana-app%40workspace%3Apublic%2Fapp"
+  languageName: node
+  linkType: soft
+
+"app@link:./public/app::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "app@link:./public/app::locator=grafana%40workspace%3A."
   languageName: node
   linkType: soft
 
@@ -22148,7 +22148,7 @@ __metadata:
     angular-route: 1.8.3
     angular-sanitize: 1.8.3
     ansicolor: 1.1.100
-    app: "link:../app"
+    app: "link:./public/app"
     autoprefixer: 10.4.13
     babel-jest: 29.3.1
     babel-loader: 9.1.0
@@ -22308,7 +22308,7 @@ __metadata:
     stylelint-config-sass-guidelines: 9.0.1
     symbol-observable: 4.0.0
     terser-webpack-plugin: 5.3.6
-    test: "link:../test"
+    test: "link:./public/test"
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.4.2
@@ -37055,15 +37055,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"test@link:../test::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "test@link:../test::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
-
 "test@link:../test::locator=grafana-app%40workspace%3Apublic%2Fapp":
   version: 0.0.0-use.local
   resolution: "test@link:../test::locator=grafana-app%40workspace%3Apublic%2Fapp"
+  languageName: node
+  linkType: soft
+
+"test@link:./public/test::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "test@link:./public/test::locator=grafana%40workspace%3A."
   languageName: node
   linkType: soft
 
