@@ -30,13 +30,14 @@ type ServiceAccountsStoreImpl struct {
 }
 
 func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service,
-	kvStore kvstore.KVStore, orgService org.Service) *ServiceAccountsStoreImpl {
+	kvStore kvstore.KVStore, userService user.Service, orgService org.Service) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
 		sqlStore:      store,
 		apiKeyService: apiKeyService,
 		kvStore:       kvStore,
 		log:           log.New("serviceaccounts.store"),
 		orgService:    orgService,
+		userService:   userService,
 	}
 }
 
@@ -55,7 +56,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	var newSA *user.User
 	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) (err error) {
 		var errUser error
-		newSA, errUser = s.sqlStore.CreateUser(ctx, user.CreateUserCommand{
+		newSA, errUser = s.userService.CreateServiceAccount(ctx, &user.CreateUserCommand{
 			Login:            generatedLogin,
 			OrgID:            orgId,
 			Name:             saForm.Name,
@@ -461,7 +462,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 	}
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		newSA, errCreateSA := s.sqlStore.CreateUser(ctx, cmd)
+		newSA, errCreateSA := s.userService.CreateServiceAccount(ctx, &cmd)
 		if errCreateSA != nil {
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
 		}

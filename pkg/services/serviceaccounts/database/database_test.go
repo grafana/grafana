@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -118,7 +119,9 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	kvStore := kvstore.ProvideService(db)
 	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
 	require.NoError(t, err)
-	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, orgService)
+	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, userSvc, orgService)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
