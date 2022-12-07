@@ -14,10 +14,10 @@ func TestKindRegistry(t *testing.T) {
 	err := registry.Register(dummy.GetEntityKindInfo("test"), dummy.GetEntitySummaryBuilder("test"))
 	require.NoError(t, err)
 
-	ids := []string{}
-	for _, k := range registry.GetKinds() {
-		ids = append(ids, k.ID)
-	}
+	// ids := []string{}
+	// for _, k := range registry.GetKinds() {
+	// 	ids = append(ids, k.ID)
+	// }
 	// require.Equal(t, []string{
 	// 	"dashboard",
 	// 	"folder",
