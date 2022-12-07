@@ -51,7 +51,7 @@ func (e exitWithCode) Error() string {
 
 func RunServer(opt ServerOptions) int {
 	var (
-		target     = serverFs.String("target", "all", "modules to run, separated by spaces. ex: \"all\" or \"object-store\"")
+		target     = serverFs.String("target", "", "modules to run, separated by spaces. ex: \"all\" or \"object-store\"")
 		configFile = serverFs.String("config", "", "path to config file")
 		homePath   = serverFs.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 		pidFile    = serverFs.String("pidfile", "", "path to pid file")

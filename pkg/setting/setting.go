@@ -721,7 +721,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 
 func applyCommandLineProperties(target string, props map[string]string, file *ini.File) {
 	defaultSection, err := file.GetSection("")
-	if err == nil {
+	if err == nil && target != "" {
 		key, err := defaultSection.GetKey("target")
 		if err == nil {
 			key.SetValue(target)
@@ -1008,7 +1008,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
-	if err := readObjectStoreSettings(cfg, iniFile); err != nil {
+	if err := readEntityStoreSettings(cfg, iniFile); err != nil {
 		return err
 	}
 
@@ -1582,8 +1582,8 @@ type EntityStoreSettings struct {
 	Address string
 }
 
-func readObjectStoreSettings(cfg *Cfg, iniFile *ini.File) error {
-	os := iniFile.Section("object_store")
+func readEntityStoreSettings(cfg *Cfg, iniFile *ini.File) error {
+	os := iniFile.Section("entity_store")
 	address := os.Key("address").MustString("127.0.0.1:10000")
 	cfg.EntityStore = EntityStoreSettings{Address: address}
 	return nil
