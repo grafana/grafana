@@ -30,7 +30,6 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   config,
   visibleLabels,
 }) => {
-  console.log('exemplars', exemplars);
   const plotInstance = useRef<uPlot>();
 
   useLayoutEffect(() => {
