@@ -95,6 +95,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.service-accounts.title', 'Service accounts');
     case 'admin':
       return t('nav.admin.title', 'Server admin');
+    case 'system-notifications':
+      return t('nav.system-notifications.title', 'System notifications');
     case 'global-users':
       return config.featureToggles.topnav
         ? t('nav.global-users.title', 'Users')
@@ -183,6 +185,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.api-keys.subtitle', 'Manage and create API keys that are used to interact with Grafana HTTP APIs');
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
+    case 'system-notifications':
+      return t('nav.system-notifications.subtitle', 'System notifications');
     case 'global-users':
       return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':

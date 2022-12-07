@@ -5,8 +5,6 @@ import { NavModel, NavModelItem } from '@grafana/data';
 import { Branding } from '../Branding/Branding';
 
 export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
-  const homeNav = useSelector((state) => state.navIndex)?.[HOME_NAV_ID];
-
   useEffect(() => {
     const parts: string[] = [];
     if (pageNav) {

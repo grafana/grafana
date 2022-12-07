@@ -1153,6 +1153,23 @@ export const mockNavModel: NavIndex = {
       ],
     },
   },
+  'system-notifications': {
+    id: 'system-notifications',
+    text: 'System notifications',
+    icon: 'bell', // CHANGE THIS
+    section: NavSection.Config,
+    url: '/system-notifications',
+    sortWeight: -1150,
+    hideFromTabs: false,
+    children: [
+      {
+        id: 'system-notifications',
+        text: 'System notifications',
+        icon: 'bell',
+        url: '/system-notifications',
+      },
+    ],
+  },
   'global-orgs': {
     id: 'global-orgs',
     text: 'Orgs',
