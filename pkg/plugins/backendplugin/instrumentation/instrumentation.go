@@ -53,6 +53,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 			"endpoint", endpoint,
 			"eventName", "grafana-data-egress",
 			"insight_logs", true,
+			"since_grafana_request_started", log.TimeSinceStart(ctx, time.Now()),
 		}
 
 		if pluginCtx.User != nil {
