@@ -83,4 +83,5 @@ export interface FeatureToggles {
   elasticsearchBackendMigration?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
+  sessionRemoteCache?: boolean;
 }

@@ -378,5 +378,10 @@ var (
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "sessionRemoteCache",
+			Description: "Enable using remote cache for user sessions",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
