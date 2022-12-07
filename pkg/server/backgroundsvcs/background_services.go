@@ -158,7 +158,7 @@ func NewBackgroundServiceRegistry(
 		cfg:                         cfg,
 	}
 
-	r.BasicService = services.NewBasicService(nil, r.run, r.stop)
+	r.BasicService = services.NewBasicService(r.start, r.run, r.stop)
 	return r
 }
 
@@ -173,10 +173,6 @@ func (r *BackgroundServiceRegistry) start(ctx context.Context) error {
 }
 
 func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
-	if err := r.start(ctx); err != nil {
-		return err
-	}
-
 	// Start background services.
 	for _, svc := range r.Services {
 		if registry.IsDisabled(svc) {
