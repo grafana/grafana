@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -167,15 +168,9 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.EvaluationResult, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
-	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []StateTransition
-
-	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
-		states = append(states, s)
-	}
+	states := st.updateRuleStates(ctx, logger, results, alertRule, extraLabels)
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
 	st.deleteAlertStates(ctx, logger, staleStates)
 
@@ -188,10 +183,97 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	return allChanges
 }
 
-// Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
-	currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
+func (st *Manager) updateRuleStates(ctx context.Context, logger log.Logger, results eval.EvaluationResult, alertRule *ngModels.AlertRule, extraLabels data.Labels) []StateTransition {
+	if results.Error != nil {
+		logger.Debug("Processing evaluation error", "mapping", alertRule.ExecErrState)
+		switch alertRule.ExecErrState {
+		case ngModels.OkErrState:
+			return st.setAllStates(ctx, logger, alertRule, results, eval.Normal, "Error:"+results.Error.Error())
+		case ngModels.AlertingErrState:
+			return st.setAllStates(ctx, logger, alertRule, results, eval.Alerting, "Error:"+results.Error.Error())
+		case ngModels.ErrorErrState:
+			r := eval.Result{
+				Instance:           nil,
+				State:              eval.Error,
+				Error:              results.Error,
+				EvaluatedAt:        results.EvaluatedAt,
+				EvaluationDuration: results.EvaluationDuration,
+			}
+			s := st.cache.getOrCreate(ctx, st.log, alertRule, r, extraLabels, st.externalURL)
+			transition := setNextState(ctx, logger, st.images, alertRule, r, s, "")
+			st.cache.set(transition.State)
+			return []StateTransition{transition}
+		}
+	}
+	if results.NoData != nil {
+		logger.Debug("Processing evaluation no data", "mapping", alertRule.NoDataState)
+		switch alertRule.NoDataState {
+		case ngModels.OK:
+			return st.setAllStates(ctx, logger, alertRule, results, eval.Normal, "No Data:"+results.NoData.String())
+		case ngModels.Alerting:
+			return st.setAllStates(ctx, logger, alertRule, results, eval.Alerting, "No Data:"+results.NoData.String())
+		case ngModels.NoData:
+			if results.NoData.DatasourceToRefID != nil {
+				transitions := make([]StateTransition, 0, len(results.NoData.DatasourceToRefID))
+				for datasourceUID, refIDs := range results.NoData.DatasourceToRefID {
+					r := eval.Result{
+						Instance: data.Labels{
+							"datasource_uid": datasourceUID,
+							"ref_id":         strings.Join(refIDs, ","),
+						},
+						State:              eval.NoData,
+						EvaluatedAt:        results.EvaluatedAt,
+						EvaluationDuration: results.EvaluationDuration,
+					}
+					s := st.cache.getOrCreate(ctx, st.log, alertRule, r, extraLabels, st.externalURL)
+					transition := setNextState(ctx, logger, st.images, alertRule, r, s, "")
+					st.cache.set(transition.State)
+					transitions = append(transitions, transition)
+				}
+				return transitions
+			}
+			r := eval.Result{
+				State:              eval.NoData,
+				EvaluatedAt:        results.EvaluatedAt,
+				EvaluationDuration: results.EvaluationDuration,
+			}
+			s := st.cache.getOrCreate(ctx, st.log, alertRule, r, extraLabels, st.externalURL)
+			transition := setNextState(ctx, logger, st.images, alertRule, r, s, "")
+			st.cache.set(transition.State)
+			return []StateTransition{transition}
+		}
+	}
+	logger.Debug("State manager processing evaluation results", "results", len(results.Results))
 
+	transitions := make([]StateTransition, 0, len(results.Results))
+	for _, result := range results.Results {
+		currentState := st.cache.getOrCreate(ctx, st.log, alertRule, result, extraLabels, st.externalURL)
+		transition := setNextState(ctx, logger, st.images, alertRule, result, currentState, "")
+		st.cache.set(transition.State)
+		transitions = append(transitions, transition)
+	}
+	return transitions
+}
+
+func (st *Manager) setAllStates(ctx context.Context, logger log.Logger, alertRule *ngModels.AlertRule, result eval.EvaluationResult, newState eval.State, stateReason string) []StateTransition {
+	states := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	transitions := make([]StateTransition, 0, len(states))
+	for _, state := range states {
+		r := eval.Result{
+			Instance:           state.Labels,
+			State:              newState,
+			EvaluatedAt:        result.EvaluatedAt,
+			EvaluationDuration: result.EvaluationDuration,
+		}
+		transition := setNextState(ctx, logger, st.images, alertRule, r, state, stateReason)
+		st.cache.set(transition.State)
+		transitions = append(transitions, transition)
+	}
+	return transitions
+}
+
+// Set the current state based on evaluation results
+func setNextState(ctx context.Context, logger log.Logger, images ImageCapturer, alertRule *ngModels.AlertRule, result eval.Result, currentState *State, newStateReason string) StateTransition {
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
@@ -224,13 +306,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	case eval.Pending: // we do not emit results with this state
 		logger.Debug("Ignoring set next state as result is pending")
 	}
-
-	// Set reason iff: result is different than state, reason is not Alerting or Normal
-	currentState.StateReason = ""
+	currentState.StateReason = newStateReason
 
 	if currentState.State != result.State &&
 		result.State != eval.Normal &&
-		result.State != eval.Alerting {
+		result.State != eval.Alerting && newStateReason == "" {
 		currentState.StateReason = result.State.String()
 	}
 
@@ -239,7 +319,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
-		image, err := takeImage(ctx, st.images, alertRule)
+		image, err := takeImage(ctx, images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
 				"dashboard", alertRule.GetDashboardUID(),
@@ -249,8 +329,6 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 			currentState.Image = image
 		}
 	}
-
-	st.cache.set(currentState)
 
 	nextState := StateTransition{
 		State:               currentState,
