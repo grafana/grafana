@@ -5,6 +5,7 @@
 ### Bug fixes
 
 - **Prometheus:** Fix exemplars not respecting corresponding series display status. [#59678](https://github.com/grafana/grafana/issues/59678), [@gtk-grafana](https://github.com/gtk-grafana)
+- **Prometheus:** Match exemplar fill color with series color in time series. [#59908](https://github.com/grafana/grafana/issues/59499), [@gtk-grafana](https://github.com/gtk-grafana)
 
 <!-- 9.3.2 END -->
 <!-- 9.3.1 START -->
