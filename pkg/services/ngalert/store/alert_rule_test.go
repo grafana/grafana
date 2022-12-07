@@ -154,7 +154,6 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
