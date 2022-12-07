@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "returnUnameHeader",
+			Description: "Return user login as header for authenticated requests",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
@@ -376,6 +381,11 @@ var (
 		{
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "sessionRemoteCache",
+			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
 	}

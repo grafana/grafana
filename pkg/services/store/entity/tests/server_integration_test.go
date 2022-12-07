@@ -1,6 +1,7 @@
 package entity_server_tests
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -13,6 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+)
+
+var (
+	//go:embed testdata/dashboard-with-tags-b-g.json
+	dashboardWithTagsBlueGreen string
+	//go:embed testdata/dashboard-with-tags-r-g.json
+	dashboardWithTagsRedGreen string
 )
 
 type rawEntityMatcher struct {
@@ -134,7 +142,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, resp)
-		require.Nil(t, resp.Entity)
+		require.Nil(t, resp.GRN)
 	})
 
 	t.Run("should be able to read persisted objects", func(t *testing.T) {
@@ -162,9 +170,9 @@ func TestIntegrationEntityServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, readResp.SummaryJson)
-		require.NotNil(t, readResp.Entity)
+		require.NotNil(t, readResp)
 
-		foundGRN := readResp.Entity.GRN
+		foundGRN := readResp.GRN
 		require.NotNil(t, foundGRN)
 		require.Equal(t, testCtx.user.OrgID, foundGRN.TenantId) // orgId becomes the tenant id when not set
 		require.Equal(t, grn.Kind, foundGRN.Kind)
@@ -179,7 +187,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			body:         body,
 			version:      &firstVersion,
 		}
-		requireEntityMatch(t, readResp.Entity, objectMatcher)
+		requireEntityMatch(t, readResp, objectMatcher)
 
 		deleteResp, err := testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
 			GRN:             grn,
@@ -194,7 +202,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			WithBody: true,
 		})
 		require.NoError(t, err)
-		require.Nil(t, readRespAfterDelete.Entity)
+		require.Nil(t, readRespAfterDelete.GRN)
 	})
 
 	t.Run("should be able to update an object", func(t *testing.T) {
@@ -258,7 +266,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, readRespLatest.SummaryJson)
-		requireEntityMatch(t, readRespLatest.Entity, latestMatcher)
+		requireEntityMatch(t, readRespLatest, latestMatcher)
 
 		readRespFirstVer, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
 			GRN:      grn,
@@ -268,8 +276,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Nil(t, readRespFirstVer.SummaryJson)
-		require.NotNil(t, readRespFirstVer.Entity)
-		requireEntityMatch(t, readRespFirstVer.Entity, rawEntityMatcher{
+		require.NotNil(t, readRespFirstVer)
+		requireEntityMatch(t, readRespFirstVer, rawEntityMatcher{
 			grn:          grn,
 			createdRange: []time.Time{before, time.Now()},
 			updatedRange: []time.Time{before, time.Now()},
@@ -378,5 +386,89 @@ func TestIntegrationEntityServer(t *testing.T) {
 			w1.Entity.Version,
 			w2.Entity.Version,
 		}, version)
+	})
+
+	t.Run("should be able to filter objects based on their labels", func(t *testing.T) {
+		kind := models.StandardKindDashboard
+		_, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
+				Kind: kind,
+				UID:  "blue-green",
+			},
+			Body: []byte(dashboardWithTagsBlueGreen),
+		})
+		require.NoError(t, err)
+
+		_, err = testCtx.client.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
+				Kind: kind,
+				UID:  "red-green",
+			},
+			Body: []byte(dashboardWithTagsRedGreen),
+		})
+		require.NoError(t, err)
+
+		search, err := testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"red": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 1)
+		require.Equal(t, search.Results[0].GRN.UID, "red-green")
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"red":   "",
+				"green": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 1)
+		require.Equal(t, search.Results[0].GRN.UID, "red-green")
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"red": "invalid",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 0)
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"green": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 2)
+
+		search, err = testCtx.client.Search(ctx, &entity.EntitySearchRequest{
+			Kind:       []string{kind},
+			WithBody:   false,
+			WithLabels: true,
+			Labels: map[string]string{
+				"yellow": "",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, search)
+		require.Len(t, search.Results, 0)
 	})
 }
