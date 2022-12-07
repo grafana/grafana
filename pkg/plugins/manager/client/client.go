@@ -231,10 +231,7 @@ func (s *Service) attachJWT(ctx context.Context, pluginCtx backend.PluginContext
 		return ctx
 	}
 
-	// TODO: pull tenant from context
-	tenantID := 0
-
-	token, err := s.jwtAuthService.Generate(user, int64(tenantID), pluginCtx.PluginID)
+	token, err := s.jwtAuthService.Generate(user, pluginCtx.PluginID)
 	if err != nil {
 		return ctx
 	}

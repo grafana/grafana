@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"encoding/json"
 	"math/rand"
 	"net/url"
 	"os"
@@ -290,6 +291,30 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
 		require.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
 	})
+}
+
+func TestSettingsFromJSON(t *testing.T) {
+	jsonv := `{
+		"database": { 
+			"user": "test" 
+		},
+		"search": {
+			"dashboard_loading_batch_size": "10"
+		}
+	}`
+
+	configjson := make(map[string]map[string]string, 0)
+	err := json.Unmarshal([]byte(jsonv), &configjson)
+	require.NoError(t, err)
+
+	cfg, err := FromJSON(configjson)
+	require.NoError(t, err)
+
+	// Check settings from raw file
+	require.Equal(t, "test", cfg.Raw.Section("database").Key("user").MustString(""))
+
+	// And settings that are parsed explicitly
+	require.Equal(t, 10, cfg.Search.DashboardLoadingBatchSize)
 }
 
 func TestParseAppURLAndSubURL(t *testing.T) {

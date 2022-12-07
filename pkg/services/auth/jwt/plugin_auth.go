@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
+	"os"
 	"strconv"
 	"time"
 
@@ -53,7 +54,7 @@ func newPluginAuthService(cfg *setting.Cfg, features *featuremgmt.FeatureManager
 
 type PluginAuthService interface {
 	Verify(context.Context, string) (models.JWTClaims, error)
-	Generate(*user.SignedInUser, int64, string) (string, error)
+	Generate(*user.SignedInUser, string) (string, error)
 	IsEnabled() bool
 	UnaryClientInterceptor(string) grpc.UnaryClientInterceptor
 	StreamClientInterceptor(string) grpc.StreamClientInterceptor
@@ -91,9 +92,14 @@ func (s *pluginAuthService) Verify(ctx context.Context, token string) (models.JW
 	return Verify(ctx, s.keySet, expectedClaims, additionalClaims, token)
 }
 
-func (s *pluginAuthService) Generate(usr *user.SignedInUser, tenantID int64, audience string) (string, error) {
+func (s *pluginAuthService) Generate(usr *user.SignedInUser, audience string) (string, error) {
 	if !s.IsEnabled() {
 		return "", errors.New("JWT token generation is disabled")
+	}
+
+	stackID, err := strconv.ParseInt(os.Getenv("HG_STACK_ID"), 10, 64)
+	if err == nil {
+		usr.StackID = stackID
 	}
 
 	claims := jwt.Claims{
@@ -107,12 +113,12 @@ func (s *pluginAuthService) Generate(usr *user.SignedInUser, tenantID int64, aud
 
 	customClaims := struct {
 		orgID       int64
-		tenantID    int64
+		stackID     int64
 		login       string
 		displayName string
 	}{
 		orgID:       usr.OrgID,
-		tenantID:    tenantID,
+		stackID:     usr.StackID,
 		login:       usr.Login,
 		displayName: usr.Name,
 	}
@@ -180,10 +186,7 @@ func (s *pluginAuthService) UnaryClientInterceptor(namespace string) grpc.UnaryC
 			return invoker(ctx, method, req, reply, cc, opts...)
 		}
 
-		// TODO: Pull tenant ID from context
-		tenantID := int64(0)
-
-		token, err := s.Generate(usr, tenantID, namespace)
+		token, err := s.Generate(usr, namespace)
 		if err != nil {
 			return err
 		}
@@ -205,10 +208,7 @@ func (s *pluginAuthService) StreamClientInterceptor(namespace string) grpc.Strea
 			return streamer(ctx, desc, cc, method, opts...)
 		}
 
-		// TODO: Pull tenant ID from context
-		tenantID := int64(0)
-
-		token, err := s.Generate(usr, tenantID, namespace)
+		token, err := s.Generate(usr, namespace)
 		if err != nil {
 			return nil, err
 		}

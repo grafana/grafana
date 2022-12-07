@@ -9,7 +9,7 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 
 // Override k8s.io/client-go outdated dependency, which is an indirect dependency of grafana/loki.
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
-replace k8s.io/client-go => k8s.io/client-go v0.22.1
+replace k8s.io/client-go => k8s.io/client-go v0.24.0
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
@@ -265,6 +265,9 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.7.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.7.0
 	gocloud.dev v0.25.0
+	k8s.io/api v0.24.0
+	k8s.io/apimachinery v0.24.0
+	k8s.io/client-go v12.0.0+incompatible
 )
 
 require (
@@ -284,8 +287,11 @@ require (
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
+	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
+	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.0.0-20220520183353-fd19c99a87aa // indirect
 	github.com/googleapis/go-type-adapters v1.0.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
@@ -297,6 +303,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
@@ -308,7 +315,15 @@ require (
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
+	golang.org/x/term v0.2.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/inf.v0 v0.9.1 // indirect
+	k8s.io/klog/v2 v2.60.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
+	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
+	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
+	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
 require (
