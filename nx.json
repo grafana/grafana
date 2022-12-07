@@ -49,6 +49,10 @@
     },
     "lint": {
       "dependsOn": ["lint:sass"]
+    },
+    "betterer": {
+      "inputs": ["{projectRoot}/**/*.{ts,tsx}", "{projectRoot}/**/*.test.*", "{projectRoot}/**/*.story.tsx"],
+      "outputs": ["{projectRoot}/.betterer.results"]
     }
   }
 }

@@ -42,6 +42,7 @@
     "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "devDependencies": {
+    "@betterer/cli": "^5.4.0",
     "@rollup/plugin-commonjs": "23.0.2",
     "@rollup/plugin-node-resolve": "15.0.1",
     "@types/node": "18.11.9",

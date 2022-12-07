@@ -12,6 +12,7 @@
   },
   "main": "index.js",
   "scripts": {
+    "betterer": "betterer --config ../../.betterer.ts",
     "build": "NODE_ENV=production webpack --config ./webpack/webpack.prod.js --env noMinify=1",
     "build:nominify": "yarn run build --env noMinify=1",
     "generateThemes": "ts-node --transpile-only --project ../../scripts/cli/tsconfig.json ../../scripts/cli/generateSassVariableFiles.ts",
@@ -200,6 +201,7 @@
     "@babel/preset-typescript": "7.18.6",
     "@babel/runtime": "7.20.1",
     "@betterer/betterer": "5.4.0",
+    "@betterer/cli": "^5.4.0",
     "@emotion/eslint-plugin": "11.10.0",
     "@grafana/eslint-config": "5.0.0",
     "@grafana/tsconfig": "^1.2.0-rc1",

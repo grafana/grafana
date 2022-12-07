@@ -126,5 +126,8 @@
     "tslib": "2.4.0",
     "typescript": "4.8.2",
     "webpack": "^5.72.0"
+  },
+  "devDependencies": {
+    "@betterer/cli": "^5.4.0"
   }
 }

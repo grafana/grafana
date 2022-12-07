@@ -6,7 +6,7 @@
   "author": "Grafana Labs",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "betterer": "betterer",
+    "betterer": "nx run-many --target=betterer",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "build": "nx run grafana-app:build",

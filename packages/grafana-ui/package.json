@@ -118,6 +118,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.19.6",
+    "@betterer/cli": "^5.4.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-node-resolve": "15.0.1",

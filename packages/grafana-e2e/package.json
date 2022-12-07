@@ -50,6 +50,7 @@
     "prettier:check": "prettier --ignore-path=\"../../.prettierignore\" --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\""
   },
   "devDependencies": {
+    "@betterer/cli": "^5.4.0",
     "@rollup/plugin-node-resolve": "15.0.1",
     "@types/chrome-remote-interface": "0.31.4",
     "@types/lodash": "4.14.187",

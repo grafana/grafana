@@ -3397,7 +3397,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/cli@npm:5.4.0":
+"@betterer/cli@npm:5.4.0, @betterer/cli@npm:^5.4.0":
   version: 5.4.0
   resolution: "@betterer/cli@npm:5.4.0"
   dependencies:
@@ -4339,6 +4339,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
+    "@betterer/cli": ^5.4.0
     "@braintree/sanitize-url": 6.0.1
     "@grafana/schema": 9.4.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -4406,6 +4407,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
+    "@betterer/cli": ^5.4.0
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-node-resolve": 15.0.1
@@ -4428,6 +4430,7 @@ __metadata:
   dependencies:
     "@babel/core": 7.19.6
     "@babel/preset-env": 7.19.4
+    "@betterer/cli": ^5.4.0
     "@cypress/webpack-preprocessor": 5.15.2
     "@grafana/e2e-selectors": 9.4.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -4553,6 +4556,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
+    "@betterer/cli": ^5.4.0
     "@grafana/data": 9.4.0-pre
     "@grafana/e2e-selectors": 9.4.0-pre
     "@grafana/faro-web-sdk": 1.0.0-beta2
@@ -4599,6 +4603,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
+    "@betterer/cli": ^5.4.0
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-json": 5.0.1
@@ -4632,6 +4637,7 @@ __metadata:
     "@babel/preset-env": 7.18.9
     "@babel/preset-react": 7.18.6
     "@babel/preset-typescript": 7.18.6
+    "@betterer/cli": ^5.4.0
     "@grafana/data": 9.4.0-pre
     "@grafana/eslint-config": 5.0.0
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -4721,6 +4727,7 @@ __metadata:
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
     "@babel/core": 7.19.6
+    "@betterer/cli": ^5.4.0
     "@emotion/css": 11.10.5
     "@emotion/react": 11.10.5
     "@grafana/data": 9.4.0-pre
@@ -21692,6 +21699,7 @@ __metadata:
     "@babel/preset-typescript": 7.18.6
     "@babel/runtime": 7.20.1
     "@betterer/betterer": 5.4.0
+    "@betterer/cli": ^5.4.0
     "@daybrush/utils": 1.10.0
     "@emotion/css": 11.10.5
     "@emotion/eslint-plugin": 11.10.0
