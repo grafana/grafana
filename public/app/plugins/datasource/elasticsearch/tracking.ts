@@ -5,7 +5,7 @@ import { variableRegex } from 'app/features/variables/utils';
 import pluginJson from './plugin.json';
 import { ElasticsearchQuery } from './types';
 
-type LokiOnDashboardLoadedTrackingEvent = {
+type ElasticSearchOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
   dashboard_id?: string;
   org_id?: number;
