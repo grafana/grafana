@@ -489,7 +489,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, orgService org.Service, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
 	var orgModel *org.Org
-	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	for i := 0; i < numUsers; i++ {

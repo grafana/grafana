@@ -140,9 +140,10 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 	teamSvc := teamimpl.ProvideService(db, db.Cfg)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
-	orgSvc, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
+	qs := quotatest.New(false, nil)
+	orgSvc, err := orgimpl.ProvideService(db, db.Cfg, qs)
 	require.NoError(b, err)
-	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, qs)
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)

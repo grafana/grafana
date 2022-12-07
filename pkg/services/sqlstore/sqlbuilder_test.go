@@ -214,7 +214,7 @@ func createDummyUser(t *testing.T, sqlStore *SQLStore) *user.User {
 	}
 
 	var id int64
-	err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
 		sess.UseBool("is_admin")
 		var err error
 		id, err = sess.Insert(usr)
