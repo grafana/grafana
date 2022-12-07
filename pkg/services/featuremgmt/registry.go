@@ -372,5 +372,10 @@ var (
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "sessionRemoteCache",
+			Description: "Enable using remote cache for user sessions",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
