@@ -60,6 +60,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -123,6 +124,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -323,6 +325,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -964,6 +967,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1024,6 +1028,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -1214,6 +1219,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -2244,6 +2250,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4762,6 +4769,7 @@ clone:
 depends_on: []
 environment:
   EDITION: oss
+  NX_BRANCH: ${DRONE_BRANCH}
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -6318,6 +6326,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: d6172512cf5e186da16974c8a75f70fc62c425a803214cd01af936e9d481f8de
+hmac: 5568da619fddce33e5f9dbd4ace5275db930b4904106f5d55cd29637d96511bc
 
 ...

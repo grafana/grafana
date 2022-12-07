@@ -17,7 +17,7 @@ load(
 
 
 def test_frontend(trigger, ver_mode, committish):
-    environment = {'EDITION': 'oss'}
+    environment = {'EDITION': 'oss', 'NX_BRANCH': '${DRONE_BRANCH}'}
 
     steps = [
         identify_runner_step(),

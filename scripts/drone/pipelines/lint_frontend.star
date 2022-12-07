@@ -12,7 +12,7 @@ load(
 
 
 def lint_frontend_pipeline(trigger, ver_mode):
-    environment = {'EDITION': 'oss'}
+    environment = {'EDITION': 'oss', 'NX_BRANCH': '${DRONE_BRANCH}'}
 
     init_steps = [
         identify_runner_step(),

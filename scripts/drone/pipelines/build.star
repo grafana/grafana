@@ -46,7 +46,7 @@ load(
 
 def build_e2e(trigger, ver_mode):
     edition = 'oss'
-    environment = {'EDITION': edition}
+    environment = {'EDITION': edition, 'NX_BRANCH': '${DRONE_BRANCH}'}
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -81,7 +81,8 @@ def build_e2e(trigger, ver_mode):
             build_frontend_step(edition=edition, ver_mode=ver_mode),
             build_frontend_package_step(edition=edition, ver_mode=ver_mode),
             build_plugins_step(edition=edition, ver_mode=ver_mode),
-            package_step(edition=edition, ver_mode=ver_mode, variants=variants),
+            package_step(edition=edition, ver_mode=ver_mode,
+                         variants=variants),
             grafana_server_step(edition=edition),
             e2e_tests_step('dashboards-suite'),
             e2e_tests_step('smoke-tests-suite'),
