@@ -427,7 +427,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
 		if len(st.Cfg.DisabledOrgs) > 0 {
 			var ids []int64
-			for orgID, _ := range st.Cfg.DisabledOrgs {
+			for orgID := range st.Cfg.DisabledOrgs {
 				ids = append(ids, orgID)
 			}
 
@@ -451,7 +451,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var ids []int64
 		if len(st.Cfg.DisabledOrgs) > 0 {
-			for orgID, _ := range st.Cfg.DisabledOrgs {
+			for orgID := range st.Cfg.DisabledOrgs {
 				ids = append(ids, orgID)
 			}
 		}
@@ -486,7 +486,9 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("dashboard").Alias("D").Select("D.uid, D.title").Where("is_folder = ?", true).And("EXISTS (SELECT 1 FROM alert_rule AS A WHERE D.uid = A.namespace_uid)")
+			foldersSql := sess.Table("dashboard").Alias("D").Select("D.uid, D.title").
+				Where("is_folder = ?", true).
+				And("EXISTS (SELECT 1 FROM alert_rule A WHERE D.uid = A.namespace_uid)")
 			if len(ids) > 0 {
 				foldersSql = foldersSql.NotIn("org_id", ids)
 			}
