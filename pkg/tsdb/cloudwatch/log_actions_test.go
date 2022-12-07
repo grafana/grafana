@@ -16,8 +16,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -463,6 +465,46 @@ func Test_executeStartQuery(t *testing.T) {
 			},
 		}, cli.calls.startQueryWithContext)
 	})
+}
+func Test_executeStartQuery_formats_malformedQueryException(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	mockLogsClient := mockCWLogsClient{}
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return &mockLogsClient
+	}
+
+	mockLogsClient.On("StartQueryWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.StartQueryOutput{},
+		&cloudwatchlogs.MalformedQueryException{Message_: utils.Pointer("some message")})
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+	})
+	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+	result, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+		Queries: []backend.DataQuery{
+			{
+				RefID:     "A",
+				TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+				JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryString":"fields @message",
+						"logGroupNames":["some name","another name"]
+					}`),
+			},
+		},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, &AWSError{
+		Code:    "MalformedQueryException",
+		Message: "MalformedQueryException: some message\n{\n  RespMetadata: {\n    StatusCode: 0,\n    RequestID: \"\"\n  },\n  Message_: \"some message\"\n}",
+	}, result.Responses["A"].Error)
 }
 
 func TestQuery_StopQuery(t *testing.T) {

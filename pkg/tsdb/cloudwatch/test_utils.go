@@ -20,6 +20,17 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type mockCWLogsClient struct {
+	mock.Mock
+	cloudwatchlogsiface.CloudWatchLogsAPI
+}
+
+func (m *mockCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
+	args := m.Called(ctx, input, option)
+
+	return args.Get(0).(*cloudwatchlogs.StartQueryOutput), args.Get(1).(error)
+}
+
 type fakeCWLogsClient struct {
 	cloudwatchlogsiface.CloudWatchLogsAPI
 

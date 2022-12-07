@@ -270,7 +270,6 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logger log.Lo
 			logger.Debug("malformed query", "err", awsErr)
 			return nil, &AWSError{Code: awsErr.Code(), Message: err.Error()}
 		}
-
 		return nil, err
 	}
 
