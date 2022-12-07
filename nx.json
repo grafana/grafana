@@ -33,7 +33,8 @@
           "generateThemes",
           "lint:sass",
           "storybookBuild",
-          "prettier:check"
+          "prettier:check",
+          "betterer"
         ],
         "accessToken": "ZjBjMmFhMGQtZGZjNS00NjI0LTliZDMtNWExN2RjYWQ5MGM1fHJlYWQtd3JpdGU="
       }
