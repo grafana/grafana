@@ -13,7 +13,6 @@ describe('SceneTimeRange', () => {
     timeRange.onRefresh();
     const diff = timeRange.state.value.from.valueOf() - startTime;
     expect(diff).toBeGreaterThan(1);
-    expect(diff).toBeLessThan(2000);
   });
 
   it('toUrlValues with relative range', () => {
