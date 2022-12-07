@@ -44,7 +44,7 @@ func (s *installPluginRecipeStep) Apply(c context.Context) error {
 
 	if err == nil {
 		s.Status = RecipeStepStatus{
-			Status:        "Installed",
+			Status:        "Completed",
 			StatusMessage: "Plugin successfully installed",
 		}
 		return nil
@@ -53,7 +53,7 @@ func (s *installPluginRecipeStep) Apply(c context.Context) error {
 	var dupeErr plugins.DuplicateError
 	if errors.As(err, &dupeErr) {
 		s.Status = RecipeStepStatus{
-			Status:        "Installed",
+			Status:        "Completed",
 			StatusMessage: "Plugin already installed",
 		}
 		return nil
@@ -62,7 +62,7 @@ func (s *installPluginRecipeStep) Apply(c context.Context) error {
 	var versionUnsupportedErr repo.ErrVersionUnsupported
 	if errors.As(err, &versionUnsupportedErr) {
 		s.Status = RecipeStepStatus{
-			Status:        "NotInstalled",
+			Status:        "NotCompleted",
 			StatusMessage: "Plugin version not supported",
 		}
 		return nil
@@ -71,7 +71,7 @@ func (s *installPluginRecipeStep) Apply(c context.Context) error {
 	var versionNotFoundErr repo.ErrVersionNotFound
 	if errors.As(err, &versionNotFoundErr) {
 		s.Status = RecipeStepStatus{
-			Status:        "NotInstalled",
+			Status:        "NotCompleted",
 			StatusMessage: "Plugin version not found",
 		}
 		return nil
@@ -80,7 +80,7 @@ func (s *installPluginRecipeStep) Apply(c context.Context) error {
 	var clientError repo.Response4xxError
 	if errors.As(err, &clientError) {
 		s.Status = RecipeStepStatus{
-			Status:        "NotInstalled",
+			Status:        "NotCompleted",
 			StatusMessage: clientError.Message,
 		}
 		return nil
@@ -88,7 +88,7 @@ func (s *installPluginRecipeStep) Apply(c context.Context) error {
 
 	if errors.Is(err, plugins.ErrInstallCorePlugin) {
 		s.Status = RecipeStepStatus{
-			Status:        "NotInstalled",
+			Status:        "NotCompleted",
 			StatusMessage: "Cannot install or change a Core plugin",
 		}
 		return nil
@@ -119,7 +119,7 @@ func (s *installPluginRecipeStep) Revert(c context.Context) error {
 	if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 		s.Status = RecipeStepStatus{
 
-			Status:        "Installed",
+			Status:        "Completed",
 			StatusMessage: "Plugin is installed (Core plugin, cannot be uninstalled)",
 		}
 
@@ -128,7 +128,7 @@ func (s *installPluginRecipeStep) Revert(c context.Context) error {
 
 	if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
 		s.Status = RecipeStepStatus{
-			Status:        "Installed",
+			Status:        "Completed",
 			StatusMessage: "Plugin is installed (Cannot unistall the plugin due to being outside of the plugins directory)",
 		}
 		return nil

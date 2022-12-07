@@ -26,7 +26,7 @@ func (s *dashboardStep) Apply(c context.Context) error {
 	// TODO: figure out what to do when applying an instruction?
 
 	s.Status = RecipeStepStatus{
-		Status:        "Shown",
+		Status:        "Completed",
 		StatusMessage: "Instructions shown successfully.",
 	}
 
@@ -35,7 +35,7 @@ func (s *dashboardStep) Apply(c context.Context) error {
 
 func (s *dashboardStep) Revert(c context.Context) error {
 	s.Status = RecipeStepStatus{
-		Status:        "NotShown",
+		Status:        "NotCompleted",
 		StatusMessage: "The instruction message was not shown yet.",
 	}
 

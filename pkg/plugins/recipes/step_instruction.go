@@ -27,7 +27,7 @@ type InstructionStepMeta struct {
 
 func (s *InstructionStep) Apply(c context.Context) error {
 	s.Status = RecipeStepStatus{
-		Status:        "Visible",
+		Status:        "Completed",
 		StatusMessage: "Please follow the instructions.",
 	}
 
