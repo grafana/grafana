@@ -22,7 +22,6 @@ export interface Props {
 }
 
 export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: Props) => {
-  console.log('ismail simsek here 5555555555555555555555555');
   const styles = useStyles2(getStyles);
 
   if (!data || rowIndex == null) {
