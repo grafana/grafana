@@ -69,31 +69,11 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
     };
   }, []);
 
-  // Merge values from objects with same props
-  const getUniqueValuesFromLabels = (labels: Labels[]) => {
-    const labelToSet: { [index: string]: Set<string> } = {};
-
-    Object.values(labels).forEach((labelObject) => {
-      return Object.keys(labelObject).forEach((labelName) => {
-        const labelValue: string = labelObject[labelName];
-        if (typeof labelToSet[labelName] === 'undefined') {
-          labelToSet[labelName] = new Set<string>().add(labelValue);
-        } else {
-          labelToSet[labelName].add(labelValue);
-        }
-      });
-    });
-
-    return labelToSet;
-  };
-
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       // If the parent provided series/labels: filter the exemplars, otherwise default to show all exemplars
       let showMarker =
-        visibleLabels !== undefined
-          ? showExemplarMarker(visibleLabels, getUniqueValuesFromLabels, dataFrame, dataFrameFieldIndex)
-          : true;
+        visibleLabels !== undefined ? showExemplarMarker(visibleLabels, dataFrame, dataFrameFieldIndex) : true;
 
       if (!showMarker) {
         return <></>;
@@ -155,7 +135,6 @@ export const getVisibleLabels = (
  */
 const showExemplarMarker = (
   visibleLabels: { labels: Labels[]; totalSeriesCount: number },
-  getUniqueValuesFromLabels: (labels: Labels[]) => { [p: string]: Set<string> },
   dataFrame: DataFrame,
   dataFrameFieldIndex: DataFrameFieldIndex
 ) => {
