@@ -123,7 +123,7 @@ func (s *pluginAuthService) Generate(usr *user.SignedInUser, audience string) (s
 
 func (s *pluginAuthService) init() error {
 	set := jose.JSONWebKeySet{}
-	privKey, err := generateJWK()
+	privKey, err := s.getPrivateKey()
 	if err != nil {
 		return err
 	}
@@ -182,6 +182,23 @@ func (s *pluginAuthService) StreamClientInterceptor(namespace string) grpc.Strea
 		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 		return streamer(ctx, desc, cc, method, opts...)
 	}
+}
+
+func (s *pluginAuthService) getPrivateKey() (*jose.JSONWebKey, error) {
+	privKey := &jose.JSONWebKey{}
+
+	s.log.Debug("JWT plugin auth signing key", "key", s.Cfg.JWTAuthSigningKey)
+	if s.Cfg.JWTAuthSigningKey != "" {
+		if err := privKey.UnmarshalJSON([]byte(s.Cfg.JWTAuthSigningKey)); err != nil {
+			s.log.Error("Failed to unmarshal JWK auth signing key", "err", err)
+			return nil, err
+		}
+		return privKey, nil
+	}
+
+	s.log.Debug("Generating JWK")
+
+	return generateJWK()
 }
 
 func generateJWK() (privKey *jose.JSONWebKey, err error) {
