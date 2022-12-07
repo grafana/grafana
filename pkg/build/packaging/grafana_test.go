@@ -19,5 +19,4 @@ func TestPackageRegexp(t *testing.T) {
 			assert.Truef(t, rgx.MatchString(v), "'%s' should match regex '%s'", v, rgx.String())
 		}
 	})
-
 }
