@@ -1,3 +1,4 @@
+// DO NOT ADD METHODS TO THIS FILES. SQLSTORE IS DEPRECATED AND WILL BE REMOVED.
 package sqlstore
 
 import (
@@ -8,8 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// MainOrgName is the name of the main organization.
-const MainOrgName = "Main Org."
+const mainOrgName = "Main Org."
 
 func verifyExistingOrg(sess *DBSession, orgId int64) error {
 	var org models.Org
@@ -41,7 +41,7 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 				ss.Cfg.AutoAssignOrgId)
 		}
 
-		org.Name = MainOrgName
+		org.Name = mainOrgName
 		org.Id = int64(ss.Cfg.AutoAssignOrgId)
 	} else {
 		org.Name = orgName

@@ -13,12 +13,12 @@ export function getNestedScene(): Scene {
     layout: new SceneFlexLayout({
       direction: 'column',
       children: [
-        getInnerScene('Inner scene'),
         new VizPanel({
           key: '3',
           pluginId: 'timeseries',
           title: 'Panel 3',
         }),
+        getInnerScene('Inner scene'),
       ],
     }),
     $timeRange: new SceneTimeRange(),

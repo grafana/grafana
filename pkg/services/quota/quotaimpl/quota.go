@@ -33,7 +33,7 @@ func (s *serviceDisabled) CheckQuotaReached(ctx context.Context, targetSrv quota
 }
 
 func (s *serviceDisabled) DeleteQuotaForUser(ctx context.Context, userID int64) error {
-	return quota.ErrDisabled
+	return nil
 }
 
 func (s *serviceDisabled) RegisterQuotaReporter(e *quota.NewUsageReporter) error {

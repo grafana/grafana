@@ -43,6 +43,7 @@ export {
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
+export { InteractiveTable } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
 export { Tag, type OnTagClick } from './Tags/Tag';

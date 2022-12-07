@@ -7,4 +7,5 @@ export { SceneTimePicker } from './SceneTimePicker';
 export { ScenePanelRepeater } from './ScenePanelRepeater';
 export { SceneSubMenu } from './SceneSubMenu';
 export { SceneFlexLayout } from './layout/SceneFlexLayout';
-export { SceneGridLayout, SceneGridRow } from './layout/SceneGridLayout';
+export { SceneGridLayout } from './layout/SceneGridLayout';
+export { SceneGridRow } from './layout/SceneGridRow';
