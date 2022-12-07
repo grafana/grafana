@@ -31,10 +31,6 @@ export const DashboardPortal: FC<FNDashboardProps> = (props) =>{
     const queryParams = parseQueryParams(search);
 
     const { dashboardUID, slug } = queryParams
-    if(!dashboardUID){
-      return null;
-    }
-
     console.log({queryParams}, "queryParams in FNDashboard")
 
     const newProps: FNDashboardProps = {
@@ -44,7 +40,7 @@ export const DashboardPortal: FC<FNDashboardProps> = (props) =>{
       queryParams,
       hiddenVariables: get(HIDE_FILTERS_BY_DASHBOARD_TYPE, snakeCase(dashboardUID as string).toUpperCase()) || []
      }
-    return(
+    return dashboardUID &&(
       <RenderPortal ID="grafana-portal" >
         <RenderFNDashboard {...newProps} />
       </RenderPortal>
