@@ -16,14 +16,18 @@ folder="grafana-$version"
 tmp="/tmp/$folder"
 
 # package
-mkdir -p $tmp
+mkdir -p $tmp/usr/share/grafana
+mkdir -p $tmp/usr/sbin
+mkdir -p $tmp/etc
 
-cp -r ./bin/linux-amd64 $tmp/bin
-cp -r ./conf $tmp
-cp -r ./plugins-bundled $tmp
-cp -r ./public $tmp
-cp -r ./scripts $tmp
-cp -r ./packaging/deb $tmp
+cp -r ./bin/linux-amd64/* $tmp/usr/sbin
+cp -r ./conf $tmp/usr/share/grafana
+cp -r ./plugins-bundled $tmp/usr/share/grafana
+cp -r ./public $tmp/usr/share/grafana
+cp -r ./scripts $tmp/usr/share/grafana
+cp -r ./packaging/deb/init.d $tmp/etc
+cp -r ./packaging/deb/default $tmp/etc
+cp -r ./packaging/deb/systemd $tmp/etc
 
 fpm \
    -s dir \
@@ -31,10 +35,7 @@ fpm \
    -C $tmp \
    --url https://grafana.com \
    --maintainer "contact@grafana.com" \
-   --config-files $tmp/deb/init.d \
-   --config-files $tmp/deb/default \
-   --config-files $tmp/deb/systemd \
-   --after-install $tmp/deb/control/postinst \
+   --after-install ./packaging/deb/control/postinst \
    --version=$version \
    --name=grafana \
    --vendor=Grafana \
