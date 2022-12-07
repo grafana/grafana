@@ -636,6 +636,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		loginMaxLifetime, err := gtime.ParseDuration("30d")
 		require.NoError(t, err)
 		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 		cfg.LoginCookieName = "grafana_session"
 		cfg.LoginMaxLifetime = loginMaxLifetime
 		// Required when rendering errors

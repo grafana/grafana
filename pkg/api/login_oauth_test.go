@@ -29,6 +29,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 		cfg = setting.NewCfg()
 	}
 	cfg.ErrTemplateName = "error-template"
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 
 	sqlStore := sqlstore.InitTestDB(t)
 

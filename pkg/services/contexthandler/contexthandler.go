@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -173,7 +174,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		// this can be used by proxies to identify certain users
-		if h.features.IsEnabled(featuremgmt.FlagReturnUnameHeader) {
+		if h.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagReturnUnameHeader) {
 			w.Header().Add("grafana-uname", reqContext.Login)
 		}
 
