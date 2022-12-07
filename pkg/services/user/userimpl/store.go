@@ -78,12 +78,6 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	// verify that user was created and cmd.ID was updated with the actual new userID
-	_, err = ss.GetByID(ctx, cmd.ID)
-	if err != nil {
-		return 0, err
-	}
 	return cmd.ID, nil
 }
 
