@@ -12,7 +12,6 @@ import (
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -110,7 +109,7 @@ func initAuth(role org.RoleType, permissions ...[]accesscontrol.Permission) (jwt
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagJwtTokenGeneration)
-	pluginAuth, err := jwt.ProvidePluginAuthService(cfg, features, kvstore.NewFakeSecretsKVStore())
+	pluginAuth, err := jwt.ProvidePluginAuthService(cfg, features)
 	if err != nil {
 		panic(err)
 	}
