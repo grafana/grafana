@@ -71,7 +71,11 @@ func UploadPackages(c *cli.Context) error {
 
 	edition, ok := os.LookupEnv("EDITION")
 	if !ok {
-		return fmt.Errorf("EDITION envvar is missing, exitting")
+		if c.Bool("enterprise2") {
+			edition = string(config.EditionEnterprise2)
+		} else {
+			return fmt.Errorf("both EDITION envvar and '--enterprise2' flag are missing. At leaast one of those is required")
+		}
 	}
 
 	// TODO: Verify config values
@@ -86,9 +90,9 @@ func UploadPackages(c *cli.Context) error {
 		distDir:     distDir,
 	}
 
-	if cfg.edition == config.EditionEnterprise2 || c.Bool("enterprise2") {
+	if cfg.edition == config.EditionEnterprise2 {
 		if releaseModeConfig.Buckets.ArtifactsEnterprise2 != "" {
-			cfg.Config.Bucket = releaseModeConfig.Buckets.ArtifactsEnterprise2
+			cfg.Bucket = releaseModeConfig.Buckets.ArtifactsEnterprise2
 		} else {
 			return fmt.Errorf("enterprise2 bucket var doesn't exist")
 		}
