@@ -89,12 +89,12 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      // If the parent provided series/labels: filter the exemplars, otherwise default to show all exemplars
       let showMarker =
         visibleLabels !== undefined
           ? showExemplarMarker(visibleLabels, getUniqueValuesFromLabels, dataFrame, dataFrameFieldIndex)
           : true;
 
-      // If all series are visible, don't filter any exemplars
       if (!showMarker) {
         return <></>;
       }
