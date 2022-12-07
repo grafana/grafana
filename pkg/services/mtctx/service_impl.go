@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -28,11 +29,13 @@ func (s *serviceImpl) showTenantInfo(c *models.ReqContext) response.Response {
 		fmt.Println("Could not find tenant info", err)
 		return response.JSON(500, map[string]interface{}{
 			"nope": "nope",
+			"env":  os.Getenv("HG_STACK_ID"),
 		})
 	}
 
 	return response.JSON(200, map[string]interface{}{
 		"stackID": t.StackID,
+		"env":     os.Getenv("HG_STACK_ID"),
 	})
 }
 

@@ -98,9 +98,9 @@ func (s *pluginAuthService) Generate(usr *user.SignedInUser, audience string) (s
 		return "", errors.New("JWT token generation is disabled")
 	}
 
-	tenantID, err := strconv.ParseInt(os.Getenv("stackID"), 10, 64)
+	tenantID, err := strconv.ParseInt(os.Getenv("HG_STACK_ID"), 10, 64)
 	if err != nil {
-		fmt.Println("WARNING stackID is missing:", err)
+		fmt.Println("StackID is unknown:", err)
 	}
 
 	claims := jwt.Claims{
