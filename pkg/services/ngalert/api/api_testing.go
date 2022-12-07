@@ -54,11 +54,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults, err := conditionEval.Evaluate(c.Req.Context(), now)
-	if err != nil {
-		return ErrResp(500, err, "Failed to evaluate the rule")
-	}
-
+	evalResults := conditionEval.Evaluate(c.Req.Context(), now)
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
 		"instances": []*data.Frame{&frame},
