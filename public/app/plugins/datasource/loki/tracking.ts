@@ -4,6 +4,7 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
+import { REF_ID_DATA_SAMPLES } from './datasource';
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, parseToNodeNamesArray } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -119,6 +120,9 @@ const isQueryWithChangedLegend = (query: LokiQuery): boolean => {
 
 export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], app: string): void {
   for (const query of queries) {
+    if (query.refId === REF_ID_DATA_SAMPLES) {
+      return;
+    }
     reportInteraction('grafana_loki_query_executed', {
       app,
       editor_mode: query.editorMode,
