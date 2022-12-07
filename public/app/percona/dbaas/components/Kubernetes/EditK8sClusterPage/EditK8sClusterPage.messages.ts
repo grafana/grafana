@@ -8,8 +8,6 @@ export const Messages = {
   EKS cluster`,
   awsSecretAccessKeyTooltip: `AWS Secret Access Key of the root user or an IAM user with access
   to the EKS cluster`,
-  cancelButton: 'Cancel',
-  confirm: 'Register',
   fields: {
     clusterName: 'Kubernetes Cluster Name',
     kubeConfig: 'Kubeconfig file',

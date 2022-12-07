@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data/src';
 
 import { DBCluster } from '../../DBCluster.types';
 

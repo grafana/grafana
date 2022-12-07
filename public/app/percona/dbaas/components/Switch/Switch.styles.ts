@@ -7,6 +7,10 @@ export const getStyles = ({ spacing, palette, typography, colors }: GrafanaTheme
     &:not(:last-child) {
       margin-bottom: ${spacing.formInputMargin};
     }
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: ${spacing.md};
   `,
   label: css`
     display: block;
@@ -14,9 +18,14 @@ export const getStyles = ({ spacing, palette, typography, colors }: GrafanaTheme
     font-size: ${typography.size.md};
     font-weight: ${typography.weight.semibold};
     line-height: 1.25;
-    margin: ${spacing.formLabelMargin};
     padding: ${spacing.formLabelPadding};
     color: ${colors.formLabel};
+  `,
+  fieldWithLabelWrapper: css`
+    display: flex;
+    flex-direction: row;
+    gap: ${spacing.sm};
+    margin-left: ${spacing.md};
   `,
   labelWrapper: css`
     align-items: center;

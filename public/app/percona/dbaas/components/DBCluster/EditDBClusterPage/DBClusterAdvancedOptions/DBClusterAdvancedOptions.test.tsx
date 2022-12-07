@@ -4,7 +4,7 @@ import { Form, FormRenderProps } from 'react-final-form';
 
 import { Databases } from 'app/percona/shared/core';
 
-import { AddDBClusterFields } from '../AddDBClusterModal.types';
+import { AddDBClusterFields } from '../EditDBClusterPage.types';
 
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions';
 import { DBClusterResources, DBClusterTopology } from './DBClusterAdvancedOptions.types';
@@ -48,9 +48,6 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(screen.getByTestId('dbcluster-resources-bar-memory')).toBeInTheDocument();
     expect(screen.getByTestId('dbcluster-resources-bar-cpu')).toBeInTheDocument();
     expect(screen.getByTestId('disk-number-input')).toBeInTheDocument();
-    const databaseVersionField = screen.getByTestId('dbcluster-database-version-field');
-    expect(databaseVersionField).toBeInTheDocument();
-    expect(databaseVersionField.querySelector('input')).toBeDisabled();
   });
 
   it('renders correctly with initial values', async () => {

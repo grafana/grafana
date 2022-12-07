@@ -12,9 +12,9 @@ import { SelectFieldAdapter } from 'app/percona/shared/components/Form/FieldAdap
 import { MultiCheckboxField } from 'app/percona/shared/components/Form/MultiCheckbox/MultiCheckboxField';
 import { Databases } from 'app/percona/shared/core';
 
-import { Operators } from '../../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DATABASE_OPERATORS } from '../../DBCluster/DBCluster.constants';
 import { newDBClusterService } from '../../DBCluster/DBCluster.utils';
+import { Operators } from '../../DBCluster/EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { KubernetesOperatorStatus } from '../OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 
 import { useOperatorsComponentsVersions } from './ManageComponentsVersions.hooks';

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory } from '@grafana/ui/src';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const { spacing, colors } = theme;
+  const { spacing } = theme;
 
   return {
     resourcesWrapper: css`
@@ -23,15 +23,16 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     resourcesBarCol: css`
       display: flex;
       flex-direction: column;
-      margin-left: ${spacing.lg};
-      width: 50%;
+      margin-left: ${spacing.xl};
+      width: 336px;
     `,
     nodesWrapper: css`
       margin-bottom: ${spacing.md};
-      width: 60px;
+      flex: 1 0 auto;
       div,
       label {
         white-space: nowrap;
+        margin-left: ${spacing.md};
       }
     `,
     resourcesBar: css`
@@ -48,10 +49,8 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     resourcesInfoWrapper: css`
       display: flex;
       align-items: center;
-      background-color: ${colors.bg2};
       padding: ${spacing.sm};
       width: fit-content;
-      margin-bottom: ${spacing.md};
     `,
     resourcesInfoIcon: css`
       margin-right: ${spacing.sm};
@@ -60,6 +59,21 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       display: flex;
       justify-content: space-between;
+      width: 760px;
+    `,
+    line: css`
+      display: flex;
+    `,
+    resourcesRadioBtnGroup: css`
+      & {
+        > div:nth-child(3) {
+          label {
+            height: 37px; //TODO create the common system of components with one height for forms
+            align-items: center;
+            min-width: 118px;
+          }
+        }
+      }
     `,
   };
 });

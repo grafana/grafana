@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { Alert, useStyles } from '@grafana/ui';
+import { Alert, useStyles } from '@grafana/ui/src';
 
 import { getStyles } from './UnsafeConfigurationWarning.styles';
 

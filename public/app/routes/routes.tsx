@@ -20,6 +20,13 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { DBAAS_URL } from '../percona/dbaas/DBaaS.constants';
+import {
+  DB_CLUSTER_CREATION_URL,
+  DB_CLUSTER_EDIT_URL,
+  DB_CLUSTER_INVENTORY_URL,
+} from '../percona/dbaas/components/DBCluster/EditDBClusterPage/EditDBClusterPage.constants';
+import { K8S_INVENTORY_URL } from '../percona/dbaas/components/Kubernetes/EditK8sClusterPage/EditK8sClusterPage.constants';
 
 import { pluginHasRootPage } from './utils';
 
@@ -506,7 +513,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dbaas',
+      path: DBAAS_URL,
       // eslint-disable-next-line react/display-name
       component: SafeDynamicImport(
         () =>
@@ -514,7 +521,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dbaas/kubernetes',
+      path: K8S_INVENTORY_URL,
       component: SafeDynamicImport(
         () =>
           import(
@@ -533,9 +540,29 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dbaas/dbclusters',
+      path: DB_CLUSTER_INVENTORY_URL,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DbaaSClustersPage" */ 'app/percona/dbaas/components/DBCluster/DBCluster')
+      ),
+    },
+    {
+      path: DB_CLUSTER_CREATION_URL,
+      // eslint-disable-next-line react/display-name
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DbaaSKubernetesPage" */ 'app/percona/dbaas/components/DBCluster/EditDBClusterPage/EditDBClusterPage'
+          )
+      ),
+    },
+    {
+      path: DB_CLUSTER_EDIT_URL,
+      // eslint-disable-next-line react/display-name
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DbaaSKubernetesPage" */ 'app/percona/dbaas/components/DBCluster/EditDBClusterPage/EditDBClusterPage'
+          )
       ),
     },
     {

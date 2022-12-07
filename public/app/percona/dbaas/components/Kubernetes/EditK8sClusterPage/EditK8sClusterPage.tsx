@@ -1,16 +1,10 @@
-import {
-  LoaderButton,
-  PasswordInputField,
-  TextareaInputField,
-  TextInputField,
-  validators,
-} from '@percona/platform-core';
+import { PasswordInputField, TextareaInputField, TextInputField, validators } from '@percona/platform-core';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
-import { Button, Icon, LinkButton, PageToolbar, Tooltip, useStyles } from '@grafana/ui/src';
+import { Button, Icon, Tooltip, useStyles } from '@grafana/ui/src';
 
 import { FeatureLoader } from '../../../../shared/components/Elements/FeatureLoader';
 import { PageSwitcher } from '../../../../shared/components/PageSwitcher/PageSwitcher';
@@ -20,15 +14,15 @@ import { useShowPMMAddressWarning } from '../../../../shared/components/hooks/sh
 import { addKubernetesAction, resetAddK8SClusterState } from '../../../../shared/core/reducers/k8sCluster/k8sCluster';
 import { getAddKubernetes, getPerconaSettingFlag } from '../../../../shared/core/selectors';
 import { Messages as DBaaSMessages } from '../../../DBaaS.messages';
+import DBaaSPage from '../../DBaaSPage/DBaaSPage';
 import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarning';
 import { DELETE_KUBERNETES_CANCEL_TOKEN } from '../Kubernetes.constants';
 import { NewKubernetesCluster } from '../Kubernetes.types';
 
-import { AWS_CREDENTIALS_DOC_LINK, DBAAS_INVENTORY_URL, K8S_INVENTORY_URL } from './EditK8sClusterPage.constants';
+import { AWS_CREDENTIALS_DOC_LINK, K8S_INVENTORY_URL } from './EditK8sClusterPage.constants';
 import { Messages as K8sFormMessages } from './EditK8sClusterPage.messages';
 import { getStyles } from './EditK8sClusterPage.styles';
 import { onKubeConfigValueChange, pasteFromClipboard } from './EditK8sClusterPage.utils';
-import { PageHeader } from './PageHeader/PageHeader';
 
 const { required } = validators;
 const {
@@ -37,10 +31,8 @@ const {
   awsAccessKeyIDTooltip,
   awsSecretAccessKeyLabel,
   awsSecretAccessKeyTooltip,
-  confirm,
   paste,
   fields,
-  cancelButton,
   genericRadioButton,
   eksRadioButton,
   isEKSRadioTooltip,
@@ -102,32 +94,24 @@ export const EditK8sClusterPage = () => {
       initialValues={{ isEKS: false }}
       render={({ handleSubmit, valid, pristine, form, values: { isEKS } }: FormRenderProps<NewKubernetesCluster>) => (
         <form onSubmit={handleSubmit}>
-          <>
-            <PageToolbar
-              title={pageTitle}
-              parent={dbaas}
-              titleHref={K8S_INVENTORY_URL}
-              parentHref={DBAAS_INVENTORY_URL}
-              className={styles.pageToolbarWrapper}
-            >
-              <LinkButton href={K8S_INVENTORY_URL} data-testid="cancel-button" variant="secondary" fill="outline">
-                {cancelButton}
-              </LinkButton>
-              <LoaderButton
-                data-testid="k8s-cluster-submit-button"
-                size="md"
-                type="submit"
-                variant="primary"
-                disabled={!valid || pristine}
-                loading={addK8SClusterLoading}
-              >
-                {confirm}
-              </LoaderButton>
-            </PageToolbar>
-            <PageHeader header={kubernetes.addAction} />
+          <DBaaSPage
+            pageToolbarProps={{
+              title: pageTitle,
+              parent: dbaas,
+              titleHref: K8S_INVENTORY_URL,
+            }}
+            submitBtnProps={{
+              disabled: !valid || pristine,
+              loading: addK8SClusterLoading,
+            }}
+            pageHeader={kubernetes.addAction}
+            pageName="k8s-cluster"
+            cancelUrl={K8S_INVENTORY_URL}
+            featureLoaderProps={{ featureName: DBaaSMessages.dbaas, featureSelector: featureSelector }}
+          >
             <FeatureLoader featureName={dbaas} featureSelector={featureSelector}>
-              {showPMMAddressWarning && <PMMServerUrlWarning className={styles.pmmUrlWarning} />}
-              <div className={styles.pageContent}>
+              {showPMMAddressWarning && <PMMServerUrlWarning />}
+              <>
                 <div className={styles.radioGroup}>
                   <PageSwitcher values={pageSwitcherValues} />
                   <Tooltip content={isEKSRadioTooltip}>
@@ -189,9 +173,9 @@ export const EditK8sClusterPage = () => {
                   validators={[required]}
                   fieldClassName={styles.k8sField}
                 />
-              </div>
+              </>
             </FeatureLoader>
-          </>
+          </DBaaSPage>
         </form>
       )}
     />

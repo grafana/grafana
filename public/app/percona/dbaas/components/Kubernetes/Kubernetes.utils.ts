@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
+import { DATABASE_OPERATORS, DATABASE_OPTIONS } from '../DBCluster/DBCluster.constants';
+import { ActiveOperatorsMap } from '../DBCluster/DBCluster.types';
 import {
   DatabaseOption,
   Operators,
-} from '../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
-import { DATABASE_OPERATORS, DATABASE_OPTIONS } from '../DBCluster/DBCluster.constants';
-import { ActiveOperatorsMap } from '../DBCluster/DBCluster.types';
+} from '../DBCluster/EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 import { Kubernetes, Operator } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';

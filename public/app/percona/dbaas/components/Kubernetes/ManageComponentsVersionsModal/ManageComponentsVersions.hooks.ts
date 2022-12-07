@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Databases } from 'app/percona/shared/core';
 
-import { Operators } from '../../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DATABASE_OPERATORS } from '../../DBCluster/DBCluster.constants';
 import { DBClusterVersion } from '../../DBCluster/DBCluster.types';
 import { newDBClusterService } from '../../DBCluster/DBCluster.utils';
+import { Operators } from '../../DBCluster/EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { Kubernetes } from '../Kubernetes.types';
 import { KubernetesOperatorStatus } from '../OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 

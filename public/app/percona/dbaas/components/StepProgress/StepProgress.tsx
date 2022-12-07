@@ -6,8 +6,8 @@ import { Form, FormRenderProps } from 'react-final-form';
 
 import { HorizontalGroup, useStyles } from '@grafana/ui';
 
-import { AddDBClusterFields } from '../DBCluster/AddDBClusterModal/AddDBClusterModal.types';
-import { generateUID } from '../DBCluster/AddDBClusterModal/AddDBClusterModal.utils';
+import { AddDBClusterFields } from '../DBCluster/EditDBClusterPage/EditDBClusterPage.types';
+import { generateUID } from '../DBCluster/EditDBClusterPage/EditDBClusterPage.utils';
 
 import { Step, StepStatus } from './Step/Step';
 import { getStyles } from './StepProgress.styles';

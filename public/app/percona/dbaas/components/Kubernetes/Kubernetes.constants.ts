@@ -1,6 +1,6 @@
 import { Databases } from 'app/percona/shared/core';
 
-import { Operators } from '../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
+import { Operators } from '../DBCluster/EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 import { ComponentToUpdate, DatabaseComponentToUpdateMap } from './Kubernetes.types';
 

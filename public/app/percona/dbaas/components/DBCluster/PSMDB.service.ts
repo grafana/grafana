@@ -8,7 +8,6 @@ import {
   SupportedComponents,
 } from '../Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersionsModal.types';
 
-import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { BILLION, THOUSAND } from './DBCluster.constants';
 import { DBClusterService } from './DBCluster.service';
 import { getComponentChange } from './DBCluster.service.utils';
@@ -29,6 +28,7 @@ import {
   DBClusterStatus,
   DBClusterSuspendResumeRequest,
 } from './DBCluster.types';
+import { Operators } from './EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 export class PSMDBService extends DBClusterService {
   addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {

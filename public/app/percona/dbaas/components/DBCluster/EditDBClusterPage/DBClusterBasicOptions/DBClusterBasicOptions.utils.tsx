@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data/src';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 
 import { Kubernetes } from '../../../Kubernetes/Kubernetes.types';

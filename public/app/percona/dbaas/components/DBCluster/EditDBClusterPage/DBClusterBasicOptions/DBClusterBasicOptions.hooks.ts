@@ -2,10 +2,10 @@ import { logger } from '@percona/platform-core';
 import { FormApi } from 'final-form';
 import { useEffect } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data/src';
 
 import { isOptionEmpty, newDBClusterService } from '../../DBCluster.utils';
-import { AddDBClusterFields } from '../AddDBClusterModal.types';
+import { AddDBClusterFields } from '../EditDBClusterPage.types';
 
 import { findDefaultDatabaseVersion } from './DBClusterBasicOptions.utils';
 

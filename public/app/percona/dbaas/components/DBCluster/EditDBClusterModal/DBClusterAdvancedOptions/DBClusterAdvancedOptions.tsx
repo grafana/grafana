@@ -9,17 +9,17 @@ import { Databases } from 'app/percona/shared/core';
 import validators from 'app/percona/shared/helpers/validators';
 
 import { CPU, Disk, Memory } from '../../../DBaaSIcons';
-import {
-  RECHECK_INTERVAL,
-  EXPECTED_DELAY,
-} from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
-import {
-  canGetExpectedResources,
-  resourceValidator,
-} from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.utils';
 import { DBClusterService } from '../../DBCluster.service';
 import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
 import { getExpectedResourcesDifference, newDBClusterService } from '../../DBCluster.utils';
+import {
+  RECHECK_INTERVAL,
+  EXPECTED_DELAY,
+} from '../../EditDBClusterPage/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
+import {
+  canGetExpectedResources,
+  resourceValidator,
+} from '../../EditDBClusterPage/DBClusterAdvancedOptions/DBClusterAdvancedOptions.utils';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
 import { EditDBClusterFields } from '../EditDBClusterModal.types';
 

@@ -1,8 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { Databases } from 'app/percona/shared/core';
 
-import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DBClusterService } from './DBCluster.service';
+import { Operators } from './EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 export type AddDBClusterAction = (dbCluster: DBCluster) => void;
 export type GetDBClustersAction = () => void;

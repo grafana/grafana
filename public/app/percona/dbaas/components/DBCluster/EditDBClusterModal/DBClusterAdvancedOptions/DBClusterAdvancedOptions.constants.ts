@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 
-import { DBClusterDefaultResources } from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
+import { DBClusterDefaultResources } from '../../EditDBClusterPage/DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
 
 import { DBClusterTopology, DBClusterResources } from './DBClusterAdvancedOptions.types';
 

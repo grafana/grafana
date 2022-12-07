@@ -9,8 +9,8 @@ import {
   SupportedComponents,
 } from '../Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersionsModal.types';
 
-import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DBClusterChangeComponentAPI } from './DBCluster.types';
+import { Operators } from './EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 export const getComponentChange = (
   operator: Operators,

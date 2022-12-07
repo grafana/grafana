@@ -8,6 +8,7 @@ import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Databases } from '../../../../shared/core';
 import { selectKubernetesCluster } from '../../../../shared/core/reducers';
 import { AddClusterButton } from '../../AddClusterButton/AddClusterButton';
+import { DB_CLUSTER_CREATION_URL } from '../../DBCluster/EditDBClusterPage/EditDBClusterPage.constants';
 import { Kubernetes, OperatorToUpdate } from '../Kubernetes.types';
 import { KubernetesClusterStatus } from '../KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { KubernetesOperatorStatus } from '../OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
@@ -65,7 +66,7 @@ export const OperatorStatusRow: FC<OperatorStatusRowProps> = ({
         label={Messages.dbcluster.addAction}
         action={() => {
           dispatch(selectKubernetesCluster(element));
-          history.push('/dbaas/dbclusters');
+          history.push(DB_CLUSTER_CREATION_URL);
         }}
         data-testid={`${element.kubernetesClusterName}-add-cluster-button`}
         disabled={isDisabled}

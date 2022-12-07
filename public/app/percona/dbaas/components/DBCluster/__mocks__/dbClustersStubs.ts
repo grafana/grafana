@@ -1,6 +1,6 @@
 import { Databases } from 'app/percona/shared/core';
 
-import { Operators } from '../AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
+import { Operators } from '../EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import {
   CpuUnits,
   DBCluster,

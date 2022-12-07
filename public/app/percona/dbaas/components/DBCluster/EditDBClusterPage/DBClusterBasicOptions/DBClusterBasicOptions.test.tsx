@@ -4,7 +4,7 @@ import { Form, FormRenderProps } from 'react-final-form';
 
 import { Messages } from '../../../../DBaaS.messages';
 import { kubernetesStub } from '../../../Kubernetes/__mocks__/kubernetesStubs';
-import { AddDBClusterFields } from '../AddDBClusterModal.types';
+import { AddDBClusterFields } from '../EditDBClusterPage.types';
 
 import { DBClusterBasicOptions } from './DBClusterBasicOptions';
 import { kubernetesClusterNameValidator } from './DBClusterBasicOptions.utils';
@@ -21,6 +21,9 @@ describe('DBClusterBasicOptions::', () => {
     expect(screen.getByTestId('name-text-input')).toBeInTheDocument();
     expect(screen.getByTestId('dbcluster-kubernetes-cluster-field')).toBeInTheDocument();
     expect(screen.getByTestId('dbcluster-database-type-field')).toBeInTheDocument();
+    const databaseVersionField = screen.getByTestId('dbcluster-database-version-field');
+    expect(databaseVersionField).toBeInTheDocument();
+    expect(databaseVersionField.querySelector('input')).toBeDisabled();
   });
 
   it('renders correctly with default values', () => {
