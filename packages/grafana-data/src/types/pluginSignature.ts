@@ -7,5 +7,10 @@ import { PluginSignatureStatus } from './plugin';
  * @internal
  */
 export function isUnsignedPluginSignature(signature?: PluginSignatureStatus) {
-  return signature && signature !== PluginSignatureStatus.valid && signature !== PluginSignatureStatus.internal;
+  return (
+    signature &&
+    signature !== PluginSignatureStatus.valid &&
+    signature !== PluginSignatureStatus.internal &&
+    signature !== PluginSignatureStatus.cdn
+  );
 }

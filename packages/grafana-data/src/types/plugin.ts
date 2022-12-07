@@ -23,6 +23,7 @@ export enum PluginType {
 /** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */
 export enum PluginSignatureStatus {
   internal = 'internal', // core plugin, no signature
+  cdn = 'cdn', // cdn plugin, inherently trusted
   valid = 'valid', // signed and accurate MANIFEST
   invalid = 'invalid', // invalid signature
   modified = 'modified', // valid signature, but content mismatch
