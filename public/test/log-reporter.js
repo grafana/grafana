@@ -9,7 +9,7 @@ class CustomReporter {
     if (!this._options.enable) {
       return;
     }
-    console.log(results);
+
     this.logStats(results);
     this.logTestFailures(results);
   }
