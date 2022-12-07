@@ -77,6 +77,9 @@ func wrapDirector(d func(*http.Request)) func(req *http.Request) {
 		d(req)
 		PrepareProxyRequest(req)
 
+		// Set X-Grafana-Referer to correlate access logs to dashboards
+		req.Header.Set("X-Grafana-Referer", req.Header.Get("Referer"))
+
 		// Clear Origin and Referer to avoid CORS issues
 		req.Header.Del("Origin")
 		req.Header.Del("Referer")
