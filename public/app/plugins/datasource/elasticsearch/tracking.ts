@@ -53,7 +53,7 @@ export const onDashboardLoadedHandler = ({
     const rawDocumentQueries = elasticsearchQueries.filter((query) => getQueryType(query) === 'raw_document');
     const queriesWithChangedLineLimit = elasticsearchQueries.filter(isQueryWithChangedLineLimit);
 
-    const event: LokiOnDashboardLoadedTrackingEvent = {
+    const event: ElasticSearchOnDashboardLoadedTrackingEvent = {
       grafana_version: grafanaVersion,
       dashboard_id: dashboardId,
       org_id: orgId,
