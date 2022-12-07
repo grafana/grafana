@@ -2,6 +2,7 @@ package mtctx
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/setting"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -145,17 +148,45 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 
 // Builds the kubernetes stackname
 func stackName(stackID int64) string {
-	return fmt.Sprintf("%d-hackathon-mthg", stackID)
+	return fmt.Sprintf("%d-mt-config", stackID)
 }
 
 // takes INI, initializes db connection and returns it
-func initializeDBConnection(config any) *session.SessionDB {
-	//~magic~ to connect to db with config
-	return nil
+func initializeDBConnection(config *v1.ConfigMap) *session.SessionDB {
+	if config == nil {
+		fmt.Printf("missing config!")
+		return nil
+	}
+	jsontxt, ok := config.Data["ini"]
+	if !ok {
+		fmt.Printf("could not find key ini")
+		return nil
+	}
+
+	jsonmap := make(map[string]map[string]string, 0)
+	err := json.Unmarshal([]byte(jsontxt), &jsonmap)
+	if err != nil {
+		fmt.Printf("missing config!")
+		return nil
+	}
+	cfg, err := setting.FromJSON(jsonmap)
+	if err != nil {
+		fmt.Printf("error reading json config: " + err.Error())
+		return nil
+	}
+
+	// a whold new instance?   ┗|・o・|┛
+	ss, err := sqlstore.NewSQLStore(cfg, nil, nil, nil, nil, nil)
+	if err != nil {
+		fmt.Printf("error reading json config: " + err.Error())
+		return nil
+	}
+
+	return ss.GetSqlxSession()
 }
 
 // Builds tenant info and returns it to enter into cache
-func buildTenantInfoFromConfig(stackID int64, config any) *TenantInfo {
+func buildTenantInfoFromConfig(stackID int64, config *v1.ConfigMap) *TenantInfo {
 	dbCon := initializeDBConnection(config)
 
 	return &TenantInfo{

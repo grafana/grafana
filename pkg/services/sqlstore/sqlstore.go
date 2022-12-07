@@ -65,7 +65,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, cacheService, nil, migrations, bus, tracer)
+	s, err := NewSQLStore(cfg, cacheService, nil, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, er
 	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
-func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
+func NewSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
@@ -592,7 +592,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
+		testSQLStore, err = NewSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
 		if err != nil {
 			return nil, err
 		}

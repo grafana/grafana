@@ -962,9 +962,38 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.Raw = iniFile
+	return cfg.applyRaw()
+}
 
+// Load Cfg from a string map rather than a real ini file
+func FromJSON(config map[string]map[string]string) (*Cfg, error) {
+	inifile := ini.Empty()
+	for section, vals := range config {
+		s, err := inifile.NewSection(section)
+		if err != nil {
+			return nil, err
+		}
+		for key, val := range vals {
+			_, err := s.NewKey(key, val)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	cfg := NewCfg()
+	cfg.Raw = inifile
+	err := cfg.applyRaw()
+	return cfg, err
+}
+
+func (cfg *Cfg) applyRaw() error {
+	if cfg.Raw == nil {
+		return fmt.Errorf("missing inifile config")
+	}
 	// Temporarily keep global, to make refactor in steps
 	Raw = cfg.Raw
+	iniFile := cfg.Raw
+	var err error
 
 	cfg.BuildVersion = BuildVersion
 	cfg.BuildCommit = BuildCommit
