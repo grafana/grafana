@@ -71,7 +71,7 @@ const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
       align-items: center;
     `,
     actionButtons: css`
-      margin-left: 8px;
+      margin-left: ${theme.spacing(1)};
       display: flex;
     `,
     errored: css`
