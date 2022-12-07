@@ -147,6 +147,15 @@ export function loadDataSources(): ThunkResult<void> {
   };
 }
 
+export function testAllDataSources(): ThunkResult<void> {
+  return async (dispatch) => {
+    const dataSourcesResponse = await api.getDataSources();
+    dispatch(dataSourcesLoaded(dataSourcesResponse));
+
+    dataSourcesResponse.forEach(async (ds) => await dispatch(testDataSource(ds.uid)));
+  };
+}
+
 export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
     let dataSource = await api.getDataSourceByIdOrUid(uid);

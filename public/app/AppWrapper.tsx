@@ -21,6 +21,7 @@ import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
+import { TestAllDataSources } from './features/datasources/components/TestAllDataSources';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
 interface AppWrapperProps {
@@ -134,6 +135,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
                           <AngularRoot />
                           <AppNotificationList />
+                          <TestAllDataSources />
                           {this.searchBarEnabled() && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
