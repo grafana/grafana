@@ -3,10 +3,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
