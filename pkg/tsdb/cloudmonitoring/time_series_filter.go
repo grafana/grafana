@@ -24,7 +24,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeries {
-		seriesLabels, defaultMetricName := series.getLabels(nil, groupBys)
+		seriesLabels, defaultMetricName := series.getLabels(groupBys)
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.getRefID()
 		frame.Meta = &data.FrameMeta{

@@ -47,7 +47,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 	for _, series := range response.TimeSeriesData {
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = timeSeriesQuery.refID
-		seriesLabels, defaultMetricName := series.getLabels(response.TimeSeriesDescriptor.LabelDescriptors, nil)
+		seriesLabels, defaultMetricName := series.getLabels(response.TimeSeriesDescriptor.LabelDescriptors)
 
 		for n, d := range response.TimeSeriesDescriptor.PointDescriptors {
 			// If more than 1 pointdescriptor was returned, three aggregations are returned per time series - min, mean and max.

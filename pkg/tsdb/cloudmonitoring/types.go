@@ -131,7 +131,6 @@ type pointIterator interface {
 	getPoint(index int) point
 	metricType() string
 	valueType() string
-	getLabels(labelDescriptors []LabelDescriptor, groupBys []string) (data.Labels, string)
 }
 
 type point interface {
@@ -186,7 +185,7 @@ func (ts timeSeriesData) getPoint(index int) point {
 	return &ts.PointData[index]
 }
 
-func (ts timeSeriesData) getLabels(labelDescriptors []LabelDescriptor, groupBys []string) (data.Labels, string) {
+func (ts timeSeriesData) getLabels(labelDescriptors []LabelDescriptor) (data.Labels, string) {
 	seriesLabels := make(map[string]string)
 	defaultMetricName := ""
 
@@ -206,9 +205,12 @@ func (ts timeSeriesData) getLabels(labelDescriptors []LabelDescriptor, groupBys 
 		}
 
 		if strings.Contains(key, "metric.label") || strings.Contains(key, "resource.label") {
-			defaultMetricName += " " + seriesLabels[key]
+			defaultMetricName += seriesLabels[key] + " "
 		}
 	}
+
+	defaultMetricName = strings.Trim(defaultMetricName, " ")
+
 	return seriesLabels, defaultMetricName
 }
 
@@ -284,7 +286,7 @@ func (ts timeSeries) valueType() string {
 	return ts.ValueType
 }
 
-func (ts timeSeries) getLabels(labelDescriptors []LabelDescriptor, groupBys []string) (data.Labels, string) {
+func (ts timeSeries) getLabels(groupBys []string) (data.Labels, string) {
 	seriesLabels := data.Labels{}
 	defaultMetricName := ts.Metric.Type
 	seriesLabels["resource.type"] = ts.Resource.Type
