@@ -1,7 +1,6 @@
 import { DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
-//import { variableRegex } from 'app/features/variables/utils';
 
 import pluginJson from './plugin.json';
 import { ElasticsearchQuery } from './types';
