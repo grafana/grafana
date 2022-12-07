@@ -421,36 +421,19 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return folder, nil
 }
 
-func (st DBstore) getFilterByOrgsString() (string, []interface{}) {
-	if len(st.Cfg.DisabledOrgs) == 0 {
-		return "", nil
-	}
-	builder := strings.Builder{}
-	builder.WriteString("org_id NOT IN(")
-	idx := len(st.Cfg.DisabledOrgs)
-	args := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
-	for orgId := range st.Cfg.DisabledOrgs {
-		args = append(args, orgId)
-		builder.WriteString("?")
-		idx--
-		if idx == 0 {
-			builder.WriteString(")")
-			break
-		}
-		builder.WriteString(",")
-	}
-	return builder.String(), args
-}
-
 func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		alertRulesSql := "SELECT org_id, uid, version FROM alert_rule"
-		filter, args := st.getFilterByOrgsString()
-		if filter != "" {
-			alertRulesSql += " WHERE " + filter
+		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
+		if len(st.Cfg.DisabledOrgs) > 0 {
+			var ids []int64
+			for orgID, _ := range st.Cfg.DisabledOrgs {
+				ids = append(ids, orgID)
+			}
+
+			alertRulesSql = alertRulesSql.NotIn("org_id", ids)
 		}
-		if err := sess.SQL(alertRulesSql, args...).Find(&result); err != nil {
+		if err := alertRulesSql.Find(&result); err != nil {
 			return err
 		}
 		return nil
