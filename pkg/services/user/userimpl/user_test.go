@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -25,6 +26,7 @@ func TestUserService(t *testing.T) {
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
+		features:     featuremgmt.WithFeatures(),
 	}
 
 	t.Run("create user", func(t *testing.T) {
@@ -103,6 +105,7 @@ func TestUserService(t *testing.T) {
 			orgService:   orgService,
 			cacheService: localcache.ProvideService(),
 			teamService:  teamtest.NewFakeService(),
+			features:     featuremgmt.WithFeatures(),
 		}
 		usr := &user.SignedInUser{
 			OrgID:       1,
