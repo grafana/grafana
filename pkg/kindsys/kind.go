@@ -90,9 +90,3 @@ type Structured interface {
 // 	// TODO docs
 // 	Properties() CoreStructuredProperties // TODO figure out how to reconcile this interface with CustomStructuredProperties
 // }
-
-// type Kind[Category KindMetas, GoType any] struct {
-// 	Decl *Decl[Category]
-// 	Lineage thema.Lineage
-// 	ConvergentLineage thema.ConvergentLineage[GoType]
-// }
