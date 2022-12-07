@@ -14,5 +14,11 @@ import "github.com/grafana/grafana/pkg/kindsys"
 // Summarizer returns a func that takes raw bytes representing a Playlist
 // and constructs a [kindsys.EntitySummary].
 func Summarizer() kindsys.Summarizer {
+	// This func is a gateway. The generated body depends on the value of handleSummary.
+	// in the Playlist kind declaration.
+
+	// handleSummary is "passthrough" for the Playlist kind. If the Go compiler
+	// is failing here, you must either hand-implement getSummarizer() in another file in
+	// this package, or change the value of handleSummary to "generic".
 	return getSummarizer()
 }
