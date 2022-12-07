@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
@@ -29,11 +28,10 @@ const (
 )
 
 type SecretsService struct {
-	store      secrets.Store
-	enc        encryption.Internal
-	settings   setting.Provider
-	features   featuremgmt.FeatureToggles
-	usageStats usagestats.Service
+	store    secrets.Store
+	enc      encryption.Internal
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
 
 	mtx          sync.Mutex
 	dataKeyCache *dataKeyCache
@@ -51,21 +49,19 @@ func ProvideSecretsService(
 	store secrets.Store,
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
-	settings setting.Provider,
 	features featuremgmt.FeatureToggles,
-	usageStats usagestats.Service,
+	cfg *setting.Cfg,
 ) (*SecretsService, error) {
-	ttl := settings.KeyValue("security.encryption", "data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	ttl := cfg.DataKeysCacheTTL
 
 	currentProviderID := kmsproviders.NormalizeProviderID(secrets.ProviderID(
-		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
+		cfg.EncryptionProvider,
 	))
 
 	s := &SecretsService{
 		store:               store,
 		enc:                 enc,
-		settings:            settings,
-		usageStats:          usageStats,
+		cfg:                 cfg,
 		kmsProvidersService: kmsProvidersService,
 		dataKeyCache:        newDataKeyCache(ttl),
 		currentProviderID:   currentProviderID,
@@ -92,8 +88,6 @@ func ProvideSecretsService(
 
 	s.log.Info("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
-	s.registerUsageMetrics()
-
 	return s, nil
 }
 
@@ -103,42 +97,6 @@ func (s *SecretsService) InitProviders() (err error) {
 	})
 
 	return
-}
-
-func (s *SecretsService) registerUsageMetrics() {
-	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		usageMetrics := make(map[string]interface{})
-
-		// Enabled / disabled
-		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if !s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
-			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
-		}
-
-		// Current provider
-		kind, err := s.currentProviderID.Kind()
-		if err != nil {
-			return nil, err
-		}
-		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
-
-		// Count by kind
-		countByKind := make(map[string]int)
-		for id := range s.providers {
-			kind, err := id.Kind()
-			if err != nil {
-				return nil, err
-			}
-
-			countByKind[kind]++
-		}
-
-		for kind, count := range countByKind {
-			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
-		}
-
-		return usageMetrics, nil
-	})
 }
 
 func (s *SecretsService) providersInitialized() bool {
@@ -357,7 +315,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 	var dataKey []byte
 
 	if !s.encryptedWithEnvelopeEncryption(payload) {
-		secretKey := s.settings.KeyValue("security", "secret_key").Value()
+		secretKey := s.cfg.SecretKey
 		dataKey = []byte(secretKey)
 	} else {
 		payload = payload[1:]
@@ -515,8 +473,7 @@ func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 
 func (s *SecretsService) Run(ctx context.Context) error {
 	gc := time.NewTicker(
-		s.settings.KeyValue("security.encryption", "data_keys_cache_cleanup_interval").
-			MustDuration(time.Minute),
+		s.cfg.DataKeysCacheCleanupInterval,
 	)
 
 	grp, gCtx := errgroup.WithContext(ctx)

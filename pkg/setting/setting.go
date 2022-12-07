@@ -270,6 +270,12 @@ type Cfg struct {
 	CSPReportOnlyTemplate string
 	AngularSupportEnabled bool
 
+	// TODO change to break dependency cycle
+	DataKeysCacheTTL             time.Duration
+	EncryptionProvider           string
+	EncryptionAlgorithmKey       string
+	DataKeysCacheCleanupInterval time.Duration
+
 	TempDataLifetime time.Duration
 
 	// Plugins
@@ -1347,6 +1353,23 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AdminUser = valueAsString(security, "admin_user", "")
 	cfg.AdminPassword = valueAsString(security, "admin_password", "")
 	cfg.AdminEmail = valueAsString(security, "admin_email", fmt.Sprintf("%s@localhost", cfg.AdminUser))
+
+	// TODO added for breaking dependency cycle
+	cfg.EncryptionProvider = valueAsString(security, "encryption_provider", "secretKey.v1")
+	cfg.EncryptionAlgorithmKey = valueAsString(security, "algorithm", "aes-cfb")
+
+	securityEncryption := iniFile.Section("security.encryption")
+	dataKeysCacheTTL := valueAsString(securityEncryption, "data_keys_cache_ttl", (15 * time.Minute).String())
+	var err error
+	cfg.DataKeysCacheTTL, err = gtime.ParseDuration(dataKeysCacheTTL)
+	if err != nil {
+		return err
+	}
+	dataKeysCacheCleanupInterval := valueAsString(securityEncryption, "data_keys_cache_ttl", (time.Minute).String())
+	cfg.DataKeysCacheCleanupInterval, err = gtime.ParseDuration(dataKeysCacheCleanupInterval)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -26,8 +25,7 @@ const (
 type Service struct {
 	log log.Logger
 
-	settingsProvider setting.Provider
-	usageMetrics     usagestats.Service
+	cfg *setting.Cfg
 
 	ciphers   map[string]encryption.Cipher
 	deciphers map[string]encryption.Decipher
@@ -35,8 +33,7 @@ type Service struct {
 
 func ProvideEncryptionService(
 	provider encryption.Provider,
-	usageMetrics usagestats.Service,
-	settingsProvider setting.Provider,
+	cfg *setting.Cfg,
 ) (*Service, error) {
 	s := &Service{
 		log: log.New("encryption"),
@@ -44,21 +41,14 @@ func ProvideEncryptionService(
 		ciphers:   provider.ProvideCiphers(),
 		deciphers: provider.ProvideDeciphers(),
 
-		usageMetrics:     usageMetrics,
-		settingsProvider: settingsProvider,
+		cfg: cfg,
 	}
 
-	algorithm := s.settingsProvider.
-		KeyValue(securitySection, encryptionAlgorithmKey).
-		MustString(defaultEncryptionAlgorithm)
+	algorithm := cfg.EncryptionAlgorithmKey
 
 	if err := s.checkEncryptionAlgorithm(algorithm); err != nil {
 		return nil, err
 	}
-
-	settingsProvider.RegisterReloadHandler(securitySection, s)
-
-	s.registerUsageMetrics()
 
 	return s, nil
 }
@@ -82,18 +72,6 @@ func (s *Service) checkEncryptionAlgorithm(algorithm string) error {
 	}
 
 	return nil
-}
-
-func (s *Service) registerUsageMetrics() {
-	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		algorithm := s.settingsProvider.
-			KeyValue(securitySection, encryptionAlgorithmKey).
-			MustString(defaultEncryptionAlgorithm)
-
-		return map[string]interface{}{
-			fmt.Sprintf("stats.encryption.%s.count", algorithm): 1,
-		}, nil
-	})
 }
 
 func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {
@@ -174,9 +152,7 @@ func (s *Service) Encrypt(ctx context.Context, payload []byte, secret string) ([
 		}
 	}()
 
-	algorithm := s.settingsProvider.
-		KeyValue(securitySection, encryptionAlgorithmKey).
-		MustString(defaultEncryptionAlgorithm)
+	algorithm := s.cfg.EncryptionAlgorithmKey
 
 	cipher, ok := s.ciphers[algorithm]
 	if !ok {

@@ -9,23 +9,22 @@ import (
 )
 
 type grafanaProvider struct {
-	settings   setting.Provider
+	cfg        *setting.Cfg
 	encryption encryption.Internal
 }
 
-func New(settings setting.Provider, encryption encryption.Internal) secrets.Provider {
+func New(cfg *setting.Cfg, encryption encryption.Internal) secrets.Provider {
 	return grafanaProvider{
-		settings:   settings,
 		encryption: encryption,
 	}
 }
 
 func (p grafanaProvider) Encrypt(ctx context.Context, blob []byte) ([]byte, error) {
-	key := p.settings.KeyValue("security", "secret_key").Value()
+	key := p.cfg.SecretKey
 	return p.encryption.Encrypt(ctx, blob, key)
 }
 
 func (p grafanaProvider) Decrypt(ctx context.Context, blob []byte) ([]byte, error) {
-	key := p.settings.KeyValue("security", "secret_key").Value()
+	key := p.cfg.SecretKey
 	return p.encryption.Decrypt(ctx, blob, key)
 }
