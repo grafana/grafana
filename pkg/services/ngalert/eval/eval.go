@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-var ErrNotABackendDatasource = errors.New("")
 var logger = log.New("ngalert.eval")
 
 type EvaluatorFactory interface {
