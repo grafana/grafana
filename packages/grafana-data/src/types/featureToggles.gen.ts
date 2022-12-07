@@ -72,7 +72,6 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
-  interFont?: boolean;
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
@@ -84,4 +83,5 @@ export interface FeatureToggles {
   elasticsearchBackendMigration?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
+  sessionRemoteCache?: boolean;
 }

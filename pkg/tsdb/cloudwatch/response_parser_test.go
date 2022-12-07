@@ -112,9 +112,35 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		})
 	})
 
+	t.Run("when aggregating response and error codes are in second GetMetricDataOutput", func(t *testing.T) {
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/multiple-outputs3.json")
+		require.NoError(t, err)
+		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
+		t.Run("response for id a", func(t *testing.T) {
+			idA := "a"
+			idB := "b"
+			t.Run("should have exceeded request limit", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMetricsExceeded"])
+				assert.True(t, aggregatedResponse[idB].ErrorCodes["MaxMetricsExceeded"])
+			})
+			t.Run("should have exceeded query time range", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryTimeRangeExceeded"])
+				assert.True(t, aggregatedResponse[idB].ErrorCodes["MaxQueryTimeRangeExceeded"])
+			})
+			t.Run("should have exceeded max query results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryResultsExceeded"])
+				assert.True(t, aggregatedResponse[idB].ErrorCodes["MaxQueryResultsExceeded"])
+			})
+			t.Run("should have exceeded max matching results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMatchingResultsExceeded"])
+				assert.True(t, aggregatedResponse[idB].ErrorCodes["MaxMatchingResultsExceeded"])
+			})
+		})
+	})
+
 	t.Run("Expand dimension value using exact match", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
@@ -178,7 +204,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 	t.Run("Expand dimension value using substring", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
@@ -241,7 +267,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 	t.Run("Expand dimension value using wildcard", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -300,7 +326,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 	t.Run("Expand dimension value when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -339,7 +365,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 	t.Run("Expand dimension value when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -381,7 +407,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 	t.Run("Should only expand certain fields when using SQL queries", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("lb3"),
@@ -425,7 +451,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 	t.Run("Parse cloudwatch response", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Id:    aws.String("id1"),
@@ -475,7 +501,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("buildDataFrames should use response label as frame name when dynamic label is enabled", func(t *testing.T) {
-		response := &queryRowResponse{
+		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
 				{
 					Label:      aws.String("some response label"),
