@@ -2,14 +2,15 @@ import { css } from '@emotion/css';
 import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, AppNotificationType } from '@grafana/data';
+import { useStyles2, Tag } from '@grafana/ui';
 import { selectAll } from 'app/core/reducers/appNotification';
-import { useSelector } from 'app/types';
+import { useSelector, tagColorMap } from 'app/types';
 
 export function Notification() {
   const styles = useStyles2(getStyles);
   const notifications = useSelector((state) => selectAll(state.appNotifications));
+  const tagType = notifications.type ?? AppNotificationType.SystemMessage;
 
   return (
     <div className={styles.layout} onClick={(e) => e.stopPropagation()}>
@@ -18,7 +19,10 @@ export function Notification() {
         {notifications.map((notification) => (
           <li key={notification.id} className={styles.notificationItem}>
             <a href="/system-notifications">
-              <p className={styles.title}>{notification.title}</p>
+              <div className={styles.titleWrapper}>
+                <Tag name={tagType} colorIndex={tagColorMap[tagType]} />
+                <p className={styles.title}>{notification.title}</p>
+              </div>
               <span className={styles.date}>
                 {notification.timestamp && formatDistanceToNow(notification.timestamp, { addSuffix: true })}
               </span>
@@ -51,6 +55,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   notificationItem: css({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     padding: `${theme.spacing(1.5, 0)}`,
+  }),
+  titleWrapper: css({
+    display: 'flex',
   }),
   title: css({
     marginBottom: `${theme.spacing(0.5)}`,
