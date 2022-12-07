@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -16,22 +17,61 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const batchSize = 500
+const concurrency = 10
+const batchSize = 1000
 
-func batch(count, size int, eachFn func(start, end int) error) error {
-	for i := 0; i < count; {
-		end := i + size
-		if end > count {
-			end = count
-		}
+type bounds struct {
+	start, end int
+}
 
-		if err := eachFn(i, end); err != nil {
-			return err
-		}
+func concurrentBatch(workers, count, size int, eachFn func(start, end int) error) error {
+	var wg sync.WaitGroup
+	alldone := make(chan bool) // Indicates that all workers have finished working
+	chunk := make(chan bounds) // Gives the workers the bounds they should work with
+	ret := make(chan error)    // Allow workers to notify in case of errors
+	defer close(ret)
 
-		i = end
+	// Launch all workers
+	for x := 0; x < workers; x++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for ck := range chunk {
+				if err := eachFn(ck.start, ck.end); err != nil {
+					ret <- err
+					return
+				}
+			}
+		}()
 	}
 
+	go func() {
+		// Tell the workers the chunks they have to work on
+		for i := 0; i < count; {
+			end := i + size
+			if end > count {
+				end = count
+			}
+
+			chunk <- bounds{start: i, end: end}
+
+			i = end
+		}
+		close(chunk)
+
+		// Wait for the workers
+		wg.Wait()
+		close(alldone)
+	}()
+
+	// wait for an error or for all workers to be done
+	select {
+	case err := <-ret:
+		fmt.Println("Got an error from a worker", err)
+		return err
+	case <-alldone:
+		break
+	}
 	return nil
 }
 
@@ -109,7 +149,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	}
 
 	// Populate store
-	if err := batch(len(roles), batchSize, func(start, end int) error {
+	if errInsert := concurrentBatch(concurrency, len(roles), batchSize, func(start, end int) error {
 		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			if _, err := sess.Insert(users[start:end]); err != nil {
 				return err
@@ -124,17 +164,17 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 			return err
 		})
 		return err
-	}); err != nil {
+	}); errInsert != nil {
 		require.NoError(b, err, "could not insert users and roles")
 		return nil, nil
 	}
-	if err := batch(len(permissions), batchSize, func(start, end int) error {
-		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+
+	if errInsert := concurrentBatch(concurrency, len(permissions), batchSize, func(start, end int) error {
+		return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Insert(permissions[start:end])
 			return err
 		})
-		return err
-	}); err != nil {
+	}); errInsert != nil {
 		require.NoError(b, err, "could not insert permissions")
 		return nil, nil
 	}
@@ -208,3 +248,101 @@ func BenchmarkSearchUsersPermissions_10K_1K(b *testing.B) {
 	}
 	benchSearchUsersPermissions(b, 10000, 1000)
 } // ~50s/op
+
+// Benchmarking search when we specify Action and Scope
+func benchSearchUsersSpecificPermissions(b *testing.B, usersCount, resourceCount int) {
+	acService, siu := setupBenchEnv(b, usersCount, resourceCount)
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu, 1,
+			accesscontrol.SearchOptions{Action: "resources:action2", Scope: "resources:id:1"})
+		require.NoError(b, err)
+		require.Len(b, usersPermissions, usersCount)
+		for _, permissions := range usersPermissions {
+			require.Len(b, permissions, 1)
+		}
+	}
+}
+
+func BenchmarkSearchUsersSpecificPermissions_1K_10(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 1000, 10)
+} // ~0.045s/op
+func BenchmarkSearchUsersSpecificPermissions_1K_100(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 1000, 100)
+} // ~0.038s/op
+func BenchmarkSearchUsersSpecificPermissions_1K_1K(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 1000, 1000)
+} // ~0.033s/op
+func BenchmarkSearchUsersSpecificPermissions_1K_10K(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 1000, 10000)
+} // ~0.033s/op
+func BenchmarkSearchUsersSpecificPermissions_1K_100K(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 1000, 100000)
+} // ~0.056s/op
+
+func BenchmarkSearchUsersSpecificPermissions_10K_10(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 10000, 10)
+} // ~s/op
+func BenchmarkSearchUsersSpecificPermissions_10K_100(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 10000, 100)
+} // ~0.12s/op
+func BenchmarkSearchUsersSpecificPermissions_10K_1K(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 10000, 1000)
+} // ~0.12s/op
+
+func BenchmarkSearchUsersSpecificPermissions_20K_10(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 20000, 10)
+} // ~0.22s/op
+func BenchmarkSearchUsersSpecificPermissions_20K_100(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 20000, 100)
+} // ~0.22s/op
+func BenchmarkSearchUsersSpecificPermissions_20K_1K(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 20000, 1000)
+} // ~0.25s/op
+
+func BenchmarkSearchUsersSpecificPermissions_100K_10(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 100000, 10)
+} // ~0.88s/op
+func BenchmarkSearchUsersSpecificPermissions_100K_100(b *testing.B) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	benchSearchUsersSpecificPermissions(b, 100000, 100)
+} // ~0.72s/op
