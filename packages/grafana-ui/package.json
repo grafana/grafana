@@ -34,6 +34,7 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "betterer": "betterer --config ../../.betterer.ts",
+    "bettererMerge": "betterer --config ../../.betterer.ts merge",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "lint:sass": "yarn stylelint './**/*.scss' --cache",
     "bundle": "rollup -c rollup.config.ts",

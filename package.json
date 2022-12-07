@@ -7,7 +7,7 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "betterer": "nx run-many --target=betterer",
-    "betterer:merge": "betterer merge",
+    "betterer:merge": "nx run-many --target=bettererMerge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "build": "nx run grafana-app:build",
     "build:nominify": "yarn run build --env noMinify=1",

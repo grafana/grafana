@@ -32,6 +32,7 @@
   "scripts": {
     "build": "yarn clean && tsc -p tsconfig.json && yarn copy-files",
     "betterer": "betterer --config ../../.betterer.ts",
+    "bettererMerge": "betterer --config ../../.betterer.ts merge",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "copy-files": "node ./scripts/copy-files.js",
     "clean": "rimraf ./dist ./compiled ./sass ./package.tgz",
