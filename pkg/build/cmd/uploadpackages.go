@@ -74,7 +74,7 @@ func UploadPackages(c *cli.Context) error {
 		if c.Bool("enterprise2") {
 			edition = string(config.EditionEnterprise2)
 		} else {
-			return fmt.Errorf("both EDITION envvar and '--enterprise2' flag are missing. At leaast one of those is required")
+			return fmt.Errorf("both EDITION envvar and '--enterprise2' flag are missing. At least one of those is required")
 		}
 	}
 
