@@ -51,21 +51,18 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "packages/grafana-data/src/dataframe/CircularDataFrame.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/dataframe/DataFrameJSON.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "packages/grafana-data/src/dataframe/DataFrameView.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -91,23 +88,18 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
+      [0, 0, 0, "Do not use any type assertions.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
+      [0, 0, 0, "Do not use any type assertions.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Do not use any type assertions.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Do not use any type assertions.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
-      [0, 0, 0, "Do not use any type assertions.", "21"]
+      [0, 0, 0, "Do not use any type assertions.", "16"]
     ],
     "packages/grafana-data/src/dataframe/dimensions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -119,10 +111,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-data/src/dataframe/frameComparisons.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-data/src/dataframe/processDataFrame.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -142,21 +131,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
+      [0, 0, 0, "Do not use any type assertions.", "14"],
+      [0, 0, 0, "Do not use any type assertions.", "15"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
+      [0, 0, 0, "Do not use any type assertions.", "17"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
       [0, 0, 0, "Do not use any type assertions.", "19"],
       [0, 0, 0, "Do not use any type assertions.", "20"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
-      [0, 0, 0, "Do not use any type assertions.", "22"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
-      [0, 0, 0, "Do not use any type assertions.", "24"],
-      [0, 0, 0, "Do not use any type assertions.", "25"],
-      [0, 0, 0, "Do not use any type assertions.", "26"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "28"]
+      [0, 0, 0, "Do not use any type assertions.", "21"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "23"]
     ],
     "packages/grafana-data/src/datetime/datemath.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -196,13 +180,9 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-data/src/datetime/rangeutil.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-data/src/datetime/timezones.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -233,37 +213,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "packages/grafana-data/src/field/displayProcessor.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/field/displayProcessor.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
-    ],
-    "packages/grafana-data/src/field/fieldColor.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-data/src/field/fieldComparers.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-data/src/field/fieldDisplay.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-data/src/field/fieldOverrides.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -309,10 +269,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
-    "packages/grafana-data/src/field/getFieldDisplayValuesProxy.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "packages/grafana-data/src/field/overrides/processors.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -348,10 +304,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "packages/grafana-data/src/field/templateProxies.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/geo/layer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -374,16 +327,8 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-data/src/panel/registryFactories.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"]
-    ],
-    "packages/grafana-data/src/text/sanitize.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-data/src/text/string.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-data/src/text/text.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -391,22 +336,13 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/themes/colorManipulator.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "packages/grafana-data/src/themes/createColors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-data/src/transformations/fieldReducer.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-data/src/transformations/fieldReducer.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/transformations/matchers/predicates.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

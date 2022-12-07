@@ -180,7 +180,7 @@ const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 /**
  * Given a name and value, this will pick a reasonable field type
  */
-export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType {
+export function guessFieldTypeFromNameAndValue(name: string, v: unknown): FieldType {
   if (name) {
     name = name.toLowerCase();
     if (name === 'date' || name === 'time') {
@@ -193,7 +193,7 @@ export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType 
 /**
  * Check the field type to see what the contents are
  */
-export function getFieldTypeFromValue(v: any): FieldType {
+export function getFieldTypeFromValue(v: unknown): FieldType {
   if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
@@ -218,7 +218,7 @@ export function getFieldTypeFromValue(v: any): FieldType {
  *
  * NOTE: this is will try to see if string values can be mapped to other types (like number)
  */
-export function guessFieldTypeFromValue(v: any): FieldType {
+export function guessFieldTypeFromValue(v: unknown): FieldType {
   if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
@@ -299,9 +299,9 @@ export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFr
   return series;
 };
 
-export const isTableData = (data: any): data is DataFrame => data && data.hasOwnProperty('columns');
+export const isTableData = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('columns'));
 
-export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
+export const isDataFrame = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('fields'));
 
 /**
  * Inspect any object and return the results as a DataFrame
