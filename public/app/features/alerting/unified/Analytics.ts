@@ -40,15 +40,16 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
   };
 }
 
-export const trackAlertRuleCreation = (props: AlertRuleTrackingProps) => {
+export const trackNewAlerRuleFormSaved = (props: AlertRuleTrackingProps) => {
   reportInteraction('grafana_alerting_rule_creation', props);
 };
 
-export const trackAlertRuleAborted = (props: AlertRuleTrackingProps) => {
+export const trackNewAlerRuleFormCancelled = (props: AlertRuleTrackingProps) => {
   reportInteraction('grafana_alerting_rule_aborted', props);
 };
 
 export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;
+  user_id?: number;
 };

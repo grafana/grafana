@@ -33,7 +33,7 @@ import {
 
 import { contextSrv } from '../../../../core/core';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerformanceLogging, trackAlertRuleCreation } from '../Analytics';
+import { logInfo, LogMessages, withPerformanceLogging, trackNewAlerRuleFormSaved } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -485,7 +485,14 @@ export const saveRuleFormAction = createAsyncThunk(
           }
 
           logInfo(LogMessages.successSavingAlertRule);
-          trackAlertRuleCreation({ grafana_version: config.buildInfo.version, org_id: contextSrv.user.orgId });
+
+          if (!existing) {
+            trackNewAlerRuleFormSaved({
+              grafana_version: config.buildInfo.version,
+              org_id: contextSrv.user.orgId,
+              user_id: contextSrv.user.id,
+            });
+          }
 
           if (redirectOnSave) {
             locationService.push(redirectOnSave);

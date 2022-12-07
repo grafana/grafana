@@ -13,7 +13,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages, trackAlertRuleAborted } from '../../Analytics';
+import { LogMessages, trackNewAlerRuleFormCancelled } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -164,7 +164,13 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
 
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
-    trackAlertRuleAborted({ grafana_version: config.buildInfo.version, org_id: contextSrv.user.orgId });
+    if (!existing) {
+      trackNewAlerRuleFormCancelled({
+        grafana_version: config.buildInfo.version,
+        org_id: contextSrv.user.orgId,
+        user_id: contextSrv.user.id,
+      });
+    }
   };
 
   return (
