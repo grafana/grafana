@@ -51,6 +51,8 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 			"duration", elapsed,
 			"pluginId", pluginCtx.PluginID,
 			"endpoint", endpoint,
+			"eventName", "grafana-data-egress",
+			"insight_logs", true,
 		}
 
 		if pluginCtx.User != nil {
