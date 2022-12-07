@@ -69,7 +69,7 @@ export const onDashboardLoadedHandler = ({
 
     reportInteraction('grafana_elasticsearch_dashboard_loaded', event);
   } catch (error) {
-    console.error('error in loki tracking handler', error);
+    console.error('error in elasticsearch tracking handler', error);
   }
 };
 
