@@ -217,6 +217,8 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
   });
 });
 
+// Previously we filtered out Explore events due to too many errors being generated while a user is building a query
+// This tests that we send an event for Explore queries but do not record errors
 describe('emitDataRequestEvent - from Explore', () => {
   it('Should report meta analytics', () => {
     const data = getTestDataForExplore(CoreApp.Explore);
