@@ -45,6 +45,23 @@ grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 
+const meta: { [key: string]: {} } = {
+  '/*': {
+    esModule: true,
+    authorization: true,
+    loader: 'plugin-loader',
+  },
+};
+
+// Force "authorization: false" for all cdn plugins (do not pass auth data to CDN)
+config.bootData.settings?.cdnPluginsBaseURLs?.forEach((url: string) => {
+  meta[`/${url}/*`] = {
+    esModule: true,
+    authorization: false,
+    loader: 'plugin-loader',
+  };
+});
+
 grafanaRuntime.SystemJS.config({
   baseURL: 'public',
   defaultExtension: 'js',
@@ -57,16 +74,7 @@ grafanaRuntime.SystemJS.config({
     text: 'vendor/plugin-text/text.js',
     css: 'vendor/plugin-css/css.js',
   },
-  meta: {
-    '/*': {
-      esModule: true,
-      authorization: true,
-      loader: 'plugin-loader',
-    },
-    '/public/*': {
-      authorization: false,
-    },
-  },
+  meta,
 });
 
 export function exposeToPlugin(name: string, component: any) {
