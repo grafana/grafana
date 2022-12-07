@@ -3,12 +3,14 @@ package registry
 import (
 	"context"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 // BackgroundServiceRegistry provides background services.
 type BackgroundServiceRegistry interface {
 	GetServices() []BackgroundService
+	services.Service
 }
 
 // CanBeDisabled allows the services to decide if it should
