@@ -7,6 +7,8 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -91,9 +93,14 @@ func (s *pluginAuthService) Verify(ctx context.Context, token string) (models.JW
 	return Verify(ctx, s.keySet, expectedClaims, additionalClaims, token)
 }
 
-func (s *pluginAuthService) Generate(usr *user.SignedInUser, tenantID int64, audience string) (string, error) {
+func (s *pluginAuthService) Generate(usr *user.SignedInUser, audience string) (string, error) {
 	if !s.IsEnabled() {
 		return "", errors.New("JWT token generation is disabled")
+	}
+
+	tenantID, err := strconv.ParseInt(os.Getenv("stackID"), 10, 64)
+	if err != nil {
+		fmt.Println("WARNING stackID is missing:", err)
 	}
 
 	claims := jwt.Claims{
@@ -180,10 +187,7 @@ func (s *pluginAuthService) UnaryClientInterceptor(namespace string) grpc.UnaryC
 			return invoker(ctx, method, req, reply, cc, opts...)
 		}
 
-		// TODO: Pull tenant ID from context
-		tenantID := int64(0)
-
-		token, err := s.Generate(usr, tenantID, namespace)
+		token, err := s.Generate(usr, namespace)
 		if err != nil {
 			return err
 		}
@@ -205,10 +209,7 @@ func (s *pluginAuthService) StreamClientInterceptor(namespace string) grpc.Strea
 			return streamer(ctx, desc, cc, method, opts...)
 		}
 
-		// TODO: Pull tenant ID from context
-		tenantID := int64(0)
-
-		token, err := s.Generate(usr, tenantID, namespace)
+		token, err := s.Generate(usr, namespace)
 		if err != nil {
 			return nil, err
 		}
