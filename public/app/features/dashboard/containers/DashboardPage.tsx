@@ -392,7 +392,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
 
-          <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
+          <DashboardGrid
+            dashboard={dashboard}
+            isEditable={!!dashboard.meta.canEdit}
+            viewPanel={viewPanel}
+            editPanel={editPanel}
+          />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
