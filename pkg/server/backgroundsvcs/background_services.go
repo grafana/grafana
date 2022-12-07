@@ -63,13 +63,23 @@ func ProvideBackgroundServiceRegistry(
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
 	roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService,
+	userService user.Service,
+	loginAttemptService loginattempt.Service,
 	pluginStore *pluginStore.Service,
+	cfg *setting.Cfg,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 ) *BackgroundServiceRegistry {
-	r := NewBackgroundServiceRegistry(
+	return NewBackgroundServiceRegistry(
+		usageStatsProvidersRegistry,
+		statsCollector,
+		provisioningService,
+		httpServer,
+		userService,
+		loginAttemptService,
+		cfg,
 		pluginStore,
 		httpServer,
 		ng,
@@ -98,12 +108,6 @@ func ProvideBackgroundServiceRegistry(
 		processManager,
 		secretMigrationProvider,
 	)
-
-	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
-	r.statsCollectorService = statsCollector
-	r.provisioningService = provisioningService
-
-	return r
 }
 
 // BackgroundServiceRegistry provides background services.
@@ -127,16 +131,33 @@ type BackgroundServiceRegistry struct {
 	shutdownFinished chan struct{}
 }
 
-func NewBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundServiceRegistry {
+func NewBackgroundServiceRegistry(
+	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
+	statsCollector *statscollector.Service,
+	provisioningService provisioning.ProvisioningService,
+	HTTPServer *api.HTTPServer,
+	userService user.Service,
+	loginAttemptService loginattempt.Service,
+	cfg *setting.Cfg,
+	s ...registry.BackgroundService,
+) *BackgroundServiceRegistry {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 	r := &BackgroundServiceRegistry{
-		context:       childCtx,
-		shutdownFn:    shutdownFn,
-		childRoutines: childRoutines,
-		Services:      s,
-		log:           log.New("background-services"),
+		context:                     childCtx,
+		shutdownFn:                  shutdownFn,
+		childRoutines:               childRoutines,
+		Services:                    s,
+		log:                         log.New("background-services"),
+		usageStatsProvidersRegistry: usageStatsProvidersRegistry,
+		statsCollectorService:       statsCollector,
+		provisioningService:         provisioningService,
+		HTTPServer:                  HTTPServer,
+		userService:                 userService,
+		loginAttemptService:         loginAttemptService,
+		cfg:                         cfg,
 	}
+
 	r.BasicService = services.NewBasicService(nil, r.run, r.stop)
 	return r
 }
@@ -152,6 +173,10 @@ func (r *BackgroundServiceRegistry) start(ctx context.Context) error {
 }
 
 func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
+	if err := r.start(ctx); err != nil {
+		return err
+	}
+
 	// Start background services.
 	for _, svc := range r.Services {
 		if registry.IsDisabled(svc) {
