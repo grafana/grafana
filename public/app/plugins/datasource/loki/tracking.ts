@@ -4,7 +4,12 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
-import { REF_ID_STARTER_ANNOTATION, REF_ID_DATA_SAMPLES, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
+import {
+  REF_ID_STARTER_ANNOTATION,
+  REF_ID_DATA_SAMPLES,
+  REF_ID_STARTER_LOG_ROW_CONTEXT,
+  REF_ID_STARTER_LOG_VOLUME,
+} from './datasource';
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, parseToNodeNamesArray } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -119,11 +124,9 @@ const isQueryWithChangedLegend = (query: LokiQuery): boolean => {
 };
 
 const shouldNotReportBasedOnRefId = (refId: string): boolean => {
-  if (
-    refId === REF_ID_DATA_SAMPLES ||
-    refId.startsWith(REF_ID_STARTER_ANNOTATION) ||
-    refId.startsWith(REF_ID_STARTER_LOG_ROW_CONTEXT)
-  ) {
+  const starters = [REF_ID_STARTER_ANNOTATION, REF_ID_STARTER_LOG_ROW_CONTEXT, REF_ID_STARTER_LOG_VOLUME];
+
+  if (refId === REF_ID_DATA_SAMPLES || starters.some((starter) => refId.startsWith(starter))) {
     return true;
   }
   return false;

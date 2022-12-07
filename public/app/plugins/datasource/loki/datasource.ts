@@ -79,6 +79,7 @@ export const LOKI_ENDPOINT = '/loki/api/v1';
 export const REF_ID_DATA_SAMPLES = 'loki-data-samples';
 export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
+export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 const NS_IN_MS = 1000000;
 
 function makeRequest(
@@ -150,6 +151,7 @@ export class LokiDatasource
       const query = removeCommentsFromQuery(target.expr);
       return {
         ...target,
+        refId: `${REF_ID_STARTER_LOG_VOLUME}${target.refId}`,
         instant: false,
         volumeQuery: true,
         expr: `sum by (level) (count_over_time(${query}[$__interval]))`,
