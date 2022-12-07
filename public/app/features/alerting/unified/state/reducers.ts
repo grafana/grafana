@@ -18,7 +18,6 @@ import {
   fetchRulerRulesAction,
   fetchRulesSourceBuildInfoAction,
   fetchSilencesAction,
-  fetchValidAlertManagerConfigAction,
   saveRuleFormAction,
   testReceiversAction,
   updateAlertManagerConfigAction,
@@ -39,7 +38,6 @@ export const reducer = combineReducers({
     fetchAlertManagerConfigAction,
     (alertManagerSourceName) => alertManagerSourceName
   ).reducer,
-  validAmConfigs: createAsyncSlice('validAmConfigs', fetchValidAlertManagerConfigAction).reducer,
   silences: createAsyncMapSlice('silences', fetchSilencesAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
   ruleForm: combineReducers({
