@@ -345,7 +345,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	e := definitions.AlertRuleFileExport{}
+	e := definitions.AlertRuleFileExport{APIVersion: 1}
 	for _, group := range groupWithTitles {
 		export, err := definitions.NewAlertRuleGroupExport(c.OrgID, group.FolderTitle, group.AlertRuleGroup)
 		if err != nil {
