@@ -1,22 +1,17 @@
-import { render, waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Route, Router } from 'react-router-dom';
-import { ui } from 'test/helpers/alertingRuleEditor';
+import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
-import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
@@ -58,20 +53,6 @@ const mocks = {
     fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
-
-function renderRuleEditor(identifier?: string) {
-  const store = configureStore();
-
-  locationService.push(identifier ? `/alerting/${identifier}/edit` : `/alerting/new`);
-
-  return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
-      </Router>
-    </Provider>
-  );
-}
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 describe('RuleEditor grafana managed rules', () => {
