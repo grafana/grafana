@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const concurrency = 10
+const concurrency = 20
 const batchSize = 1000
 
 type bounds struct {
@@ -67,7 +67,6 @@ func concurrentBatch(workers, count, size int, eachFn func(start, end int) error
 	// wait for an error or for all workers to be done
 	select {
 	case err := <-ret:
-		fmt.Println("Got an error from a worker", err)
 		return err
 	case <-alldone:
 		break
@@ -250,7 +249,10 @@ func BenchmarkSearchUsersPermissions_10K_1K(b *testing.B) {
 } // ~50s/op
 
 // Benchmarking search when we specify Action and Scope
-func benchSearchUsersSpecificPermissions(b *testing.B, usersCount, resourceCount int) {
+func benchSearchUsersWithPerm(b *testing.B, usersCount, resourceCount int) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
 	acService, siu := setupBenchEnv(b, usersCount, resourceCount)
 	b.ResetTimer()
 
@@ -265,84 +267,21 @@ func benchSearchUsersSpecificPermissions(b *testing.B, usersCount, resourceCount
 	}
 }
 
-func BenchmarkSearchUsersSpecificPermissions_1K_10(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 1000, 10)
-} // ~0.045s/op
-func BenchmarkSearchUsersSpecificPermissions_1K_100(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 1000, 100)
-} // ~0.038s/op
-func BenchmarkSearchUsersSpecificPermissions_1K_1K(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 1000, 1000)
-} // ~0.033s/op
-func BenchmarkSearchUsersSpecificPermissions_1K_10K(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 1000, 10000)
-} // ~0.033s/op
-func BenchmarkSearchUsersSpecificPermissions_1K_100K(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 1000, 100000)
-} // ~0.056s/op
+func BenchmarkSearchUsersWithPerm_1K_10(b *testing.B)   { benchSearchUsersWithPerm(b, 1000, 10) }     // ~0.045s/op
+func BenchmarkSearchUsersWithPerm_1K_100(b *testing.B)  { benchSearchUsersWithPerm(b, 1000, 100) }    // ~0.038s/op
+func BenchmarkSearchUsersWithPerm_1K_1K(b *testing.B)   { benchSearchUsersWithPerm(b, 1000, 1000) }   // ~0.033s/op
+func BenchmarkSearchUsersWithPerm_1K_10K(b *testing.B)  { benchSearchUsersWithPerm(b, 1000, 10000) }  // ~0.033s/op
+func BenchmarkSearchUsersWithPerm_1K_100K(b *testing.B) { benchSearchUsersWithPerm(b, 1000, 100000) } // ~0.056s/op
 
-func BenchmarkSearchUsersSpecificPermissions_10K_10(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 10000, 10)
-} // ~0.11s/op
-func BenchmarkSearchUsersSpecificPermissions_10K_100(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 10000, 100)
-} // ~0.12s/op
-func BenchmarkSearchUsersSpecificPermissions_10K_1K(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 10000, 1000)
-} // ~0.12s/op
+func BenchmarkSearchUsersWithPerm_10K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 10000, 10) }    // ~0.11s/op
+func BenchmarkSearchUsersWithPerm_10K_100(b *testing.B) { benchSearchUsersWithPerm(b, 10000, 100) }   // ~0.12s/op
+func BenchmarkSearchUsersWithPerm_10K_1K(b *testing.B)  { benchSearchUsersWithPerm(b, 10000, 1000) }  // ~0.12s/op
+func BenchmarkSearchUsersWithPerm_10K_10K(b *testing.B) { benchSearchUsersWithPerm(b, 10000, 10000) } // ~1.77s/op
 
-func BenchmarkSearchUsersSpecificPermissions_20K_10(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 20000, 10)
-} // ~0.22s/op
-func BenchmarkSearchUsersSpecificPermissions_20K_100(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 20000, 100)
-} // ~0.22s/op
-func BenchmarkSearchUsersSpecificPermissions_20K_1K(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 20000, 1000)
-} // ~0.25s/op
+func BenchmarkSearchUsersWithPerm_20K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 20000, 10) }    // ~0.22s/op
+func BenchmarkSearchUsersWithPerm_20K_100(b *testing.B) { benchSearchUsersWithPerm(b, 20000, 100) }   // ~0.22s/op
+func BenchmarkSearchUsersWithPerm_20K_1K(b *testing.B)  { benchSearchUsersWithPerm(b, 20000, 1000) }  // ~0.25s/op
+func BenchmarkSearchUsersWithPerm_20K_10K(b *testing.B) { benchSearchUsersWithPerm(b, 20000, 10000) } // ~s/op
 
-func BenchmarkSearchUsersSpecificPermissions_100K_10(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 100000, 10)
-} // ~0.88s/op
-func BenchmarkSearchUsersSpecificPermissions_100K_100(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping benchmark in short mode")
-	}
-	benchSearchUsersSpecificPermissions(b, 100000, 100)
-} // ~0.72s/op
+func BenchmarkSearchUsersWithPerm_100K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 100000, 10) }  // ~0.88s/op
+func BenchmarkSearchUsersWithPerm_100K_100(b *testing.B) { benchSearchUsersWithPerm(b, 100000, 100) } // ~0.72s/op
