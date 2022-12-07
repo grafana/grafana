@@ -205,17 +205,24 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	oldState := currentState.State
 	oldReason := currentState.StateReason
 
-	logger.Debug("Setting alert state")
+	// Add the instance to the log context to help correlate log lines for a state
+	logger = logger.New("instance", result.Instance)
+
 	switch result.State {
 	case eval.Normal:
-		currentState.resultNormal(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultNormal")
+		resultNormal(currentState, alertRule, result, logger)
 	case eval.Alerting:
-		currentState.resultAlerting(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultAlerting")
+		resultAlerting(currentState, alertRule, result, logger)
 	case eval.Error:
-		currentState.resultError(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultError")
+		resultError(currentState, alertRule, result, logger)
 	case eval.NoData:
-		currentState.resultNoData(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultNoData")
+		resultNoData(currentState, alertRule, result, logger)
 	case eval.Pending: // we do not emit results with this state
+		logger.Debug("Ignoring set next state as result is pending")
 	}
 
 	// Set reason iff: result is different than state, reason is not Alerting or Normal
