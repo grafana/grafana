@@ -46,18 +46,17 @@ interface Notification {
 }
 
 const pageNav: NavModelItem = {
-  icon: 'user',
+  icon: 'bell',
   id: 'system-notifications',
   text: 'System notifications',
   // subTitle: '',
-  breadcrumbs: [{ title: 'System notifications', url: 'system-notifications' }],
+  // breadcrumbs: [{ title: 'System notifications', url: 'system-notifications' }],
 };
 
 export const SystemNotificationsPage = () => {
-  //({ className }: SystemNotificationsProps) => {
-  // const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
   const dispatch = useDispatch();
   const notifications = useSelector((state) => selectAll(state.appNotifications));
+  const updatedNotifications = notifications.map((i) => i.type ?? { ...i, type: AppNotificationType.SystemMessage });
   // const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);
   const allNotificationsSelected = notifications.every((notification) =>
@@ -115,7 +114,7 @@ export const SystemNotificationsPage = () => {
           <h3>User account</h3>
           <hr />
           <div className={styles.notificationGroupListItems}>
-            {notifications.map((notif) => {
+            {updatedNotifications.map((notif) => {
               return (
                 <li key={notif.id} className={styles.listItem}>
                   <SystemNotificationsItem
