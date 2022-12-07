@@ -55,6 +55,7 @@ export function StepContent({ step, onComplete }: Omit<Props, 'isOpen'>): ReactE
 const getStyles = () => ({
   stepName: css`
     font-size: 19px;
+    margin-top: 3px;
   `,
 
   stepDescription: css`
