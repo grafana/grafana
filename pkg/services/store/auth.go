@@ -31,6 +31,7 @@ func (u *UserInfo) String() string {
 	return string(raw)
 }
 
+// Really just spitballing here :) this should hook into a system that can give better display info
 func GetUserIDString(user *user.SignedInUser) string {
 	if user == nil {
 		return ""
