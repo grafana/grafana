@@ -88,7 +88,7 @@ func UploadPackages(c *cli.Context) error {
 			Version: version,
 			Bucket:  releaseModeConfig.Buckets.Artifacts,
 		},
-		edition:     config.Edition(edition),
+		edition:     edition,
 		versionMode: releaseMode.Mode,
 		gcpKey:      gcpKey,
 		distDir:     distDir,
