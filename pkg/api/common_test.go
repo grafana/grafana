@@ -220,6 +220,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	sc := &scenarioContext{
 		url: url,
 		t:   t,
@@ -248,6 +249,7 @@ func (s *fakeRenderService) Init() error {
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.Quota.Enabled = false
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 
 	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
