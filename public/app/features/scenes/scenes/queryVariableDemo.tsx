@@ -17,20 +17,13 @@ export function getQueryVariableDemo(): Scene {
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({
-          name: 'regex',
-          query: 'prom,graf,nod',
-          value: 'prom',
+          name: 'label',
+          query: 'job : job, instance : instance',
         }),
         new QueryVariable({
-          name: 'job',
-          query: { query: 'label_values(go_gc_duration_seconds, job)' },
-          datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
-          // regex: '/^${regex}*/',
-        }),
-        new QueryVariable({
-          name: 'instance (on time range refresh)',
+          name: 'label values (on time range refresh)',
           refresh: VariableRefresh.onTimeRangeChanged,
-          query: { query: 'label_values(go_gc_duration_seconds, instance)' },
+          query: { query: 'label_values(go_gc_duration_seconds, ${label})' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         }),
       ],

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Observable, Subject, of, Unsubscribable, filter, take, mergeMap, catchError, throwError } from 'rxjs';
+import { Observable, Subject, of, Unsubscribable, filter, take, mergeMap, catchError, throwError, from } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -41,12 +41,13 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
   private dataSourceSubject?: Subject<DataSourceApi>;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    statePaths: ['regex'],
+    statePaths: ['regex', 'query'],
     // TODO: add query and datasource support
   });
 
   public constructor(initialState: Partial<QueryVariableState>) {
     super({
+      type: 'query',
       name: '',
       value: '',
       text: '',
@@ -91,61 +92,37 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
       return of([]);
     }
 
-    return new Observable<VariableValueOption[]>((observer) => {
-      this.dataSourceSubject = new Subject<DataSourceApi>();
-
-      // Wait for the data source to be ready
-      this.dataSourceSubject.subscribe({
-        next: (ds) => {
-          const runner = createQueryVariableRunner(ds);
-          const target = runner.getTarget(this);
-          const request = this.getRequest(target);
-          runner
-            .runRequest({}, request)
-            .pipe(
-              filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
-              take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet
-              mergeMap((data: PanelData) => {
-                if (data.state === LoadingState.Error) {
-                  return throwError(() => data.error);
-                }
-
-                return of(data);
-              }),
-              toMetricFindValues(),
-              mergeMap((values) => {
-                let regex = '';
-                if (this.state.regex) {
-                  regex = sceneGraph.interpolate(this, this.state.regex, undefined, 'regex');
-                }
-                return of(metricNamesToVariableValues(regex, this.state.sort, values));
-              }),
-              catchError((error) => {
-                if (error.cancelled) {
-                  return of([]);
-                }
-
-                return throwError(() => error);
-              })
-            )
-            .subscribe((values) => {
-              observer.next(values);
-              observer.complete();
-            });
-        },
-        error: (e) => observer.error(e),
-      });
-
-      // Resolve variable's data soure
-      getDataSourceSrv()
-        .get(this.state.datasource ?? '')
-        .then((ds) => {
-          this.dataSourceSubject?.next(ds);
-        })
-        .catch((err) => {
-          this.dataSourceSubject?.error(err);
-        });
-    });
+    return from(getDataSourceSrv().get(this.state.datasource ?? '')).pipe(
+      mergeMap((ds) => {
+        const runner = createQueryVariableRunner(ds);
+        const target = runner.getTarget(this);
+        const request = this.getRequest(target);
+        return runner.runRequest({}, request).pipe(
+          filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
+          take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet
+          mergeMap((data: PanelData) => {
+            if (data.state === LoadingState.Error) {
+              return throwError(() => data.error);
+            }
+            return of(data);
+          }),
+          toMetricFindValues(),
+          mergeMap((values) => {
+            let regex = '';
+            if (this.state.regex) {
+              regex = sceneGraph.interpolate(this, this.state.regex, undefined, 'regex');
+            }
+            return of(metricNamesToVariableValues(regex, this.state.sort, values));
+          }),
+          catchError((error) => {
+            if (error.cancelled) {
+              return of([]);
+            }
+            return throwError(() => error);
+          })
+        );
+      })
+    );
   }
 
   private getRequest(target: DataQuery) {
@@ -157,6 +134,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
     const scopedVars: ScopedVars = {
       // ...searchFilterAsVars,
       ...variableAsVars,
+      __sceneObject: { text: '__sceneObject', value: this },
     };
 
     const range =

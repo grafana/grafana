@@ -153,6 +153,18 @@ describe('QueryVariable', () => {
       ]);
     });
 
+    it('Should pass variable scene object via request scoped vars', async () => {
+      const variable = new QueryVariable({
+        name: 'test',
+        datasource: { uid: 'fake-std', type: 'fake-std' },
+        query: 'query',
+      });
+
+      await lastValueFrom(variable.validateAndUpdate());
+      const call = runRequestMock.mock.calls[0];
+      expect(call[1].scopedVars.__sceneObject).toEqual({ value: variable, text: '__sceneObject' });
+    });
+
     describe('when refresh on dashboard load set', () => {
       it('Should issue variable query with default time range', async () => {
         const variable = new QueryVariable({

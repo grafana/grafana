@@ -9,6 +9,14 @@ export class ConstantVariable
   extends SceneObjectBase<ConstantVariableState>
   implements SceneVariable<ConstantVariableState>
 {
+  constructor(initialState: Partial<ConstantVariableState>) {
+    super({
+      type: 'constant',
+      value: '',
+      name: '',
+      ...initialState,
+    });
+  }
   public getValue(): VariableValue {
     return this.state.value;
   }
