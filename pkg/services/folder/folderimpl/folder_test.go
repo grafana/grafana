@@ -524,13 +524,31 @@ func TestNestedFolderService(t *testing.T) {
 				guardian.New = g
 			})
 
-			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			store.ExpectedChildFolders = []*folder.Folder{{UID: "newFolder", ParentUID: "12345"}, {UID: "12345", ParentUID: ""}}
+			store.ExpectedError = folder.ErrCircularReference
 			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, folder.ErrCircularReference)
 			require.Nil(t, f)
 			store.ExpectedChildFolders = []*folder.Folder{}
+		})
+
+		t.Run("move when new parentUID depth + subTree height bypassed maximum depth returns error", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			store.ExpectedError = nil
+			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			store.ExpectedParentFolders = []*folder.Folder{
+				{UID: "newFolder", ParentUID: "newFolder"},
+				{UID: "newFolder2", ParentUID: "newFolder2"},
+			}
+			store.ExpectedFolderHeight = 5
+			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
+			require.Error(t, err, folder.ErrMaximumDepthReached)
+			require.Nil(t, f)
 		})
 
 		t.Run("move when parentUID in the current subtree returns error from nested folder service", func(t *testing.T) {
@@ -543,7 +561,7 @@ func TestNestedFolderService(t *testing.T) {
 			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			store.ExpectedParentFolders = []*folder.Folder{{UID: "myFolder", ParentUID: "12345"}, {UID: "12345", ParentUID: ""}}
-			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
+			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, folder.ErrCircularReference)
 			require.Nil(t, f)
 			store.ExpectedChildFolders = []*folder.Folder{}

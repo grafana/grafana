@@ -565,6 +565,42 @@ func TestIntegrationGetChildren(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetHeight(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	t.Skip("skipping until folder migration is merged")
+
+	db := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
+
+	orgID := CreateOrg(t, db)
+
+	// create folder
+	title1 := "folder1"
+	desc1 := "folder desc"
+	uid1 := util.GenerateShortUID()
+	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:       title1,
+		Description: desc1,
+		OrgID:       orgID,
+		UID:         uid1,
+	})
+	require.NoError(t, err)
+	subTree := CreateSubTree(t, folderStore, orgID, parent.UID, 4, "sub")
+
+	t.Run("should successfully get height", func(t *testing.T) {
+		height, err := folderStore.GetHeight(context.Background(), parent.UID, orgID, nil)
+		require.NoError(t, err)
+		require.Equal(t, 4, height)
+	})
+
+	t.Run("should failed when the parent folder exist in the subtree", func(t *testing.T) {
+		_, err = folderStore.GetHeight(context.Background(), parent.UID, orgID, &subTree[0])
+		require.Error(t, err, folder.ErrCircularReference)
+	})
+}
+
 func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
@@ -583,17 +619,14 @@ func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
-	ancestorUIDs := []string{}
+	ancestorUIDs := []string{parentUID}
 	for i := 0; i < depth; i++ {
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
 		cmd := folder.CreateFolderCommand{
 			Title:     title,
 			OrgID:     orgID,
-			ParentUID: parentUID,
+			ParentUID: ancestorUIDs[len(ancestorUIDs)-1],
 			UID:       util.GenerateShortUID(),
-		}
-		if len(ancestorUIDs) > 0 {
-			cmd.ParentUID = ancestorUIDs[len(ancestorUIDs)-1]
 		}
 		f, err := store.Create(context.Background(), cmd)
 		require.NoError(t, err)
