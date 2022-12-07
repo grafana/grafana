@@ -76,6 +76,9 @@ import { LokiVariableSupport } from './variables';
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
+export const REF_ID_DATA_SAMPLES = 'loki-data-samples';
+export const REF_ID_STARTER_ANNOTATION = 'annotation-';
+export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 const NS_IN_MS = 1000000;
 
 function makeRequest(
@@ -556,7 +559,7 @@ export class LokiDatasource
     const app = CoreApp.Explore;
 
     return lastValueFrom(
-      this.query(makeRequest(query, range, app, `log-row-context-query-${direction}`)).pipe(
+      this.query(makeRequest(query, range, app, `${REF_ID_STARTER_LOG_ROW_CONTEXT}${direction}`)).pipe(
         catchError((err) => {
           const error: DataQueryError = {
             message: 'Error during context query. Please check JS console logs.',
@@ -597,7 +600,7 @@ export class LokiDatasource
     const query: LokiQuery = {
       expr: `{${expr}}`,
       queryType: LokiQueryType.Range,
-      refId: row.dataFrame.refId ?? '',
+      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
       maxLines: limit,
       direction: queryDirection,
     };
@@ -675,7 +678,7 @@ export class LokiDatasource
       return [];
     }
 
-    const id = `annotation-${options.annotation.name}`;
+    const id = `${REF_ID_STARTER_ANNOTATION}${options.annotation.name}`;
 
     const query: LokiQuery = {
       refId: id,

@@ -4,6 +4,7 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
+import { REF_ID_STARTER_ANNOTATION, REF_ID_DATA_SAMPLES, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, parseToNodeNamesArray } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -117,8 +118,22 @@ const isQueryWithChangedLegend = (query: LokiQuery): boolean => {
   return query.legendFormat !== '';
 };
 
+const shouldNotReportBasedOnRefId = (refId: string): boolean => {
+  if (
+    refId === REF_ID_DATA_SAMPLES ||
+    refId.startsWith(REF_ID_STARTER_ANNOTATION) ||
+    refId.startsWith(REF_ID_STARTER_LOG_ROW_CONTEXT)
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], app: string): void {
   for (const query of queries) {
+    if (shouldNotReportBasedOnRefId(query.refId)) {
+      return;
+    }
     reportInteraction('grafana_loki_query_executed', {
       app,
       editor_mode: query.editorMode,
