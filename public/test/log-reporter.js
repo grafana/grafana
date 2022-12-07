@@ -27,7 +27,7 @@ class CustomReporter {
       failures: results.numFailedTests,
       duration: Date.now() - results.startTime,
     };
-    // JestStats suites=1 tests=94 passes=93 pending=0 failures=1 duration=-3973
+    // JestStats suites=1 tests=94 passes=93 pending=0 failures=1 duration=3973
     console.log(`JestStats ${objToLogAttributes(stats)}`);
   }
 }
