@@ -106,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: `${theme.v1.palette.blue80}`,
     borderRadius: '100%',
     fontSize: '8px',
-    color: '#fff',
+    color: `${theme.palette.white}`,
     position: 'absolute',
     top: 0,
     left: 0,
