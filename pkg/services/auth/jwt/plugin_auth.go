@@ -7,7 +7,6 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -98,9 +97,9 @@ func (s *pluginAuthService) Generate(usr *user.SignedInUser, audience string) (s
 		return "", errors.New("JWT token generation is disabled")
 	}
 
-	tenantID, err := strconv.ParseInt(os.Getenv("HG_STACK_ID"), 10, 64)
-	if err != nil {
-		fmt.Println("StackID is unknown:", err)
+	stackID, err := strconv.ParseInt(os.Getenv("HG_STACK_ID"), 10, 64)
+	if err == nil {
+		usr.StackID = stackID
 	}
 
 	claims := jwt.Claims{
@@ -114,12 +113,12 @@ func (s *pluginAuthService) Generate(usr *user.SignedInUser, audience string) (s
 
 	customClaims := struct {
 		orgID       int64
-		tenantID    int64
+		stackID     int64
 		login       string
 		displayName string
 	}{
 		orgID:       usr.OrgID,
-		tenantID:    tenantID,
+		stackID:     usr.StackID,
 		login:       usr.Login,
 		displayName: usr.Name,
 	}

@@ -141,6 +141,10 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
+	if stackId, ok := claims["stackId"].(int64); ok {
+		signedInUser.StackID = stackId
+	}
+
 	return signedInUser, nil
 }
 

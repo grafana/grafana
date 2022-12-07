@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	v1 "k8s.io/api/core/v1"
@@ -29,12 +30,14 @@ func (s *serviceImpl) showTenantInfo(c *models.ReqContext) response.Response {
 		fmt.Println("Could not find tenant info", err)
 		return response.JSON(500, map[string]interface{}{
 			"nope": "nope",
+			"user": c.SignedInUser,
 			"env":  os.Getenv("HG_STACK_ID"),
 		})
 	}
 
 	return response.JSON(200, map[string]interface{}{
 		"stackID": t.StackID,
+		"user":    c.SignedInUser,
 		"env":     os.Getenv("HG_STACK_ID"),
 	})
 }
@@ -59,18 +62,16 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println("POTATO", r.RequestURI)
 		ctx := r.Context()
-
-		// Get stack ID
-		stackID, err := StackIDFromContext(ctx)
+		user, err := appcontext.User(ctx)
 		if err != nil {
-			fmt.Println("No stackID on context:", err)
-			fmt.Println("StackID on context:", stackID)
+			fmt.Println("missing user", err)
+			next.ServeHTTP(w, r)
+			return
 		}
 
 		// Check cache for config by stackID
-		info, ok := s.cache[stackID]
+		info, ok := s.cache[user.StackID]
 
 		// If no config, get one
 		if !ok {
@@ -78,16 +79,16 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 
 			// get the initial config map
 			if s.clientset != nil {
-				config, err = s.clientset.CoreV1().ConfigMaps("hosted-grafana").Get(context.TODO(), stackName(stackID), metav1.GetOptions{})
+				config, err = s.clientset.CoreV1().ConfigMaps("hosted-grafana").Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
 				if err != nil {
 					fmt.Println("Error getting config map:", err)
 				}
 			}
 
 			// build tenant info and add to context
-			info = buildTenantInfoFromConfig(stackID, config)
+			info = buildTenantInfoFromConfig(user.StackID, config)
 			fmt.Println("POTATO: context set")
-			s.cache[stackID] = info
+			s.cache[user.StackID] = info
 
 			// Get config watcher
 			//w, err := s.GetStackConfigWatcher(context.TODO(), stackID)
