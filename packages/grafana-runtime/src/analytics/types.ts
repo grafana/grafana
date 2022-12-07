@@ -22,7 +22,7 @@ export interface DashboardInfo {
  * @public
  */
 export interface DataRequestInfo extends Partial<DashboardInfo> {
-  source: CoreApp | string;
+  source?: CoreApp | string;
   datasourceName: string;
   datasourceId: number;
   datasourceUid: string;
