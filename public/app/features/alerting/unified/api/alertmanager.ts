@@ -53,20 +53,6 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
   }
 }
 
-//this is only available for the "grafana" alert manager
-export async function fetchValidAlertManagerConfig(): Promise<AlertManagerCortexConfig[]> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<AlertManagerCortexConfig[]>({
-      url: `/api/alertmanager/${getDatasourceAPIUid(
-        GRAFANA_RULES_SOURCE_NAME
-      )}/config/api/v1/alerts/successfully-applied?limit=${limitToSuccessfullyAppliedAMs}`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-  return result.data;
-}
-
 export async function updateAlertManagerConfig(
   alertManagerSourceName: string,
   config: AlertManagerCortexConfig
