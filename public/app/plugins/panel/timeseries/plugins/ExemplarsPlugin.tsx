@@ -20,7 +20,7 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  visibleSeries: VisibleExemplarLabels;
+  visibleSeries?: VisibleExemplarLabels;
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -71,11 +71,11 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      let showMarker = false;
+      const showMarker =
+        visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, dataFrameFieldIndex) : true;
 
-      const markerColor = getExemplarColor(dataFrame, dataFrameFieldIndex, visibleSeries);
-
-      showMarker = showExemplar(visibleSeries, showMarker, dataFrame, dataFrameFieldIndex);
+      const markerColor =
+        visibleSeries !== undefined ? getExemplarColor(dataFrame, dataFrameFieldIndex, visibleSeries) : undefined;
 
       if (!showMarker) {
         return <></>;
@@ -170,12 +170,12 @@ const getExemplarColor = (
 /**
  * Determine if the current exemplar marker is filtered by what series are selected in the legend UI
  */
-function showExemplar(
+const showExemplarMarker = (
   visibleSeries: VisibleExemplarLabels,
-  showMarker: boolean,
   dataFrame: DataFrame,
   dataFrameFieldIndex: DataFrameFieldIndex
-) {
+) => {
+  let showMarker = false;
   // If all series are visible, don't filter any exemplars
   if (visibleSeries.labels.length === visibleSeries.totalSeriesCount) {
     showMarker = true;
@@ -206,4 +206,4 @@ function showExemplar(
     });
   }
   return showMarker;
-}
+};
