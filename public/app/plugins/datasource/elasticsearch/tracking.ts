@@ -85,10 +85,12 @@ const getQueryType = (query: ElasticsearchQuery): string | undefined => {
 };
 
 const getLineLimit = (query: ElasticsearchQuery): number | undefined => {
-  // We only want to track line limit for log queries
-  const logMetric = query.metrics?.[0]?.type === 'logs' ? query.metrics[0] : undefined;
-  const lineLimitString = logMetric ? logMetric.settings?.limit : undefined;
-  return lineLimitString ? parseInt(lineLimitString, 10) : undefined;
+  if (query.metrics?.[0]?.type !== 'logs') {
+    return undefined;
+  }
+
+  const lineLimit = query.metrics?.[0].settings?.limit;
+  return lineLimit ? parseInt(lineLimit, 10) : undefined;
 };
 
 const isQueryWithChangedLineLimit = (query: ElasticsearchQuery): boolean => {
