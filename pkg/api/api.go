@@ -416,6 +416,8 @@ func (hs *HTTPServer) registerRoutes() {
 				recipesRoute.Get("/:recipeId", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.GetRecipeByID))
 				recipesRoute.Post("/:recipeId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.InstallRecipe))
 				recipesRoute.Post("/:recipeId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.UninstallRecipe))
+				recipesRoute.Post("/:recipeId/:stepNumber/apply", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.ApplyRecipeStep))
+				recipesRoute.Post("/:recipeId/:stepNumber/revert", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.RevertRecipeStep))
 			})
 		}
 

@@ -39,7 +39,7 @@ type Prompt struct {
 
 func (s *PromptStep) Apply(c context.Context) error {
 	s.Status = RecipeStepStatus{
-		Status:        "Visible",
+		Status:        "Completed",
 		StatusMessage: "Please fill out the required information",
 	}
 

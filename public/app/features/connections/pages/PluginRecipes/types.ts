@@ -13,6 +13,12 @@ export type PluginRecipeMeta = {
 
 export type Screenshot = { name: string; url: string };
 
+export enum StepStatus {
+  Completed = 'Completed',
+  NotCompleted = 'NotCompleted',
+  Error = 'Error',
+}
+
 // Step - General
 // --------------
 export type PluginRecipeStep = {
@@ -23,7 +29,7 @@ export type PluginRecipeStep = {
 
   // Optional information about the status of this recipe step
   status?: {
-    status: string;
+    status: StepStatus;
     statusMessage: string;
   };
 };
@@ -59,7 +65,7 @@ export type PluginRecipePromptMeta = PluginRecipeStepMeta & {
 export type PluginRecipePrompt = {
   label: string;
   description: string;
-  type: string;
+  type: string; // 'text', 'number', 'select', 'multiselect', 'radio'
   placeholder: string;
   defaultValue: string;
   options: Array<{
