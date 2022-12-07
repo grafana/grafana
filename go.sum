@@ -439,6 +439,10 @@ github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+Ce
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
+github.com/bhmj/jsonslice v1.1.2 h1:Lzen2S9iG3HsESpiIAnTM7Obs1QiTz83ZXa5YrpTTWI=
+github.com/bhmj/jsonslice v1.1.2/go.mod h1:O3ZoA0zdEefdbk1dkU5aWPOA36zQhhS/HV6RQFLTlnU=
+github.com/bhmj/xpression v0.9.1 h1:N7bX/nWx9oFi/zsiMTx2ehoRApTDAWdQadq/5o2wMGk=
+github.com/bhmj/xpression v0.9.1/go.mod h1:j9oYmEXJjeL9mrgW1+ZDBKJXnbupsCPGhlO9J5YhS1Q=
 github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932/go.mod h1:NOuUCSz6Q9T7+igc/hlvDOUdtWKryOrtFyIVABv/p7k=
 github.com/bitly/go-simplejson v0.5.0/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
 github.com/bits-and-blooms/bitset v1.2.0 h1:Kn4yilvwNtMACtf1eYDlG8H77R07mZSPbMjLyS07ChA=
