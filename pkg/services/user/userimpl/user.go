@@ -273,7 +273,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 		// Fallback to in memory cache
 		if cached, found := s.cacheService.Get(cacheKey); found {
 			cachedUser := cached.(user.SignedInUser)
-			s.logger.Debug("got user from local cache", "login", cachedUser.Login)
+			s.logger.Debug("got user from local cache", "cachekey", cacheKey)
 			return &cachedUser, nil
 		}
 	}
