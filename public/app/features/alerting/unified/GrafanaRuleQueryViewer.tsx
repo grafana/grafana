@@ -7,9 +7,8 @@ import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, RelativeTimeRange
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Badge, useStyles2 } from '@grafana/ui';
-import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 
-import { AlertQuery, RulerGrafanaRuleDTO } from '../../../types/unified-alerting-dto';
+import { AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
   downsamplingTypes,
@@ -27,23 +26,28 @@ import { ExpressionResult } from './components/expressions/Expression';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 
 interface GrafanaRuleViewerProps {
-  rule: RulerGrafanaRuleDTO;
+  queries: AlertQuery[];
+  condition: string;
   evalDataByQuery?: Record<string, PanelData>;
   onTimeRangeChange: (queryRef: string, timeRange: RelativeTimeRange) => void;
 }
 
-export function GrafanaRuleQueryViewer({ rule, evalDataByQuery = {}, onTimeRangeChange }: GrafanaRuleViewerProps) {
+export function GrafanaRuleQueryViewer({
+  queries,
+  condition,
+  evalDataByQuery = {},
+  onTimeRangeChange,
+}: GrafanaRuleViewerProps) {
   // const styles = useStyles2(getGrafanaRuleViewerStyles);
 
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
-  const queries = rule.grafana_alert.data.filter((q) => !isExpressionQuery(q.model));
-  const expressions = rule.grafana_alert.data.filter((q) => isExpressionQuery(q.model));
-  const condition = rule.grafana_alert.condition;
+  const dataQueries = queries.filter((q) => !isExpressionQuery(q.model));
+  const expressions = queries.filter((q) => isExpressionQuery(q.model));
 
   return (
     <Stack gap={2} direction="column">
       <Stack gap={2}>
-        {queries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
+        {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
           const dataSource = dsByUid[datasourceUid];
 
           return (
@@ -102,11 +106,12 @@ export function QueryPreview({
 }: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
 
-  // const [timeRange, setTimeRange] = useState(relativeTimeRange);
-
   const headerItems = [dataSource?.name ?? '[[Data source not found]]'];
   if (relativeTimeRange) {
-    headerItems.push(mapRelativeTimeRangeToOption(relativeTimeRange).display);
+    const interval = relativeTimeRange.from - relativeTimeRange.to;
+    // headerItems.push(mapRelativeTimeRangeToOption(relativeTimeRange).display);
+    headerItems.push(`Time range: ${interval}s`);
+    // headerItems.push(describeInterval(`${interval}s`));
   }
 
   return (

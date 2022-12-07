@@ -60,6 +60,8 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
   const [queries, setQueries] = useState<AlertQuery[]>([]);
 
+  // const [customQueryTimeRange, setCustomQueryTimeRange]
+
   const { allDataSourcesAvailable } = useAlertQueriesStatus(queries2);
 
   const onRunQueries = useCallback(() => {
@@ -95,16 +97,15 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   const onQueryTimeRangeChange = useCallback(
     (refId: string, timeRange: RelativeTimeRange) => {
-      setQueries(
-        produce((draftQueries) => {
-          const queryToChange = draftQueries.find((q) => q.refId === refId);
-          if (queryToChange) {
-            queryToChange.relativeTimeRange = timeRange;
-          }
-        })
-      );
+      const updatedQueries = produce(queries, (draftQueries) => {
+        const queryToChange = draftQueries.find((q) => q.refId === refId);
+        if (queryToChange) {
+          queryToChange.relativeTimeRange = timeRange;
+        }
+      });
+      setQueries([...updatedQueries]);
     },
-    [setQueries]
+    [queries, setQueries]
   );
 
   if (!identifier?.ruleSourceName) {
@@ -211,7 +212,8 @@ export function RuleViewer({ match }: RuleViewerProps) {
       >
         {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
           <GrafanaRuleQueryViewer
-            rule={rule.rulerRule}
+            condition={rule.rulerRule.grafana_alert.condition}
+            queries={queries}
             evalDataByQuery={data}
             onTimeRangeChange={onQueryTimeRangeChange}
           />
@@ -224,6 +226,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
                 <QueryPreview
                   key={query.refId}
                   isAlertCondition={false}
+                  relativeTimeRange={query.relativeTimeRange}
                   onTimeRangeChange={(timeRange) => onChangeQuery({ ...query, relativeTimeRange: timeRange })}
                   refId={query.refId}
                   model={query.model}
