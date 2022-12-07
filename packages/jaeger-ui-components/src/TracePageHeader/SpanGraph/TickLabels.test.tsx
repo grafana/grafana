@@ -22,7 +22,7 @@ describe('<TickLabels>', () => {
     duration: 5000,
   };
 
-  let ticks;
+  let ticks: HTMLElement[];
 
   beforeEach(() => {
     render(<TickLabels {...defaultProps} />);
@@ -52,6 +52,6 @@ describe('<TickLabels>', () => {
   });
 
   it("doesn't explode if no trace is present", () => {
-    expect(() => render(<TickLabels {...defaultProps} trace={null} />)).not.toThrow();
+    expect(() => render(<TickLabels {...defaultProps} />)).not.toThrow();
   });
 });
