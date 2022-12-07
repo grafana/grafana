@@ -255,6 +255,10 @@ const (
 	// Use double quote to escape keyword in Mysql query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
+	// FlagUserRemoteCache
+	// Enable using remote cache for users
+	FlagUserRemoteCache = "userRemoteCache"
+
 	// FlagDatasourceLogger
 	// Logs all datasource requests
 	FlagDatasourceLogger = "datasourceLogger"

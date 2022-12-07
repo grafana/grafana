@@ -347,6 +347,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "userRemoteCache",
+			Description: "Enable using remote cache for users",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "datasourceLogger",
 			Description: "Logs all datasource requests",
 		},

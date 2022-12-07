@@ -8,9 +8,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -24,6 +27,9 @@ type Service struct {
 	orgService   org.Service
 	teamService  team.Service
 	cacheService *localcache.CacheService
+	remoteCache  *remotecache.RemoteCache
+	logger       log.Logger
+	features     *featuremgmt.FeatureManager
 	cfg          *setting.Cfg
 }
 
@@ -34,6 +40,8 @@ func ProvideService(
 	teamService team.Service,
 	cacheService *localcache.CacheService,
 	quotaService quota.Service,
+	remoteCache *remotecache.RemoteCache,
+	features *featuremgmt.FeatureManager,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
 	s := &Service{
@@ -42,6 +50,13 @@ func ProvideService(
 		cfg:          cfg,
 		teamService:  teamService,
 		cacheService: cacheService,
+		remoteCache:  remoteCache,
+		features:     features,
+		logger:       log.New("user.service"),
+	}
+
+	if features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
+		remotecache.Register(user.SignedInUser{})
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -231,15 +246,35 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 }
 
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	var signedInUser *user.SignedInUser
-
 	// only check cache if we have a user ID and an org ID in query
 	if query.OrgID > 0 && query.UserID > 0 {
 		cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+
+		// Fetching from remote cache first
+		if s.features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
+			res, errCache := s.remoteCache.Get(ctx, cacheKey)
+			if errCache == nil {
+				if cachedUser, ok := res.(user.SignedInUser); ok {
+					s.logger.Debug("got user from remote cache",
+						"cacheKey", cacheKey)
+					return &cachedUser, nil
+				}
+			} else {
+				if errors.Is(errCache, remotecache.ErrCacheItemNotFound) {
+					s.logger.Debug("user not found in cache",
+						"cacheKey", cacheKey)
+				} else {
+					s.logger.Warn("failed to get user from cache",
+						"cacheKey", cacheKey, "error", errCache)
+				}
+			}
+		}
+
+		// Fallback to in memory cache
 		if cached, found := s.cacheService.Get(cacheKey); found {
 			cachedUser := cached.(user.SignedInUser)
-			signedInUser = &cachedUser
-			return signedInUser, nil
+			s.logger.Debug("got user from local cache", "cachekey", cacheKey)
+			return &cachedUser, nil
 		}
 	}
 
@@ -249,7 +284,18 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	}
 
 	cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
+	// Remember user in remote cache
+	if s.features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
+		errCache := s.remoteCache.Set(ctx, cacheKey, *(result), time.Second*5)
+		if errCache != nil {
+			s.logger.Warn("could not cache user in remote cache",
+				"cacheKey", cacheKey, "error", errCache)
+		}
+	}
+
+	// Remember user in memory cache
 	s.cacheService.Set(cacheKey, *result, time.Second*5)
+
 	return result, nil
 }
 
