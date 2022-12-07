@@ -16,11 +16,12 @@ folder="grafana-$version"
 tmp="/tmp/$folder"
 
 # package
-mkdir -p $tmp/usr/share/grafana
+mkdir -p $tmp/usr/share/grafana/bin
 mkdir -p $tmp/usr/sbin
-mkdir -p $tmp/etc
+mkdir -p $tmp/etc/grafana
 
-cp -r ./bin/linux-amd64/* $tmp/usr/sbin
+cp -r ./bin/linux-amd64/* $tmp/usr/sbin/
+cp -r ./bin/linux-amd64/* $tmp/usr/share/grafana/bin/
 cp -r ./conf $tmp/usr/share/grafana
 cp -r ./plugins-bundled $tmp/usr/share/grafana
 cp -r ./public $tmp/usr/share/grafana
