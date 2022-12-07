@@ -152,7 +152,7 @@ func main() {
 		},
 		{
 			Name:   "store-storybook",
-			Usage:  "Integrity check for storybook build",
+			Usage:  "Stores storybook to GCS buckets",
 			Action: StoreStorybook,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -160,6 +160,11 @@ func main() {
 					Usage: "Kind of deployment (e.g. canary/latest)",
 				},
 			},
+		},
+		{
+			Name:   "verify-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: VerifyStorybook,
 		},
 		{
 			Name:   "upload-packages",
