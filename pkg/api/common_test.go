@@ -409,7 +409,11 @@ func setupHTTPServerWithCfgDb(
 	} else {
 		var err error
 		ac = acimpl.ProvideAccessControl(cfg)
-		userSvc, err = userimpl.ProvideService(db, nil, cfg, teamimpl.ProvideService(db, cfg), localcache.ProvideService(), quotatest.New(false, nil))
+		userSvc, err = userimpl.ProvideService(
+			db, nil, cfg, teamimpl.ProvideService(db, cfg),
+			localcache.ProvideService(), quotatest.New(false, nil),
+			nil, featuremgmt.WithFeatures(),
+		)
 		require.NoError(t, err)
 		acService, err = acimpl.ProvideService(cfg, db, routeRegister, localcache.ProvideService(), ac, featuremgmt.WithFeatures())
 		require.NoError(t, err)

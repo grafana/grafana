@@ -89,7 +89,8 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	quotaService := ProvideService(sqlStore, sqlStore.Cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	userService, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
+	userService, err := userimpl.ProvideService(sqlStore, orgService,
+		sqlStore.Cfg, nil, nil, quotaService, nil, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	setupEnv(t, sqlStore, b, quotaService)
 

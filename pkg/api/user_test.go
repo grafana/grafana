@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -72,7 +73,10 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
 		require.Nil(t, err)
-		hs.userService, err = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil, quotatest.New(false, nil))
+		hs.userService, err = userimpl.ProvideService(
+			sqlStore, nil, sc.cfg, nil, nil, quotatest.New(false, nil),
+			nil, featuremgmt.WithFeatures(),
+		)
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID

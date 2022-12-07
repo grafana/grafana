@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -292,7 +293,8 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
 
-	userSvc, err := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, quotatest.New(false, nil))
+	userSvc, err := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg),
+		nil, quotatest.New(false, nil), nil, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
 		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)

@@ -394,7 +394,10 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			var err error
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotatest.New(false, nil))
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg),
+					localcache.ProvideService(), quotatest.New(false, nil),
+					nil, featuremgmt.WithFeatures(),
+				)
 				require.NoError(t, err)
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotatest.New(false, nil))
 				require.NoError(t, err)
@@ -501,7 +504,10 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				quotaService := quotatest.New(false, nil)
 				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotaService)
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg),
+					localcache.ProvideService(), quotaService,
+					nil, featuremgmt.WithFeatures(),
+				)
 				require.NoError(t, err)
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotaService)
 				require.NoError(t, err)
@@ -610,7 +616,8 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotatest.New(false, nil))
 				require.NoError(t, err)
 				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, hs.orgService, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotatest.New(false, nil))
+					hs.SQLStore, hs.orgService, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg),
+					localcache.ProvideService(), quotatest.New(false, nil), nil, featuremgmt.WithFeatures())
 				require.NoError(t, err)
 			})
 
@@ -731,7 +738,10 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, setting.NewCfg(), quotatest.New(false, nil))
 				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(), quotatest.New(false, nil))
+					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore),
+						setting.NewCfg()), localcache.ProvideService(), quotatest.New(false, nil),
+					nil, featuremgmt.WithFeatures(),
+				)
 				require.NoError(t, err)
 			})
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -851,7 +861,10 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				quotaService := quotatest.New(false, nil)
 				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotaService)
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg),
+					localcache.ProvideService(), quotaService,
+					nil, featuremgmt.WithFeatures(),
+				)
 				require.NoError(t, err)
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotaService)
 				require.NoError(t, err)
@@ -981,7 +994,10 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
 				quotaService := quotatest.New(false, nil)
 				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotaService)
+					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg),
+					localcache.ProvideService(), quotaService,
+					nil, featuremgmt.WithFeatures(),
+				)
 				require.NoError(t, err)
 				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotaService)
 				require.NoError(t, err)

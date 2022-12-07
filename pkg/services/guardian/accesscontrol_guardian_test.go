@@ -606,7 +606,8 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
-	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil))
+	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil,
+		quotatest.New(false, nil), nil, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
