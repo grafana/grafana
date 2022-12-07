@@ -69,7 +69,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
-	go generate ./public/app/plugins
+	go generate ./public/app/plugins/gen.go
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
@@ -232,6 +232,9 @@ drone: $(DRONE)
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
+
+format-drone:
+	black --include '\.star$$' -S scripts/drone/ .drone.star
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

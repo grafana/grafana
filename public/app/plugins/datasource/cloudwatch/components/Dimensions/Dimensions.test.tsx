@@ -55,6 +55,24 @@ describe('Dimensions', () => {
     });
   });
 
+  describe('when rendered with two existing dimensions and values are represented as arrays', () => {
+    it('should render two filter items', async () => {
+      props.query.dimensions = {
+        InstanceId: ['*'],
+        InstanceGroup: ['Group1'],
+      };
+      render(<Dimensions {...props} metricStat={props.query} dimensionKeys={[]} />);
+      const filterItems = screen.getAllByTestId('cloudwatch-dimensions-filter-item');
+      expect(filterItems.length).toBe(2);
+
+      expect(within(filterItems[0]).getByText('InstanceId')).toBeInTheDocument();
+      expect(within(filterItems[0]).getByText('*')).toBeInTheDocument();
+
+      expect(within(filterItems[1]).getByText('InstanceGroup')).toBeInTheDocument();
+      expect(within(filterItems[1]).getByText('Group1')).toBeInTheDocument();
+    });
+  });
+
   describe('when adding a new filter item', () => {
     it('it should add the new item but not call onChange', async () => {
       props.query.dimensions = {};

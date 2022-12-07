@@ -69,9 +69,10 @@ export const MINUTE = '1m';
 
 type Props = {
   existing?: RuleWithLocation;
+  prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
-export const AlertRuleForm: FC<Props> = ({ existing }) => {
+export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -86,6 +87,14 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     if (existing) {
       return rulerRuleToFormValues(existing);
     }
+
+    if (prefill) {
+      return {
+        ...getDefaultFormValues(),
+        ...prefill,
+      };
+    }
+
     return {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
@@ -94,7 +103,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       type: RuleFormType.grafana,
       evaluateEvery: evaluateEvery,
     };
-  }, [existing, queryParams, evaluateEvery]);
+  }, [existing, prefill, queryParams, evaluateEvery]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
