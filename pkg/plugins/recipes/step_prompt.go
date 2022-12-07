@@ -1,8 +1,6 @@
 package recipes
 
-import (
-	"context"
-)
+import "github.com/grafana/grafana/pkg/models"
 
 func newPromptStep(meta PromptStepMeta) *PromptStep {
 	return &PromptStep{
@@ -13,9 +11,8 @@ func newPromptStep(meta PromptStepMeta) *PromptStep {
 
 // A step used to prompt information from the user
 type PromptStep struct {
-	Action string           `json:"action"`
-	Meta   PromptStepMeta   `json:"meta"`
-	Status RecipeStepStatus `json:"status"`
+	Action string         `json:"action"`
+	Meta   PromptStepMeta `json:"meta"`
 }
 
 type PromptStepMeta struct {
@@ -37,20 +34,14 @@ type Prompt struct {
 	Options      []PromptOption `json:"options"` // Only for "radio", "select" or "multiselect" fields
 }
 
-func (s *PromptStep) Apply(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "Completed",
-		StatusMessage: "Please fill out the required information",
-	}
-
+func (s *PromptStep) Apply(c *models.ReqContext) error {
 	return nil
 }
 
-func (s *PromptStep) Revert(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "NotCompleted",
-		StatusMessage: "",
-	}
-
+func (s *PromptStep) Revert(c *models.ReqContext) error {
 	return nil
+}
+
+func (s *PromptStep) Status(c *models.ReqContext) (StepStatus, error) {
+	return Completed, nil
 }

@@ -1,8 +1,6 @@
 package recipes
 
-import (
-	"context"
-)
+import "github.com/grafana/grafana/pkg/models"
 
 func newInstallAgentStep(meta RecipeStepMeta, metrics []AgentMetrics) *installAgentStep {
 	return &installAgentStep{
@@ -19,28 +17,19 @@ type AgentMetrics struct {
 }
 
 type installAgentStep struct {
-	Action  string           `json:"action"`
-	Meta    RecipeStepMeta   `json:"meta"`
-	Status  RecipeStepStatus `json:"status"`
-	Metrics []AgentMetrics   `json:"metrics"`
+	Action  string         `json:"action"`
+	Meta    RecipeStepMeta `json:"meta"`
+	Metrics []AgentMetrics `json:"metrics"`
 }
 
-func (s *installAgentStep) Apply(c context.Context) error {
-	// TODO: figure out what to do when applying an instruction?
-
-	s.Status = RecipeStepStatus{
-		Status:        "Shown",
-		StatusMessage: "Instructions shown successfully.",
-	}
-
+func (s *installAgentStep) Apply(c *models.ReqContext) error {
 	return nil
 }
 
-func (s *installAgentStep) Revert(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "NotShown",
-		StatusMessage: "The instruction message was not shown yet.",
-	}
-
+func (s *installAgentStep) Revert(c *models.ReqContext) error {
 	return nil
+}
+
+func (s *installAgentStep) Status(c *models.ReqContext) (StepStatus, error) {
+	return Completed, nil
 }

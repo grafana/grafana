@@ -1,8 +1,6 @@
 package recipes
 
-import (
-	"context"
-)
+import "github.com/grafana/grafana/pkg/models"
 
 func newInstructionStep(meta InstructionStepMeta) *InstructionStep {
 	return &InstructionStep{
@@ -14,7 +12,6 @@ func newInstructionStep(meta InstructionStepMeta) *InstructionStep {
 type InstructionStep struct {
 	Action string              `json:"action"`
 	Meta   InstructionStepMeta `json:"meta"`
-	Status RecipeStepStatus    `json:"status"`
 }
 
 type InstructionStepMeta struct {
@@ -25,20 +22,14 @@ type InstructionStepMeta struct {
 	InstructionTestExpectedHttpResponse string `json:"instructionTestExpectedHttpResponse"` // E.g. "200"
 }
 
-func (s *InstructionStep) Apply(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "Completed",
-		StatusMessage: "Please follow the instructions.",
-	}
-
+func (s *InstructionStep) Apply(c *models.ReqContext) error {
 	return nil
 }
 
-func (s *InstructionStep) Revert(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "NotCompleted",
-		StatusMessage: "",
-	}
-
+func (s *InstructionStep) Revert(c *models.ReqContext) error {
 	return nil
+}
+
+func (s *InstructionStep) Status(c *models.ReqContext) (StepStatus, error) {
+	return Completed, nil
 }

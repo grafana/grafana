@@ -1,8 +1,6 @@
 package recipes
 
-import (
-	"context"
-)
+import "github.com/grafana/grafana/pkg/models"
 
 func newSetupAlertsStep(meta RecipeStepMeta, alerts []AlertRule) *setupAlertsStep {
 	return &setupAlertsStep{
@@ -20,28 +18,19 @@ type AlertRule struct {
 }
 
 type setupAlertsStep struct {
-	Action string           `json:"action"`
-	Meta   RecipeStepMeta   `json:"meta"`
-	Status RecipeStepStatus `json:"status"`
-	Alerts []AlertRule      `json:"alerts"`
+	Action string         `json:"action"`
+	Meta   RecipeStepMeta `json:"meta"`
+	Alerts []AlertRule    `json:"alerts"`
 }
 
-func (s *setupAlertsStep) Apply(c context.Context) error {
-	// TODO: figure out what to do when applying an instruction?
-
-	s.Status = RecipeStepStatus{
-		Status:        "Shown",
-		StatusMessage: "Instructions shown successfully.",
-	}
-
+func (s *setupAlertsStep) Apply(c *models.ReqContext) error {
 	return nil
 }
 
-func (s *setupAlertsStep) Revert(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "NotShown",
-		StatusMessage: "The instruction message was not shown yet.",
-	}
-
+func (s *setupAlertsStep) Revert(c *models.ReqContext) error {
 	return nil
+}
+
+func (s *setupAlertsStep) Status(c *models.ReqContext) (StepStatus, error) {
+	return Completed, nil
 }

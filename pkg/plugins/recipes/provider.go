@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,7 +28,7 @@ func (s *staticRecipesProvider) GetAll() []*Recipe {
 	return s.recipes
 }
 
-func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
+func ProvideService(i plugins.Installer, cfg *setting.Cfg, ds datasources.DataSourceService) RecipesProvider {
 	recipes := []*Recipe{
 		// Linux Server
 		{
@@ -214,6 +215,10 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg) RecipesProvider {
 					{
 						Name: "container_fs_inodes_free",
 					},
+				}),
+				newSetupDatasourceStep(ds, RecipeStepMeta{
+					Name:        "Setting up datasource",
+					Description: "something here..",
 				}),
 				newPluginInstallStep(i, cfg,
 					RecipeStepMeta{

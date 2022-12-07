@@ -1,13 +1,11 @@
 package recipes
 
-import (
-	"context"
-)
+import "github.com/grafana/grafana/pkg/models"
 
 type RecipeStep interface {
-	Apply(c context.Context) error
-	Revert(c context.Context) error
-	Status(c context.Context) (RecipeStepStatus, error)
+	Apply(c *models.ReqContext) error
+	Revert(c *models.ReqContext) error
+	Status(c *models.ReqContext) (StepStatus, error)
 }
 
 type RecipeStepMeta struct {

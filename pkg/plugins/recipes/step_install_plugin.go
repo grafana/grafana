@@ -1,10 +1,10 @@
 package recipes
 
 import (
-	"context"
 	"errors"
 	"runtime"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -30,12 +30,11 @@ type installPluginRecipeStep struct {
 	Action    string           `json:"action"`
 	Meta      RecipeStepMeta   `json:"meta"`
 	Plugin    recipePluginStep `json:"plugin"`
-	Status    RecipeStepStatus `json:"status"`
 	installer plugins.Installer
 	cfg       *setting.Cfg
 }
 
-func (s *installPluginRecipeStep) Apply(c context.Context) error {
+func (s *installPluginRecipeStep) Apply(c *models.ReqContext) error {
 	err := s.installer.Add(c, s.Plugin.Id, s.Plugin.Version, plugins.CompatOpts{
 		GrafanaVersion: s.cfg.BuildVersion,
 		OS:             runtime.GOOS,
@@ -43,97 +42,101 @@ func (s *installPluginRecipeStep) Apply(c context.Context) error {
 	})
 
 	if err == nil {
-		s.Status = RecipeStepStatus{
-			Status:        "Completed",
-			StatusMessage: "Plugin successfully installed",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "Completed",
+		// 	StatusMessage: "Plugin successfully installed",
+		// }
 		return nil
 	}
 
 	var dupeErr plugins.DuplicateError
 	if errors.As(err, &dupeErr) {
-		s.Status = RecipeStepStatus{
-			Status:        "Completed",
-			StatusMessage: "Plugin already installed",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "Completed",
+		// 	StatusMessage: "Plugin already installed",
+		// }
 		return nil
 	}
 
 	var versionUnsupportedErr repo.ErrVersionUnsupported
 	if errors.As(err, &versionUnsupportedErr) {
-		s.Status = RecipeStepStatus{
-			Status:        "NotCompleted",
-			StatusMessage: "Plugin version not supported",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "NotCompleted",
+		// 	StatusMessage: "Plugin version not supported",
+		// }
 		return nil
 	}
 
 	var versionNotFoundErr repo.ErrVersionNotFound
 	if errors.As(err, &versionNotFoundErr) {
-		s.Status = RecipeStepStatus{
-			Status:        "NotCompleted",
-			StatusMessage: "Plugin version not found",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "NotCompleted",
+		// 	StatusMessage: "Plugin version not found",
+		// }
 		return nil
 	}
 
 	var clientError repo.Response4xxError
 	if errors.As(err, &clientError) {
-		s.Status = RecipeStepStatus{
-			Status:        "NotCompleted",
-			StatusMessage: clientError.Message,
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "NotCompleted",
+		// 	StatusMessage: clientError.Message,
+		// }
 		return nil
 	}
 
 	if errors.Is(err, plugins.ErrInstallCorePlugin) {
-		s.Status = RecipeStepStatus{
-			Status:        "NotCompleted",
-			StatusMessage: "Cannot install or change a Core plugin",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "NotCompleted",
+		// 	StatusMessage: "Cannot install or change a Core plugin",
+		// }
 		return nil
 	}
 
 	return err
 }
 
-func (s *installPluginRecipeStep) Revert(c context.Context) error {
+func (s *installPluginRecipeStep) Revert(c *models.ReqContext) error {
 	err := s.installer.Remove(c, s.Plugin.Id)
 
 	if err == nil {
-		s.Status = RecipeStepStatus{
-			Status:        "",
-			StatusMessage: "",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "",
+		// 	StatusMessage: "",
+		// }
 		return nil
 	}
 
 	if errors.Is(err, plugins.ErrPluginNotInstalled) {
-		s.Status = RecipeStepStatus{
-			Status:        "",
-			StatusMessage: "",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "",
+		// 	StatusMessage: "",
+		// }
 		return nil
 	}
 
 	if errors.Is(err, plugins.ErrUninstallCorePlugin) {
-		s.Status = RecipeStepStatus{
+		// s.Status = RecipeStepStatus{
 
-			Status:        "Completed",
-			StatusMessage: "Plugin is installed (Core plugin, cannot be uninstalled)",
-		}
+		// 	Status:        "Completed",
+		// 	StatusMessage: "Plugin is installed (Core plugin, cannot be uninstalled)",
+		// }
 
 		return nil
 	}
 
 	if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
-		s.Status = RecipeStepStatus{
-			Status:        "Completed",
-			StatusMessage: "Plugin is installed (Cannot unistall the plugin due to being outside of the plugins directory)",
-		}
+		// s.Status = RecipeStepStatus{
+		// 	Status:        "Completed",
+		// 	StatusMessage: "Plugin is installed (Cannot unistall the plugin due to being outside of the plugins directory)",
+		// }
 		return nil
 	}
 
 	return err
 
+}
+
+func (s *installPluginRecipeStep) Status(c *models.ReqContext) (StepStatus, error) {
+	return Completed, nil
 }

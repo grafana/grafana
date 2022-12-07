@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
@@ -34,11 +33,11 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
 	}
 
-	go func(steps []recipes.RecipeStep, c context.Context) {
+	go func(steps []recipes.RecipeStep, c *models.ReqContext) {
 		for _, step := range steps {
 			step.Apply(c)
 		}
-	}(recipe.Steps, c.Req.Context())
+	}(recipe.Steps, c)
 
 	return response.JSON(http.StatusOK, recipe)
 }
@@ -51,11 +50,11 @@ func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
 	}
 
-	go func(steps []recipes.RecipeStep, c context.Context) {
+	go func(steps []recipes.RecipeStep, c *models.ReqContext) {
 		for _, step := range recipe.Steps {
 			step.Revert(c)
 		}
-	}(recipe.Steps, c.Req.Context())
+	}(recipe.Steps, c)
 
 	return response.JSON(http.StatusOK, recipe)
 }
@@ -74,7 +73,7 @@ func (hs *HTTPServer) ApplyRecipeStep(c *models.ReqContext) response.Response {
 	}
 
 	step := recipe.Steps[stepNumber]
-	step.Apply(c.Req.Context())
+	step.Apply(c)
 
 	return response.JSON(http.StatusOK, step)
 }
@@ -93,7 +92,7 @@ func (hs *HTTPServer) RevertRecipeStep(c *models.ReqContext) response.Response {
 	}
 
 	step := recipe.Steps[stepNumber]
-	step.Revert(c.Req.Context())
+	step.Revert(c)
 
 	return response.JSON(http.StatusOK, step)
 }

@@ -1,13 +1,15 @@
 package recipes
 
 import (
-	"context"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-func newSetupDashboardStep(meta dashboardStepMeta) *dashboardStep {
+func newSetupDashboardStep(ds dashboards.DashboardService, meta dashboardStepMeta) *dashboardStep {
 	return &dashboardStep{
 		Action: "setup-dashboard",
 		Meta:   meta,
+		ds:     ds,
 	}
 }
 
@@ -19,25 +21,37 @@ type dashboardStepMeta struct {
 type dashboardStep struct {
 	Action string            `json:"action"`
 	Meta   dashboardStepMeta `json:"meta"`
-	Status RecipeStepStatus  `json:"status"`
+	ds     dashboards.DashboardService
 }
 
-func (s *dashboardStep) Apply(c context.Context) error {
-	// TODO: figure out what to do when applying an instruction?
+func (s *dashboardStep) Apply(c *models.ReqContext) error {
+	// TODO: map step config to command
+	cmd := models.SaveDashboardCommand{
+		OrgId:  c.OrgID,
+		UserId: c.UserID,
+	}
 
-	s.Status = RecipeStepStatus{
-		Status:        "Completed",
-		StatusMessage: "Instructions shown successfully.",
+	// TODO: add logic to setup folder if missing
+
+	d := &dashboards.SaveDashboardDTO{
+		Dashboard: cmd.GetDashboardModel(),
+		Message:   cmd.Message,
+		OrgId:     c.OrgID,
+		User:      c.SignedInUser,
+		Overwrite: cmd.Overwrite,
+	}
+
+	if _, err := s.ds.SaveDashboard(c.Req.Context(), d, true); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (s *dashboardStep) Revert(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "NotCompleted",
-		StatusMessage: "The instruction message was not shown yet.",
-	}
-
+func (s *dashboardStep) Revert(c *models.ReqContext) error {
 	return nil
+}
+
+func (s *dashboardStep) Status(c *models.ReqContext) (StepStatus, error) {
+	return Completed, nil
 }

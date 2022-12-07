@@ -1,38 +1,84 @@
 package recipes
 
 import (
-	"context"
+	"errors"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-func newSetupDatasourceStep(meta RecipeStepMeta) *setupDatasourceStep {
+func newSetupDatasourceStep(ds datasources.DataSourceService, meta RecipeStepMeta) *setupDatasourceStep {
 	return &setupDatasourceStep{
 		Action: "setup-dashboard",
 		Meta:   meta,
+		ds:     ds,
 	}
+}
+
+// TODO: add fields needed to setup datasource
+type datasourceConfig struct {
+	Name string
 }
 
 type setupDatasourceStep struct {
-	Action string           `json:"action"`
-	Meta   RecipeStepMeta   `json:"meta"`
-	Status RecipeStepStatus `json:"status"`
+	Action string         `json:"action"`
+	Meta   RecipeStepMeta `json:"meta"`
+	Config datasourceConfig
+	ds     datasources.DataSourceService
 }
 
-func (s *setupDatasourceStep) Apply(c context.Context) error {
-	// TODO: figure out what to do when applying an instruction?
+func (s *setupDatasourceStep) Apply(c *models.ReqContext) error {
+	status, err := s.Status(c)
+	if err != nil {
+		return err
+	}
+	if status == Completed {
+		return nil
+	}
 
-	s.Status = RecipeStepStatus{
-		Status:        "Shown",
-		StatusMessage: "Instructions shown successfully.",
+	// TODO: map config to AddDataSourceCommand
+	cmd := datasources.AddDataSourceCommand{
+		UserId: c.UserID,
+		OrgId:  c.OrgID,
+	}
+
+	if err := s.ds.AddDataSource(c.Req.Context(), &cmd); err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNameExists) || errors.Is(err, datasources.ErrDataSourceUidExists) {
+			return err
+		}
+		return err
 	}
 
 	return nil
 }
 
-func (s *setupDatasourceStep) Revert(c context.Context) error {
-	s.Status = RecipeStepStatus{
-		Status:        "NotShown",
-		StatusMessage: "The instruction message was not shown yet.",
+func (s *setupDatasourceStep) Revert(c *models.ReqContext) error {
+	status, err := s.Status(c)
+	if err != nil {
+		return err
+	}
+
+	if status == NotCompleted {
+		return nil
+	}
+
+	cmd := &datasources.DeleteDataSourceCommand{Name: s.Config.Name, OrgID: c.OrgID}
+	if err := s.ds.DeleteDataSource(c.Req.Context(), cmd); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (s *setupDatasourceStep) Status(c *models.ReqContext) (StepStatus, error) {
+	query := datasources.GetDataSourceQuery{Name: s.Config.Name, OrgId: c.OrgID}
+
+	if err := s.ds.GetDataSource(c.Req.Context(), &query); err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return NotCompleted, nil
+		}
+		return Error, err
+	}
+
+	return Completed, nil
 }
