@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { selectWarningsAndErrors } from 'app/core/reducers/appNotification';
+import { selectAll } from 'app/core/reducers/appNotification';
 import { useSelector } from 'app/types';
 
 import { NewsContainer } from './News/NewsContainer';
@@ -20,7 +20,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
-  const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
+  const notifications = useSelector((state) => selectAll(state.appNotifications));
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
@@ -106,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: `${theme.v1.palette.blue80}`,
     borderRadius: '100%',
     fontSize: '8px',
-    color: `${theme.palette.white}`,
+    color: `${theme.v1.palette.white}`,
     position: 'absolute',
     top: 0,
     left: 0,

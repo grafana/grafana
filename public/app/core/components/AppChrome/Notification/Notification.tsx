@@ -4,12 +4,12 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { selectWarningsAndErrors } from 'app/core/reducers/appNotification';
+import { selectAll } from 'app/core/reducers/appNotification';
 import { useSelector } from 'app/types';
 
 export function Notification() {
   const styles = useStyles2(getStyles);
-  const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
+  const notifications = useSelector((state) => selectAll(state.appNotifications));
 
   return (
     <div className={styles.layout} onClick={(e) => e.stopPropagation()}>
