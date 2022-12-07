@@ -8,13 +8,23 @@ import (
 	"github.com/grafana/codejen"
 )
 
-type SummarizerJenny struct{}
+// SummarizerJenny generates a gateway func named Summarizer in each core kind's
+// backend kind directory.
+func SummarizerJenny(path string) OneToOne {
+	return summarizerJenny{
+		parentpath: path,
+	}
+}
 
-func (j SummarizerJenny) JennyName() string {
+type summarizerJenny struct {
+	parentpath string
+}
+
+func (j summarizerJenny) JennyName() string {
 	return "SummarizerJenny"
 }
 
-func (j SummarizerJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
+func (j summarizerJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	if decl.IsComposable() {
 		return nil, nil
 	}
@@ -24,8 +34,7 @@ func (j SummarizerJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		return nil, fmt.Errorf("failed executing kind summary template: %w", err)
 	}
 
-	// FIXME ugh path hardcoding
-	path := filepath.Join("pkg", "services", "store", "kind", decl.Properties.Common().MachineName, "summary_gen.go")
+	path := filepath.Join(j.parentpath, decl.Properties.Common().MachineName, "summary_gen.go")
 	b, err := postprocessGoFile(genGoFile{
 		path: path,
 		in:   buf.Bytes(),

@@ -14,5 +14,10 @@ import "github.com/grafana/grafana/pkg/kindsys"
 // Summarizer returns a func that takes raw bytes representing a SVG
 // and constructs a [kindsys.EntitySummary].
 func Summarizer() kindsys.Summarizer {
+	// This func is a gateway. The generated body depends on the value of handleSummary.
+	// in the SVG kind declaration.
+
+	// handleSummary is "generic" for the SVG kind. The generic summary
+	// extractor is used.
 	return kindsys.GenericSummarizer("SVG")
 }

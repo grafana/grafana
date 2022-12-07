@@ -7,18 +7,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dataframe"
 	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/geojson"
 	"github.com/grafana/grafana/pkg/services/store/kind/jsonobj"
-	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
-	"github.com/grafana/grafana/pkg/services/store/kind/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,24 +28,6 @@ type KindRegistry interface {
 
 func NewKindRegistry() KindRegistry {
 	kinds := make(map[string]*kindValues)
-	// FIXME horrible hack, undermines SSoT; codegen this
-	for _, k := range corekind.NewBase(nil).All() {
-		kv := &kindValues{
-			info: makeEKI(k.Props()),
-		}
-
-		switch k.Props().Common().MachineName {
-		case "playlist":
-			kv.builder = playlist.Summarizer()
-		case "dashboard":
-			kv.builder = dashboard.Summarizer()
-		case "team":
-			kv.builder = team.Summarizer()
-		default:
-			kv.builder = kindsys.GenericSummarizer(k.Props().Common().Name)
-		}
-		kinds[k.Props().Common().MachineName] = kv
-	}
 
 	kinds[models.StandardKindSnapshot] = &kindValues{
 		info:    snapshot.GetEntityKindInfo(),
@@ -74,6 +52,16 @@ func NewKindRegistry() KindRegistry {
 	kinds[models.StandardKindJSONObj] = &kindValues{
 		info:    jsonobj.GetEntityKindInfo(),
 		builder: jsonobj.GetEntitySummaryBuilder(),
+	}
+
+	for k, val := range doNewRegistry() {
+		if _, has := kinds[k]; has {
+			// Force removal of handwritten impl above. If you hit this panic - remember to
+			// remove not just the above entry, but also the GetEntityKindInfo() func being
+			// referenced, too!
+			panic(fmt.Sprintf("duplicate entry for %s backend kind - remove the manual registration", k))
+		}
+		kinds[k] = val
 	}
 
 	// create a registry
