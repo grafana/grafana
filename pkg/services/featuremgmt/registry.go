@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "returnUnameHeader",
+			Description: "Return user login as header for authenticated requests",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,

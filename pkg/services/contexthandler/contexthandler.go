@@ -172,6 +172,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
+		// this can be used by proxies to identify certain users
+		if h.features.IsEnabled(featuremgmt.FlagReturnUnameHeader) {
+			w.Header().Add("grafana-uname", reqContext.Login)
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
