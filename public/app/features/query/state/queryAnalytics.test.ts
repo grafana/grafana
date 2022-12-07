@@ -228,7 +228,6 @@ describe('emitDataRequestEvent - from Explore', () => {
         source: 'explore',
         datasourceName: 'test',
         datasourceId: 1,
-        datasourceUid: 'test',
         dataSize: 0,
         duration: 1,
         totalQueries: 0,
