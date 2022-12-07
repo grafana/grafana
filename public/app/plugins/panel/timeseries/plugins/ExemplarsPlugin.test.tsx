@@ -1,7 +1,7 @@
-import { Labels, MutableDataFrame } from '@grafana/data/src';
+import { Field, MutableDataFrame } from '@grafana/data/src';
 import { UPlotConfigBuilder } from '@grafana/ui/src';
 
-import { getVisibleLabels } from './ExemplarsPlugin';
+import { getVisibleLabels, VisibleExemplarLabels } from './ExemplarsPlugin';
 
 describe('getVisibleLabels()', () => {
   const dataFrameSeries1 = new MutableDataFrame({
@@ -19,7 +19,7 @@ describe('getVisibleLabels()', () => {
         },
         values: [0.018963114754098367, 0.019140624999999974, 0.019718309859154928, 0.020064189189189167],
       },
-    ],
+    ] as unknown as Field[],
     length: 4,
   });
   const dataFrameSeries2 = new MutableDataFrame({
@@ -37,7 +37,7 @@ describe('getVisibleLabels()', () => {
         },
         values: [0.028963114754098367, 0.029140624999999974, 0.029718309859154928, 0.030064189189189167],
       },
-    ],
+    ] as unknown as Field[],
     length: 4,
   });
   const dataFrameSeries3 = new MutableDataFrame({
@@ -55,7 +55,7 @@ describe('getVisibleLabels()', () => {
         },
         values: [0.028963114754098367, 0.029140624999999974, 0.029718309859154928, 0.030064189189189167],
       },
-    ],
+    ] as unknown as Field[],
     length: 4,
   });
   const frames = [dataFrameSeries1, dataFrameSeries2, dataFrameSeries3];
@@ -84,9 +84,22 @@ describe('getVisibleLabels()', () => {
   } as UPlotConfigBuilder;
 
   it('function should only return labels associated with actively visible series', () => {
-    const expected: { labels: Labels[]; totalSeriesCount: number } = {
+    const expected: VisibleExemplarLabels = {
       totalSeriesCount: 3,
-      labels: [{ job: 'tns/app' }, { job: 'tns/db' }],
+      labels: [
+        {
+          color: '',
+          labels: {
+            job: 'tns/app',
+          },
+        },
+        {
+          color: '',
+          labels: {
+            job: 'tns/db',
+          },
+        },
+      ],
     };
 
     // Base case
