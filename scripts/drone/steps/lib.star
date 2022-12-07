@@ -246,7 +246,7 @@ def build_storybook_step(ver_mode):
         },
         'commands': [
             'yarn storybook:build',
-            './bin/grabpl verify-storybook',
+            './bin/build verify-storybook',
         ],
         'when': get_trigger_storybook(ver_mode),
     }
