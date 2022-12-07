@@ -69,4 +69,5 @@ export interface FeatureToggles {
   increaseInMemDatabaseQueryCache?: boolean;
   userRemoteCache?: boolean;
   datasourceLogger?: boolean;
+  sessionRemoteCache?: boolean;
 }
