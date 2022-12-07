@@ -36,7 +36,7 @@ const getStyles = () => {
   };
 };
 
-export type TickLabelsProps = {
+type TickLabelsProps = {
   numTicks: number;
   duration: number;
 };
