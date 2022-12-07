@@ -1,3 +1,12 @@
+<!-- 9.3.2 START -->
+
+# 9.3.2 (2022-12-13)
+
+### Bug fixes
+
+- **Prometheus:** Enable exemplars to be filtered when series visibility is toggled in the time series legend UI. [#59678](https://github.com/grafana/grafana/issues/59678), [@gtk-grafana](https://github.com/gtk-grafana)
+
+<!-- 9.3.2 END -->
 <!-- 9.3.0 START -->
 
 # 9.3.0 (2022-11-30)
