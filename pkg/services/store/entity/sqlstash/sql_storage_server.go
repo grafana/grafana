@@ -29,7 +29,7 @@ var _ entity.EntityStoreAdminServer = &sqlEntityServer{}
 
 func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider, kinds kind.KindRegistry, resolver resolver.EntityReferenceResolver) *sqlEntityServer {
 	entityServer := &sqlEntityServer{
-		sess:     db.GetSqlxSession(),
+		sess:     GetSessionDBProviderFromContext(db.GetSqlxSession()),
 		log:      log.New("sql-entity-server"),
 		kinds:    kinds,
 		resolver: resolver,
@@ -42,7 +42,7 @@ func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcs
 type sqlEntityServer struct {
 	*services.BasicService
 	log      log.Logger
-	sess     *session.SessionDB
+	sess     SessionDBProvider
 	kinds    kind.KindRegistry
 	resolver resolver.EntityReferenceResolver
 }
@@ -167,7 +167,7 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	args := []interface{}{grn.ToGRNString()}
 	where := "grn=?"
 
-	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
+	rows, err := s.sess(ctx).Query(ctx, getReadSelect(r)+where, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 		"updated_at", "updated_by",
 	}
 
-	rows, err := s.sess.Query(ctx,
+	rows, err := s.sess(ctx).Query(ctx,
 		"SELECT "+strings.Join(fields, ",")+
 			" FROM entity_history WHERE grn=? AND version=?", oid, r.Version)
 	if err != nil {
@@ -269,7 +269,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 
 	req := b.Batch[0]
 	query := getReadSelect(req) + strings.Join(constraints, " OR ")
-	rows, err := s.sess.Query(ctx, query, args...)
+	rows, err := s.sess(ctx).Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		origin = &entity.EntityOriginInfo{}
 	}
 
-	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+	err = s.sess(ctx).WithTransaction(ctx, func(tx *session.SessionTx) error {
 		var versionInfo *entity.EntityVersionInfo
 		isUpdate := false
 		if r.ClearHistory {
@@ -581,7 +581,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 	}
 
 	rsp := &entity.DeleteEntityResponse{}
-	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+	err = s.sess(ctx).WithTransaction(ctx, func(tx *session.SessionTx) error {
 		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
 		return err
 	})
@@ -625,7 +625,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		" WHERE grn=? " + page + "\n" +
 		" ORDER BY updated_at DESC LIMIT 100"
 
-	rows, err := s.sess.Query(ctx, query, args...)
+	rows, err := s.sess(ctx).Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -715,7 +715,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	fmt.Printf("%v\n", args)
 	fmt.Printf("\n-------------\n\n")
 
-	rows, err := s.sess.Query(ctx, query, args...)
+	rows, err := s.sess(ctx).Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -35,19 +35,18 @@ func (s *serviceImpl) showTenantInfo(c *models.ReqContext) response.Response {
 	if err != nil {
 		fmt.Println("Could not find tenant info", err)
 		return response.JSON(500, map[string]interface{}{
-			"nope": "nope",
-			"user": c.SignedInUser,
-			"env":  os.Getenv("HG_STACK_ID"),
+			"nope":        "nope",
+			"user":        c.SignedInUser,
+			"HG_STACK_ID": os.Getenv("HG_STACK_ID"),
 		})
 	}
 
-	return response.JSON(200, map[string]interface{}{
-		"stackID":     t.StackID,
-		"user":        c.SignedInUser,
-		"hasdb":       t.SessionDB != nil,
-		"HG_STACK_ID": os.Getenv("HG_STACK_ID"),
-		"info":        t,
-	})
+	// Try to initalize the DB
+	if !t.DBInitalized {
+		_ = t.GetSessionDB()
+	}
+
+	return response.JSON(200, t)
 }
 
 // Gets config.ini from kubernetes and returns a watcher to listen for changes
@@ -96,18 +95,15 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 		// If no config, get one
 		if !ok {
 			var config *v1.ConfigMap
+			info = &TenantInfo{StackID: user.StackID}
 
 			// get the initial config map
 			if s.clientset != nil {
-				config, err = s.clientset.CoreV1().ConfigMaps(s.namespace).Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
-				if err != nil {
-					fmt.Println("Error getting config map:", err)
-					info.Err = err
-				}
+				info.Config, info.Err = s.clientset.CoreV1().ConfigMaps(s.namespace).Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
+			} else {
+				info.Err = fmt.Errorf("missing client")
 			}
 
-			// build tenant info and add to context
-			info = buildTenantInfoFromConfig(user.StackID, config)
 			logger.Info("POTATO: context set: %v", config)
 
 			//	s.cache[user.StackID] = info
@@ -197,16 +193,4 @@ func initializeDBConnection(config *v1.ConfigMap) (*session.SessionDB, error) {
 	}
 
 	return ss.GetSqlxSession(), nil
-}
-
-// Builds tenant info and returns it to enter into cache
-func buildTenantInfoFromConfig(stackID int64, config *v1.ConfigMap) *TenantInfo {
-	dbCon, err := initializeDBConnection(config)
-
-	return &TenantInfo{
-		StackID:   stackID,
-		SessionDB: dbCon,
-		Err:       err,
-		Config:    config,
-	}
 }
