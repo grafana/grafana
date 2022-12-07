@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -37,6 +38,7 @@ type Service struct {
 	accessControlStore accesscontrol.Service
 	remoteCache        *remotecache.RemoteCache
 	features           *featuremgmt.FeatureManager
+	logger             log.Logger
 	// TODO remove sqlstore
 	sqlStore *sqlstore.SQLStore
 
@@ -79,6 +81,7 @@ func ProvideService(
 		sqlStore:           ss,
 		remoteCache:        remoteCache,
 		features:           features,
+		logger:             log.New("user.service"),
 	}
 }
 
@@ -323,11 +326,19 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	// Fetching from remote cache first otherwise fallback to in memory cache
 	cacheKey := sqlstore.NewSignedInUserCacheKey(query.OrgID, query.UserID)
-	if s.features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
+	if query.OrgID > 0 && query.UserID > 0 && s.features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
 		res, errCache := s.remoteCache.Get(ctx, cacheKey)
 		if errCache == nil {
 			if signedInUser, ok := res.(user.SignedInUser); ok {
 				return &signedInUser, nil
+			} else {
+				if errors.Is(errCache, remotecache.ErrCacheItemNotFound) {
+					s.logger.Debug("user not found in cache",
+						"cacheKey", cacheKey)
+				} else {
+					s.logger.Warn("failed to get user from cache",
+						"cacheKey", cacheKey, "error", errCache)
+				}
 			}
 		}
 	}
@@ -345,7 +356,10 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 
 	// Remember user in remote cache
 	if s.features.IsEnabled(featuremgmt.FlagUserRemoteCache) {
-		_ = s.remoteCache.Set(ctx, cacheKey, *(q.Result), time.Second*5)
+		if errCache := s.remoteCache.Set(ctx, cacheKey, *(q.Result), time.Second*5); errCache != nil {
+			s.logger.Warn("could not cache user in remote cache",
+				"cacheKey", cacheKey, "error", errCache)
+		}
 	}
 	return q.Result, nil
 }
