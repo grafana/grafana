@@ -20,7 +20,7 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  visibleLabels: { labels: Labels[]; totalSeriesCount: number };
+  visibleLabels?: { labels: Labels[]; totalSeriesCount: number };
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -89,17 +89,12 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      let showMarker = false;
+      let showMarker =
+        visibleLabels !== undefined
+          ? showExemplarMarker(visibleLabels, getUniqueValuesFromLabels, dataFrame, dataFrameFieldIndex)
+          : true;
 
       // If all series are visible, don't filter any exemplars
-      showMarker = showExemplarMarker(
-        visibleLabels,
-        showMarker,
-        getUniqueValuesFromLabels,
-        dataFrame,
-        dataFrameFieldIndex
-      );
-
       if (!showMarker) {
         return <></>;
       }
@@ -160,11 +155,11 @@ export const getVisibleLabels = (
  */
 const showExemplarMarker = (
   visibleLabels: { labels: Labels[]; totalSeriesCount: number },
-  showMarker: boolean,
   getUniqueValuesFromLabels: (labels: Labels[]) => { [p: string]: Set<string> },
   dataFrame: DataFrame,
   dataFrameFieldIndex: DataFrameFieldIndex
 ) => {
+  let showMarker = false;
   if (visibleLabels.labels.length === visibleLabels.totalSeriesCount) {
     showMarker = true;
   } else {
