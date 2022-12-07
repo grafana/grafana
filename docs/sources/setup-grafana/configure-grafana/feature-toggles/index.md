@@ -91,6 +91,7 @@ Alpha features might be changed or removed without prior notice.
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                     |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
+| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 
 ## Development feature toggles
 

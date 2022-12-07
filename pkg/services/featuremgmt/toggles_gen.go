@@ -274,4 +274,8 @@ const (
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
+
+	// FlagSessionRemoteCache
+	// Enable using remote cache for user sessions
+	FlagSessionRemoteCache = "sessionRemoteCache"
 )
