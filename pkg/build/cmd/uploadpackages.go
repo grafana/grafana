@@ -69,13 +69,17 @@ func UploadPackages(c *cli.Context) error {
 		return cli.NewExitError(err.Error(), 1)
 	}
 
-	edition, ok := os.LookupEnv("EDITION")
-	if !ok {
-		if c.Bool("enterprise2") {
-			edition = string(config.EditionEnterprise2)
-		} else {
-			return fmt.Errorf("both EDITION envvar and '--enterprise2' flag are missing. At least one of those is required")
-		}
+	var edition config.Edition
+	if e, ok := os.LookupEnv("EDITION"); ok {
+		edition = config.Edition(e)
+	}
+
+	if c.Bool("enterprise2") {
+		edition = config.EditionEnterprise2
+	}
+
+	if edition == "" {
+		return fmt.Errorf("both EDITION envvar and '--enterprise2' flag are missing. At least one of those is required")
 	}
 
 	// TODO: Verify config values
