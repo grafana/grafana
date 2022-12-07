@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -21,6 +23,7 @@ import (
 )
 
 type serviceImpl struct {
+	namespace string
 	clientset *kubernetes.Clientset
 	cache     map[int64]*TenantInfo
 	//watchers  map[int64]watch.Interface
@@ -39,9 +42,11 @@ func (s *serviceImpl) showTenantInfo(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(200, map[string]interface{}{
-		"stackID": t.StackID,
-		"user":    c.SignedInUser,
-		"env":     os.Getenv("HG_STACK_ID"),
+		"stackID":     t.StackID,
+		"user":        c.SignedInUser,
+		"hasdb":       t.SessionDB != nil,
+		"HG_STACK_ID": os.Getenv("HG_STACK_ID"),
+		"info":        t,
 	})
 }
 
@@ -73,6 +78,18 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Try to set it from environment (only relevant for single tenant setup)
+		if user.StackID == 0 {
+			v := os.Getenv("HG_STACK_ID")
+			if v == "" {
+				v = "6" // VSCODE DEBUGGER ENVIRONMENT
+			}
+			stackID, err := strconv.ParseInt(v, 10, 64)
+			if err == nil {
+				user.StackID = stackID
+			}
+		}
+
 		// Check cache for config by stackID
 		info, ok := s.cache[user.StackID]
 
@@ -82,16 +99,18 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 
 			// get the initial config map
 			if s.clientset != nil {
-				config, err = s.clientset.CoreV1().ConfigMaps("hosted-grafana").Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
+				config, err = s.clientset.CoreV1().ConfigMaps(s.namespace).Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
 				if err != nil {
 					fmt.Println("Error getting config map:", err)
+					info.Err = err
 				}
 			}
 
 			// build tenant info and add to context
 			info = buildTenantInfoFromConfig(user.StackID, config)
-			fmt.Println("POTATO: context set")
-			s.cache[user.StackID] = info
+			logger.Info("POTATO: context set: %v", config)
+
+			//	s.cache[user.StackID] = info
 
 			// Get config watcher
 			//w, err := s.GetStackConfigWatcher(context.TODO(), stackID)
@@ -152,45 +171,42 @@ func stackName(stackID int64) string {
 }
 
 // takes INI, initializes db connection and returns it
-func initializeDBConnection(config *v1.ConfigMap) *session.SessionDB {
+func initializeDBConnection(config *v1.ConfigMap) (*session.SessionDB, error) {
 	if config == nil {
-		fmt.Printf("missing config!")
-		return nil
+		return nil, fmt.Errorf("missing config")
 	}
-	jsontxt, ok := config.Data["ini"]
+	jsontxt, ok := config.Data["ini.json"]
 	if !ok {
-		fmt.Printf("could not find key ini")
-		return nil
+		return nil, fmt.Errorf("could not find key ini")
 	}
 
 	jsonmap := make(map[string]map[string]string, 0)
 	err := json.Unmarshal([]byte(jsontxt), &jsonmap)
 	if err != nil {
-		fmt.Printf("missing config!")
-		return nil
+		return nil, err
 	}
 	cfg, err := setting.FromJSON(jsonmap)
 	if err != nil {
-		fmt.Printf("error reading json config: " + err.Error())
-		return nil
+		return nil, err
 	}
 
-	// a whold new instance?   ┗|・o・|┛
+	// a whole new instance?   ┗|・o・|┛
 	ss, err := sqlstore.NewSQLStore(cfg, nil, nil, nil, nil, nil)
 	if err != nil {
-		fmt.Printf("error reading json config: " + err.Error())
-		return nil
+		return nil, err
 	}
 
-	return ss.GetSqlxSession()
+	return ss.GetSqlxSession(), nil
 }
 
 // Builds tenant info and returns it to enter into cache
 func buildTenantInfoFromConfig(stackID int64, config *v1.ConfigMap) *TenantInfo {
-	dbCon := initializeDBConnection(config)
+	dbCon, err := initializeDBConnection(config)
 
 	return &TenantInfo{
 		StackID:   stackID,
 		SessionDB: dbCon,
+		Err:       err,
+		Config:    config,
 	}
 }
