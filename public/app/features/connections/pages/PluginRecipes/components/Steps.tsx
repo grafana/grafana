@@ -3,14 +3,7 @@ import React, { ReactElement, useState } from 'react';
 
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
-import {
-  PluginRecipeStep,
-  StepStatus,
-  isInstallPluginStep,
-  isInstrucitonStep,
-  isPromptStep,
-  isSetupDashboardStep,
-} from '../types';
+import { PluginRecipeStep, StepStatus } from '../types';
 
 import { Step } from './Step';
 
