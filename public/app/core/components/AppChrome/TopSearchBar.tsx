@@ -4,9 +4,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { selectAll } from 'app/core/reducers/appNotification';
 import { useSelector } from 'app/types';
 
 import { NewsContainer } from './News/NewsContainer';
+import { Notification } from './Notification/Notification';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
 import { QuickAdd } from './QuickAdd/QuickAdd';
 import { SignInLink } from './TopBar/SignInLink';
@@ -18,6 +20,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
+  const notifications = useSelector((state) => selectAll(state.appNotifications));
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
@@ -35,6 +38,13 @@ export function TopSearchBar() {
       </TopSearchBarSection>
       <TopSearchBarSection align="right">
         <QuickAdd />
+
+        <Dropdown overlay={() => <Notification />} placement="bottom-end">
+          <ToolbarButton icon="bell" aria-label="Notifications">
+            {notifications.length > 0 && <span className={styles.notificationIndicator}>{notifications.length}</span>}
+          </ToolbarButton>
+        </Dropdown>
+
         {helpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
@@ -89,5 +99,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.breakpoints.down('sm')]: {
       display: 'none',
     },
+  }),
+  notificationIndicator: css({
+    width: '14px',
+    height: '14px',
+    background: `${theme.v1.palette.blue80}`,
+    borderRadius: '100%',
+    fontSize: '8px',
+    color: `${theme.v1.palette.white}`,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    lineHeight: '1.8',
   }),
 });
