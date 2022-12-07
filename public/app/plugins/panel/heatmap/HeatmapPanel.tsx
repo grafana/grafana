@@ -205,6 +205,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                   width: '100%',
                   display: 'flex',
                   justifyContent: 'flex-end',
+                  paddingBottom: '6px',
                 }}
               >
                 <CloseButton
