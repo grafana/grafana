@@ -157,25 +157,18 @@ func (s *UserAuthTokenService) lookupTokenWithCache(ctx context.Context, unhashe
 		return nil, err
 	}
 
-	// only cache tokens until their rotation time
-	nextRotation := time.Unix(token.RotatedAt, 0).Add(time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute)
+	// only cache tokens until their near rotation time
+	// Near rotation time = tokens last rotation plus the rotation interval minus 2 ttl (=30s by default)
+	nextRotation := time.Unix(token.RotatedAt, 0).
+		Add(-2 * ttl). // subtract 2 ttl to make sure we don't cache tokens that are about to expire
+		Add(time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute)
 	if now := getTime(); now.Before(nextRotation) {
-		if ttlSet := min(ttl, nextRotation.Sub(now)); ttlSet >= time.Second {
-			if err := s.remoteCache.Set(ctx, cacheKey, *token, ttlSet); err != nil {
-				s.log.Warn("could not cache token", "error", err, "cacheKey", cacheKey, "userId", token.UserId)
-			}
+		if err := s.remoteCache.Set(ctx, cacheKey, *token, ttl); err != nil {
+			s.log.Warn("could not cache token", "error", err, "cacheKey", cacheKey, "userId", token.UserId)
 		}
 	}
 
 	return token, nil
-
-}
-
-func min(x, y time.Duration) time.Duration {
-	if x < y {
-		return x
-	}
-	return y
 }
 
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
