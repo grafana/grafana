@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState, useMemo } from 'react';
-import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, useStyles2, Select } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -13,21 +12,17 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import {
   deleteAlertManagerConfigAction,
   fetchAlertManagerConfigAction,
-  fetchValidAlertManagerConfigAction,
   updateAlertManagerConfigAction,
 } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 
+import AlertmanagerConfigSelector, { ValidAmConfigOption } from './AlertmanagerConfigSelector';
 import { ConfigEditor } from './ConfigEditor';
 
 export interface FormValues {
   configJSON: string;
-}
-interface ValidAmConfigOption {
-  label: string;
-  value: AlertManagerCortexConfig;
 }
 
 export default function AlertmanagerConfig(): JSX.Element {
@@ -43,9 +38,6 @@ export default function AlertmanagerConfig(): JSX.Element {
   const styles = useStyles2(getStyles);
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const { loading: isFetchingValidAmConfigs, result: validAmConfigs } = useUnifiedAlertingSelector(
-    (state) => state.validAmConfigs
-  );
 
   const [selectedAmConfig, setSelectedAmConfig] = useState<ValidAmConfigOption | undefined>();
 
@@ -60,26 +52,6 @@ export default function AlertmanagerConfig(): JSX.Element {
       dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
     }
   }, [alertManagerSourceName, dispatch]);
-
-  useAsync(async () => {
-    if (!loadingError || alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-      return;
-    }
-    dispatch(fetchValidAlertManagerConfigAction());
-  }, [loadingError, alertManagerSourceName, dispatch]);
-
-  const validAmConfigsOptions = useMemo(() => {
-    if (!validAmConfigs?.length) {
-      return [];
-    }
-
-    const configs: ValidAmConfigOption[] = validAmConfigs.map((config, index) => ({
-      label: `Config ${index + 1}`,
-      value: config,
-    }));
-    setSelectedAmConfig(configs[0]);
-    return configs;
-  }, [validAmConfigs]);
 
   const resetConfig = () => {
     if (alertManagerSourceName) {
@@ -132,29 +104,15 @@ export default function AlertmanagerConfig(): JSX.Element {
             {loadingError.message || 'Unknown error.'}
           </Alert>
 
-          {!isFetchingValidAmConfigs && validAmConfigs && validAmConfigs.length > 0 && (
-            <>
-              <div>Choose a previous working configuration</div>
-
-              <Select
-                className={styles.container}
-                options={validAmConfigsOptions}
-                value={selectedAmConfig}
-                onChange={(value: SelectableValue) => {
-                  // @ts-ignore
-                  setSelectedAmConfig(value);
-                }}
-              />
-
-              <ConfigEditor
-                defaultValues={defaultValidValues}
-                onSubmit={(values) => onSubmit(values, false, selectedAmConfig?.value)}
-                readOnly={readOnly}
-                loading={loading}
-                alertManagerSourceName={alertManagerSourceName}
-              />
-            </>
-          )}
+          <AlertmanagerConfigSelector
+            onChange={setSelectedAmConfig}
+            selectedAmConfig={selectedAmConfig}
+            defaultValues={defaultValidValues}
+            readOnly={readOnly}
+            loading={loading}
+            alertManagerSourceName={alertManagerSourceName}
+            onSubmit={onSubmit}
+          />
         </>
       )}
       {isDeleting && alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME && (
