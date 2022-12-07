@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-// import { useHistory } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
 import { GrafanaTheme2, AppNotificationType } from '@grafana/data';
+import { isIconName } from '@grafana/data/src/types/icon';
 import { config } from '@grafana/runtime';
 import { Tag, Card, Checkbox, useTheme2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui/src/components/Icon/Icon';
 
-import { AlertVariant, SystemNotificationsProps } from './SystemNotificationsPage';
+import { SystemNotificationsProps } from './SystemNotificationsPage';
 
 export const SystemNotificationsItem = ({
   children,
@@ -22,32 +23,29 @@ export const SystemNotificationsItem = ({
   traceId,
   timestamp,
 }: SystemNotificationsProps) => {
-  // const history = useHistory();
   const theme = useTheme2();
   const styles = getStyles(theme);
   const showTraceId = config.featureToggles.tracing && traceId;
 
   return (
     <Card className={className} onClick={onClick}>
-      {title && (
+      {title ? (
         <Card.Heading>
-          {/* {icon ? (
-          <Card.Figure>
-            <Icon name={icon} />
-            <img
-              src={icon}
-              alt=""
-              height="16px"
-              width="16px"
-              // className={styles.logo}
-            />
-            {title}
-          </Card.Figure>
-        ) : ( */}
-          {title}
-          {/* )} */}
+          {icon ? (
+            <span>
+              {isIconName(icon) ? (
+                <Icon name={icon} size="md" style={{ marginRight: '8px', verticalAlign: 'text-top' }} />
+              ) : (
+                <img src={icon} alt="" height="20px" width="20px" className={styles.logo} />
+              )}
+
+              {title}
+            </span>
+          ) : (
+            { title }
+          )}
         </Card.Heading>
-      )}
+      ) : null}
       <Card.Description>{description}</Card.Description>
       <Card.Description>{children}</Card.Description>
       <Card.Figure>
@@ -77,6 +75,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.pxToRem(10),
       justifySelf: 'flex-end',
     }),
+    logo: css({
+      objectFit: 'contain',
+      marginRight: '8px',
+    }),
   };
 };
 
@@ -91,10 +93,10 @@ function getColorFromNotifType(type: AppNotificationType): number {
     case 'permissions':
       return 3;
     case 'access':
-      return 4;
+      return 14;
     case 'systemMessage':
-      return 5;
+      return 7;
     default:
-      return 6;
+      return 8;
   }
 }

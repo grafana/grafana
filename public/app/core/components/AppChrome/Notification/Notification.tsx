@@ -17,7 +17,7 @@ export function Notification() {
       <ul>
         {notifications.map((notification) => (
           <li key={notification.id} className={styles.notificationItem}>
-            <a href="/profile/notifications">
+            <a href="/system-notifications">
               <p className={styles.title}>{notification.title}</p>
               <span className={styles.date}>
                 {notification.timestamp && formatDistanceToNow(notification.timestamp, { addSuffix: true })}

@@ -9,8 +9,9 @@ import {
   clearAllNotifications,
   clearNotification,
   readAllNotifications,
-  selectWarningsAndErrors,
+  // selectWarningsAndErrors,
   selectLastReadTimestamp,
+  selectAll,
 } from 'app/core/reducers/appNotification';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -32,6 +33,18 @@ export interface SystemNotificationsProps {
   traceId?: string;
 }
 
+interface Notification {
+  id: string;
+  severity: AlertVariant;
+  icon: string;
+  title: string;
+  text: string;
+  traceId: string;
+  timestamp: number;
+  type?: AppNotificationType;
+  showing: boolean;
+}
+
 const pageNav: NavModelItem = {
   icon: 'user',
   id: 'system-notifications',
@@ -44,7 +57,8 @@ export const SystemNotificationsPage = () => {
   //({ className }: SystemNotificationsProps) => {
   // const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
   const dispatch = useDispatch();
-  const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
+  const notifications = useSelector((state) => selectAll(state.appNotifications));
+  // const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);
   const allNotificationsSelected = notifications.every((notification) =>
     selectedNotificationIds.includes(notification.id)
@@ -100,91 +114,99 @@ export const SystemNotificationsPage = () => {
         <div className={styles.notificationGroup}>
           <h3>User account</h3>
           <hr />
-          {userAccountNotifications.map((notif) => {
-            return (
-              <li key={notif.id} className={styles.listItem}>
-                <SystemNotificationsItem
-                  className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
-                  isSelected={selectedNotificationIds.includes(notif.id)}
-                  onClick={() => handleCheckboxToggle(notif.id)}
-                  severity={notif.severity}
-                  title={notif.title}
-                  description={notif.text}
-                  icon={notif.icon}
-                  type={notif.type}
-                  traceId={notif.traceId}
-                  timestamp={notif.timestamp}
-                />
-              </li>
-            );
-          })}
+          <div className={styles.notificationGroupListItems}>
+            {notifications.map((notif) => {
+              return (
+                <li key={notif.id} className={styles.listItem}>
+                  <SystemNotificationsItem
+                    className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
+                    isSelected={selectedNotificationIds.includes(notif.id)}
+                    onClick={() => handleCheckboxToggle(notif.id)}
+                    severity={notif.severity}
+                    title={notif.title}
+                    description={notif.text}
+                    icon={notif.icon}
+                    type={notif.type}
+                    traceId={notif.traceId}
+                    timestamp={notif.timestamp}
+                  />
+                </li>
+              );
+            })}
+          </div>
         </div>
         <div className={styles.notificationGroup}>
           <h3>Product updates</h3>
           <hr />
-          {productUpdateNotifications.map((notif) => {
-            return (
-              <li key={notif.id} className={styles.listItem}>
-                <SystemNotificationsItem
-                  className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
-                  isSelected={selectedNotificationIds.includes(notif.id)}
-                  onClick={() => handleCheckboxToggle(notif.id)}
-                  severity={notif.severity}
-                  title={notif.title}
-                  description={notif.text}
-                  icon={notif.icon}
-                  type={notif.type}
-                  traceId={notif.traceId}
-                  timestamp={notif.timestamp}
-                />
-              </li>
-            );
-          })}
+          <div className={styles.notificationGroupListItems}>
+            {productUpdateNotifications.map((notif) => {
+              return (
+                <li key={notif.id} className={styles.listItem}>
+                  <SystemNotificationsItem
+                    className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
+                    isSelected={selectedNotificationIds.includes(notif.id)}
+                    onClick={() => handleCheckboxToggle(notif.id)}
+                    severity={notif.severity}
+                    title={notif.title}
+                    description={notif.text}
+                    icon={notif.icon}
+                    type={notif.type}
+                    traceId={notif.traceId}
+                    timestamp={notif.timestamp}
+                  />
+                </li>
+              );
+            })}
+          </div>
         </div>
         <div className={styles.notificationGroup}>
           <h3>Permissions and Access</h3>
           <hr />
-          {permissionsAndAccessNotifications.map((notif) => {
-            return (
-              <li key={notif.id} className={styles.listItem}>
-                <SystemNotificationsItem
-                  className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
-                  isSelected={selectedNotificationIds.includes(notif.id)}
-                  onClick={() => handleCheckboxToggle(notif.id)}
-                  severity={notif.severity}
-                  title={notif.title}
-                  description={notif.text}
-                  icon={notif.icon}
-                  type={notif.type}
-                  traceId={notif.traceId}
-                  timestamp={notif.timestamp}
-                />
-              </li>
-            );
-          })}
+          <div className={styles.notificationGroupListItems}>
+            {permissionsAndAccessNotifications.map((notif) => {
+              return (
+                <li key={notif.id} className={styles.listItem}>
+                  <SystemNotificationsItem
+                    className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
+                    isSelected={selectedNotificationIds.includes(notif.id)}
+                    onClick={() => handleCheckboxToggle(notif.id)}
+                    severity={notif.severity}
+                    title={notif.title}
+                    description={notif.text}
+                    icon={notif.icon}
+                    type={notif.type}
+                    traceId={notif.traceId}
+                    timestamp={notif.timestamp}
+                  />
+                </li>
+              );
+            })}
+          </div>
         </div>
 
         <div className={styles.notificationGroup}>
           <h3>Product Announcements</h3>
           <hr />
-          {productAnnouncementsNotifications.map((notif) => {
-            return (
-              <li key={notif.id} className={styles.listItem}>
-                <SystemNotificationsItem
-                  className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
-                  isSelected={selectedNotificationIds.includes(notif.id)}
-                  onClick={() => handleCheckboxToggle(notif.id)}
-                  severity={notif.severity}
-                  title={notif.title}
-                  description={notif.text}
-                  icon={notif.icon}
-                  type={notif.type}
-                  traceId={notif.traceId}
-                  timestamp={notif.timestamp}
-                />
-              </li>
-            );
-          })}
+          <div className={styles.notificationGroupListItems}>
+            {productAnnouncementsNotifications.map((notif) => {
+              return (
+                <li key={notif.id} className={styles.listItem}>
+                  <SystemNotificationsItem
+                    className={cx({ [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
+                    isSelected={selectedNotificationIds.includes(notif.id)}
+                    onClick={() => handleCheckboxToggle(notif.id)}
+                    severity={notif.severity}
+                    title={notif.title}
+                    description={notif.text}
+                    icon={notif.icon}
+                    type={notif.type}
+                    traceId={notif.traceId}
+                    timestamp={notif.timestamp}
+                  />
+                </li>
+              );
+            })}
+          </div>
         </div>
       </Page.Contents>
     </Page>
@@ -195,6 +217,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     notificationGroup: css({
       marginTop: '32px',
+    }),
+    notificationGroupListItems: css({
+      maxHeight: '260px',
+      overflow: 'scroll',
     }),
     topRow: css({
       alignItems: 'center',
@@ -235,93 +261,68 @@ const getStyles = (theme: GrafanaTheme2) => {
 export default SystemNotificationsPage;
 
 // DUMMY DATA
-const userAccountNotifications = [
-  {
-    id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
-    severity: 'warning',
-    icon: 'exclamation-triangle',
-    title: 'Invalid username or password',
-    text: 'Oh I am an error',
-    traceId: '12345',
-    timestamp: 1670023855624,
-    type: 'systemMessage',
-    showing: false,
-  },
-  {
-    id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
-    severity: 'error',
-    icon: 'exclamation-triangle',
-    title: 'Terribly informative error message',
-    text: 'I am a really big error',
-    traceId: '54321',
-    timestamp: 1670023855731,
-    type: 'systemMessage',
-    showing: false,
-  },
-];
-
-const productUpdateNotifications = [
+const productUpdateNotifications: Notification[] = [
   {
     id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
     severity: 'info',
-    icon: 'public/plugins/grafana-synthetic-monitoring-app/img/logo.svg',
+    icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
     title: 'Synthetic Monitoring',
     text: 'Update Synthetics Monitoring to version 3.01',
     traceId: '123455',
     timestamp: 1670023812345,
-    type: 'update',
+    type: AppNotificationType.Update,
     showing: true,
   },
   {
     id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
     severity: 'error',
-    icon: 'public/plugins/grafana-synthetic-monitoring-app/img/logo.svg',
+    icon: 'public/img/plugins/kubernetes.png',
     title: 'Kubernetes',
     text: 'The current version of Kubernetes is 2.32; your version is 1.30',
     traceId: '54321',
     timestamp: 1670023855731,
-    type: 'update',
+    type: AppNotificationType.Update,
     showing: false,
   },
 ];
 
-const permissionsAndAccessNotifications = [
+const permissionsAndAccessNotifications: Notification[] = [
   {
     id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
     severity: 'warning',
-    icon: 'exclamation-triangle',
-    title: 'Integrations and Connections',
+    icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
+    title: 'Synthetic Monitoring',
     text: '5 non-admin users are requesting access to the Synthtics Monitoring probes in Tokyo',
     traceId: '123455',
     timestamp: 1670023812345,
-    type: 'access',
+    type: AppNotificationType.Access,
     showing: true,
   },
   {
     id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
     severity: 'success',
-    icon: 'exclamation-triangle',
+    icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
     title: 'Synthetic Monitoring',
     text: 'Admin access removed for very-rude-123@gmail.com',
     traceId: '54321',
     timestamp: 1670023855789,
-    type: 'access',
+    type: AppNotificationType.Access,
     showing: false,
   },
   {
     id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
     severity: 'error',
-    icon: 'exclamation-triangle',
-    title: 'Integrations',
+    icon: 'public/img/plugins/grafana-easystart-app.svg',
+    title: 'Integrations and Connections',
     text: 'Permissions changed to read-only for very-rude-123@gmail.com',
     traceId: '54321',
     timestamp: 1670023855789,
-    type: 'permissions',
+    type: AppNotificationType.Permissions,
     showing: false,
   },
 ];
 
-const productAnnouncementsNotifications = [
+const productAnnouncementsNotifications: Notification[] = [
   {
     id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
     severity: 'success',
@@ -330,7 +331,7 @@ const productAnnouncementsNotifications = [
     text: 'Announcing Grafana Faro',
     traceId: '123457',
     timestamp: 1009023812345,
-    type: 'productAnnouncement',
+    type: AppNotificationType.ProductAnnouncement,
     showing: true,
   },
 ];
