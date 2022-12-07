@@ -216,6 +216,6 @@ const (
 	FlagDatasourceLogger = "datasourceLogger"
 
 	// FlagSessionRemoteCache
-	// Enable using remote cache for users and sessions
+	// Enable using remote cache for user sessions
 	FlagSessionRemoteCache = "sessionRemoteCache"
 )
