@@ -1,15 +1,13 @@
-import pluralize from 'pluralize';
-import React, { FC, Fragment, useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 
+import { Stack } from '@grafana/experimental';
+import { Badge } from '@grafana/ui';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { isAlertingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
-import { StateColoredText } from '../StateColoredText';
 
 interface Props {
-  showInactive?: boolean;
-  showRecording?: boolean;
   group?: CombinedRuleGroup;
   namespaces?: CombinedRuleNamespace[];
 }
@@ -23,14 +21,17 @@ const emptyStats = {
   error: 0,
 } as const;
 
-export const RuleStats: FC<Props> = ({ showInactive, showRecording, group, namespaces }) => {
+export const RuleStats: FC<Props> = ({ group, namespaces }) => {
+  const evaluationInterval = group?.interval;
+
   const calculated = useMemo(() => {
     const stats = { ...emptyStats };
+
     const calcRule = (rule: CombinedRule) => {
       if (rule.promRule && isAlertingRule(rule.promRule)) {
         stats[rule.promRule.state] += 1;
       }
-      if (rule.promRule?.health === 'err' || rule.promRule?.health === 'error') {
+      if (ruleHasError(rule)) {
         stats.error += 1;
       }
       if (
@@ -41,75 +42,65 @@ export const RuleStats: FC<Props> = ({ showInactive, showRecording, group, names
       }
       stats.total += 1;
     };
+
     if (group) {
       group.rules.forEach(calcRule);
     }
+
     if (namespaces) {
       namespaces.forEach((namespace) => namespace.groups.forEach((group) => group.rules.forEach(calcRule)));
     }
+
     return stats;
   }, [group, namespaces]);
 
   const statsComponents: React.ReactNode[] = [];
+
   if (calculated[PromAlertingRuleState.Firing]) {
     statsComponents.push(
-      <StateColoredText key="firing" status={PromAlertingRuleState.Firing}>
-        {calculated[PromAlertingRuleState.Firing]} firing
-      </StateColoredText>
-    );
-  }
-  if (calculated.error) {
-    statsComponents.push(
-      <StateColoredText key="errors" status={PromAlertingRuleState.Firing}>
-        {calculated.error} errors
-      </StateColoredText>
-    );
-  }
-  if (calculated[PromAlertingRuleState.Pending]) {
-    statsComponents.push(
-      <StateColoredText key="pending" status={PromAlertingRuleState.Pending}>
-        {calculated[PromAlertingRuleState.Pending]} pending
-      </StateColoredText>
-    );
-  }
-  if (showInactive && calculated[PromAlertingRuleState.Inactive]) {
-    statsComponents.push(
-      <StateColoredText key="inactive" status="neutral">
-        {calculated[PromAlertingRuleState.Inactive]} normal
-      </StateColoredText>
-    );
-  }
-  if (showRecording && calculated.recording) {
-    statsComponents.push(
-      <StateColoredText key="recording" status="neutral">
-        {calculated.recording} recording
-      </StateColoredText>
+      <Badge color="red" key="firing" text={`${calculated[PromAlertingRuleState.Firing]} firing`} />
     );
   }
 
+  if (calculated.error) {
+    statsComponents.push(<Badge color="red" key="errors" text={`${calculated.error} errors`} />);
+  }
+
+  if (calculated[PromAlertingRuleState.Pending]) {
+    statsComponents.push(
+      <Badge color={'orange'} key="pending" text={`${calculated[PromAlertingRuleState.Pending]} pending`} />
+    );
+  }
+
+  if (calculated[PromAlertingRuleState.Inactive]) {
+    statsComponents.push(
+      <Badge color="green" key="inactive" text={`${calculated[PromAlertingRuleState.Inactive]} normal`} />
+    );
+  }
+
+  if (calculated.recording) {
+    statsComponents.push(<Badge color="purple" key="recording" text={`${calculated.recording} recording`} />);
+  }
+
+  const hasStats = Boolean(statsComponents.length);
+
   return (
-    <div>
-      <span>
-        {calculated.total} {pluralize('rule', calculated.total)}
-      </span>
-      {!!statsComponents.length && (
+    <Stack direction="row">
+      {hasStats && (
+        <div>
+          <Stack gap={0.5}>{statsComponents}</Stack>
+        </div>
+      )}
+      {evaluationInterval && (
         <>
-          <span>: </span>
-          {statsComponents.reduce<React.ReactNode[]>(
-            (prev, curr, idx) =>
-              prev.length
-                ? [
-                    prev,
-                    <Fragment key={idx}>
-                      <span>, </span>
-                    </Fragment>,
-                    curr,
-                  ]
-                : [curr],
-            []
-          )}
+          <div>|</div>
+          <Badge text={evaluationInterval} icon="clock-nine" color={'blue'} />
         </>
       )}
-    </div>
+    </Stack>
   );
 };
+
+function ruleHasError(rule: CombinedRule) {
+  return rule.promRule?.health === 'err' || rule.promRule?.health === 'error';
+}
