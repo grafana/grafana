@@ -3,6 +3,8 @@ package recipes
 import "github.com/grafana/grafana/pkg/models"
 
 func newInstallAgentStep(meta RecipeStepMeta, metrics []AgentMetrics) *installAgentStep {
+	meta.Status = NotCompleted
+
 	return &installAgentStep{
 		Action: "install-agent",
 		Meta:   meta,
@@ -29,15 +31,19 @@ type installAgentSettings struct {
 }
 
 func (s *installAgentStep) Apply(c *models.ReqContext) error {
+	s.Meta.Status = Completed
+
 	return nil
 }
 
 func (s *installAgentStep) Revert(c *models.ReqContext) error {
+	s.Meta.Status = NotCompleted
+
 	return nil
 }
 
 func (s *installAgentStep) Status(c *models.ReqContext) (StepStatus, error) {
-	return Completed, nil
+	return s.Meta.Status, nil
 }
 
 func (s *installAgentStep) ToDto(c *models.ReqContext) *RecipeStepDTO {

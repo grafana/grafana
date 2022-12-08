@@ -34,6 +34,7 @@ export function Step({ step, isOpen, onComplete }: Props): ReactElement {
         </div>
       )}
 
+      {/* Content */}
       {isOpen && (
         <>
           {/* Description */}

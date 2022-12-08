@@ -3,6 +3,8 @@ package recipes
 import "github.com/grafana/grafana/pkg/models"
 
 func newSetupAlertsStep(meta RecipeStepMeta, alerts []AlertRule) *setupAlertsStep {
+	meta.Status = NotCompleted
+
 	return &setupAlertsStep{
 		Action: "setup-alerts",
 		Meta:   meta,
@@ -30,15 +32,19 @@ type setupAlertsStep struct {
 }
 
 func (s *setupAlertsStep) Apply(c *models.ReqContext) error {
+	s.Meta.Status = Completed
 	return nil
 }
 
+// TODO: remove alert
 func (s *setupAlertsStep) Revert(c *models.ReqContext) error {
+	s.Meta.Status = NotCompleted
 	return nil
 }
 
+// TODO: check here if the alert has already been added, maybe that's more sophisticated
 func (s *setupAlertsStep) Status(c *models.ReqContext) (StepStatus, error) {
-	return Completed, nil
+	return s.Meta.Status, nil
 }
 
 func (s *setupAlertsStep) ToDto(c *models.ReqContext) *RecipeStepDTO {

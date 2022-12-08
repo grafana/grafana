@@ -6,6 +6,8 @@ import (
 )
 
 func newSetupDashboardStep(ds dashboards.DashboardService, meta RecipeStepMeta, settings *dashboardSettings) *dashboardStep {
+	meta.Status = NotCompleted
+
 	return &dashboardStep{
 		Action:   "setup-dashboard",
 		Meta:     meta,
@@ -47,15 +49,20 @@ func (s *dashboardStep) Apply(c *models.ReqContext) error {
 		return err
 	}
 
+	s.Meta.Status = Completed
+
 	return nil
 }
 
+// TODO: delete dashboard
 func (s *dashboardStep) Revert(c *models.ReqContext) error {
+	s.Meta.Status = NotCompleted
+
 	return nil
 }
 
 func (s *dashboardStep) Status(c *models.ReqContext) (StepStatus, error) {
-	return Completed, nil
+	return s.Meta.Status, nil
 }
 
 func (s *dashboardStep) ToDto(c *models.ReqContext) *RecipeStepDTO {

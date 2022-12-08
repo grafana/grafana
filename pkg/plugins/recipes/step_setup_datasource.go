@@ -8,6 +8,8 @@ import (
 )
 
 func newSetupDatasourceStep(ds datasources.DataSourceService, meta RecipeStepMeta) *setupDatasourceStep {
+	meta.Status = NotCompleted
+
 	return &setupDatasourceStep{
 		Action: "setup-datasource",
 		Meta:   meta,
@@ -49,6 +51,8 @@ func (s *setupDatasourceStep) Apply(c *models.ReqContext) error {
 		return err
 	}
 
+	s.Meta.Status = Completed
+
 	return nil
 }
 
@@ -67,9 +71,13 @@ func (s *setupDatasourceStep) Revert(c *models.ReqContext) error {
 		return err
 	}
 
+	s.Meta.Status = NotCompleted
+
 	return nil
 }
 
+// TODO: instead of detecting if there is a datasource existing with a given name, should we perist the ID of the created datasource instead?
+// (It can happen that there are multiple datasources with the same name querying different services / endpoints.)
 func (s *setupDatasourceStep) Status(c *models.ReqContext) (StepStatus, error) {
 	query := datasources.GetDataSourceQuery{Name: s.Settings.Name, OrgId: c.OrgID}
 

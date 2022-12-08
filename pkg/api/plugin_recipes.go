@@ -68,15 +68,16 @@ func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) ApplyRecipeStep(c *models.ReqContext) response.Response {
 	recipeID := web.Params(c.Req)[":recipeId"]
+	rawStepNumber := web.Params(c.Req)[":stepNumber"]
 
-	stepNumber, err := strconv.Atoi(web.Params(c.Req)[":stepNumber"])
+	stepNumber, err := strconv.Atoi(rawStepNumber)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "The step number needs to be a number", nil)
+		return response.Error(http.StatusBadRequest, "The step number needs to be a number, received: '"+rawStepNumber+"'", nil)
 	}
 
 	recipe := hs.recipeProvider.GetById(recipeID)
 	if recipe == nil {
-		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
+		return response.Error(http.StatusNotFound, "Plugin recipe not found with ID '"+recipeID+"'", nil)
 	}
 
 	step := recipe.Steps[stepNumber]
@@ -87,15 +88,16 @@ func (hs *HTTPServer) ApplyRecipeStep(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) RevertRecipeStep(c *models.ReqContext) response.Response {
 	recipeID := web.Params(c.Req)[":recipeId"]
+	rawStepNumber := web.Params(c.Req)[":stepNumber"]
 
-	stepNumber, err := strconv.Atoi(web.Params(c.Req)[":stepNumber"])
+	stepNumber, err := strconv.Atoi(rawStepNumber)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "The step number needs to be an number", nil)
+		return response.Error(http.StatusBadRequest, "The step number needs to be a number, received: '"+rawStepNumber+"'", nil)
 	}
 
 	recipe := hs.recipeProvider.GetById(recipeID)
 	if recipe == nil {
-		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
+		return response.Error(http.StatusNotFound, "Plugin recipe not found with ID '"+recipeID+"'", nil)
 	}
 
 	step := recipe.Steps[stepNumber]
