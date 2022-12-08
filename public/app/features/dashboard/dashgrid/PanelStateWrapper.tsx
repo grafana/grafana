@@ -40,6 +40,7 @@ import { RenderEvent } from 'app/types/events';
 import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { LoadingBar } from '../components/LoadingBar/LoadingBar';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
@@ -585,8 +586,9 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
+    const loadingNode = <LoadingBar width={'128px'} height={'2px'} />;
     const dataState = (
-      <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} dataState={LoadingState.Error} key="state" />
+      <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} dataState={data.state} key="state" />
     );
     const titleItemsNodes = [<PanelHeaderNotices frames={data.series} panelId={panel.id} key="notices" />];
 
@@ -600,6 +602,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           titleItemsNodes={titleItemsNodes}
           onStreamingStop={() => panel.getQueryRunner().cancelQuery()}
           loadingState={data.state}
+          loadingNode={loadingNode}
           dataStateNode={dataState}
           // leftItems is to be deprecated
           // leftItems={[<PanelHeaderLoadingIndicator state={data.state} onClick={() => {}} key="loading-indicator" />]}

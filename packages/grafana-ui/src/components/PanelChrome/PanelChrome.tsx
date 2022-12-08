@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactNode, useEffect, useState } from 'react';
+import React, { CSSProperties, ReactElement, ReactNode, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
 
@@ -8,7 +8,6 @@ import { IconName } from '../../types/icon';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
-import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
 /**
@@ -32,13 +31,14 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   titleItems?: PanelChromeInfoState[];
-  titleItemsNodes?: React.ReactElement[];
-  menu?: React.ReactElement;
+  titleItemsNodes?: ReactElement[];
+  menu?: ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
   hoverHeader?: boolean;
   onStreamingStop?: () => void;
   loadingState?: LoadingState;
+  loadingNode?: ReactNode;
   dataStateNode?: ReactNode;
   /** @deprecated in favor of prop states
    * which will serve the same purpose
@@ -64,11 +64,12 @@ export function PanelChrome({
   title = '',
   titleItems = [],
   menu,
-  titleItemsNodes,
+  titleItemsNodes = [],
   // dragClass,
   // hoverHeader = false,
   onStreamingStop,
   loadingState,
+  loadingNode = null,
   dataStateNode = null,
   leftItems = [],
 }: PanelChromeProps) {
@@ -109,12 +110,12 @@ export function PanelChrome({
   // TODO Should we leave them both for a while?
   // const isUsingDeprecatedLeftItems = leftItems.length > 0;
   const isUsingDeprecatedLeftItems = !dataStateNode && leftItems.length > 0;
+  const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
+  const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
 
   return (
     <div className={styles.container} style={containerStyles}>
-      {loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems && (
-        <LoadingBar width={'128px'} height={'2px'} />
-      )}
+      {showLoading && loadingNode}
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
         {title && (
@@ -123,7 +124,7 @@ export function PanelChrome({
           </div>
         )}
 
-        {loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems && (
+        {showStreaming && (
           <div className={styles.item} style={itemStyles}>
             <IconButton
               tooltip={`${isStreaming ? 'Streaming (click to stop)' : 'Streaming stopped'}`}
@@ -154,7 +155,7 @@ export function PanelChrome({
           </div>
         )}
 
-        {titleItemsNodes && (
+        {titleItemsNodes.length > 0 && (
           <div className={styles.items} data-testid="title-items-container">
             {itemsRenderer(titleItemsNodes, (item) => item)}
           </div>
