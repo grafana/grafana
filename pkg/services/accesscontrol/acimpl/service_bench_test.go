@@ -107,7 +107,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		orgUsers := make([]org.OrgUser, 0, n)
 		roles := make([]accesscontrol.Role, 0, n)
 		userRoles := make([]accesscontrol.UserRole, 0, n)
-		for u := start; u < end; u++ {
+		for u := start + 1; u < end+1; u++ {
 			users = append(users, user.User{
 				ID:      int64(u),
 				Name:    fmt.Sprintf("user%v", u),
