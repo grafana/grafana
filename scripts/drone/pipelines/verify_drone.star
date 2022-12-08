@@ -11,6 +11,7 @@ load(
     'pipeline',
 )
 
+
 def verify_drone(trigger, ver_mode):
     environment = {'EDITION': 'oss'}
     steps = [
@@ -20,5 +21,10 @@ def verify_drone(trigger, ver_mode):
         lint_drone_step(),
     ]
     return pipeline(
-        name='{}-verify-drone'.format(ver_mode), edition="oss", trigger=trigger, services=[], steps=steps, environment=environment,
+        name='{}-verify-drone'.format(ver_mode),
+        edition="oss",
+        trigger=trigger,
+        services=[],
+        steps=steps,
+        environment=environment,
     )

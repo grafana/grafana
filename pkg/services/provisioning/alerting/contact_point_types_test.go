@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func TestReceivers(t *testing.T) {

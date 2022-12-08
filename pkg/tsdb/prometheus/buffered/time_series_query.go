@@ -688,7 +688,7 @@ func deviation(values []float64) float64 {
 func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	frame := data.NewFrame(name, fields...)
 	frame.Meta = &data.FrameMeta{
-		Type: data.FrameTypeTimeSeriesMany,
+		Type: data.FrameTypeTimeSeriesMulti,
 		Custom: map[string]string{
 			"resultType": typ, // Note: SSE depends on this property and map type
 		},
