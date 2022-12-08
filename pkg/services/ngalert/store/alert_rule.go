@@ -488,7 +488,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		if query.PopulateFolders {
 			foldersSql := sess.Table("dashboard").Alias("D").Select("D.uid, D.title").
 				Where("is_folder = ?", true).
-				And("EXISTS (SELECT 1 FROM alert_rule A WHERE D.uid = A.namespace_uid)")
+				And(`EXISTS (SELECT 1 FROM alert_rule A WHERE "D".uid = A.namespace_uid)`)
 			if len(ids) > 0 {
 				foldersSql = foldersSql.NotIn("org_id", ids)
 			}
