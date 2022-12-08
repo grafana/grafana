@@ -7,6 +7,7 @@ import { isIconName } from '@grafana/data/src/types/icon';
 import { config } from '@grafana/runtime';
 import { Tag, Card, Checkbox, useTheme2 } from '@grafana/ui';
 import { Icon } from '@grafana/ui/src/components/Icon/Icon';
+import { tagColorMap } from 'app/types';
 
 import { SystemNotificationsProps } from './SystemNotificationsPage';
 
@@ -29,7 +30,7 @@ export const SystemNotificationsItem = ({
 
   return (
     <Card className={className} onClick={onClick}>
-      {title ? (
+      {title && (
         <Card.Heading>
           {icon ? (
             <span>
@@ -45,21 +46,17 @@ export const SystemNotificationsItem = ({
             { title }
           )}
         </Card.Heading>
-      ) : null}
+      )}
       <Card.Description>{description}</Card.Description>
       <Card.Description>{children}</Card.Description>
       <Card.Figure>
         <Checkbox onChange={onClick} tabIndex={-1} value={isSelected} />
       </Card.Figure>
       <Card.Tags className={styles.trace}>
+        {type && <Tag name={type} colorIndex={tagColorMap[type]} style={{ marginBottom: '12px' }} />}
         {showTraceId && <span>{`Trace ID: ${traceId}`}</span>}
         {timestamp && formatDistanceToNow(timestamp, { addSuffix: true })}
       </Card.Tags>
-      {type && (
-        <Card.Tags>
-          <Tag name={type} colorIndex={getColorFromNotifType(type)} style={{ marginBottom: '12px' }} />
-        </Card.Tags>
-      )}
     </Card>
   );
 };
@@ -83,20 +80,3 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export default SystemNotificationsItem;
-
-function getColorFromNotifType(type: AppNotificationType): number {
-  switch (type) {
-    case 'update':
-      return 1;
-    case 'productAnnouncement':
-      return 2;
-    case 'permissions':
-      return 3;
-    case 'access':
-      return 14;
-    case 'systemMessage':
-      return 7;
-    default:
-      return 8;
-  }
-}

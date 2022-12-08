@@ -2,16 +2,22 @@ import { css, cx } from '@emotion/css';
 import React, { ReactNode, useRef, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { AppNotificationType, NavModelItem, GrafanaTheme2 } from '@grafana/data';
+import {
+  AppNotification,
+  AppNotificationType,
+  AppNotificationSeverity,
+  NavModelItem,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { Alert, Button, Checkbox, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import {
   clearAllNotifications,
   clearNotification,
   readAllNotifications,
-  // selectWarningsAndErrors,
+  selectWarningsAndErrors,
   selectLastReadTimestamp,
-  selectAll,
+  // selectAll,
 } from 'app/core/reducers/appNotification';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -33,18 +39,6 @@ export interface SystemNotificationsProps {
   traceId?: string;
 }
 
-interface Notification {
-  id: string;
-  severity: AlertVariant;
-  icon: string;
-  title: string;
-  text: string;
-  traceId: string;
-  timestamp: number;
-  type?: AppNotificationType;
-  showing: boolean;
-}
-
 const pageNav: NavModelItem = {
   icon: 'bell',
   id: 'system-notifications',
@@ -55,9 +49,8 @@ const pageNav: NavModelItem = {
 
 export const SystemNotificationsPage = () => {
   const dispatch = useDispatch();
-  const notifications = useSelector((state) => selectAll(state.appNotifications));
-  const updatedNotifications = notifications.map((i) => i.type ?? { ...i, type: AppNotificationType.SystemMessage });
-  // const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
+  const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
+
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);
   const allNotificationsSelected = notifications.every((notification) =>
     selectedNotificationIds.includes(notification.id)
@@ -111,10 +104,10 @@ export const SystemNotificationsPage = () => {
           </Button>
         </div>
         <div className={styles.notificationGroup}>
-          <h3>User account</h3>
+          <h3>System error</h3>
           <hr />
           <div className={styles.notificationGroupListItems}>
-            {updatedNotifications.map((notif) => {
+            {notifications.map((notif) => {
               return (
                 <li key={notif.id} className={styles.listItem}>
                   <SystemNotificationsItem
@@ -125,7 +118,7 @@ export const SystemNotificationsPage = () => {
                     title={notif.title}
                     description={notif.text}
                     icon={notif.icon}
-                    type={notif.type}
+                    type={notif.type || AppNotificationType.SystemMessage}
                     traceId={notif.traceId}
                     timestamp={notif.timestamp}
                   />
@@ -226,15 +219,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(2),
     }),
-    trace: css({
-      alignItems: 'flex-end',
-      alignSelf: 'flex-end',
-      color: theme.colors.text.secondary,
-      display: 'flex',
-      flexDirection: 'column',
-      fontSize: theme.typography.pxToRem(10),
-      justifySelf: 'flex-end',
-    }),
     newItem: css({
       '&::before': {
         content: '""',
@@ -260,10 +244,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 export default SystemNotificationsPage;
 
 // DUMMY DATA
-const productUpdateNotifications: Notification[] = [
+const productUpdateNotifications: AppNotification[] = [
   {
     id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
-    severity: 'info',
+    severity: AppNotificationSeverity.Info,
     icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
     title: 'Synthetic Monitoring',
     text: 'Update Synthetics Monitoring to version 3.01',
@@ -274,7 +258,7 @@ const productUpdateNotifications: Notification[] = [
   },
   {
     id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
-    severity: 'error',
+    severity: AppNotificationSeverity.Error,
     icon: 'public/img/plugins/kubernetes.png',
     title: 'Kubernetes',
     text: 'The current version of Kubernetes is 2.32; your version is 1.30',
@@ -285,10 +269,10 @@ const productUpdateNotifications: Notification[] = [
   },
 ];
 
-const permissionsAndAccessNotifications: Notification[] = [
+const permissionsAndAccessNotifications: AppNotification[] = [
   {
     id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
-    severity: 'warning',
+    severity: AppNotificationSeverity.Warning,
     icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
     title: 'Synthetic Monitoring',
     text: '5 non-admin users are requesting access to the Synthtics Monitoring probes in Tokyo',
@@ -299,7 +283,7 @@ const permissionsAndAccessNotifications: Notification[] = [
   },
   {
     id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
-    severity: 'success',
+    severity: AppNotificationSeverity.Success,
     icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
     title: 'Synthetic Monitoring',
     text: 'Admin access removed for very-rude-123@gmail.com',
@@ -310,7 +294,7 @@ const permissionsAndAccessNotifications: Notification[] = [
   },
   {
     id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
-    severity: 'error',
+    severity: AppNotificationSeverity.Error,
     icon: 'public/img/plugins/grafana-easystart-app.svg',
     title: 'Integrations and Connections',
     text: 'Permissions changed to read-only for very-rude-123@gmail.com',
@@ -321,10 +305,10 @@ const permissionsAndAccessNotifications: Notification[] = [
   },
 ];
 
-const productAnnouncementsNotifications: Notification[] = [
+const productAnnouncementsNotifications: AppNotification[] = [
   {
     id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
-    severity: 'success',
+    severity: AppNotificationSeverity.Success,
     icon: 'exclamation-triangle',
     title: '',
     text: 'Announcing Grafana Faro',
