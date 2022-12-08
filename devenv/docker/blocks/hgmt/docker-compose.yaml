@@ -1,13 +1,69 @@
-  core:
+
+  # k3s:
+  #   image: "rancher/k3s:${K3S_VERSION:-latest}"
+  #   command: 
+  #   - server
+  #   tmpfs:
+  #   - /run
+  #   - /var/run
+  #   privileged: true
+  #   environment:
+  #   #- K3S_TOKEN=secret
+  #   - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
+  #   - K3S_KUBECONFIG_MODE=666
+  #   volumes:
+  #   - .:/output
+  #   ports:
+  #   - 6443:6443
+  
+  mysql:
+    image: arm64v8/mysql:oracle
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
+
+  stack25:
     image: grafana/grafana:dev-ubuntu
     ports:
-      - 3000:3000
+      - 3025:3000
     volumes:
       - ./docker/blocks/hgmt/core.ini:/etc/grafana/grafana.ini
+    environment:
+      HG_STACK_ID: 25
+      GF_DATABASE_TYPE: mysql
+      GF_DATABASE_HOST: mysql
+      GF_DATABASE_USER: grafana
+      GF_DATABASE_PASSWORD: password
+      GF_DATABASE_NAME: grafana
+    links:
+      - mysql
 
+  stack26:
+    image: grafana/grafana:dev-ubuntu
+    ports:
+      - 3026:3000
+    volumes:
+      - ./docker/blocks/hgmt/core.ini:/etc/grafana/grafana.ini
+    environment:
+      HG_STACK_ID: 26
+      # GF_DATABASE_TYPE: postgres
+      # GF_DATABASE_HOST: postgres
+      # GF_DATABASE_PORT: 5432
+      # GF_DATABASE_NAME: stack26
+      # GF_DATABASE_USER: grafana
+      # GF_DATABASE_PASSWORD: grafana
+    links:
+      - mysql
+  
   entity-store:
     image: grafana/grafana:dev-ubuntu
     volumes:
       - ./docker/blocks/hgmt/entity.ini:/etc/grafana/grafana.ini
     links:
-      - core
+      - stack25
+      - stack26
