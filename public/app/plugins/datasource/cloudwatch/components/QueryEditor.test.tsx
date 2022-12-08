@@ -31,7 +31,7 @@ const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
   query: {} as CloudWatchQuery,
 };
 
-describe('PanelQueryEditor should render right editor', () => {
+describe('QueryEditor should render right editor', () => {
   describe('when using grafana 6.3.0 metric query', () => {
     it('should render the metrics query editor', async () => {
       const query = {
@@ -193,7 +193,7 @@ describe('PanelQueryEditor should render right editor', () => {
         {
           name: 'it is metric query code query and toggle is not enabled',
           query: validMetricQueryCodeQuery,
-          toggle: true,
+          toggle: false,
         },
         { name: 'it is logs query and feature is not enabled', query: validLogsQuery, toggle: false },
         {
@@ -214,6 +214,75 @@ describe('PanelQueryEditor should render right editor', () => {
         });
         expect(await screen.queryByText('Monitoring account')).toBeNull();
       });
+    });
+  });
+
+  describe('QueryHeader', () => {
+    it('should display metric actions in header when metric query is used', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricQueryCodeQuery} />);
+      });
+
+      expect(screen.getByLabelText(/Region.*/)).toBeInTheDocument();
+      expect(screen.getByText('CloudWatch Metrics')).toBeInTheDocument();
+      expect(screen.getByLabelText('Builder')).toBeInTheDocument();
+      expect(screen.getByLabelText('Code')).toBeInTheDocument();
+      expect(screen.getByText('Metric Query')).toBeInTheDocument();
+    });
+
+    it('should display metric actions in header when metric query is used', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validLogsQuery} />);
+      });
+
+      expect(screen.getByLabelText(/Region.*/)).toBeInTheDocument();
+      expect(screen.getByText('CloudWatch Logs')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Builder')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Code')).not.toBeInTheDocument();
+      expect(screen.queryByText('Metric Query')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('metrics editor should handle editor modes correctly', () => {
+    it('when metric query type is metric search and editor mode is builder', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricSearchBuilderQuery} />);
+      });
+
+      expect(screen.getByText('Metric Search')).toBeInTheDocument();
+      const radio = screen.getByLabelText('Builder');
+      expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+    });
+
+    it('when metric query type is metric search and editor mode is raw', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricSearchCodeQuery} />);
+      });
+      expect(screen.getByText('Metric Search')).toBeInTheDocument();
+      const radio = screen.getByLabelText('Code');
+      expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+    });
+
+    it('when metric query type is metric query and editor mode is builder', async () => {
+      await act(async () => {
+        await act(async () => {
+          render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
+        });
+
+        expect(screen.getByText('Metric Query')).toBeInTheDocument();
+        const radio = screen.getByLabelText('Builder');
+        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+      });
+    });
+
+    it('when metric query type is metric query and editor mode is raw', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricQueryCodeQuery} />);
+      });
+
+      expect(screen.getByText('Metric Query')).toBeInTheDocument();
+      const radio = screen.getByLabelText('Code');
+      expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
     });
   });
 });
