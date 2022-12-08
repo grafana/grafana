@@ -28,7 +28,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { CustomVariableModel } from '../../../features/variables/types';
 
-import { LokiDatasource } from './datasource';
+import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
@@ -946,7 +946,7 @@ describe('LokiDatasource', () => {
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           hideFromInspector: true,
-          requestId: 'log-samples',
+          requestId: REF_ID_DATA_SAMPLES,
         })
       );
     });

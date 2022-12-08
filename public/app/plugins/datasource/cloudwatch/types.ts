@@ -331,7 +331,8 @@ export interface StartQueryRequest {
   /**
    * The list of log groups to be queried. You can include up to 20 log groups. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
-  logGroupNames?: string[];
+  logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
+  logGroups?: SelectableResourceValue[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */

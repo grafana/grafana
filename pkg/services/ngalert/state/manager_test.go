@@ -1937,7 +1937,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					Values: make(map[string]float64),
-					State:  eval.Alerting,
+					State:  eval.Pending,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
