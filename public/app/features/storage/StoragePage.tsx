@@ -149,7 +149,7 @@ export default function StoragePage(props: Props) {
 
     // Lets only apply permissions to folders (for now)
     if (isFolder) {
-      opts.push({ what: StorageView.Perms, text: 'Permissions' });
+      // opts.push({ what: StorageView.Perms, text: 'Permissions' });
     } else {
       // TODO: only if the file exists in a storage engine with
       opts.push({ what: StorageView.History, text: 'History' });
@@ -181,8 +181,8 @@ export default function StoragePage(props: Props) {
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={toIconName(navModel.node.icon ?? '')} />
           <HorizontalGroup>
             {canViewDashboard && (
-              <LinkButton icon="dashboard" href={`g/${path}`}>
-                Dashboard
+              <LinkButton icon="dashboard" href={`g/${path.substring(path.indexOf('/') + 1)}`}>
+                DashboardX
               </LinkButton>
             )}
 
