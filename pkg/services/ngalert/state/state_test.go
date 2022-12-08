@@ -24,17 +24,20 @@ func TestSetAlerting(t *testing.T) {
 	tests := []struct {
 		name     string
 		state    State
+		reason   string
 		startsAt time.Time
 		endsAt   time.Time
 		expected State
 	}{{
 		name:     "state is set to Alerting",
+		reason:   "this is a reason",
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:    eval.Alerting,
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:       eval.Alerting,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
 		},
 	}, {
 		name: "previous state is removed",
@@ -55,7 +58,7 @@ func TestSetAlerting(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetAlerting(test.startsAt, test.endsAt)
+			actual.SetAlerting(test.reason, test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -66,17 +69,20 @@ func TestSetPending(t *testing.T) {
 	tests := []struct {
 		name     string
 		state    State
+		reason   string
 		startsAt time.Time
 		endsAt   time.Time
 		expected State
 	}{{
 		name:     "state is set to Pending",
+		reason:   "this is a reason",
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:    eval.Pending,
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:       eval.Pending,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
 		},
 	}, {
 		name: "previous state is removed",
@@ -97,7 +103,7 @@ func TestSetPending(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetPending(test.startsAt, test.endsAt)
+			actual.SetPending(test.reason, test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -108,17 +114,20 @@ func TestNormal(t *testing.T) {
 	tests := []struct {
 		name     string
 		state    State
+		reason   string
 		startsAt time.Time
 		endsAt   time.Time
 		expected State
 	}{{
 		name:     "state is set to Normal",
+		reason:   "this is a reason",
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:    eval.Normal,
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:       eval.Normal,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
 		},
 	}, {
 		name: "previous state is removed",
@@ -139,7 +148,7 @@ func TestNormal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetNormal(test.startsAt, test.endsAt)
+			actual.SetNormal(test.reason, test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -150,6 +159,7 @@ func TestNoData(t *testing.T) {
 	tests := []struct {
 		name     string
 		state    State
+		reason   string
 		startsAt time.Time
 		endsAt   time.Time
 		expected State
@@ -181,7 +191,7 @@ func TestNoData(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetNoData(test.startsAt, test.endsAt)
+			actual.SetNoData(test.reason, test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

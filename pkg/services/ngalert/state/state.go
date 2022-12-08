@@ -119,9 +119,9 @@ func (a *State) SetError(err error, startsAt, endsAt time.Time) {
 }
 
 // SetNormal sets the state to Normal. It changes both the start and end time.
-func (a *State) SetNormal(startsAt, endsAt time.Time) {
+func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
 	a.State = eval.Normal
-	a.StateReason = ""
+	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = nil
@@ -185,7 +185,7 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 	} else {
 		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
 		// Normal states have the same start and end timestamps
-		state.SetNormal(result.EvaluatedAt, result.EvaluatedAt)
+		state.SetNormal("", result.EvaluatedAt, result.EvaluatedAt)
 	}
 }
 
