@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
@@ -14,10 +14,10 @@ const navId = 'connections-plugin-recipes';
 
 export function PluginRecipeDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { status, error, data } = useGetSingle(params.id);
+  const { status, error, data, refetch } = useGetSingle(params.id);
   const { tabId, tabs } = usePluginRecipeDetailsPageTabs(data);
   const styles = useStyles2(getStyles);
-  const onStartInstall = () => {}; // called when the user clicks on "Install"
+  const [isInstallStarted, setIsInstallStarted] = useState(false);
   const isInstalled = useMemo(
     () => (data ? data.steps.every((step) => step.status?.status === StepStatus.Completed) : false),
     [data]
@@ -33,11 +33,25 @@ export function PluginRecipeDetailsPage() {
     [data, isInstalled]
   );
 
+  // Can be used to either start or continue an install process
+  const onRunInstall = () => {
+    setIsInstallStarted(true);
+    // Find the steps that:
+    //   - are not applied yet
+    //   - can be auto-applied (without user-interaction)
+    // Apply them sequentally
+
+    // Instantiate a periodic refetch
+    refetch();
+  };
+
+  // Some random options to be used in the header
   const info = [
     { label: 'Version', value: 'v1.0.0' },
     { label: 'Rating', value: '4/5' },
   ];
 
+  // Loading recipe
   if (status === 'loading') {
     return (
       <Page navId={navId} pageNav={{ text: '', subTitle: '', active: true }}>
@@ -48,6 +62,7 @@ export function PluginRecipeDetailsPage() {
     );
   }
 
+  // Error while loading recipe
   if (status === 'error') {
     return (
       <Page navId={navId} pageNav={{ text: 'Error', subTitle: '', active: true }}>
@@ -58,6 +73,7 @@ export function PluginRecipeDetailsPage() {
     );
   }
 
+  // Not found
   if (status === 'success' && !data) {
     return (
       <Page navId={navId} pageNav={{ text: '', subTitle: '', active: true }}>
@@ -72,9 +88,10 @@ export function PluginRecipeDetailsPage() {
       pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}
       actions={
         <DetailsHeaderActions
-          onInstall={onStartInstall}
+          onInstall={onRunInstall}
           isInstalled={isInstalled}
           isInstallInProgress={isInstallInProgress}
+          isInstallStarted={isInstallStarted} // TMP
         />
       }
       info={info}
@@ -89,7 +106,12 @@ export function PluginRecipeDetailsPage() {
         <div className={styles.content}>
           {tabId === tabIds.overview && <DetailsOverview recipe={data} />}
           {tabId === tabIds.status && (
-            <DetailsStatus recipe={data} isInstalled={isInstalled} onInstall={onStartInstall} />
+            <DetailsStatus
+              recipe={data}
+              isInstalled={isInstalled}
+              isInstallStarted={isInstallStarted}
+              onInstall={onRunInstall}
+            />
           )}
         </div>
       </Page.Contents>
