@@ -10781,6 +10781,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/glob@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@types/glob@npm:8.0.0"
+  dependencies:
+    "@types/minimatch": "*"
+    "@types/node": "*"
+  checksum: 1817b05f5a8aed851d102a65b5e926d5c777bef927ea62b36d635860eef5364f2046bb5a692d135b6f2b28f34e4a9d44ade9396122c0845bcc7636d35f624747
+  languageName: node
+  linkType: hard
+
 "@types/google.analytics@npm:^0.0.42":
   version: 0.0.42
   resolution: "@types/google.analytics@npm:0.0.42"
@@ -21518,6 +21528,7 @@ __metadata:
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/eslint": 8.4.9
     "@types/file-saver": 2.0.5
+    "@types/glob": ^8.0.0
     "@types/google.analytics": ^0.0.42
     "@types/gtag.js": ^0.0.12
     "@types/history": 4.7.11

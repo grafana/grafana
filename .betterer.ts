@@ -4,6 +4,8 @@ import { ESLint, Linter } from 'eslint';
 import { existsSync } from 'fs';
 import { exec } from 'child_process';
 import path from 'path';
+import glob from 'glob';
+
 export default {
   'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
   'better eslint': () => countEslintErrors().include('**/*.{ts,tsx}'),
@@ -25,11 +27,10 @@ function countUndocumentedStories() {
 
 async function findEslintConfigFiles(): Promise<string[]> {
   return new Promise((resolve, reject) => {
-    const findEslintFiles = exec("find . -iname '.eslintrc*' -not -path '*/node_modules/*'", (err, stdout) => {
+    glob('**/.eslintrc', (err, files) => {
       if (err) {
         reject(err);
       }
-      const files = stdout.split('\n').filter((file) => !!file.trim());
       resolve(files);
     });
   });
