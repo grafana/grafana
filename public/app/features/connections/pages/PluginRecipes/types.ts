@@ -14,6 +14,7 @@ export type PluginRecipeMeta = {
 export type Screenshot = { name: string; url: string };
 
 export enum StepStatus {
+  Loading = 'Loading',
   Completed = 'Completed',
   NotCompleted = 'NotCompleted',
   Error = 'Error',

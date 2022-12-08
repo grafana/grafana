@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
@@ -8,6 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { useGetSingle } from './api';
 import { DetailsOverview, DetailsStatus, DetailsHeaderActions } from './components';
 import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
+import { StepStatus } from './types';
 
 const navId = 'connections-plugin-recipes';
 
@@ -17,6 +18,21 @@ export function PluginRecipeDetailsPage() {
   const { tabId, tabs } = usePluginRecipeDetailsPageTabs(data);
   const styles = useStyles2(getStyles);
   const onStartInstall = () => {}; // called when the user clicks on "Install"
+  const isInstalled = useMemo(
+    () => (data ? data.steps.every((step) => step.status?.status === StepStatus.Completed) : false),
+    [data]
+  );
+  const isInstallInProgress = useMemo(
+    () =>
+      data
+        ? !isInstalled &&
+          data.steps.some(
+            (step) => step.status?.status === StepStatus.Completed || step.status?.status === StepStatus.Loading
+          )
+        : false,
+    [data, isInstalled]
+  );
+
   const info = [
     { label: 'Version', value: 'v1.0.0' },
     { label: 'Rating', value: '4/5' },
@@ -54,7 +70,13 @@ export function PluginRecipeDetailsPage() {
     <Page
       navId={navId}
       pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}
-      actions={<DetailsHeaderActions onInstall={onStartInstall} />}
+      actions={
+        <DetailsHeaderActions
+          onInstall={onStartInstall}
+          isInstalled={isInstalled}
+          isInstallInProgress={isInstallInProgress}
+        />
+      }
       info={info}
       renderTitle={(title) => (
         <div className={styles.pageTitleContainer}>
@@ -66,7 +88,9 @@ export function PluginRecipeDetailsPage() {
       <Page.Contents>
         <div className={styles.content}>
           {tabId === tabIds.overview && <DetailsOverview recipe={data} />}
-          {tabId === tabIds.status && <DetailsStatus recipe={data} />}
+          {tabId === tabIds.status && (
+            <DetailsStatus recipe={data} isInstalled={isInstalled} onInstall={onStartInstall} />
+          )}
         </div>
       </Page.Contents>
     </Page>
