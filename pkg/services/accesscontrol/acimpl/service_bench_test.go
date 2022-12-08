@@ -24,6 +24,7 @@ type bounds struct {
 	start, end int
 }
 
+// concurrentBatch spawns the requested amount of workers then ask them to run eachFn on chunks of the requested size
 func concurrentBatch(workers, count, size int, eachFn func(start, end int) error) error {
 	var wg sync.WaitGroup
 	alldone := make(chan bool) // Indicates that all workers have finished working
