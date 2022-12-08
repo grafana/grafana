@@ -378,5 +378,10 @@ var (
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "golangMigrate",
+			Description: "Enable golang-migrate intergration over legacy migrations",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

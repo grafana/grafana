@@ -274,4 +274,8 @@ const (
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
+
+	// FlagGolangMigrate
+	// Enable golang-migrate intergration over legacy migrations
+	FlagGolangMigrate = "golangMigrate"
 )
