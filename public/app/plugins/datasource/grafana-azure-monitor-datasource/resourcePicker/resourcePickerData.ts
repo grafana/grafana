@@ -364,6 +364,12 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         supportedMetricNamespaces = supportedMetricNamespaces.concat(namespaceVals);
       }
     }
+
+    if (supportedMetricNamespaces.length === 0) {
+      throw new Error(
+        'No namespaces returned. Validate the datasource configuration is correct and required permissions have been granted.'
+      );
+    }
     this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
   }
 
