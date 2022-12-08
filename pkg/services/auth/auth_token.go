@@ -4,14 +4,17 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,16 +25,27 @@ const ServiceName = "UserAuthTokenService"
 
 var getTime = time.Now
 
-const urgentRotateTime = 1 * time.Minute
+const (
+	ttl              = 15 * time.Second
+	urgentRotateTime = 1 * time.Minute
+)
 
-func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore, serverLockService *serverlock.ServerLockService,
+func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore,
+	serverLockService *serverlock.ServerLockService,
+	remoteCache *remotecache.RemoteCache,
+	features *featuremgmt.FeatureManager,
 	cfg *setting.Cfg) *UserAuthTokenService {
 	s := &UserAuthTokenService{
 		SQLStore:          sqlStore,
 		ServerLockService: serverLockService,
 		Cfg:               cfg,
 		log:               log.New("auth"),
+		remoteCache:       remoteCache,
+		features:          features,
 	}
+
+	remotecache.Register(models.UserToken{})
+
 	return s
 }
 
@@ -40,6 +54,8 @@ type UserAuthTokenService struct {
 	ServerLockService *serverlock.ServerLockService
 	Cfg               *setting.Cfg
 	log               log.Logger
+	remoteCache       *remotecache.RemoteCache
+	features          *featuremgmt.FeatureManager
 }
 
 type ActiveAuthTokenService struct {
@@ -118,7 +134,52 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 	return &userToken, err
 }
 
+func (s *UserAuthTokenService) lookupTokenWithCache(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+	hashedToken := hashToken(unhashedToken)
+	cacheKey := "auth_token:" + hashedToken
+
+	session, errCache := s.remoteCache.Get(ctx, cacheKey)
+	if errCache == nil {
+		token := session.(models.UserToken)
+		return &token, nil
+	} else {
+		if errors.Is(errCache, remotecache.ErrCacheItemNotFound) {
+			s.log.Debug("user auth token not found in cache",
+				"cacheKey", cacheKey)
+		} else {
+			s.log.Warn("failed to get user auth token from cache",
+				"cacheKey", cacheKey, "error", errCache)
+		}
+	}
+
+	token, err := s.lookupToken(ctx, unhashedToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// only cache tokens until their near rotation time
+	// Near rotation time = tokens last rotation plus the rotation interval minus 2 ttl (=30s by default)
+	nextRotation := time.Unix(token.RotatedAt, 0).
+		Add(-2 * ttl). // subtract 2 ttl to make sure we don't cache tokens that are about to expire
+		Add(time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute)
+	if now := getTime(); now.Before(nextRotation) {
+		if err := s.remoteCache.Set(ctx, cacheKey, *token, ttl); err != nil {
+			s.log.Warn("could not cache token", "error", err, "cacheKey", cacheKey, "userId", token.UserId)
+		}
+	}
+
+	return token, nil
+}
+
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+	if s.features != nil && s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
+		return s.lookupTokenWithCache(ctx, unhashedToken)
+	}
+
+	return s.lookupToken(ctx, unhashedToken)
+}
+
+func (s *UserAuthTokenService) lookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	var model userAuthToken
 	var exists bool

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -170,6 +171,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
 				reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 			}
+		}
+
+		// this can be used by proxies to identify certain users
+		if h.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagReturnUnameHeader) {
+			w.Header().Add("grafana-uname", reqContext.Login)
 		}
 
 		next.ServeHTTP(w, r)
