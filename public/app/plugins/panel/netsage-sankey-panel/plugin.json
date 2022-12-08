@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "panel",
+  "name": "Sankey Panel",
+  "id": "netsage-sankey-panel",
+  "info": {
+    "description": "Sankey Panel Plugin for Grafana",
+    "author": {
+      "name": "NetSage",
+      "url": "http://github.com/netsage-project"
+    },
+    "keywords": ["netsage", "sankey"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://github.com/netsage-project/netsage-sankey-panel"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/netsage-project/netsage-sankey-panel/blob/master/LICENSE"
+      }
+    ],
+    "screenshots": [
+      { "name": "sankey2", "path": "img/sankey2.png" },
+      { "name": "sankey3", "path": "img/sankey3.png" }
+    ],
+    "version": "1.0.6",
+    "updated": "2021-12-03"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=8.0.0",
+    "plugins": []
+  }
+}
