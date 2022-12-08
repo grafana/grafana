@@ -147,7 +147,7 @@ const getExemplarColor = (
   visibleLabels: VisibleExemplarLabels
 ) => {
   let exemplarColor;
-  visibleLabels.labels.forEach((visibleLabel) => {
+  visibleLabels.labels.some((visibleLabel) => {
     const labelKeys = Object.keys(visibleLabel.labels);
     const fields = dataFrame.fields.filter((field) => {
       return labelKeys.find((labelKey) => labelKey === field.name);
@@ -160,9 +160,10 @@ const getExemplarColor = (
 
       if (hasMatch) {
         exemplarColor = visibleLabel.color;
-        return;
+        return true;
       }
     }
+    return false;
   });
   return exemplarColor;
 };
