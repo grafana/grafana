@@ -52,10 +52,6 @@ export function getAppRoutes(): RouteDescriptor[] {
           path: '/admin/access',
           component: () => <NavLandingPage navId="admin/access" />,
         },
-        {
-          path: '/system-notifications',
-          component: () => <NavLandingPage navId="system-notifications" />,
-        },
       ]
     : [];
 
@@ -311,7 +307,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // SYSTEM NOTIFICATIONS
     {
-      path: '/system-notfications',
+      path: '/system-notifications',
       component: SystemNotificationsPage,
     },
     // ADMIN
@@ -499,24 +495,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
-      ),
-    },
-    {
-      path: '/notifications',
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "NotificationsPage"*/ 'app/core/components/SystemNotifications/SystemNotificationsPage'
-          )
-      ),
-    },
-    {
-      path: '/system-notifications',
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "NotificationsPage"*/ 'app/core/components/SystemNotifications/SystemNotificationsPage'
-          )
       ),
     },
     ...getBrowseStorageRoutes(),
