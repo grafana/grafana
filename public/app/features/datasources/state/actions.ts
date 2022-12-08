@@ -8,7 +8,8 @@ import {
   isFetchError,
   locationService,
 } from '@grafana/runtime';
-import { updateNavIndex } from 'app/core/actions';
+import { notifyApp, updateNavIndex } from 'app/core/actions';
+import { createWarningNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -146,6 +147,39 @@ export function loadDataSources(): ThunkResult<void> {
     dispatch(dataSourcesLoaded(response));
   };
 }
+
+export const testAllDataSources = (
+  dependencies: TestDataSourceDependencies = {
+    getDatasourceSrv,
+    getBackendSrv,
+  }
+): ThunkResult<void> => {
+  return async (dispatch) => {
+    const dataSourcesResponse = await api.getDataSources();
+    dispatch(dataSourcesLoaded(dataSourcesResponse));
+
+    dataSourcesResponse.map(async (ds) => {
+      const dsApi = await dependencies.getDatasourceSrv().get(ds.uid);
+      if (!dsApi.testDatasource) {
+        return;
+      }
+      dependencies.getBackendSrv().withNoBackendCache(async () => {
+        try {
+          await dsApi.testDatasource();
+        } catch (e) {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                `${ds.name} connection failed`,
+                'This data source connection appears to be broken'
+              )
+            )
+          );
+        }
+      });
+    });
+  };
+};
 
 export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
