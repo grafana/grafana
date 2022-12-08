@@ -54,6 +54,7 @@ import { trackQuery } from './tracking';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 
+export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const ELASTIC_META_FIELDS = [
@@ -617,7 +618,7 @@ export class ElasticDatasource
       });
 
       const logsVolumeQuery: ElasticsearchQuery = {
-        refId: target.refId,
+        refId: `${REF_ID_STARTER_LOG_VOLUME}${target.refId}`,
         query: target.query,
         metrics: [{ type: 'count', id: '1' }],
         timeField,

@@ -2,6 +2,7 @@ import { DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
+import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import pluginJson from './plugin.json';
 import { ElasticsearchQuery } from './types';
 
@@ -102,8 +103,18 @@ const isQueryWithTemplateVariables = (query: ElasticsearchQuery): boolean => {
   return variableRegex.test(query.query ?? '');
 };
 
+const shouldNotReportBasedOnRefId = (refId: string): boolean => {
+  if (refId.startsWith(REF_ID_STARTER_LOG_VOLUME)) {
+    return true;
+  }
+  return false;
+};
+
 export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQuery[], app: string): void {
   for (const query of queries) {
+    if (shouldNotReportBasedOnRefId(query.refId)) {
+      return;
+    }
     reportInteraction('grafana_elasticsearch_query_executed', {
       app,
       with_lucene_query: query.query ? true : false,
