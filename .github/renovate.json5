@@ -80,6 +80,7 @@
     "enabled": false
   },
   "prConcurrentLimit": 10,
+  "rebaseWhen": "conflicted",
   "reviewers": ["team:grafana/frontend-ops"],
   "separateMajorMinor": false,
   "vulnerabilityAlerts": {
