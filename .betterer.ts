@@ -1,10 +1,17 @@
 import { regexp } from '@betterer/regexp';
-import { BettererFileTest } from '@betterer/betterer';
+import { BettererFileTest, BettererFileTestResult } from '@betterer/betterer';
 import { ESLint, Linter } from 'eslint';
 import { existsSync } from 'fs';
-import { exec } from 'child_process';
 import path from 'path';
 import glob from 'glob';
+import fs from 'fs';
+import { Worker } from 'worker_threads';
+
+// function that takes a string and writes it to log.log
+function log(str: string) {
+  const logPath = path.join(__dirname, 'log.log');
+  fs.appendFileSync(logPath, str + '\n');
+}
 
 export default {
   'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
@@ -35,12 +42,52 @@ async function findEslintConfigFiles(): Promise<string[]> {
     });
   });
 }
+const baseRules: Partial<Linter.RulesRecord> = {
+  '@typescript-eslint/no-explicit-any': 'error',
+};
+
+const nonTestFilesRules: Partial<Linter.RulesRecord> = {
+  ...baseRules,
+  '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+};
+
+async function countEslintErrorsThread({
+  rules,
+  baseDirectory,
+  filePaths,
+  fileTestResult,
+}: {
+  rules: Partial<Linter.RulesRecord>;
+  baseDirectory: string;
+  filePaths: string[];
+  fileTestResult: BettererFileTestResult;
+}) {
+  const cli = new ESLint({ cwd: baseDirectory });
+  const linterOptions = (await cli.calculateConfigForFile(filePaths[0])) as Linter.Config;
+  const runner = new ESLint({
+    baseConfig: {
+      ...linterOptions,
+      rules: rules,
+    },
+    useEslintrc: false,
+    cwd: baseDirectory,
+  });
+  const lintResults = await runner.lintFiles(filePaths);
+  lintResults
+    .filter((lintResult) => lintResult.source)
+    .forEach((lintResult) => {
+      const { messages } = lintResult;
+      const filePath = lintResult.filePath;
+      const file = fileTestResult.addFile(filePath, '');
+      messages.forEach((message, index) => {
+        file.addIssue(0, 0, message.message, `${index}`);
+      });
+    });
+}
 
 function countEslintErrors() {
   return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
     const { baseDirectory } = resolver;
-    const cli = new ESLint({ cwd: baseDirectory });
-
     const testFiles: string[] = [];
     const codeFiles: string[] = [];
 
@@ -60,15 +107,6 @@ function countEslintErrors() {
       }
     });
 
-    const baseRules: Partial<Linter.RulesRecord> = {
-      '@typescript-eslint/no-explicit-any': 'error',
-    };
-
-    const nonTestFilesRules: Partial<Linter.RulesRecord> = {
-      ...baseRules,
-      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-    };
-
     const fileGroups: Record<string, string[]> = {};
 
     for (const filePath of filePaths) {
@@ -87,28 +125,39 @@ function countEslintErrors() {
       fileGroups[configPath].push(filePath);
     }
 
+    const promises: Array<Promise<void>> = [];
+    const workers: Worker[] = [];
     for (const configPath of Object.keys(fileGroups)) {
       const rules = configPath.endsWith('-test') ? baseRules : nonTestFilesRules;
-      const linterOptions = (await cli.calculateConfigForFile(fileGroups[configPath][0])) as Linter.Config;
-      const runner = new ESLint({
-        baseConfig: {
-          ...linterOptions,
-          rules: rules,
+      const worker = new Worker('./.betterer.worker.js', {
+        workerData: {
+          rules,
+          baseDirectory,
+          filePaths: fileGroups[configPath],
         },
-        useEslintrc: false,
-        cwd: baseDirectory,
       });
-      const lintResults = await runner.lintFiles(fileGroups[configPath]);
-      lintResults
-        .filter((lintResult) => lintResult.source)
-        .forEach((lintResult) => {
-          const { messages } = lintResult;
-          const filePath = lintResult.filePath;
-          const file = fileTestResult.addFile(filePath, '');
-          messages.forEach((message, index) => {
-            file.addIssue(0, 0, message.message, `${index}`);
+      workers.push(worker);
+      worker.on('message', (message) => {
+        console.log('got message', message);
+        const file = fileTestResult.addFile(message.filePath, '');
+        file.addIssue(0, 0, message.message, `${message.index}`);
+      });
+      promises.push(
+        new Promise((resolve) => {
+          worker.on('exit', () => {
+            resolve();
           });
-        });
+        })
+      );
+      // promises.push(
+      //   countEslintErrorsThread({
+      //     rules,
+      //     baseDirectory,
+      //     filePaths: fileGroups[configPath],
+      //     fileTestResult,
+      //   })
+      // );
     }
+    await Promise.all(promises);
   });
 }
