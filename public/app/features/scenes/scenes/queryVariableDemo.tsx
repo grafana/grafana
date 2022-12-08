@@ -18,7 +18,7 @@ export function getQueryVariableDemo(): Scene {
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({
-          name: 'label',
+          name: 'metric',
           query: 'job : job, instance : instance',
         }),
         new DataSourceVariable({
@@ -34,7 +34,7 @@ export function getQueryVariableDemo(): Scene {
         new QueryVariable({
           name: 'label values (on time range refresh)',
           refresh: VariableRefresh.onTimeRangeChanged,
-          query: { query: 'label_values(go_gc_duration_seconds, ${label})' },
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         }),
       ],
@@ -46,7 +46,7 @@ export function getQueryVariableDemo(): Scene {
           children: [
             new SceneCanvasText({
               size: { width: '40%' },
-              text: 'job: ${job}',
+              text: 'metric: ${metric}',
               fontSize: 20,
               align: 'center',
             }),

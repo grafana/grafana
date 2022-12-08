@@ -99,6 +99,11 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * Not sure if this should be handled here on in MultiValueVariable
    */
   private handleVariableError(variable: SceneVariable, err: Error) {
+    const update = this.updating.get(variable);
+    update?.subscription?.unsubscribe();
+
+    this.updating.delete(variable);
+    this.variablesToUpdate.delete(variable);
     variable.setState({ loading: false, error: err });
   }
 

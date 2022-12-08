@@ -22,7 +22,6 @@ import { sceneGraph } from '../../../core/sceneGraph';
 import { SceneComponentProps } from '../../../core/types';
 import { VariableDependencyConfig } from '../../VariableDependencyConfig';
 import { VariableValueSelect } from '../../components/VariableValueSelect';
-import { CustomFormatterFn } from '../../interpolation/sceneInterpolator';
 import { VariableValueOption } from '../../types';
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from '../MultiValueVariable';
 
@@ -43,7 +42,6 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['regex', 'query', 'datasource'],
-    // TODO: add query and datasource support
   });
 
   public constructor(initialState: Partial<QueryVariableState>) {
