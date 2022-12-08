@@ -14,7 +14,7 @@ type Props = {
 export function Steps({ steps = [] }: Props): ReactElement {
   const styles = useStyles2(getStyles);
   const [activeStepIndex, setActiveStepIndex] = useState(findActiveStepIndex(steps));
-  const isStepCompleted = (step: PluginRecipeStep) => step.status?.status === StepStatus.Completed;
+  const isStepCompleted = (step: PluginRecipeStep) => step.status.code === StepStatus.Completed;
   const isStepActive = (i: number) => i === activeStepIndex;
   const isStepExpandable = (step: PluginRecipeStep) => step.action === 'prompt' || step.action === 'display-info';
 
@@ -63,7 +63,7 @@ export function Steps({ steps = [] }: Props): ReactElement {
 
 // Returns the first not-completed step
 function findActiveStepIndex(steps: PluginRecipeStep[] = []): number {
-  const activeStep = steps.find((step) => step.status?.status === StepStatus.NotCompleted);
+  const activeStep = steps.find((step) => step.status.code === StepStatus.NotCompleted);
 
   // No active step, point to the first step
   if (!activeStep) {

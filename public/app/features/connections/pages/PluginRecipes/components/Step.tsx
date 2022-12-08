@@ -25,12 +25,12 @@ export function Step({ step, isOpen, onComplete }: Props): ReactElement {
   return (
     <div>
       {/* Name */}
-      <div className={styles.stepName}>{step.meta?.name}</div>
+      <div className={styles.stepName}>{step.name}</div>
 
       {isOpen && (
         <>
           {/* Description */}
-          {Boolean(step.meta?.description) && <div className={styles.stepDescription}>{step.meta?.description}</div>}
+          {Boolean(step.description) && <div className={styles.stepDescription}>{step.description}</div>}
 
           {/* Content */}
           <StepContent step={step} onComplete={onComplete} />

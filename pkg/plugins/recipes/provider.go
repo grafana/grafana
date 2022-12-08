@@ -30,6 +30,7 @@ func (s *staticRecipesProvider) GetAll() []*Recipe {
 }
 
 func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService datasources.DataSourceService, dashboardService dashboards.DashboardService) RecipesProvider {
+
 	recipes := []*Recipe{
 		// Linux Server
 		{
@@ -45,7 +46,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "grafana-jira-datasource",
 						Version: "1.0.9",
 					},
@@ -225,7 +226,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "grafana-jira-datasource",
 						Version: "1.0.9",
 					},
@@ -340,30 +341,32 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 						Summary:   "Kernel is predicted to exhaust file descriptors limit soon.",
 					},
 				}),
-				newSetupDashboardStep(dashboardService, dashboardStepMeta{
-					RecipeStepMeta: RecipeStepMeta{
-						Name:        "Setup dashboards to view docker metrics",
-						Description: "Dashboard to visualize metrics gathered by this recipe",
-					},
-					Screenshots: []RecipeStepScreenshot{
-						{
-							Name: "Metrics",
-							Url:  "https://storage.googleapis.com/grafanalabs-integration-assets/docker/screenshots/docker_overview.png",
+				newSetupDashboardStep(dashboardService, RecipeStepMeta{
+					Name:        "Setup dashboards to view docker metrics",
+					Description: "Dashboard to visualize metrics gathered by this recipe",
+				},
+					&dashboardSettings{
+						Screenshots: []RecipeStepScreenshot{
+							{
+								Name: "Metrics",
+								Url:  "https://storage.googleapis.com/grafanalabs-integration-assets/docker/screenshots/docker_overview.png",
+							},
 						},
 					},
-				}),
-				newSetupDashboardStep(dashboardService, dashboardStepMeta{
-					RecipeStepMeta: RecipeStepMeta{
-						Name:        "Setup dashboard to view docker logs",
-						Description: "Dashboard to visualize logs gathered by this recipe.",
-					},
-					Screenshots: []RecipeStepScreenshot{
-						{
-							Name: "Logs",
-							Url:  "https://storage.googleapis.com/grafanalabs-integration-assets/docker/screenshots/docker_logs.png",
+				),
+				newSetupDashboardStep(dashboardService, RecipeStepMeta{
+					Name:        "Setup dashboard to view docker logs",
+					Description: "Dashboard to visualize logs gathered by this recipe.",
+				},
+					&dashboardSettings{
+						Screenshots: []RecipeStepScreenshot{
+							{
+								Name: "Logs",
+								Url:  "https://storage.googleapis.com/grafanalabs-integration-assets/docker/screenshots/docker_logs.png",
+							},
 						},
 					},
-				}),
+				),
 			},
 		},
 
@@ -381,7 +384,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "grafana-jira-datasource",
 						Version: "1.0.9",
 					},
@@ -399,7 +402,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "grafana-k6-app",
 						Version: "0.4.1",
 					},
@@ -408,7 +411,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing Anodot panel",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "anodot-panel",
 						Version: "2.0.1",
 					},
@@ -430,7 +433,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "grafana-jira-datasource",
 						Version: "1.0.9",
 					},
@@ -448,7 +451,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "grafana-k6-app",
 						Version: "0.4.1",
 					},
@@ -457,7 +460,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					RecipeStepMeta{
 						Name:        "Installing Anodot panel",
 						Description: "Some description here...",
-					}, recipePluginStep{
+					}, &installPlugin{
 						Id:      "anodot-panel",
 						Version: "2.0.1",
 					},

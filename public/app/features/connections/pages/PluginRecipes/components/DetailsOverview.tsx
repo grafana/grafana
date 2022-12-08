@@ -3,13 +3,7 @@ import React, { ReactElement, useMemo } from 'react';
 
 import { HorizontalGroup, useStyles2 } from '@grafana/ui';
 
-import {
-  isSetupDashboardStep,
-  PluginRecipe,
-  PluginRecipeSetupDashboardStep,
-  PluginRecipeStep,
-  Screenshot,
-} from '../types';
+import { isSetupDashboardStep, PluginRecipe, PluginRecipeStep, Screenshot, SetupDashboardStepSettings } from '../types';
 
 type Props = {
   recipe: PluginRecipe;
@@ -26,7 +20,7 @@ export function DetailsOverview({ recipe }: Props): ReactElement {
       <section>
         <h2>About</h2>
         <hr />
-        <p>{recipe.meta.description}</p>
+        <p>{recipe.description}</p>
       </section>
       {dashboardSteps.length > 0 && (
         <section>
@@ -38,7 +32,7 @@ export function DetailsOverview({ recipe }: Props): ReactElement {
           </p>
           <ul>
             {dashboardSteps.map((step) => (
-              <li key={step.meta?.name}>{step.meta?.description}</li>
+              <li key={step.name}>{step.description}</li>
             ))}
           </ul>
           {dashboardScreenshots.length > 0 && (
@@ -56,18 +50,16 @@ export function DetailsOverview({ recipe }: Props): ReactElement {
   );
 }
 
-function useDashboardSteps(steps: PluginRecipeStep[]): PluginRecipeSetupDashboardStep[] {
+function useDashboardSteps(steps: PluginRecipeStep[]): Array<PluginRecipeStep<SetupDashboardStepSettings>> {
   return useMemo(() => {
-    return steps.filter<PluginRecipeSetupDashboardStep>(isSetupDashboardStep);
+    return steps.filter<PluginRecipeStep<SetupDashboardStepSettings>>(isSetupDashboardStep);
   }, [steps]);
 }
 
-function useDashboardScreenshots(steps: PluginRecipeSetupDashboardStep[]): Screenshot[] {
+function useDashboardScreenshots(steps: Array<PluginRecipeStep<SetupDashboardStepSettings>>): Screenshot[] {
   return useMemo(() => {
     return steps.reduce<Screenshot[]>((all, step) => {
-      if (step.meta?.screenshots) {
-        all.push(...step.meta?.screenshots);
-      }
+      all.push(...step.settings.screenshots);
       return all;
     }, []);
   }, [steps]);

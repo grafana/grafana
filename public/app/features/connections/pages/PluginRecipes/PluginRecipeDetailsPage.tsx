@@ -14,7 +14,7 @@ const navId = 'connections-plugin-recipes';
 export function PluginRecipeDetailsPage() {
   const params = useParams<{ id: string }>();
   const { status, error, data } = useGetSingle(params.id);
-  const { tabId, tabs } = usePluginRecipeDetailsPageTabs(data);
+  const { tabId, tabs } = usePluginRecipeDetailsPageTabs();
   const styles = useStyles2(getStyles);
   const onStartInstall = () => {}; // called when the user clicks on "Install"
   const info = [
@@ -53,12 +53,12 @@ export function PluginRecipeDetailsPage() {
   return (
     <Page
       navId={navId}
-      pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}
+      pageNav={{ text: data.name, subTitle: data.summary, active: true, children: tabs }}
       actions={<DetailsHeaderActions onInstall={onStartInstall} />}
       info={info}
       renderTitle={(title) => (
         <div className={styles.pageTitleContainer}>
-          <img className={styles.pageTitleImage} src={data.meta.logo} alt={`Logo of ${data.name}`} />
+          <img className={styles.pageTitleImage} src={data.logo} alt={`Logo of ${data.name}`} />
           <h1 className={styles.pageTitle}>{title}</h1>
         </div>
       )}

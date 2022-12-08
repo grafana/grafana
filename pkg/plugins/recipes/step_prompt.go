@@ -6,19 +6,26 @@ func newPromptStep(meta PromptStepMeta) *PromptStep {
 	return &PromptStep{
 		Action: "prompt",
 		Meta:   meta,
+		Settings: &promptSettings{
+			Prompts: make([]Prompt, 0),
+		},
 	}
 }
 
 // A step used to prompt information from the user
 type PromptStep struct {
-	Action string         `json:"action"`
-	Meta   PromptStepMeta `json:"meta"`
+	Action   string          `json:"action"`
+	Meta     PromptStepMeta  `json:"meta"`
+	Settings *promptSettings `json:"settings"`
+}
+
+type promptSettings struct {
+	Prompts []Prompt `json:"prompts"`
 }
 
 type PromptStepMeta struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Prompts     []Prompt `json:"prompts"` // The list of prompts
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 type PromptOption struct {
 	Name  string `json:"name"`
@@ -44,4 +51,16 @@ func (s *PromptStep) Revert(c *models.ReqContext) error {
 
 func (s *PromptStep) Status(c *models.ReqContext) (StepStatus, error) {
 	return Completed, nil
+}
+
+func (s *PromptStep) ToDto(c *models.ReqContext) *RecipeStepDTO {
+	status, err := s.Status(c)
+
+	return &RecipeStepDTO{
+		Action:      s.Action,
+		Name:        s.Meta.Name,
+		Description: s.Meta.Description,
+		Status:      *status.ToDto(err),
+		Settings:    s.Settings,
+	}
 }

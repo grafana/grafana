@@ -11,7 +11,14 @@ import (
 )
 
 func (hs *HTTPServer) GetRecipeList(c *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, hs.recipeProvider.GetAll())
+	rs := hs.recipeProvider.GetAll()
+	dtos := make([]*recipes.RecipeDTO, len(rs))
+
+	for i, r := range rs {
+		dtos[i] = r.ToDto(c)
+	}
+
+	return response.JSON(http.StatusOK, dtos)
 }
 
 func (hs *HTTPServer) GetRecipeByID(c *models.ReqContext) response.Response {
@@ -22,7 +29,7 @@ func (hs *HTTPServer) GetRecipeByID(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusNotFound, "Plugin recipe not found with the same id", nil)
 	}
 
-	return response.JSON(http.StatusOK, recipe)
+	return response.JSON(http.StatusOK, recipe.ToDto(c))
 }
 
 func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
@@ -39,7 +46,7 @@ func (hs *HTTPServer) InstallRecipe(c *models.ReqContext) response.Response {
 		}
 	}(recipe.Steps, c)
 
-	return response.JSON(http.StatusOK, recipe)
+	return response.JSON(http.StatusOK, recipe.ToDto(c))
 }
 
 func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
@@ -56,7 +63,7 @@ func (hs *HTTPServer) UninstallRecipe(c *models.ReqContext) response.Response {
 		}
 	}(recipe.Steps, c)
 
-	return response.JSON(http.StatusOK, recipe)
+	return response.JSON(http.StatusOK, recipe.ToDto(c))
 }
 
 func (hs *HTTPServer) ApplyRecipeStep(c *models.ReqContext) response.Response {
@@ -75,7 +82,7 @@ func (hs *HTTPServer) ApplyRecipeStep(c *models.ReqContext) response.Response {
 	step := recipe.Steps[stepNumber]
 	step.Apply(c)
 
-	return response.JSON(http.StatusOK, step)
+	return response.JSON(http.StatusOK, step.ToDto(c))
 }
 
 func (hs *HTTPServer) RevertRecipeStep(c *models.ReqContext) response.Response {
@@ -94,5 +101,5 @@ func (hs *HTTPServer) RevertRecipeStep(c *models.ReqContext) response.Response {
 	step := recipe.Steps[stepNumber]
 	step.Revert(c)
 
-	return response.JSON(http.StatusOK, step)
+	return response.JSON(http.StatusOK, step.ToDto(c))
 }

@@ -14,6 +14,12 @@ type InstructionStep struct {
 	Meta   InstructionStepMeta `json:"meta"`
 }
 
+type instructionStepSettings struct {
+	Text                     string `json:"instructionText"`                     // The instruction as Markdown text
+	TestURL                  string `json:"instructionTestURL"`                  // The URL to test if the requested changes are configured. If left empty then no test button will be added.
+	TestExpectedHttpResponse string `json:"instructionTestExpectedHttpResponse"` // E.g. "200"
+}
+
 type InstructionStepMeta struct {
 	Name                                string `json:"name"`
 	Description                         string `json:"description"`
@@ -32,4 +38,20 @@ func (s *InstructionStep) Revert(c *models.ReqContext) error {
 
 func (s *InstructionStep) Status(c *models.ReqContext) (StepStatus, error) {
 	return Completed, nil
+}
+
+func (s *InstructionStep) ToDto(c *models.ReqContext) *RecipeStepDTO {
+	status, err := s.Status(c)
+
+	return &RecipeStepDTO{
+		Action:      s.Action,
+		Name:        s.Meta.Name,
+		Description: s.Meta.Description,
+		Status:      *status.ToDto(err),
+		Settings: &instructionStepSettings{
+			Text:                     s.Meta.InstructionText,
+			TestURL:                  s.Meta.InstructionTestURL,
+			TestExpectedHttpResponse: s.Meta.InstructionTestExpectedHttpResponse,
+		},
+	}
 }

@@ -1,9 +1,9 @@
 import React, { ReactElement } from 'react';
 
-import { PluginRecipeInstallPluginStep } from '../types';
+import { InstallPluginStepSettings, PluginRecipeStep } from '../types';
 
 type Props = {
-  step: PluginRecipeInstallPluginStep;
+  step: PluginRecipeStep<InstallPluginStepSettings>;
 };
 
 export function StepInstallPlugin({ step }: Props): ReactElement {

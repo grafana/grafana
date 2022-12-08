@@ -16,15 +16,15 @@ func newSetupDatasourceStep(ds datasources.DataSourceService, meta RecipeStepMet
 }
 
 // TODO: add fields needed to setup datasource
-type datasourceConfig struct {
-	Name string
+type datasourceSettings struct {
+	Name string `json:"name"`
 }
 
 type setupDatasourceStep struct {
-	Action string         `json:"action"`
-	Meta   RecipeStepMeta `json:"meta"`
-	Config datasourceConfig
-	ds     datasources.DataSourceService
+	Action   string         `json:"action"`
+	Meta     RecipeStepMeta `json:"meta"`
+	Settings datasourceSettings
+	ds       datasources.DataSourceService
 }
 
 func (s *setupDatasourceStep) Apply(c *models.ReqContext) error {
@@ -62,7 +62,7 @@ func (s *setupDatasourceStep) Revert(c *models.ReqContext) error {
 		return nil
 	}
 
-	cmd := &datasources.DeleteDataSourceCommand{Name: s.Config.Name, OrgID: c.OrgID}
+	cmd := &datasources.DeleteDataSourceCommand{Name: s.Settings.Name, OrgID: c.OrgID}
 	if err := s.ds.DeleteDataSource(c.Req.Context(), cmd); err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (s *setupDatasourceStep) Revert(c *models.ReqContext) error {
 }
 
 func (s *setupDatasourceStep) Status(c *models.ReqContext) (StepStatus, error) {
-	query := datasources.GetDataSourceQuery{Name: s.Config.Name, OrgId: c.OrgID}
+	query := datasources.GetDataSourceQuery{Name: s.Settings.Name, OrgId: c.OrgID}
 
 	if err := s.ds.GetDataSource(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
@@ -81,4 +81,16 @@ func (s *setupDatasourceStep) Status(c *models.ReqContext) (StepStatus, error) {
 	}
 
 	return Completed, nil
+}
+
+func (s *setupDatasourceStep) ToDto(c *models.ReqContext) *RecipeStepDTO {
+	status, err := s.Status(c)
+
+	return &RecipeStepDTO{
+		Action:      s.Action,
+		Name:        s.Meta.Name,
+		Description: s.Meta.Description,
+		Status:      *status.ToDto(err),
+		Settings:    s.Settings,
+	}
 }

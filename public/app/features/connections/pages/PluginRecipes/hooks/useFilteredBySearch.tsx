@@ -22,7 +22,7 @@ export function useRecipesFilteredBySearch(
         result.push({
           id: recipe.id,
           name: recipe.name,
-          logo: recipe.meta.logo || DEFAULT_LOGO,
+          logo: recipe.logo || DEFAULT_LOGO,
           url: ROUTES.PluginRecipeDetails.replace(':id', recipe.id),
         });
         continue;
@@ -33,7 +33,7 @@ export function useRecipesFilteredBySearch(
         result.push({
           id: recipe.id,
           name: recipe.name,
-          logo: recipe.meta.logo || DEFAULT_LOGO,
+          logo: recipe.logo || DEFAULT_LOGO,
           url: ROUTES.PluginRecipeDetails.replace(':id', recipe.id),
         });
         continue;

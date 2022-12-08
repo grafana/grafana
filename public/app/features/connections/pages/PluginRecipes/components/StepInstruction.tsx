@@ -3,10 +3,10 @@ import React, { ReactElement } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-import { PluginRecipeInstructionStep } from '../types';
+import { InstructionStepSettings, PluginRecipeStep } from '../types';
 
 type Props = {
-  step: PluginRecipeInstructionStep;
+  step: PluginRecipeStep<InstructionStepSettings>;
 };
 
 export function StepInstruction({ step }: Props): ReactElement {

@@ -6,7 +6,9 @@ func newSetupAlertsStep(meta RecipeStepMeta, alerts []AlertRule) *setupAlertsSte
 	return &setupAlertsStep{
 		Action: "setup-alerts",
 		Meta:   meta,
-		Alerts: alerts,
+		Settings: &alertsSettings{
+			Alerts: alerts,
+		},
 	}
 }
 
@@ -17,10 +19,14 @@ type AlertRule struct {
 	Summary   string `json:"summary"`
 }
 
+type alertsSettings struct {
+	Alerts []AlertRule `json:"alerts"`
+}
+
 type setupAlertsStep struct {
-	Action string         `json:"action"`
-	Meta   RecipeStepMeta `json:"meta"`
-	Alerts []AlertRule    `json:"alerts"`
+	Action   string          `json:"action"`
+	Meta     RecipeStepMeta  `json:"meta"`
+	Settings *alertsSettings `json:"settings"`
 }
 
 func (s *setupAlertsStep) Apply(c *models.ReqContext) error {
@@ -33,4 +39,16 @@ func (s *setupAlertsStep) Revert(c *models.ReqContext) error {
 
 func (s *setupAlertsStep) Status(c *models.ReqContext) (StepStatus, error) {
 	return Completed, nil
+}
+
+func (s *setupAlertsStep) ToDto(c *models.ReqContext) *RecipeStepDTO {
+	status, err := s.Status(c)
+
+	return &RecipeStepDTO{
+		Action:      s.Action,
+		Name:        s.Meta.Name,
+		Description: s.Meta.Description,
+		Status:      *status.ToDto(err),
+		Settings:    s.Settings,
+	}
 }

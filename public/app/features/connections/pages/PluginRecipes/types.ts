@@ -1,17 +1,22 @@
 export type PluginRecipe = {
   id: string;
   name: string;
-  meta: PluginRecipeMeta;
+  logo: string;
+  summary: string;
+  description?: string;
   steps: PluginRecipeStep[];
 };
 
-export type PluginRecipeMeta = {
-  logo?: string;
-  summary?: string;
-  description?: string;
+export type PluginRecipeStep<T = unknown> = {
+  action: 'install-plugin' | 'display-info' | 'setup-dashboard' | 'prompt' | 'setup-alerts' | 'install-agent';
+  name: string;
+  description: string;
+  settings: T;
+  status: {
+    code: StepStatus;
+    message?: string;
+  };
 };
-
-export type Screenshot = { name: string; url: string };
 
 export enum StepStatus {
   Completed = 'Completed',
@@ -19,33 +24,11 @@ export enum StepStatus {
   Error = 'Error',
 }
 
-// Step - General
-// --------------
-export type PluginRecipeStep = {
-  action: 'install-plugin' | 'display-info' | 'setup-dashboard' | 'prompt' | 'setup-alerts' | 'install-agent';
-
-  // Meta information about the step (Optional)
-  meta?: PluginRecipeStepMeta;
-
-  // Optional information about the status of this recipe step
-  status?: {
-    status: StepStatus;
-    statusMessage: string;
-  };
-};
-
-export type PluginRecipeStepMeta = {
-  name?: string;
-  description?: string;
-};
+export type Screenshot = { name: string; url: string };
 
 // Step - Install Plugin
 // ---------------------
-export type PluginRecipeInstallPluginStep = PluginRecipeStep & {
-  meta?: PluginRecipeInstallPluginMeta;
-};
-
-export type PluginRecipeInstallPluginMeta = PluginRecipeStepMeta & {
+export type InstallPluginStepSettings = {
   plugin: {
     id: string;
     version: string;
@@ -54,11 +37,7 @@ export type PluginRecipeInstallPluginMeta = PluginRecipeStepMeta & {
 
 // Step - Prompt
 // --------------
-export type PluginRecipePromptStep = PluginRecipeStep & {
-  meta?: PluginRecipePromptMeta;
-};
-
-export type PluginRecipePromptMeta = PluginRecipeStepMeta & {
+export type PromptStepSettings = {
   prompts: PluginRecipePrompt[];
 };
 
@@ -76,11 +55,7 @@ export type PluginRecipePrompt = {
 
 // Step - Instruction
 // -----------------
-export type PluginRecipeInstructionStep = PluginRecipeStep & {
-  meta?: PluginRecipeInstructionMeta;
-};
-
-export type PluginRecipeInstructionMeta = PluginRecipeStepMeta & {
+export type InstructionStepSettings = {
   instructionText: string; // The text of the instructions as Markdown
   instructionTestURL: string; // The URL to run the health-check against
   instructionTestExpectedHttpResponse: string; // The expected healthy HTTP response code (e.g. "200")
@@ -88,17 +63,12 @@ export type PluginRecipeInstructionMeta = PluginRecipeStepMeta & {
 
 // Step - Dashboard
 // -----------------
-export type PluginRecipeSetupDashboardStep = PluginRecipeStep & {
-  meta?: PluginRecipeSetupDashboardStepMeta;
-};
-
-export type PluginRecipeSetupDashboardStepMeta = PluginRecipeStepMeta & {
+export type SetupDashboardStepSettings = {
   screenshots: Screenshot[];
 };
 
 // Step - Alerts
 // -----------------
-
 export type RecipeAlertRule = {
   namespace: string;
   group: string;
@@ -106,43 +76,42 @@ export type RecipeAlertRule = {
   summary: string;
 };
 
-export type PluginRecipeSetupAlertsStep = PluginRecipeStep & {
+export type SetupAlertsStepSettings = {
   alerts: RecipeAlertRule[];
 };
 
 // Step - Agent
 // -----------------
-
 export type RecipeMetric = {
   name: string;
   type?: string;
   description?: string;
 };
 
-export type PluginRecipeInstallAgentStep = PluginRecipeStep & {
+export type InstallAgentStepSettings = {
   metrics: RecipeMetric[];
 };
 
-export function isSetupDashboardStep(step: PluginRecipeStep): step is PluginRecipeSetupDashboardStep {
+export function isSetupDashboardStep(step: PluginRecipeStep): step is PluginRecipeStep<SetupDashboardStepSettings> {
   return step.action === 'setup-dashboard';
 }
 
-export function isInstrucitonStep(step: PluginRecipeStep): step is PluginRecipeInstructionStep {
+export function isInstrucitonStep(step: PluginRecipeStep): step is PluginRecipeStep<InstructionStepSettings> {
   return step.action === 'display-info';
 }
 
-export function isPromptStep(step: PluginRecipeStep): step is PluginRecipePromptStep {
+export function isPromptStep(step: PluginRecipeStep): step is PluginRecipeStep<PromptStepSettings> {
   return step.action === 'prompt';
 }
 
-export function isInstallPluginStep(step: PluginRecipeStep): step is PluginRecipeInstallPluginStep {
+export function isInstallPluginStep(step: PluginRecipeStep): step is PluginRecipeStep<InstallPluginStepSettings> {
   return step.action === 'install-plugin';
 }
 
-export function isSetupAlertsStep(step: PluginRecipeStep): step is PluginRecipeSetupAlertsStep {
+export function isSetupAlertsStep(step: PluginRecipeStep): step is PluginRecipeStep<SetupAlertsStepSettings> {
   return step.action === 'setup-alerts';
 }
 
-export function isInstallAgentStep(step: PluginRecipeStep): step is PluginRecipeInstallAgentStep {
+export function isInstallAgentStep(step: PluginRecipeStep): step is PluginRecipeStep<InstallAgentStepSettings> {
   return step.action === 'install-agent';
 }

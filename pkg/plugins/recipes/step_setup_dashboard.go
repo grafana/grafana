@@ -5,23 +5,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-func newSetupDashboardStep(ds dashboards.DashboardService, meta dashboardStepMeta) *dashboardStep {
+func newSetupDashboardStep(ds dashboards.DashboardService, meta RecipeStepMeta, settings *dashboardSettings) *dashboardStep {
 	return &dashboardStep{
-		Action: "setup-dashboard",
-		Meta:   meta,
-		ds:     ds,
+		Action:   "setup-dashboard",
+		Meta:     meta,
+		ds:       ds,
+		Settings: settings,
 	}
 }
 
-type dashboardStepMeta struct {
-	RecipeStepMeta
+type dashboardSettings struct {
+	Name        string
 	Screenshots []RecipeStepScreenshot `json:"screenshots"`
 }
 
 type dashboardStep struct {
-	Action string            `json:"action"`
-	Meta   dashboardStepMeta `json:"meta"`
-	ds     dashboards.DashboardService
+	Action   string
+	Meta     RecipeStepMeta
+	Settings *dashboardSettings
+	ds       dashboards.DashboardService
 }
 
 func (s *dashboardStep) Apply(c *models.ReqContext) error {
@@ -54,4 +56,16 @@ func (s *dashboardStep) Revert(c *models.ReqContext) error {
 
 func (s *dashboardStep) Status(c *models.ReqContext) (StepStatus, error) {
 	return Completed, nil
+}
+
+func (s *dashboardStep) ToDto(c *models.ReqContext) *RecipeStepDTO {
+	status, err := s.Status(c)
+
+	return &RecipeStepDTO{
+		Action:      s.Action,
+		Name:        s.Meta.Name,
+		Description: s.Meta.Description,
+		Status:      *status.ToDto(err),
+		Settings:    s.Settings,
+	}
 }

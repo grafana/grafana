@@ -3,6 +3,7 @@ package recipes
 import "github.com/grafana/grafana/pkg/models"
 
 type RecipeStep interface {
+	ToDto(c *models.ReqContext) *RecipeStepDTO
 	Apply(c *models.ReqContext) error
 	Revert(c *models.ReqContext) error
 	Status(c *models.ReqContext) (StepStatus, error)

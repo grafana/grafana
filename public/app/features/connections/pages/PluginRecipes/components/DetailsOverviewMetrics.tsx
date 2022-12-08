@@ -1,9 +1,9 @@
 import React, { ReactElement, useMemo } from 'react';
 
-import { PluginRecipeInstallAgentStep, RecipeMetric } from '../types';
+import { InstallAgentStepSettings, PluginRecipeStep, RecipeMetric } from '../types';
 
 type Props = {
-  steps: PluginRecipeInstallAgentStep[];
+  steps: Array<PluginRecipeStep<InstallAgentStepSettings>>;
 };
 
 export function DetailsOverviewMetrics({ steps }: Props): ReactElement {
@@ -41,11 +41,11 @@ type CollectedMetrics = {
   metrics: RecipeMetric[];
 };
 
-function useCollectedMetrics(steps: PluginRecipeInstallAgentStep[]): CollectedMetrics {
+function useCollectedMetrics(steps: Array<PluginRecipeStep<InstallAgentStepSettings>>): CollectedMetrics {
   return useMemo(() => {
     return steps.reduce<CollectedMetrics>(
       (result, step) => {
-        for (const metric of step.metrics) {
+        for (const metric of step.settings.metrics) {
           if (metric.name) {
             result.fields['name'] = true;
           }

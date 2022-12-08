@@ -11,31 +11,37 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type recipePluginStep struct {
+type installPlugin struct {
 	Id      string `json:"id"`
 	Version string `json:"version"`
 }
+type installPluginSettings struct {
+	Plugin *installPlugin `json:"plugin"`
+}
 
-func newPluginInstallStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, plugin recipePluginStep) *installPluginRecipeStep {
+func newPluginInstallStep(installer plugins.Installer, cfg *setting.Cfg, meta RecipeStepMeta, plugin *installPlugin) *installPluginRecipeStep {
 	return &installPluginRecipeStep{
-		Action:    "install-plugin",
-		Meta:      meta,
-		Plugin:    plugin,
+		Action: "install-plugin",
+		Meta:   meta,
+		Settings: &installPluginSettings{
+			Plugin: plugin,
+		},
 		installer: installer,
 		cfg:       cfg,
 	}
 }
 
 type installPluginRecipeStep struct {
-	Action    string           `json:"action"`
-	Meta      RecipeStepMeta   `json:"meta"`
-	Plugin    recipePluginStep `json:"plugin"`
+	Action    string                 `json:"action"`
+	Meta      RecipeStepMeta         `json:"meta"`
+	Settings  *installPluginSettings `json:"plugin"`
 	installer plugins.Installer
 	cfg       *setting.Cfg
 }
 
 func (s *installPluginRecipeStep) Apply(c *models.ReqContext) error {
-	err := s.installer.Add(c.Req.Context(), s.Plugin.Id, s.Plugin.Version, plugins.CompatOpts{
+	p := s.Settings.Plugin
+	err := s.installer.Add(c.Req.Context(), p.Id, p.Version, plugins.CompatOpts{
 		GrafanaVersion: s.cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -97,7 +103,8 @@ func (s *installPluginRecipeStep) Apply(c *models.ReqContext) error {
 }
 
 func (s *installPluginRecipeStep) Revert(c *models.ReqContext) error {
-	err := s.installer.Remove(c.Req.Context(), s.Plugin.Id)
+	p := s.Settings.Plugin
+	err := s.installer.Remove(c.Req.Context(), p.Id)
 
 	if err == nil {
 		// s.Status = RecipeStepStatus{
@@ -139,4 +146,16 @@ func (s *installPluginRecipeStep) Revert(c *models.ReqContext) error {
 
 func (s *installPluginRecipeStep) Status(c *models.ReqContext) (StepStatus, error) {
 	return Completed, nil
+}
+
+func (s *installPluginRecipeStep) ToDto(c *models.ReqContext) *RecipeStepDTO {
+	status, err := s.Status(c)
+
+	return &RecipeStepDTO{
+		Action:      s.Action,
+		Name:        s.Meta.Name,
+		Description: s.Meta.Description,
+		Status:      *status.ToDto(err),
+		Settings:    s.Settings,
+	}
 }

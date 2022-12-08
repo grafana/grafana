@@ -2,10 +2,10 @@ import React, { ReactElement, useMemo } from 'react';
 
 import { HorizontalGroup } from '@grafana/ui';
 
-import { PluginRecipeSetupDashboardStep, Screenshot } from '../types';
+import { PluginRecipeStep, Screenshot, SetupDashboardStepSettings } from '../types';
 
 type Props = {
-  steps: PluginRecipeSetupDashboardStep[];
+  steps: Array<PluginRecipeStep<SetupDashboardStepSettings>>;
 };
 
 export function DetailsOverviewDashboards({ steps }: Props): ReactElement {
@@ -20,7 +20,7 @@ export function DetailsOverviewDashboards({ steps }: Props): ReactElement {
       </p>
       <ul>
         {steps.map((step) => (
-          <li key={step.meta?.name}>{step.meta?.description}</li>
+          <li key={step.name}>{step.description}</li>
         ))}
       </ul>
       {dashboardScreenshots.length > 0 && (
@@ -36,12 +36,10 @@ export function DetailsOverviewDashboards({ steps }: Props): ReactElement {
   );
 }
 
-function useDashboardScreenshots(steps: PluginRecipeSetupDashboardStep[]): Screenshot[] {
+function useDashboardScreenshots(steps: Array<PluginRecipeStep<SetupDashboardStepSettings>>): Screenshot[] {
   return useMemo(() => {
     return steps.reduce<Screenshot[]>((all, step) => {
-      if (step.meta?.screenshots) {
-        all.push(...step.meta?.screenshots);
-      }
+      all.push(...step.settings.screenshots);
       return all;
     }, []);
   }, [steps]);

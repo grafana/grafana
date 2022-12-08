@@ -1,9 +1,9 @@
 import React, { ReactElement } from 'react';
 
-import { PluginRecipeSetupDashboardStep } from '../types';
+import { PluginRecipeStep, SetupDashboardStepSettings } from '../types';
 
 type Props = {
-  step: PluginRecipeSetupDashboardStep;
+  step: PluginRecipeStep<SetupDashboardStepSettings>;
 };
 
 export function StepSetupDashboard({ step }: Props): ReactElement {

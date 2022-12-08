@@ -1,9 +1,9 @@
 import React, { ReactElement, useMemo } from 'react';
 
-import { PluginRecipeSetupAlertsStep, RecipeAlertRule } from '../types';
+import { PluginRecipeStep, RecipeAlertRule, SetupAlertsStepSettings } from '../types';
 
 type Props = {
-  steps: PluginRecipeSetupAlertsStep[];
+  steps: Array<PluginRecipeStep<SetupAlertsStepSettings>>;
 };
 
 export function DetailsOverviewAlerts({ steps }: Props): ReactElement {
@@ -39,11 +39,11 @@ type ConfiguredAlerts = {
   alerts: RecipeAlertRule[];
 };
 
-function useConfiguredAlerts(steps: PluginRecipeSetupAlertsStep[]): ConfiguredAlerts {
+function useConfiguredAlerts(steps: Array<PluginRecipeStep<SetupAlertsStepSettings>>): ConfiguredAlerts {
   return useMemo(() => {
     return steps.reduce<ConfiguredAlerts>(
       (result, step) => {
-        for (const alert of step.alerts) {
+        for (const alert of step.settings.alerts) {
           if (alert.name) {
             result.fields['name'] = true;
           }

@@ -4,8 +4,6 @@ import { useMemo } from 'react';
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { PluginRecipe } from '../types';
-
 export const tabIds = {
   overview: 'overview',
   status: 'status',
@@ -16,11 +14,9 @@ type TabsResult = {
   tabs: NavModelItem[];
 };
 
-export function usePluginRecipeDetailsPageTabs(recipe: PluginRecipe | undefined): TabsResult {
+export function usePluginRecipeDetailsPageTabs(): TabsResult {
   const [query, setQueryParams] = useQueryParams();
   const current = parseTabId(query.page);
-
-  //Todo: create tabs based on recipe content.
 
   return useMemo((): TabsResult => {
     return {
