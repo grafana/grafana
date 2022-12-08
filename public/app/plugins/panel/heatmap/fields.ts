@@ -69,7 +69,6 @@ export function prepareHeatmapData(
 
   if (getFieldLinks) {
     exemplars?.fields.forEach((field, index) => {
-      // const links = getFieldLinks(field, index);
       exemplars.fields[index].getLinks = getFieldLinks(exemplars, field);
     });
   }
