@@ -19,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var folderTitle string = "folder1"
+var folderDsc string = "folder desc"
+
 func TestIntegrationCreate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -32,8 +35,8 @@ func TestIntegrationCreate(t *testing.T) {
 
 	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:       "folder1",
-			Description: "folder desc",
+			Title:       folderTitle,
+			Description: folderDsc,
 			OrgID:       orgID,
 		})
 		require.Error(t, err)
@@ -41,10 +44,10 @@ func TestIntegrationCreate(t *testing.T) {
 
 	t.Run("creating a folder with unknown parent should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:       "folder1",
+			Title:       folderTitle,
 			OrgID:       orgID,
 			ParentUID:   "unknown",
-			Description: "folder desc",
+			Description: folderDsc,
 			UID:         util.GenerateShortUID(),
 		})
 		require.Error(t, err)
@@ -53,8 +56,8 @@ func TestIntegrationCreate(t *testing.T) {
 	t.Run("creating a folder without providing a parent should default to the empty parent folder", func(t *testing.T) {
 		uid := util.GenerateShortUID()
 		f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:       "folder1",
-			Description: "folder desc",
+			Title:       folderTitle,
+			Description: folderDsc,
 			OrgID:       orgID,
 			UID:         uid,
 		})
@@ -65,8 +68,8 @@ func TestIntegrationCreate(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		assert.Equal(t, "folder1", f.Title)
-		assert.Equal(t, "folder desc", f.Description)
+		assert.Equal(t, folderTitle, f.Title)
+		assert.Equal(t, folderDsc, f.Description)
 		assert.NotEmpty(t, f.ID)
 		assert.Equal(t, uid, f.UID)
 		assert.Empty(t, f.ParentUID)
@@ -76,8 +79,8 @@ func TestIntegrationCreate(t *testing.T) {
 			OrgID: orgID,
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, "folder1", ff.Title)
-		assert.Equal(t, "folder desc", ff.Description)
+		assert.Equal(t, folderTitle, ff.Title)
+		assert.Equal(t, folderDsc, ff.Description)
 		assert.Empty(t, ff.ParentUID)
 
 		assertAncestorUIDs(t, folderStore, f, []string{folder.GeneralFolderUID})
@@ -103,10 +106,10 @@ func TestIntegrationCreate(t *testing.T) {
 
 		uid := util.GenerateShortUID()
 		f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:       "folder1",
+			Title:       folderTitle,
 			OrgID:       orgID,
 			ParentUID:   parent.UID,
-			Description: "folder desc",
+			Description: folderDsc,
 			UID:         uid,
 		})
 		require.NoError(t, err)
@@ -115,8 +118,8 @@ func TestIntegrationCreate(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		assert.Equal(t, "folder1", f.Title)
-		assert.Equal(t, "folder desc", f.Description)
+		assert.Equal(t, folderTitle, f.Title)
+		assert.Equal(t, folderDsc, f.Description)
 		assert.NotEmpty(t, f.ID)
 		assert.Equal(t, uid, f.UID)
 		assert.Equal(t, parentUID, f.ParentUID)
@@ -129,8 +132,8 @@ func TestIntegrationCreate(t *testing.T) {
 			OrgID: f.OrgID,
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, "folder1", ff.Title)
-		assert.Equal(t, "folder desc", ff.Description)
+		assert.Equal(t, folderTitle, ff.Title)
+		assert.Equal(t, folderDsc, ff.Description)
 		assert.Equal(t, parentUID, ff.ParentUID)
 	})
 }
@@ -195,11 +198,9 @@ func TestIntegrationUpdate(t *testing.T) {
 	orgID := CreateOrg(t, db)
 
 	// create folder
-	origTitle := "folder1"
-	origDesc := "folder desc"
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:       origTitle,
-		Description: origDesc,
+		Title:       folderTitle,
+		Description: folderDsc,
 		OrgID:       orgID,
 		UID:         util.GenerateShortUID(),
 	})
@@ -300,12 +301,10 @@ func TestIntegrationGet(t *testing.T) {
 	orgID := CreateOrg(t, db)
 
 	// create folder
-	title1 := "folder1"
-	desc1 := "folder desc"
 	uid1 := util.GenerateShortUID()
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:       title1,
-		Description: desc1,
+		Title:       folderTitle,
+		Description: folderDsc,
 		OrgID:       orgID,
 		UID:         uid1,
 	})
@@ -381,12 +380,10 @@ func TestIntegrationGetParents(t *testing.T) {
 	orgID := CreateOrg(t, db)
 
 	// create folder
-	title1 := "folder1"
-	desc1 := "folder desc"
 	uid1 := util.GenerateShortUID()
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:       title1,
-		Description: desc1,
+		Title:       folderTitle,
+		Description: folderDsc,
 		OrgID:       orgID,
 		UID:         uid1,
 	})
@@ -450,12 +447,10 @@ func TestIntegrationGetChildren(t *testing.T) {
 	orgID := CreateOrg(t, db)
 
 	// create folder
-	title1 := "folder1"
-	desc1 := "folder desc"
 	uid1 := util.GenerateShortUID()
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:       title1,
-		Description: desc1,
+		Title:       folderTitle,
+		Description: folderDsc,
 		OrgID:       orgID,
 		UID:         uid1,
 	})
@@ -577,12 +572,10 @@ func TestIntegrationGetHeight(t *testing.T) {
 	orgID := CreateOrg(t, db)
 
 	// create folder
-	title1 := "folder1"
-	desc1 := "folder desc"
 	uid1 := util.GenerateShortUID()
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:       title1,
-		Description: desc1,
+		Title:       folderTitle,
+		Description: folderDsc,
 		OrgID:       orgID,
 		UID:         uid1,
 	})
