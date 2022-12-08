@@ -7,4 +7,4 @@ CREATE UNIQUE INDEX "UQE_folder_uid_org_id" ON "folder" ("uid","org_id");
 -- Add unique index for folder.title and folder.parent_uid
 CREATE UNIQUE INDEX "UQE_folder_title_parent_uid" ON "folder" ("title","parent_uid");
 -- copy existing folders from dashboard table
-INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING
+INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING;
