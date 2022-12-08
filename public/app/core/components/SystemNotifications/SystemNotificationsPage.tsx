@@ -159,7 +159,7 @@ export const SystemNotificationsPage = () => {
           </div>
         </div>
         <div className={styles.notificationGroup}>
-          <h3>Permissions and Access</h3>
+          <h3>Permissions and access</h3>
           <hr />
           <div className={styles.notificationGroupListItems}>
             {permissionsAndAccessNotifications.map((notif) => {
@@ -184,7 +184,7 @@ export const SystemNotificationsPage = () => {
         </div>
 
         <div className={styles.notificationGroup}>
-          <h3>Product Announcements</h3>
+          <h3>Product announcements</h3>
           <hr />
           <div className={styles.notificationGroupListItems}>
             {productAnnouncementsNotifications.map((notif) => {
