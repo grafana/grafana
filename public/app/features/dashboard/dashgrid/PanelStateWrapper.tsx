@@ -594,12 +594,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     if (config.featureToggles.newPanelChromeUI) {
       return (
         <PanelChrome
-          state={headerState}
-          titleItemsNodes={titleItemsNodes}
           width={width}
           height={height}
-          title={title}
           padding={noPadding}
+          title={title}
+          state={headerState}
+          titleItemsNodes={titleItemsNodes}
+          loadingState={LoadingState.Streaming}
         >
           {(innerWidth, innerHeight) => (
             <>

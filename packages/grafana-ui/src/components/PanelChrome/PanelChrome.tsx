@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, ReactNode, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
 
@@ -38,6 +38,7 @@ export interface PanelChromeProps {
   // dragClass?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
+  onStreamingStop?: () => void;
   state?: ReactNode; // maybe PanelDataState?
   /** @deprecated in favor of prop states
    * which will serve the same purpose
@@ -63,9 +64,10 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   title = '',
   titleItems = [],
   menu,
-  titleItemsNodes, // titleItems is very strict with the type, and for cases like PanelNotices where we have a component doesn't make sense
+  titleItemsNodes,
   // dragClass,
-  hoverHeader = false,
+  // hoverHeader = false,
+  onStreamingStop,
   loadingState,
   state = null,
   leftItems = [],
@@ -73,7 +75,22 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const headerHeight = !hoverHeader ? getHeaderHeight(theme, title, leftItems) : 0;
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  useEffect(() => {
+    if (loadingState === LoadingState.Streaming && !isStreaming) {
+      setIsStreaming(true);
+    }
+  }, [loadingState, isStreaming]);
+
+  const handleClickStreaming = () => {
+    setIsStreaming(false);
+    if (onStreamingStop) {
+      onStreamingStop();
+    }
+  };
+
+  const headerHeight = getHeaderHeight(theme, title, leftItems);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
@@ -85,68 +102,83 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   };
   const containerStyles: CSSProperties = { width, height };
 
-  const handleMenuOpen = () => {};
+  // TODO Hover header
+  // For now: Default keep header always
+  // const hasHeader = title || titleItems.length > 0 || menu || isStreaming || titleItemsNodes.length > 0;
 
-  const hasHeader = title || titleItems.length > 0 || menu;
-  const isUsingDeprecatedLeftItems = leftItems.length > 0;
+  // TODO Should we leave them both for a while?
+  // const isUsingDeprecatedLeftItems = leftItems.length > 0;
+  const isUsingDeprecatedLeftItems = !state && leftItems.length > 0;
+
   return (
     <div className={styles.container} style={containerStyles}>
       {loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems && (
-        <LoadingBar containerWidth={width} width={128} height={2} />
+        <LoadingBar width={'128px'} height={'2px'} />
       )}
 
-      {!isUsingDeprecatedLeftItems && state}
+      <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+        {title && (
+          <div title={title} className={styles.title}>
+            {title}
+          </div>
+        )}
 
-      {hasHeader && !hoverHeader && (
-        <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
-          {title && (
-            <div title={title} className={styles.title}>
-              {title}
+        {loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems && (
+          <div className={styles.item} style={itemStyles}>
+            <IconButton
+              tooltip={`${isStreaming ? 'Streaming (click to stop)' : 'Streaming stopped'}`}
+              name="circle"
+              iconType="mono"
+              size="sm"
+              onClick={handleClickStreaming}
+              className={isStreaming ? styles.streaming : styles.streamingStopped}
+            />
+          </div>
+        )}
+
+        {titleItems.length > 0 && (
+          <div className={styles.items} data-testid="title-items-container">
+            {titleItems
+              .filter((item) => isIconName(item.icon))
+              .map((item, i) => (
+                <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
+                  {item.onClick ? (
+                    <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
+                  ) : (
+                    <Tooltip content={item.tooltip ?? ''}>
+                      <Icon name={item.icon} size="sm" />
+                    </Tooltip>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+
+        {titleItemsNodes && (
+          <div className={styles.items} data-testid="title-items-container">
+            {itemsRenderer(titleItemsNodes, (item) => item)}
+          </div>
+        )}
+
+        {menu && (
+          <Dropdown overlay={menu} placement="bottom">
+            <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
+              <IconButton
+                ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                tooltip="Menu"
+                name="ellipsis-v"
+                size="sm"
+              />
             </div>
-          )}
+          </Dropdown>
+        )}
 
-          {titleItems.length > 0 && (
-            <div className={styles.items} data-testid="title-items-container">
-              {titleItems
-                .filter((item) => isIconName(item.icon))
-                .map((item, i) => (
-                  <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
-                    {item.onClick ? (
-                      <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
-                    ) : (
-                      <Tooltip content={item.tooltip ?? ''}>
-                        <Icon name={item.icon} size="sm" />
-                      </Tooltip>
-                    )}
-                  </div>
-                ))}
-            </div>
-          )}
-          {titleItemsNodes && (
-            <div className={styles.items} data-testid="title-items-container">
-              {itemsRenderer(titleItemsNodes, (item) => item)}
-            </div>
-          )}
-
-          {menu && (
-            <Dropdown overlay={menu} placement="bottom">
-              <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
-                <IconButton
-                  ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                  tooltip="Menu"
-                  name="ellipsis-v"
-                  size="sm"
-                  onClick={handleMenuOpen}
-                />
-              </div>
-            </Dropdown>
-          )}
-
-          {isUsingDeprecatedLeftItems && (
-            <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
-          )}
-        </div>
-      )}
+        {isUsingDeprecatedLeftItems ? (
+          <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
+        ) : (
+          state
+        )}
+      </div>
 
       <div className={styles.content} style={contentStyle}>
         {children(innerWidth, innerHeight)}
@@ -224,6 +256,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       padding: `0 ${theme.spacing(padding)}`,
     }),
+    streaming: css({
+      color: theme.colors.success.text,
+
+      '&:hover': {
+        color: theme.colors.success.text,
+      },
+    }),
+    streamingStopped: css({
+      color: theme.colors.error.text,
+
+      '&:hover': {
+        color: theme.colors.error.text,
+      },
+    }),
     title: css({
       textOverflow: 'ellipsis',
       overflow: 'hidden',
@@ -235,7 +281,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     item: css({
       display: 'flex',
-      justifyContent: 'space-around',
+      justifyContent: 'center',
       alignItems: 'center',
     }),
     menuItem: css({
