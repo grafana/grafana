@@ -304,7 +304,11 @@ require (
 	github.com/segmentio/asm v1.1.4 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
+	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
+	github.com/unknwon/com v1.0.1 // indirect
+	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
+	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 )
 
 require (
@@ -384,3 +388,5 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
+
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.145.1-0.20221208120216-29a26824c4df
