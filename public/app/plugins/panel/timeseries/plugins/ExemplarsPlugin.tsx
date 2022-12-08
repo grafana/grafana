@@ -181,7 +181,7 @@ const showExemplarMarker = (
   if (visibleSeries.labels.length === visibleSeries.totalSeriesCount) {
     showMarker = true;
   } else {
-    visibleSeries.labels.forEach((visibleLabel) => {
+    visibleSeries.labels.some((visibleLabel) => {
       // Get the label names
       const labelKeys = Object.keys(visibleLabel.labels);
 
@@ -204,6 +204,7 @@ const showExemplarMarker = (
           });
         }
       }
+      return showMarker;
     });
   }
   return showMarker;
