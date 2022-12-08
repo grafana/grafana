@@ -1,4 +1,5 @@
 import { omit } from 'lodash';
+import memoize from 'memoize-one';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
@@ -14,7 +15,9 @@ import {
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { Graph, Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -24,6 +27,7 @@ import { errorFromSeries } from './util';
 interface Props {
   // The query configuration
   queries: AlertQuery[];
+  expressions: AlertQuery[];
   data: Record<string, PanelData>;
   onRunQueries: () => void;
 
@@ -156,10 +160,16 @@ export class QueryRows extends PureComponent<Props> {
   };
 
   getThresholdsForQueries = (queries: AlertQuery[]): Record<string, ThresholdsConfig> => {
-    const record: Record<string, ThresholdsConfig> = {};
+    const thresholds: Record<string, ThresholdsConfig> = {};
+    const SUPPORTED_EXPRESSION_TYPES = [ExpressionQueryType.threshold, ExpressionQueryType.classic];
 
     for (const query of queries) {
       if (!isExpressionQuery(query.model)) {
+        continue;
+      }
+
+      // currently only supporting threshold & classic condition expressions
+      if (!SUPPORTED_EXPRESSION_TYPES.includes(query.model.type)) {
         continue;
       }
 
@@ -168,40 +178,65 @@ export class QueryRows extends PureComponent<Props> {
       }
 
       query.model.conditions.forEach((condition, index) => {
+        // we only seem to support the first condition in the visualization
         if (index > 0) {
           return;
         }
-        const threshold = condition.evaluator.params[0];
-        const refId = condition.query.params[0];
 
+        const threshold = condition.evaluator.params[0];
+        // classic_conditions use `condition.query.params[]` and threshold uses `query.model.expression` *sigh*
+        const refId = condition.query.params[0] ?? query.model.expression;
+
+        // TODO support range thresholds
         if (condition.evaluator.type === 'outside_range' || condition.evaluator.type === 'within_range') {
           return;
         }
-        if (!record[refId]) {
-          record[refId] = {
-            mode: ThresholdsMode.Absolute,
-            steps: [
-              {
-                value: -Infinity,
-                color: config.theme2.colors.success.main,
-              },
-            ],
-          };
+
+        try {
+          // 1. create a DAG so we can find the origin of the current expression
+          const graph = createDagFromQueries(queries);
+
+          // 2. check if the origin is a data query
+          // TODO memoize this
+          const originRefID = getOriginOfRefId(refId, graph);
+          const originQuery = queries.find((query) => query.refId === originRefID);
+          const originIsDataQuery = !isExpressionQuery(originQuery?.model);
+
+          // 3. if yes, add threshold config to the refId of the data Query
+          if (originIsDataQuery && originRefID) {
+            appendThreshold(originRefID, threshold);
+          }
+        } catch (err) {
+          return;
         }
 
-        record[refId].steps.push({
-          value: threshold,
-          color: config.theme2.colors.error.main,
-        });
+        function appendThreshold(originRefID: string, value: number) {
+          if (!thresholds[originRefID]) {
+            thresholds[originRefID] = {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                {
+                  value: -Infinity,
+                  color: config.theme2.colors.success.main,
+                },
+              ],
+            };
+          }
+
+          thresholds[originRefID].steps.push({
+            value: value,
+            color: config.theme2.colors.error.main,
+          });
+        }
       });
     }
 
-    return record;
+    return thresholds;
   };
 
   render() {
-    const { queries } = this.props;
-    const thresholdByRefId = this.getThresholdsForQueries(queries);
+    const { queries, expressions } = this.props;
+    const thresholdByRefId = this.getThresholdsForQueries([...queries, ...expressions]);
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -340,3 +375,69 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
     </EmptyQueryWrapper>
   );
 };
+
+// TODO maybe move this to the DAG util?
+function getOriginOfRefId(refId: string, graph: Graph): string | undefined {
+  const node = graph.getNode(refId);
+
+  let origin: Node | undefined;
+
+  // recurse through "node > inputEdges > inputNode"
+  function findChildNode(node: Node) {
+    const inputEdges = node.inputEdges;
+
+    // if we still have input edges, keep looking
+    if (inputEdges.length > 0) {
+      // check each edge for input nodes
+      inputEdges.forEach((edge) => {
+        // if the edge still has a child node, keep looking
+        if (edge.inputNode) {
+          findChildNode(edge.inputNode);
+        }
+      });
+    } else {
+      // if we have no more input edges it means we we've found our origin
+      origin = node;
+    }
+  }
+
+  findChildNode(node);
+
+  return origin?.name;
+}
+
+// memoized version of _createDagFromQueries to prevent recreating the DAG if no sources or targets are modified
+const createDagFromQueries = memoize(
+  _createDagFromQueries,
+  (previous: Parameters<typeof _createDagFromQueries>, next: Parameters<typeof _createDagFromQueries>) => {
+    return fingerPrintQueries(previous[0]) === fingerPrintQueries(next[0]);
+  }
+);
+
+function fingerPrintQueries(queries: AlertQuery[]) {
+  return queries.map((query) => query.refId + query.model.expression).join();
+}
+
+/**
+ * Turn the array of alert queries (this means data queries and expressions)
+ * in to a DAG, a directed acyclical graph
+ */
+function _createDagFromQueries(queries: AlertQuery[]): Graph {
+  const graph = new Graph();
+
+  queries.forEach((query) => {
+    const source = query.refId;
+    const target = query.model.expression;
+    const isSelf = source === target;
+
+    if (!graph.getNode(source)) {
+      graph.createNode(source);
+    }
+
+    if (source && target && !isSelf) {
+      graph.link(target, source);
+    }
+  });
+
+  return graph;
+}
