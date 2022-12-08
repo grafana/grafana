@@ -13,7 +13,6 @@ interface MetricsQueryHeaderProps {
   query: CloudWatchMetricsQuery;
   datasource: CloudWatchDatasource;
   onChange: (query: CloudWatchQuery) => void;
-  onRunQuery: () => void;
   sqlCodeEditorIsDirty: boolean;
 }
 
@@ -31,7 +30,6 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
   query,
   sqlCodeEditorIsDirty,
   onChange,
-  onRunQuery,
   children,
   datasource,
 }) => {
@@ -71,23 +69,23 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
       />
       <FlexItem grow={1} />
 
-      {shouldDisplayMonitoringBadge && (
+      {/* {shouldDisplayMonitoringBadge && (
         <Badge
           text="Monitoring account"
           color="blue"
           tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
         ></Badge>
-      )}
+      )} */}
 
       {children}
 
       <RadioButtonGroup options={editorModes} size="sm" value={metricEditorMode} onChange={onEditorModeChange} />
 
-      {query.metricQueryType === MetricQueryType.Query && query.metricEditorMode === MetricEditorMode.Code && (
+      {/* {query.metricQueryType === MetricQueryType.Query && query.metricEditorMode === MetricEditorMode.Code && (
         <Button variant="secondary" size="sm" onClick={() => onRunQuery()}>
           Run query
         </Button>
-      )}
+      )} */}
 
       <ConfirmModal
         isOpen={showConfirm}

@@ -1,13 +1,12 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
-import { EditorField, EditorRow, Space } from '@grafana/experimental';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { EditorField, EditorRow, InlineSelect, Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Input } from '@grafana/ui';
+import { ConfirmModal, Input, RadioButtonGroup } from '@grafana/ui';
 
 import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from '../';
 import { CloudWatchDatasource } from '../../datasource';
-import { isCloudWatchMetricsQuery } from '../../guards';
 import useMigratedMetricsQuery from '../../migrations/useMigratedMetricsQuery';
 import {
   CloudWatchJsonData,
@@ -23,30 +22,85 @@ import { Alias } from './Alias';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
-  setHeaderItems: React.Dispatch<JSX.Element | undefined>;
+  headerElementLeft: React.Dispatch<JSX.Element | undefined>;
+  headerElementRight: React.Dispatch<JSX.Element | undefined>;
 }
 
+const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
+  { label: 'Metric Search', value: MetricQueryType.Search },
+  { label: 'Metric Query', value: MetricQueryType.Query },
+];
+const editorModes = [
+  { label: 'Builder', value: MetricEditorMode.Builder },
+  { label: 'Code', value: MetricEditorMode.Code },
+];
+
 export const MetricsQueryEditor = (props: Props) => {
-  const { query, onRunQuery, datasource, setHeaderItems, onChange } = props;
+  const { query, onRunQuery, datasource, headerElementLeft, headerElementRight, onChange } = props;
+  const [showConfirm, setShowConfirm] = useState(false);
   const [sqlCodeEditorIsDirty, setSQLCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
 
+  const onEditorModeChange = useCallback(
+    (newMetricEditorMode: MetricEditorMode) => {
+      if (
+        sqlCodeEditorIsDirty &&
+        query.metricQueryType === MetricQueryType.Query &&
+        query.metricEditorMode === MetricEditorMode.Code
+      ) {
+        setShowConfirm(true);
+        return;
+      }
+      onChange({ ...query, metricEditorMode: newMetricEditorMode });
+    },
+    [setShowConfirm, onChange, sqlCodeEditorIsDirty, query]
+  );
+
   useEffect(() => {
-    setHeaderItems(
-      <MetricsQueryHeader
-        query={query}
-        datasource={datasource}
-        onChange={(newQuery) => {
-          if (isCloudWatchMetricsQuery(newQuery) && newQuery.metricEditorMode !== query.metricEditorMode) {
-            setSQLCodeEditorIsDirty(false);
-          }
-          onChange(newQuery);
+    headerElementLeft(
+      <InlineSelect
+        aria-label="Metric editor mode"
+        value={metricEditorModes.find((m) => m.value === query.metricQueryType)}
+        options={metricEditorModes}
+        onChange={({ value }) => {
+          onChange({ ...query, metricQueryType: value });
         }}
-        onRunQuery={onRunQuery}
-        sqlCodeEditorIsDirty={sqlCodeEditorIsDirty}
-      ></MetricsQueryHeader>
+      />
     );
-  }, [query, sqlCodeEditorIsDirty, datasource, onRunQuery, onChange, setHeaderItems]);
+
+    headerElementRight(
+      <>
+        <RadioButtonGroup
+          options={editorModes}
+          size="sm"
+          value={query.metricEditorMode}
+          onChange={onEditorModeChange}
+        />
+        <ConfirmModal
+          isOpen={showConfirm}
+          title="Are you sure?"
+          body="You will lose manual changes done to the query if you go back to the visual builder."
+          confirmText="Yes, I am sure."
+          dismissText="No, continue editing the query manually."
+          icon="exclamation-triangle"
+          onConfirm={() => {
+            setShowConfirm(false);
+            onChange({ ...query, metricEditorMode: MetricEditorMode.Builder });
+          }}
+          onDismiss={() => setShowConfirm(false)}
+        />
+      </>
+    );
+  }, [
+    query,
+    sqlCodeEditorIsDirty,
+    datasource,
+    onChange,
+    headerElementLeft,
+    headerElementRight,
+    showConfirm,
+    onEditorModeChange,
+  ]);
 
   return (
     <>

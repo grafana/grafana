@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 
@@ -15,20 +15,29 @@ export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Clou
 export const QueryEditor = (props: Props) => {
   const { query, onChange, data } = props;
   const [dataIsStale, setDataIsStale] = useState(false);
-  const [headerActions, setHeaderActions] = useState<JSX.Element>();
+  const [headerElementLeft, setHeaderElementLeft] = useState<JSX.Element>();
+  const [headerElementRight, setHeaderElementRight] = useState<JSX.Element>();
 
   useEffect(() => {
     setDataIsStale(false);
   }, [data]);
 
-  const onChangeInternal = (query: CloudWatchQuery) => {
-    setDataIsStale(true);
-    onChange(query);
-  };
+  const onChangeInternal = useCallback(
+    (query: CloudWatchQuery) => {
+      setDataIsStale(true);
+      onChange(query);
+    },
+    [onChange]
+  );
 
   return (
     <>
-      <QueryHeader {...props} element={headerActions} dataIsStale={dataIsStale} />
+      <QueryHeader
+        {...props}
+        leftHeaderElement={headerElementLeft}
+        rightHeaderElement={headerElementRight}
+        dataIsStale={dataIsStale}
+      />
 
       {isCloudWatchMetricsQuery(query) && (
         <MetricsQueryEditor
@@ -36,11 +45,18 @@ export const QueryEditor = (props: Props) => {
           query={query}
           onRunQuery={() => {}}
           onChange={onChangeInternal}
-          setHeaderItems={setHeaderActions}
+          headerElementLeft={setHeaderElementLeft}
+          headerElementRight={setHeaderElementRight}
         />
       )}
       {isCloudWatchLogsQuery(query) && (
-        <LogsQueryEditor {...props} query={query} onChange={onChangeInternal} setHeaderItems={setHeaderActions} />
+        <LogsQueryEditor
+          {...props}
+          query={query}
+          onChange={onChangeInternal}
+          headerElementLeft={setHeaderElementLeft}
+          headerElementRight={setHeaderElementRight}
+        />
       )}
     </>
   );

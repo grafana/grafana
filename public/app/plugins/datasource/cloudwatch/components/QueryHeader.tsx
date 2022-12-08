@@ -11,7 +11,8 @@ import { useIsMonitoringAccount, useRegions } from '../hooks';
 import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
-  element?: JSX.Element;
+  leftHeaderElement?: JSX.Element;
+  rightHeaderElement?: JSX.Element;
   dataIsStale: boolean;
 }
 
@@ -20,7 +21,16 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const QueryHeader: React.FC<Props> = ({ query, onChange, datasource, element, dataIsStale, data, onRunQuery }) => {
+const QueryHeader: React.FC<Props> = ({
+  query,
+  onChange,
+  datasource,
+  leftHeaderElement,
+  rightHeaderElement,
+  dataIsStale,
+  data,
+  onRunQuery,
+}) => {
   const { queryMode, region } = query;
   const isMonitoringAccount = useIsMonitoringAccount(datasource.api, query.region);
 
@@ -43,8 +53,7 @@ const QueryHeader: React.FC<Props> = ({ query, onChange, datasource, element, da
     }
   };
 
-  const shouldDisplayMonitoringBadge =
-    queryMode === 'Logs' && isMonitoringAccount && config.featureToggles.cloudWatchCrossAccountQuerying;
+  const shouldDisplayMonitoringBadge = config.featureToggles.cloudWatchCrossAccountQuerying && isMonitoringAccount;
 
   return (
     <>
@@ -61,9 +70,12 @@ const QueryHeader: React.FC<Props> = ({ query, onChange, datasource, element, da
 
         <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
 
+        {leftHeaderElement}
+
+        <FlexItem grow={1} />
+
         {shouldDisplayMonitoringBadge && (
           <>
-            <FlexItem grow={1} />
             <Badge
               text="Monitoring account"
               color="blue"
@@ -72,7 +84,7 @@ const QueryHeader: React.FC<Props> = ({ query, onChange, datasource, element, da
           </>
         )}
 
-        {element}
+        {rightHeaderElement}
 
         <Button
           variant={dataIsStale ? 'primary' : 'secondary'}

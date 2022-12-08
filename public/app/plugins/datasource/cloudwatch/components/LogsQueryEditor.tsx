@@ -14,7 +14,8 @@ import CloudWatchLogsQueryField from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   query: CloudWatchLogsQuery;
-  setHeaderItems: React.Dispatch<JSX.Element | undefined>;
+  headerElementLeft: React.Dispatch<JSX.Element | undefined>;
+  headerElementRight: React.Dispatch<JSX.Element | undefined>;
 };
 
 const labelClass = css`
@@ -23,10 +24,11 @@ const labelClass = css`
 `;
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
-  const { query, data, datasource, onRunQuery, onChange, exploreId } = props;
+  const { query, data, datasource, onRunQuery, onChange, exploreId, headerElementLeft, headerElementRight } = props;
 
   useEffectOnce(() => {
-    props.setHeaderItems(undefined);
+    headerElementLeft(undefined);
+    headerElementRight(undefined);
   });
 
   let absolute: AbsoluteTimeRange;
