@@ -1,7 +1,7 @@
 import { uniqBy } from 'lodash';
 import React from 'react';
 
-import { TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import { TimeRange, isDateTime, rangeUtil, TimeZone } from '@grafana/data';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 
 import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
@@ -24,7 +24,7 @@ export const TimePickerWithHistory = (props: Props) => {
     <LocalStorageValueProvider<LSTimePickerHistoryItem[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(rawValues, onSaveToStore) => {
         const values = migrateHistory(rawValues);
-        const history = deserializeHistory(values);
+        const history = deserializeHistory(values, props.timeZone);
 
         return (
           <TimeRangePicker
@@ -41,8 +41,8 @@ export const TimePickerWithHistory = (props: Props) => {
   );
 };
 
-function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
-  return values.map((item) => rangeUtil.convertRawToRange(item));
+function deserializeHistory(values: TimePickerHistoryItem[], timeZone: TimeZone | undefined): TimeRange[] {
+  return values.map((item) => rangeUtil.convertRawToRange(item, timeZone));
 }
 
 function migrateHistory(values: LSTimePickerHistoryItem[]): TimePickerHistoryItem[] {
