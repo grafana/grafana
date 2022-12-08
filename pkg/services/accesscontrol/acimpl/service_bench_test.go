@@ -282,7 +282,7 @@ func BenchmarkSearchUsersWithPerm_1K_100K(b *testing.B) { benchSearchUsersWithPe
 func BenchmarkSearchUsersWithPerm_10K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 10000, 10) }    // ~0.11s/op
 func BenchmarkSearchUsersWithPerm_10K_100(b *testing.B) { benchSearchUsersWithPerm(b, 10000, 100) }   // ~0.12s/op
 func BenchmarkSearchUsersWithPerm_10K_1K(b *testing.B)  { benchSearchUsersWithPerm(b, 10000, 1000) }  // ~0.12s/op
-func BenchmarkSearchUsersWithPerm_10K_10K(b *testing.B) { benchSearchUsersWithPerm(b, 10000, 10000) } // ~1.77s/op
+func BenchmarkSearchUsersWithPerm_10K_10K(b *testing.B) { benchSearchUsersWithPerm(b, 10000, 10000) } // ~0.17s/op
 
 func BenchmarkSearchUsersWithPerm_20K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 20000, 10) }    // ~0.22s/op
 func BenchmarkSearchUsersWithPerm_20K_100(b *testing.B) { benchSearchUsersWithPerm(b, 20000, 100) }   // ~0.22s/op
