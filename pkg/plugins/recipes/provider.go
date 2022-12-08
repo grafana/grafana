@@ -29,7 +29,7 @@ func (s *staticRecipesProvider) GetAll() []*Recipe {
 	return s.recipes
 }
 
-func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService datasources.DataSourceService, dashboardService dashboards.DashboardService) RecipesProvider {
+func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, datasourceService datasources.DataSourceService, dashboardService dashboards.DashboardService) RecipesProvider {
 
 	recipes := []*Recipe{
 		// Linux Server
@@ -42,7 +42,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/linux.png",
 			},
 			Steps: []RecipeStep{
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
@@ -222,7 +222,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 					Name:        "Setting up datasource",
 					Description: "something here..",
 				}),
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
@@ -380,7 +380,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/mysql.png",
 			},
 			Steps: []RecipeStep{
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
@@ -398,7 +398,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 						InstructionTestExpectedHttpResponse: "200",
 					},
 				),
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
 						Description: "Some description here...",
@@ -407,7 +407,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 						Version: "0.4.1",
 					},
 				),
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing Anodot panel",
 						Description: "Some description here...",
@@ -429,7 +429,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/apple.svg",
 			},
 			Steps: []RecipeStep{
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing Jira",
 						Description: "Some description here...",
@@ -447,7 +447,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 						InstructionTestExpectedHttpResponse: "200",
 					},
 				),
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing K6 app",
 						Description: "Some description here...",
@@ -456,7 +456,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService dat
 						Version: "0.4.1",
 					},
 				),
-				newPluginInstallStep(i, cfg,
+				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
 						Name:        "Installing Anodot panel",
 						Description: "Some description here...",
