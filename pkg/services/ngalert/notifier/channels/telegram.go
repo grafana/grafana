@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -21,6 +22,11 @@ import (
 
 var (
 	TelegramAPIURL = "https://api.telegram.org/bot%s/%s"
+
+	DefaultParseMode = "HTML"
+	// SupportedParseMode is a map of all supported values for field `parse_mode`. https://core.telegram.org/bots/api#formatting-options.
+	// Keys are options accepted by Grafana API, values are options accepted by Telegram API
+	SupportedParseMode = map[string]string{"Markdown": "Markdown", "MarkdownV2": "MarkdownV2", DefaultParseMode: "HTML", "None": ""}
 )
 
 // TelegramNotifier is responsible for sending
@@ -35,9 +41,11 @@ type TelegramNotifier struct {
 }
 
 type telegramSettings struct {
-	BotToken string `json:"bottoken,omitempty" yaml:"bottoken,omitempty"`
-	ChatID   string `json:"chatid,omitempty" yaml:"chatid,omitempty"`
-	Message  string `json:"message,omitempty" yaml:"message,omitempty"`
+	BotToken             string `json:"bottoken,omitempty" yaml:"bottoken,omitempty"`
+	ChatID               string `json:"chatid,omitempty" yaml:"chatid,omitempty"`
+	Message              string `json:"message,omitempty" yaml:"message,omitempty"`
+	ParseMode            string `json:"parse_mode,omitempty" yaml:"parse_mode,omitempty"`
+	DisableNotifications bool   `json:"disable_notifications,omitempty" yaml:"disable_notifications,omitempty"`
 }
 
 func buildTelegramSettings(fc FactoryConfig) (telegramSettings, error) {
@@ -55,6 +63,21 @@ func buildTelegramSettings(fc FactoryConfig) (telegramSettings, error) {
 	}
 	if settings.Message == "" {
 		settings.Message = DefaultMessageEmbed
+	}
+	// if field is missing, then we fall back to the previous default: HTML
+	if settings.ParseMode == "" {
+		settings.ParseMode = DefaultParseMode
+	}
+	found := false
+	for parseMode, value := range SupportedParseMode {
+		if strings.EqualFold(settings.ParseMode, parseMode) {
+			settings.ParseMode = value
+			found = true
+			break
+		}
+	}
+	if !found {
+		return settings, fmt.Errorf("unknown parse_mode, must be Markdown, MarkdownV2, HTML or None")
 	}
 	return settings, nil
 }
@@ -168,7 +191,12 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 
 	m := make(map[string]string)
 	m["text"] = messageText
-	m["parse_mode"] = "html"
+	if tn.settings.ParseMode != "" {
+		m["parse_mode"] = tn.settings.ParseMode
+	}
+	if tn.settings.DisableNotifications {
+		m["disable_notification"] = "true"
+	}
 	return m, nil
 }
 
