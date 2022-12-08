@@ -1,9 +1,22 @@
 import { css } from '@emotion/css';
 import React, { ReactElement, useMemo } from 'react';
 
-import { HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
-import { isSetupDashboardStep, PluginRecipe, PluginRecipeStep, Screenshot, SetupDashboardStepSettings } from '../types';
+import {
+  InstallAgentStepSettings,
+  isInstallAgentStep,
+  isSetupAlertsStep,
+  isSetupDashboardStep,
+  PluginRecipe,
+  PluginRecipeStep,
+  SetupAlertsStepSettings,
+  SetupDashboardStepSettings,
+} from '../types';
+
+import { DetailsOverviewAlerts } from './DetailsOverviewAlerts';
+import { DetailsOverviewDashboards } from './DetailsOverviewDashboards';
+import { DetailsOverviewMetrics } from './DetailsOverviewMetrics';
 
 type Props = {
   recipe: PluginRecipe;
@@ -13,7 +26,8 @@ export function DetailsOverview({ recipe }: Props): ReactElement {
   const styles = useStyles2(getStyles);
 
   const dashboardSteps = useDashboardSteps(recipe.steps);
-  const dashboardScreenshots = useDashboardScreenshots(dashboardSteps);
+  const agentSteps = useAgentSteps(recipe.steps);
+  const alertSteps = useAlertSteps(recipe.steps);
 
   return (
     <div className={styles.overview}>
@@ -22,30 +36,9 @@ export function DetailsOverview({ recipe }: Props): ReactElement {
         <hr />
         <p>{recipe.description}</p>
       </section>
-      {dashboardSteps.length > 0 && (
-        <section>
-          <h2>Dashboards</h2>
-          <hr />
-          <p>
-            The following pre-built dashboards are included in this recipe. You can either use them as they are or
-            customize them to your specific needs.
-          </p>
-          <ul>
-            {dashboardSteps.map((step) => (
-              <li key={step.name}>{step.description}</li>
-            ))}
-          </ul>
-          {dashboardScreenshots.length > 0 && (
-            <section>
-              <HorizontalGroup>
-                {dashboardScreenshots.map((screenshot) => (
-                  <img key={screenshot.name} src={screenshot.url} alt={screenshot.name} />
-                ))}
-              </HorizontalGroup>
-            </section>
-          )}
-        </section>
-      )}
+      {dashboardSteps.length > 0 && <DetailsOverviewDashboards steps={dashboardSteps} />}
+      {agentSteps.length > 0 && <DetailsOverviewMetrics steps={agentSteps} />}
+      {alertSteps.length > 0 && <DetailsOverviewAlerts steps={alertSteps} />}
     </div>
   );
 }
@@ -56,16 +49,19 @@ function useDashboardSteps(steps: PluginRecipeStep[]): Array<PluginRecipeStep<Se
   }, [steps]);
 }
 
-function useDashboardScreenshots(steps: Array<PluginRecipeStep<SetupDashboardStepSettings>>): Screenshot[] {
+function useAgentSteps(steps: PluginRecipeStep[]): Array<PluginRecipeStep<InstallAgentStepSettings>> {
   return useMemo(() => {
-    return steps.reduce<Screenshot[]>((all, step) => {
-      all.push(...step.settings.screenshots);
-      return all;
-    }, []);
+    return steps.filter<PluginRecipeStep<InstallAgentStepSettings>>(isInstallAgentStep);
   }, [steps]);
 }
 
-const getStyles = () => ({
+function useAlertSteps(steps: PluginRecipeStep[]): Array<PluginRecipeStep<SetupAlertsStepSettings>> {
+  return useMemo(() => {
+    return steps.filter<PluginRecipeStep<SetupAlertsStepSettings>>(isSetupAlertsStep);
+  }, [steps]);
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
   overview: css`
     hr {
       margin-top: 12px;
@@ -85,6 +81,29 @@ const getStyles = () => ({
     }
     ul {
       padding-left: 25px;
+    }
+    table {
+      font-size: 14px;
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 12px;
+      tbody tr:nth-child(even) {
+        background: transparent;
+      }
+      tbody tr:nth-child(odd) {
+        background: ${theme.colors.background.secondary};
+      }
+      td {
+        font-weight: 400;
+        font-size: 12px;
+      }
+      td,
+      th {
+        &:not(:last-child) {
+          width: 200px;
+        }
+        padding: 10px 8px;
+      }
     }
   `,
 });

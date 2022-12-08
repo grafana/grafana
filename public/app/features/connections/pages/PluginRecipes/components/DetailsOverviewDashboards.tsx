@@ -39,7 +39,9 @@ export function DetailsOverviewDashboards({ steps }: Props): ReactElement {
 function useDashboardScreenshots(steps: Array<PluginRecipeStep<SetupDashboardStepSettings>>): Screenshot[] {
   return useMemo(() => {
     return steps.reduce<Screenshot[]>((all, step) => {
-      all.push(...step.settings.screenshots);
+      if (step.settings) {
+        all.push(...step.settings.screenshots);
+      }
       return all;
     }, []);
   }, [steps]);

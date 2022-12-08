@@ -9,7 +9,7 @@ import (
 
 func newSetupDatasourceStep(ds datasources.DataSourceService, meta RecipeStepMeta) *setupDatasourceStep {
 	return &setupDatasourceStep{
-		Action: "setup-dashboard",
+		Action: "setup-datasource",
 		Meta:   meta,
 		ds:     ds,
 	}

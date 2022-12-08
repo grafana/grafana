@@ -8,7 +8,14 @@ export type PluginRecipe = {
 };
 
 export type PluginRecipeStep<T = unknown> = {
-  action: 'install-plugin' | 'display-info' | 'setup-dashboard' | 'prompt' | 'setup-alerts' | 'install-agent';
+  action:
+    | 'install-plugin'
+    | 'display-info'
+    | 'setup-dashboard'
+    | 'setup-datasource'
+    | 'prompt'
+    | 'setup-alerts'
+    | 'install-agent';
   name: string;
   description: string;
   settings: T;
