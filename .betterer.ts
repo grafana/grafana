@@ -53,6 +53,9 @@ function countEslintErrors() {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
     };
 
+    // group files by eslint config file
+    // this will create two file groups for each eslint config file
+    // one for test files and one for non-test files
     const fileGroups: Record<string, string[]> = {};
 
     for (const filePath of filePaths) {
@@ -62,6 +65,7 @@ function countEslintErrors() {
         filePath.endsWith('.test.ts') ||
         filePath.includes('__mocks__') ||
         filePath.includes('public/test/');
+
       if (isTestFile) {
         configPath += '-test';
       }
@@ -73,6 +77,7 @@ function countEslintErrors() {
 
     for (const configPath of Object.keys(fileGroups)) {
       const rules = configPath.endsWith('-test') ? baseRules : nonTestFilesRules;
+      // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
       const linterOptions = (await cli.calculateConfigForFile(fileGroups[configPath][0])) as Linter.Config;
       const runner = new ESLint({
         baseConfig: {
