@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { from, mergeMap, Observable, of } from 'rxjs';
 
 import {
   DataQuery,
@@ -9,12 +9,13 @@ import {
   PanelData,
 } from '@grafana/data';
 import { runRequest } from 'app/features/query/state/runRequest';
-import { hasStandardVariableSupport } from 'app/features/variables/guard';
+import { hasLegacyVariableSupport, hasStandardVariableSupport } from 'app/features/variables/guard';
 
 import { QueryVariable } from './QueryVariable';
 
 export interface RunnerArgs {
   searchFilter?: string;
+  variable: QueryVariable;
 }
 
 export interface QueryRunner {
@@ -33,7 +34,7 @@ class StandardQueryRunner implements QueryRunner {
     throw new Error("Couldn't create a target with supplied arguments.");
   }
 
-  public runRequest(args: RunnerArgs, request: DataQueryRequest) {
+  public runRequest(_: RunnerArgs, request: DataQueryRequest) {
     if (!hasStandardVariableSupport(this.datasource)) {
       return getEmptyMetricFindValueObservable();
     }
@@ -46,6 +47,46 @@ class StandardQueryRunner implements QueryRunner {
   }
 }
 
+class LegacyQueryRunner implements QueryRunner {
+  public constructor(private datasource: DataSourceApi) {}
+
+  public getTarget(variable: QueryVariable) {
+    if (hasLegacyVariableSupport(this.datasource)) {
+      return variable.state.query;
+    }
+
+    throw new Error("Couldn't create a target with supplied arguments.");
+  }
+
+  public runRequest({ variable }: RunnerArgs, request: DataQueryRequest) {
+    if (!hasLegacyVariableSupport(this.datasource)) {
+      return getEmptyMetricFindValueObservable();
+    }
+
+    return from(
+      this.datasource.metricFindQuery(variable.state.query, {
+        ...request,
+        // variable is used by SQL common data source
+        variable: {
+          name: variable.state.name,
+          type: variable.state.type,
+        },
+        // TODO: add support for search filter
+        // searchFilter
+      })
+    ).pipe(
+      mergeMap((values) => {
+        if (!values || !values.length) {
+          return getEmptyMetricFindValueObservable();
+        }
+
+        const series: any = values;
+        return of({ series, state: LoadingState.Done, timeRange: request.range });
+      })
+    );
+  }
+}
+
 function getEmptyMetricFindValueObservable(): Observable<PanelData> {
   return of({ state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() });
 }
@@ -53,6 +94,10 @@ function getEmptyMetricFindValueObservable(): Observable<PanelData> {
 function createQueryVariableRunnerFactory(datasource: DataSourceApi): QueryRunner {
   if (hasStandardVariableSupport(datasource)) {
     return new StandardQueryRunner(datasource, runRequest);
+  }
+
+  if (hasLegacyVariableSupport(datasource)) {
+    return new LegacyQueryRunner(datasource);
   }
 
   // TODO: add support for legacy, cutom and datasource query runners

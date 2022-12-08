@@ -96,7 +96,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
         const runner = createQueryVariableRunner(ds);
         const target = runner.getTarget(this);
         const request = this.getRequest(target);
-        return runner.runRequest({}, request).pipe(
+        return runner.runRequest({ variable: this }, request).pipe(
           filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
           take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet
           mergeMap((data: PanelData) => {

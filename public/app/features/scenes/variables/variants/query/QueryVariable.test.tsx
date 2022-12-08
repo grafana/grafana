@@ -1,3 +1,5 @@
+import { lastValueFrom, of } from 'rxjs';
+
 import {
   DataQueryRequest,
   DataSourceApi,
@@ -15,18 +17,18 @@ import {
 } from '@grafana/data';
 import { SceneFlexLayout } from 'app/features/scenes/components';
 import { SceneTimeRange } from 'app/features/scenes/core/SceneTimeRange';
-import { lastValueFrom, of } from 'rxjs';
+
 import { SceneVariableSet } from '../../sets/SceneVariableSet';
-import { QueryRunner, RunnerArgs, setCreateQueryVariableRunnerFactory } from './createQueryVariableRunner';
 
 import { QueryVariable } from './QueryVariable';
+import { QueryRunner, RunnerArgs, setCreateQueryVariableRunnerFactory } from './createQueryVariableRunner';
 
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
     state: LoadingState.Done,
     series: [
       toDataFrame({
-        fields: [{ name: 'text', type: FieldType.string, values: ['A', 'B', 'C'] }],
+        fields: [{ name: 'text', type: FieldType.string, values: ['A', 'AB', 'C'] }],
       }),
     ],
     timeRange: getDefaultTimeRange(),
@@ -77,7 +79,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 class FakeQueryRunner implements QueryRunner {
-  constructor(private datasource: DataSourceApi, private _runRequest: jest.Mock) {}
+  public constructor(private datasource: DataSourceApi, private _runRequest: jest.Mock) {}
 
   public getTarget(variable: QueryVariable) {
     return (this.datasource.variables as StandardVariableSupport<DataSourceApi>).toDataQuery(variable.state.query);
@@ -148,7 +150,7 @@ describe('QueryVariable', () => {
 
       expect(variable.state.options).toEqual([
         { label: 'A', value: 'A' },
-        { label: 'B', value: 'B' },
+        { label: 'AB', value: 'AB' },
         { label: 'C', value: 'C' },
       ]);
     });
@@ -284,11 +286,25 @@ describe('QueryVariable', () => {
     });
   });
 
-  describe('When value provided', () => {
-    it('should keep valid value', () => {});
+  describe('When regex provided', () => {
+    beforeEach(() => {
+      setCreateQueryVariableRunnerFactory(() => new FakeQueryRunner(fakeDsMock, runRequestMock));
+    });
+
+    it('should return options that match regex', async () => {
+      const variable = new QueryVariable({
+        name: 'test',
+        datasource: { uid: 'fake-std', type: 'fake-std' },
+        query: 'query',
+        regex: '/^A/',
+      });
+
+      await lastValueFrom(variable.validateAndUpdate());
+
+      expect(variable.state.options).toEqual([
+        { label: 'A', value: 'A' },
+        { label: 'AB', value: 'AB' },
+      ]);
+    });
   });
-
-  describe('When regex provided', () => {});
-
-  describe('When searchFilter provided', () => {});
 });

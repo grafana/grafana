@@ -4597,6 +4597,9 @@ exports[`better eslint`] = {
     "public/app/features/scenes/variables/variants/query/QueryVariable.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/scenes/variables/variants/query/createQueryVariableRunner.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/features/scenes/variables/variants/query/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]

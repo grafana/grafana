@@ -37,6 +37,12 @@ export function getQueryVariableDemo(): Scene {
           query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         }),
+        new QueryVariable({
+          name: 'legacy (graphite)',
+          refresh: VariableRefresh.onTimeRangeChanged,
+          query: { queryType: 'Default', target: 'stats.response.*' },
+          datasource: { uid: 'gdev-graphite', type: 'graphite' },
+        }),
       ],
     }),
     layout: new SceneFlexLayout({
