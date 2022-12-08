@@ -1,30 +1,35 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
-import { ToolbarButtonVariant } from '@grafana/ui/src/components/ToolbarButton';
 import { InspectTab } from 'app/features/inspector/types';
 
 enum InfoMode {
   Error = 'Error',
-  Info = 'Info',
   Warning = 'Warning',
 }
 
 interface Props {
-  data?: PanelData; // for getting notices
-  errorMessage?: string; // when data fails
-  panelId: number; //for opening inspector
+  panelId: number;
+  dataState: LoadingState;
+  errorMessage?: string;
 }
 
-export function PanelHeaderState(props: Props) {
-  const { data, errorMessage, panelId } = props;
-  const state = getGeneralPanelState(data, errorMessage);
+export function PanelHeaderState({ dataState, errorMessage, panelId }: Props) {
   const styles = useStyles2(getStyles);
-  const mode = getInfoMode(state);
-  const iconName = getInfoMode(state) === InfoMode.Info ? 'info-circle' : 'exclamation-triangle';
+  const [mode, setMode] = useState<InfoMode>();
+
+  useEffect(() => {
+    if (errorMessage) {
+      setMode(InfoMode.Error);
+    } else if (dataState === LoadingState.Warning) {
+      setMode(InfoMode.Warning);
+    } else {
+      setMode(undefined);
+    }
+  }, [dataState, errorMessage]);
 
   const openInspect = useCallback(
     (e: React.SyntheticEvent, tab: string) => {
@@ -33,74 +38,35 @@ export function PanelHeaderState(props: Props) {
     },
     [panelId]
   );
-  let variantType: ToolbarButtonVariant = 'default';
-  if (!mode) {
-    return null;
-  }
 
-  variantType = getVariantType(mode);
-  const tooltipMessage = InfoMode.Error && errorMessage;
-  const onClick = mode === InfoMode.Info ? undefined : (e: React.SyntheticEvent) => openInspect(e, InspectTab.Error);
-
-  return (
+  return mode ? (
     <div className={styles.container}>
       <ToolbarButton
-        onClick={onClick}
-        variant={variantType}
+        onClick={(e: React.SyntheticEvent) => openInspect(e, InspectTab.Error)}
+        variant={getVariantType(mode)}
         className={styles.buttonStyles}
-        icon={iconName}
-        tooltip={tooltipMessage}
+        icon="exclamation-triangle"
+        tooltip={InfoMode.Error && errorMessage}
       />
     </div>
-  );
+  ) : null;
 }
 
 function getVariantType(mode: InfoMode) {
-  let variantType: ToolbarButtonVariant;
   switch (mode) {
     case InfoMode.Error:
-      variantType = 'destructive';
-      break;
-    case InfoMode.Info:
-      variantType = 'primary';
-      break;
+      return 'destructive';
     case InfoMode.Warning:
-      variantType = 'warning';
-      break;
+      return 'warning';
     default:
-      variantType = 'default';
+      return 'default';
   }
-  return variantType;
 }
-
-function getGeneralPanelState(data: PanelData | undefined, errorMessage: string | undefined) {
-  let state;
-  if (errorMessage) {
-    state = InfoMode.Error;
-  } else if (data?.state === LoadingState.Warning) {
-    state = InfoMode.Warning;
-  } else {
-    state = '';
-  }
-  return state;
-}
-
-const getInfoMode = (state: string) => {
-  switch (state) {
-    case 'Error':
-      return InfoMode.Error;
-    case 'Info':
-      return InfoMode.Info;
-    case 'Warning':
-      return InfoMode.Warning;
-    default:
-      return undefined;
-  }
-};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
+      label: 'panel-header-state',
       display: 'flex',
       alignItems: 'center',
       position: 'absolute',
