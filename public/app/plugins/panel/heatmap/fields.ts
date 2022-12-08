@@ -6,9 +6,11 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   GrafanaTheme2,
+  LinkModel,
   outerJoinDataFrames,
   PanelData,
   ValueFormatter,
+  ValueLinkConfig,
 } from '@grafana/data';
 import {
   calculateHeatmapFromData,
@@ -52,13 +54,25 @@ export interface HeatmapData {
   warning?: string;
 }
 
-export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme: GrafanaTheme2): HeatmapData {
+export function prepareHeatmapData(
+  data: PanelData,
+  options: PanelOptions,
+  theme: GrafanaTheme2,
+  getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
+): HeatmapData {
   let frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
+
+  if (getFieldLinks) {
+    exemplars?.fields.forEach((field, index) => {
+      // const links = getFieldLinks(field, index);
+      exemplars.fields[index].getLinks = getFieldLinks(exemplars, field);
+    });
+  }
 
   if (options.calculate) {
     return getDenseHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);

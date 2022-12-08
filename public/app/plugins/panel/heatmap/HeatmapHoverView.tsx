@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { DataFrameType, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
+import {
+  DataFrameType,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  LinkModel,
+  TimeRange,
+} from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -15,6 +23,7 @@ type Props = {
   data: HeatmapData;
   hover: HeatmapHoverEvent;
   showHistogram?: boolean;
+  timeRange: TimeRange;
 };
 
 export const HeatmapHoverView = (props: Props) => {

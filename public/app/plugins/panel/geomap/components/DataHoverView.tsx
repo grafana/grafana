@@ -61,19 +61,6 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: 
   return (
     <table className={styles.infoWrap}>
       <tbody>
-        {(mode === TooltipDisplayMode.Multi || mode == null) &&
-          displayValues.map((v, i) => (
-            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
-              <th>{v[0]}:</th>
-              <td>{v[2]}</td>
-            </tr>
-          ))}
-        {mode === TooltipDisplayMode.Single && columnIndex && (
-          <tr key={`${columnIndex}/${rowIndex}`}>
-            <th>{displayValues[columnIndex][0]}:</th>
-            <td>{displayValues[columnIndex][2]}</td>
-          </tr>
-        )}
         {links.length > 0 && (
           <tr>
             <td colSpan={2}>
@@ -93,6 +80,19 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: 
                 ))}
               </VerticalGroup>
             </td>
+          </tr>
+        )}
+        {(mode === TooltipDisplayMode.Multi || mode == null) &&
+          displayValues.map((v, i) => (
+            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
+              <th>{v[0]}:</th>
+              <td>{v[2]}</td>
+            </tr>
+          ))}
+        {mode === TooltipDisplayMode.Single && columnIndex && (
+          <tr key={`${columnIndex}/${rowIndex}`}>
+            <th>{displayValues[columnIndex][0]}:</th>
+            <td>{displayValues[columnIndex][2]}</td>
           </tr>
         )}
       </tbody>
