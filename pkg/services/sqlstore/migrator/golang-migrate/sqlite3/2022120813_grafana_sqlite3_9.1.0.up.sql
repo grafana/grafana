@@ -6,13 +6,6 @@ ALTER TABLE `alert_rule` ADD COLUMN `rule_group_idx` INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE `alert_rule_version` ADD COLUMN `rule_group_idx` INTEGER NOT NULL DEFAULT 1;
 -- create correlation table v1
 CREATE TABLE IF NOT EXISTS `correlation` ( `uid` TEXT NOT NULL , `source_uid` TEXT NOT NULL , `target_uid` TEXT NULL , `label` TEXT NOT NULL , `description` TEXT NOT NULL , PRIMARY KEY ( `uid`,`source_uid` ));
-CREATE TABLE IF NOT EXISTS `dashboard_public_config` ( `uid` TEXT PRIMARY KEY NOT NULL , `dashboard_uid` TEXT NOT NULL , `org_id` INTEGER NOT NULL , `time_settings` TEXT NOT NULL , `refresh_rate` INTEGER NOT NULL DEFAULT 30 , `template_variables` TEXT NULL );
--- drop index UQE_dashboard_public_config_uid - v1
-DROP INDEX `UQE_dashboard_public_config_uid`;
--- drop index IDX_dashboard_public_config_org_id_dashboard_uid - v1
-DROP INDEX `IDX_dashboard_public_config_org_id_dashboard_uid`;
--- Drop old dashboard public config table
-DROP TABLE IF EXISTS `dashboard_public_config`;
 -- recreate dashboard public config v1
 CREATE TABLE IF NOT EXISTS `dashboard_public_config` ( `uid` TEXT PRIMARY KEY NOT NULL , `dashboard_uid` TEXT NOT NULL , `org_id` INTEGER NOT NULL , `time_settings` TEXT NOT NULL , `refresh_rate` INTEGER NOT NULL DEFAULT 30 , `template_variables` TEXT NULL );
 -- drop index UQE_dashboard_public_config_uid - v2
