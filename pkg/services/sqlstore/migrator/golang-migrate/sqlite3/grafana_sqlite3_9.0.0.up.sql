@@ -1,7 +1,7 @@
 -- Add isPublic for dashboard
-ALTER TABLE `dashboard` ADD COLUMN `is_public` INTEGER NOT NULL DEFAULT 0
+ALTER TABLE `dashboard` ADD COLUMN `is_public` INTEGER NOT NULL DEFAULT 0;
 -- add current_reason column related to current_state
-ALTER TABLE `alert_instance` ADD COLUMN `current_reason` TEXT NULL
+ALTER TABLE `alert_instance` ADD COLUMN `current_reason` TEXT NULL;
 -- create alert_image table
 CREATE TABLE IF NOT EXISTS `alert_image` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `token` TEXT NOT NULL , `path` TEXT NOT NULL , `url` TEXT NOT NULL , `created_at` DATETIME NOT NULL , `expires_at` DATETIME NOT NULL );
 -- add unique index on token to alert_image table
@@ -9,17 +9,17 @@ CREATE UNIQUE INDEX `UQE_alert_image_token` ON `alert_image` (`token`);
 -- create secrets table
 CREATE TABLE IF NOT EXISTS `secrets` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `org_id` INTEGER NOT NULL , `namespace` TEXT NOT NULL , `type` TEXT NOT NULL , `value` TEXT NULL , `created` DATETIME NOT NULL , `updated` DATETIME NOT NULL );
 -- rename data_keys name column to id
-ALTER TABLE `data_keys` RENAME COLUMN `name` TO `id`
+ALTER TABLE `data_keys` RENAME COLUMN `name` TO `id`;
 -- add name column into data_keys
-ALTER TABLE `data_keys` ADD COLUMN `name` TEXT NOT NULL DEFAULT ''
+ALTER TABLE `data_keys` ADD COLUMN `name` TEXT NOT NULL DEFAULT '';
 -- copy data_keys id column values into name
-UPDATE data_keys SET name = id
+UPDATE data_keys SET name = id;
 -- rename data_keys name column to label
-ALTER TABLE `data_keys` RENAME COLUMN `name` TO `label`
+ALTER TABLE `data_keys` RENAME COLUMN `name` TO `label`;
 -- rename data_keys id column back to name
-ALTER TABLE `data_keys` RENAME COLUMN `id` TO `name`
+ALTER TABLE `data_keys` RENAME COLUMN `id` TO `name`;
 -- add column org_id in query_history_star
-ALTER TABLE `query_history_star` ADD COLUMN `org_id` INTEGER NOT NULL DEFAULT 1
+ALTER TABLE `query_history_star` ADD COLUMN `org_id` INTEGER NOT NULL DEFAULT 1;
 -- create entity_events table
 CREATE TABLE IF NOT EXISTS `entity_event` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `entity_id` TEXT NOT NULL , `event_type` TEXT NOT NULL , `created` INTEGER NOT NULL );
 -- create dashboard public config v1

@@ -1,5 +1,5 @@
 -- delete alert_definition table
-DROP TABLE IF EXISTS `alert_definition`
+DROP TABLE IF EXISTS `alert_definition`;
 -- recreate alert_definition table
 CREATE TABLE IF NOT EXISTS `alert_definition` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `org_id` INTEGER NOT NULL , `title` TEXT NOT NULL , `condition` TEXT NOT NULL , `data` TEXT NOT NULL , `updated` DATETIME NOT NULL , `interval_seconds` INTEGER NOT NULL DEFAULT 60 , `version` INTEGER NOT NULL DEFAULT 0 , `uid` TEXT NOT NULL DEFAULT 0 );
 -- add index in alert_definition on org_id and title columns
@@ -7,19 +7,19 @@ CREATE INDEX `IDX_alert_definition_org_id_title` ON `alert_definition` (`org_id`
 -- add index in alert_definition on org_id and uid columns
 CREATE INDEX `IDX_alert_definition_org_id_uid` ON `alert_definition` (`org_id`,`uid`);
 -- drop index in alert_definition on org_id and title columns
-DROP INDEX `IDX_alert_definition_org_id_title`
+DROP INDEX `IDX_alert_definition_org_id_title`;
 -- drop index in alert_definition on org_id and uid columns
-DROP INDEX `IDX_alert_definition_org_id_uid`
+DROP INDEX `IDX_alert_definition_org_id_uid`;
 -- add unique index in alert_definition on org_id and title columns
 CREATE UNIQUE INDEX `UQE_alert_definition_org_id_title` ON `alert_definition` (`org_id`,`title`);
 -- add unique index in alert_definition on org_id and uid columns
 CREATE UNIQUE INDEX `UQE_alert_definition_org_id_uid` ON `alert_definition` (`org_id`,`uid`);
 -- Add column paused in alert_definition
-ALTER TABLE `alert_definition` ADD COLUMN `paused` INTEGER NOT NULL DEFAULT 0
+ALTER TABLE `alert_definition` ADD COLUMN `paused` INTEGER NOT NULL DEFAULT 0;
 -- drop alert_definition table
-DROP TABLE IF EXISTS `alert_definition`
+DROP TABLE IF EXISTS `alert_definition`;
 -- delete alert_definition_version table
-DROP TABLE IF EXISTS `alert_definition_version`
+DROP TABLE IF EXISTS `alert_definition_version`;
 -- recreate alert_definition_version table
 CREATE TABLE IF NOT EXISTS `alert_definition_version` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `alert_definition_id` INTEGER NOT NULL , `alert_definition_uid` TEXT NOT NULL DEFAULT 0 , `parent_version` INTEGER NOT NULL , `restored_from` INTEGER NOT NULL , `version` INTEGER NOT NULL , `created` DATETIME NOT NULL , `title` TEXT NOT NULL , `condition` TEXT NOT NULL , `data` TEXT NOT NULL , `interval_seconds` INTEGER NOT NULL );
 -- add index in alert_definition_version table on alert_definition_id and version columns
@@ -27,7 +27,7 @@ CREATE UNIQUE INDEX `UQE_alert_definition_version_alert_definition_id_version` O
 -- add index in alert_definition_version table on alert_definition_uid and version columns
 CREATE UNIQUE INDEX `UQE_alert_definition_version_alert_definition_uid_version` ON `alert_definition_version` (`alert_definition_uid`,`version`);
 -- drop alert_definition_version table
-DROP TABLE IF EXISTS `alert_definition_version`
+DROP TABLE IF EXISTS `alert_definition_version`;
 -- create alert_instance table
 CREATE TABLE IF NOT EXISTS `alert_instance` ( `def_org_id` INTEGER NOT NULL , `def_uid` TEXT NOT NULL DEFAULT 0 , `labels` TEXT NOT NULL , `labels_hash` TEXT NOT NULL , `current_state` TEXT NOT NULL , `current_state_since` INTEGER NOT NULL , `last_eval_time` INTEGER NOT NULL , PRIMARY KEY ( `def_org_id`,`def_uid`,`labels_hash` ));
 -- add index in alert_instance table on def_org_id, def_uid and current_state columns
@@ -35,11 +35,11 @@ CREATE INDEX `IDX_alert_instance_def_org_id_def_uid_current_state` ON `alert_ins
 -- add index in alert_instance table on def_org_id, current_state columns
 CREATE INDEX `IDX_alert_instance_def_org_id_current_state` ON `alert_instance` (`def_org_id`,`current_state`);
 -- add column current_state_end to alert_instance
-ALTER TABLE `alert_instance` ADD COLUMN `current_state_end` INTEGER NOT NULL DEFAULT 0
+ALTER TABLE `alert_instance` ADD COLUMN `current_state_end` INTEGER NOT NULL DEFAULT 0;
 -- remove index def_org_id, def_uid, current_state on alert_instance
-DROP INDEX `IDX_alert_instance_def_org_id_def_uid_current_state`
+DROP INDEX `IDX_alert_instance_def_org_id_def_uid_current_state`;
 -- remove index def_org_id, current_state on alert_instance
-DROP INDEX `IDX_alert_instance_def_org_id_current_state`
+DROP INDEX `IDX_alert_instance_def_org_id_current_state`;
 -- rename def_org_id to rule_org_id in alert_instance
 ALTER TABLE alert_instance RENAME COLUMN def_org_id TO rule_org_id;
 -- rename def_uid to rule_uid in alert_instance
@@ -57,13 +57,13 @@ CREATE UNIQUE INDEX `UQE_alert_rule_org_id_uid` ON `alert_rule` (`org_id`,`uid`)
 -- add index in alert_rule on org_id, namespace_uid, group_uid columns
 CREATE INDEX `IDX_alert_rule_org_id_namespace_uid_rule_group` ON `alert_rule` (`org_id`,`namespace_uid`,`rule_group`);
 -- add column for to alert_rule
-ALTER TABLE `alert_rule` ADD COLUMN `for` INTEGER NOT NULL DEFAULT 0
+ALTER TABLE `alert_rule` ADD COLUMN `for` INTEGER NOT NULL DEFAULT 0;
 -- add column annotations to alert_rule
-ALTER TABLE `alert_rule` ADD COLUMN `annotations` TEXT NULL
+ALTER TABLE `alert_rule` ADD COLUMN `annotations` TEXT NULL;
 -- add column labels to alert_rule
-ALTER TABLE `alert_rule` ADD COLUMN `labels` TEXT NULL
+ALTER TABLE `alert_rule` ADD COLUMN `labels` TEXT NULL;
 -- remove unique index from alert_rule on org_id, title columns
-DROP INDEX `UQE_alert_rule_org_id_title`
+DROP INDEX `UQE_alert_rule_org_id_title`;
 -- add index in alert_rule on org_id, namespase_uid and title columns
 CREATE UNIQUE INDEX `UQE_alert_rule_org_id_namespace_uid_title` ON `alert_rule` (`org_id`,`namespace_uid`,`title`);
 -- create alert_rule_version table
@@ -73,15 +73,15 @@ CREATE UNIQUE INDEX `UQE_alert_rule_version_rule_org_id_rule_uid_version` ON `al
 -- add index in alert_rule_version table on rule_org_id, rule_namespace_uid and rule_group columns
 CREATE INDEX `IDX_alert_rule_version_rule_org_id_rule_namespace_uid_rule_group` ON `alert_rule_version` (`rule_org_id`,`rule_namespace_uid`,`rule_group`);
 -- add column for to alert_rule_version
-ALTER TABLE `alert_rule_version` ADD COLUMN `for` INTEGER NOT NULL DEFAULT 0
+ALTER TABLE `alert_rule_version` ADD COLUMN `for` INTEGER NOT NULL DEFAULT 0;
 -- add column annotations to alert_rule_version
-ALTER TABLE `alert_rule_version` ADD COLUMN `annotations` TEXT NULL
+ALTER TABLE `alert_rule_version` ADD COLUMN `annotations` TEXT NULL;
 -- add column labels to alert_rule_version
-ALTER TABLE `alert_rule_version` ADD COLUMN `labels` TEXT NULL
+ALTER TABLE `alert_rule_version` ADD COLUMN `labels` TEXT NULL;
 -- create_alert_configuration_table
 CREATE TABLE IF NOT EXISTS `alert_configuration` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `alertmanager_configuration` TEXT NOT NULL , `configuration_version` TEXT NOT NULL , `created_at` INTEGER NOT NULL );
 -- Add column default in alert_configuration
-ALTER TABLE `alert_configuration` ADD COLUMN `default` INTEGER NOT NULL DEFAULT 0
+ALTER TABLE `alert_configuration` ADD COLUMN `default` INTEGER NOT NULL DEFAULT 0;
 -- create library_element table v1
 CREATE TABLE IF NOT EXISTS `library_element` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `org_id` INTEGER NOT NULL , `folder_id` INTEGER NOT NULL , `uid` TEXT NOT NULL , `name` TEXT NOT NULL , `kind` INTEGER NOT NULL , `type` TEXT NOT NULL , `description` TEXT NOT NULL , `model` TEXT NOT NULL , `created` DATETIME NOT NULL , `created_by` INTEGER NOT NULL , `updated` DATETIME NOT NULL , `updated_by` INTEGER NOT NULL , `version` INTEGER NOT NULL );
 -- add index library_element org_id-folder_id-name-kind

@@ -1,13 +1,13 @@
 -- drop index IDX_temp_user_email - v1
-DROP INDEX `IDX_temp_user_email`
+DROP INDEX `IDX_temp_user_email`;
 -- drop index IDX_temp_user_org_id - v1
-DROP INDEX `IDX_temp_user_org_id`
+DROP INDEX `IDX_temp_user_org_id`;
 -- drop index IDX_temp_user_code - v1
-DROP INDEX `IDX_temp_user_code`
+DROP INDEX `IDX_temp_user_code`;
 -- drop index IDX_temp_user_status - v1
-DROP INDEX `IDX_temp_user_status`
+DROP INDEX `IDX_temp_user_status`;
 -- Rename table temp_user to temp_user_tmp_qwerty - v1
-ALTER TABLE `temp_user` RENAME TO `temp_user_tmp_qwerty`
+ALTER TABLE `temp_user` RENAME TO `temp_user_tmp_qwerty`;
 -- create temp_user v2
 CREATE TABLE IF NOT EXISTS `temp_user` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `org_id` INTEGER NOT NULL , `version` INTEGER NOT NULL , `email` TEXT NOT NULL , `name` TEXT NULL , `role` TEXT NULL , `code` TEXT NOT NULL , `status` TEXT NOT NULL , `invited_by_user_id` INTEGER NULL , `email_sent` INTEGER NOT NULL , `email_sent_on` DATETIME NULL , `remote_addr` TEXT NULL , `created` INTEGER NOT NULL DEFAULT 0 , `updated` INTEGER NOT NULL DEFAULT 0 );
 -- create index IDX_temp_user_email - v2
@@ -19,9 +19,9 @@ CREATE INDEX `IDX_temp_user_code` ON `temp_user` (`code`);
 -- create index IDX_temp_user_status - v2
 CREATE INDEX `IDX_temp_user_status` ON `temp_user` (`status`);
 -- drop temp_user_tmp_qwerty
-DROP TABLE IF EXISTS `temp_user_tmp_qwerty`
+DROP TABLE IF EXISTS `temp_user_tmp_qwerty`;
 -- Add encrypted dashboard json column
-ALTER TABLE `dashboard_snapshot` ADD COLUMN `dashboard_encrypted` BLOB NULL
+ALTER TABLE `dashboard_snapshot` ADD COLUMN `dashboard_encrypted` BLOB NULL;
 -- Add non-unique index alert_notification_state_alert_id
 CREATE INDEX `IDX_alert_notification_state_alert_id` ON `alert_notification_state` (`alert_id`);
 -- Add non-unique index alert_rule_tag_alert_id

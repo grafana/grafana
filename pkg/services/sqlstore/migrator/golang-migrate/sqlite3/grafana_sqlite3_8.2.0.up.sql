@@ -11,13 +11,13 @@ CREATE INDEX `IDX_dashboard_acl_org_id_role` ON `dashboard_acl` (`org_id`,`role`
 -- add index dashboard_permission
 CREATE INDEX `IDX_dashboard_acl_permission` ON `dashboard_acl` (`permission`);
 -- add dashboard_uid column to alert_rule
-ALTER TABLE `alert_rule` ADD COLUMN `dashboard_uid` TEXT NULL
+ALTER TABLE `alert_rule` ADD COLUMN `dashboard_uid` TEXT NULL;
 -- add panel_id column to alert_rule
-ALTER TABLE `alert_rule` ADD COLUMN `panel_id` INTEGER NULL
+ALTER TABLE `alert_rule` ADD COLUMN `panel_id` INTEGER NULL;
 -- add index in alert_rule on org_id, dashboard_uid and panel_id columns
 CREATE INDEX `IDX_alert_rule_org_id_dashboard_uid_panel_id` ON `alert_rule` (`org_id`,`dashboard_uid`,`panel_id`);
 -- add column org_id in alert_configuration
-ALTER TABLE `alert_configuration` ADD COLUMN `org_id` INTEGER NOT NULL DEFAULT 0
+ALTER TABLE `alert_configuration` ADD COLUMN `org_id` INTEGER NOT NULL DEFAULT 0;
 -- add index in alert_configuration table on org_id column
 CREATE INDEX `IDX_alert_configuration_org_id` ON `alert_configuration` (`org_id`);
 -- create_ngalert_configuration_table
