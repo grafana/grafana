@@ -57,7 +57,7 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 		Name:             testUser.Name,
 		OrgID:            testUser.OrgID,
 	})
-	require.NoError(t, err)
+	require.NoError(t, err, "failed to create test user %s in orgID %d", testUser.Name, testUser.OrgID)
 	return u1
 }
 
