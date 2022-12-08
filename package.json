@@ -300,7 +300,6 @@
     "@testing-library/user-event": "14.4.3",
     "@types/angular": "1.8.4",
     "@types/angular-route": "1.7.2",
-    "@types/classnames": "2.3.0",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "7.4.0",
     "@types/d3-force": "^2.1.0",
@@ -326,7 +325,6 @@
     "@types/papaparse": "5.3.5",
     "@types/pluralize": "^0.0.29",
     "@types/prismjs": "1.26.0",
-    "@types/rc-time-picker": "3.4.1",
     "@types/react": "17.0.42",
     "@types/react-beautiful-dnd": "13.1.2",
     "@types/react-dom": "17.0.14",
@@ -341,13 +339,11 @@
     "@types/react-window": "1.8.5",
     "@types/react-window-infinite-loader": "^1",
     "@types/redux-mock-store": "1.0.3",
-    "@types/reselect": "2.2.0",
     "@types/semver": "7.3.13",
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.2",
     "@types/slate-react": "0.22.9",
     "@types/testing-library__jest-dom": "5.14.5",
-    "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "8.3.4",
     "@typescript-eslint/eslint-plugin": "5.42.0",
@@ -432,8 +428,6 @@
     "webpack-manifest-plugin": "5.0.0",
     "webpack-merge": "5.8.0"
   },
-  "engines": {
-    "node": ">= 16"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v9-2/",
@@ -451,6 +445,9 @@
     "*pkg/**/*.go": [
       "gofmt -w -s"
     ]
+  },
+  "engines": {
+    "node": ">= 16"
   },
   "packageManager": "yarn@3.2.4"
 }

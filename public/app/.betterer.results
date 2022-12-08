@@ -1078,9 +1078,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "features/alerting/unified/RuleEditor.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+(??)    ],
+(??)    "public/app/features/alerting/unified/RuleEditor.test.tsx:5381": [
+(??)      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "features/alerting/unified/RuleList.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
