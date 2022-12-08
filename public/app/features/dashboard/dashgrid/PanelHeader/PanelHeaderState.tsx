@@ -64,6 +64,8 @@ function getVariantType(mode: InfoMode) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const { headerHeight, padding } = theme.components.panel;
+
   return {
     container: css({
       label: 'panel-header-state',
@@ -77,19 +79,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: theme.components.panel.padding,
-      width: '32px',
-      height: '32px',
+      padding: theme.spacing(padding),
+      width: theme.spacing(headerHeight),
+      height: theme.spacing(headerHeight),
       borderRadius: 0,
-    }),
-    containerMultipleStates: css({
-      display: 'flex',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      backgroundColor: theme.colors.background.secondary,
-      padding: theme.spacing(1),
-      width: '100%',
     }),
   };
 };
