@@ -40,7 +40,7 @@ export function TopSearchBar() {
         <QuickAdd />
 
         <Dropdown overlay={() => <Notification />} placement="bottom-end">
-          <ToolbarButton icon="bell" aria-label="Notifications">
+          <ToolbarButton icon="mailbox-with-raised-flag" aria-label="Notifications">
             {notifications.length > 0 && <span className={styles.notificationIndicator}>{notifications.length}</span>}
           </ToolbarButton>
         </Dropdown>

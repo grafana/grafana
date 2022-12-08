@@ -128,6 +128,8 @@ export const availableIconsIndex = {
   'list-ui-alt': true,
   'list-ul': true,
   lock: true,
+  mailbox: true,
+  'mailbox-with-raised-flag': true,
   'map-marker': true,
   message: true,
   minus: true,

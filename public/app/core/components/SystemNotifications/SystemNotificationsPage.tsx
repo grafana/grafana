@@ -39,7 +39,7 @@ export interface SystemNotificationsProps {
 }
 
 const pageNav: NavModelItem = {
-  icon: 'bell',
+  icon: 'mailbox-with-raised-flag',
   id: 'system-notifications',
   text: 'System notifications',
   // subTitle: '',

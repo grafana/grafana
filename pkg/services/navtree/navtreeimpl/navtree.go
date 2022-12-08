@@ -142,13 +142,13 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	treeRoot.AddSection(&navtree.NavLink{
-		Text:       "System Notifications",
-		Id:         "system-notifications",
-		SubTitle:   "",
-		Icon:       "bell",
-		SortWeight: navtree.WeightExplore,
-		Section:    navtree.NavSectionCore,
-		Url:        s.cfg.AppSubURL + "/system-notifications",
+		Text:         "System Notifications",
+		Id:           "system-notifications",
+		SubTitle:     "",
+		Icon:         "mailbox-with-raised-flag",
+		SortWeight:   navtree.WeightExplore,
+		Section:      navtree.NavSectionCore,
+		Url:          s.cfg.AppSubURL + "/system-notifications",
 		HideFromTabs: true,
 	})
 
