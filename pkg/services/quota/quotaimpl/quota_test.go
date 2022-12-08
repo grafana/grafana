@@ -465,7 +465,7 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, b bus.Bus, quotaService quota.Service) {
 	_, err := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, sqlStore.Cfg, nil, quotaService)
+	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, nil, featuremgmt.WithFeatures(), quotaService, sqlStore.Cfg)
 	require.NoError(t, err)
 	_, err = dashboardStore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 	require.NoError(t, err)

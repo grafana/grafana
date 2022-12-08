@@ -13,16 +13,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Run("Testing Team commands & queries", func(t *testing.T) {
+	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		teamSvc := ProvideService(sqlStore, sqlStore.Cfg)
 		testUser := &user.SignedInUser{
@@ -35,6 +38,11 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				},
 			},
 		}
+		quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService)
+		require.NoError(t, err)
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
@@ -51,7 +59,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 						Name:  fmt.Sprint("user", i),
 						Login: fmt.Sprint("loginuser", i),
 					}
-					usr, err = sqlStore.CreateUser(context.Background(), userCmd)
+					usr, err = userSvc.Create(context.Background(), &userCmd)
 					require.NoError(t, err)
 					userIds = append(userIds, usr.ID)
 				}
@@ -82,7 +90,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
 				err = teamSvc.GetTeamMembers(context.Background(), q1)
 				require.NoError(t, err)
-				require.Equal(t, len(q1.Result), 2)
+				require.Equal(t, 2, len(q1.Result))
 				require.Equal(t, q1.Result[0].TeamId, team1.Id)
 				require.Equal(t, q1.Result[0].Login, "loginuser0")
 				require.Equal(t, q1.Result[0].OrgId, testOrgID)
@@ -373,6 +381,11 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
+				quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+				orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+				require.NoError(t, err)
+				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService)
+				require.NoError(t, err)
 				setup()
 				userCmd = user.CreateUserCommand{
 					Email:            fmt.Sprint("sa", 1, "@test.com"),
@@ -380,7 +393,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					Login:            fmt.Sprint("login-sa", 1),
 					IsServiceAccount: true,
 				}
-				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
+				serviceAccount, err := userSvc.CreateUserForTests(context.Background(), &userCmd)
 				require.NoError(t, err)
 
 				groupId := team2.Id
@@ -497,6 +510,11 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errCreateTeam)
 		team2, errCreateTeam := teamSvc.CreateTeam("group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
+		quotaService := quotaimpl.ProvideService(store, store.Cfg)
+		orgSvc, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(store, orgSvc, store.Cfg, teamSvc, nil, quotaService)
+		require.NoError(t, err)
 
 		for i := 0; i < 4; i++ {
 			userCmd := user.CreateUserCommand{
@@ -504,7 +522,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
-			user, errCreateUser := store.CreateUser(context.Background(), userCmd)
+			user, errCreateUser := userSvc.Create(context.Background(), &userCmd)
 			require.NoError(t, errCreateUser)
 			userIds[i] = user.ID
 		}
