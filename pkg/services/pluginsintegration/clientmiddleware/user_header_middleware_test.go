@@ -38,7 +38,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
-				require.Len(t, cdt.QueryDataReq.Headers, 0)
+				require.Empty(t, cdt.QueryDataReq.Headers)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 1)
@@ -52,7 +52,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
-				require.Len(t, cdt.CallResourceReq.Headers, 0)
+				require.Empty(t, cdt.CallResourceReq.Headers)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 1)
@@ -66,7 +66,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
-				require.Len(t, cdt.CheckHealthReq.Headers, 0)
+				require.Empty(t, cdt.CheckHealthReq.Headers)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 1)
@@ -94,7 +94,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
-				require.Len(t, cdt.QueryDataReq.Headers, 0)
+				require.Empty(t, cdt.QueryDataReq.Headers)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 1)
@@ -108,7 +108,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				}, nopCallResourceSender)
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
-				require.Len(t, cdt.CallResourceReq.Headers, 0)
+				require.Empty(t, cdt.CallResourceReq.Headers)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 1)
@@ -122,7 +122,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
-				require.Len(t, cdt.CheckHealthReq.Headers, 0)
+				require.Empty(t, cdt.CheckHealthReq.Headers)
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 1)
@@ -155,7 +155,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Len(t, cdt.QueryDataReq.Headers, 1)
-				require.Equal(t, "admin", cdt.QueryDataReq.Headers[proxyutil.UserHeaderName])
+				require.Equal(t, "admin", cdt.QueryDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 1)
@@ -170,7 +170,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
-				require.Equal(t, "admin", cdt.CallResourceReq.Headers[proxyutil.UserHeaderName][0])
+				require.Equal(t, "admin", cdt.CallResourceReq.GetHTTPHeader(proxyutil.UserHeaderName))
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 1)
@@ -185,7 +185,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
-				require.Equal(t, "admin", cdt.CheckHealthReq.Headers[proxyutil.UserHeaderName])
+				require.Equal(t, "admin", cdt.CheckHealthReq.GetHTTPHeader(proxyutil.UserHeaderName))
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 1)
@@ -213,7 +213,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Len(t, cdt.QueryDataReq.Headers, 1)
-				require.Equal(t, "admin", cdt.QueryDataReq.Headers[proxyutil.UserHeaderName])
+				require.Equal(t, "admin", cdt.QueryDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
 				require.Len(t, middlewares, 1)
@@ -228,7 +228,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
-				require.Equal(t, "admin", cdt.CallResourceReq.Headers[proxyutil.UserHeaderName][0])
+				require.Equal(t, "admin", cdt.CallResourceReq.GetHTTPHeader(proxyutil.UserHeaderName))
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
 				require.Len(t, middlewares, 1)
@@ -243,7 +243,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
-				require.Equal(t, "admin", cdt.CheckHealthReq.Headers[proxyutil.UserHeaderName])
+				require.Equal(t, "admin", cdt.CheckHealthReq.GetHTTPHeader(proxyutil.UserHeaderName))
 
 				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
 				require.Len(t, middlewares, 1)

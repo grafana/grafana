@@ -34,21 +34,10 @@ func (m *UserHeaderMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 		return ctx
 	}
 
-	switch t := req.(type) {
-	case *backend.QueryDataRequest:
-		delete(t.Headers, proxyutil.UserHeaderName)
+	if h, ok := req.(backend.ForwardHTTPHeaders); ok {
+		h.DeleteHTTPHeader(proxyutil.UserHeaderName)
 		if !reqCtx.IsAnonymous {
-			t.Headers[proxyutil.UserHeaderName] = reqCtx.Login
-		}
-	case *backend.CheckHealthRequest:
-		delete(t.Headers, proxyutil.UserHeaderName)
-		if !reqCtx.IsAnonymous {
-			t.Headers[proxyutil.UserHeaderName] = reqCtx.Login
-		}
-	case *backend.CallResourceRequest:
-		delete(t.Headers, proxyutil.UserHeaderName)
-		if !reqCtx.IsAnonymous {
-			t.Headers[proxyutil.UserHeaderName] = []string{reqCtx.Login}
+			h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.Login)
 		}
 	}
 
