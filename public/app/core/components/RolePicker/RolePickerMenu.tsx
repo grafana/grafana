@@ -89,7 +89,11 @@ export const RolePickerMenu = ({
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
   const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
-  const optionGroups = getOptionGroups(options);
+  const optionGroups = {
+    fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
+    custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
+    plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
+  };
 
   const rolesCollection = {
     fixed: {
@@ -272,49 +276,23 @@ const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') &
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
 
-const getOptionGroups = (options: Role[]) => {
+const convertRolesToGroupOptions = (roles: Role[]) => {
   const groupsMap: { [key: string]: Role[] } = {};
-  const customGroupsMap: { [key: string]: Role[] } = {};
-  options.forEach((role) => {
-    const m = role.name.startsWith('fixed:') ? groupsMap : customGroupsMap;
+  roles.forEach((role) => {
     const groupName = getRoleGroup(role);
-    if (!m[groupName]) {
-      m[groupName] = [];
+    if (!groupsMap[groupName]) {
+      groupsMap[groupName] = [];
     }
-    m[groupName].push(role);
+    groupsMap[groupName].push(role);
   });
-
-  const groups = [];
-  for (const groupName of Object.keys(groupsMap)) {
-    const groupOptions = groupsMap[groupName].sort(sortRolesByName);
-    groups.push({
+  const groups = Object.entries(groupsMap).map(([groupName, roles]) => {
+    return {
       name: fixedRoleGroupNames[groupName] || capitalize(groupName),
       value: groupName,
-      options: groupOptions,
-    });
-  }
-
-  const customGroups = [];
-  for (const groupName of Object.keys(customGroupsMap)) {
-    const groupOptions = customGroupsMap[groupName].sort(sortRolesByName);
-    customGroups.push({
-      name: capitalize(groupName),
-      value: groupName,
-      options: groupOptions,
-    });
-  }
-
-  const pluginGroups: Array<{
-    name: string;
-    value: string;
-    options: Role[];
-  }> = [];
-
-  return {
-    fixed: groups.sort((a, b) => a.name.localeCompare(b.name)),
-    custom: customGroups.sort((a, b) => a.name.localeCompare(b.name)),
-    plugin: pluginGroups.sort((a, b) => a.name.localeCompare(b.name)),
-  };
+      options: roles.sort(sortRolesByName),
+    };
+  });
+  return groups;
 };
 
 interface RolePickerSubMenuProps {
