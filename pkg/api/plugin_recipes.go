@@ -70,8 +70,8 @@ func (hs *HTTPServer) ApplyRecipeStep(c *models.ReqContext) response.Response {
 	recipeID := web.Params(c.Req)[":recipeId"]
 
 	stepNumber, err := strconv.Atoi(web.Params(c.Req)[":stepNumber"])
-	if err == nil {
-		return response.Error(http.StatusBadRequest, "The step number needs to be an number", nil)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "The step number needs to be a number", nil)
 	}
 
 	recipe := hs.recipeProvider.GetById(recipeID)
@@ -89,7 +89,7 @@ func (hs *HTTPServer) RevertRecipeStep(c *models.ReqContext) response.Response {
 	recipeID := web.Params(c.Req)[":recipeId"]
 
 	stepNumber, err := strconv.Atoi(web.Params(c.Req)[":stepNumber"])
-	if err == nil {
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "The step number needs to be an number", nil)
 	}
 

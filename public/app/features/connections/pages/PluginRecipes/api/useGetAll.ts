@@ -6,6 +6,7 @@ import { PluginRecipe } from '../types';
 export const useGetAll = () => {
   return useQuery<PluginRecipe[]>({
     queryKey: ['plugin-recipes'],
+    networkMode: 'always',
     retry: false,
     retryOnMount: false,
     queryFn: async () => {
