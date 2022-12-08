@@ -142,10 +142,8 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
     // const { searchFilter } = this.state.searchFilter;
     // const searchFilterScope = { searchFilter: { text: searchFilter, value: searchFilter } };
     // const searchFilterAsVars = searchFilter ? searchFilterScope : {};
-    const variableAsVars: ScopedVars = { variable: { text: this.state.text, value: this.state.value } };
     const scopedVars: ScopedVars = {
       // ...searchFilterAsVars,
-      ...variableAsVars,
       __sceneObject: { text: '__sceneObject', value: this },
     };
 

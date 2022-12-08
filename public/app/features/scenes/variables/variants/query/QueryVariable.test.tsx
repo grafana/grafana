@@ -274,7 +274,7 @@ describe('QueryVariable', () => {
           raw: { from: toUtc('2020-01-01'), to: toUtc('2020-01-02') },
         });
 
-        await Promise.resolve();
+        await new Promise((r) => setTimeout(r, 1));
 
         expect(runRequestMock).toBeCalledTimes(2);
         const call2 = runRequestMock.mock.calls[1];
