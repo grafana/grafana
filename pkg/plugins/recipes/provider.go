@@ -34,8 +34,9 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 	recipes := []*Recipe{
 		// Linux Server
 		{
-			Id:   "linux-server",
-			Name: "Linux Server",
+			Id:               "linux-server",
+			Name:             "Linux Server",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collect metrics and logs related to the linux operating system",
 				Description: "The Linux integration uses the agent to collect metrics related to the operating system running on a node, including aspects like CPU usage, load average, memory usage, and disk and networking I/O.\n\nIt also supports logs being scraped by the agent using promtail. \nSupported files are syslog, auth.log, kern.log and journal logs.\n\nAn accompanying dashboard is provided to visualize these metrics and logs.",
@@ -166,8 +167,9 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 
 		// Docker
 		{
-			Id:   "docker",
-			Name: "Docker",
+			Id:               "docker",
+			Name:             "Docker",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collect metrics and logs for containers running in docker",
 				Description: "Docker is an open platform for developing, shipping, and running applications. Docker enables you to separate your applications from your infrastructure so you can deliver software quickly.\n\nThis integration focuses on showing overall utilization of containers running in Docker, using cAdvisor.\n\nThis integration also supports logs monitoring for Docker containers.",
@@ -372,8 +374,9 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 
 		// MySQL
 		{
-			Id:   "mysql",
-			Name: "MySQL",
+			Id:               "mysql",
+			Name:             "MySQL",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collects metrics and logs from the MySQL server",
 				Description: "MySQL is a managed, open source relational database that is widely used. The MySQL Integration enables the Grafana Agent to send metrics and logs to Grafana Cloud and includes useful dashboards, alerts, and recording rules.",
@@ -421,8 +424,9 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 
 		// Mac OS
 		{
-			Id:   "macos",
-			Name: "MacOS",
+			Id:               "macos",
+			Name:             "MacOS",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collect metrics and logs related to the macOS operating system",
 				Description: "The macOS integration uses the agent to collect metrics related to the operating system, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports system logs being scraped by the agent using promtail. An accompanying dashboard is provided to visualize these metrics and logs.",

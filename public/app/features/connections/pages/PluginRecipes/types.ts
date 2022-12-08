@@ -4,6 +4,7 @@ export type PluginRecipe = {
   logo: string;
   summary: string;
   description?: string;
+  isInstallStarted?: string;
   steps: PluginRecipeStep[];
 };
 
