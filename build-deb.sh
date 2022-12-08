@@ -11,12 +11,12 @@ export NODE_OPTIONS=--max_old_space_size=10000
 # compile
 make build
 
-
 folder="grafana-$version"
 tmp="/tmp/$folder"
 
 # package
 mkdir -p $tmp/usr/share/grafana/bin
+mkdir -p $tmp/usr/share/grafana/data/plugins
 mkdir -p $tmp/usr/sbin
 mkdir -p $tmp/etc/grafana
 
