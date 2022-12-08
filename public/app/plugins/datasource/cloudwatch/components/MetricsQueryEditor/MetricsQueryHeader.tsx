@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
+import { useIsMonitoringAccount } from '../../hooks';
 import { CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from '../../types';
 
 interface MetricsQueryHeaderProps {
@@ -14,7 +15,6 @@ interface MetricsQueryHeaderProps {
   onChange: (query: CloudWatchQuery) => void;
   onRunQuery: () => void;
   sqlCodeEditorIsDirty: boolean;
-  isMonitoringAccount: boolean;
 }
 
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
@@ -32,10 +32,12 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
   sqlCodeEditorIsDirty,
   onChange,
   onRunQuery,
-  isMonitoringAccount,
+  children,
+  datasource,
 }) => {
   const { metricEditorMode, metricQueryType } = query;
   const [showConfirm, setShowConfirm] = useState(false);
+  const isMonitoringAccount = useIsMonitoringAccount(datasource.api, query.region);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: MetricEditorMode) => {
@@ -76,6 +78,8 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
           tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
         ></Badge>
       )}
+
+      {children}
 
       <RadioButtonGroup options={editorModes} size="sm" value={metricEditorMode} onChange={onEditorModeChange} />
 

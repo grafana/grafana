@@ -15,7 +15,7 @@ import {
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
 
-import { PanelQueryEditor } from './PanelQueryEditor';
+import { QueryEditor } from './QueryEditor';
 
 // the following three fields are added to legacy queries in the dashboard migrator
 const migratedFields = {
@@ -50,7 +50,7 @@ describe('PanelQueryEditor should render right editor', () => {
         returnData: false,
       };
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Metric name')).toBeInTheDocument();
     });
@@ -78,7 +78,7 @@ describe('PanelQueryEditor should render right editor', () => {
         statistics: 'Average',
       } as any;
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Choose Log Groups')).toBeInTheDocument();
     });
@@ -106,7 +106,7 @@ describe('PanelQueryEditor should render right editor', () => {
         statistic: 'Average',
       } as any;
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Log Groups')).toBeInTheDocument();
     });
@@ -133,7 +133,7 @@ describe('PanelQueryEditor should render right editor', () => {
         statistic: 'Average',
       } as any;
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Metric name')).toBeInTheDocument();
     });
@@ -177,7 +177,7 @@ describe('PanelQueryEditor should render right editor', () => {
       test.each(cases)('$name', async ({ query, toggle }) => {
         config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
         await act(async () => {
-          render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+          render(<QueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });
         expect(await screen.getByText('Monitoring account')).toBeInTheDocument();
       });
@@ -210,7 +210,7 @@ describe('PanelQueryEditor should render right editor', () => {
       test.each(cases)('$name', async ({ query, toggle }) => {
         config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
         await act(async () => {
-          render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+          render(<QueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });
         expect(await screen.queryByText('Monitoring account')).toBeNull();
       });

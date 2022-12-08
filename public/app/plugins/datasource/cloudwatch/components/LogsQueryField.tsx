@@ -24,7 +24,6 @@ import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../typ
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
 import { LogGroupSelection } from './LogGroupSelection';
-import QueryHeader from './QueryHeader';
 
 export interface CloudWatchLogsQueryFieldProps
   extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
@@ -85,13 +84,6 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   return (
     <>
-      <QueryHeader
-        query={query}
-        onRunQuery={onRunQuery}
-        datasource={datasource}
-        onChange={onChange}
-        sqlCodeEditorIsDirty={false}
-      />
       <LogGroupSelection datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery} />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
         <div className="gf-form gf-form--grow flex-shrink-1">

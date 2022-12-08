@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { EditorField, EditorRow, Space } from '@grafana/experimental';
@@ -18,30 +18,23 @@ import {
   MetricStat,
 } from '../../types';
 import { DynamicLabelsField } from '../DynamicLabelsField';
-import QueryHeader from '../QueryHeader';
 
 import { Alias } from './Alias';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
+  setHeaderItems: React.Dispatch<JSX.Element | undefined>;
 }
 
 export const MetricsQueryEditor = (props: Props) => {
-  const { query, onRunQuery, datasource } = props;
+  const { query, onRunQuery, datasource, setHeaderItems, onChange } = props;
   const [sqlCodeEditorIsDirty, setSQLCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
 
-  const onChange = (query: CloudWatchQuery) => {
-    const { onChange, onRunQuery } = props;
-    onChange(query);
-    onRunQuery();
-  };
-
-  return (
-    <>
-      <QueryHeader
+  useEffect(() => {
+    setHeaderItems(
+      <MetricsQueryHeader
         query={query}
-        onRunQuery={onRunQuery}
         datasource={datasource}
         onChange={(newQuery) => {
           if (isCloudWatchMetricsQuery(newQuery) && newQuery.metricEditorMode !== query.metricEditorMode) {
@@ -49,8 +42,14 @@ export const MetricsQueryEditor = (props: Props) => {
           }
           onChange(newQuery);
         }}
+        onRunQuery={onRunQuery}
         sqlCodeEditorIsDirty={sqlCodeEditorIsDirty}
-      />
+      ></MetricsQueryHeader>
+    );
+  }, [query, sqlCodeEditorIsDirty, datasource, onRunQuery, onChange, setHeaderItems]);
+
+  return (
+    <>
       <Space v={0.5} />
 
       {query.metricQueryType === MetricQueryType.Search && (

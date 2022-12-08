@@ -1,23 +1,18 @@
 import React from 'react';
 
-import { SelectableValue, ExploreMode } from '@grafana/data';
+import { LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Badge } from '@grafana/ui';
+import { Badge, Button } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
 import { isCloudWatchMetricsQuery } from '../guards';
 import { useIsMonitoringAccount, useRegions } from '../hooks';
-import { CloudWatchQuery, CloudWatchQueryMode } from '../types';
+import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../types';
 
-import MetricsQueryHeader from './MetricsQueryEditor/MetricsQueryHeader';
-
-interface QueryHeaderProps {
-  query: CloudWatchQuery;
-  datasource: CloudWatchDatasource;
-  onChange: (query: CloudWatchQuery) => void;
-  onRunQuery: () => void;
-  sqlCodeEditorIsDirty: boolean;
+export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+  element?: JSX.Element;
+  dataIsStale: boolean;
 }
 
 const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
@@ -25,7 +20,7 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, datasource, onChange, onRunQuery }) => {
+const QueryHeader: React.FC<Props> = ({ query, onChange, datasource, element, dataIsStale, data, onRunQuery }) => {
   const { queryMode, region } = query;
   const isMonitoringAccount = useIsMonitoringAccount(datasource.api, query.region);
 
@@ -52,41 +47,44 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
     queryMode === 'Logs' && isMonitoringAccount && config.featureToggles.cloudWatchCrossAccountQuerying;
 
   return (
-    <EditorHeader>
-      <InlineSelect
-        label="Region"
-        value={region}
-        placeholder="Select region"
-        allowCustomValue
-        onChange={({ value: region }) => region && onRegionChange(region)}
-        options={regions}
-        isLoading={regionIsLoading}
-      />
-
-      <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
-
-      {shouldDisplayMonitoringBadge && (
-        <>
-          <FlexItem grow={1} />
-          <Badge
-            text="Monitoring account"
-            color="blue"
-            tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
-          ></Badge>
-        </>
-      )}
-
-      {queryMode === ExploreMode.Metrics && (
-        <MetricsQueryHeader
-          query={query}
-          datasource={datasource}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          isMonitoringAccount={isMonitoringAccount}
-          sqlCodeEditorIsDirty={sqlCodeEditorIsDirty}
+    <>
+      <EditorHeader>
+        <InlineSelect
+          label="Region"
+          value={region}
+          placeholder="Select region"
+          allowCustomValue
+          onChange={({ value: region }) => region && onRegionChange(region)}
+          options={regions}
+          isLoading={regionIsLoading}
         />
-      )}
-    </EditorHeader>
+
+        <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
+
+        {shouldDisplayMonitoringBadge && (
+          <>
+            <FlexItem grow={1} />
+            <Badge
+              text="Monitoring account"
+              color="blue"
+              tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
+            ></Badge>
+          </>
+        )}
+
+        {element}
+
+        <Button
+          variant={dataIsStale ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+          disabled={data?.state === LoadingState.Loading}
+        >
+          Run queries
+        </Button>
+      </EditorHeader>
+    </>
   );
 };
 
