@@ -6,7 +6,6 @@ UPDATE api_key SET service_account_id = NULL WHERE service_account_id = 0;
 ALTER TABLE `preferences` ADD COLUMN `json_data` TEXT NULL;
 -- add configuration_hash column to alert_configuration
 ALTER TABLE `alert_configuration` ADD COLUMN `configuration_hash` TEXT NOT NULL DEFAULT 'not-yet-calculated';
-ALTER TABLE `ngalert_configuration` ADD COLUMN `send_alerts_to` INTEGER NOT NULL DEFAULT 0;
 -- create provenance_type table
 CREATE TABLE IF NOT EXISTS `provenance_type` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL , `org_id` INTEGER NOT NULL , `record_key` TEXT NOT NULL , `record_type` TEXT NOT NULL , `provenance` TEXT NOT NULL );
 -- add index to uniquify (record_key, record_type, org_id) columns
