@@ -80,6 +80,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       aspect-ratio: 16 / 9;
       object-fit: cover;
     }
+    p {
+      white-space: pre;
+    }
     ul {
       padding-left: 25px;
     }
