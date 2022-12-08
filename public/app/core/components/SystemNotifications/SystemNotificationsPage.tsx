@@ -57,6 +57,14 @@ export const SystemNotificationsPage = () => {
   const lastReadTimestamp = useRef(useSelector((state) => selectLastReadTimestamp(state.appNotifications)));
   const styles = useStyles2(getStyles);
 
+  const productUpdateNotifications = notifications
+    .filter((noti) => noti.type === AppNotificationType.Update)
+    .concat(dummyProductUpdateNotifications);
+
+  const systemNotifications = notifications.filter(
+    (noti) => noti.type === AppNotificationType.SystemMessage || noti.type === undefined
+  );
+
   useEffectOnce(() => {
     dispatch(readAllNotifications(Date.now()));
   });
@@ -106,7 +114,7 @@ export const SystemNotificationsPage = () => {
           <h3>System error</h3>
           <hr />
           <div className={styles.notificationGroupListItems}>
-            {notifications.map((notif) => {
+            {systemNotifications.map((notif) => {
               return (
                 <li key={notif.id} className={styles.listItem}>
                   <SystemNotificationsItem
@@ -243,7 +251,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export default SystemNotificationsPage;
 
 // DUMMY DATA
-const productUpdateNotifications: AppNotification[] = [
+const dummyProductUpdateNotifications: AppNotification[] = [
   {
     id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
     severity: AppNotificationSeverity.Info,
@@ -270,7 +278,7 @@ const productUpdateNotifications: AppNotification[] = [
 
 const permissionsAndAccessNotifications: AppNotification[] = [
   {
-    id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
+    id: '2bc766e7-5f6e-4774-a648-a7bfe51bed61',
     severity: AppNotificationSeverity.Warning,
     icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
     title: 'Synthetic Monitoring',
@@ -281,7 +289,7 @@ const permissionsAndAccessNotifications: AppNotification[] = [
     showing: true,
   },
   {
-    id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
+    id: '2wc766e7-5f6e-4774-a648-a7bfe51bed61',
     severity: AppNotificationSeverity.Success,
     icon: 'public/img/plugins/grafana-synthetic-monitoring-app.svg',
     title: 'Synthetic Monitoring',
@@ -292,7 +300,7 @@ const permissionsAndAccessNotifications: AppNotification[] = [
     showing: false,
   },
   {
-    id: '2wc766e7-5f6e-4774-a648-a7bfe51bed6w',
+    id: '2wc766e7-5f6e-4774-a648-a7bfe51bed65',
     severity: AppNotificationSeverity.Error,
     icon: 'public/img/plugins/grafana-easystart-app.svg',
     title: 'Integrations and Connections',
@@ -306,7 +314,7 @@ const permissionsAndAccessNotifications: AppNotification[] = [
 
 const productAnnouncementsNotifications: AppNotification[] = [
   {
-    id: '2bc766e7-5f6e-4774-a648-a7bfe51bed63',
+    id: '2bc766e7-5f6e-4774-a648-a7bfe51bed67',
     severity: AppNotificationSeverity.Success,
     icon: 'exclamation-triangle',
     title: '',
