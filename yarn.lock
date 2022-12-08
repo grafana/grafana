@@ -21738,6 +21738,7 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
     react-draggable: 4.4.5
+    react-dropzone: 14.2.3
     react-grid-layout: 1.3.4
     react-highlight-words: 0.18.0
     react-hook-form: 7.5.3

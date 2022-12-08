@@ -23,7 +23,6 @@ export interface CSVConfig {
   encoding?: string; // default: "",
   useExcelHeader?: boolean; // default: false
   headerStyle?: CSVHeaderStyle;
-  dynamicTyping?: boolean;
 }
 
 export interface CSVParseCallbacks {
@@ -43,7 +42,7 @@ export interface CSVOptions {
   callback?: CSVParseCallbacks;
 }
 
-export function readCSV(csv: string, options?: CSVOptions): DataFrame[] {
+export function readCSV(csv: string, options?: CSVOptions): MutableDataFrame[] {
   return new CSVReader(options).readCSV(csv);
 }
 
