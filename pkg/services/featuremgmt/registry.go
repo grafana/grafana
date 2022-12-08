@@ -388,5 +388,10 @@ var (
 			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "apiserver",
+			Description: "Enable the embedded Grafana K8S apiserver",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

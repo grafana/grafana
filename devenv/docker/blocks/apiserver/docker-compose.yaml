@@ -1,0 +1,35 @@
+apiserver:
+  image: k8s.gcr.io/kube-apiserver:v${kubeapi_version}
+  restart: on-failure
+  ports:
+    - "6443:6443"
+  depends_on:
+    - etcd
+  volumes:
+    - ./docker/blocks/apiserver/certs:/var/lib/kubernetes
+  command:
+    - /usr/local/bin/kube-apiserver
+    - --bind-address=0.0.0.0
+    - --secure-port=6443
+    - --etcd-servers=http://etcd:2379
+    - --client-ca-file=/var/lib/kubernetes/ca.pem
+    - --tls-cert-file=/var/lib/kubernetes/kubernetes.pem
+    - --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem
+    - --service-account-key-file=/var/lib/kubernetes/service-account.pem
+    - --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem
+    - --service-account-issuer=https://localhost:6443
+
+etcd:
+  image: quay.io/coreos/etcd:v${etcd_version}
+  restart: on-failure
+  ports:
+    - "2379:2379"
+    - "2380:2380"
+  command:
+    - /usr/local/bin/etcd
+    - -name=etcd-node-0
+    - -listen-client-urls=http://0.0.0.0:2379
+    - -advertise-client-urls=http://0.0.0.0:2379
+    - -initial-advertise-peer-urls=http://0.0.0.0:2380
+    - -listen-peer-urls=http://0.0.0.0:2380
+    - -initial-cluster=etcd-node-0=http://0.0.0.0:2380

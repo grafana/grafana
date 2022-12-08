@@ -282,4 +282,8 @@ const (
 	// FlagSessionRemoteCache
 	// Enable using remote cache for user sessions
 	FlagSessionRemoteCache = "sessionRemoteCache"
+
+	// FlagApiserver
+	// Enable the embedded Grafana K8S apiserver
+	FlagApiserver = "apiserver"
 )

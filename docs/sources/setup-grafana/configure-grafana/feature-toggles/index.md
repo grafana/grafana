@@ -93,6 +93,7 @@ Alpha features might be changed or removed without prior notice.
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
+| `apiserver`                        | Enable the embedded Grafana K8S apiserver                                                                                                                                    |
 
 ## Development feature toggles
 

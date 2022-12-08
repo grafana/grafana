@@ -2117,3 +2117,52 @@ Refer to the [dashboards previews]({{< relref "../../search/dashboard-previews/"
 ## [rbac]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) for more information.
+
+
+## [apiserver]
+
+Settings related to the embedded Kubernetes API.
+
+## [apiserver.server]
+
+Settings related to the K8S HTTP server.
+
+### listen_address
+
+Which address the K8S HTTP server will be listening on, must be in `host:port` format. Default value is `127.0.0.1:8443`.
+
+### cert_file_path
+
+Path to TLS certificate that would be used by the embedded K8S API. Since k8s effectively enforces TLS, this is required. Unset by default, it must be set to enable embedded K8S API.
+
+### key_file_path
+
+Path to TLS key file that would be used by the embedded K8S API. Since k8s effectively enforces TLS, this is required. Unset by default, make sure to set it if using the embedded K8S API.
+
+### read_timeout
+
+The maximum duration for reading the entire request, including the body. A zero or negative value means there will be no timeout. Default value is `1m`.
+
+### write_timeout
+
+The maximum duration before timing out writes of the response. It is reset whenever a new request's header is read. A zero or negative value means there will be no timeout. Default value is `1m`.
+
+### shutdown_timeout
+
+The maximum duration before timing out graceful server shutdown. Default value is `1m`.
+
+## [apiserver.kubebridge]
+
+Settings related to the embedded K8S API kubernetes bridge.
+
+### kubeconfig_path
+
+The kubeconfig file which contains contexts, namespaces and auth. The file must contain all necessary information to connect and authenticate to remote `kube-apiserver`. Unset by default, make sure to set it if using the embedded K8S API.
+
+## [apiserver.proxy]
+
+Settings related to the embedded K8S API apiserver proxy.
+
+### keepalive_timeout
+
+The maximum duration after which a TCP connection to the remote `kube-apiserver` is no longer considered alive and will be terminated.

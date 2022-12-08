@@ -1,0 +1,16 @@
+{
+  "CN": "apiserver",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CH",
+      "L": "Geneva",
+      "O": "Kubernetes",
+      "OU": "GrafanaK8S",
+      "ST": "Canton of Geneva"
+    }
+  ]
+}
