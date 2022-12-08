@@ -62,6 +62,7 @@ type AlertRuleService interface {
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
+	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
 	GetRuleGroupWithTitle(ctx context.Context, orgID int64, folder, group string) (provisioning.AlertRuleGroupWithTitle, error)
 	GetAlertGroupsWithTitle(ctx context.Context, orgID int64) ([]provisioning.AlertRuleGroupWithTitle, error)
 }
@@ -372,12 +373,15 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	return exportResponse(c, e)
+	return exportResponse(c, definitions.AlertRuleFileExport{
+		APIVersion: 1,
+		Groups:     []definitions.AlertRuleGroupExport{e},
+	})
 }
 
 // RouteGetAlertRuleExport retrieves the given alert rule in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, _, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgID, UID)
+	rule, err := srv.alertRules.GetAlertRuleWithFolderTitle(c.Req.Context(), c.OrgID, UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -385,12 +389,20 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := definitions.NewAlertRuleExport(rule)
+	e, err := definitions.NewAlertRuleGroupExport(c.OrgID, rule.FolderTitle, alerting_models.AlertRuleGroup{
+		Title:     rule.AlertRule.RuleGroup,
+		FolderUID: rule.AlertRule.NamespaceUID,
+		Interval:  rule.AlertRule.IntervalSeconds,
+		Rules:     []alerting_models.AlertRule{rule.AlertRule},
+	})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	return exportResponse(c, e)
+	return exportResponse(c, definitions.AlertRuleFileExport{
+		APIVersion: 1,
+		Groups:     []definitions.AlertRuleGroupExport{e},
+	})
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {

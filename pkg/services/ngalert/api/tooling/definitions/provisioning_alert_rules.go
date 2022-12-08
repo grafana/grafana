@@ -20,7 +20,7 @@ import (
 // Export all alert rules in provisioning file format.
 //
 //     Responses:
-//       200: AlertingFileExport
+//       200: AlertRuleFileExport
 //       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
@@ -41,7 +41,7 @@ import (
 //     - text/yaml
 //
 //     Responses:
-//       200: AlertRuleExport
+//       200: AlertRuleFileExport
 //       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
@@ -200,7 +200,7 @@ func NewAlertRules(rules []*models.AlertRule) ProvisionedAlertRules {
 //     - text/yaml
 //
 //     Responses:
-//       200: AlertRuleGroupExport
+//       200: AlertRuleFileExport
 //       404: description: Not found.
 
 // swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
@@ -262,7 +262,6 @@ type AlertRuleFileExport struct {
 }
 
 // AlertRuleGroupExport is the provisioned export of models.AlertRuleGroup.
-// swagger:model
 type AlertRuleGroupExport struct {
 	OrgID    int64             `json:"orgId" yaml:"orgId"`
 	Name     string            `json:"name" yaml:"name"`
@@ -272,7 +271,6 @@ type AlertRuleGroupExport struct {
 }
 
 // AlertRuleExport is the provisioned export of models.AlertRule.
-// swagger:model
 type AlertRuleExport struct {
 	UID          string                     `json:"uid" yaml:"uid"`
 	Title        string                     `json:"title" yaml:"title"`
@@ -288,7 +286,6 @@ type AlertRuleExport struct {
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
-// swagger:model
 type AlertQueryExport struct {
 	RefID             string                   `json:"refId" yaml:"refId"`
 	QueryType         string                   `json:"queryType,omitempty" yaml:"queryType,omitempty"`

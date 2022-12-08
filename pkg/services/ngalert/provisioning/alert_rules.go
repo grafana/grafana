@@ -75,6 +75,37 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 	return *query.Result, provenance, nil
 }
 
+type AlertRuleWithFolderTitle struct {
+	AlertRule   models.AlertRule
+	FolderTitle string
+}
+
+// GetAlertRuleWithFolderTitle returns a single alert rule with its folder title.
+func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (AlertRuleWithFolderTitle, error) {
+	query := &models.GetAlertRuleByUIDQuery{
+		OrgID: orgID,
+		UID:   ruleUID,
+	}
+	err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	if err != nil {
+		return AlertRuleWithFolderTitle{}, err
+	}
+
+	dq := model.GetDashboardQuery{
+		OrgId: orgID,
+		Uid:   query.Result.NamespaceUID,
+	}
+	err = service.dashboardService.GetDashboard(ctx, &dq)
+	if err != nil {
+		return AlertRuleWithFolderTitle{}, err
+	}
+
+	return AlertRuleWithFolderTitle{
+		AlertRule:   *query.Result,
+		FolderTitle: dq.Result.Title,
+	}, nil
+}
+
 // CreateAlertRule creates a new alert rule. This function will ignore any
 // interval that is set in the rule struct and use the already existing group
 // interval or the default one.
