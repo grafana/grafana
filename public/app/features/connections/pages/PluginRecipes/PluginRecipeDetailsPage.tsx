@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { useGetSingle } from './api';
+import { useGetSingle, applyStep } from './api';
 import { DetailsOverview, DetailsStatus, DetailsHeaderActions } from './components';
 import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
 import { PluginRecipeAction, StepStatus } from './types';
@@ -54,7 +54,11 @@ export function PluginRecipeDetailsPage() {
   };
 
   // Can be used to either start or continue an install process
-  const onRunInstall = (startFromStepIndex = 0) => {
+  const onRunInstall = async (startFromStepIndex = 0) => {
+    if (!data) {
+      return;
+    }
+
     setIsInstallStarted(true);
 
     // Find the steps that:
@@ -62,6 +66,7 @@ export function PluginRecipeDetailsPage() {
     //   - can be auto-applied (without user-interaction)
     // Apply them sequentally
     const autoApplicableSteps = getAutoApplicapleStepsFromIndex(startFromStepIndex);
+    await Promise.all(autoApplicableSteps.map((_, i) => applyStep(data.id, i)));
 
     // Instantiate a periodic refetch
     refetch();

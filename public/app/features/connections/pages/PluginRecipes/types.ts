@@ -28,10 +28,11 @@ export type PluginRecipeStep<T = unknown> = {
 };
 
 export enum StepStatus {
-  Loading = 'Loading',
-  Completed = 'Completed',
-  NotCompleted = 'NotCompleted',
-  Error = 'Error',
+  Loading = 'loading',
+  Unknown = 'unknown',
+  Completed = 'completed',
+  NotCompleted = 'notCompleted',
+  Error = 'error',
 }
 
 export type Screenshot = { name: string; url: string };
