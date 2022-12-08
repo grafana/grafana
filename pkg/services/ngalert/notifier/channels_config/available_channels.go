@@ -1,11 +1,15 @@
 package channels_config
 
 import (
+	"os"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
+	hostname, _ := os.Hostname()
+
 	pushoverSoundOptions := []SelectOption{
 		{
 			Value: "default",
@@ -242,8 +246,8 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Severity",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "critical",
-					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is critical. You can use templates",
+					Placeholder:  "error",
+					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is error. You can use templates",
 					PropertyName: "severity",
 				},
 				{ // New in 8.0.
@@ -275,6 +279,30 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Placeholder:  channels.DefaultMessageTitleEmbed,
 					PropertyName: "summary",
+				},
+				{ // New in 9.4.
+					Label:        "Source",
+					Description:  "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  hostname,
+					PropertyName: "source",
+				},
+				{ // New in 9.4.
+					Label:        "Client",
+					Description:  "The name of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "Grafana",
+					PropertyName: "client",
+				},
+				{ // New in 9.4.
+					Label:        "Client URL",
+					Description:  "The URL of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "{{ .ExternalURL }}",
+					PropertyName: "client_url",
 				},
 			},
 		},

@@ -271,6 +271,10 @@ const (
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 
+	// FlagDatasourceOnboarding
+	// Enable data source onboarding page
+	FlagDatasourceOnboarding = "datasourceOnboarding"
+
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources
 	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
