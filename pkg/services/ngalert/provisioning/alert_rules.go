@@ -403,23 +403,23 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 	return nil
 }
 
-type AlertRuleGroupWithTitle struct {
+type AlertRuleGroupWithFolderTitle struct {
 	AlertRuleGroup models.AlertRuleGroup
 	FolderTitle    string
 }
 
-// GetRuleGroupWithTitle returns the alert rule group with folder title.
-func (service *AlertRuleService) GetRuleGroupWithTitle(ctx context.Context, orgID int64, namespaceUID, group string) (AlertRuleGroupWithTitle, error) {
+// GetRuleGroupWithFolderTitle returns the alert rule group with folder title.
+func (service *AlertRuleService) GetRuleGroupWithFolderTitle(ctx context.Context, orgID int64, namespaceUID, group string) (AlertRuleGroupWithFolderTitle, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{namespaceUID},
 		RuleGroup:     group,
 	}
 	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
-		return AlertRuleGroupWithTitle{}, err
+		return AlertRuleGroupWithFolderTitle{}, err
 	}
 	if len(q.Result) == 0 {
-		return AlertRuleGroupWithTitle{}, store.ErrAlertRuleGroupNotFound
+		return AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
 	}
 
 	dq := model.GetDashboardQuery{
@@ -428,10 +428,10 @@ func (service *AlertRuleService) GetRuleGroupWithTitle(ctx context.Context, orgI
 	}
 	err := service.dashboardService.GetDashboard(ctx, &dq)
 	if err != nil {
-		return AlertRuleGroupWithTitle{}, err
+		return AlertRuleGroupWithFolderTitle{}, err
 	}
 
-	res := AlertRuleGroupWithTitle{
+	res := AlertRuleGroupWithFolderTitle{
 		AlertRuleGroup: models.AlertRuleGroup{
 			Title:     q.Result[0].RuleGroup,
 			FolderUID: q.Result[0].NamespaceUID,
@@ -448,8 +448,8 @@ func (service *AlertRuleService) GetRuleGroupWithTitle(ctx context.Context, orgI
 	return res, nil
 }
 
-// GetAlertGroupsWithTitle returns all groups with folder title that have at least one alert.
-func (service *AlertRuleService) GetAlertGroupsWithTitle(ctx context.Context, orgID int64) ([]AlertRuleGroupWithTitle, error) {
+// GetAlertGroupsWithFolderTitle returns all groups with folder title that have at least one alert.
+func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]AlertRuleGroupWithFolderTitle, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
 	}
@@ -486,13 +486,13 @@ func (service *AlertRuleService) GetAlertGroupsWithTitle(ctx context.Context, or
 		folderUidToTitle[dash.Uid] = dash.Title
 	}
 
-	result := make([]AlertRuleGroupWithTitle, 0)
+	result := make([]AlertRuleGroupWithFolderTitle, 0)
 	for groupKey, rules := range groups {
 		title, ok := folderUidToTitle[groupKey.NamespaceUID]
 		if !ok {
 			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
 		}
-		result = append(result, AlertRuleGroupWithTitle{
+		result = append(result, AlertRuleGroupWithFolderTitle{
 			AlertRuleGroup: models.AlertRuleGroup{
 				Title:     rules[0].RuleGroup,
 				FolderUID: rules[0].NamespaceUID,

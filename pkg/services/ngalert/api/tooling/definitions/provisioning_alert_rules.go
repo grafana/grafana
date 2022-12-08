@@ -20,7 +20,7 @@ import (
 // Export all alert rules in provisioning file format.
 //
 //     Responses:
-//       200: AlertRuleFileExport
+//       200: AlertingFileExport
 //       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
@@ -41,7 +41,7 @@ import (
 //     - text/yaml
 //
 //     Responses:
-//       200: AlertRuleFileExport
+//       200: AlertingFileExport
 //       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
@@ -200,7 +200,7 @@ func NewAlertRules(rules []*models.AlertRule) ProvisionedAlertRules {
 //     - text/yaml
 //
 //     Responses:
-//       200: AlertRuleFileExport
+//       200: AlertingFileExport
 //       404: description: Not found.
 
 // swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
@@ -254,9 +254,9 @@ type AlertRuleGroup struct {
 	Rules     []ProvisionedAlertRule `json:"rules"`
 }
 
-// AlertRuleFileExport is the provisioned export of multiple models.AlertRuleGroup.
+// AlertingFileExport is the full provisioned file export.
 // swagger:model
-type AlertRuleFileExport struct {
+type AlertingFileExport struct {
 	APIVersion int64                  `json:"apiVersion" yaml:"apiVersion"`
 	Groups     []AlertRuleGroupExport `json:"groups" yaml:"groups"`
 }
