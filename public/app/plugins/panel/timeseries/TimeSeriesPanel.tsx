@@ -133,7 +133,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             )}
             {data.annotations && (
               <ExemplarsPlugin
-                visibleLabels={getVisibleLabels(config, frames)}
+                visibleSeries={getVisibleLabels(config, frames)}
                 config={config}
                 exemplars={data.annotations}
                 timeZone={timeZone}
