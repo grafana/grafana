@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
   - /docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/
 description: Create Grafana managed alert rule
 keywords:
   - grafana

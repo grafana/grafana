@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/canvas/
-  - /docs/grafana/latest/visualizations/canvas/
+  - ../../features/panels/canvas/
+  - ../../visualizations/canvas/
   - /docs/grafana/latest/panels-visualizations/visualizations/canvas/
 description: Canvas visualization documentation
 keywords:

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/kubernetes/
+  - ../../installation/kubernetes/
   - /docs/grafana/latest/setup-grafana/installation/kubernetes/
 description: Guide for deploying Grafana on Kubernetes
 title: Deploy Grafana on Kubernetes

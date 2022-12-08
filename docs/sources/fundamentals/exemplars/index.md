@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/basics/exemplars/
-  - /docs/grafana/latest/basics/exemplars/view-exemplars/
+  - ../basics/exemplars/
+  - ../basics/exemplars/view-exemplars/
   - /docs/grafana/latest/fundamentals/exemplars/
 description: Exemplars
 keywords:

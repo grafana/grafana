@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/enterprise-configuration/
+  - ../../enterprise/enterprise-configuration/
   - /docs/grafana/latest/setup-grafana/configure-grafana/enterprise-configuration/
 description: Learn about Grafana Enterprise configuration options that you can specify.
 title: Configure Grafana Enterprise

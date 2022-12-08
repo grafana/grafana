@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/docker/
+  - ../../installation/docker/
   - /docs/grafana/latest/setup-grafana/installation/docker/
 description: Guide for running Grafana using Docker
 title: Run Grafana Docker image

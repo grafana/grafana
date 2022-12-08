@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/mysql/
+  - ../data-sources/mysql/
+  - ../features/datasources/mysql/
   - /docs/grafana/latest/datasources/mysql/
-  - /docs/grafana/latest/data-sources/mysql/
 description: Guide for using MySQL in Grafana
 keywords:
   - grafana
