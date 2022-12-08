@@ -251,7 +251,7 @@ func listenToSystemSignals(ctx context.Context, s *server.Server) {
 			if err := log.Reload(); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
 			}
-		case _ = <-signalChan:
+		case <-signalChan:
 			s.Shutdown()
 			return
 		}

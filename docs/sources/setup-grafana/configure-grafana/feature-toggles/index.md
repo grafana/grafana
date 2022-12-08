@@ -109,4 +109,5 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `entityStore`                          | SQL-based entity store (requires storage flag also)       |
 | `queryLibrary`                         | Reusable query library                                    |
 | `accessControlOnCall`                  | Access control primitives for OnCall                      |
+| `jwtTokenGeneration`                   | Enable token generation in JWT Auth service.              |
 | `nestedFolders`                        | Enable folder nesting                                     |

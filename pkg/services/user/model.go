@@ -211,7 +211,7 @@ type SignedInUser struct {
 	HelpFlags1         HelpFlags1
 	LastSeenAt         time.Time
 	Teams              []int64
-	StackID            int64 `json:"stackId,omitempty", xorm:"-"` // In hosted grafana, the stack we are linked to
+	StackID            int64 `xorm:"-" json:"stackId,omitempty"` // In hosted grafana, the stack we are linked to
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 }

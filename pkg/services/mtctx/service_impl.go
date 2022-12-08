@@ -41,7 +41,7 @@ func (s *serviceImpl) showTenantInfo(c *models.ReqContext) response.Response {
 		})
 	}
 
-	// Try to initalize the DB
+	// Try to initialize the DB
 	if !t.DBInitalized {
 		_ = t.GetSessionDB()
 	}
@@ -104,7 +104,7 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 				info.Err = fmt.Errorf("missing client")
 			}
 
-			logger.Info("POTATO: context set: %v", config)
+			logger.Info("POTATO: context set:", "config", config)
 
 			//	s.cache[user.StackID] = info
 

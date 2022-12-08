@@ -21,9 +21,7 @@ type Service struct {
 	pluginLoader   loader.Service
 }
 
-func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service,
-	pluginLoader loader.Service) (*Service, error) {
-
+func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*Service, error) {
 	return New(gCfg, cfg, pluginRegistry, pluginLoader), nil
 }
 

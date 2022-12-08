@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api"
@@ -123,12 +122,10 @@ type BackgroundServiceRegistry struct {
 	log      log.Logger
 	Services []registry.BackgroundService
 
-	context          context.Context
-	shutdownFn       context.CancelFunc
-	childRoutines    *errgroup.Group
-	cfg              *setting.Cfg
-	shutdownOnce     sync.Once
-	shutdownFinished chan struct{}
+	context       context.Context
+	shutdownFn    context.CancelFunc
+	childRoutines *errgroup.Group
+	cfg           *setting.Cfg
 }
 
 func NewBackgroundServiceRegistry(
@@ -205,7 +202,6 @@ func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
 }
 
 func (r *BackgroundServiceRegistry) stop(reason error) error {
-
 	return reason
 }
 

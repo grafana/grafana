@@ -303,7 +303,7 @@ type fakeJWTAuth struct {
 	jwt.PluginAuthService
 }
 
-func (f *fakeJWTAuth) Generate(string, string) (string, error) {
+func (f *fakeJWTAuth) Generate(*user.SignedInUser, string) (string, error) {
 	return "", nil
 }
 

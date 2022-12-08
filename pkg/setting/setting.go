@@ -727,7 +727,7 @@ func applyCommandLineProperties(target string, props map[string]string, file *in
 		if err == nil {
 			key.SetValue(target)
 		} else {
-			defaultSection.NewKey("target", target)
+			_, _ = defaultSection.NewKey("target", target)
 		}
 	}
 	for _, section := range file.Sections() {

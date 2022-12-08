@@ -2,6 +2,7 @@ package modules
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
@@ -126,7 +127,7 @@ func (m *Modules) Run() error {
 		// log which module failed
 		for module, s := range serviceMap {
 			if s == service {
-				if service.FailureCase() == modules.ErrStopProcess {
+				if errors.Is(service.FailureCase(), modules.ErrStopProcess) {
 					m.log.Info("msg", "received stop signal via return error", "module", module, "error", service.FailureCase())
 				} else {
 					m.log.Error("msg", "module failed", "module", module, "error", service.FailureCase())
