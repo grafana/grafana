@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const concurrency = 20
+const concurrency = 10
 const batchSize = 1000
 
 type bounds struct {
@@ -74,6 +74,10 @@ func concurrentBatch(workers, count, size int, eachFn func(start, end int) error
 	return nil
 }
 
+// setupBenchEnv will create userCount users, userCount managed roles with resourceCount managed permission each
+// Example: setupBenchEnv(b, 2, 3) will create:
+//          3 users and assign them 3 managed roles
+//          each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
 	sqlStore := db.InitTestDB(b)
@@ -96,70 +100,58 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	err = acService.RegisterFixedRoles(context.Background())
 	require.NoError(b, err)
 
-	// Prepare managed permissions
-	action2 := "resources:action2"
-	users := make([]user.User, 0, usersCount)
-	orgUsers := make([]org.OrgUser, 0, usersCount)
-	roles := make([]accesscontrol.Role, 0, usersCount)
-	userRoles := make([]accesscontrol.UserRole, 0, usersCount)
-	permissions := make([]accesscontrol.Permission, 0, resourceCount*usersCount)
-	for u := 1; u < usersCount+1; u++ {
-		users = append(users, user.User{
-			ID:      int64(u),
-			Name:    fmt.Sprintf("user%v", u),
-			Login:   fmt.Sprintf("user%v", u),
-			Email:   fmt.Sprintf("user%v@example.org", u),
-			Created: now,
-			Updated: now,
-		})
-		orgUsers = append(orgUsers, org.OrgUser{
-			ID:      int64(u),
-			UserID:  int64(u),
-			OrgID:   1,
-			Role:    org.RoleViewer,
-			Created: now,
-			Updated: now,
-		})
-		roles = append(roles, accesscontrol.Role{
-			ID:      int64(u),
-			UID:     fmt.Sprintf("managed_users_%v_permissions", u),
-			Name:    fmt.Sprintf("managed:users:%v:permissions", u),
-			Version: 1,
-			Created: now,
-			Updated: now,
-		})
-		userRoles = append(userRoles, accesscontrol.UserRole{
-			ID:      int64(u),
-			OrgID:   1,
-			RoleID:  int64(u),
-			UserID:  int64(u),
-			Created: now,
-		})
-
-		for r := 1; r < resourceCount+1; r++ {
-			permissions = append(permissions, accesscontrol.Permission{
-				RoleID:  int64(u),
-				Action:  action2,
-				Scope:   fmt.Sprintf("resources:id:%v", r),
+	// Populate users, roles and assignments
+	if errInsert := concurrentBatch(concurrency, usersCount, batchSize, func(start, end int) error {
+		n := end - start
+		users := make([]user.User, 0, n)
+		orgUsers := make([]org.OrgUser, 0, n)
+		roles := make([]accesscontrol.Role, 0, n)
+		userRoles := make([]accesscontrol.UserRole, 0, n)
+		for u := start; u < end; u++ {
+			users = append(users, user.User{
+				ID:      int64(u),
+				Name:    fmt.Sprintf("user%v", u),
+				Login:   fmt.Sprintf("user%v", u),
+				Email:   fmt.Sprintf("user%v@example.org", u),
 				Created: now,
 				Updated: now,
 			})
+			orgUsers = append(orgUsers, org.OrgUser{
+				ID:      int64(u),
+				UserID:  int64(u),
+				OrgID:   1,
+				Role:    org.RoleViewer,
+				Created: now,
+				Updated: now,
+			})
+			roles = append(roles, accesscontrol.Role{
+				ID:      int64(u),
+				UID:     fmt.Sprintf("managed_users_%v_permissions", u),
+				Name:    fmt.Sprintf("managed:users:%v:permissions", u),
+				OrgID:   1,
+				Version: 1,
+				Created: now,
+				Updated: now,
+			})
+			userRoles = append(userRoles, accesscontrol.UserRole{
+				ID:      int64(u),
+				OrgID:   1,
+				RoleID:  int64(u),
+				UserID:  int64(u),
+				Created: now,
+			})
 		}
-	}
-
-	// Populate store
-	if errInsert := concurrentBatch(concurrency, len(roles), batchSize, func(start, end int) error {
 		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			if _, err := sess.Insert(users[start:end]); err != nil {
+			if _, err := sess.Insert(users); err != nil {
 				return err
 			}
-			if _, err := sess.Insert(orgUsers[start:end]); err != nil {
+			if _, err := sess.Insert(orgUsers); err != nil {
 				return err
 			}
-			if _, err := sess.Insert(roles[start:end]); err != nil {
+			if _, err := sess.Insert(roles); err != nil {
 				return err
 			}
-			_, err := sess.Insert(userRoles[start:end])
+			_, err := sess.Insert(userRoles)
 			return err
 		})
 		return err
@@ -168,9 +160,22 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		return nil, nil
 	}
 
-	if errInsert := concurrentBatch(concurrency, len(permissions), batchSize, func(start, end int) error {
+	// Populate permissions
+	action2 := "resources:action2"
+	if errInsert := concurrentBatch(concurrency, resourceCount*usersCount, batchSize, func(start, end int) error {
+		permissions := make([]accesscontrol.Permission, 0, end-start)
+		for i := start; i < end; i++ {
+			permissions = append(permissions, accesscontrol.Permission{
+				RoleID:  int64(i/resourceCount + 1),
+				Action:  action2,
+				Scope:   fmt.Sprintf("resources:id:%v", i%resourceCount+1),
+				Created: now,
+				Updated: now,
+			})
+		}
+
 		return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			_, err := sess.Insert(permissions[start:end])
+			_, err := sess.Insert(permissions)
 			return err
 		})
 	}); errInsert != nil {
