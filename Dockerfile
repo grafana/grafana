@@ -18,6 +18,11 @@ COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
 
+# Install build dependencies
+RUN if grep -i -q alpine /etc/issue; then \
+      apk add --no-cache gcc g++ make python3; \
+    fi
+
 RUN yarn install
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
@@ -30,10 +35,6 @@ RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
 
-# Install build dependencies
-RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make; \
-    fi
 
 WORKDIR /tmp/grafana
 
