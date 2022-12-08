@@ -69,6 +69,8 @@ const setup = () => {
       metricQueryType: MetricQueryType.Search,
       metricEditorMode: MetricEditorMode.Builder,
     },
+    extraHeaderElementLeft: () => {},
+    extraHeaderElementRight: () => {},
     datasource,
     history: [],
     onChange: jest.fn(),

@@ -15,8 +15,8 @@ export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Clou
 export const QueryEditor = (props: Props) => {
   const { query, onChange, data } = props;
   const [dataIsStale, setDataIsStale] = useState(false);
-  const [headerElementLeft, setHeaderElementLeft] = useState<JSX.Element>();
-  const [headerElementRight, setHeaderElementRight] = useState<JSX.Element>();
+  const [extraHeaderElementLeft, setExtraHeaderElementLeft] = useState<JSX.Element>();
+  const [extraHeaderElementRight, setExtraHeaderElementRight] = useState<JSX.Element>();
 
   useEffect(() => {
     setDataIsStale(false);
@@ -34,8 +34,8 @@ export const QueryEditor = (props: Props) => {
     <>
       <QueryHeader
         {...props}
-        leftHeaderElement={headerElementLeft}
-        rightHeaderElement={headerElementRight}
+        extraHeaderElementLeft={extraHeaderElementLeft}
+        extraHeaderElementRight={extraHeaderElementRight}
         dataIsStale={dataIsStale}
       />
 
@@ -45,19 +45,11 @@ export const QueryEditor = (props: Props) => {
           query={query}
           onRunQuery={() => {}}
           onChange={onChangeInternal}
-          headerElementLeft={setHeaderElementLeft}
-          headerElementRight={setHeaderElementRight}
+          extraHeaderElementLeft={setExtraHeaderElementLeft}
+          extraHeaderElementRight={setExtraHeaderElementRight}
         />
       )}
-      {isCloudWatchLogsQuery(query) && (
-        <LogsQueryEditor
-          {...props}
-          query={query}
-          onChange={onChangeInternal}
-          headerElementLeft={setHeaderElementLeft}
-          headerElementRight={setHeaderElementRight}
-        />
-      )}
+      {isCloudWatchLogsQuery(query) && <LogsQueryEditor {...props} query={query} onChange={onChangeInternal} />}
     </>
   );
 };

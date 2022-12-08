@@ -1,7 +1,6 @@
 // Libraries
 import { css } from '@emotion/css';
 import React, { memo } from 'react';
-import { useEffectOnce } from 'react-use';
 
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
@@ -14,8 +13,6 @@ import CloudWatchLogsQueryField from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   query: CloudWatchLogsQuery;
-  headerElementLeft: React.Dispatch<JSX.Element | undefined>;
-  headerElementRight: React.Dispatch<JSX.Element | undefined>;
 };
 
 const labelClass = css`
@@ -24,12 +21,7 @@ const labelClass = css`
 `;
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
-  const { query, data, datasource, onRunQuery, onChange, exploreId, headerElementLeft, headerElementRight } = props;
-
-  useEffectOnce(() => {
-    headerElementLeft(undefined);
-    headerElementRight(undefined);
-  });
+  const { query, data, datasource, onRunQuery, onChange, exploreId } = props;
 
   let absolute: AbsoluteTimeRange;
   if (data?.request?.range?.from) {

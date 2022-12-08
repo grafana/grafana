@@ -11,8 +11,8 @@ import { useIsMonitoringAccount, useRegions } from '../hooks';
 import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
-  leftHeaderElement?: JSX.Element;
-  rightHeaderElement?: JSX.Element;
+  extraHeaderElementLeft?: JSX.Element;
+  extraHeaderElementRight?: JSX.Element;
   dataIsStale: boolean;
 }
 
@@ -25,23 +25,22 @@ const QueryHeader: React.FC<Props> = ({
   query,
   onChange,
   datasource,
-  leftHeaderElement,
-  rightHeaderElement,
+  extraHeaderElementLeft,
+  extraHeaderElementRight,
   dataIsStale,
   data,
   onRunQuery,
 }) => {
   const { queryMode, region } = query;
   const isMonitoringAccount = useIsMonitoringAccount(datasource.api, query.region);
-
   const [regions, regionIsLoading] = useRegions(datasource);
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
-    if (value !== queryMode) {
+    if (value && value !== queryMode) {
       onChange({
         ...query,
         queryMode: value,
-      } as CloudWatchQuery);
+      });
     }
   };
   const onRegionChange = async (region: string) => {
@@ -70,7 +69,7 @@ const QueryHeader: React.FC<Props> = ({
 
         <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
 
-        {leftHeaderElement}
+        {extraHeaderElementLeft}
 
         <FlexItem grow={1} />
 
@@ -84,7 +83,7 @@ const QueryHeader: React.FC<Props> = ({
           </>
         )}
 
-        {rightHeaderElement}
+        {extraHeaderElementRight}
 
         <Button
           variant={dataIsStale ? 'primary' : 'secondary'}

@@ -22,8 +22,8 @@ import { Alias } from './Alias';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
-  headerElementLeft: React.Dispatch<JSX.Element | undefined>;
-  headerElementRight: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementLeft: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementRight: React.Dispatch<JSX.Element | undefined>;
 }
 
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
@@ -36,7 +36,14 @@ const editorModes = [
 ];
 
 export const MetricsQueryEditor = (props: Props) => {
-  const { query, onRunQuery, datasource, headerElementLeft, headerElementRight, onChange } = props;
+  const {
+    query,
+    onRunQuery,
+    datasource,
+    extraHeaderElementLeft: headerElementLeft,
+    extraHeaderElementRight: headerElementRight,
+    onChange,
+  } = props;
   const [showConfirm, setShowConfirm] = useState(false);
   const [sqlCodeEditorIsDirty, setSQLCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
@@ -91,6 +98,11 @@ export const MetricsQueryEditor = (props: Props) => {
         />
       </>
     );
+
+    return () => {
+      headerElementLeft(undefined);
+      headerElementRight(undefined);
+    };
   }, [
     query,
     sqlCodeEditorIsDirty,
