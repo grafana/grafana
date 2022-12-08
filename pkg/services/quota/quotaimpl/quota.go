@@ -212,7 +212,6 @@ func (s *service) CheckQuotaReached(ctx context.Context, targetSrv quota.TargetS
 			// do not check user quota if the user information is not available (eg no user is signed in)
 			if scope == quota.UserScope && (scopeParams == nil || scopeParams.UserID == 0) {
 				continue
-
 			}
 
 			// do not check user quota if the org information is not available (eg no user is signed in)
