@@ -1,12 +1,3 @@
-<!-- 9.3.2 START -->
-
-# 9.3.2 (2022-12-13)
-
-### Bug fixes
-
-- **Prometheus:** Fix exemplars not respecting corresponding series display status. [#59678](https://github.com/grafana/grafana/issues/59678), [@gtk-grafana](https://github.com/gtk-grafana)
-
-<!-- 9.3.2 END -->
 <!-- 9.3.1 START -->
 
 # 9.3.1 (2022-11-30)
