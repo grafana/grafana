@@ -86,6 +86,10 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
+    // Put the traceID field in front.
+    const traceIDField = dataFrame.fields.find((field) => field.name === 'traceID') || dataFrame.fields[0];
+    const orderedDataFrameFields = [traceIDField, ...dataFrame.fields.filter((field) => traceIDField !== field)];
+
     const timeFormatter = (value: number) => {
       return dateTimeFormat(value, {
         format: systemDateFormats.fullDate,
@@ -110,7 +114,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
             <div>
               <table className={styles.exemplarsTable}>
                 <tbody>
-                  {dataFrame.fields.map((field, i) => {
+                  {orderedDataFrameFields.map((field, i) => {
                     const value = field.values.get(dataFrameFieldIndex.fieldIndex);
                     const links = field.config.links?.length
                       ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
