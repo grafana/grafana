@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 
-import { useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 import { PluginRecipe } from '../types';
 
@@ -9,19 +9,52 @@ import { Steps } from './Steps';
 
 type Props = {
   recipe: PluginRecipe;
+  // Can be called to start or continue the install
+  onInstall: () => void;
+
+  // Tells if the whole recipe is installed
+  isInstalled: boolean;
+
+  // Tells if the install is in progress
+  isInstallInProgress: boolean;
 };
 
-export function DetailsStatus({ recipe }: Props): ReactElement {
+export function DetailsStatus({ recipe, onInstall, isInstalled, isInstallInProgress }: Props): ReactElement {
   const styles = useStyles2(getStyles);
 
+  // Display the steps immadiately after clicking install (and also if the recipe has been installed)
+  if (isInstallInProgress || isInstalled) {
+    return (
+      <div>
+        <Steps steps={recipe.steps} />
+      </div>
+    );
+  }
+
   return (
-    <div>
-      {/* Steps */}
-      <Steps steps={recipe.steps} />
+    <div className={styles.notInstalledContainer}>
+      <div className={styles.notInstalledText}>Start monitoring your service now!</div>
+      <div>
+        <Button size="lg" onClick={onInstall}>
+          Install
+        </Button>
+      </div>
     </div>
   );
 }
 
 const getStyles = () => ({
-  overview: css``,
+  notInstalledContainer: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  `,
+
+  notInstalledText: css`
+    margin-bottom: 20px;
+    margin-top: 30px;
+    font-size: 15px;
+    color: #ffffff69;
+  `,
 });

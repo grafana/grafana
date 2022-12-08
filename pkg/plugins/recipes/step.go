@@ -15,7 +15,7 @@ type RecipeStepMeta struct {
 }
 
 type RecipeStepStatus struct {
-	Status        string `json:"status"` // "Completed" | "NotComleted" | "Error"
+	Status        string `json:"status"` // "Loading" | "Completed" | "NotComleted" | "Error"
 	StatusMessage string `json:"statusMessage"`
 }
 

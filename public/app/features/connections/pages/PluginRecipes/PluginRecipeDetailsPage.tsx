@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
@@ -8,20 +8,72 @@ import { Page } from 'app/core/components/Page/Page';
 import { useGetSingle } from './api';
 import { DetailsOverview, DetailsStatus, DetailsHeaderActions } from './components';
 import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
+import { PluginRecipeAction, StepStatus } from './types';
 
 const navId = 'connections-plugin-recipes';
 
 export function PluginRecipeDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { status, error, data } = useGetSingle(params.id);
+  const { status, error, data, refetch } = useGetSingle(params.id);
   const { tabId, tabs } = usePluginRecipeDetailsPageTabs();
   const styles = useStyles2(getStyles);
-  const onStartInstall = () => {}; // called when the user clicks on "Install"
+  // Tells if the user instantiated the install, but it hasn't been recorded by the backend yet
+  const [isInstallStarted, setIsInstallStarted] = useState(false);
+  const isInstalled = useMemo(
+    () => (data ? data.steps.every((step) => step.status?.code === StepStatus.Completed) : false),
+    [data]
+  );
+  // Tells if the install is in progress in the backend
+  const isInstallInProgress = useMemo(
+    () =>
+      data
+        ? !isInstalled &&
+          data.steps.some(
+            (step) => step.status?.code === StepStatus.Completed || step.status?.code === StepStatus.Loading
+          )
+        : false,
+    [data, isInstalled]
+  );
+
+  // Finds the steps that can be auto-applied starting from an index
+  const getAutoApplicapleStepsFromIndex = (index = 0) => {
+    if (!data) {
+      return [];
+    }
+
+    const autoApplicableSteps = [];
+
+    for (const step of data.steps.slice(index)) {
+      if (step.action === PluginRecipeAction.DisplayInfo || step.action === PluginRecipeAction.Prompt) {
+        break;
+      }
+
+      autoApplicableSteps.push(step);
+    }
+    return autoApplicableSteps;
+  };
+
+  // Can be used to either start or continue an install process
+  const onRunInstall = (startFromStepIndex = 0) => {
+    setIsInstallStarted(true);
+
+    // Find the steps that:
+    //   - are not applied yet
+    //   - can be auto-applied (without user-interaction)
+    // Apply them sequentally
+    const autoApplicableSteps = getAutoApplicapleStepsFromIndex(startFromStepIndex);
+
+    // Instantiate a periodic refetch
+    refetch();
+  };
+
+  // Some random options to be used in the header
   const info = [
     { label: 'Version', value: 'v1.0.0' },
     { label: 'Rating', value: '4/5' },
   ];
 
+  // Loading recipe
   if (status === 'loading') {
     return (
       <Page navId={navId} pageNav={{ text: '', subTitle: '', active: true }}>
@@ -32,6 +84,7 @@ export function PluginRecipeDetailsPage() {
     );
   }
 
+  // Error while loading recipe
   if (status === 'error') {
     return (
       <Page navId={navId} pageNav={{ text: 'Error', subTitle: '', active: true }}>
@@ -42,6 +95,7 @@ export function PluginRecipeDetailsPage() {
     );
   }
 
+  // Not found
   if (status === 'success' && !data) {
     return (
       <Page navId={navId} pageNav={{ text: '', subTitle: '', active: true }}>
@@ -54,8 +108,17 @@ export function PluginRecipeDetailsPage() {
     <Page
       navId={navId}
       pageNav={{ text: data.name, subTitle: data.summary, active: true, children: tabs }}
-      actions={<DetailsHeaderActions onInstall={onStartInstall} />}
+      // Meta info
       info={info}
+      // Install actions
+      actions={
+        <DetailsHeaderActions
+          onInstall={onRunInstall}
+          isInstalled={isInstalled}
+          isInstallInProgress={isInstallStarted || isInstallInProgress}
+        />
+      }
+      // Title with logo
       renderTitle={(title) => (
         <div className={styles.pageTitleContainer}>
           <img className={styles.pageTitleImage} src={data.logo} alt={`Logo of ${data.name}`} />
@@ -65,8 +128,18 @@ export function PluginRecipeDetailsPage() {
     >
       <Page.Contents>
         <div className={styles.content}>
+          {/* Overview */}
           {tabId === tabIds.overview && <DetailsOverview recipe={data} />}
-          {tabId === tabIds.status && <DetailsStatus recipe={data} />}
+
+          {/* Status */}
+          {tabId === tabIds.status && (
+            <DetailsStatus
+              recipe={data}
+              isInstalled={isInstalled}
+              isInstallInProgress={isInstallStarted || isInstallInProgress}
+              onInstall={onRunInstall}
+            />
+          )}
         </div>
       </Page.Contents>
     </Page>
