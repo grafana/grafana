@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
-import { GrafanaTheme2, AppNotificationType } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { isIconName } from '@grafana/data/src/types/icon';
 import { config } from '@grafana/runtime';
 import { Tag, Card, Checkbox, useTheme2 } from '@grafana/ui';
