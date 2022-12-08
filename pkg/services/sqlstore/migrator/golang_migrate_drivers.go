@@ -3,7 +3,9 @@ package migrator
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/golang-migrate/migrate/v4/database"
@@ -12,6 +14,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 //go:embed golang-migrate/*/*.sql
@@ -50,4 +53,61 @@ func GetDatabaseDriver(driverName string, instance *sql.DB) (database.Driver, er
 	}
 
 	return dd, nil
+}
+
+type ListMigrationItem struct {
+	Version uint
+	HasRun  bool
+	IsDirty bool
+}
+
+func ListMigrations(sourceDriver source.Driver, databaseDriver database.Driver) ([]ListMigrationItem, error) {
+	r := make([]ListMigrationItem, 0, 0)
+
+	dbVersion, dirty, err := databaseDriver.Version()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get database version: %w", err)
+	}
+
+	firstVersion, err := sourceDriver.First()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get source first version: %w", err)
+	}
+
+	v := firstVersion
+	for {
+		hasRun := false
+		isDirty := false
+		if v <= uint(dbVersion) {
+			hasRun = true
+		}
+
+		switch {
+		case v < uint(dbVersion):
+			hasRun = true
+		case v == uint(dbVersion):
+			hasRun = true
+			if dirty {
+				isDirty = true
+			}
+		}
+
+		r = append(r, ListMigrationItem{
+			Version: v,
+			HasRun:  hasRun,
+			IsDirty: isDirty,
+		})
+
+		next, err := sourceDriver.Next(v)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				break
+			}
+
+			return nil, fmt.Errorf("failed to get next migration: %w", err)
+		}
+
+		v = next
+	}
+	return util.Reverse(r), nil
 }

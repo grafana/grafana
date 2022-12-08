@@ -204,6 +204,11 @@ var adminCommands = []*cli.Command{
 				Action: runDbCommand(getMigrationsVersion),
 			},
 			{
+				Name:   "list",
+				Usage:  "List migrations",
+				Action: runDbCommand(listMigrations),
+			},
+			{
 				Name:   "run",
 				Usage:  "It will migrate up if steps > 0, and down if steps < 0.",
 				Action: runDbCommand(runMigrationsSteps),
