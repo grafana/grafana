@@ -45,6 +45,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
 import { PanelHeaderNotices } from './PanelHeader/PanelHeaderNotices';
 import { PanelHeaderState } from './PanelHeader/PanelHeaderState';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
@@ -582,25 +583,26 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
-    // for new panel header design
-    // const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
     const title = panel.getDisplayTitle();
-    const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-    // const leftItems = [
-    //   <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
-    // ];
-    const headerState = <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} data={data} key="state" />;
+    const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
+    const dataState = (
+      <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} dataState={LoadingState.Error} key="state" />
+    );
     const titleItemsNodes = [<PanelHeaderNotices frames={data.series} panelId={panel.id} key="notices" />];
+
     if (config.featureToggles.newPanelChromeUI) {
       return (
         <PanelChrome
           width={width}
           height={height}
-          padding={noPadding}
+          padding={padding}
           title={title}
-          state={headerState}
           titleItemsNodes={titleItemsNodes}
-          loadingState={LoadingState.Streaming}
+          onStreamingStop={() => panel.getQueryRunner().cancelQuery()}
+          loadingState={data.state}
+          dataStateNode={dataState}
+          // leftItems is to be deprecated
+          // leftItems={[<PanelHeaderLoadingIndicator state={data.state} onClick={() => {}} key="loading-indicator" />]}
         >
           {(innerWidth, innerHeight) => (
             <>

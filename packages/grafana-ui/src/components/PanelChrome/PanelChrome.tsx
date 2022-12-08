@@ -37,12 +37,12 @@ export interface PanelChromeProps {
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
   hoverHeader?: boolean;
-  loadingState?: LoadingState;
   onStreamingStop?: () => void;
-  state?: ReactNode; // maybe PanelDataState?
+  loadingState?: LoadingState;
+  dataStateNode?: ReactNode;
   /** @deprecated in favor of prop states
    * which will serve the same purpose
-   * of showing the panel state in the top right corner
+   * of showing the panel dataState in the top right corner
    * of itself or its header
    * */
   leftItems?: ReactNode[];
@@ -56,7 +56,7 @@ export type PanelPadding = 'none' | 'md';
 /**
  * @internal
  */
-export const PanelChrome: React.FC<PanelChromeProps> = ({
+export function PanelChrome({
   width,
   height,
   children,
@@ -69,9 +69,9 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   // hoverHeader = false,
   onStreamingStop,
   loadingState,
-  state = null,
+  dataStateNode = null,
   leftItems = [],
-}) => {
+}: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -108,7 +108,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
 
   // TODO Should we leave them both for a while?
   // const isUsingDeprecatedLeftItems = leftItems.length > 0;
-  const isUsingDeprecatedLeftItems = !state && leftItems.length > 0;
+  const isUsingDeprecatedLeftItems = !dataStateNode && leftItems.length > 0;
 
   return (
     <div className={styles.container} style={containerStyles}>
@@ -176,7 +176,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
         {isUsingDeprecatedLeftItems ? (
           <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
         ) : (
-          state
+          dataStateNode
         )}
       </div>
 
@@ -185,7 +185,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
       </div>
     </div>
   );
-};
+}
 
 const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);

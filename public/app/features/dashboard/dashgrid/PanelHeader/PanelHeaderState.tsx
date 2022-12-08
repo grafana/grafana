@@ -22,7 +22,7 @@ export function PanelHeaderState({ dataState, errorMessage, panelId }: Props) {
   const [mode, setMode] = useState<InfoMode>();
 
   useEffect(() => {
-    if (errorMessage) {
+    if (dataState === LoadingState.Error || errorMessage) {
       setMode(InfoMode.Error);
     } else if (dataState === LoadingState.Warning) {
       setMode(InfoMode.Warning);
