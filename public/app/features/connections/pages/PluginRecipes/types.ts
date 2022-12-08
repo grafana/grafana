@@ -20,10 +20,19 @@ export enum StepStatus {
   Error = 'Error',
 }
 
+export enum PluginRecipeAction {
+  InstallPlugin = 'install-plugin',
+  DisplayInfo = 'display-info',
+  SetupDashboard = 'setup-dashboard',
+  Prompt = 'prompt',
+  SetupAlerts = 'setup-alerts',
+  InstallAgent = 'install-agent',
+}
+
 // Step - General
 // --------------
 export type PluginRecipeStep = {
-  action: 'install-plugin' | 'display-info' | 'setup-dashboard' | 'prompt' | 'setup-alerts' | 'install-agent';
+  action: PluginRecipeAction;
 
   // Meta information about the step (Optional)
   meta?: PluginRecipeStepMeta;

@@ -8,7 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { useGetSingle } from './api';
 import { DetailsOverview, DetailsStatus, DetailsHeaderActions } from './components';
 import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
-import { StepStatus } from './types';
+import { PluginRecipeAction, StepStatus } from './types';
 
 const navId = 'connections-plugin-recipes';
 
@@ -17,11 +17,13 @@ export function PluginRecipeDetailsPage() {
   const { status, error, data, refetch } = useGetSingle(params.id);
   const { tabId, tabs } = usePluginRecipeDetailsPageTabs(data);
   const styles = useStyles2(getStyles);
+  // Tells if the user instantiated the install, but it hasn't been recorded by the backend yet
   const [isInstallStarted, setIsInstallStarted] = useState(false);
   const isInstalled = useMemo(
     () => (data ? data.steps.every((step) => step.status?.status === StepStatus.Completed) : false),
     [data]
   );
+  // Tells if the install is in progress in the backend
   const isInstallInProgress = useMemo(
     () =>
       data
@@ -33,13 +35,33 @@ export function PluginRecipeDetailsPage() {
     [data, isInstalled]
   );
 
+  // Finds the steps that can be auto-applied starting from an index
+  const getAutoApplicapleStepsFromIndex = (index = 0) => {
+    if (!data) {
+      return [];
+    }
+
+    const autoApplicableSteps = [];
+
+    for (const step of data.steps.slice(index)) {
+      if (step.action === PluginRecipeAction.DisplayInfo || step.action === PluginRecipeAction.Prompt) {
+        break;
+      }
+
+      autoApplicableSteps.push(step);
+    }
+    return autoApplicableSteps;
+  };
+
   // Can be used to either start or continue an install process
-  const onRunInstall = () => {
+  const onRunInstall = (startFromStepIndex = 0) => {
     setIsInstallStarted(true);
+
     // Find the steps that:
     //   - are not applied yet
     //   - can be auto-applied (without user-interaction)
     // Apply them sequentally
+    const autoApplicableSteps = getAutoApplicapleStepsFromIndex(startFromStepIndex);
 
     // Instantiate a periodic refetch
     refetch();
@@ -86,15 +108,17 @@ export function PluginRecipeDetailsPage() {
     <Page
       navId={navId}
       pageNav={{ text: data.name, subTitle: data.meta.summary, active: true, children: tabs }}
+      // Meta info
+      info={info}
+      // Install actions
       actions={
         <DetailsHeaderActions
           onInstall={onRunInstall}
           isInstalled={isInstalled}
-          isInstallInProgress={isInstallInProgress}
-          isInstallStarted={isInstallStarted} // TMP
+          isInstallInProgress={isInstallStarted || isInstallInProgress}
         />
       }
-      info={info}
+      // Title with logo
       renderTitle={(title) => (
         <div className={styles.pageTitleContainer}>
           <img className={styles.pageTitleImage} src={data.meta.logo} alt={`Logo of ${data.name}`} />
@@ -104,12 +128,15 @@ export function PluginRecipeDetailsPage() {
     >
       <Page.Contents>
         <div className={styles.content}>
+          {/* Overview */}
           {tabId === tabIds.overview && <DetailsOverview recipe={data} />}
+
+          {/* Status */}
           {tabId === tabIds.status && (
             <DetailsStatus
               recipe={data}
               isInstalled={isInstalled}
-              isInstallStarted={isInstallStarted}
+              isInstallInProgress={isInstallStarted || isInstallInProgress}
               onInstall={onRunInstall}
             />
           )}

@@ -9,15 +9,12 @@ export type Props = {
   // Tells if the whole recipe is installed
   isInstalled: boolean;
 
-  // Tells if the install has been actually started in the backend as well
+  // Tells if the install is in progress
   isInstallInProgress: boolean;
-
-  // Tells if the install has been initiated by the user (but maybe haven't been updated in the DTO status yet)
-  isInstallStarted: boolean;
 };
 
-export const DetailsHeaderActions = ({ onInstall, isInstalled, isInstallInProgress, isInstallStarted }: Props) => {
-  if (isInstallInProgress || isInstallStarted) {
+export const DetailsHeaderActions = ({ onInstall, isInstalled, isInstallInProgress }: Props) => {
+  if (isInstallInProgress) {
     return (
       <>
         <Button icon="check" onClick={onInstall} disabled>

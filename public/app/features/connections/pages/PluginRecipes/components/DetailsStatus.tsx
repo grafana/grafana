@@ -15,30 +15,30 @@ type Props = {
   // Tells if the whole recipe is installed
   isInstalled: boolean;
 
-  // Tells if the install has been initiated by the user (but maybe haven't been updated in the DTO status yet)
-  isInstallStarted: boolean;
+  // Tells if the install is in progress
+  isInstallInProgress: boolean;
 };
 
-export function DetailsStatus({ recipe, onInstall, isInstalled, isInstallStarted }: Props): ReactElement {
+export function DetailsStatus({ recipe, onInstall, isInstalled, isInstallInProgress }: Props): ReactElement {
   const styles = useStyles2(getStyles);
 
-  if (!isInstalled) {
+  // Display the steps immadiately after clicking install (and also if the recipe has been installed)
+  if (isInstallInProgress || isInstalled) {
     return (
-      <div className={styles.notInstalledContainer}>
-        <div className={styles.notInstalledText}>Start monitoring your service now!</div>
-        <div>
-          <Button size="lg" disabled={isInstallStarted} onClick={onInstall}>
-            {isInstallStarted ? 'Installing...' : 'Install'}
-          </Button>
-        </div>
+      <div>
+        <Steps steps={recipe.steps} />
       </div>
     );
   }
 
   return (
-    <div>
-      {/* Steps */}
-      <Steps steps={recipe.steps} />
+    <div className={styles.notInstalledContainer}>
+      <div className={styles.notInstalledText}>Start monitoring your service now!</div>
+      <div>
+        <Button size="lg" onClick={onInstall}>
+          Install
+        </Button>
+      </div>
     </div>
   );
 }

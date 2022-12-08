@@ -3,7 +3,7 @@ import React, { ReactElement, useState } from 'react';
 
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
-import { PluginRecipeStep, StepStatus } from '../types';
+import { PluginRecipeStep, PluginRecipeAction, StepStatus } from '../types';
 
 import { Step } from './Step';
 
@@ -16,7 +16,8 @@ export function Steps({ steps = [] }: Props): ReactElement {
   const [activeStepIndex, setActiveStepIndex] = useState(findActiveStepIndex(steps));
   const isStepCompleted = (step: PluginRecipeStep) => step.status?.status === StepStatus.Completed;
   const isStepActive = (i: number) => i === activeStepIndex;
-  const isStepExpandable = (step: PluginRecipeStep) => step.action === 'prompt' || step.action === 'display-info';
+  const isStepExpandable = (step: PluginRecipeStep) =>
+    step.action === PluginRecipeAction.Prompt || step.action === PluginRecipeAction.DisplayInfo;
 
   // TODO: make this listen to changes from the backend as well
   const goToNextStep = () => {
