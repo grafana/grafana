@@ -3,7 +3,7 @@ import React, { ReactElement } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-import { PluginRecipeStep, isInstrucitonStep, isPromptStep } from '../types';
+import { PluginRecipeStep, isInstrucitonStep, isPromptStep, StepStatus } from '../types';
 
 import { StepInstruction } from './StepInstruction';
 import { StepPrompt } from './StepPrompt';
@@ -26,6 +26,13 @@ export function Step({ step, isOpen, onComplete }: Props): ReactElement {
     <div>
       {/* Name */}
       <div className={styles.stepName}>{step.name}</div>
+
+      {/* Error */}
+      {Boolean(step.status.code === StepStatus.Error) && (
+        <div className={styles.stepErrorMessage}>
+          <strong>Error: </strong>&quot;{step.status.message}&quot;
+        </div>
+      )}
 
       {isOpen && (
         <>
@@ -54,12 +61,19 @@ export function StepContent({ step, onComplete }: Omit<Props, 'isOpen'>): ReactE
 
 const getStyles = () => ({
   stepName: css`
-    font-size: 19px;
-    margin-top: 3px;
+    font-size: 18px;
   `,
 
   stepDescription: css`
     font-size: 13px;
     color: #ffffff69;
+  `,
+
+  stepErrorMessage: css`
+    font-size: 13px;
+    background: #0000004f;
+    padding: 1px 7px;
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
   `,
 });

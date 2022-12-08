@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { ReactElement, useState } from 'react';
 
-import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { PluginRecipeStep, PluginRecipeAction, StepStatus } from '../types';
 
@@ -15,9 +15,16 @@ export function Steps({ steps = [] }: Props): ReactElement {
   const styles = useStyles2(getStyles);
   const [activeStepIndex, setActiveStepIndex] = useState(findActiveStepIndex(steps));
   const isStepCompleted = (step: PluginRecipeStep) => step.status.code === StepStatus.Completed;
+  const isStepNotCompleted = (step: PluginRecipeStep) => step.status.code === StepStatus.NotCompleted;
+  const isStepLoading = (step: PluginRecipeStep) => step.status.code === StepStatus.Loading;
+  const isStepError = (step: PluginRecipeStep) => step.status.code === StepStatus.Error;
   const isStepActive = (i: number) => i === activeStepIndex;
   const isStepExpandable = (step: PluginRecipeStep) =>
     step.action === PluginRecipeAction.Prompt || step.action === PluginRecipeAction.DisplayInfo;
+  const shouldShowLoading = (step: PluginRecipeStep, i: number) =>
+    isStepLoading(step) || (isStepNotCompleted(step) && isStepActive(i) && isStepExpandable(step));
+  const shouldExpandStep = (step: PluginRecipeStep, i: number) =>
+    isStepNotCompleted(step) && isStepActive(i) && isStepExpandable(step);
 
   // TODO: make this listen to changes from the backend as well
   const goToNextStep = () => {
@@ -37,12 +44,17 @@ export function Steps({ steps = [] }: Props): ReactElement {
               className={cx(
                 styles.stepNumber,
                 isStepActive(i) && styles.stepNumberActive,
-                isStepCompleted(step) && styles.stepNumberCompleted
+                isStepCompleted(step) && styles.stepNumberCompleted,
+                isStepError(step) && styles.stepNumberError
               )}
             >
-              {/* Show only a loading indicator in case the step cannot be actioned on by the user */}
-              {isStepActive(i) && !isStepExpandable(step) ? (
+              {/* Loading indicator */}
+              {shouldShowLoading(step, i) ? (
                 <LoadingPlaceholder text="" className={styles.loadingIndicator} />
+              ) : isStepCompleted(step) ? (
+                <Icon name="check" size="lg" />
+              ) : isStepError(step) ? (
+                <Icon name="exclamation-triangle" />
               ) : (
                 i + 1
               )}
@@ -53,8 +65,15 @@ export function Steps({ steps = [] }: Props): ReactElement {
           </div>
 
           {/* Step content */}
-          <div className={cx(styles.stepContent, !isStepActive(i) && styles.stepContentNotCompleted)}>
-            <Step step={step} isOpen={i === activeStepIndex} onComplete={goToNextStep} />
+          <div
+            className={cx(
+              styles.stepContent,
+              isStepNotCompleted(step) && styles.stepContentNotCompleted,
+              isStepCompleted(step) && styles.stepContentCompleted,
+              isStepError(step) && styles.stepContentError
+            )}
+          >
+            <Step step={step} isOpen={shouldExpandStep(step, i)} onComplete={goToNextStep} />
           </div>
         </div>
       ))}
@@ -74,10 +93,12 @@ function findActiveStepIndex(steps: PluginRecipeStep[] = []): number {
   return steps.indexOf(activeStep);
 }
 
+const successColor = '#6fc06f';
+const errorColor = '#f26f6f';
 const getStyles = () => ({
   stepContainer: css`
     display: flex;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
   `,
 
   stepContainerActive: css`
@@ -100,12 +121,11 @@ const getStyles = () => ({
 
   stepNumber: css`
     color: #7f7f7f;
-    border: 2px solid #7f7f7f;
-    font-weight: bold;
-    font-size: 20px;
+    border: 1px solid #7f7f7f;
+    font-size: 17px;
     border-radius: 30px;
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -117,16 +137,29 @@ const getStyles = () => ({
   `,
 
   stepNumberCompleted: css`
-    background-color: green;
-    color: green;
+    border-color: ${successColor};
+    color: #b8b8b8;
+  `,
+
+  stepNumberError: css`
+    border-color: ${errorColor};
+    color: ${errorColor};
   `,
 
   stepContent: css`
     padding-left: 15px;
   `,
 
+  stepContentCompleted: css`
+    color: ${successColor};
+  `,
+
   stepContentNotCompleted: css`
     color: #7f7f7f;
+  `,
+
+  stepContentError: css`
+    color: ${errorColor};
   `,
 
   loadingIndicator: css`
