@@ -78,10 +78,10 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
 
   useEffect(() => {
-    if (loadingState === LoadingState.Streaming && !isStreaming) {
+    if (loadingState === LoadingState.Streaming) {
       setIsStreaming(true);
     }
-  }, [loadingState, isStreaming]);
+  }, [loadingState]);
 
   const handleClickStreaming = () => {
     setIsStreaming(false);
@@ -257,6 +257,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: `0 ${theme.spacing(padding)}`,
     }),
     streaming: css({
+      marginRight: 0,
       color: theme.colors.success.text,
 
       '&:hover': {
@@ -264,6 +265,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     streamingStopped: css({
+      marginRight: 0,
       color: theme.colors.error.text,
 
       '&:hover': {
