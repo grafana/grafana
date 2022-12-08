@@ -7,7 +7,7 @@ keywords:
   - images
   - notifications
 title: Use images in notifications
-weight: 460
+weight: 480
 ---
 
 # Use images in notifications

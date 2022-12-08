@@ -31,7 +31,7 @@ export const Pages = {
     url: '/datasources/new',
     /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
-    dataSourcePluginsV2: (pluginName: string) => `Add data source ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
@@ -193,6 +193,7 @@ export const Pages = {
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
+      UnsupportedDatasourcesWarningAlert: 'data-testid public dashboard unsupported datasources',
     },
   },
   Explore: {

@@ -11,6 +11,8 @@ export interface SearchQuery {
   location?: string;
   sort?: string;
   ds_uid?: string;
+  ds_type?: string;
+  saved_query_uid?: string; // TODO: not implemented yet
   tags?: string[];
   kind?: string[];
   panel_type?: string;

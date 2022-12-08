@@ -103,9 +103,11 @@ go.sum @grafana/backend-platform
 
 # Plugins
 /pkg/api/pluginproxy @grafana/plugins-platform-backend
+/pkg/infra/httpclient @grafana/plugins-platform-backend
 /pkg/plugins @grafana/plugins-platform-backend
 /pkg/services/datasourceproxy @grafana/plugins-platform-backend
 /pkg/services/datasources @grafana/plugins-platform-backend
+/pkg/services/pluginsintegration @grafana/plugins-platform-backend
 /pkg/plugins/pfs @grafana/plugins-platform-backend @grafana/grafana-as-code
 
 # Dashboard previews / crawler (behind feature flag)
@@ -146,6 +148,7 @@ tsconfig.json @grafana/frontend-ops
 /public/app/features/geo/ @grafana/grafana-edge-squad
 /public/app/features/storage/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
+/public/app/features/query-library/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/observability-experience-squad
 /public/app/features/plugins @grafana/plugins-platform-frontend
 /public/app/features/transformers/spatial @grafana/grafana-edge-squad
@@ -228,6 +231,7 @@ lerna.json @grafana/frontend-ops
 
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
+/pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
 
 # Kind system and code generation
 embed.go @grafana/grafana-as-code

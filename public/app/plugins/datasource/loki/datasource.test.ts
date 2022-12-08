@@ -15,16 +15,31 @@ import {
   LogRowModel,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, setBackendSrv, getBackendSrv, BackendSrv } from '@grafana/runtime';
+import {
+  BackendSrv,
+  BackendSrvRequest,
+  FetchResponse,
+  getBackendSrv,
+  reportInteraction,
+  setBackendSrv,
+} from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { CustomVariableModel } from '../../../features/variables/types';
 
-import { LokiDatasource } from './datasource';
-import { createMetadataRequest, createLokiDatasource } from './mocks';
+import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
+import { createLokiDatasource, createMetadataRequest } from './mocks';
+import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
 import { LokiVariableSupport } from './variables';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
@@ -112,6 +127,7 @@ describe('LokiDatasource', () => {
 
   afterEach(() => {
     setBackendSrv(origBackendSrv);
+    (reportInteraction as jest.Mock).mockClear();
   });
 
   describe('when doing logs queries with limits', () => {
@@ -155,6 +171,18 @@ describe('LokiDatasource', () => {
 
     it('should use query max lines, if both exist, even if it is higher than ds max lines', async () => {
       await runTest(80, '40', 80);
+    });
+
+    it('should report query interaction', async () => {
+      await runTest(80, '40', 80);
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_loki_query_executed',
+        expect.objectContaining({
+          query_type: 'logs',
+          line_limit: 80,
+          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+        })
+      );
     });
   });
 
@@ -918,7 +946,7 @@ describe('LokiDatasource', () => {
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           hideFromInspector: true,
-          requestId: 'log-samples',
+          requestId: REF_ID_DATA_SAMPLES,
         })
       );
     });
