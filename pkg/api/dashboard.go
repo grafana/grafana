@@ -532,6 +532,19 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 			err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 			dash := dtos.DashboardFullWithMeta{}
 			dash.Meta.CanEdit = c.SignedInUser.HasRole(org.RoleEditor)
+			// lookup folder title
+			if dq.Result.FolderId > 0 {
+				query := models.GetDashboardQuery{Id: dq.Result.FolderId, OrgId: c.OrgID}
+				if err := hs.DashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
+					if errors.Is(err, dashboards.ErrFolderNotFound) {
+						return response.Error(404, "Folder not found", err)
+					}
+					return response.Error(500, "Dashboard folder could not be read", err)
+				}
+				dash.Meta.FolderUid = query.Result.Uid
+				dash.Meta.FolderTitle = query.Result.Title
+				dash.Meta.FolderUrl = query.Result.GetUrl()
+			}
 			dash.Dashboard = dq.Result.Data
 			if err == nil {
 				return response.JSON(http.StatusOK, dash)
