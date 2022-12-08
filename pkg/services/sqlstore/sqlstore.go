@@ -13,6 +13,7 @@ import (
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -70,7 +71,29 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 		return nil, err
 	}
 
-	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
+	// TODO use features for checking if the toggle is set
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGolangMigrate) {
+		driverName := s.Dialect.DriverName()
+		sd, err := migrator.GetMigrateSourceDriver(driverName)
+		if err != nil {
+			return nil, err
+		}
+
+		dd, err := migrator.GetDatabaseDriver(driverName, s.engine.DB().DB)
+		if err != nil {
+			return nil, err
+		}
+
+		m, err := migrate.NewWithInstance("iofs", sd, driverName, dd)
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO use m.Migrate() instead
+		if err := m.Up(); err != nil {
+			return nil, err
+		}
+	} else if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
 
