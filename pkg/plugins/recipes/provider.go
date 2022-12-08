@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,7 +29,7 @@ func (s *staticRecipesProvider) GetAll() []*Recipe {
 	return s.recipes
 }
 
-func ProvideService(i plugins.Installer, cfg *setting.Cfg, ds datasources.DataSourceService) RecipesProvider {
+func ProvideService(i plugins.Installer, cfg *setting.Cfg, datasourceService datasources.DataSourceService, dashboardService dashboards.DashboardService) RecipesProvider {
 	recipes := []*Recipe{
 		// Linux Server
 		{
@@ -216,7 +217,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ds datasources.DataSo
 						Name: "container_fs_inodes_free",
 					},
 				}),
-				newSetupDatasourceStep(ds, RecipeStepMeta{
+				newSetupDatasourceStep(datasourceService, RecipeStepMeta{
 					Name:        "Setting up datasource",
 					Description: "something here..",
 				}),
@@ -339,7 +340,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ds datasources.DataSo
 						Summary:   "Kernel is predicted to exhaust file descriptors limit soon.",
 					},
 				}),
-				newSetupDashboardStep(dashboardStepMeta{
+				newSetupDashboardStep(dashboardService, dashboardStepMeta{
 					RecipeStepMeta: RecipeStepMeta{
 						Name:        "Setup dashboards to view docker metrics",
 						Description: "Dashboard to visualize metrics gathered by this recipe",
@@ -351,7 +352,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ds datasources.DataSo
 						},
 					},
 				}),
-				newSetupDashboardStep(dashboardStepMeta{
+				newSetupDashboardStep(dashboardService, dashboardStepMeta{
 					RecipeStepMeta: RecipeStepMeta{
 						Name:        "Setup dashboard to view docker logs",
 						Description: "Dashboard to visualize logs gathered by this recipe.",

@@ -35,7 +35,7 @@ type installPluginRecipeStep struct {
 }
 
 func (s *installPluginRecipeStep) Apply(c *models.ReqContext) error {
-	err := s.installer.Add(c, s.Plugin.Id, s.Plugin.Version, plugins.CompatOpts{
+	err := s.installer.Add(c.Req.Context(), s.Plugin.Id, s.Plugin.Version, plugins.CompatOpts{
 		GrafanaVersion: s.cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -97,7 +97,7 @@ func (s *installPluginRecipeStep) Apply(c *models.ReqContext) error {
 }
 
 func (s *installPluginRecipeStep) Revert(c *models.ReqContext) error {
-	err := s.installer.Remove(c, s.Plugin.Id)
+	err := s.installer.Remove(c.Req.Context(), s.Plugin.Id)
 
 	if err == nil {
 		// s.Status = RecipeStepStatus{
