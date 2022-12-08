@@ -112,7 +112,7 @@ func (a *State) SetNoData(startsAt, endsAt time.Time) {
 // SetError sets the state to Error. It changes both the start and end time.
 func (a *State) SetError(err error, startsAt, endsAt time.Time) {
 	a.State = eval.Error
-	a.StateReason = "error"
+	a.StateReason = models.StateReasonError
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = err

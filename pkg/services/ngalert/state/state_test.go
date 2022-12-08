@@ -203,7 +203,7 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is an error"),
 		expected: State{
 			State:       eval.Error,
-			StateReason: "error",
+			StateReason: ngmodels.StateReasonError,
 			Error:       errors.New("this is an error"),
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
@@ -220,7 +220,7 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is another error"),
 		expected: State{
 			State:       eval.Error,
-			StateReason: "error",
+			StateReason: ngmodels.StateReasonError,
 			Error:       errors.New("this is another error"),
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
