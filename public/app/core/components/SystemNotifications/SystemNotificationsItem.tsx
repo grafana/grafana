@@ -43,7 +43,7 @@ export const SystemNotificationsItem = ({
               {title}
             </span>
           ) : (
-            { title }
+            title
           )}
         </Card.Heading>
       )}

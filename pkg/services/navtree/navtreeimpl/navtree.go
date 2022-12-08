@@ -141,6 +141,17 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
+	treeRoot.AddSection(&navtree.NavLink{
+		Text:       "System Notifications",
+		Id:         "system-notifications",
+		SubTitle:   "",
+		Icon:       "bell",
+		SortWeight: navtree.WeightExplore,
+		Section:    navtree.NavSectionCore,
+		Url:        s.cfg.AppSubURL + "/system-notifications",
+		HideFromTabs: true,
+	})
+
 	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.OrgID]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
