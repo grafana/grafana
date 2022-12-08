@@ -122,25 +122,23 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
-        <div>
+        <section ref={ref} {...overlayProps} {...dialogProps}>
           <FocusScope contain autoFocus>
-            <section ref={ref} {...overlayProps} {...dialogProps}>
-              <TimePickerContent
-                timeZone={timeZone}
-                fiscalYearStartMonth={fiscalYearStartMonth}
-                value={value}
-                onChange={onChange}
-                quickOptions={quickOptions}
-                history={history}
-                showHistory
-                widthOverride={widthOverride}
-                onChangeTimeZone={onChangeTimeZone}
-                onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
-                hideQuickRanges={hideQuickRanges}
-              />
-            </section>
+            <TimePickerContent
+              timeZone={timeZone}
+              fiscalYearStartMonth={fiscalYearStartMonth}
+              value={value}
+              onChange={onChange}
+              quickOptions={quickOptions}
+              history={history}
+              showHistory
+              widthOverride={widthOverride}
+              onChangeTimeZone={onChangeTimeZone}
+              onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+              hideQuickRanges={hideQuickRanges}
+            />
           </FocusScope>
-        </div>
+        </section>
       )}
 
       {timeSyncButton}
