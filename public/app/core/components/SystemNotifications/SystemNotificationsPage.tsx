@@ -15,9 +15,8 @@ import {
   clearAllNotifications,
   clearNotification,
   readAllNotifications,
-  selectWarningsAndErrors,
   selectLastReadTimestamp,
-  // selectAll,
+  selectAll,
 } from 'app/core/reducers/appNotification';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -49,7 +48,7 @@ const pageNav: NavModelItem = {
 
 export const SystemNotificationsPage = () => {
   const dispatch = useDispatch();
-  const notifications = useSelector((state) => selectWarningsAndErrors(state.appNotifications));
+  const notifications = useSelector((state) => selectAll(state.appNotifications));
 
   const [selectedNotificationIds, setSelectedNotificationIds] = useState<string[]>([]);
   const allNotificationsSelected = notifications.every((notification) =>
@@ -92,7 +91,7 @@ export const SystemNotificationsPage = () => {
       <Page.Contents>
         <Alert
           severity="info"
-          title="This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
+          title="This page displays past notifications. Once dismissed, they cannot be retrieved."
         />
         <div className={styles.topRow}>
           <Checkbox
