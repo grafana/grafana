@@ -114,8 +114,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
-	r.Get("/admin/storage/*", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
+	if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+		r.Get("/admin/storage", reqSignedIn, hs.Index)
+		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
+	}
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/live", reqGrafanaAdmin, hs.Index)
