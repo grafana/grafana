@@ -7,6 +7,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, RelativeTimeRange
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Badge, useStyles2 } from '@grafana/ui';
+import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 
 import { AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
@@ -38,8 +39,6 @@ export function GrafanaRuleQueryViewer({
   evalDataByQuery = {},
   onTimeRangeChange,
 }: GrafanaRuleViewerProps) {
-  // const styles = useStyles2(getGrafanaRuleViewerStyles);
-
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
   const dataQueries = queries.filter((q) => !isExpressionQuery(q.model));
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
@@ -87,8 +86,6 @@ export function GrafanaRuleQueryViewer({
   );
 }
 
-// const getGrafanaRuleViewerStyles = (theme: GrafanaTheme2) => ({});
-
 interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRange' | 'model'> {
   isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
@@ -108,10 +105,7 @@ export function QueryPreview({
 
   const headerItems = [dataSource?.name ?? '[[Data source not found]]'];
   if (relativeTimeRange) {
-    const interval = relativeTimeRange.from - relativeTimeRange.to;
-    // headerItems.push(mapRelativeTimeRangeToOption(relativeTimeRange).display);
-    headerItems.push(`Time range: ${interval}s`);
-    // headerItems.push(describeInterval(`${interval}s`));
+    headerItems.push(mapRelativeTimeRangeToOption(relativeTimeRange).display);
   }
 
   return (
