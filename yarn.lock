@@ -10271,6 +10271,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/classnames@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@types/classnames@npm:2.3.0"
+  dependencies:
+    classnames: "*"
+  checksum: e1bd6de60fc5e4ead601838078b10f378d6a66ad21112922856de59a1f450b1361f597aa3ca34f2cc33bc030f950112872fddfde43c5189bec89737a8b237f24
+  languageName: node
+  linkType: hard
+
 "@types/clean-css@npm:*":
   version: 4.2.5
   resolution: "@types/clean-css@npm:4.2.5"
@@ -11398,6 +11407,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/rc-time-picker@npm:3.4.1":
+  version: 3.4.1
+  resolution: "@types/rc-time-picker@npm:3.4.1"
+  dependencies:
+    "@types/react": "*"
+    moment: ^2.19.4
+  checksum: 26d43beb8c5fdbd1932996bee63d3f854ca8e931915463106cbb382d98efcc81a1140f7fda004b6652ca12e87b211b1b70302b854c5ce41e3f87e68537181c06
+  languageName: node
+  linkType: hard
+
+"@types/rc-tree@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@types/rc-tree@npm:3.0.0"
+  dependencies:
+    rc-tree: "*"
+  checksum: bf8e599c5a62c8f8d91fbecdc210119c4c2ad07bdfb8adecb4d1cce9cb967fd6856ad2940431b8fdc9993cd261f127c33588f2988bfc7bc6438993de1c6eeff3
+  languageName: node
+  linkType: hard
+
 "@types/react-beautiful-dnd@npm:13.1.2":
   version: 13.1.2
   resolution: "@types/react-beautiful-dnd@npm:13.1.2"
@@ -11557,6 +11585,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-test-renderer@npm:*":
+  version: 18.0.0
+  resolution: "@types/react-test-renderer@npm:18.0.0"
+  dependencies:
+    "@types/react": "*"
+  checksum: 6afc938a1d7618d88ab8793e251f0bd5981bf3f08c1b600f74df3f8800b92589ea534dc6dcb7c8d683893fcc740bf8d7843a42bf2dae59785cfe88f004bd7b0b
+  languageName: node
+  linkType: hard
+
 "@types/react-test-renderer@npm:17.0.1":
   version: 17.0.1
   resolution: "@types/react-test-renderer@npm:17.0.1"
@@ -11667,6 +11704,15 @@ __metadata:
   version: 0.2.29
   resolution: "@types/relateurl@npm:0.2.29"
   checksum: 33226abf47dc03523f88dacb6c2acd185285e754a8e64dd832156fcfbeee053b3c9c63dcb01c06aa263f6e7cb1e53f819718d41dbf7ede38b9d00893cec4a6f6
+  languageName: node
+  linkType: hard
+
+"@types/reselect@npm:2.2.0":
+  version: 2.2.0
+  resolution: "@types/reselect@npm:2.2.0"
+  dependencies:
+    reselect: "*"
+  checksum: 034b5796c16316b60561fca01503111ecddde638178efc20c7293f07ef7d9cbc2bffce267899381f630fa9ffef3bfed54384fe87756e97132b4dc2881f585e19
   languageName: node
   linkType: hard
 
@@ -11855,6 +11901,15 @@ __metadata:
   dependencies:
     "@types/jest": "*"
   checksum: 77fe7ad3a9d49250972a0e3289b6d536942f95f0d539f32a917cf78c9422113d55c00de53b53dd4de1de49b68c8b500faea62e3017c4a64736cfbfbade749e04
+  languageName: node
+  linkType: hard
+
+"@types/testing-library__react-hooks@npm:^3.2.0":
+  version: 3.4.1
+  resolution: "@types/testing-library__react-hooks@npm:3.4.1"
+  dependencies:
+    "@types/react-test-renderer": "*"
+  checksum: f32a5659330a7c2e555bffa74807f7331b1d2fcdd5fe4c08cc9130a0a12826f5f1c5bdf3210e7b2b4c9b774bddecc283171a347f78dc98d28836b0f773583a03
   languageName: node
   linkType: hard
 
@@ -15547,7 +15602,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:2.3.2, classnames@npm:^2.3.2":
+"classnames@npm:*, classnames@npm:2.3.2, classnames@npm:^2.3.2":
   version: 2.3.2
   resolution: "classnames@npm:2.3.2"
   checksum: 2c62199789618d95545c872787137262e741f9db13328e216b093eea91c85ef2bfb152c1f9e63027204e2559a006a92eb74147d46c800a9f96297ae1d9f96f4e
@@ -22037,6 +22092,7 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
+    "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
     "@types/d3-force": ^2.1.0
@@ -22062,6 +22118,8 @@ __metadata:
     "@types/papaparse": 5.3.5
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
+    "@types/rc-time-picker": 3.4.1
+    "@types/rc-tree": ^3.0.0
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-dom": 17.0.14
@@ -22077,11 +22135,13 @@ __metadata:
     "@types/react-window": 1.8.5
     "@types/react-window-infinite-loader": ^1
     "@types/redux-mock-store": 1.0.3
+    "@types/reselect": 2.2.0
     "@types/semver": 7.3.13
     "@types/slate": 0.47.11
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
+    "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
     "@types/webpack-env": 1.18.0
@@ -28338,7 +28398,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.20.1, moment@npm:^2.29.4":
+"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.4":
   version: 2.29.4
   resolution: "moment@npm:2.29.4"
   checksum: 0ec3f9c2bcba38dc2451b1daed5daded747f17610b92427bebe1d08d48d8b7bdd8d9197500b072d14e326dd0ccf3e326b9e3d07c5895d3d49e39b6803b76e80e
@@ -32308,6 +32368,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rc-tree@npm:*":
+  version: 5.7.2
+  resolution: "rc-tree@npm:5.7.2"
+  dependencies:
+    "@babel/runtime": ^7.10.1
+    classnames: 2.x
+    rc-motion: ^2.0.1
+    rc-util: ^5.16.1
+    rc-virtual-list: ^3.4.8
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 9b465e1937fdd59987d2e69587b10c3d1415072ed6cd8e953d8975c4d31ddfa3f963d6d824b6d5017bd3a4331d9a0af029886a484af70a861ddda02dcfcb964c
+  languageName: node
+  linkType: hard
+
 "rc-tree@npm:5.7.0, rc-tree@npm:~5.7.0":
   version: 5.7.0
   resolution: "rc-tree@npm:5.7.0"
@@ -34123,6 +34199,13 @@ __metadata:
   version: 1.0.0
   resolution: "requires-port@npm:1.0.0"
   checksum: eee0e303adffb69be55d1a214e415cf42b7441ae858c76dfc5353148644f6fd6e698926fc4643f510d5c126d12a705e7c8ed7e38061113bdf37547ab356797ff
+  languageName: node
+  linkType: hard
+
+"reselect@npm:*":
+  version: 4.1.7
+  resolution: "reselect@npm:4.1.7"
+  checksum: 738d8e2b8f0dca154ad29de6a209c9fbca2d70ae6788fd85df87f2c74b95a65bbf2d16d43a9e2faff39de34d17a29d706ba08a6b2ee5660c09589edbd19af7e1
   languageName: node
   linkType: hard
 
