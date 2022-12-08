@@ -35,6 +35,7 @@ describe('addDataLinksToLogsResponse', () => {
           refId: 'A',
           expression: 'stats count(@message) by bin(1h)',
           logGroupNames: ['fake-log-group-one', 'fake-log-group-two'],
+          logGroups: [{}], // empty log groups should be ignored and fall back to logGroupNames
           region: 'us-east-1',
         },
       ],
@@ -115,6 +116,7 @@ describe('addDataLinksToLogsResponse', () => {
         {
           refId: 'A',
           expression: 'stats count(@message) by bin(1h)',
+          logGroupNames: [''],
           logGroups: [
             { value: 'arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/test:*' },
             { value: 'arn:aws:logs:us-east-2:222222222222:log-group:/ecs/prometheus:*' },
@@ -174,6 +176,7 @@ describe('addDataLinksToLogsResponse', () => {
         {
           refId: 'A',
           expression: 'stats count(@message) by bin(1h)',
+          logGroupNames: [''],
           logGroups: [{ value: 'arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/test' }],
           region: 'us-east-1',
         } as CloudWatchQuery,
