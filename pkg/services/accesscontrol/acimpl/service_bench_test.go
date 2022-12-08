@@ -76,9 +76,9 @@ func concurrentBatch(workers, count, size int, eachFn func(start, end int) error
 }
 
 // setupBenchEnv will create userCount users, userCount managed roles with resourceCount managed permission each
-// Example: setupBenchEnv(b, 2, 3) will create:
-//          3 users and assign them 3 managed roles
-//          each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
+// Example: setupBenchEnv(b, 2, 3):
+//  - will create 3 users and assign them 3 managed roles
+//  - each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
 	sqlStore := db.InitTestDB(b)
