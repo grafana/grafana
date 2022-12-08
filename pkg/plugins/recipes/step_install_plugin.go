@@ -20,6 +20,7 @@ type installPluginSettings struct {
 }
 
 func newPluginInstallStep(installer plugins.Installer, cfg *setting.Cfg, store plugins.Store, meta RecipeStepMeta, plugin *installPlugin) *installPluginRecipeStep {
+	// TODO: add logic to check for version missmatch between installed plugin and plugin required by recipe.
 	return &installPluginRecipeStep{
 		Action: "install-plugin",
 		Meta:   meta,
