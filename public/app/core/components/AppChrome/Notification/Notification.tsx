@@ -10,25 +10,28 @@ import { useSelector, tagColorMap } from 'app/types';
 export function Notification() {
   const styles = useStyles2(getStyles);
   const notifications = useSelector((state) => selectAll(state.appNotifications));
-  const tagType = notifications.type ?? AppNotificationType.SystemMessage;
 
   return (
     <div className={styles.layout} onClick={(e) => e.stopPropagation()}>
       <h4>Notifications</h4>
       <ul>
-        {notifications.map((notification) => (
-          <li key={notification.id} className={styles.notificationItem}>
-            <a href="/system-notifications">
-              <div className={styles.titleWrapper}>
-                <Tag name={tagType} colorIndex={tagColorMap[tagType]} />
-                <p className={styles.title}>{notification.title}</p>
-              </div>
-              <span className={styles.date}>
-                {notification.timestamp && formatDistanceToNow(notification.timestamp, { addSuffix: true })}
-              </span>
-            </a>
-          </li>
-        ))}
+        {notifications.map((notification) => {
+          const tagType = notification.type ?? AppNotificationType.SystemMessage;
+
+          return (
+            <li key={`top-${notification.id}`} className={styles.notificationItem}>
+              <a href="/system-notifications">
+                <div className={styles.titleWrapper}>
+                  <Tag name={tagType} colorIndex={tagColorMap[tagType]} />
+                  <p className={styles.title}>{notification.title}</p>
+                </div>
+                <span className={styles.date}>
+                  {notification.timestamp && formatDistanceToNow(notification.timestamp, { addSuffix: true })}
+                </span>
+              </a>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -61,6 +64,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   title: css({
     marginBottom: `${theme.spacing(0.5)}`,
+    marginLeft: `${theme.spacing(1.5)}`,
   }),
   date: css({
     color: `${theme.colors.text.secondary}`,
