@@ -280,12 +280,10 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
     if (scopedVars && scopedVars.__sceneObject && scopedVars.__sceneObject.value instanceof SceneObjectBase) {
-      const { __sceneObject, ...otherScopedVars } = scopedVars;
-
       return sceneGraph.interpolate(
         scopedVars.__sceneObject.value,
         target,
-        otherScopedVars,
+        scopedVars,
         format as string | CustomFormatterFn | undefined
       );
     }
