@@ -279,7 +279,7 @@
     "@react-stately/collections": "3.4.1",
     "@react-stately/menu": "3.4.1",
     "@react-stately/tree": "3.3.1",
-    "@reduxjs/toolkit": "1.9.0",
+    "@reduxjs/toolkit": "1.9.1",
     "@sentry/browser": "6.19.7",
     "@sentry/types": "6.19.7",
     "@sentry/utils": "6.19.7",
