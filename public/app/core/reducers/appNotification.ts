@@ -98,7 +98,6 @@ export function deserializeNotifications(): Record<string, StoredNotification> {
 
 function serializeNotifications(notifs: Record<string, StoredNotification>) {
   const reducedNotifs = Object.values(notifs)
-    .filter(isAtLeastWarning)
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, MAX_STORED_NOTIFICATIONS)
     .reduce<Record<string, StoredNotification>>((prev, cur) => {
@@ -111,6 +110,7 @@ function serializeNotifications(notifs: Record<string, StoredNotification>) {
         traceId: cur.traceId,
         timestamp: cur.timestamp,
         showing: cur.showing,
+        type: cur.type,
       };
 
       return prev;
