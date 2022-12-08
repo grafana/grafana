@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
-func TestAlerting(t *testing.T) {
+func TestSetAlerting(t *testing.T) {
 	mock := clock.NewMock()
 	tests := []struct {
 		name     string
@@ -55,13 +55,13 @@ func TestAlerting(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.Alerting(test.startsAt, test.endsAt)
+			actual.SetAlerting(test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestPending(t *testing.T) {
+func TestSetPending(t *testing.T) {
 	mock := clock.NewMock()
 	tests := []struct {
 		name     string
@@ -97,7 +97,7 @@ func TestPending(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.Pending(test.startsAt, test.endsAt)
+			actual.SetPending(test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -139,7 +139,7 @@ func TestNormal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.Normal(test.startsAt, test.endsAt)
+			actual.SetNormal(test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -181,7 +181,7 @@ func TestNoData(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.NoData(test.startsAt, test.endsAt)
+			actual.SetNoData(test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -202,10 +202,11 @@ func TestSetError(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		error:    errors.New("this is an error"),
 		expected: State{
-			State:    eval.Error,
-			Error:    errors.New("this is an error"),
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:       eval.Error,
+			StateReason: "error",
+			Error:       errors.New("this is an error"),
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
 		},
 	}, {
 		name: "previous state is removed",
@@ -218,10 +219,11 @@ func TestSetError(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		error:    errors.New("this is another error"),
 		expected: State{
-			State:    eval.Error,
-			Error:    errors.New("this is another error"),
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:       eval.Error,
+			StateReason: "error",
+			Error:       errors.New("this is another error"),
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
 		},
 	}}
 

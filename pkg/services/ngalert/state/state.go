@@ -82,8 +82,8 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
 }
 
-// Alerting sets the state to Alerting. It changes both the start and end time.
-func (a *State) Alerting(startsAt, endsAt time.Time) {
+// SetAlerting sets the state to Alerting. It changes both the start and end time.
+func (a *State) SetAlerting(startsAt, endsAt time.Time) {
 	a.State = eval.Alerting
 	a.StateReason = ""
 	a.StartsAt = startsAt
@@ -91,8 +91,8 @@ func (a *State) Alerting(startsAt, endsAt time.Time) {
 	a.Error = nil
 }
 
-// Pending sets the state to Pending. It changes both the start and end time.
-func (a *State) Pending(startsAt, endsAt time.Time) {
+// SetPending the state to Pending. It changes both the start and end time.
+func (a *State) SetPending(startsAt, endsAt time.Time) {
 	a.State = eval.Pending
 	a.StateReason = ""
 	a.StartsAt = startsAt
@@ -100,8 +100,8 @@ func (a *State) Pending(startsAt, endsAt time.Time) {
 	a.Error = nil
 }
 
-// NoData sets the state to NoData. It changes both the start and end time.
-func (a *State) NoData(startsAt, endsAt time.Time) {
+// SetNoData sets the state to NoData. It changes both the start and end time.
+func (a *State) SetNoData(startsAt, endsAt time.Time) {
 	a.State = eval.NoData
 	a.StateReason = ""
 	a.StartsAt = startsAt
@@ -112,14 +112,14 @@ func (a *State) NoData(startsAt, endsAt time.Time) {
 // SetError sets the state to Error. It changes both the start and end time.
 func (a *State) SetError(err error, startsAt, endsAt time.Time) {
 	a.State = eval.Error
-	a.StateReason = ""
+	a.StateReason = "error"
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = err
 }
 
-// Normal sets the state to Normal. It changes both the start and end time.
-func (a *State) Normal(startsAt, endsAt time.Time) {
+// SetNormal sets the state to Normal. It changes both the start and end time.
+func (a *State) SetNormal(startsAt, endsAt time.Time) {
 	a.State = eval.Normal
 	a.StateReason = ""
 	a.StartsAt = startsAt
@@ -185,7 +185,7 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 	} else {
 		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
 		// Normal states have the same start and end timestamps
-		state.Normal(result.EvaluatedAt, result.EvaluatedAt)
+		state.SetNormal(result.EvaluatedAt, result.EvaluatedAt)
 	}
 }
 
@@ -198,16 +198,16 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 		// If the previous state is Pending then check if the For duration has been observed
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
-			state.Alerting(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			state.SetAlerting(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		}
 	default:
 		if rule.For > 0 {
 			// If the alert rule has a For duration that should be observed then the state should be set to Pending
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
-			state.Pending(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			state.SetPending(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		} else {
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
-			state.Alerting(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			state.SetAlerting(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		}
 	}
 }
