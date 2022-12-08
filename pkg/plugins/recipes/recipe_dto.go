@@ -10,11 +10,11 @@ type RecipeDTO struct {
 }
 
 type RecipeStepDTO struct {
-	Action      string `json:"action"`
-	Status      RecipeStepStatusDTO
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Settings    interface{} `json:"settings"`
+	Action      string              `json:"action"`
+	Status      RecipeStepStatusDTO `json:"status"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Settings    interface{}         `json:"settings"`
 }
 
 type RecipeStepStatusDTO struct {
