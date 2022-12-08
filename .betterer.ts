@@ -41,24 +41,8 @@ function countEslintErrors() {
     const { baseDirectory } = resolver;
     const cli = new ESLint({ cwd: baseDirectory });
 
-    const testFiles: string[] = [];
-    const codeFiles: string[] = [];
-
     const eslintConfigFiles = await findEslintConfigFiles();
     const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
-
-    filePaths.forEach((filePath) => {
-      const isTestFile =
-        filePath.endsWith('.test.tsx') ||
-        filePath.endsWith('.test.ts') ||
-        filePath.includes('__mocks__') ||
-        filePath.includes('public/test/');
-      if (isTestFile) {
-        testFiles.push(filePath);
-      } else {
-        codeFiles.push(filePath);
-      }
-    });
 
     const baseRules: Partial<Linter.RulesRecord> = {
       '@typescript-eslint/no-explicit-any': 'error',
