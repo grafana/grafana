@@ -45,7 +45,7 @@ export function SaveToStorageForm(props: Props) {
       case WorkflowID.Push:
         return 'Push';
     }
-    console.log('Workflow', workflow);
+    console.log('???', workflow);
     return 'Save';
   }, [workflow]);
 
@@ -58,8 +58,6 @@ export function SaveToStorageForm(props: Props) {
   if (item.error) {
     return <div>Error loading workflows</div>;
   }
-
-  console.log('SAVE', item);
 
   if (item.loading || !item.value) {
     return <Spinner />;

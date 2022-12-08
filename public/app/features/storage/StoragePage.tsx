@@ -182,7 +182,7 @@ export default function StoragePage(props: Props) {
           <HorizontalGroup>
             {canViewDashboard && (
               <LinkButton icon="dashboard" href={`g/${path.substring(path.indexOf('/') + 1)}`}>
-                DashboardX
+                Dashboard
               </LinkButton>
             )}
 
