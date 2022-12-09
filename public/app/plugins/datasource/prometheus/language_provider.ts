@@ -552,7 +552,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Gets series labels
    * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
-   * while maintaining backward compatability
+   * while maintaining backward compatability. The old API call got the labels and the values in a single query,
+   * but with the new query we need two calls, one to get the labels, and another to get the values.
+   *
    * @param selector
    * @param otherLabels
    */
