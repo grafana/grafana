@@ -20,7 +20,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
+func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:                 true,
 		EnableUnifiedAlerting:                 true,
@@ -137,7 +139,9 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	}
 }
 
-func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
+func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
