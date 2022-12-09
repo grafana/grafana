@@ -1,4 +1,4 @@
-import { DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
+import { CoreApp, DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
@@ -111,6 +111,10 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
 };
 
 export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQuery[], app: string): void {
+  if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
+    return;
+  }
+
   for (const query of queries) {
     if (shouldNotReportBasedOnRefId(query.refId)) {
       return;

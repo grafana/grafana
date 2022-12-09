@@ -61,7 +61,7 @@ describe('RuleEditor recording rules', () => {
   });
 
   disableRBAC();
-  it('can create a new cloud recording rule', async () => {
+  it.skip('can create a new cloud recording rule', async () => {
     const dataSources = {
       default: mockDataSource(
         {
