@@ -57,22 +57,31 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
-  const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
-  const [queries, setQueries] = useState<AlertQuery[]>([]);
+  const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
 
-  // const [customQueryTimeRange, setCustomQueryTimeRange]
+  const [evaluationTimeRanges, setEvaluationTimeRanges] = useState<Record<string, RelativeTimeRange>>({});
 
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries2);
+  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
   const onRunQueries = useCallback(() => {
     if (queries.length > 0 && allDataSourcesAvailable) {
-      runner.run(queries);
+      const evalCustomizedQueries = queries.map<AlertQuery>((q) => ({
+        ...q,
+        relativeTimeRange: evaluationTimeRanges[q.refId] ?? q.relativeTimeRange,
+      }));
+
+      runner.run(evalCustomizedQueries);
     }
-  }, [queries, runner, allDataSourcesAvailable]);
+  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable]);
 
   useEffect(() => {
-    setQueries(queries2);
-  }, [queries2]);
+    const alertQueries = alertRuleToQueries(rule);
+    const defaultEvalTimeRanges = Object.fromEntries(
+      alertQueries.map((q) => [q.refId, q.relativeTimeRange ?? { from: 0, to: 0 }])
+    );
+
+    setEvaluationTimeRanges(defaultEvalTimeRanges);
+  }, [rule]);
 
   useEffect(() => {
     if (allDataSourcesAvailable && expandQuery) {
@@ -84,28 +93,14 @@ export function RuleViewer({ match }: RuleViewerProps) {
     return () => runner.destroy();
   }, [runner]);
 
-  const onChangeQuery = useCallback((query: AlertQuery) => {
-    setQueries((queries) =>
-      queries.map((q) => {
-        if (q.refId === query.refId) {
-          return query;
-        }
-        return q;
-      })
-    );
-  }, []);
-
   const onQueryTimeRangeChange = useCallback(
     (refId: string, timeRange: RelativeTimeRange) => {
-      const updatedQueries = produce(queries, (draftQueries) => {
-        const queryToChange = draftQueries.find((q) => q.refId === refId);
-        if (queryToChange) {
-          queryToChange.relativeTimeRange = timeRange;
-        }
+      const newEvalTimeRanges = produce(evaluationTimeRanges, (draft) => {
+        draft[refId] = timeRange;
       });
-      setQueries([...updatedQueries]);
+      setEvaluationTimeRanges(newEvalTimeRanges);
     },
-    [queries, setQueries]
+    [evaluationTimeRanges, setEvaluationTimeRanges]
   );
 
   if (!identifier?.ruleSourceName) {
@@ -215,6 +210,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             condition={rule.rulerRule.grafana_alert.condition}
             queries={queries}
             evalDataByQuery={data}
+            evalTimeRanges={evaluationTimeRanges}
             onTimeRangeChange={onQueryTimeRangeChange}
           />
         )}
@@ -225,13 +221,14 @@ export function RuleViewer({ match }: RuleViewerProps) {
               return (
                 <QueryPreview
                   key={query.refId}
-                  isAlertCondition={false}
-                  relativeTimeRange={query.relativeTimeRange}
-                  onTimeRangeChange={(timeRange) => onChangeQuery({ ...query, relativeTimeRange: timeRange })}
                   refId={query.refId}
                   model={query.model}
-                  queryData={data[query.refId]}
                   dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
+                  queryData={data[query.refId]}
+                  relativeTimeRange={query.relativeTimeRange}
+                  evalTimeRange={evaluationTimeRanges[query.refId]}
+                  onEvalTimeRangeChange={(timeRange) => onQueryTimeRangeChange(query.refId, timeRange)}
+                  isAlertCondition={false}
                 />
               );
             })}

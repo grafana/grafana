@@ -30,6 +30,7 @@ interface GrafanaRuleViewerProps {
   queries: AlertQuery[];
   condition: string;
   evalDataByQuery?: Record<string, PanelData>;
+  evalTimeRanges?: Record<string, RelativeTimeRange>;
   onTimeRangeChange: (queryRef: string, timeRange: RelativeTimeRange) => void;
 }
 
@@ -37,6 +38,7 @@ export function GrafanaRuleQueryViewer({
   queries,
   condition,
   evalDataByQuery = {},
+  evalTimeRanges = {},
   onTimeRangeChange,
 }: GrafanaRuleViewerProps) {
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
@@ -56,9 +58,10 @@ export function GrafanaRuleQueryViewer({
               isAlertCondition={condition === refId}
               model={model}
               relativeTimeRange={relativeTimeRange}
+              evalTimeRange={evalTimeRanges[refId]}
               dataSource={dataSource}
               queryData={evalDataByQuery[refId]}
-              onTimeRangeChange={(timeRange) => onTimeRangeChange(refId, timeRange)}
+              onEvalTimeRangeChange={(timeRange) => onTimeRangeChange(refId, timeRange)}
             />
           );
         })}
@@ -90,7 +93,8 @@ interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRang
   isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
   queryData?: PanelData;
-  onTimeRangeChange: (timeRange: RelativeTimeRange) => void;
+  evalTimeRange?: RelativeTimeRange;
+  onEvalTimeRangeChange: (timeRange: RelativeTimeRange) => void;
 }
 
 export function QueryPreview({
@@ -99,10 +103,13 @@ export function QueryPreview({
   model,
   dataSource,
   queryData,
-  onTimeRangeChange,
+  evalTimeRange,
+  onEvalTimeRangeChange,
 }: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
 
+  // relativeTimeRange is what is defined for a query
+  // evalTimeRange is temporary value which the user can change
   const headerItems = [dataSource?.name ?? '[[Data source not found]]'];
   if (relativeTimeRange) {
     headerItems.push(mapRelativeTimeRangeToOption(relativeTimeRange).display);
@@ -119,8 +126,8 @@ export function QueryPreview({
           datasourceUid={dataSource.uid}
           model={model}
           data={queryData}
-          relativeTimeRange={relativeTimeRange}
-          onTimeRangeChange={onTimeRangeChange}
+          relativeTimeRange={evalTimeRange}
+          onTimeRangeChange={onEvalTimeRangeChange}
           className={styles.visualization}
         />
       )}
@@ -136,7 +143,6 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
     flex: 1 0 100%; // RuleViewerVisualization uses AutoSizer which doesn't expand the box
   `,
   visualization: css`
-    //width: auto;
     padding: ${theme.spacing(1)};
   `,
 });
