@@ -22,7 +22,7 @@ export function PanelHeaderState({ dataState, errorMessage, panelId }: Props) {
   const [mode, setMode] = useState<InfoMode>();
 
   useEffect(() => {
-    if (dataState === LoadingState.Error || errorMessage) {
+    if (errorMessage) {
       setMode(InfoMode.Error);
     } else if (dataState === LoadingState.Warning) {
       setMode(InfoMode.Warning);
@@ -69,10 +69,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       label: 'panel-header-state',
-      display: 'flex',
-      alignItems: 'center',
       position: 'absolute',
       width: '100%',
+      display: 'flex',
+      alignItems: 'center',
       justifyContent: 'center',
     }),
     buttonStyles: css({

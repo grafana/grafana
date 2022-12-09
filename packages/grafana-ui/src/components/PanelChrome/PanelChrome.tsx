@@ -31,7 +31,6 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   titleItems?: PanelChromeInfoState[];
-  titleItemsNodes?: ReactElement[];
   menu?: ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
@@ -64,7 +63,6 @@ export function PanelChrome({
   title = '',
   titleItems = [],
   menu,
-  titleItemsNodes = [],
   // dragClass,
   // hoverHeader = false,
   onStreamingStop,
@@ -115,7 +113,7 @@ export function PanelChrome({
 
   return (
     <div className={styles.container} style={containerStyles}>
-      {showLoading && loadingNode}
+      <div className={styles.loadingBarContainer}>{showLoading ? loadingNode : null}</div>
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
         {title && (
@@ -127,7 +125,7 @@ export function PanelChrome({
         {showStreaming && (
           <div className={styles.item} style={itemStyles}>
             <IconButton
-              tooltip={`${isStreaming ? 'Streaming (click to stop)' : 'Streaming stopped'}`}
+              tooltip={`${isStreaming ? `Streaming ${onStreamingStop && '(click to stop)'}` : 'Streaming stopped'}`}
               name="circle"
               iconType="mono"
               size="sm"
@@ -152,12 +150,6 @@ export function PanelChrome({
                   )}
                 </div>
               ))}
-          </div>
-        )}
-
-        {titleItemsNodes.length > 0 && (
-          <div className={styles.items} data-testid="title-items-container">
-            {itemsRenderer(titleItemsNodes, (item) => item)}
           </div>
         )}
 
@@ -244,6 +236,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:focus-visible': {
         outline: `1px solid ${theme.colors.action.focus}`,
       },
+    }),
+    loadingBarContainer: css({
+      position: 'absolute',
+      top: 0,
+      width: '100%',
     }),
     content: css({
       label: 'panel-content',

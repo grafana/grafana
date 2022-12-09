@@ -46,8 +46,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
-import { PanelHeaderNotices } from './PanelHeader/PanelHeaderNotices';
 import { PanelHeaderState } from './PanelHeader/PanelHeaderState';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -590,7 +588,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const dataState = (
       <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} dataState={data.state} key="state" />
     );
-    const titleItemsNodes = [<PanelHeaderNotices frames={data.series} panelId={panel.id} key="notices" />];
 
     if (config.featureToggles.newPanelChromeUI) {
       return (
@@ -599,13 +596,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           height={height}
           padding={padding}
           title={title}
-          titleItemsNodes={titleItemsNodes}
           onStreamingStop={() => panel.getQueryRunner().cancelQuery()}
           loadingState={data.state}
           loadingNode={loadingNode}
           dataStateNode={dataState}
-          // leftItems is to be deprecated
-          // leftItems={[<PanelHeaderLoadingIndicator state={data.state} onClick={() => {}} key="loading-indicator" />]}
         >
           {(innerWidth, innerHeight) => (
             <>
