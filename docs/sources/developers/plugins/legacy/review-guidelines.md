@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../plugins/developing/plugin-review-guidelines/
-  - /docs/grafana/latest/developers/plugins/legacy/review-guidelines/
 title: Legacy review guidelines
 ---
 

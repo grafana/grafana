@@ -7,7 +7,6 @@ aliases:
   - ../panels/reference-standard-field-definitions/
   - ../panels/standard-field-definitions/
   - ../panels/working-with-panels/format-standard-fields/
-  - /docs/grafana/latest/panels-visualizations/configure-standard-options/
 keywords:
   - panel
   - dasboard

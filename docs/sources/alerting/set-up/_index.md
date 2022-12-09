@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/set-up/
   - unified-alerting/set-up/
 title: Set up Alerting
 weight: 107

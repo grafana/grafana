@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../visualizations/traces/
-  - /docs/grafana/latest/panels-visualizations/visualizations/traces/
 keywords:
   - grafana
   - dashboard

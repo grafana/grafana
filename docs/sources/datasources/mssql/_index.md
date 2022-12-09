@@ -2,7 +2,6 @@
 aliases:
   - ../data-sources/mssql/
   - ../features/datasources/mssql/
-  - /docs/grafana/latest/datasources/mssql/
 description: Guide for using Microsoft SQL Server in Grafana
 keywords:
   - grafana

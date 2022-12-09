@@ -12,7 +12,6 @@ aliases:
   - ../message-templating/template-data/
   - ../unified-alerting/message-templating/
   - ../unified-alerting/message-templating/template-data/
-  - /docs/grafana/latest/alerting/manage-notifications/create-message-template/
 keywords:
   - grafana
   - alerting

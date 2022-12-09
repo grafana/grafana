@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../enterprise/access-control/configure-rbac/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/configure-rbac/
 description: Learn how to configure RBAC.
 menuTitle: Configure RBAC
 title: Configure RBAC in Grafana

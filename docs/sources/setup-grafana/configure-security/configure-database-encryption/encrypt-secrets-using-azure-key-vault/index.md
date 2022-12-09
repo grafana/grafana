@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../enterprise/enterprise-encryption/using-azure-key-vault-to-encrypt-database-secrets/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-azure-key-vault/
 description: Learn how to use Azure Key Vault to encrypt secrets in the Grafana database.
 title: Encrypt database secrets using Azure Key Vault
 weight: 400

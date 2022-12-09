@@ -9,7 +9,6 @@ aliases:
   - ../panels/working-with-panels/add-panel/
   - ../panels/working-with-panels/navigate-inspector-panel/
   - ../panels/working-with-panels/navigate-panel-editor/
-  - /docs/grafana/next/dashboards/build-dashboards/add-organize-panels/
   - add-organize-panels/
 keywords:
   - panel

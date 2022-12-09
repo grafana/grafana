@@ -2,7 +2,6 @@
 aliases:
   - ../data-sources/testdata/
   - ../features/datasources/testdata/
-  - /docs/grafana/latest/datasources/testdata/
 keywords:
   - grafana
   - dashboard

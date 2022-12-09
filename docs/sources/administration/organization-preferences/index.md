@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/organization-preferences/
   - change-home-dashboard/
   - preferences/
   - preferences/change-grafana-name/

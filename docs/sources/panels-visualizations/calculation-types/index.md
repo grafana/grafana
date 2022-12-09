@@ -3,7 +3,6 @@ aliases:
   - ../panels/calculation-types/
   - ../panels/calculations-list/
   - ../panels/reference-calculation-types/
-  - /docs/grafana/latest/panels-visualizations/calculation-types/
 title: Calculation types
 weight: 1100
 ---

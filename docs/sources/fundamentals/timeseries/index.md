@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../basics/timeseries/
-  - /docs/grafana/latest/fundamentals/timeseries/
 description: Introduction to time series
 keywords:
   - grafana

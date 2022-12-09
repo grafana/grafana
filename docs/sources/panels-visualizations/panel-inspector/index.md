@@ -4,7 +4,6 @@ aliases:
   - ../panels/query-a-data-source/inspect-query-performance/
   - ../panels/query-a-data-source/inspect-request-and-response-data/
   - ../panels/working-with-panels/navigate-inspector-panel/
-  - /docs/grafana/latest/panels-visualizations/panel-inspector/
 title: The panel inspect view
 weight: 1200
 ---
