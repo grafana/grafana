@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/node-graph/
-  - /docs/grafana/latest/visualizations/node-graph/
+  - ../../panels/visualizations/node-graph/
+  - ../../visualizations/node-graph/
   - /docs/grafana/latest/panels-visualizations/visualizations/node-graph/
 keywords:
   - grafana

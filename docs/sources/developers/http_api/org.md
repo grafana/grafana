@@ -1,8 +1,8 @@
 ---
 aliases:
+  - ../../http_api/org/
+  - ../../http_api/organization/
   - /docs/grafana/latest/developers/http_api/org/
-  - /docs/grafana/latest/http_api/org/
-  - /docs/grafana/latest/http_api/organization/
 description: Grafana Organization HTTP API
 keywords:
   - grafana
@@ -10,7 +10,7 @@ keywords:
   - documentation
   - api
   - organization
-title: 'Organization HTTP API'
+title: Organization HTTP API
 ---
 
 # Organization API

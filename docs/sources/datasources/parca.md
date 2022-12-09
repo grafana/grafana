@@ -1,8 +1,10 @@
 ---
 aliases:
+  - ../features/datasources/parca/
   - /docs/grafana/latest/datasources/parca/
-  - /docs/grafana/latest/features/datasources/parca/
-description: Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.
+description: Continuous profiling for analysis of CPU and memory usage, down to the
+  line number and throughout time. Saving infrastructure cost, improving performance,
+  and increasing reliability.
 keywords:
   - parca
   - guide
