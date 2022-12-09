@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../features/dashboard/dashboards/
   - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
 title: Manage dashboards
 weight: 8
 ---

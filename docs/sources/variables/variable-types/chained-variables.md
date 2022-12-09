@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/chained-variables/
+  - ../chained-variables/
   - /docs/grafana/latest/variables/variable-types/chained-variables/
 keywords:
   - grafana

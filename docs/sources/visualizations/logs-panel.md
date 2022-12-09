@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/logs/
-  - /docs/grafana/latest/panels/visualizations/logs-panel/
-  - /docs/grafana/latest/reference/logs/
+  - ../features/panels/logs/
+  - ../panels/visualizations/logs-panel/
+  - ../reference/logs/
   - /docs/grafana/latest/visualizations/logs-panel/
 keywords:
   - grafana

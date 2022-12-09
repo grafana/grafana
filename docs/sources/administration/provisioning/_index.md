@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../installation/provisioning/
   - /docs/grafana/latest/administration/provisioning/
-  - /docs/grafana/latest/installation/provisioning/
 description: Describes provisioning settings for Grafana using configuration files.
 keywords:
   - grafana

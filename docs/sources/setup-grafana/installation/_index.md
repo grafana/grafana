@@ -1,9 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/install/
-  - /docs/grafana/latest/installation/
-  - /docs/grafana/latest/installation/installation/
-  - /docs/grafana/latest/installation/requirements/
+  - ../install/
+  - ../installation/
+  - ../installation/installation/
+  - ../installation/requirements/
   - /docs/grafana/latest/setup-grafana/installation/
   - /docs/grafana/v2.1/installation/install/
 description: Installation guide for Grafana

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/dashlist/
-  - /docs/grafana/latest/panels/visualizations/dashboard-list-panel/
-  - /docs/grafana/latest/reference/dashlist/
+  - ../features/panels/dashlist/
+  - ../panels/visualizations/dashboard-list-panel/
+  - ../reference/dashlist/
   - /docs/grafana/latest/visualizations/dashboard-list-panel/
 keywords:
   - grafana

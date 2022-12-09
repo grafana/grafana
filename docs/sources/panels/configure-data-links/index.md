@@ -1,10 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/linking/data-link-variables/
-  - /docs/grafana/latest/variables/url-variables/
-  - /docs/grafana/latest/variables/variable-types/url-variables/
-  - /docs/grafana/latest/linking/data-links/
-  - /docs/grafana/latest/reference/datalinks/
+  - ../linking/data-link-variables/
+  - ../linking/data-links/
+  - ../reference/datalinks/
+  - ../variables/url-variables/
+  - ../variables/variable-types/url-variables/
   - /docs/grafana/latest/panels/configure-data-links/
 keywords:
   - grafana
@@ -13,8 +13,8 @@ keywords:
   - data link
   - documentation
   - playlist
-title: Configure data links
 menuTitle: Configure data links
+title: Configure data links
 weight: 400
 ---
 

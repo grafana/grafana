@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../reference/export_import/
   - /docs/grafana/latest/dashboards/export-import/
-  - /docs/grafana/latest/reference/export_import/
 keywords:
   - grafana
   - dashboard

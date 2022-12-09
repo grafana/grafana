@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../../http_api/alerting_notification_channels/
   - /docs/grafana/latest/developers/http_api/alerting_notification_channels/
-  - /docs/grafana/latest/http_api/alerting_notification_channels/
 description: Grafana Alerting Notification Channel HTTP API
 keywords:
   - grafana

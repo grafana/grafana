@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/image-rendering/troubleshooting/
+  - ../../image-rendering/troubleshooting/
   - /docs/grafana/latest/setup-grafana/image-rendering/troubleshooting/
 description: Image rendering troubleshooting
 keywords:

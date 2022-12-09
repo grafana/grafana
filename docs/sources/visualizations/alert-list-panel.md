@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/alertlist/
-  - /docs/grafana/latest/panels/visualizations/alert-list-panel/
-  - /docs/grafana/latest/reference/alertlist/
+  - ../features/panels/alertlist/
+  - ../panels/visualizations/alert-list-panel/
+  - ../reference/alertlist/
   - /docs/grafana/latest/visualizations/alert-list-panel/
 keywords:
   - grafana

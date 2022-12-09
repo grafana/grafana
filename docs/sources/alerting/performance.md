@@ -1,9 +1,13 @@
-+++
-title = "Performance considerations"
-description = "Understanding alerting performance"
-keywords = ["grafana", "alerting", "performance"]
-weight = 555
-+++
+---
+aliases: []
+description: Understanding alerting performance
+keywords:
+  - grafana
+  - alerting
+  - performance
+title: Performance considerations
+weight: 555
+---
 
 # Alerting performance considerations
 

@@ -1,14 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/table_panel/
-  - /docs/grafana/latest/reference/table/
+  - ../features/panels/table_panel/
+  - ../panels/visualizations/table/filter-table-columns/
+  - ../reference/table/
   - /docs/grafana/latest/visualizations/table/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
-  - /docs/grafana/latest/features/panels/table_panel/
-  - /docs/grafana/latest/panels/visualizations/table/filter-table-columns/
-  - /docs/grafana/latest/reference/table/
-  - /docs/grafana/latest/visualizations/table/filter-table-columns/
-  - /docs/grafana/latest/visualizations/table/
+  - filter-table-columns/
+description: Learn about table panel visualization features.
 keywords:
   - grafana
   - dashboard
@@ -18,9 +16,8 @@ keywords:
   - format tables
   - table filter
   - filter columns
-title: Table
 menuTitle: Table
-description: Learn about table panel visualization features.
+title: Table
 weight: 1000
 ---
 

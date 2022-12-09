@@ -1,13 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/add-panels-dynamically/
-  - /docs/grafana/latest/panels/repeat-panels-or-rows/
-  - /docs/grafana/latest/panels/working-with-panels/add-title-and-description/
-  - /docs/grafana/latest/panels/working-with-panels/view-json-model/
   - /docs/grafana/latest/panels/configure-panel-options/
-title: Configure panel options
-menuTitle: Configure panel options
-weight: 150
+  - add-panels-dynamically/
+  - repeat-panels-or-rows/
+  - working-with-panels/add-title-and-description/
+  - working-with-panels/view-json-model/
 keywords:
   - panel
   - dynamic
@@ -15,6 +12,9 @@ keywords:
   - title
   - description
   - JSON model
+menuTitle: Configure panel options
+title: Configure panel options
+weight: 150
 ---
 
 # Configure panel options

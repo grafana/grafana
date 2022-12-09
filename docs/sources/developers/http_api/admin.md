@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../../http_api/admin/
   - /docs/grafana/latest/developers/http_api/admin/
-  - /docs/grafana/latest/http_api/admin/
 description: Grafana Admin HTTP API
 keywords:
   - grafana

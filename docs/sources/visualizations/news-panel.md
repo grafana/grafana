@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/news-graph/
+  - ../panels/visualizations/news-graph/
   - /docs/grafana/latest/visualizations/news-panel/
 keywords:
   - grafana
