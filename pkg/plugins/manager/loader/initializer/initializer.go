@@ -10,19 +10,18 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 type Initializer struct {
 	cfg             *config.Cfg
-	license         models.Licensing
+	license         plugins.Licensing
 	backendProvider plugins.BackendFactoryProvider
 	log             log.Logger
 }
 
-func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license models.Licensing) Initializer {
+func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing) Initializer {
 	return Initializer{
 		cfg:             cfg,
 		license:         license,
@@ -57,13 +56,11 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 		hostEnv = append(
 			hostEnv,
 			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
-			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.cfg.EnterpriseLicensePath),
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.license.Path()),
 		)
 
-		if envProvider, ok := i.license.(models.LicenseEnvironment); ok {
-			for k, v := range envProvider.Environment() {
-				hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
-			}
+		for _, env := range i.license.Environment() {
+			hostEnv = append(hostEnv, env)
 		}
 	}
 
