@@ -2,10 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
+import { NavToolbarSeparator } from './NavToolbarSeparator';
 import { NewsContainer } from './News/NewsContainer';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
 import { QuickAdd } from './QuickAdd/QuickAdd';
@@ -34,6 +36,14 @@ export function TopSearchBar() {
         <TopSearchBarInput />
       </TopSearchBarSection>
       <TopSearchBarSection align="right">
+        <ToolbarButton
+          iconOnly
+          onClick={() => locationService.push(`/explore`)}
+          icon="compass"
+          title="Explore your Data"
+          aria-label="Explore"
+        />
+        <NavToolbarSeparator className={styles.separator} />
         <QuickAdd />
         {helpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
@@ -86,6 +96,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   newsButton: css({
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+  }),
+  separator: css({
     [theme.breakpoints.down('sm')]: {
       display: 'none',
     },
