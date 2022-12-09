@@ -72,7 +72,7 @@ func expandTemplate(ctx context.Context, name, text string, labels map[string]st
 	// Replace missing key value to one that does not look like an HTML tag. This can cause problems downstream in some notifiers.
 	// For example, Telegram in HTML mode rejects requests with unsupported tags.
 	result = strings.ReplaceAll(result, "<no value>", "[no value]")
-	return
+	return result, resultErr
 }
 
 func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[string]templateCaptureValue {
