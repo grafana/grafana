@@ -5,18 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-/**
- * @internal
- */
 export interface LoadingBarProps {
   width?: string;
   height?: string;
   ariaLabel?: string;
 }
 
-/**
- * @internal
- */
 export function LoadingBar({ width, height, ariaLabel = 'Loading bar' }: LoadingBarProps) {
   const styles = useStyles2(getStyles(width, height));
 
