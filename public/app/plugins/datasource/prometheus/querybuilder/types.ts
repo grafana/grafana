@@ -119,7 +119,15 @@ export enum PromOperationId {
   LessOrEqual = '__less_or_equal',
 }
 
+export enum PromQueryPatternType {
+  RateSum = 'rate_sum',
+  RateSumAvg = 'rate_sum_avg',
+  HistQuantRate = 'histogram_quantile_rate',
+  HistQuantIncrease = 'histogram_quantile_increase',
+}
+
 export interface PromQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
+  type: PromQueryPatternType;
 }
