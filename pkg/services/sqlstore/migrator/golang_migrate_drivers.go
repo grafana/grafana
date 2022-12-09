@@ -5,8 +5,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -17,7 +15,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/hashicorp/go-multierror"
 )
 
 //go:embed golang-migrate/*/*.sql
