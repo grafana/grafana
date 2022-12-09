@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/database-encryption/
-  - /docs/grafana/latest/enterprise/enterprise-encryption/
+  - ../../administration/database-encryption/
+  - ../../enterprise/enterprise-encryption/
   - /docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/
 description: If you have a Grafana Enterprise license, you can integrate with a variety
   of key management system providers.

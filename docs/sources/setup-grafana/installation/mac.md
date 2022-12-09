@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/mac/
+  - ../../installation/mac/
   - /docs/grafana/latest/setup-grafana/installation/mac/
 description: Installing Grafana on macOS
 title: Install on macOS

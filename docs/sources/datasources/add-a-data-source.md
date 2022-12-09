@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../features/datasources/add-a-data-source/
   - /docs/grafana/latest/datasources/add-a-data-source/
-  - /docs/grafana/latest/features/datasources/add-a-data-source/
 title: Add data source
 weight: 100
 ---

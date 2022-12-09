@@ -1,9 +1,9 @@
 ---
 aliases:
   - /docs/grafana/latest/
-  - /docs/grafana/latest/guides/reference/admin/
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
+  - guides/reference/admin/
 description: Guides, Installation and Feature Documentation
 keywords:
   - grafana

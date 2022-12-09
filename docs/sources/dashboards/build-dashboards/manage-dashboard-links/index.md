@@ -1,11 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/linking/
-  - /docs/grafana/latest/features/navigation-links/
-  - /docs/grafana/latest/linking/linking-overview/
-  - /docs/grafana/latest/linking/dashboard-links/
-  - /docs/grafana/latest/dashboards/manage-dashboard-links/
-  - /docs/grafana/latest/panels/working-with-panels/add-link-to-panel/
+  - ../../features/navigation-links/
+  - ../../linking/
+  - ../../linking/dashboard-links/
+  - ../../linking/linking-overview/
+  - ../../panels/working-with-panels/add-link-to-panel/
+  - ../manage-dashboard-links/
   - /docs/grafana/latest/dashboards/build-dashboards/manage-dashboard-links/
 description: How to link Grafana dashboards.
 keywords:
@@ -16,8 +16,8 @@ keywords:
   - create links
   - link dashboards
   - navigate
-title: Manage dashboard links
 menuTitle: Manage dashboard links
+title: Manage dashboard links
 weight: 500
 ---
 

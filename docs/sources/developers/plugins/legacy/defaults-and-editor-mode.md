@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../../../plugins/developing/defaults-and-editor-mode/
   - /docs/grafana/latest/developers/plugins/legacy/defaults-and-editor-mode/
-  - /docs/grafana/latest/plugins/developing/defaults-and-editor-mode/
 title: Legacy defaults and editor mode
 ---
 

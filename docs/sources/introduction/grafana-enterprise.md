@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/
+  - ../enterprise/
   - /docs/grafana/latest/introduction/grafana-enterprise/
 description: Grafana Enterprise overview
 title: Grafana Enterprise

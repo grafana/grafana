@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/restart-grafana/
+  - ../installation/restart-grafana/
   - /docs/grafana/latest/setup-grafana/restart-grafana/
 description: Instructions for restarting Grafana
 title: Restart Grafana

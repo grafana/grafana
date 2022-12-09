@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/windows/
+  - ../../installation/windows/
   - /docs/grafana/latest/setup-grafana/installation/windows/
 description: Install Grafana on Windows
 title: Install on Windows
