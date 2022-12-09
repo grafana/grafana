@@ -16,6 +16,7 @@ interface SceneState extends SceneObjectStatePlain {
   actions?: SceneObject[];
   subMenu?: SceneObject;
   isEditing?: boolean;
+  standalone?: boolean;
 }
 
 export class Scene extends SceneObjectBase<SceneState> {
@@ -35,7 +36,15 @@ export class Scene extends SceneObjectBase<SceneState> {
 }
 
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
-  const { title, layout, actions = [], isEditing, $editor, subMenu } = model.useState();
+  const { title, layout, actions = [], isEditing, $editor, subMenu, standalone } = model.useState();
+
+  if (!standalone) {
+    return (
+      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto', minHeight: '100%' }}>
+        <layout.Component model={layout} isEditing={isEditing} />
+      </div>
+    );
+  }
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
