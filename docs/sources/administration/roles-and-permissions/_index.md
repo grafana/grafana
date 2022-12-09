@@ -4,7 +4,6 @@ aliases:
   - ../permissions/
   - ../permissions/organization_roles/
   - ../permissions/overview/
-  - /docs/grafana/latest/administration/roles-and-permissions/
   - manage-users-and-permissions/about-users-and-permissions/
 description: Information about Grafana user, team, and organization roles and permissions
 title: Roles and permissions

@@ -3,7 +3,6 @@ aliases:
   - ../../../enterprise/access-control/assign-rbac-roles/
   - ../../../enterprise/access-control/manage-role-assignments/manage-built-in-role-assignments/
   - ../../../enterprise/access-control/manage-role-assignments/manage-user-role-assignments/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/assign-rbac-roles/
 description: Learn how to assign RBAC roles to users and teams in Grafana.
 menuTitle: Assign RBAC roles
 title: Assign Grafana RBAC roles

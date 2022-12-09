@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../http_api/folder/
-  - /docs/grafana/latest/developers/http_api/folder/
 description: Grafana Folder HTTP API
 keywords:
   - grafana

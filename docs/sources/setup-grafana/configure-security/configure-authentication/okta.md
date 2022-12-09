@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../auth/okta/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/okta/
 description: Grafana Okta OAuth Guide
 title: Configure Okta OAuth2 authentication
 weight: 1200

@@ -9,7 +9,6 @@ aliases:
   - ../../panels/working-with-panels/navigate-panel-editor/
   - ../add-organize-panels/
   - ../dashboard-create/
-  - /docs/grafana/next/dashboards/build-dashboards/add-organize-panels/
 keywords:
   - panel
   - dashboard

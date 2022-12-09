@@ -3,7 +3,6 @@ aliases:
   - ../../message-templating/
   - ../../unified-alerting/message-templating/
   - ./
-  - /docs/grafana/latest/alerting/contact-points/message-templating/example-template/
 keywords:
   - grafana
   - alerting

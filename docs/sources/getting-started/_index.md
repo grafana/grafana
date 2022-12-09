@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/getting-started/
   - guides/what-is-grafana/
 title: Get started
 weight: 9

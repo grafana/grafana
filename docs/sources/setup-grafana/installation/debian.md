@@ -2,7 +2,6 @@
 aliases:
   - ../../installation/debian/
   - ../../installation/installation/debian/
-  - /docs/grafana/latest/setup-grafana/installation/debian/
 description: Install guide for Grafana on Debian or Ubuntu
 title: Install on Debian or Ubuntu
 weight: 100

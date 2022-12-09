@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/linking-to-silence-form/
 description: Linking to a silence form
 keywords:
   - grafana

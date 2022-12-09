@@ -3,7 +3,6 @@ aliases:
   - ../../features/panels/gauge/
   - ../../panels/visualizations/gauge-panel/
   - ../../visualizations/gauge-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/gauge/
 description: Gauge panel docs
 keywords:
   - grafana

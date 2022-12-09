@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../unified-alerting/high-availability/
-  - /docs/grafana/latest/alerting/high-availability/enable-alerting-ha/
 description: Enable alerting high availability
 keywords:
   - grafana

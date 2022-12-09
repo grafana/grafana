@@ -5,7 +5,6 @@ aliases:
   - ../panels/repeat-panels-or-rows/
   - ../panels/working-with-panels/add-title-and-description/
   - ../panels/working-with-panels/view-json-model/
-  - /docs/grafana/latest/panels-visualizations/configure-panel-options/
 keywords:
   - panel
   - dynamic

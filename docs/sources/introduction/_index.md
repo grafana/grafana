@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/introduction/
   - guides/what-is-grafana/
   - oss-details/
 title: Introduction to Grafana

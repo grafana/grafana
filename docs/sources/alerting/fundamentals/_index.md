@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/fundamentals/
   - metrics/
   - unified-alerting/fundamentals/
 title: Explore Grafana Alerting

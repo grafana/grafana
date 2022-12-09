@@ -4,7 +4,6 @@ aliases:
   - ../../message-templating/template-functions/
   - ../../unified-alerting/fundamentals/annotation-label/template-functions/
   - ../../unified-alerting/message-templating/template-functions/
-  - /docs/grafana/latest/alerting/fundamentals/annotation-label/template-functions/
 keywords:
   - grafana
   - alerting

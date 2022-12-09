@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../unified-alerting/alert-groups/
-  - /docs/grafana/latest/alerting/alert-groups/filter-alerts/
 description: Alert groups
 keywords:
   - grafana

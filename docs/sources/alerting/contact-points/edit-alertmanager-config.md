@@ -2,7 +2,6 @@
 aliases:
   - ../message-templating/
   - ../unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/edit-alertmanager-config/
   - message-templating/
 keywords:
   - grafana

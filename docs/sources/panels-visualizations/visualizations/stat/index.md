@@ -5,7 +5,6 @@ aliases:
   - ../../panels/visualizations/stat-panel/
   - ../../reference/singlestat/
   - ../../visualizations/stat-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/stat/
 description: Stat panel documentation
 keywords:
   - grafana

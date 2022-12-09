@@ -6,7 +6,6 @@ aliases:
   - ../reference/graph/
   - ../visualizations/
   - ../visualizations/graph-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/
 title: Visualizations
 weight: 75
 ---

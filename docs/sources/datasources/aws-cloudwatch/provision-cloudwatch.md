@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/provision-cloudwatch/
 description: Guide for provisioning CloudWatch
 title: Provision CloudWatch
 weight: 400

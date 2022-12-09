@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/fundamentals/
   - basics/
 title: Fundamentals
 weight: 8

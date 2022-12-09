@@ -1,8 +1,6 @@
 ---
 aliases:
   - ../../plugins/development/
-  - /docs/grafana/latest/developers/plugins/legacy/
-  - /docs/grafana/next/plugins/apps/
   - /docs/grafana/next/plugins/datasources/
   - /docs/grafana/next/plugins/developing/development/
   - /docs/grafana/next/plugins/panels/

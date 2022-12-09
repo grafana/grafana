@@ -2,7 +2,6 @@
 aliases:
   - ../message-templating/
   - ../unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/test-contact-point/
   - message-templating/
 keywords:
   - grafana

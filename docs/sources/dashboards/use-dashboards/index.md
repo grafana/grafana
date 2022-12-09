@@ -2,7 +2,6 @@
 aliases:
   - ../features/dashboard/dashboards/
   - ../reference/search/
-  - /docs/grafana/latest/dashboards/use-dashboards/
   - dashboard-ui/
   - dashboard-ui/dashboard-header/
   - dashboard-ui/dashboard-row/

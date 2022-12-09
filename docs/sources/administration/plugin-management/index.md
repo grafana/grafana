@@ -5,7 +5,6 @@ aliases:
   - ../plugins/installation/
   - ../plugins/plugin-signature-verification/
   - ../plugins/plugin-signatures/
-  - /docs/grafana/latest/administration/plugin-management/
 title: Plugin management
 weight: 600
 ---

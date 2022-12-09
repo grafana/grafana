@@ -2,7 +2,6 @@
 aliases:
   - ../../features/panels/heatmap/
   - ../../visualizations/heatmap/
-  - /docs/grafana/latest/panels-visualizations/visualizations/heatmap/
 description: Heatmap visualization documentation
 keywords:
   - grafana
