@@ -124,6 +124,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"googleAnalytics4Id":                  setting.GoogleAnalytics4Id,
+		"GoogleAnalytics4SendManualPageViews": setting.GoogleAnalytics4SendManualPageViews,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
 		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
@@ -146,6 +147,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"auth": map[string]interface{}{
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
 		"buildInfo": map[string]interface{}{
@@ -196,6 +198,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"unifiedAlerting": map[string]interface{}{
 			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
 		},
+		"oauth":                   hs.getEnabledOAuthProviders(),
+		"samlEnabled":             hs.samlEnabled(),
+		"samlName":                hs.samlName(),
+		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
 	}
 
 	if hs.ThumbService != nil {
@@ -214,21 +220,23 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
-
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
-
 		if err != nil {
 			return nil, err
 		}
 
-		filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
-		if err != nil {
-			return nil, err
+		if c.IsPublicDashboardView {
+			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
+			orgDataSources = query.Result
+		} else {
+			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+			if err != nil {
+				return nil, err
+			}
+			orgDataSources = filtered
 		}
-
-		orgDataSources = filtered
 	}
 
 	dataSources := make(map[string]plugins.DataSourceDTO)
@@ -496,4 +504,15 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	}
 
 	return pluginSettings, nil
+}
+
+func (hs *HTTPServer) getEnabledOAuthProviders() map[string]interface{} {
+	providers := make(map[string]interface{})
+	for key, oauth := range hs.SocialService.GetOAuthInfoProviders() {
+		providers[key] = map[string]string{
+			"name": oauth.Name,
+			"icon": oauth.Icon,
+		}
+	}
+	return providers
 }

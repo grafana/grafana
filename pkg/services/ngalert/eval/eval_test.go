@@ -12,12 +12,13 @@ import (
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestEvaluateExecutionResult(t *testing.T) {
@@ -352,15 +353,20 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
+	type services struct {
+		cache        *fakes.FakeCacheService
+		pluginsStore *plugins.FakePluginStore
+	}
+
 	testCases := []struct {
 		name      string
-		condition func(service *fakes.FakeCacheService) models.Condition
+		condition func(services services) models.Condition
 		error     bool
 	}{
 		{
 			name:  "fail if no expressions",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
+			condition: func(_ services) models.Condition {
 				return models.Condition{
 					Condition: "A",
 					Data:      []models.AlertQuery{},
@@ -370,17 +376,25 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "fail if condition RefID does not exist",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
-				service.DataSources = append(service.DataSources, &datasources.DataSource{
-					Uid: ds.DatasourceUID,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					Uid:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
 				})
 
 				return models.Condition{
 					Condition: "C",
 					Data: []models.AlertQuery{
-						ds,
-						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+						dsQuery,
+						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -388,17 +402,24 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "fail if condition RefID is empty",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
-				service.DataSources = append(service.DataSources, &datasources.DataSource{
-					Uid: ds.DatasourceUID,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					Uid:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
 				})
-
 				return models.Condition{
 					Condition: "",
 					Data: []models.AlertQuery{
-						ds,
-						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+						dsQuery,
+						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -406,13 +427,68 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "fail if datasource with UID does not exists",
 			error: true,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
 				// do not update the cache service
 				return models.Condition{
-					Condition: ds.RefID,
+					Condition: dsQuery.RefID,
 					Data: []models.AlertQuery{
-						ds,
+						dsQuery,
+					},
+				}
+			},
+		},
+		{
+			name:  "fail if datasource cannot be found in plugin store",
+			error: true,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					Uid:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				// do not update the plugin store
+				return models.Condition{
+					Condition: dsQuery.RefID,
+					Data: []models.AlertQuery{
+						dsQuery,
+					},
+				}
+			},
+		},
+		{
+			name:  "fail if datasource is not backend one",
+			error: true,
+			condition: func(services services) models.Condition {
+				dsQuery1 := models.GenerateAlertQuery()
+				dsQuery2 := models.GenerateAlertQuery()
+				ds1 := &datasources.DataSource{
+					Uid:  dsQuery1.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				ds2 := &datasources.DataSource{
+					Uid:  dsQuery2.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds1, ds2)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+					JSONData: plugins.JSONData{
+						ID:      ds1.Type,
+						Backend: false,
+					},
+				}, plugins.PluginDTO{
+					JSONData: plugins.JSONData{
+						ID:      ds2.Type,
+						Backend: true,
+					},
+				})
+				// do not update the plugin store
+				return models.Condition{
+					Condition: dsQuery1.RefID,
+					Data: []models.AlertQuery{
+						dsQuery1,
+						dsQuery2,
 					},
 				}
 			},
@@ -420,17 +496,25 @@ func TestValidate(t *testing.T) {
 		{
 			name:  "pass if datasource exists and condition is correct",
 			error: false,
-			condition: func(service *fakes.FakeCacheService) models.Condition {
-				ds := models.GenerateAlertQuery()
-				service.DataSources = append(service.DataSources, &datasources.DataSource{
-					Uid: ds.DatasourceUID,
+			condition: func(services services) models.Condition {
+				dsQuery := models.GenerateAlertQuery()
+				ds := &datasources.DataSource{
+					Uid:  dsQuery.DatasourceUID,
+					Type: util.GenerateShortUID(),
+				}
+				services.cache.DataSources = append(services.cache.DataSources, ds)
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+					JSONData: plugins.JSONData{
+						ID:      ds.Type,
+						Backend: true,
+					},
 				})
 
 				return models.Condition{
 					Condition: "B",
 					Data: []models.AlertQuery{
-						ds,
-						models.CreateClassicConditionExpression("B", ds.RefID, "last", "gt", rand.Int()),
+						dsQuery,
+						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -442,11 +526,16 @@ func TestValidate(t *testing.T) {
 
 		t.Run(testCase.name, func(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
-			condition := testCase.condition(cacheService)
+			store := &plugins.FakePluginStore{}
+			condition := testCase.condition(services{
+				cache:        cacheService,
+				pluginsStore: store,
+			})
 
-			evaluator := NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, log.New("test"), cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), store)
+			evalCtx := Context(context.Background(), u)
 
-			err := evaluator.Validate(context.Background(), u, condition)
+			err := evaluator.Validate(evalCtx, condition)
 			if testCase.error {
 				require.Error(t, err)
 			} else {

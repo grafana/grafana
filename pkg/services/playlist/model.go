@@ -3,7 +3,7 @@ package playlist
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/coremodel/playlist"
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 // Typed errors
@@ -22,7 +22,7 @@ type Playlist struct {
 	OrgId    int64  `json:"-" db:"org_id"`
 }
 
-type PlaylistDTO = playlist.Model
+type PlaylistDTO = playlist.Playlist
 type PlaylistItemDTO = playlist.PlaylistItem
 type PlaylistItemType = playlist.PlaylistItemType
 

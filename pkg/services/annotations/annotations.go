@@ -13,8 +13,10 @@ var (
 	ErrBaseTagLimitExceeded = errutil.NewBase(errutil.StatusBadRequest, "annotations.tag-limit-exceeded", errutil.WithPublicMessage("Tags length exceeds the maximum allowed."))
 )
 
+//go:generate mockery --name Repository --structname FakeAnnotationsRepo --inpackage --filename annotations_repository_mock.go
 type Repository interface {
 	Save(ctx context.Context, item *Item) error
+	SaveMany(ctx context.Context, items []Item) error
 	Update(ctx context.Context, item *Item) error
 	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
 	Delete(ctx context.Context, params *DeleteParams) error

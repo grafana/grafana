@@ -10,6 +10,7 @@ import {
   LogsSortOrder,
   toDataFrame,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';
@@ -148,7 +149,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // React Hook that creates an object state value called result to component state and a setter function called setResult
   // The initial value for result is null
   // Used for sorting the response from backend
-  const [result, setResult] = useState<ResultType>(null as any as ResultType);
+  const [result, setResult] = useState<ResultType>(null as unknown as ResultType);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
   // The initial value for hasMoreContextRows is {before: true, after: true}
@@ -210,7 +211,16 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       after: result ? result.errors[1] : undefined,
     },
     hasMoreContextRows,
-    updateLimit: () => setLimit(limit + 10),
+    updateLimit: () => {
+      setLimit(limit + 10);
+
+      const { datasourceType, uid: logRowUid } = row;
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType,
+        logRowUid,
+        newLimit: limit + 10,
+      });
+    },
     limit,
     logsSortOrder,
   });

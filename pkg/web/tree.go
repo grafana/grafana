@@ -96,8 +96,8 @@ func getWildcards(pattern string) (string, []string) {
 
 // getRawPattern removes all regexp but keeps wildcards for building URL path.
 func getRawPattern(rawPattern string) string {
-	rawPattern = strings.Replace(rawPattern, ":int", "", -1)
-	rawPattern = strings.Replace(rawPattern, ":string", "", -1)
+	rawPattern = strings.ReplaceAll(rawPattern, ":int", "")
+	rawPattern = strings.ReplaceAll(rawPattern, ":string", "")
 
 	for {
 		startIdx := strings.Index(rawPattern, "(")

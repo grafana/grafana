@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -19,7 +18,6 @@ var (
 )
 
 func ProvideService(
-	sqlStore sqlstore.Store,
 	userService user.Service,
 	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
@@ -27,7 +25,6 @@ func ProvideService(
 	orgService org.Service,
 ) *Implementation {
 	s := &Implementation{
-		SQLStore:        sqlStore,
 		userService:     userService,
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
@@ -38,18 +35,12 @@ func ProvideService(
 }
 
 type Implementation struct {
-	SQLStore        sqlstore.Store
 	userService     user.Service
 	AuthInfoService login.AuthInfoService
 	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
 	accessControl   accesscontrol.Service
 	orgService      org.Service
-}
-
-// CreateUser creates inserts a new one.
-func (ls *Implementation) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
-	return ls.SQLStore.CreateUser(context.Background(), cmd)
 }
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
@@ -71,16 +62,25 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			return login.ErrSignupNotAllowed
 		}
 
-		limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
-		if errLimit != nil {
-			cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
-			return login.ErrGettingUserQuota
-		}
-		if limitReached {
-			return login.ErrUsersQuotaReached
+		// we may insert in both user and org_user tables
+		// therefore we need to query check quota for both user and org services
+		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
+			limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, quota.TargetSrv(srv))
+			if errLimit != nil {
+				cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
+				return login.ErrGettingUserQuota
+			}
+			if limitReached {
+				return login.ErrUsersQuotaReached
+			}
 		}
 
-		result, errCreateUser := ls.createUser(extUser)
+		result, errCreateUser := ls.userService.Create(ctx, &user.CreateUserCommand{
+			Login:        extUser.Login,
+			Email:        extUser.Email,
+			Name:         extUser.Name,
+			SkipOrgSetup: len(extUser.OrgRoles) > 0,
+		})
 		if errCreateUser != nil {
 			return errCreateUser
 		}
@@ -205,16 +205,6 @@ func (ls *Implementation) DisableExternalUser(ctx context.Context, username stri
 // SetTeamSyncFunc sets the function received through args as the team sync function.
 func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
-}
-
-func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*user.User, error) {
-	cmd := user.CreateUserCommand{
-		Login:        extUser.Login,
-		Email:        extUser.Email,
-		Name:         extUser.Name,
-		SkipOrgSetup: len(extUser.OrgRoles) > 0,
-	}
-	return ls.CreateUser(cmd)
 }
 
 func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {

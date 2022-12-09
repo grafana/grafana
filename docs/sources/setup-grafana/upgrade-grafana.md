@@ -17,7 +17,11 @@ weight: 500
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order to make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
-Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://grafana.com/docs/grafana/latest/release-notes/) and [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md)
+Upgrading between many minor versions and one major version is generally safe, and dashboards and graphs will look the same.
+There might be minor breaking changes in some releases.
+We outline these in the [What's New overviews]({{< relref "../whatsnew/" >}}) for each release.
+For versions of Grafana prior to v9.2, we also published additional information in the [Release Notes]({{< relref "../release-notes/" >}}).
+We also list all changes, with links to pull requests or issues when available, in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Backup
 
@@ -200,7 +204,7 @@ Grafana will fall back to using the database as a shared cache.
 
 ### Upgrading Elasticsearch to v7.0+
 
-The semantics of `max concurrent shard requests` changed in Elasticsearch v7.0, see [release notes](https://www.elastic.co/guide/en/elasticsearch/reference/7.0/breaking-changes-7.0.html#semantics-changed-max-concurrent-shared-requests) for reference.
+The semantics of `max concurrent shard requests` changed in Elasticsearch v7.0. See its [release notes](https://www.elastic.co/guide/en/elasticsearch/reference/7.0/breaking-changes-7.0.html#semantics-changed-max-concurrent-shared-requests) for reference.
 
 If you upgrade Elasticsearch to v7.0+ you should make sure to update the data source configuration in Grafana so that version
 is `7.0+` and `max concurrent shard requests` properly configured. 256 was the default in pre v7.0 versions. In v7.0 and above 5 is the default.
@@ -374,7 +378,7 @@ ORDER BY time
 There are two possible workarounds to resolve this problem:
 
 1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field definitions' display name]({{< relref "../panels/configure-standard-options/#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+2. Use the [Standard field definitions' display name]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
 For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres/#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql/#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql/#time-series-queries" >}}).
 
@@ -400,3 +404,7 @@ The concept of a `default` data source existed in Grafana since the beginning. H
 This behavior was not very intuitive and creates issues for users who want to change the default without it impacting existing dashboards.
 That is why we are changing the behavior in 8.5. From now on, the `default` data source will not be a persisted property but just the starting data source for new panels and queries.
 Existing dashboards that still have panels with a `datasource` set to null will be migrated when the dashboard opens. The migration will set the data source property to the **current** default data source.
+
+## Upgrading to v9.2
+
+Beginning in v9.2, Grafana has a [supported database versions policy]({{< relref "./installation/#supported-databases" >}}). As of this release, MySQL versions from 5.7, postgres versions from v10, and SQLite 3 are supported databases.

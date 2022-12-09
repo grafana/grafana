@@ -15,7 +15,7 @@ export function getIntervalFromString(strInterval: string): SelectableValue<numb
 }
 
 interface Props {
-  func: () => any; // TODO
+  func: () => unknown;
   loading: boolean;
   interval: string;
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateSavePublicDashboard(t *testing.T) {
+func TestValidatePublicDashboard(t *testing.T) {
 	t.Run("Returns validation error when dashboard has template variables", func(t *testing.T) {
 		templateVars := []byte(`{
 			"templating": {
@@ -22,10 +22,10 @@ func TestValidateSavePublicDashboard(t *testing.T) {
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
 		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
-		err := ValidateSavePublicDashboard(dto, dashboard)
-		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Reason)
+		err := ValidatePublicDashboard(dto, dashboard)
+		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Error())
 	})
 
 	t.Run("Returns no validation error when dashboard has no template variables", func(t *testing.T) {
@@ -36,9 +36,9 @@ func TestValidateSavePublicDashboard(t *testing.T) {
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
 		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
-		err := ValidateSavePublicDashboard(dto, dashboard)
+		err := ValidatePublicDashboard(dto, dashboard)
 		require.NoError(t, err)
 	})
 }

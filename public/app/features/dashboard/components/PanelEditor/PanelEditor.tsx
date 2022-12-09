@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { config, locationService } from '@grafana/runtime';
 import {
   Button,
@@ -14,7 +15,6 @@ import {
   ModalsController,
   PageToolbar,
   RadioButtonGroup,
-  Stack,
   stylesFactory,
   Themeable2,
   ToolbarButton,
@@ -47,7 +47,7 @@ import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { VisualizationButton } from './VisualizationButton';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
-import { toggleTableView } from './state/reducers';
+import { PanelEditorUIState, toggleTableView } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { calculatePanelSize } from './utils';
@@ -193,11 +193,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.toggleTableView();
   };
 
-  onTogglePanelOptions = () => {
-    const { uiState, updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
-  };
-
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
     const { dashboard, panel, uiState, tableViewEnabled, theme } = this.props;
 
@@ -246,32 +241,45 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderPanelAndEditor(styles: EditorStyles) {
+  renderPanelAndEditor(uiState: PanelEditorUIState, styles: EditorStyles) {
     const { panel, dashboard, plugin, tab } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
     const isOnlyPanel = tabs.length === 0;
     const panelPane = this.renderPanel(styles, isOnlyPanel);
 
     if (tabs.length === 0) {
-      return panelPane;
+      return <div className={styles.onlyPanel}>{panelPane}</div>;
     }
 
-    return [
-      panelPane,
-      <div
-        className={styles.tabsWrapper}
-        aria-label={selectors.components.PanelEditor.DataPane.content}
-        key="panel-editor-tabs"
+    return (
+      <SplitPaneWrapper
+        splitOrientation="horizontal"
+        maxSize={-200}
+        paneSize={uiState.topPaneSize}
+        primary="first"
+        secondaryPaneStyle={{ minHeight: 0 }}
+        onDragFinished={(size) => {
+          if (size) {
+            updatePanelEditorUIState({ topPaneSize: size / window.innerHeight });
+          }
+        }}
       >
-        <PanelEditorTabs
-          key={panel.key}
-          panel={panel}
-          dashboard={dashboard}
-          tabs={tabs}
-          onChangeTab={this.onChangeTab}
-        />
-      </div>,
-    ];
+        {panelPane}
+        <div
+          className={styles.tabsWrapper}
+          aria-label={selectors.components.PanelEditor.DataPane.content}
+          key="panel-editor-tabs"
+        >
+          <PanelEditorTabs
+            key={panel.key}
+            panel={panel}
+            dashboard={dashboard}
+            tabs={tabs}
+            onChangeTab={this.onChangeTab}
+          />
+        </div>
+      </SplitPaneWrapper>
+    );
   }
 
   renderTemplateVariables(styles: EditorStyles) {
@@ -370,8 +378,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 onClick={() => {
                   showModal(UnlinkModal, {
                     onConfirm: () => {
-                      delete this.props.panel.libraryPanel;
-                      this.props.panel.render();
+                      this.props.panel.unlinkLibraryPanel();
                       this.forceUpdate();
                     },
                     onDismiss: hideModal,
@@ -440,7 +447,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav, className } = this.props;
+    const { initDone, uiState, theme, sectionNav, pageNav, className, updatePanelEditorUIState } = this.props;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
@@ -458,18 +465,29 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       >
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>
-            <SplitPaneWrapper
-              leftPaneComponents={this.renderPanelAndEditor(styles)}
-              rightPaneComponents={this.renderOptionsPane()}
-              uiState={uiState}
-              updateUiState={updatePanelEditorUIState}
-              rightPaneVisible={uiState.isPanelOptionsVisible}
-            />
+            {!uiState.isPanelOptionsVisible ? (
+              this.renderPanelAndEditor(uiState, styles)
+            ) : (
+              <SplitPaneWrapper
+                splitOrientation="vertical"
+                maxSize={-300}
+                paneSize={uiState.rightPaneSize}
+                primary="second"
+                onDragFinished={(size) => {
+                  if (size) {
+                    updatePanelEditorUIState({ rightPaneSize: size / window.innerWidth });
+                  }
+                }}
+              >
+                {this.renderPanelAndEditor(uiState, styles)}
+                {this.renderOptionsPane()}
+              </SplitPaneWrapper>
+            )}
           </div>
           {this.state.showSaveLibraryPanelModal && (
             <SaveLibraryPanelModal
               panel={this.props.panel as PanelModelWithLibraryPanel}
-              folderId={this.props.dashboard.meta.folderId as number}
+              folderUid={this.props.dashboard.meta.folderUid ?? ''}
               onConfirm={this.onConfirmAndDismissLibarayPanelModel}
               onDiscard={this.onDiscard}
               onDismiss={this.onConfirmAndDismissLibarayPanelModel}
@@ -544,6 +562,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
       align-items: center;
       position: relative;
       flex-direction: column;
+    `,
+    onlyPanel: css`
+      height: 100%;
+      position: absolute;
+      overflow: hidden;
+      width: 100%;
     `,
   };
 });

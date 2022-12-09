@@ -5,11 +5,11 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type CrawlerAuthSetupService interface {
@@ -17,7 +17,7 @@ type CrawlerAuthSetupService interface {
 }
 
 func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service, serviceAccountsStore serviceaccounts.Store,
-	sqlStore *sqlstore.SQLStore, orgService org.Service) *OSSCrawlerAuthSetupService {
+	sqlStore db.DB, orgService org.Service) *OSSCrawlerAuthSetupService {
 	return &OSSCrawlerAuthSetupService{
 		serviceAccountNamePrefix: "dashboard-previews-crawler-org-",
 		serviceAccounts:          serviceAccounts,
@@ -33,7 +33,7 @@ type OSSCrawlerAuthSetupService struct {
 	serviceAccountNamePrefix string
 	serviceAccounts          serviceaccounts.Service
 	serviceAccountsStore     serviceaccounts.Store
-	sqlStore                 *sqlstore.SQLStore
+	sqlStore                 db.DB
 	orgService               org.Service
 }
 

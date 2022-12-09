@@ -7,34 +7,23 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 )
-
-func createTempFile(sfx string) (string, error) {
-	f, err := os.CreateTemp("", fmt.Sprintf("*-%s", sfx))
-	if err != nil {
-		return "", err
-	}
-	if err := f.Close(); err != nil {
-		return "", err
-	}
-
-	return f.Name(), nil
-}
 
 // LoadGPGKeys loads GPG key pair and password from the environment and writes them to corresponding files.
 //
 // The passed config's GPG fields also get updated. Make sure to call RemoveGPGFiles at application exit.
 func LoadGPGKeys(cfg *config.Config) error {
 	var err error
-	cfg.GPGPrivateKey, err = createTempFile("priv.key")
+	cfg.GPGPrivateKey, err = fsutil.CreateTempFile("priv.key")
 	if err != nil {
 		return err
 	}
-	cfg.GPGPublicKey, err = createTempFile("pub.key")
+	cfg.GPGPublicKey, err = fsutil.CreateTempFile("pub.key")
 	if err != nil {
 		return err
 	}
-	cfg.GPGPassPath, err = createTempFile("")
+	cfg.GPGPassPath, err = fsutil.CreateTempFile("")
 	if err != nil {
 		return err
 	}

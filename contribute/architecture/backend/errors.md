@@ -29,11 +29,28 @@ Grafana (e.g. `StatusBadRequest` is generally speaking not as relevant
 as `StatusInternal`). All available status codes live in the `errutil`
 package and have names starting with `Status`.
 
-The messageID is constructed as `<servicename>.<error-identifier>` where
+The messageID is constructed as `<servicename>.<errorIdentifier>` where
 the `<servicename>` corresponds to the root service directory per
-[the package hierarchy](package-hierarchy.md) and `<error-identifier>`
-is a short identifier using dashes for word separation that identifies
-the specific category of errors within the service.
+[the package hierarchy](package-hierarchy.md) and `<errorIdentifier>`
+is a camelCased short identifier that identifies the specific category
+of errors within the service.
+
+Errors should be grouped together (i.e. share `errutil.Base`) based on
+their public facing properties, a single messageID should represent a
+translatable string and what metadata is carried with it.
+_service.MissingRequiredFields_ and _service.MessageTooLong_ are likely
+to be two different errors that are both validation failures, as their
+user-friendly expansions are likely different. This is the maximization
+rule of declaring as many `errutil.Error`s as you need public message
+structures.
+
+The other side of this is that even though a login service's
+"user is ratelimited", "user does not exist", "wrong username", and
+"wrong password" are reasonable errors to separate between internally,
+for security reasons the end-user should not be told which particular
+error they struck. This means that they should share the same base (such
+as _login.Failed_). This is the minimization rule of grouping together
+distinct logged errors that provide the same information via the API.
 
 To set a static message sent to the client when the error occurs, the
 `errutil.WithPublicMessage(message string)` option may be appended to
@@ -53,7 +70,7 @@ import (
   "example.org/thing"
 )
 
-var ErrBaseNotFound = errutil.NewBase(errutil.StatusNotFound, "main.not-found", errutil.WithPublicMessage("Thing not found"))
+var ErrBaseNotFound = errutil.NewBase(errutil.StatusNotFound, "main.notFound", errutil.WithPublicMessage("Thing not found"))
 
 func Look(id int) (*Thing, error) {
   t, err := thing.GetByID(id)
@@ -65,17 +82,22 @@ func Look(id int) (*Thing, error) {
 }
 ```
 
-Check out [errutil's GoDocs](https://pkg.go.dev/github.com/grafana/grafana@v0.0.0-20220621133844-0f4fc1290421/pkg/util/errutil)
-for details on how to construct and use Grafana style errors.
+Errors consider themselves to be both its `errutil.Base` or
+`errutil.Template` and whatever errors it wraps for the purposes of the
+`errors.Is` function.
+
+Check out the package and method documentation for
+github.com/grafana/grafana/pkg/util/errutil for details on how to
+construct and use Grafana style errors. This documentation is
+unfortunately not readily available on pkg.go.dev because Grafana is not
+fully Go modules compatible, but can be viewed using
+[godoc](https://go.dev/cmd/godoc/) from the Grafana directory.
 
 ### Handling errors in the API
 
 API handlers use the `github.com/grafana/grafana/pkg/api/response.Err`
-function to create responses based on `errutil.Error`s.
+or `github.com/grafana/grafana/pkg/api/response.ErrWithFallback`
+(same signature as `response.Error`) function to create responses based
+on `errutil.Error`.
 
-> **Note:** (@sakjur 2022-06) `response.Err` requires all errors to be
-> `errutil.Error` or it'll be considered an internal server error.
-> This is something that should be fixed in the near future to allow
-> fallback behavior to make it possible to correctly handle Grafana
-> style errors if they're present but allow fallback to a reasonable
-> default otherwise.
+Using `response.Err` requires all errors to be Grafana style errors.

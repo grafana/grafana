@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Placement, Rect } from '@popperjs/core';
 import React, { useCallback, useRef, useState } from 'react';
 import SVG from 'react-inlinesvg';
 import { usePopper } from 'react-popper';
@@ -34,15 +35,18 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onC
   const timeout = useRef<number | null>(null);
 
   // Popper specific logic
-  const offsetCallback = useCallback(({ placement, reference, popper }) => {
-    let result: [number, number] = [0, 0];
-    if (placement === 'bottom' || placement === 'top') {
-      result = [0, -(reference.height + popper.height) / 2];
-    } else if (placement === 'left' || placement === 'right') {
-      result = [-(reference.width + popper.width) / 2, 0];
-    }
-    return result;
-  }, []);
+  const offsetCallback = useCallback(
+    ({ placement, reference, popper }: { placement: Placement; reference: Rect; popper: Rect }) => {
+      let result: [number, number] = [0, 0];
+      if (placement === 'bottom' || placement === 'top') {
+        result = [0, -(reference.height + popper.height) / 2];
+      } else if (placement === 'left' || placement === 'right') {
+        result = [-(reference.width + popper.width) / 2, 0];
+      }
+      return result;
+    },
+    []
+  );
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
   const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {

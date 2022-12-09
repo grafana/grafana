@@ -80,6 +80,9 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid: "test-app",
 			skip:   "has a 'page'-type include which isn't a known part of spec",
 		},
+		"test-app-with-roles": {
+			rootid: "test-app",
+		},
 		"unsigned-datasource": {
 			rootid:  "test-datasource",
 			subpath: "plugin",
@@ -157,7 +160,7 @@ func TestParseTreeTestdata(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {
@@ -169,6 +172,7 @@ func TestParseTreeTestdata(t *testing.T) {
 			if tst.err == nil {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
+				require.Error(t, err)
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
 			}
@@ -256,7 +260,7 @@ func TestParseTreeZips(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {

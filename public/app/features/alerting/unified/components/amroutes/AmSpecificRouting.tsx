@@ -119,7 +119,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
                   onFilterChange={(filter) =>
                     setFilters((currentFilters) => ({ ...currentFilters, queryString: filter }))
                   }
-                  queryString={filters.queryString ?? ''}
+                  defaultQueryString={filters.queryString ?? ''}
                   className={styles.filterInput}
                 />
                 <div className={styles.filterInput}>

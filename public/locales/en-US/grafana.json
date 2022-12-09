@@ -1,10 +1,13 @@
 {
+  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
   "common": {
     "locale": {
-      "default": "Default",
-      "en": "English",
-      "es": "Spanish",
-      "fr": "French"
+      "default": "Default"
     },
     "save": "Save"
   },
@@ -61,12 +64,6 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
-    "refresh-picker": {
-      "off-arialabel": "Turn off auto refresh",
-      "off-description": "Auto refresh turned off. Choose refresh time interval",
-      "off-label": "Off",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Add panel",
       "comments-show": "Show dashboard comments",
@@ -103,62 +100,255 @@
     }
   },
   "nav": {
-    "alerting": "Alerting",
-    "alerting-admin": "Admin",
-    "alerting-am-routes": "Notification policies",
-    "alerting-channels": "Notification channels",
-    "alerting-groups": "Groups",
-    "alerting-legacy": "Alerting (legacy)",
-    "alerting-list": "Alert rules",
-    "alerting-receivers": "Contact points",
-    "alerting-silences": "Silences",
-    "api-keys": "API keys",
-    "config": "Configuration",
-    "correlations": "Correlations",
-    "create": "Create",
-    "create-alert": "New alert rule",
-    "create-dashboard": "Dashboard",
-    "create-folder": "Folder",
-    "create-import": "Import",
-    "dashboards": "Dashboards",
-    "datasources": "Data sources",
-    "explore": "Explore",
-    "help": "Help",
-    "home": "Home",
-    "library-panels": "Library panels",
-    "live": "Event streaming",
-    "live-cloud": "Cloud",
-    "live-pipeline": "Pipeline",
-    "live-status": "Status",
-    "manage-dashboards": "Browse",
-    "new-dashboard": "New dashboard",
-    "new-folder": "New folder",
-    "org-settings": "Preferences",
-    "playlists": "Playlists",
-    "plugins": "Plugins",
-    "profile/password": "Change password",
-    "profile/settings": "Preferences",
-    "service-accounts": "Service accounts",
-    "sign-out": "Sign out",
-    "snapshots": "Snapshots",
-    "starred": "Starred",
-    "starred-empty": "Your starred dashboards will appear here",
-    "teams": "Teams",
-    "users": "Users"
+    "admin": {
+      "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
+      "title": "Server admin"
+    },
+    "admin-access": {
+      "title": "Users and access"
+    },
+    "admin-general": {
+      "title": "General"
+    },
+    "admin-plugins": {
+      "title": "Plugins and data"
+    },
+    "alerting": {
+      "subtitle": "Learn about problems in your systems moments after they occur",
+      "title": "Alerting"
+    },
+    "alerting-admin": {
+      "title": "Admin"
+    },
+    "alerting-am-routes": {
+      "subtitle": "Determine how alerts are routed to contact points",
+      "title": "Notification policies"
+    },
+    "alerting-channels": {
+      "title": "Notification channels"
+    },
+    "alerting-groups": {
+      "subtitle": "See grouped alerts from an Alertmanager instance",
+      "title": "Groups"
+    },
+    "alerting-legacy": {
+      "title": "Alerting (legacy)"
+    },
+    "alerting-list": {
+      "subtitle": "Rules that determine whether an alert will fire",
+      "title": "Alert rules"
+    },
+    "alerting-receivers": {
+      "subtitle": "Decide how your contacts are notified when an alert fires",
+      "title": "Contact points"
+    },
+    "alerting-silences": {
+      "subtitle": "Stop notifications from one or more alerting rules",
+      "title": "Silences"
+    },
+    "alerts-and-incidents": {
+      "subtitle": "Alerting and incident management apps",
+      "title": "Alerts & incidents"
+    },
+    "api-keys": {
+      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
+      "title": "API keys"
+    },
+    "apps": {
+      "subtitle": "App plugins that extend the Grafana experience",
+      "title": "Apps"
+    },
+    "config": {
+      "title": "Administration",
+      "titleBeforeTopnav": "Configuration"
+    },
+    "correlations": {
+      "subtitle": "Add and configure correlations",
+      "title": "Correlations"
+    },
+    "create": {
+      "title": "Create"
+    },
+    "create-alert": {
+      "title": "New alert rule"
+    },
+    "create-dashboard": {
+      "title": "Dashboard"
+    },
+    "create-folder": {
+      "title": "Folder"
+    },
+    "create-import": {
+      "title": "Import"
+    },
+    "dashboards": {
+      "subtitle": "Create and manage dashboards to visualize your data",
+      "title": "Dashboards"
+    },
+    "datasources": {
+      "subtitle": "Add and configure data sources",
+      "title": "Data sources"
+    },
+    "explore": {
+      "title": "Explore"
+    },
+    "global-orgs": {
+      "subtitle": "Isolated instances of Grafana running on the same server",
+      "title": "Organizations"
+    },
+    "global-users": {
+      "subtitle": "Manage users in Grafana",
+      "title": "Users",
+      "titleBeforeTopnav": "Users"
+    },
+    "help": {
+      "title": "Help"
+    },
+    "help/community": "Community",
+    "help/documentation": "Documentation",
+    "help/keyboard-shortcuts": "Keyboard shortcuts",
+    "help/support": "Support",
+    "home": {
+      "title": "Home"
+    },
+    "library-panels": {
+      "subtitle": "Reusable panels that can be added to multiple dashboards",
+      "title": "Library panels"
+    },
+    "live": {
+      "title": "Event streaming"
+    },
+    "live-cloud": {
+      "title": "Cloud"
+    },
+    "live-pipeline": {
+      "title": "Pipeline"
+    },
+    "live-status": {
+      "title": "Status"
+    },
+    "manage-dashboards": {
+      "title": "Browse"
+    },
+    "monitoring": {
+      "subtitle": "Monitoring and infrastructure apps",
+      "title": "Monitoring"
+    },
+    "new-dashboard": {
+      "title": "New dashboard"
+    },
+    "new-folder": {
+      "title": "New folder"
+    },
+    "org-settings": {
+      "subtitle": "Manage preferences across an organization",
+      "title": "Default preferences",
+      "titleBeforeTopnav": "Preferences"
+    },
+    "playlists": {
+      "subtitle": "Groups of dashboards that are displayed in a sequence",
+      "title": "Playlists"
+    },
+    "plugins": {
+      "subtitle": "Extend the Grafana experience with plugins",
+      "title": "Plugins"
+    },
+    "profile/notifications": {
+      "title": "Notification history"
+    },
+    "profile/password": {
+      "title": "Change password"
+    },
+    "profile/settings": {
+      "title": "Preferences"
+    },
+    "profile/switch-org": "Switch organization",
+    "scenes": {
+      "title": "Scenes"
+    },
+    "search": {
+      "placeholder": "Search Grafana"
+    },
+    "search-dashboards": {
+      "title": "Search dashboards"
+    },
+    "server-settings": {
+      "subtitle": "View the settings defined in your Grafana config",
+      "title": "Settings"
+    },
+    "service-accounts": {
+      "subtitle": "Use service accounts to run automated workloads in Grafana",
+      "title": "Service accounts"
+    },
+    "sign-in": "Sign in",
+    "sign-out": {
+      "title": "Sign out"
+    },
+    "snapshots": {
+      "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
+      "title": "Snapshots"
+    },
+    "starred": {
+      "title": "Starred"
+    },
+    "starred-empty": {
+      "title": "Your starred dashboards will appear here"
+    },
+    "storage": {
+      "subtitle": "Manage file storage",
+      "title": "Storage"
+    },
+    "teams": {
+      "subtitle": "Groups of users that have common dashboard and permission needs",
+      "title": "Teams"
+    },
+    "upgrading": {
+      "title": "Stats and license"
+    },
+    "users": {
+      "subtitle": "Invite and assign roles to users",
+      "title": "Users"
+    }
   },
   "navigation": {
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     }
   },
+  "news": {
+    "title": "Latest from the blog"
+  },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
       "share": "Share",
+      "show-legend": "Show legend",
       "view": "View"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Auto refresh turned off. Choose refresh time interval",
+      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+    },
+    "live-option": {
+      "aria-label": "Turn on live streaming",
+      "label": "Live"
+    },
+    "off-option": {
+      "aria-label": "Turn off auto refresh",
+      "label": "Off"
+    },
+    "select-button": {
+      "auto-refresh": "Set auto refresh interval"
     }
   },
   "share-modal": {
@@ -216,7 +406,8 @@
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
     },
     "tab-title": {
       "embed": "Embed",
@@ -230,6 +421,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {
@@ -257,6 +451,48 @@
     "absolute": {
       "recent-title": "Recently used absolute ranges",
       "title": "Absolute time range"
+    },
+    "calendar": {
+      "apply-button": "Apply time range",
+      "cancel-button": "Cancel",
+      "select-time": "Select a time range"
+    },
+    "content": {
+      "empty-recent-list": "<0><0>It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
+      "filter-placeholder": "Search quick ranges"
+    },
+    "footer": {
+      "change-settings-button": "Change time settings",
+      "fiscal-year-option": "Fiscal year",
+      "fiscal-year-start": "Fiscal year start month",
+      "time-zone-option": "Time zone",
+      "time-zone-selection": "Time zone selection"
+    },
+    "range-content": {
+      "apply-button": "Apply time range",
+      "default-error": "Please enter a past date or \"now\"",
+      "fiscal-year": "Fiscal year",
+      "from-input": "From",
+      "range-error": "\"From\" can't be after \"To\"",
+      "to-input": "To"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Move time range backwards",
+      "current-time-selected": "Time range selected: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Move time range forwards",
+      "to": "to",
+      "zoom-out-button": "Zoom out time range",
+      "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
+    },
+    "time-range": {
+      "aria-role": "Time range selection",
+      "default-title": "Time ranges",
+      "example-title": "Example time ranges",
+      "specify": "Specify time range <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Time zone picker",
+      "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
   "user-orgs": {
@@ -277,7 +513,7 @@
     "title": "Edit profile"
   },
   "user-session": {
-    "browser-column": "Browser &amp; OS",
+    "browser-column": "Browser & OS",
     "created-at-column": "Logged on",
     "ip-column": "IP address",
     "revoke": "Revoke user session",
@@ -285,5 +521,14 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Enter variable value",
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    }
   }
 }

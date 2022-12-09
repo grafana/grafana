@@ -11,17 +11,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/secretscan"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
 	metricsCollectionInterval = time.Minute * 30
+	defaultSecretScanInterval = time.Minute * 5
 )
 
 type ServiceAccountsService struct {
-	store         serviceaccounts.Store
-	log           log.Logger
-	backgroundLog log.Logger
+	store             serviceaccounts.Store
+	log               log.Logger
+	backgroundLog     log.Logger
+	secretScanService secretscan.Checker
+
+	secretScanEnabled  bool
+	secretScanInterval time.Duration
 }
 
 func ProvideServiceAccountsService(
@@ -45,8 +51,15 @@ func ProvideServiceAccountsService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, permissionService)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, s.store, permissionService)
 	serviceaccountsAPI.RegisterAPIEndpoints()
+
+	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
+	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
+		Key("interval").MustDuration(defaultSecretScanInterval)
+	if s.secretScanEnabled {
+		s.secretScanService = secretscan.NewService(s.store, cfg)
+	}
 
 	return s, nil
 }
@@ -60,6 +73,27 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
 	defer updateStatsTicker.Stop()
+
+	// Enforce a minimum interval of 1 minute.
+	if sa.secretScanEnabled && sa.secretScanInterval < time.Minute {
+		sa.backgroundLog.Warn("secret scan interval is too low, increasing to " +
+			defaultSecretScanInterval.String())
+
+		sa.secretScanInterval = defaultSecretScanInterval
+	}
+
+	tokenCheckTicker := time.NewTicker(sa.secretScanInterval)
+
+	if !sa.secretScanEnabled {
+		tokenCheckTicker.Stop()
+	} else {
+		sa.backgroundLog.Debug("enabled token secret check and executing first check")
+		if err := sa.secretScanService.CheckTokens(ctx); err != nil {
+			sa.backgroundLog.Warn("Failed to check for leaked tokens", "error", err.Error())
+		}
+
+		defer tokenCheckTicker.Stop()
+	}
 
 	for {
 		select {
@@ -76,6 +110,12 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 			if _, err := sa.getUsageMetrics(ctx); err != nil {
 				sa.backgroundLog.Warn("Failed to get usage metrics", "error", err.Error())
+			}
+		case <-tokenCheckTicker.C:
+			sa.backgroundLog.Debug("checking for leaked tokens")
+
+			if err := sa.secretScanService.CheckTokens(ctx); err != nil {
+				sa.backgroundLog.Warn("Failed to check for leaked tokens", "error", err.Error())
 			}
 		}
 	}

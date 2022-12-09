@@ -3,6 +3,7 @@ package proxyutil
 import (
 	"net"
 	"net/http"
+	"sort"
 )
 
 // PrepareProxyRequest prepares a request for being proxied.
@@ -26,19 +27,31 @@ func PrepareProxyRequest(req *http.Request) {
 	}
 }
 
-// ClearCookieHeader clear cookie header, except for cookies specified to be kept.
-func ClearCookieHeader(req *http.Request, keepCookiesNames []string) {
-	var keepCookies []*http.Cookie
+// ClearCookieHeader clear cookie header, except for cookies specified to be kept (keepCookiesNames) if not in skipCookiesNames.
+func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookiesNames []string) {
+	keepCookies := map[string]*http.Cookie{}
 	for _, c := range req.Cookies() {
 		for _, v := range keepCookiesNames {
 			if c.Name == v {
-				keepCookies = append(keepCookies, c)
+				keepCookies[c.Name] = c
 			}
 		}
 	}
 
+	for _, v := range skipCookiesNames {
+		delete(keepCookies, v)
+	}
+
 	req.Header.Del("Cookie")
-	for _, c := range keepCookies {
+
+	sortedCookies := []string{}
+	for name := range keepCookies {
+		sortedCookies = append(sortedCookies, name)
+	}
+	sort.Strings(sortedCookies)
+
+	for _, name := range sortedCookies {
+		c := keepCookies[name]
 		req.AddCookie(c)
 	}
 }

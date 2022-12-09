@@ -8,11 +8,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -20,22 +26,21 @@ import (
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
 )
 
 type FakeFeatures struct {
@@ -64,6 +69,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	})
 
 	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: setting.SchedulerBaseInterval,
 	}
@@ -72,9 +78,11 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	*cfg.UnifiedAlerting.Enabled = true
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
-	sqlStore := sqlstore.InitTestDB(tb)
+	sqlStore := db.InitTestDB(tb)
 	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
-	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := databasestore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	require.NoError(tb, err)
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
@@ -87,15 +95,12 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 		features, folderPermissions, dashboardPermissions, ac,
 	)
 
-	bus := busmock.New()
-	folderService := dashboardservice.ProvideFolderService(
-		cfg, dashboardService, dashboardStore, nil,
-		features, folderPermissions, ac, bus,
-	)
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, nil, features, folderPermissions, nil)
 
 	ng, err := ngalert.ProvideService(
-		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
-		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(),
+		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(), &plugins.FakePluginStore{},
 	)
 	require.NoError(tb, err)
 	return ng, &store.DBstore{
@@ -124,9 +129,12 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
-	folder, err := dbstore.FolderService.CreateFolder(ctx, user, orgID, "FOLDER-"+util.GenerateShortUID(), folderUID)
+
+	ctx = appcontext.WithUser(ctx, user)
+	_, err := dbstore.FolderService.Create(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, SignedInUser: user})
+	// var foldr *folder.Folder
 	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
-		folder, err = dbstore.FolderService.GetFolderByUID(ctx, user, orgID, folderUID)
+		_, err = dbstore.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID, SignedInUser: user})
 	}
 	require.NoError(t, err)
 
@@ -154,7 +162,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 			Labels:          labels,
 			Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
 			IntervalSeconds: intervalSeconds,
-			NamespaceUID:    folder.Uid,
+			NamespaceUID:    folderUID,
 			RuleGroup:       ruleGroup,
 			NoDataState:     models.NoData,
 			ExecErrState:    models.AlertingErrState,
@@ -164,7 +172,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
-		NamespaceUIDs: []string{folder.Uid},
+		NamespaceUIDs: []string{folderUID},
 		RuleGroup:     ruleGroup,
 	}
 	err = dbstore.ListAlertRules(ctx, &q)
@@ -172,6 +180,6 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 	require.NotEmpty(t, q.Result)
 
 	rule := q.Result[0]
-	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folder.Uid)
+	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folderUID)
 	return rule
 }

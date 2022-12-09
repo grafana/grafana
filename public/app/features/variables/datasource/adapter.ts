@@ -15,7 +15,7 @@ import { dataSourceVariableReducer, initialDataSourceVariableModelState } from '
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
     id: 'datasource',
-    description: 'Enabled you to dynamically switch the data source for multiple panels.',
+    description: 'Enables you to dynamically switch the data source for multiple panels.',
     name: 'Data source',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,

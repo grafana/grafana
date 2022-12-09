@@ -5,6 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -12,16 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 )
 
 func TestSecretsService_EnvelopeEncryption(t *testing.T) {
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	store := database.ProvideSecretsStore(db.InitTestDB(t))
 	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
@@ -81,7 +82,7 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 }
 
 func TestSecretsService_DataKeys(t *testing.T) {
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	store := database.ProvideSecretsStore(db.InitTestDB(t))
 	ctx := context.Background()
 
 	dataKey := &secrets.DataKey{
@@ -159,7 +160,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 
 func TestSecretsService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
-		svc := SetupTestService(t, database.ProvideSecretsStore(sqlstore.InitTestDB(t)))
+		svc := SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
@@ -186,7 +187,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, settings, features))
-		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+		secretStore := database.ProvideSecretsStore(db.InitTestDB(t))
 
 		secretsService, err := ProvideSecretsService(
 			secretStore,
@@ -260,7 +261,7 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 
 func TestSecretsService_Run(t *testing.T) {
 	ctx := context.Background()
-	sql := sqlstore.InitTestDB(t)
+	sql := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(sql)
 	svc := SetupTestService(t, store)
 
@@ -300,7 +301,7 @@ func TestSecretsService_Run(t *testing.T) {
 
 func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 	ctx := context.Background()
-	sql := sqlstore.InitTestDB(t)
+	sql := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(sql)
 	svc := SetupTestService(t, store)
 
@@ -341,7 +342,7 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 
 func TestSecretsService_Decrypt(t *testing.T) {
 	ctx := context.Background()
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+	store := database.ProvideSecretsStore(db.InitTestDB(t))
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := SetupTestService(t, store)

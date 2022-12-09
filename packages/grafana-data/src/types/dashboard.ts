@@ -14,6 +14,9 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
   /** ID of the panel within the current dashboard */
   id: number;
 
+  /** The panel type */
+  type: string;
+
   /** Panel title */
   title?: string;
 

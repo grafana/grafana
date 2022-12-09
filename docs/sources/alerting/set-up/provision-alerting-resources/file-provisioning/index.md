@@ -30,7 +30,7 @@ Provisioning takes place during the initial set up of your Grafana system, but y
 Create or delete alert rules in your Grafana instance(s).
 
 1. Create an alert rule in Grafana.
-1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations) to extract the alert rule.
+1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting/#get-alerts) to extract the alert rule.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -536,7 +536,7 @@ policies:
     # <duration> How long to wait before sending a notification about new alerts that
     #            are added to a group of alerts for which an initial notification has
     #            already been sent. (Usually ~5m or more), default = 5m
-    group_internval: 5m
+    group_interval: 5m
     # <duration>  How long to wait before sending a notification again if it has already
     #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
     repeat_interval: 4h

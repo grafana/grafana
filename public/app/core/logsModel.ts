@@ -207,7 +207,7 @@ export function dataFrameToLogsModel(
   queries?: DataQuery[]
 ): LogsModel {
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries);
+  const logsModel = logSeriesToLogsModel(logSeries, queries);
 
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
@@ -346,7 +346,7 @@ function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefined {
+export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[] = []): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -432,6 +432,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         logLevel = getLogLevel(entry);
       }
 
+      const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
+
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
@@ -450,6 +452,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         raw: message,
         labels: labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
+        datasourceType,
       });
     }
   }

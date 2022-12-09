@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -55,13 +55,13 @@ type AuthProxy struct {
 	cfg          *setting.Cfg
 	remoteCache  *remotecache.RemoteCache
 	loginService login.Service
-	sqlStore     sqlstore.Store
+	sqlStore     db.DB
 	userService  user.Service
 
 	logger log.Logger
 }
 
-func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, loginService login.Service, userService user.Service, sqlStore sqlstore.Store) *AuthProxy {
+func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, loginService login.Service, userService user.Service, sqlStore db.DB) *AuthProxy {
 	return &AuthProxy{
 		cfg:          cfg,
 		remoteCache:  remoteCache,

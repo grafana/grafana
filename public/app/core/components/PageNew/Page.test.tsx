@@ -6,6 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { configureStore } from 'app/store/configureStore';
 
 import { PageProps } from '../Page/types';
@@ -19,9 +20,12 @@ const pageNav: NavModelItem = {
     { text: 'pageNav child2', url: '2' },
   ],
 };
-
 const setup = (props: Partial<PageProps>) => {
   config.bootData.navTree = [
+    {
+      id: HOME_NAV_ID,
+      text: 'Home',
+    },
     {
       text: 'Section name',
       id: 'section',
@@ -88,5 +92,16 @@ describe('Render', () => {
     expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
+  });
+
+  it('should update document title', async () => {
+    setup({ navId: 'child1', pageNav });
+    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
+  });
+
+  it('should not include hideFromBreadcrumb nodes in title', async () => {
+    pageNav.children![0].hideFromBreadcrumbs = true;
+    setup({ navId: 'child1', pageNav });
+    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
   });
 });

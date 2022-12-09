@@ -75,11 +75,9 @@ describe('situation', () => {
       labels: [{ name: 'level', value: 'info', op: '=' }],
     });
 
-    /*
-    Currently failing, reason unknown
     assertSituation('sum(^)', {
       type: 'IN_AGGREGATION',
-    });*/
+    });
   });
 
   it('handles label names', () => {

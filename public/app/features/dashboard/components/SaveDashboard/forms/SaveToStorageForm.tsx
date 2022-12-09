@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -12,7 +13,6 @@ import {
   Input,
   RadioButtonGroup,
   Spinner,
-  Stack,
   TextArea,
 } from '@grafana/ui';
 import { getGrafanaStorage } from 'app/features/storage/storage';
@@ -96,7 +96,8 @@ export function SaveToStorageForm(props: Props) {
         }
         setSaving(true);
 
-        let uid = saveModel.clone.uid;
+        // Save dashboard without the UID
+        let { uid, ...body } = saveModel.clone;
         if (isNew || isCopy) {
           uid = path;
           if (!uid.endsWith('-dash.json')) {
@@ -104,7 +105,7 @@ export function SaveToStorageForm(props: Props) {
           }
         }
         const rsp = await getGrafanaStorage().write(uid, {
-          body: saveModel.clone,
+          body,
           kind: 'dashboard',
           title: data.title,
           message: data.message,

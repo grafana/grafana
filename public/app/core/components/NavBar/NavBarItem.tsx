@@ -11,7 +11,7 @@ import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
 import { getNavBarItemWithoutMenuStyles } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { useNavBarContext } from './context';
-import getNavTranslation from './navBarItem-translations';
+import { getNavTitle } from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
 
 export interface Props {
@@ -53,7 +53,7 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
     }
   };
 
-  const linkText = getNavTranslation(link.id) ?? link.text;
+  const linkText = getNavTitle(link.id) ?? link.text;
 
   return (
     <li className={cx(styles.container, { [styles.containerHover]: section.id === menuIdOpen }, className)}>
@@ -72,7 +72,7 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
           onNavigate={onNavigate}
         >
           {(item: NavModelItem) => {
-            const itemText = getNavTranslation(item.id) ?? item.text;
+            const itemText = getNavTitle(item.id) ?? item.text;
             const isSection = item.menuItemType === NavMenuItemType.Section;
             const iconName = item.icon ? toIconName(item.icon) : undefined;
             const icon = item.showIconInNavbar && !isSection ? iconName : undefined;

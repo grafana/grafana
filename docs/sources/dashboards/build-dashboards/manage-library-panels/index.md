@@ -7,14 +7,14 @@ aliases:
   - /docs/grafana/latest/panels/library-panels/unlink-library-panel/
   - /docs/grafana/latest/panels/library-panels/manage-library-panel/
   - /docs/grafana/latest/panels/library-panels/delete-library-panel/
-  - /docs/grafana/next/dashboards/manage-library-panels/
-  - /docs/grafana/next/dashboards/build-dashboards/manage-library-panels/
-title: Manage Grafana library panels
+  - /docs/grafana/latest/dashboards/manage-library-panels/
+  - /docs/grafana/latest/dashboards/build-dashboards/manage-library-panels/
+title: Manage library panels
 menuTitle: Manage library panels
 weight: 300
 ---
 
-# Manage Grafana library panels
+# Manage library panels
 
 A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.
 
@@ -28,7 +28,6 @@ When you create a library panel, the panel on the source dashboard is converted 
 1. In the panel display options, click the down arrow option to bring changes to the visualization.
    {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "800px" caption="Screenshot of the edit panel" >}}
 1. Click the **Library panels** option, and then click **Create library panel** to open the create dialog.
-   {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "500px" caption="Screenshot of the create library panel dialog" >}}
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel.
 1. Click **Create library panel** to save your changes.

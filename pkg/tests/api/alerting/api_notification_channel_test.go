@@ -20,13 +20,13 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -707,6 +707,10 @@ func TestNotificationChannels(t *testing.T) {
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
 	mockEmail := &mockEmailHandler{}
 
+	// Set up responses
+	mockChannel.responses["slack_recv1"] = `{"ok": true}`
+	mockChannel.responses["slack_recvX"] = `{"ok": true}`
+
 	// Overriding some URLs to send to the mock channel.
 	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
@@ -776,7 +780,7 @@ func TestNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers apimodels.Receivers
+		var receivers []apimodels.Receiver
 		err := json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -799,7 +803,7 @@ func TestNotificationChannels(t *testing.T) {
 		t.Cleanup(func() {
 			store.GenerateNewAlertRuleUID = originalFunction
 		})
-		store.GenerateNewAlertRuleUID = func(_ *sqlstore.DBSession, _ int64, ruleTitle string) (string, error) {
+		store.GenerateNewAlertRuleUID = func(_ *db.Session, _ int64, ruleTitle string) (string, error) {
 			return "UID_" + ruleTitle, nil
 		}
 
@@ -811,8 +815,9 @@ func TestNotificationChannels(t *testing.T) {
 	// Eventually, we'll get all the desired alerts.
 	// nolint:gosec
 	require.Eventually(t, func() bool {
-		// TODO: not waiting for the failed notifications, flaky test?
-		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) && len(mockEmail.emails) >= 1
+		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) &&
+			mockChannel.totalNotificationErrors() >= len(expNotificationErrors) &&
+			len(mockEmail.emails) >= 1
 	}, 30*time.Second, 1*time.Second)
 
 	mockChannel.matchesExpNotifications(t, expNonEmailNotifications)
@@ -824,7 +829,7 @@ func TestNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers apimodels.Receivers
+	var receivers []apimodels.Receiver
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
@@ -857,8 +862,8 @@ func TestNotificationChannels(t *testing.T) {
 
 					// If the receiver is not active, no attempts to send notifications should be registered.
 					if expActive {
+						// Prometheus' durations get rounded down, so we might end up with "0s" if we have values smaller than 1ms.
 						require.NotZero(t, integration.LastNotifyAttempt)
-						require.NotEqual(t, "0s", integration.LastNotifyAttemptDuration)
 					} else {
 						require.Zero(t, integration.LastNotifyAttempt)
 						require.Equal(t, "0s", integration.LastNotifyAttemptDuration)
@@ -988,8 +993,10 @@ type mockNotificationChannel struct {
 	t      *testing.T
 	server *http.Server
 
-	receivedNotifications    map[string][]string
-	receivedNotificationsMtx sync.Mutex
+	receivedNotifications  map[string][]string
+	responses              map[string]string
+	notificationErrorCount int
+	notificationsMtx       sync.RWMutex
 }
 
 func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNotificationChannel {
@@ -1005,6 +1012,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 			Addr: listener.Addr().String(),
 		},
 		receivedNotifications: make(map[string][]string),
+		responses:             make(map[string]string),
 		t:                     t,
 	}
 
@@ -1018,31 +1026,45 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 
 func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	nc.t.Helper()
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.Lock()
+	defer nc.notificationsMtx.Unlock()
 
+	// paths[0] contains the receiver's name
 	paths := strings.Split(req.URL.Path[1:], "/")
+	if _, ok := expNotificationErrors[paths[0]]; ok {
+		nc.notificationErrorCount++
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	key := strings.Join(paths[0:2], "/")
 	body := getBody(nc.t, req.Body)
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
 	res.WriteHeader(http.StatusOK)
+	fmt.Fprint(res, nc.responses[paths[0]])
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {
 	total := 0
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
 	for _, v := range nc.receivedNotifications {
 		total += len(v)
 	}
 	return total
 }
 
+func (nc *mockNotificationChannel) totalNotificationErrors() int {
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
+	return nc.notificationErrorCount
+}
+
 func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map[string][]string) {
 	t.Helper()
-	nc.receivedNotificationsMtx.Lock()
-	defer nc.receivedNotificationsMtx.Unlock()
+	nc.notificationsMtx.RLock()
+	defer nc.notificationsMtx.RUnlock()
 
 	require.Len(t, nc.receivedNotifications, len(exp))
 
@@ -1612,7 +1634,7 @@ const alertmanagerConfig = `
             }
           }
         ]
-      },   
+      },
 	  {
         "name": "slack_recv2",
         "grafana_managed_receiver_configs": [
@@ -1642,7 +1664,7 @@ const alertmanagerConfig = `
               "text": "Integration Test"
             },
             "secureSettings": {
-              "url": "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test"
+              "url": "http://CHANNEL_ADDR/slack_failed_recv/slack_failed_test"
             }
           }
 		]
@@ -2275,6 +2297,7 @@ var expEmailNotifications = []*models.SendEmailCommandSync{
 						SilenceURL:   "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DEmailAlert&matcher=grafana_folder%3Ddefault",
 						DashboardURL: "",
 						PanelURL:     "",
+						Values:       map[string]float64{"A": 1},
 						ValueString:  "[ var='A' labels={} value=1 ]",
 					},
 				},
@@ -2296,7 +2319,6 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
-          "text": "Integration Test [FIRING:1] SlackAlert1 (default)",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2307,18 +2329,11 @@ var expNonEmailNotifications = map[string][]string{
 			  "text": "Integration Test ",
 			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<!here|here> <!subteam^group1><!subteam^group2> <@user1><@user2>"
 			}
 		  ]
 		}`,
@@ -2326,27 +2341,19 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recvX/slack_testX": {
 		`{
 		  "channel": "#test-channel",
-          "text": "[FIRING:1] SlackAlert2 (default)",
 		  "username": "Integration Test",
 		  "attachments": [
 			{
 			  "title": "[FIRING:1] SlackAlert2 (default)",
 			  "title_link": "http://localhost:3000/alerting/list",
-			  "text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = SlackAlert2\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SlackAlert2/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DSlackAlert2&matcher=grafana_folder%%3Ddefault\n",
+			  "text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = SlackAlert2\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SlackAlert2/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DSlackAlert2&matcher=grafana_folder%%3Ddefault\n",
 			  "fallback": "[FIRING:1] SlackAlert2 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
-			  "ts": %s
-			}
-		  ],
-		  "blocks": [
-			{
-			  "text": {
-				"text": "<@user1><@user2>",
-				"type": "mrkdwn"
-			  },
-			  "type": "section"
+			  "ts": %s,
+              "mrkdwn_in": ["pretext"],
+              "pretext": "<@user1><@user2>"
 			}
 		  ]
 		}`,
@@ -2355,7 +2362,6 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "234edb34441f942f713f3c2ccf58b1d719d921b4cbe34e57a1630f1dee847e3b",
-		  "description": "[FIRING:1] PagerdutyAlert (default)",
 		  "event_action": "trigger",
 		  "payload": {
 			"summary": "Integration Test [FIRING:1] PagerdutyAlert (default)",
@@ -2365,7 +2371,7 @@ var expNonEmailNotifications = map[string][]string{
 			"component": "Integration Test",
 			"group": "testgroup",
 			"custom_details": {
-			  "firing": "\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = PagerdutyAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PagerdutyAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DPagerdutyAlert&matcher=grafana_folder%%3Ddefault\n",
+			  "firing": "\nValue: A=1\nLabels:\n - alertname = PagerdutyAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PagerdutyAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DPagerdutyAlert&matcher=grafana_folder%%3Ddefault\n",
 			  "num_firing": "1",
 			  "num_resolved": "0",
 			  "resolved": ""
@@ -2385,7 +2391,7 @@ var expNonEmailNotifications = map[string][]string{
 		`{
 		  "link": {
 			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%3A3000%2Falerting%2Flist",
-			"text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = DingDingAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_DingDingAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DDingDingAlert&matcher=grafana_folder%3Ddefault\n",
+			"text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = DingDingAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_DingDingAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DDingDingAlert&matcher=grafana_folder%3Ddefault\n",
 			"title": "[FIRING:1] DingDingAlert (default)"
 		  },
 		  "msgtype": "link"
@@ -2406,7 +2412,7 @@ var expNonEmailNotifications = map[string][]string{
 				    "weight": "bolder",
 				    "wrap": true
 				  }, {
-				  	"text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = TeamsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TeamsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3DTeamsAlert\u0026matcher=grafana_folder%3Ddefault\n",
+				  	"text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = TeamsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TeamsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3DTeamsAlert\u0026matcher=grafana_folder%3Ddefault\n",
 				  	"type": "TextBlock",
 				  	"wrap": true
 				  }, {
@@ -2447,7 +2453,8 @@ var expNonEmailNotifications = map[string][]string{
 			  },
 			  "annotations": {},
 			  "startsAt": "%s",
-        "valueString": "[ var='A' labels={} value=1 ]",
+              "values": {"A": 1},
+              "valueString": "[ var='A' labels={} value=1 ]",
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "http://localhost:3000/alerting/grafana/UID_WebhookAlert/view",
 			  "fingerprint": "15c59b0a380bd9f1",
@@ -2470,17 +2477,17 @@ var expNonEmailNotifications = map[string][]string{
 		  "truncatedAlerts": 0,
 		  "title": "[FIRING:1] WebhookAlert (default)",
 		  "state": "alerting",
-		  "message": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = WebhookAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_WebhookAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DWebhookAlert&matcher=grafana_folder%%3Ddefault\n"
+		  "message": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = WebhookAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_WebhookAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DWebhookAlert&matcher=grafana_folder%%3Ddefault\n"
 		}`,
 	},
 	"discord_recv/discord_test": {
 		`{
-		  "content": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = DiscordAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_DiscordAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DDiscordAlert&matcher=grafana_folder%3Ddefault\n",
+		  "content": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = DiscordAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_DiscordAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DDiscordAlert&matcher=grafana_folder%3Ddefault\n",
 		  "embeds": [
 			{
 			  "color": 14037554,
 			  "footer": {
-				"icon_url": "https://grafana.com/assets/img/fav32.png",
+				"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 				"text": "Grafana v"
 			  },
 			  "title": "[FIRING:1] DiscordAlert (default)",
@@ -2503,7 +2510,7 @@ var expNonEmailNotifications = map[string][]string{
 			  },
 			  "name": "default"
 			},
-			"output": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = SensuGoAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SensuGoAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DSensuGoAlert&matcher=grafana_folder%%3Ddefault\n",
+			"output": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = SensuGoAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SensuGoAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DSensuGoAlert&matcher=grafana_folder%%3Ddefault\n",
 			"status": 2
 		  },
 		  "entity": {
@@ -2516,10 +2523,10 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	"pushover_recv/pushover_test": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
 	},
 	"telegram_recv/bot6sh027hs034h": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
 	},
 	"googlechat_recv/googlechat_test": {
 		`{
@@ -2535,7 +2542,7 @@ var expNonEmailNotifications = map[string][]string{
 				  "widgets": [
 					{
 					  "textParagraph": {
-						"text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = GoogleChatAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_GoogleChatAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DGoogleChatAlert&matcher=grafana_folder%%3Ddefault\n"
+						"text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = GoogleChatAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_GoogleChatAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DGoogleChatAlert&matcher=grafana_folder%%3Ddefault\n"
 					  }
 					},
 					{
@@ -2573,7 +2580,7 @@ var expNonEmailNotifications = map[string][]string{
 				"client": "Grafana",
 				"client_url": "http://localhost:3000/alerting/list",
 				"description": "[FIRING:1] KafkaAlert (default)",
-				"details": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = KafkaAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_KafkaAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DKafkaAlert&matcher=grafana_folder%3Ddefault\n",
+				"details": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = KafkaAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_KafkaAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DKafkaAlert&matcher=grafana_folder%3Ddefault\n",
 				"incident_key": "35c0bdb1715f9162a20d7b2a01cb2e3a4c5b1dc663571701e3f67212b696332f"
 			  }
 			}
@@ -2581,10 +2588,10 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	"line_recv/line_test": {
-		`message=%5BFIRING%3A1%5D+LineAlert+%28default%29%0Ahttp%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+%5B+var%3D%27A%27+labels%3D%7B%7D+value%3D1+%5D%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0A+-+grafana_folder+%3D+default%0AAnnotations%3A%0ASource%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fgrafana%2FUID_LineAlert%2Fview%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253DLineAlert%26matcher%3Dgrafana_folder%253Ddefault%0A`,
+		`message=%5BFIRING%3A1%5D+LineAlert+%28default%29%0Ahttp%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+A%3D1%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0A+-+grafana_folder+%3D+default%0AAnnotations%3A%0ASource%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fgrafana%2FUID_LineAlert%2Fview%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253DLineAlert%26matcher%3Dgrafana_folder%253Ddefault%0A`,
 	},
 	"threema_recv/threema_test": {
-		`from=%2A1234567&secret=myapisecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D+ThreemaAlert+%28default%29%0A%0A%2AMessage%3A%2A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+%5B+var%3D%27A%27+labels%3D%7B%7D+value%3D1+%5D%0ALabels%3A%0A+-+alertname+%3D+ThreemaAlert%0A+-+grafana_folder+%3D+default%0AAnnotations%3A%0ASource%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fgrafana%2FUID_ThreemaAlert%2Fview%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253DThreemaAlert%26matcher%3Dgrafana_folder%253Ddefault%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A&to=abcdefgh`,
+		`from=%2A1234567&secret=myapisecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D+ThreemaAlert+%28default%29%0A%0A%2AMessage%3A%2A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+A%3D1%0ALabels%3A%0A+-+alertname+%3D+ThreemaAlert%0A+-+grafana_folder+%3D+default%0AAnnotations%3A%0ASource%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fgrafana%2FUID_ThreemaAlert%2Fview%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253DThreemaAlert%26matcher%3Dgrafana_folder%253Ddefault%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A&to=abcdefgh`,
 	},
 	"victorops_recv/victorops_test": {
 		`{
@@ -2593,14 +2600,14 @@ var expNonEmailNotifications = map[string][]string{
 		  "entity_id": "633ae988fa7074bcb51f3d1c5fef2ba1c5c4ccb45b3ecbf681f7d507b078b1ae",
 		  "message_type": "CRITICAL",
 		  "monitoring_tool": "Grafana v",
-		  "state_message": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = VictorOpsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_VictorOpsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DVictorOpsAlert&matcher=grafana_folder%%3Ddefault\n",
+		  "state_message": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = VictorOpsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_VictorOpsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DVictorOpsAlert&matcher=grafana_folder%%3Ddefault\n",
 		  "timestamp": %s
 		}`,
 	},
 	"opsgenie_recv/opsgenie_test": {
 		`{
 		  "alias": "47e92f0f6ef9fe99f3954e0d6155f8d09c4b9a038d8c3105e82c0cee4c62956e",
-		  "description": "[FIRING:1] OpsGenieAlert (default)\nhttp://localhost:3000/alerting/list\n\n**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = OpsGenieAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_OpsGenieAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DOpsGenieAlert&matcher=grafana_folder%3Ddefault\n",
+		  "description": "[FIRING:1] OpsGenieAlert (default)\nhttp://localhost:3000/alerting/list\n\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = OpsGenieAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_OpsGenieAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DOpsGenieAlert&matcher=grafana_folder%3Ddefault\n",
 		  "details": {
 			"url": "http://localhost:3000/alerting/list"
 		  },
@@ -2619,8 +2626,10 @@ var expNonEmailNotifications = map[string][]string{
 			  "grafana_folder": "default"
 			},
 			"annotations": {
-        "__value_string__": "[ var='A' labels={} value=1 ]"
-      },
+			  "__orgId__":"1",
+              "__values__": "{\"A\":1}",
+              "__value_string__": "[ var='A' labels={} value=1 ]"
+            },
 			"startsAt": "%s",
 			"endsAt": "0001-01-01T00:00:00Z",
 			"generatorURL": "http://localhost:3000/alerting/grafana/UID_AlertmanagerAlert/view",
@@ -2633,10 +2642,10 @@ var expNonEmailNotifications = map[string][]string{
 
 // expNotificationErrors maps a receiver name with its expected error string.
 var expNotificationErrors = map[string]string{
-	"slack_failed_recv": `Post "htt://127.0.0.1:8080/slack_failed_recv/slack_failed_test": unsupported protocol scheme "htt"`,
+	"slack_failed_recv": "failed to send Slack message: unexpected 5xx status code: 500",
 }
 
-// expNotificationErrors maps a receiver name with its expected error string.
+// expInactiveReceivers is a set of receivers expected to be unused.
 var expInactiveReceivers = map[string]struct{}{
 	"slack_inactive_recv": {},
 }

@@ -413,7 +413,7 @@ export const RolePickerSubMenu = ({
   );
 };
 
-interface RoleMenuOptionProps<T> {
+interface RoleMenuOptionProps {
   data: Role;
   onChange: (value: Role) => void;
   isSelected?: boolean;
@@ -422,7 +422,7 @@ interface RoleMenuOptionProps<T> {
   hideDescription?: boolean;
 }
 
-export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps<any>>>(
+export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps>>(
   ({ data, isFocused, isSelected, disabled, onChange, hideDescription }, ref) => {
     const theme = useTheme2();
     const styles = getSelectStyles(theme);

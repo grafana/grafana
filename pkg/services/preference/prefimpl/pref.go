@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,7 +22,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureMan
 		cfg:      cfg,
 		features: features,
 	}
-	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
+	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		service.store = &sqlxStore{
 			sess: db.GetSqlxSession(),
 		}
@@ -54,15 +54,15 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		if p.Timezone != "" {
 			res.Timezone = p.Timezone
 		}
-		if p.WeekStart != "" {
+		if p.WeekStart != nil && *p.WeekStart != "" {
 			res.WeekStart = p.WeekStart
 		}
 		if p.HomeDashboardID != 0 {
 			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JSONData != nil {
-			if p.JSONData.Locale != "" {
-				res.JSONData.Locale = p.JSONData.Locale
+			if p.JSONData.Language != "" {
+				res.JSONData.Language = p.JSONData.Language
 			}
 
 			if len(p.JSONData.Navbar.SavedItems) > 0 {
@@ -108,12 +108,12 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				TeamID:          cmd.TeamID,
 				HomeDashboardID: cmd.HomeDashboardID,
 				Timezone:        cmd.Timezone,
-				WeekStart:       cmd.WeekStart,
+				WeekStart:       &cmd.WeekStart,
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
 				JSONData: &pref.PreferenceJSONData{
-					Locale: cmd.Locale,
+					Language: cmd.Language,
 				},
 			}
 			_, err = s.store.Insert(ctx, preference)
@@ -125,13 +125,13 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	}
 
 	preference.Timezone = cmd.Timezone
-	preference.WeekStart = cmd.WeekStart
+	preference.WeekStart = &cmd.WeekStart
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
 	preference.HomeDashboardID = cmd.HomeDashboardID
 	preference.JSONData = &pref.PreferenceJSONData{
-		Locale: cmd.Locale,
+		Language: cmd.Language,
 	}
 
 	if cmd.Navbar != nil {
@@ -166,11 +166,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		exists = true
 	}
 
-	if cmd.Locale != nil {
+	if cmd.Language != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
 		}
-		preference.JSONData.Locale = *cmd.Locale
+		preference.JSONData.Language = *cmd.Language
 	}
 
 	if cmd.Navbar != nil {
@@ -200,7 +200,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if cmd.WeekStart != nil {
-		preference.WeekStart = *cmd.WeekStart
+		preference.WeekStart = cmd.WeekStart
 	}
 
 	if cmd.Theme != nil {
@@ -232,13 +232,13 @@ func (s *Service) GetDefaults() *pref.Preference {
 	defaults := &pref.Preference{
 		Theme:           s.cfg.DefaultTheme,
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
-		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
+		WeekStart:       &s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
 		JSONData:        &pref.PreferenceJSONData{},
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagInternationalization) {
-		defaults.JSONData.Locale = s.cfg.DefaultLocale
+		defaults.JSONData.Language = s.cfg.DefaultLanguage
 	}
 
 	return defaults

@@ -11,22 +11,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -52,11 +50,8 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 }
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
-	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
-	svcmock := tests.ServiceAccountMock{}
+	store := db.InitTestDB(t)
+	services := setupTestServices(t, store)
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
@@ -136,7 +131,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				bodyString = string(b)
 			}
 
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
+			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store, services.SAStore)
 			actual := requestResponse(server, http.MethodPost, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -150,7 +145,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				assert.Equal(t, tc.body["name"], actualBody["name"])
 
 				query := apikey.GetByNameQuery{KeyName: tc.body["name"].(string), OrgId: sa.OrgID}
-				err = apiKeyService.GetApiKeyByName(context.Background(), &query)
+				err = services.APIKeyService.GetApiKeyByName(context.Background(), &query)
 				require.NoError(t, err)
 
 				assert.Equal(t, sa.ID, *query.Result.ServiceAccountId)
@@ -169,11 +164,8 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 }
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
-	kvStore := kvstore.ProvideService(store)
-	svcMock := &tests.ServiceAccountMock{}
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
+	store := db.InitTestDB(t)
+	services := setupTestServices(t, store)
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
@@ -233,11 +225,11 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			token := createTokenforSA(t, saStore, tc.keyName, sa.OrgID, sa.ID, 1)
+			token := createTokenforSA(t, services.SAStore, tc.keyName, sa.OrgID, sa.ID, 1)
 
 			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.ID, token.Id)
 			bodyString := ""
-			server, _ := setupTestServer(t, svcMock, routing.NewRouteRegister(), tc.acmock, store, saStore)
+			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store, services.SAStore)
 			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -247,7 +239,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
 
 			query := apikey.GetByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgID}
-			err := apiKeyService.GetApiKeyByName(context.Background(), &query)
+			err := services.APIKeyService.GetApiKeyByName(context.Background(), &query)
 			if actualCode == http.StatusOK {
 				require.Error(t, err)
 			} else {
@@ -267,7 +259,7 @@ func (s *saStoreMockTokens) ListTokens(ctx context.Context, query *serviceaccoun
 }
 
 func TestServiceAccountsAPI_ListTokens(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 

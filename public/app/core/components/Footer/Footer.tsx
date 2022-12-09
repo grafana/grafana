@@ -3,6 +3,7 @@ import React from 'react';
 import { LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface FooterLink {
   target: LinkTarget;
@@ -17,21 +18,21 @@ export let getFooterLinks = (): FooterLink[] => {
     {
       target: '_blank',
       id: 'documentation',
-      text: 'Documentation',
+      text: t('nav.help/documentation', 'Documentation'),
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
     },
     {
       target: '_blank',
       id: 'support',
-      text: 'Support',
+      text: t('nav.help/support', 'Support'),
       icon: 'question-circle',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
     },
     {
       target: '_blank',
       id: 'community',
-      text: 'Community',
+      text: t('nav.help/community', 'Community'),
       icon: 'comments-alt',
       url: 'https://community.grafana.com/?utm_source=grafana_footer',
     },
@@ -39,11 +40,10 @@ export let getFooterLinks = (): FooterLink[] => {
 };
 
 export function getVersionMeta(version: string) {
-  const containsHyphen = version.includes('-');
   const isBeta = version.includes('-beta');
 
   return {
-    hasReleaseNotes: !containsHyphen || isBeta,
+    hasReleaseNotes: true,
     isBeta,
   };
 }
@@ -64,17 +64,13 @@ export let getVersionLinks = (): FooterLink[] => {
     return links;
   }
 
-  const { hasReleaseNotes, isBeta } = getVersionMeta(buildInfo.version);
-  const versionSlug = buildInfo.version.replace(/\./g, '-'); // replace all periods with hyphens
-  const docsVersion = isBeta ? 'next' : 'latest';
+  const { hasReleaseNotes } = getVersionMeta(buildInfo.version);
 
   links.push({
     target: '_blank',
     id: 'version',
     text: `v${buildInfo.version} (${buildInfo.commit})`,
-    url: hasReleaseNotes
-      ? `https://grafana.com/docs/grafana/${docsVersion}/release-notes/release-notes-${versionSlug}/`
-      : undefined,
+    url: hasReleaseNotes ? `https://github.com/grafana/grafana/blob/main/CHANGELOG.md` : undefined,
   });
 
   if (buildInfo.hasUpdate) {

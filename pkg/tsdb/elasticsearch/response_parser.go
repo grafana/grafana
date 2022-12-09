@@ -31,14 +31,12 @@ const (
 type responseParser struct {
 	Responses []*es.SearchResponse
 	Targets   []*Query
-	DebugInfo *es.SearchDebugInfo
 }
 
-var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
+var newResponseParser = func(responses []*es.SearchResponse, targets []*Query) *responseParser {
 	return &responseParser{
 		Responses: responses,
 		Targets:   targets,
-		DebugInfo: debugInfo,
 	}
 }
 
@@ -53,22 +51,11 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 	for i, res := range rp.Responses {
 		target := rp.Targets[i]
 
-		var debugInfo *simplejson.Json
-		if rp.DebugInfo != nil && i == 0 {
-			debugInfo = simplejson.NewFromAny(rp.DebugInfo)
-		}
-
 		if res.Error != nil {
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: errors.New(errResult),
-				Frames: data.Frames{
-					&data.Frame{
-						Meta: &data.FrameMeta{
-							Custom: debugInfo,
-						},
-					},
-				}}
+			}
 			continue
 		}
 
@@ -82,11 +69,6 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 		rp.nameFields(queryRes, target)
 		rp.trimDatapoints(queryRes, target)
 
-		for _, frame := range queryRes.Frames {
-			frame.Meta = &data.FrameMeta{
-				Custom: debugInfo,
-			}
-		}
 		result.Responses[target.RefID] = queryRes
 	}
 	return &result, nil
@@ -527,7 +509,7 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 		return
 	}
 
-	trimEdges, err := histogram.Settings.Get("trimEdges").Int()
+	trimEdges, err := castToInt(histogram.Settings.Get("trimEdges"))
 	if err != nil {
 		return
 	}
@@ -537,10 +519,14 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 	for _, frame := range frames {
 		for _, field := range frame.Fields {
 			if field.Len() > trimEdges*2 {
-				for i := 0; i < field.Len(); i++ {
-					if i < trimEdges || i > field.Len()-trimEdges {
-						field.Delete(i)
-					}
+				// first we delete the first "trim" items
+				for i := 0; i < trimEdges; i++ {
+					field.Delete(0)
+				}
+
+				// then we delete the last "trim" items
+				for i := 0; i < trimEdges; i++ {
+					field.Delete(field.Len() - 1)
 				}
 			}
 		}
@@ -672,6 +658,25 @@ func (rp *responseParser) getMetricName(metric string) string {
 	}
 
 	return metric
+}
+
+func castToInt(j *simplejson.Json) (int, error) {
+	i, err := j.Int()
+	if err == nil {
+		return i, nil
+	}
+
+	s, err := j.String()
+	if err != nil {
+		return 0, err
+	}
+
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, err
+	}
+
+	return v, nil
 }
 
 func castToFloat(j *simplejson.Json) *float64 {

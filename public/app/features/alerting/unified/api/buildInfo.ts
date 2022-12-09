@@ -78,7 +78,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
     const rulerSupported = await hasRulerSupport(name);
 
     return {
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: rulerSupported,
       },
@@ -190,12 +190,10 @@ async function hasRulerSupport(dataSourceName: string) {
   }
 }
 // there errors indicate that the ruler API might be disabled or not supported for Cortex
-function errorIndicatesMissingRulerSupport(error: any) {
-  return (
-    (isFetchError(error) &&
-      (error.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
-        error.data.message?.includes('page not found'))) || // ruler api disabled
-    error.message?.includes('404 from rules config endpoint') || // ruler api disabled
-    error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
-  );
+function errorIndicatesMissingRulerSupport(error: unknown) {
+  return isFetchError(error)
+    ? error.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
+        error.data.message?.includes('page not found') || // ruler api disabled
+        error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
+    : error instanceof Error && error.message?.includes('404 from rules config endpoint'); // ruler api disabled
 }

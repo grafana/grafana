@@ -1,9 +1,10 @@
 import { intersection } from 'lodash';
 import React, { useState, useMemo } from 'react';
 
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 
 import Datasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import SubscriptionField from '../SubscriptionField';
 
@@ -73,7 +74,7 @@ const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
   }, [datasource]);
 
   return (
-    <span data-testid="azure-monitor-arg-query-editor-with-experimental-ui">
+    <span data-testid={selectors.components.queryEditor.argsQueryEditor.container.input}>
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>

@@ -26,7 +26,7 @@ export interface LibraryPanelsSearchProps {
   showFolderFilter?: boolean;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
-  currentFolderId?: number;
+  currentFolderUID?: string;
   perPage?: number;
 }
 
@@ -34,7 +34,7 @@ export const LibraryPanelsSearch = ({
   onClick,
   variant = LibraryPanelsSearchVariant.Spacious,
   currentPanelId,
-  currentFolderId,
+  currentFolderUID,
   perPage = DEFAULT_PER_PAGE_PAGINATION,
   showPanelFilter = false,
   showFolderFilter = false,
@@ -48,7 +48,7 @@ export const LibraryPanelsSearch = ({
   useDebounce(() => setDebouncedSearchQuery(searchQuery), 200, [searchQuery]);
 
   const [sortDirection, setSortDirection] = useState<SelectableValue<string>>({});
-  const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderId ? [String(currentFolderId)] : []);
+  const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderUID ? [currentFolderUID] : []);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
 
   const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
@@ -155,7 +155,7 @@ const SearchControls = React.memo(
       [onPanelFilterChange]
     );
     const folderFilterChanged = useCallback(
-      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => String(f.id))),
+      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => f.uid ?? '')),
       [onFolderFilterChange]
     );
 

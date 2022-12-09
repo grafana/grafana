@@ -224,4 +224,9 @@ export class SQLSearcher implements GrafanaSearcher {
       isItemLoaded: (index: number): boolean => true,
     };
   }
+
+  getFolderViewSort = () => {
+    // sorts alphabetically in memory after retrieving the folders from the database
+    return '';
+  };
 }

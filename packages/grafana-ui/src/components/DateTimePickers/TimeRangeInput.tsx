@@ -78,7 +78,12 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
 
   return (
     <div className={styles.container}>
-      <button className={styles.pickerInput} aria-label={selectors.components.TimePicker.openButton} onClick={onOpen}>
+      <button
+        type="button"
+        className={styles.pickerInput}
+        aria-label={selectors.components.TimePicker.openButton}
+        onClick={onOpen}
+      >
         {isValidTimeRange(value) ? (
           <TimePickerButtonLabel value={value} timeZone={timeZone} />
         ) : (

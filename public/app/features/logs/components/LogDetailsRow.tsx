@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
+import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
@@ -21,6 +22,8 @@ export interface Props extends Themeable2 {
   showDetectedFields?: string[];
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
+  row: LogRowModel;
+  app?: CoreApp;
 }
 
 interface State {
@@ -54,9 +57,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       top: 0px;
       justify-content: center;
-      border-radius: 20px;
-      width: 26px;
-      height: 26px;
+      border-radius: ${theme.shape.borderRadius(10)};
+      width: ${theme.spacing(3.25)};
+      height: ${theme.spacing(3.25)};
     `,
     wrapLine: css`
       label: wrapLine;
@@ -64,6 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
@@ -73,41 +77,74 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   showField = () => {
-    const { onClickShowDetectedField, parsedKey } = this.props;
+    const { onClickShowDetectedField, parsedKey, row } = this.props;
     if (onClickShowDetectedField) {
       onClickShowDetectedField(parsedKey);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+      datasourceType: row.datasourceType,
+      logRowUid: row.uid,
+      type: 'enable',
+    });
   };
 
   hideField = () => {
-    const { onClickHideDetectedField, parsedKey } = this.props;
+    const { onClickHideDetectedField, parsedKey, row } = this.props;
     if (onClickHideDetectedField) {
       onClickHideDetectedField(parsedKey);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+      datasourceType: row.datasourceType,
+      logRowUid: row.uid,
+      type: 'disable',
+    });
   };
 
   filterLabel = () => {
-    const { onClickFilterLabel, parsedKey, parsedValue } = this.props;
+    const { onClickFilterLabel, parsedKey, parsedValue, row } = this.props;
     if (onClickFilterLabel) {
       onClickFilterLabel(parsedKey, parsedValue);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+      datasourceType: row.datasourceType,
+      filterType: 'include',
+      logRowUid: row.uid,
+    });
   };
 
   filterOutLabel = () => {
-    const { onClickFilterOutLabel, parsedKey, parsedValue } = this.props;
+    const { onClickFilterOutLabel, parsedKey, parsedValue, row } = this.props;
     if (onClickFilterOutLabel) {
       onClickFilterOutLabel(parsedKey, parsedValue);
     }
+
+    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+      datasourceType: row.datasourceType,
+      filterType: 'exclude',
+      logRowUid: row.uid,
+    });
   };
 
   showStats = () => {
+    const { getStats, isLabel, row, app } = this.props;
     const { showFieldsStats } = this.state;
     if (!showFieldsStats) {
-      const fieldStats = this.props.getStats();
+      const fieldStats = getStats();
       const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
       this.setState({ fieldStats, fieldCount });
     }
     this.toggleFieldsStats();
+
+    reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
+      dataSourceType: row.datasourceType,
+      fieldType: isLabel ? 'label' : 'detectedField',
+      type: showFieldsStats ? 'close' : 'open',
+      logRowUid: row.uid,
+      app,
+    });
   };
 
   toggleFieldsStats() {

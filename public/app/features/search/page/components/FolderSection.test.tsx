@@ -26,7 +26,7 @@ describe('FolderSection', () => {
     window.localStorage.clear();
   });
 
-  describe('when where are no results', () => {
+  describe('when there are no results', () => {
     const emptySearchData: DataFrame = {
       fields: [
         { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([]) },
@@ -100,8 +100,19 @@ describe('FolderSection', () => {
         { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-dashboard-1']) },
         { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
         { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([['foo', 'bar']]) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
+        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(['my-folder-1']) },
       ],
+      meta: {
+        custom: {
+          locationInfo: {
+            'my-folder-1': {
+              name: 'My folder 1',
+              kind: 'folder',
+              url: '/my-folder-1',
+            },
+          },
+        },
+      },
       length: 1,
     };
 
@@ -203,6 +214,24 @@ describe('FolderSection', () => {
         await userEvent.click(await screen.findByRole('checkbox', { name: 'Select folder' }));
         expect(mockSelectionToggle).toHaveBeenCalledWith('folder', 'my-folder');
         expect(mockSelectionToggle).toHaveBeenCalledWith('dashboard', 'my-dashboard-1');
+      });
+    });
+
+    describe('when in a pseudo-folder (i.e. Starred/Recent)', () => {
+      const mockRecentSection = {
+        kind: 'folder',
+        uid: '__recent',
+        title: 'Recent',
+        itemsUIDs: ['my-dashboard-1'],
+      };
+
+      it('shows the correct folder name next to the dashboard', async () => {
+        render(<FolderSection section={mockRecentSection} onTagSelected={mockOnTagSelected} />);
+
+        await userEvent.click(await screen.findByRole('button', { name: mockRecentSection.title }));
+        expect(getGrafanaSearcher().search).toHaveBeenCalled();
+        expect(await screen.findByText('My dashboard 1')).toBeInTheDocument();
+        expect(await screen.findByText('My folder 1')).toBeInTheDocument();
       });
     });
   });

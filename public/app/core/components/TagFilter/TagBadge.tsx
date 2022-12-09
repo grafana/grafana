@@ -9,7 +9,7 @@ export interface Props {
   onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export class TagBadge extends React.Component<Props, any> {
+export class TagBadge extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
   }

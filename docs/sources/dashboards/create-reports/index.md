@@ -24,7 +24,9 @@ Reporting enables you to automatically generate PDFs from any of your dashboards
 > If you have [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
 
-{{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
+<!--
+{{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" >}}
+-->
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes.
 
@@ -68,15 +70,9 @@ Only organization administrators can create reports by default. You can customiz
    - **Send test email:** To verify that the configuration works as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 1. Preview and save the report.
 
-{{< figure src="/static/img/docs/enterprise/reports/select-dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/format-report.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/schedule.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/share.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/confirm.png" max-width="500px" class="docs-image--no-shadow" >}}
-
 ### Choose template variables
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/" >}}) section.
 
@@ -84,9 +80,9 @@ You can configure report-specific template variables for the dashboard on the re
 
 ### Render a report with panels or rows set to repeat by a variable
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows]({{< relref "../../panels/configure-panel-options/#configure-repeating-rows-or-panels" >}}).
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows]({{< relref "../../panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels" >}}).
 
 #### Caveats
 
@@ -99,7 +95,7 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
 
 ### Report time range
 
-> **Note:** You can set custom report time ranges in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) 7.2+ and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** You can set custom report time ranges in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 7.2+ and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 By default, reports use the saved time range of the dashboard. You can change the time range of the report by:
 
@@ -123,7 +119,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ### CSV export
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) 8+ with the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration]({{< relref "#rendering-configuration" >}}).
 
@@ -135,12 +131,10 @@ A background job runs every 10 minutes and removes temporary CSV files. You can 
 
 ### Scheduling
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 > The scheduler was significantly changed in Grafana Enterprise version 8.1.
 
 Scheduled reports can be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**, for example to send the report via the API.
-
-{{< figure src="/static/img/docs/enterprise/reports_scheduler_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 **Send now or schedule for later**
 
@@ -158,7 +152,7 @@ When you schedule a report with a monthly frequency, and set the start date betw
 
 #### Send a test email
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 1. In the report, click **Send test email**.
 1. In the **Email** field, enter the email address or addresses that you want to test, separated by a semicolon.
@@ -167,23 +161,21 @@ When you schedule a report with a monthly frequency, and set the start date betw
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
-{{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
-
 ### Pause a report
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can pause sending reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
 
 ### Add multiple dashboards to a report
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You cannot add the same dashboard to a report multiple times.
 
 ### Embed a dashboard as an image into a report
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
@@ -238,7 +230,7 @@ font_italic = DejaVuSansCondensed-Oblique.ttf
 
 ## Report settings
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 7.2 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.2 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
@@ -254,8 +246,6 @@ Email branding:
 - **Email footer:** Toggle to enable the report email footer. Select **Sent by** or **None**.
 - **Footer link text:** Text of the link in the report email footer. Defaults to `Grafana`.
 - **Footer link URL:** Link of the report email footer.
-
-{{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting
 

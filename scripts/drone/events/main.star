@@ -38,11 +38,6 @@ load(
 )
 
 load(
-    'scripts/drone/pipelines/publish.star',
-    'publish',
-)
-
-load(
     'scripts/drone/pipelines/trigger_downstream.star',
     'enterprise_downstream_pipeline',
 )
@@ -62,7 +57,9 @@ load('scripts/drone/vault.star', 'from_secret')
 
 ver_mode = 'main'
 trigger = {
-    'event': ['push',],
+    'event': [
+        'push',
+    ],
     'branch': 'main',
     'paths': {
         'exclude': [
@@ -73,9 +70,12 @@ trigger = {
     },
 }
 
-def main_pipelines(edition):
+
+def main_pipelines():
     drone_change_trigger = {
-        'event': ['push',],
+        'event': [
+            'push',
+        ],
         'branch': 'main',
         'repo': [
             'grafana/grafana',
@@ -91,24 +91,36 @@ def main_pipelines(edition):
     }
 
     pipelines = [
-        docs_pipelines(edition, ver_mode, trigger_docs_main()),
-        test_frontend(trigger, ver_mode),
+        docs_pipelines(ver_mode, trigger_docs_main()),
+        test_frontend(trigger, ver_mode, committish='${DRONE_COMMIT}'),
         lint_frontend_pipeline(trigger, ver_mode),
-        test_backend(trigger, ver_mode),
+        test_backend(trigger, ver_mode, committish='${DRONE_COMMIT}'),
         lint_backend_pipeline(trigger, ver_mode),
-        build_e2e(trigger, ver_mode, edition),
-        integration_tests(trigger, ver_mode, edition),
-        windows(trigger, edition, ver_mode),
-    notify_pipeline(
-        name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
-        template=drone_change_template, secret='drone-changes-webhook',
-    ),
-    publish(trigger, ver_mode, edition),
-    enterprise_downstream_pipeline(edition, ver_mode),
-    notify_pipeline(
-        name='main-notify', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
-        depends_on=['main-test-frontend', 'main-test-backend', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows', 'main-publish'],
-        template=failure_template, secret='slack_webhook'
-    )]
+        build_e2e(trigger, ver_mode),
+        integration_tests(trigger, prefix=ver_mode),
+        windows(trigger, edition='oss', ver_mode=ver_mode),
+        notify_pipeline(
+            name='notify-drone-changes',
+            slack_channel='slack-webhooks-test',
+            trigger=drone_change_trigger,
+            template=drone_change_template,
+            secret='drone-changes-webhook',
+        ),
+        enterprise_downstream_pipeline(),
+        notify_pipeline(
+            name='main-notify',
+            slack_channel='grafana-ci-notifications',
+            trigger=dict(trigger, status=['failure']),
+            depends_on=[
+                'main-test-frontend',
+                'main-test-backend',
+                'main-build-e2e-publish',
+                'main-integration-tests',
+                'main-windows',
+            ],
+            template=failure_template,
+            secret='slack_webhook',
+        ),
+    ]
 
     return pipelines

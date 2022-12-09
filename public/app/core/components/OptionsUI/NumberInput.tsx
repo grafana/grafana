@@ -50,33 +50,31 @@ export class NumberInput extends PureComponent<Props, State> {
     let newValue = '';
     const min = this.props.min;
     const max = this.props.max;
-    const currentValue = txt && +txt;
+    let currentValue = txt !== '' ? Number(txt) : undefined;
 
-    if (currentValue) {
-      if (!Number.isNaN(currentValue)) {
-        if (min != null && currentValue < min) {
-          newValue = min.toString();
-          corrected = true;
-        } else if (max != null && currentValue > max) {
-          newValue = max.toString();
-          corrected = true;
-        } else {
-          newValue = txt;
-        }
+    if (currentValue && !Number.isNaN(currentValue)) {
+      if (min != null && currentValue < min) {
+        newValue = min.toString();
+        corrected = true;
+      } else if (max != null && currentValue > max) {
+        newValue = max.toString();
+        corrected = true;
+      } else {
+        newValue = txt ?? '';
       }
 
       this.setState({
-        text: newValue || '',
+        text: newValue,
         inputCorrected: corrected,
       });
+    }
 
-      if (corrected) {
-        this.updateValueDebounced();
-      }
+    if (corrected) {
+      this.updateValueDebounced();
+    }
 
-      if (!isNaN(currentValue) && currentValue !== this.props.value) {
-        this.props.onChange(currentValue);
-      }
+    if (!Number.isNaN(currentValue) && currentValue !== this.props.value) {
+      this.props.onChange(currentValue);
     }
   };
 

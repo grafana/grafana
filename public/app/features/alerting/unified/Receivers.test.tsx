@@ -1,23 +1,32 @@
 import { render, waitFor, within, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerChoice,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, ContactPointsState } from 'app/types';
 
+import 'whatwg-fetch';
+
 import Receivers from './Receivers';
-import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
+import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import { fetchNotifiers, fetchContactPointsState } from './api/grafana';
+import { fetchNotifiers } from './api/grafana';
+import * as receiversApi from './api/receiversApi';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -25,11 +34,11 @@ import {
   someCloudAlertManagerStatus,
   someGrafanaAlertManagerConfig,
 } from './mocks';
+import { mockAlertmanagerChoiceResponse } from './mocks/alertmanagerApi';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
 import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
 jest.mock('./utils/config');
@@ -46,7 +55,9 @@ const mocks = {
     fetchNotifiers: jest.mocked(fetchNotifiers),
     testReceivers: jest.mocked(testReceivers),
     discoverAlertmanagerFeatures: jest.mocked(discoverAlertmanagerFeatures),
-    fetchReceivers: jest.mocked(fetchContactPointsState),
+  },
+  hooks: {
+    useGetContactPointsState: jest.spyOn(receiversApi, 'useGetContactPointsState'),
   },
   contextSrv: jest.mocked(contextSrv),
 };
@@ -130,15 +141,27 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 };
 
 document.addEventListener('click', interceptLinkClicks);
+const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
 describe('Receivers', () => {
+  const server = setupServer();
+
+  beforeAll(() => {
+    setBackendSrv(backendSrv);
+    server.listen({ onUnhandledRequest: 'error' });
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
   beforeEach(() => {
+    server.resetHandlers();
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
-    const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
-    mocks.api.fetchReceivers.mockResolvedValue(emptyContactPointsState);
+    mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
@@ -158,6 +181,7 @@ describe('Receivers', () => {
   });
 
   it('Template and receiver tables are rendered, alertmanager can be selected, no notification errors', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
     mocks.api.fetchConfig.mockImplementation((name) =>
       Promise.resolve(name === GRAFANA_RULES_SOURCE_NAME ? someGrafanaAlertManagerConfig : someCloudAlertManagerConfig)
     );
@@ -202,6 +226,8 @@ describe('Receivers', () => {
   });
 
   it('Grafana receiver can be tested', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
 
     await renderReceivers();
@@ -258,6 +284,8 @@ describe('Receivers', () => {
   });
 
   it('Grafana receiver can be created', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
     await renderReceivers();
@@ -320,6 +348,8 @@ describe('Receivers', () => {
   });
 
   it('Hides create contact point button for users without permission', () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
     mocks.contextSrv.hasAccess.mockImplementation((action) =>
@@ -327,12 +357,15 @@ describe('Receivers', () => {
         (a) => a === action
       )
     );
+    mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     renderReceivers();
 
     expect(ui.newContactPointButton.query()).not.toBeInTheDocument();
   });
 
   it('Cloud alertmanager receiver can be edited', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchConfig.mockResolvedValue(someCloudAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
     await renderReceivers('CloudManager');
@@ -427,6 +460,8 @@ describe('Receivers', () => {
   });
 
   it('Prometheus Alertmanager receiver cannot be edited', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.fetchStatus.mockResolvedValue({
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
@@ -464,6 +499,7 @@ describe('Receivers', () => {
   });
 
   it('Loads config from status endpoint if there is no user config', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
     // loading an empty config with make it fetch config from status endpoint
     mocks.api.fetchConfig.mockResolvedValue({
       template_files: {},
@@ -485,6 +521,8 @@ describe('Receivers', () => {
   });
 
   it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
+
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
     mocks.api.fetchConfig.mockRejectedValue({ message: 'alertmanager storage object not found' });
 
@@ -497,8 +535,10 @@ describe('Receivers', () => {
     expect(receiversTable).toBeInTheDocument();
     expect(ui.newContactPointButton.get()).toBeInTheDocument();
   });
+
   describe('Contact points state', () => {
     it('Should render error notifications when there are some points state ', async () => {
+      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
       mocks.api.updateConfig.mockResolvedValue();
 
@@ -543,7 +583,7 @@ describe('Receivers', () => {
         errorCount: 1,
       };
 
-      mocks.api.fetchReceivers.mockResolvedValue(receiversMock);
+      mocks.hooks.useGetContactPointsState.mockReturnValue(receiversMock);
       await renderReceivers();
 
       //
@@ -561,15 +601,16 @@ describe('Receivers', () => {
       // expand contact point detail for default 2 emails - 2 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[0]));
       const defaultDetailTable = screen.getAllByTestId('dynamic-table')[1];
-      expect(byText('1 error').getAll(defaultDetailTable)).toHaveLength(1);
+      expect(byText('Error').getAll(defaultDetailTable)).toHaveLength(1);
 
       // expand contact point detail for slack and pagerduty - 0 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[1]));
       const criticalDetailTable = screen.getAllByTestId('dynamic-table')[2];
-      expect(byText('1 error').query(criticalDetailTable)).toBeNull();
+      expect(byText('Error').query(criticalDetailTable)).toBeNull();
       expect(byText('OK').getAll(criticalDetailTable)).toHaveLength(2);
     });
     it('Should render no attempt message when there are some points state with null lastNotifyAttempt, and "-" in null values', async () => {
+      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
       mocks.api.updateConfig.mockResolvedValue();
 
@@ -614,7 +655,7 @@ describe('Receivers', () => {
         errorCount: 1,
       };
 
-      mocks.api.fetchReceivers.mockResolvedValue(receiversMock);
+      mocks.hooks.useGetContactPointsState.mockReturnValue(receiversMock);
       await renderReceivers();
 
       //
@@ -632,7 +673,7 @@ describe('Receivers', () => {
       // expand contact point detail for default 2 emails - 2 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[0]));
       const defaultDetailTable = screen.getAllByTestId('dynamic-table')[1];
-      expect(byText('1 error').getAll(defaultDetailTable)).toHaveLength(1);
+      expect(byText('Error').getAll(defaultDetailTable)).toHaveLength(1);
 
       // expand contact point detail for slack and pagerduty - 0 errors
       await userEvent.click(ui.contactPointsCollapseToggle.get(receiverRows[1]));
@@ -645,11 +686,12 @@ describe('Receivers', () => {
       expect(criticalDetailTableRows[1]).toHaveTextContent('117.2455ms');
     });
 
-    it('Should not render error notifications when fetchContactPointsState raises 404 error ', async () => {
+    it('Should not render error notifications when fetching contact points state raises 404 error ', async () => {
+      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
       mocks.api.updateConfig.mockResolvedValue();
 
-      mocks.api.fetchReceivers.mockRejectedValue({ status: 404 });
+      mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
       await renderReceivers();
 
       await ui.receiversTable.find();

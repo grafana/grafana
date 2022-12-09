@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { InlineField } from '@grafana/ui';
 
 import { Dimensions } from '..';
@@ -26,6 +27,9 @@ const queryTypes: Array<{ value: string; label: string }> = [
   { value: VariableQueryType.ResourceArns, label: 'Resource ARNs' },
   { value: VariableQueryType.Statistics, label: 'Statistics' },
   { value: VariableQueryType.LogGroups, label: 'Log Groups' },
+  ...(config.featureToggles.cloudWatchCrossAccountQuerying
+    ? [{ value: VariableQueryType.Accounts, label: 'Accounts' }]
+    : []),
 ];
 
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
@@ -34,9 +38,9 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const { region, namespace, metricName, dimensionKey, dimensionFilters } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
-  const metrics = useMetrics(datasource, region, namespace);
-  const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
-  const keysForDimensionFilter = useDimensionKeys(datasource, region, namespace, metricName, dimensionFilters ?? {});
+  const metrics = useMetrics(datasource, { region, namespace });
+  const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
+  const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -65,14 +69,14 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const sanitizeQuery = async (query: VariableQuery) => {
     let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
-      await datasource.api.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
         }
       });
     }
     if (dimensionKey) {
-      await datasource.api.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      await datasource.api.getDimensionKeys({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
           dimensionFilters = {};
@@ -90,6 +94,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.EC2InstanceAttributes,
     VariableQueryType.ResourceArns,
     VariableQueryType.LogGroups,
+    VariableQueryType.Accounts,
   ].includes(parsedQuery.queryType);
   const hasNamespaceField = [
     VariableQueryType.Metrics,
