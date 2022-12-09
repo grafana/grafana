@@ -260,6 +260,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
                   dataMax = dataMax > 0 ? 1 : 0;
                   return [dataMin, dataMax];
                 }
+              : config.unit === 'enumstr'
+              ? (u: uPlot, dataMin: number, dataMax: number) => [dataMin - 1, dataMax + 1]
               : undefined,
           decimals: field.config.decimals,
         },
@@ -304,9 +306,37 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
       let incrs: uPlot.Axis.Incrs | undefined;
 
+      // TODO: these will be dynamic with frame updates, so need to accept getYTickLabels()
+      let values: uPlot.Axis.Values | undefined;
+      let splits: uPlot.Axis.Splits | undefined;
+
       if (IEC_UNITS.has(config.unit!)) {
         incrs = BIN_INCRS;
+      } else if (config.unit === 'enumstr') {
+        splits = field.enum.map((v: string, i: number) => i);
+        values = field.enum;
       }
+
+      builder.addAxis(
+        tweakAxis(
+          {
+            scaleKey,
+            label: customConfig.axisLabel,
+            size: customConfig.axisWidth,
+            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
+            theme,
+            grid: { show: customConfig.axisGridShow },
+            decimals: field.config.decimals,
+            distr: customConfig.scaleDistribution?.type,
+            splits,
+            values,
+            incrs,
+            ...axisColorOpts,
+          },
+          field
+        )
+      );
 
       builder.addAxis(
         tweakAxis(

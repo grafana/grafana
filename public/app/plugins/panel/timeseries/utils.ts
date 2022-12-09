@@ -15,6 +15,67 @@ import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 
+function ordinalizeStringFields(frames: DataFrame[]) {
+  // enums
+  const uniqStrVals = new Set<string>();
+
+  let frames2: DataFrame[] = frames.map((frame) => {
+    return {
+      ...frame,
+      fields: frame.fields.map((field) => {
+        if (field.type === FieldType.string) {
+
+          let vals = field.values.toArray();
+
+          for (let i = 0; i < vals.length; i++) {
+            uniqStrVals.add(vals[i]);
+          }
+
+          return {
+            ...field,
+            // type: FieldType.number, // ordinal? enumstr?
+            config: {
+              ...field.config,
+              unit: 'enumstr', // ordinal? enumstr?
+            },
+            values: new ArrayVector(vals.slice()),
+          };
+        }
+
+        return field;
+      }),
+    };
+  });
+
+  // ordinalize across all string fields in all frames
+  let ordinalStrMap = new Map<string, number>();
+
+  let ordinalLabels = [...uniqStrVals];
+
+  ordinalLabels.forEach((val, i) => {
+    ordinalStrMap.set(val, i);
+  });
+
+  frames2.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      if (field.type === FieldType.string) {
+        let vals = field.values.toArray();
+
+        for (let i = 0; i < vals.length; i++) {
+          // can mutate here cause we slice() during copying earlier
+          vals[i] = ordinalStrMap.get(vals[i]);
+        }
+
+        field.type = FieldType.number; // ordinal? enumstr?
+        // field.entities seems to make it through to here, so ¯\_(ツ)_/¯
+        field.enum = ordinalLabels;
+      }
+    });
+  });
+
+  return frames2;
+}
+
 /**
  * Returns null if there are no graphable fields
  */
@@ -26,6 +87,8 @@ export function prepareGraphableFields(
   if (!series?.length) {
     return null;
   }
+
+  series = ordinalizeStringFields(series);
 
   let copy: Field;
 
