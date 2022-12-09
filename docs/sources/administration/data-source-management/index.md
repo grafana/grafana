@@ -195,7 +195,7 @@ To view available data source plugins, go to the [plugin catalog](/grafana/plugi
 For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use [Grafana Enterprise]{{< relref "../../enterprise/" >}}, you can also filter by Enterprise-supported plugins.
+If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
 
 For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
 

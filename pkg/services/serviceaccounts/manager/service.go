@@ -55,10 +55,9 @@ func ProvideServiceAccountsService(
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
+	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
+		Key("interval").MustDuration(defaultSecretScanInterval)
 	if s.secretScanEnabled {
-		s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
-			Key("interval").MustDuration(defaultSecretScanInterval)
-
 		s.secretScanService = secretscan.NewService(s.store, cfg)
 	}
 
@@ -76,7 +75,7 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	defer updateStatsTicker.Stop()
 
 	// Enforce a minimum interval of 1 minute.
-	if sa.secretScanInterval < time.Minute {
+	if sa.secretScanEnabled && sa.secretScanInterval < time.Minute {
 		sa.backgroundLog.Warn("secret scan interval is too low, increasing to " +
 			defaultSecretScanInterval.String())
 

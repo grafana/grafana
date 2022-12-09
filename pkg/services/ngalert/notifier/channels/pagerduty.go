@@ -26,6 +26,7 @@ const (
 	defaultSeverity = "critical"
 	defaultClass    = "default"
 	defaultGroup    = "default"
+	defaultClient   = "Grafana"
 )
 
 var (
@@ -52,6 +53,9 @@ type pagerdutySettings struct {
 	Component     string `json:"component,omitempty" yaml:"component,omitempty"`
 	Group         string `json:"group,omitempty" yaml:"group,omitempty"`
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Source        string `json:"source,omitempty" yaml:"source,omitempty"`
+	Client        string `json:"client,omitempty" yaml:"client,omitempty"`
+	ClientURL     string `json:"client_url,omitempty" yaml:"client_url,omitempty"`
 }
 
 func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
@@ -88,7 +92,19 @@ func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
 	if settings.Summary == "" {
 		settings.Summary = DefaultMessageTitleEmbed
 	}
-
+	if settings.Client == "" {
+		settings.Client = defaultClient
+	}
+	if settings.ClientURL == "" {
+		settings.ClientURL = "{{ .ExternalURL }}"
+	}
+	if settings.Source == "" {
+		source, err := os.Hostname()
+		if err != nil {
+			source = settings.Client
+		}
+		settings.Source = source
+	}
 	return &settings, nil
 }
 
@@ -190,8 +206,8 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	msg := &pagerDutyMessage{
-		Client:      "Grafana",
-		ClientURL:   pn.tmpl.ExternalURL.String(),
+		Client:      tmpl(pn.settings.Client),
+		ClientURL:   tmpl(pn.settings.ClientURL),
 		RoutingKey:  pn.settings.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
@@ -200,6 +216,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			Text: "External URL",
 		}},
 		Payload: pagerDutyPayload{
+			Source:        tmpl(pn.settings.Source),
 			Component:     tmpl(pn.settings.Component),
 			Summary:       tmpl(pn.settings.Summary),
 			Severity:      severity,
@@ -222,11 +239,6 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	if summary, truncated := notify.Truncate(msg.Payload.Summary, 1024); truncated {
 		pn.log.Debug("Truncated summary", "original", msg.Payload.Summary)
 		msg.Payload.Summary = summary
-	}
-
-	if hostname, err := os.Hostname(); err == nil {
-		// TODO: should this be configured like in Prometheus AM?
-		msg.Payload.Source = hostname
 	}
 
 	if tmplErr != nil {

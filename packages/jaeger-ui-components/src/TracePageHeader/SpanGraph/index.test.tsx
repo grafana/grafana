@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { shallow, ShallowWrapper } from 'enzyme';
 import React from 'react';
 
 import traceGenerator from '../../demo/trace-generators';
@@ -21,9 +21,9 @@ import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnim
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
-import ViewingLayer from './ViewingLayer';
+import ViewingLayer, { ViewingLayerProps, UnthemedViewingLayer } from './ViewingLayer';
 
-import SpanGraph from './index';
+import SpanGraph, { SpanGraphProps } from './index';
 
 describe('<SpanGraph>', () => {
   polyfillAnimationFrame(window);
@@ -39,10 +39,10 @@ describe('<SpanGraph>', () => {
     },
   };
 
-  let wrapper;
+  let wrapper: ShallowWrapper<ViewingLayerProps, {}, UnthemedViewingLayer>;
 
   beforeEach(() => {
-    wrapper = shallow(<SpanGraph {...props} />);
+    wrapper = shallow(<SpanGraph {...(props as unknown as SpanGraphProps)} />);
   });
 
   it('renders a <CanvasSpanGraph />', () => {
@@ -54,7 +54,7 @@ describe('<SpanGraph>', () => {
   });
 
   it('returns a <div> if a trace is not provided', () => {
-    wrapper = shallow(<SpanGraph {...props} trace={null} />);
+    wrapper = shallow(<SpanGraph {...({ ...props, trace: null } as unknown as SpanGraphProps)} />);
     expect(wrapper.matchesElement(<div />)).toBeTruthy();
   });
 
@@ -68,7 +68,7 @@ describe('<SpanGraph>', () => {
 
   it('passes items to CanvasSpanGraph', () => {
     const canvasGraph = wrapper.find(CanvasSpanGraph).first();
-    const items = trace.spans.map((span) => ({
+    const items = trace?.spans.map((span) => ({
       valueOffset: span.relativeStartTime,
       valueWidth: span.duration,
       serviceName: span.process.serviceName,
