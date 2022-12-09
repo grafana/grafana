@@ -6,6 +6,7 @@ func newInstallAgentStep(settings *installAgentSettings) *installAgentStep {
 	return &installAgentStep{
 		Action: "install-agent",
 		Meta: RecipeStepMeta{
+			Status:      NotCompleted,
 			Name:        "Installing Grafana agent on server",
 			Description: "Grafana agent is used to collect and ship metrics to Prometheus",
 		},
@@ -30,15 +31,19 @@ type installAgentSettings struct {
 }
 
 func (s *installAgentStep) Apply(c *models.ReqContext) error {
+	s.Meta.Status = Completed
+
 	return nil
 }
 
 func (s *installAgentStep) Revert(c *models.ReqContext) error {
+	s.Meta.Status = NotCompleted
+
 	return nil
 }
 
 func (s *installAgentStep) Status(c *models.ReqContext) (StepStatus, error) {
-	return Completed, nil
+	return s.Meta.Status, nil
 }
 
 func (s *installAgentStep) ToDto(c *models.ReqContext) *RecipeStepDTO {

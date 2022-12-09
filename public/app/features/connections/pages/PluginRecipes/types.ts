@@ -4,6 +4,7 @@ export type PluginRecipe = {
   logo: string;
   summary: string;
   description?: string;
+  isInstallStarted?: string;
   steps: PluginRecipeStep[];
 };
 
@@ -65,9 +66,14 @@ export type PluginRecipePrompt = {
 // Step - Instruction
 // -----------------
 export type InstructionStepSettings = {
-  instructionText: string; // The text of the instructions as Markdown
+  instruction: Instruction[];
   instructionTestURL: string; // The URL to run the health-check against
   instructionTestExpectedHttpResponse: string; // The expected healthy HTTP response code (e.g. "200")
+};
+
+export type Instruction = {
+  os: string;
+  markdown: string;
 };
 
 // Step - Dashboard

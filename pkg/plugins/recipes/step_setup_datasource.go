@@ -12,6 +12,7 @@ func newSetupDatasourceStep(ds datasources.DataSourceService, settings *datasour
 	return &setupDatasourceStep{
 		Action: "setup-datasource",
 		Meta: RecipeStepMeta{
+			Status:      NotCompleted,
 			Name:        fmt.Sprintf("Configuring %s data source", settings.Type),
 			Description: fmt.Sprintf("Configuring so Grafana can connect to the %s instance to query data", settings.Type),
 		},
@@ -64,6 +65,8 @@ func (s *setupDatasourceStep) Apply(c *models.ReqContext) error {
 		return err
 	}
 
+	s.Meta.Status = Completed
+
 	return nil
 }
 
@@ -82,9 +85,13 @@ func (s *setupDatasourceStep) Revert(c *models.ReqContext) error {
 		return err
 	}
 
+	s.Meta.Status = NotCompleted
+
 	return nil
 }
 
+// TODO: instead of detecting if there is a datasource existing with a given name, should we perist the ID of the created datasource instead?
+// (It can happen that there are multiple datasources with the same name querying different services / endpoints.)
 func (s *setupDatasourceStep) Status(c *models.ReqContext) (StepStatus, error) {
 	query := datasources.GetDataSourceQuery{Name: s.Settings.Name, OrgId: c.OrgID}
 

@@ -3,6 +3,8 @@ package recipes
 import "github.com/grafana/grafana/pkg/models"
 
 func newPromptStep(meta PromptStepMeta) *PromptStep {
+	meta.Status = NotCompleted
+
 	return &PromptStep{
 		Action: "prompt",
 		Meta:   meta,
@@ -26,6 +28,7 @@ type promptSettings struct {
 type PromptStepMeta struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Status      StepStatus
 }
 type PromptOption struct {
 	Name  string `json:"name"`
@@ -42,15 +45,19 @@ type Prompt struct {
 }
 
 func (s *PromptStep) Apply(c *models.ReqContext) error {
+	s.Meta.Status = Completed
+
 	return nil
 }
 
 func (s *PromptStep) Revert(c *models.ReqContext) error {
+	s.Meta.Status = NotCompleted
+
 	return nil
 }
 
 func (s *PromptStep) Status(c *models.ReqContext) (StepStatus, error) {
-	return Completed, nil
+	return s.Meta.Status, nil
 }
 
 func (s *PromptStep) ToDto(c *models.ReqContext) *RecipeStepDTO {

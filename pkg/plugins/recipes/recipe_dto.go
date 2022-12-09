@@ -1,12 +1,13 @@
 package recipes
 
 type RecipeDTO struct {
-	Id          string           `json:"id"`
-	Name        string           `json:"name"`
-	Summary     string           `json:"summary"`
-	Description string           `json:"description"`
-	Logo        string           `json:"logo"`
-	Steps       []*RecipeStepDTO `json:"steps"`
+	Id               string           `json:"id"`
+	Name             string           `json:"name"`
+	Summary          string           `json:"summary"`
+	Description      string           `json:"description"`
+	Logo             string           `json:"logo"`
+	IsInstallStarted bool             `json:"isInstallStarted"`
+	Steps            []*RecipeStepDTO `json:"steps"`
 }
 
 type RecipeStepDTO struct {

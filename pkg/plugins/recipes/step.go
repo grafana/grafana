@@ -12,6 +12,7 @@ type RecipeStep interface {
 type RecipeStepMeta struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Status      StepStatus
 }
 
 type RecipeStepStatus struct {

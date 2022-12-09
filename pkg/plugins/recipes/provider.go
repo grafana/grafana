@@ -34,8 +34,9 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 	recipes := []*Recipe{
 		// Linux Server
 		{
-			Id:   "linux-server",
-			Name: "Linux Server",
+			Id:               "linux-server",
+			Name:             "Linux Server",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collect metrics and logs related to the linux operating system",
 				Description: "The Linux integration uses the agent to collect metrics related to the operating system running on a node, including aspects like CPU usage, load average, memory usage, and disk and networking I/O.\n\nIt also supports logs being scraped by the agent using promtail. \nSupported files are syslog, auth.log, kern.log and journal logs.\n\nAn accompanying dashboard is provided to visualize these metrics and logs.",
@@ -48,11 +49,20 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 				}),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
-						InstructionTestURL:                  "http://my-service.com/api/health",
-						InstructionTestExpectedHttpResponse: "200",
+						Name:        "Install `htop`",
+						Description: "Install the famous interactive process viewer",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
+						InstructionTestURL:                  "",
+						InstructionTestExpectedHttpResponse: "",
 					},
 				),
 				newSetupAlertsStep(RecipeStepMeta{
@@ -161,8 +171,9 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 
 		// Docker
 		{
-			Id:   "docker",
-			Name: "Docker",
+			Id:               "docker",
+			Name:             "Docker",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collect metrics and logs for containers running in docker",
 				Description: "Docker is an open platform for developing, shipping, and running applications. Docker enables you to separate your applications from your infrastructure so you can deliver software quickly.\n\nThis integration focuses on showing overall utilization of containers running in Docker, using cAdvisor.\n\nThis integration also supports logs monitoring for Docker containers.",
@@ -219,9 +230,18 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 				}),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
+						Name:        "Some instruction",
+						Description: "Some description here...",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
 						InstructionTestURL:                  "http://my-service.com/api/health",
 						InstructionTestExpectedHttpResponse: "200",
 					},
@@ -358,8 +378,9 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 
 		// MySQL
 		{
-			Id:   "mysql",
-			Name: "MySQL",
+			Id:               "mysql",
+			Name:             "MySQL",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collects metrics and logs from the MySQL server",
 				Description: "MySQL is a managed, open source relational database that is widely used. The MySQL Integration enables the Grafana Agent to send metrics and logs to Grafana Cloud and includes useful dashboards, alerts, and recording rules.",
@@ -372,11 +393,20 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 				}),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
-						InstructionTestURL:                  "http://my-service.com/api/health",
-						InstructionTestExpectedHttpResponse: "200",
+						Name:        "Install `htop`",
+						Description: "Install the famous interactive process viewer",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
+						InstructionTestURL:                  "",
+						InstructionTestExpectedHttpResponse: "",
 					},
 				),
 				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
@@ -392,8 +422,9 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 
 		// Mac OS
 		{
-			Id:   "macos",
-			Name: "MacOS",
+			Id:               "macos",
+			Name:             "MacOS",
+			IsInstallStarted: false,
 			Meta: RecipeMeta{
 				Summary:     "Collect metrics and logs related to the macOS operating system",
 				Description: "The macOS integration uses the agent to collect metrics related to the operating system, including aspects like CPU usage, load average, memory usage, and disk and networking I/O. It also supports system logs being scraped by the agent using promtail. An accompanying dashboard is provided to visualize these metrics and logs.",
@@ -406,11 +437,20 @@ func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds
 				}),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
-						InstructionTestURL:                  "http://my-service.com/api/health",
-						InstructionTestExpectedHttpResponse: "200",
+						Name:        "Install `htop`",
+						Description: "Install the famous interactive process viewer",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
+						InstructionTestURL:                  "",
+						InstructionTestExpectedHttpResponse: "",
 					},
 				),
 				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
