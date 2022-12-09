@@ -12,7 +12,7 @@ import { getVariablesDemo } from './variablesDemo';
 
 interface SceneDef {
   title: string;
-  getScene: () => Scene;
+  getScene: (standalone: boolean) => Scene;
 }
 export function getScenes(): SceneDef[] {
   return [
@@ -29,22 +29,20 @@ export function getScenes(): SceneDef[] {
   ];
 }
 
-const cache: Record<string, Scene> = {};
+const cache: Record<string, { standalone: boolean; scene: Scene }> = {};
 
 export function getSceneByTitle(title: string, standalone = true) {
   if (cache[title]) {
-    if (cache[title].state.standalone !== standalone) {
-      cache[title].setState({ standalone });
+    if (cache[title].standalone === standalone) {
+      return cache[title].scene;
     }
-
-    return cache[title];
   }
 
   const scene = getScenes().find((x) => x.title === title);
 
   if (scene) {
-    cache[title] = scene.getScene();
+    cache[title] = { scene: scene.getScene(standalone), standalone };
   }
 
-  return cache[title];
+  return cache[title].scene;
 }
