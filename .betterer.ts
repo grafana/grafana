@@ -46,7 +46,7 @@ function countEslintErrors() {
 
     const baseRules: Partial<Linter.RulesRecord> = {
       '@typescript-eslint/no-explicit-any': 'error',
-      '@grafana/eslint-rules/no-aria-label-selectors': 'error',
+      '@grafana/no-aria-label-selectors': 'error',
     };
 
     const nonTestFilesRules: Partial<Linter.RulesRecord> = {
