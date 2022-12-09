@@ -29,7 +29,109 @@ func GetMigrateSourceDriver(driverName string) (source.Driver, error) {
 	return d, nil
 }
 
-func GetDatabaseDriver(driverName string, instance *sql.DB) (database.Driver, error) {
+type SQLiteDriver struct {
+	*sqlite3.Sqlite
+
+	db     *sql.DB
+	config SQLiteConfig
+}
+
+type SQLiteConfig struct {
+	*sqlite3.Config
+
+	DryRun bool
+}
+
+func NewSQLiteDriver(instance *sql.DB, sqliteCfg SQLiteConfig) (*SQLiteDriver, error) {
+	if sqliteCfg.Config == nil {
+		sqliteCfg.Config = &sqlite3.Config{}
+	}
+	dd, err := sqlite3.WithInstance(instance, sqliteCfg.Config)
+	if err != nil {
+		return nil, err
+	}
+	sd, ok := dd.(*sqlite3.Sqlite)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast to postgres driver: %w", err)
+	}
+
+	return &SQLiteDriver{sd, instance, sqliteCfg}, nil
+}
+
+func (m *SQLiteDriver) SetVersion(version int, dirty bool) error {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return &database.Error{OrigErr: err, Err: "transaction start failed"}
+	}
+
+	query := "DELETE FROM " + m.config.MigrationsTable
+	if _, err := tx.Exec(query); err != nil {
+		return &database.Error{OrigErr: err, Query: []byte(query)}
+	}
+
+	// Also re-write the schema version for nil dirty versions to prevent
+	// empty schema version for failed down migration on the first migration
+	// See: https://github.com/golang-migrate/migrate/issues/330
+	if version >= 0 || (version == database.NilVersion && dirty) {
+		query := fmt.Sprintf(`INSERT INTO %s (version, dirty) VALUES (?, ?)`, m.config.MigrationsTable)
+		if _, err := tx.Exec(query, version, dirty); err != nil {
+			if errRollback := tx.Rollback(); errRollback != nil {
+				err = multierror.Append(err, errRollback)
+			}
+			return &database.Error{OrigErr: err, Query: []byte(query)}
+		}
+	}
+
+	if m.config.DryRun {
+		if errRollback := tx.Rollback(); errRollback != nil {
+			return &database.Error{OrigErr: errRollback, Query: []byte(query)}
+		}
+		return nil
+	}
+
+	if err := tx.Commit(); err != nil {
+		return &database.Error{OrigErr: err, Err: "transaction commit failed"}
+	}
+
+	return nil
+}
+
+func (m *SQLiteDriver) Run(migration io.Reader) error {
+	migr, err := ioutil.ReadAll(migration)
+	if err != nil {
+		return err
+	}
+	query := string(migr[:])
+
+	return m.executeQuery(query)
+}
+
+func (m *SQLiteDriver) executeQuery(query string) error {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return &database.Error{OrigErr: err, Err: "transaction start failed"}
+	}
+	if _, err := tx.Exec(query); err != nil {
+		if errRollback := tx.Rollback(); errRollback != nil {
+			err = multierror.Append(err, errRollback)
+		}
+		return &database.Error{OrigErr: err, Query: []byte(query)}
+	}
+
+	if m.config.DryRun {
+		if errRollback := tx.Rollback(); errRollback != nil {
+			return &database.Error{OrigErr: errRollback, Query: []byte(query)}
+		}
+		return nil
+	}
+
+	if err := tx.Commit(); err != nil {
+		return &database.Error{OrigErr: err, Err: "transaction commit failed"}
+	}
+	return nil
+}
+
+func GetDatabaseDriver(driverName string, instance *sql.DB, sqliteCfg SQLiteConfig) (database.Driver, error) {
 	var dd database.Driver
 	var err error
 	switch {
@@ -44,7 +146,7 @@ func GetDatabaseDriver(driverName string, instance *sql.DB) (database.Driver, er
 			return nil, err
 		}
 	case driverName == SQLite:
-		dd, err = sqlite3.WithInstance(instance, &sqlite3.Config{})
+		dd, err = NewSQLiteDriver(instance, sqliteCfg)
 		if err != nil {
 			return nil, err
 		}

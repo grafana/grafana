@@ -208,7 +208,7 @@ var adminCommands = []*cli.Command{
 				Usage:  "It will force a migration version and reset the dirty state to false without checking any currently active version in database.",
 				Action: runMigrateCommand(forceMigrationsVersion),
 				Flags: []cli.Flag{
-					&cli.Uint64Flag{
+					&cli.IntFlag{
 						Name:     "version",
 						Usage:    "Target version",
 						Required: true,
@@ -237,10 +237,16 @@ var adminCommands = []*cli.Command{
 				Usage:  "Migrates up or down to the target version",
 				Action: runMigrateCommand(runMigrations),
 				Flags: []cli.Flag{
-					&cli.Uint64Flag{
+					&cli.UintFlag{
 						Name:     "version",
 						Usage:    "Targer version",
 						Required: true,
+					},
+					&cli.BoolFlag{
+						Name:     "dry-run",
+						Usage:    "Dry run migrations",
+						Required: false,
+						Value:    false,
 					},
 				},
 			},
