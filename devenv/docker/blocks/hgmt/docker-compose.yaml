@@ -16,16 +16,35 @@
   #   ports:
   #   - 6443:6443
   
-  mysql:
+  mysql25:
     image: arm64v8/mysql:oracle
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_ROOT_PASSWORD: grafana
       MYSQL_DATABASE: grafana
       MYSQL_USER: grafana
-      MYSQL_PASSWORD: password
+      MYSQL_PASSWORD: grafana
     ports:
-      - "3306:3306"
+      - "3325:3306"
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+
+  mysql26:
+    image: arm64v8/mysql:oracle
+    environment:
+      MYSQL_ROOT_PASSWORD: grafana
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: grafana
+    ports:
+      - "3326:3306"
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
 
   stack25:
     image: grafana/grafana:dev-ubuntu
@@ -36,12 +55,15 @@
     environment:
       HG_STACK_ID: 25
       GF_DATABASE_TYPE: mysql
-      GF_DATABASE_HOST: mysql
+      GF_DATABASE_HOST: mysql25
       GF_DATABASE_USER: grafana
-      GF_DATABASE_PASSWORD: password
+      GF_DATABASE_PASSWORD: grafana
       GF_DATABASE_NAME: grafana
     links:
-      - mysql
+      - mysql25
+    depends_on:
+      mysql25:
+        condition: service_healthy
 
   stack26:
     image: grafana/grafana:dev-ubuntu
@@ -51,14 +73,16 @@
       - ./docker/blocks/hgmt/core.ini:/etc/grafana/grafana.ini
     environment:
       HG_STACK_ID: 26
-      # GF_DATABASE_TYPE: postgres
-      # GF_DATABASE_HOST: postgres
-      # GF_DATABASE_PORT: 5432
-      # GF_DATABASE_NAME: stack26
-      # GF_DATABASE_USER: grafana
-      # GF_DATABASE_PASSWORD: grafana
+      GF_DATABASE_TYPE: mysql
+      GF_DATABASE_HOST: mysql26
+      GF_DATABASE_USER: grafana
+      GF_DATABASE_PASSWORD: grafana
+      GF_DATABASE_NAME: grafana
     links:
-      - mysql
+      - mysql26
+    depends_on:
+      mysql25:
+        condition: service_healthy
   
   entity-store:
     image: grafana/grafana:dev-ubuntu
@@ -67,3 +91,5 @@
     links:
       - stack25
       - stack26
+      - mysql25
+      - mysql26
