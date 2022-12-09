@@ -1,10 +1,12 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import * as ui from '@grafana/ui';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+import { FakeSQLCodeEditor } from '../__mocks__/FakeSQLCodeEditor';
 import {
   validLogsQuery,
   validMetricQueryBuilderQuery,
@@ -30,6 +32,22 @@ const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
   onChange: jest.fn(),
   query: {} as CloudWatchQuery,
 };
+
+const FAKE_EDITOR_LABEL = 'FakeEditor';
+
+jest.mock('.', () => ({
+  ...jest.requireActual('.'),
+  SQLCodeEditor: ({ sql, onChange }: { sql: string; onChange: (val: string) => void }) => {
+    return (
+      <>
+        <label htmlFor="cloudwatch-fake-editor">{FAKE_EDITOR_LABEL}</label>
+        <input id="cloudwatch-fake-editor" value={sql} onChange={(e) => onChange(e.currentTarget.value)}></input>
+      </>
+    );
+  },
+  MathExpressionQueryField: () => <></>,
+  SQLBuilderEditor: () => <></>,
+}));
 
 describe('QueryEditor should render right editor', () => {
   describe('when using grafana 6.3.0 metric query', () => {
@@ -283,6 +301,55 @@ describe('QueryEditor should render right editor', () => {
       expect(screen.getByText('Metric Query')).toBeInTheDocument();
       const radio = screen.getByLabelText('Code');
       expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+    });
+  });
+
+  describe('confirm modal', () => {
+    it('should be shown when moving from code editor to builder when in sql mode', async () => {
+      const sqlQuery = 'SELECT * FROM test';
+      render(
+        <QueryEditor
+          {...props}
+          query={{ ...validMetricQueryCodeQuery, sqlExpression: sqlQuery }}
+          onChange={jest.fn()}
+          onRunQuery={jest.fn()}
+        />
+      );
+
+      // the modal should not be shown unless the code editor is "dirty", so need to trigger a change
+      const codeEditorElement = screen.getByLabelText(FAKE_EDITOR_LABEL);
+      fireEvent.change(codeEditorElement, { target: { value: 'select * from ' } });
+      const builderElement = screen.getByLabelText('Builder');
+      expect(builderElement).toBeInTheDocument();
+      await act(async () => {
+        await builderElement.click();
+      });
+
+      const modalTitleElem = screen.getByText('Are you sure?');
+      expect(modalTitleElem).toBeInTheDocument();
+    });
+
+    it('should not be shown when moving from builder to code when in sql mode', async () => {
+      render(
+        <QueryEditor {...props} query={validMetricQueryBuilderQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />
+      );
+      const builderElement = screen.getByLabelText('Builder');
+      expect(builderElement).toBeInTheDocument();
+      await act(async () => {
+        await builderElement.click();
+      });
+      expect(screen.queryByText('Are you sure?')).toBeNull();
+    });
+
+    it('should not be shown when moving from code to builder when in search mode', async () => {
+      render(<QueryEditor {...props} query={validMetricSearchCodeQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />);
+
+      const builderElement = screen.getByLabelText('Builder');
+      expect(builderElement).toBeInTheDocument();
+      await act(async () => {
+        await builderElement.click();
+      });
+      expect(screen.queryByText('Are you sure?')).toBeNull();
     });
   });
 });

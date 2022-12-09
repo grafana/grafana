@@ -22,8 +22,8 @@ import { Alias } from './Alias';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
-  extraHeaderElementLeft: React.Dispatch<JSX.Element | undefined>;
-  extraHeaderElementRight: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementLeft?: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementRight?: React.Dispatch<JSX.Element | undefined>;
 }
 
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
@@ -36,14 +36,7 @@ const editorModes = [
 ];
 
 export const MetricsQueryEditor = (props: Props) => {
-  const {
-    query,
-    onRunQuery,
-    datasource,
-    extraHeaderElementLeft: headerElementLeft,
-    extraHeaderElementRight: headerElementRight,
-    onChange,
-  } = props;
+  const { query, onRunQuery, datasource, extraHeaderElementLeft, extraHeaderElementRight, onChange } = props;
   const [showConfirm, setShowConfirm] = useState(false);
   const [sqlCodeEditorIsDirty, setSQLCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
@@ -64,7 +57,7 @@ export const MetricsQueryEditor = (props: Props) => {
   );
 
   useEffect(() => {
-    headerElementLeft(
+    extraHeaderElementLeft?.(
       <InlineSelect
         aria-label="Metric editor mode"
         value={metricEditorModes.find((m) => m.value === query.metricQueryType)}
@@ -75,7 +68,7 @@ export const MetricsQueryEditor = (props: Props) => {
       />
     );
 
-    headerElementRight(
+    extraHeaderElementRight?.(
       <>
         <RadioButtonGroup
           options={editorModes}
@@ -100,16 +93,16 @@ export const MetricsQueryEditor = (props: Props) => {
     );
 
     return () => {
-      headerElementLeft(undefined);
-      headerElementRight(undefined);
+      extraHeaderElementLeft?.(undefined);
+      extraHeaderElementRight?.(undefined);
     };
   }, [
     query,
     sqlCodeEditorIsDirty,
     datasource,
     onChange,
-    headerElementLeft,
-    headerElementRight,
+    extraHeaderElementLeft,
+    extraHeaderElementRight,
     showConfirm,
     onEditorModeChange,
   ]);
