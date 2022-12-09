@@ -31,7 +31,7 @@ export const installRecipe = async (recipe?: PluginRecipe, fromStepIndex = 0) =>
 };
 
 export const findActiveStepIndex = (steps: PluginRecipeStep[] = []): number => {
-  const activeStep = steps.find((step) => step.status.code !== StepStatus.NotCompleted);
+  const activeStep = steps.find((step) => step.status.code !== StepStatus.Completed);
 
   // No active step, point to the first step
   if (!activeStep) {
@@ -55,6 +55,6 @@ export const isStepExpandable = (step: PluginRecipeStep) =>
 const isStepActive = (recipe: PluginRecipe, stepIndex: number) => stepIndex === findActiveStepIndex(recipe.steps);
 
 export const isStepExpanded = (recipe: PluginRecipe, stepIndex: number) =>
-  isStepNotCompleted(recipe.steps[stepIndex]) &&
   isStepActive(recipe, stepIndex) &&
+  isStepNotCompleted(recipe.steps[stepIndex]) &&
   isStepExpandable(recipe.steps[stepIndex]);
