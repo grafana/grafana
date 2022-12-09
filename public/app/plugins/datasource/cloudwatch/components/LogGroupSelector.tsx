@@ -21,7 +21,6 @@ export interface LogGroupSelectorProps {
   onChange: (logGroups: string[]) => void;
 
   datasource?: CloudWatchDatasource;
-  onRunQuery?: () => void;
   onOpenMenu?: () => Promise<void>;
   refId?: string;
   width?: number | 'auto';
@@ -33,7 +32,6 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
   selectedLogGroups,
   onChange,
   datasource,
-  onRunQuery,
   onOpenMenu,
   refId,
   width,
@@ -135,7 +133,6 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       options={datasource ? appendTemplateVariables(datasource, logGroupOptions) : logGroupOptions}
       value={selectedLogGroups}
       onChange={(v) => onChange(v.filter(({ value }) => value).map(({ value }) => value))}
-      onBlur={onRunQuery}
       closeMenuOnSelect={false}
       isClearable
       isOptionDisabled={() => selectedLogGroups.length >= MAX_LOG_GROUPS}

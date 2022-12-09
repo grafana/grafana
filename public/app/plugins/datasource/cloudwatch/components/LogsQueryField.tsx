@@ -84,14 +84,13 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   return (
     <>
-      <LogGroupSelection datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery} />
+      <LogGroupSelection datasource={datasource} query={query} onChange={onChange} />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
         <div className="gf-form gf-form--grow flex-shrink-1">
           <QueryField
             additionalPlugins={plugins}
             query={query.expression ?? ''}
             onChange={onChangeQuery}
-            onRunQuery={props.onRunQuery}
             onTypeahead={onTypeahead}
             cleanText={cleanText}
             placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"

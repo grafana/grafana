@@ -35,7 +35,6 @@ const defaultProps = {
       },
     ]),
   onChange: jest.fn(),
-  onRunQuery: jest.fn(),
 };
 
 const originalDebounce = lodash.debounce;
@@ -177,14 +176,5 @@ describe('CrossAccountLogsQueryField', () => {
         value: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
       },
     ]);
-  });
-
-  it('runs the query on close of the modal', async () => {
-    const onRunQuery = jest.fn();
-    render(<CrossAccountLogsQueryField {...defaultProps} onRunQuery={onRunQuery} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
-    expect(screen.getByText('Log Group Name')).toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText('Close dialogue'));
-    expect(onRunQuery).toBeCalledTimes(1);
   });
 });

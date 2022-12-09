@@ -37,7 +37,7 @@ const editorModes = [
 ];
 
 export const MetricsQueryEditor = (props: Props) => {
-  const { query, onRunQuery, datasource, extraHeaderElementLeft, extraHeaderElementRight, onChange } = props;
+  const { query, datasource, extraHeaderElementLeft, extraHeaderElementRight, onChange } = props;
   const [showConfirm, setShowConfirm] = useState(false);
   const [sqlCodeEditorIsDirty, setSQLCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
@@ -124,7 +124,6 @@ export const MetricsQueryEditor = (props: Props) => {
           )}
           {query.metricEditorMode === MetricEditorMode.Code && (
             <MathExpressionQueryField
-              onRunQuery={onRunQuery}
               expression={query.expression ?? ''}
               onChange={(expression) => props.onChange({ ...query, expression })}
               datasource={datasource}
@@ -144,19 +143,13 @@ export const MetricsQueryEditor = (props: Props) => {
                 }
                 props.onChange({ ...migratedQuery, sqlExpression });
               }}
-              onRunQuery={onRunQuery}
               datasource={datasource}
             />
           )}
 
           {query.metricEditorMode === MetricEditorMode.Builder && (
             <>
-              <SQLBuilderEditor
-                query={query}
-                onChange={props.onChange}
-                onRunQuery={onRunQuery}
-                datasource={datasource}
-              ></SQLBuilderEditor>
+              <SQLBuilderEditor query={query} onChange={props.onChange} datasource={datasource}></SQLBuilderEditor>
             </>
           )}
         </>
@@ -172,7 +165,6 @@ export const MetricsQueryEditor = (props: Props) => {
         >
           <Input
             id={`${query.refId}-cloudwatch-metric-query-editor-id`}
-            onBlur={onRunQuery}
             onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...migratedQuery, id: event.target.value })}
             type="text"
             value={query.id}
@@ -184,7 +176,6 @@ export const MetricsQueryEditor = (props: Props) => {
             id={`${query.refId}-cloudwatch-metric-query-editor-period`}
             value={query.period || ''}
             placeholder="auto"
-            onBlur={onRunQuery}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange({ ...migratedQuery, period: event.target.value })
             }
@@ -200,7 +191,6 @@ export const MetricsQueryEditor = (props: Props) => {
           >
             <DynamicLabelsField
               width={52}
-              onRunQuery={onRunQuery}
               label={migratedQuery.label ?? ''}
               onChange={(label) => props.onChange({ ...query, label })}
             ></DynamicLabelsField>

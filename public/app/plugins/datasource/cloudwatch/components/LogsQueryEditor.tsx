@@ -21,7 +21,7 @@ const labelClass = css`
 `;
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
-  const { query, data, datasource, onRunQuery, onChange, exploreId } = props;
+  const { query, data, datasource, exploreId } = props;
 
   let absolute: AbsoluteTimeRange;
   if (data?.request?.range?.from) {
@@ -39,13 +39,9 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
 
   return (
     <CloudWatchLogsQueryField
+      {...props}
       exploreId={exploreId}
-      datasource={datasource}
-      query={query}
-      onChange={onChange}
-      onRunQuery={onRunQuery}
       history={[]}
-      data={data}
       absoluteRange={absolute}
       ExtraFieldElement={
         <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
