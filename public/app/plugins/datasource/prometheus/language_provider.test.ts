@@ -1,9 +1,10 @@
 import { Editor as SlateEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 
-import { AbstractLabelOperator, HistoryItem } from '@grafana/data';
+import { AbstractLabelOperator, HistoryItem, Labels } from '@grafana/data';
 import { SearchFunctionType } from '@grafana/ui';
 
+import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
 import { PromQuery } from './types';
@@ -13,6 +14,7 @@ describe('Language completion provider', () => {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
     getTimeRangeParams: () => ({ start: '0', end: '1' }),
     interpolateString: (string: string) => string,
+    hasLabelsMatchAPISupport: () => false,
   } as unknown as PrometheusDatasource;
 
   describe('cleanText', () => {
@@ -63,6 +65,76 @@ describe('Language completion provider', () => {
 
     it('removes range syntax', () => {
       expect(cleanText('[1m')).toBe('1m');
+    });
+  });
+
+  describe('getSeriesLabels', () => {
+    it('should call series endpoint', () => {
+      const languageProvider = new LanguageProvider({ ...datasource } as PrometheusDatasource);
+      const getSeriesLabels = languageProvider.getSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+
+      const labelName = 'job';
+      const labelValue = 'grafana';
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/api/v1/series', [], {
+        end: '1',
+        'match[]': '{job="grafana"}',
+        start: '0',
+      });
+    });
+
+    it('should call labels endpoint', () => {
+      const languageProvider = new LanguageProvider({
+        ...datasource,
+        hasLabelsMatchAPISupport: () => true,
+      } as PrometheusDatasource);
+      const getSeriesLabels = languageProvider.getSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+
+      const labelName = 'job';
+      const labelValue = 'grafana';
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(`/api/v1/labels`, [], {
+        end: '1',
+        'match[]': '{job="grafana"}',
+        start: '0',
+      });
+    });
+  });
+
+  describe('getSeriesValues', () => {
+    it('should call old series endpoint and should use match[] parameter', () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const getSeriesValues = languageProvider.getSeriesValues;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      getSeriesValues('job', '{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/api/v1/series', [], {
+        end: '1',
+        'match[]': '{job="grafana"}',
+        start: '0',
+      });
+    });
+
+    it('should call new series endpoint and should use match[] parameter', () => {
+      const languageProvider = new LanguageProvider({
+        ...datasource,
+        hasLabelsMatchAPISupport: () => true,
+      } as PrometheusDatasource);
+      const getSeriesValues = languageProvider.getSeriesValues;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      const labelName = 'job';
+      const labelValue = 'grafana';
+      getSeriesValues(labelName, `{${labelName}="${labelValue}"}`);
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(`/api/v1/label/${labelName}/values`, [], {
+        end: '1',
+        'match[]': `{${labelName}="${labelValue}"}`,
+        start: '0',
+      });
     });
   });
 
