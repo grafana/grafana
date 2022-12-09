@@ -10,7 +10,7 @@ export interface ExampleVariableState extends MultiValueVariableState {
 }
 
 class ExampleVariable extends MultiValueVariable<ExampleVariableState> {
-  constructor(initialState: Partial<ExampleVariableState>) {
+  public constructor(initialState: Partial<ExampleVariableState>) {
     super({
       type: 'custom',
       optionsToReturn: [],
