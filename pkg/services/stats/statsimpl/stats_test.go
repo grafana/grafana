@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
@@ -71,6 +73,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	t.Helper()
 
 	orgService, _ := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
 
 	users := make([]user.User, 3)
 	for i := range users {
@@ -80,7 +83,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			Login:   fmt.Sprintf("user_test_%v_login", i),
 			OrgName: fmt.Sprintf("Org #%v", i),
 		}
-		user, err := sqlStore.CreateUser(context.Background(), cmd)
+		user, err := userSvc.CreateUserForTests(context.Background(), &cmd)
 		require.NoError(t, err)
 		users[i] = *user
 	}

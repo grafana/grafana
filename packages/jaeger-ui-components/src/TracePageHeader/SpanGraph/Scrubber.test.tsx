@@ -15,19 +15,19 @@
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
-import Scrubber from './Scrubber';
+import Scrubber, { ScrubberProps } from './Scrubber';
 
 describe('<Scrubber>', () => {
   const defaultProps = {
     position: 0,
   };
 
-  let rerender;
+  let rerender: (arg0: JSX.Element) => void;
 
   beforeEach(() => {
     ({ rerender } = render(
       <svg>
-        <Scrubber {...defaultProps} />
+        <Scrubber {...(defaultProps as ScrubberProps)} />
       </svg>
     ));
   });
@@ -45,7 +45,7 @@ describe('<Scrubber>', () => {
   it('calculates the correct x% for a timestamp', () => {
     rerender(
       <svg>
-        <Scrubber {...defaultProps} position={0.5} />
+        <Scrubber {...(defaultProps as ScrubberProps)} position={0.5} />
       </svg>
     );
     const line = screen.getByTestId('scrubber-component-line');

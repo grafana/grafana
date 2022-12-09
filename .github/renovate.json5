@@ -30,6 +30,7 @@
     "react-dom",
     "react-test-renderer"
   ],
+  "includePaths": ["package.json", "packages/*"],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
   "packageRules": [

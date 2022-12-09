@@ -133,9 +133,6 @@ function getTags(v: StorageInfo) {
   if (v.builtin) {
     tags.push('Builtin');
   }
-  if (!v.editable) {
-    tags.push('Read only');
-  }
 
   // Error
   if (!v.ready) {

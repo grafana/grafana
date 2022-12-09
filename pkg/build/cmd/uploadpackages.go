@@ -69,9 +69,17 @@ func UploadPackages(c *cli.Context) error {
 		return cli.NewExitError(err.Error(), 1)
 	}
 
-	edition, ok := os.LookupEnv("EDITION")
-	if !ok {
-		return fmt.Errorf("EDITION envvar is missing, exitting")
+	var edition config.Edition
+	if e, ok := os.LookupEnv("EDITION"); ok {
+		edition = config.Edition(e)
+	}
+
+	if c.Bool("enterprise2") {
+		edition = config.EditionEnterprise2
+	}
+
+	if edition == "" {
+		return fmt.Errorf("both EDITION envvar and '--enterprise2' flag are missing. At least one of those is required")
 	}
 
 	// TODO: Verify config values
@@ -80,7 +88,7 @@ func UploadPackages(c *cli.Context) error {
 			Version: version,
 			Bucket:  releaseModeConfig.Buckets.Artifacts,
 		},
-		edition:     config.Edition(edition),
+		edition:     edition,
 		versionMode: releaseMode.Mode,
 		gcpKey:      gcpKey,
 		distDir:     distDir,
@@ -88,7 +96,7 @@ func UploadPackages(c *cli.Context) error {
 
 	if cfg.edition == config.EditionEnterprise2 {
 		if releaseModeConfig.Buckets.ArtifactsEnterprise2 != "" {
-			cfg.Config.Bucket = releaseModeConfig.Buckets.ArtifactsEnterprise2
+			cfg.Bucket = releaseModeConfig.Buckets.ArtifactsEnterprise2
 		} else {
 			return fmt.Errorf("enterprise2 bucket var doesn't exist")
 		}
