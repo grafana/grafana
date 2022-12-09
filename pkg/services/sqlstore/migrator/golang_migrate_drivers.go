@@ -83,6 +83,8 @@ func ListMigrations(sourceDriver source.Driver, databaseDriver database.Driver) 
 		}
 
 		switch {
+		case dbVersion == -1:
+			hasRun = false
 		case v < uint(dbVersion):
 			hasRun = true
 		case v == uint(dbVersion):
