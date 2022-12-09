@@ -1,7 +1,7 @@
 import { Action, Priority } from 'kbar';
 import React from 'react';
 
-import { isIconName, NavModelItem } from '@grafana/data';
+import { isIconName, locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
@@ -35,7 +35,7 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Actio
       id: idForNavItem(navItem),
       name: text, // TODO: translate
       section: isCreateAction ? SECTION_ACTIONS : SECTION_PAGES,
-      perform: url ? () => locationService.push(url) : undefined,
+      perform: url ? () => locationService.push(locationUtil.stripBaseFromUrl(url)) : undefined,
       parent: parent && idForNavItem(parent),
 
       // Only show icons for top level items

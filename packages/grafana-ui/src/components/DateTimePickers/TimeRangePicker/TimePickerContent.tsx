@@ -160,7 +160,6 @@ const NarrowScreenForm = (props: FormProps) => {
           <div className={styles.form}>
             <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
-          <p></p>
           {showHistory && (
             <TimeRangeList
               title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
@@ -246,7 +245,8 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   if (!Array.isArray(ranges) || ranges.length === 0) {
     return [];
   }
-  return ranges.slice(ranges.length - 4).map((range) => mapRangeToTimeOption(range, timeZone));
+
+  return ranges.map((range) => mapRangeToTimeOption(range, timeZone));
 }
 
 EmptyRecentList.displayName = 'EmptyRecentList';

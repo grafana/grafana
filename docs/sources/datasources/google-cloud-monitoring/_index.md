@@ -38,7 +38,7 @@ Once you've added the Google Cloud Monitoring data source, you can [configure it
 
 1. Hover the cursor over the **Configuration** (gear) icon.
 1. Select **Data Sources**.
-1. Select the AWS CloudWatch data source.
+1. Select the **Google Cloud Monitoring** data source.
 
 Set the data source's basic configuration options carefully:
 
