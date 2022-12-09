@@ -201,12 +201,12 @@ var adminCommands = []*cli.Command{
 			{
 				Name:   "version",
 				Usage:  "Print current database migration version",
-				Action: runDbCommand(getMigrationsVersion),
+				Action: runMigrateCommand(getMigrationsVersion),
 			},
 			{
 				Name:   "force-version",
 				Usage:  "It will force a migration version and reset the dirty state to false without checking any currently active version in database.",
-				Action: runDbCommand(forceMigrationsVersion),
+				Action: runMigrateCommand(forceMigrationsVersion),
 				Flags: []cli.Flag{
 					&cli.Uint64Flag{
 						Name:     "version",
@@ -218,12 +218,12 @@ var adminCommands = []*cli.Command{
 			{
 				Name:   "list",
 				Usage:  "List migrations",
-				Action: runDbCommand(listMigrations),
+				Action: runMigrateCommand(listMigrations),
 			},
 			{
 				Name:   "run-steps",
 				Usage:  "If steps are provided it will migrate up if steps > 0, and down if steps < 0.\nIt does nothing if steps is zero",
-				Action: runDbCommand(runMigrationsSteps),
+				Action: runMigrateCommand(runMigrationsSteps),
 				Flags: []cli.Flag{
 					&cli.Int64Flag{
 						Name:     "steps",
@@ -235,7 +235,7 @@ var adminCommands = []*cli.Command{
 			{
 				Name:   "run",
 				Usage:  "Migrates up or down to the target version",
-				Action: runDbCommand(runMigrations),
+				Action: runMigrateCommand(runMigrations),
 				Flags: []cli.Flag{
 					&cli.Uint64Flag{
 						Name:     "version",
