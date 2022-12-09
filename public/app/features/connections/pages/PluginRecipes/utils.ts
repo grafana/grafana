@@ -1,5 +1,5 @@
 import { applyStep } from './api';
-import { PluginRecipeAction, PluginRecipe } from './types';
+import { PluginRecipeAction, PluginRecipe, PluginRecipeStep, StepStatus } from './types';
 
 // Finds the steps that can be auto-applied starting from a certain index
 // (It is used to automatically apply steps that don't need a user action, but stop when a user action is needed)
@@ -29,3 +29,32 @@ export const installRecipe = async (recipe?: PluginRecipe, fromStepIndex = 0) =>
   const autoApplicableStepIndexes = getAutoApplicapleStepIndexes(recipe, fromStepIndex);
   await Promise.all(autoApplicableStepIndexes.map((index) => applyStep(recipe.id, index)));
 };
+
+export const findActiveStepIndex = (steps: PluginRecipeStep[] = []): number => {
+  const activeStep = steps.find((step) => step.status.code !== StepStatus.NotCompleted);
+
+  // No active step, point to the first step
+  if (!activeStep) {
+    return 0;
+  }
+
+  return steps.indexOf(activeStep);
+};
+
+export const isStepCompleted = (step: PluginRecipeStep) => step.status.code === StepStatus.Completed;
+
+export const isStepNotCompleted = (step: PluginRecipeStep) => step.status.code === StepStatus.NotCompleted;
+
+export const isStepLoading = (step: PluginRecipeStep) => step.status.code === StepStatus.Loading;
+
+export const isStepError = (step: PluginRecipeStep) => step.status.code === StepStatus.Error;
+
+export const isStepExpandable = (step: PluginRecipeStep) =>
+  step.action === PluginRecipeAction.Prompt || step.action === PluginRecipeAction.DisplayInfo;
+
+const isStepActive = (recipe: PluginRecipe, stepIndex: number) => stepIndex === findActiveStepIndex(recipe.steps);
+
+export const isStepExpanded = (recipe: PluginRecipe, stepIndex: number) =>
+  isStepNotCompleted(recipe.steps[stepIndex]) &&
+  isStepActive(recipe, stepIndex) &&
+  isStepExpandable(recipe.steps[stepIndex]);

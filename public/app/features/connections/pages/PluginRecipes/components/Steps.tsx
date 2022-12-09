@@ -24,8 +24,6 @@ export function Steps({ recipe }: Props): ReactElement {
     step.action === PluginRecipeAction.Prompt || step.action === PluginRecipeAction.DisplayInfo;
   const shouldShowLoading = (step: PluginRecipeStep, i: number) =>
     isStepLoading(step) || (isStepNotCompleted(step) && isStepActive(i) && isStepExpandable(step));
-  const shouldExpandStep = (step: PluginRecipeStep, i: number) =>
-    isStepNotCompleted(step) && isStepActive(i) && isStepExpandable(step);
 
   return (
     <div>
@@ -69,7 +67,7 @@ export function Steps({ recipe }: Props): ReactElement {
               isStepError(step) && styles.stepContentError
             )}
           >
-            <Step recipe={recipe} stepIndex={i} isOpen={shouldExpandStep(step, i)} />
+            <Step recipe={recipe} stepIndex={i} />
           </div>
         </div>
       ))}

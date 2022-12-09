@@ -6,7 +6,7 @@ import { useStyles2, Button, HorizontalGroup, Tab, TabsBar, TabContent } from '@
 
 import { applyStep, useGetSingle } from '../api';
 import { InstructionStepSettings, PluginRecipe, PluginRecipeStep } from '../types';
-import { installRecipe } from '../utils';
+import { installRecipe, isStepCompleted } from '../utils';
 
 type Props = {
   recipe: PluginRecipe;
@@ -56,9 +56,11 @@ export function StepInstruction({ recipe, step, stepIndex }: Props): ReactElemen
             </Button>
           )}
 
-          <Button onClick={onDone} icon="check">
-            Done
-          </Button>
+          {!isStepCompleted(step) && (
+            <Button onClick={onDone} icon="check">
+              Done
+            </Button>
+          )}
         </HorizontalGroup>
       </div>
     </>
