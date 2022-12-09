@@ -242,7 +242,17 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
         f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
         f.config.color?.mode === FieldColorModeId.Thresholds;
 
-      return fromThresholds || f.config.mappings?.some((m) => m.options.result.color != null);
+      return (
+        fromThresholds ||
+        f.config.mappings?.some((m) => {
+          // ValueToText mappings have a different format, where all of them are grouped into an object keyed by value
+          if (m.type === 'value') {
+            // === MappingType.ValueToText
+            return Object.values(m.options).some((result) => result.color != null);
+          }
+          return m.options.result.color != null;
+        })
+      );
     });
 
     if (hasPerBarColor) {
