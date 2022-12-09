@@ -45,7 +45,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 			Steps: []RecipeStep{
 				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
-						Name:        "Installing Jira",
+						Name:        "Install the Jira Datasource plugin",
 						Description: "Some description here...",
 					}, &installPlugin{
 						Id:      "grafana-jira-datasource",
@@ -54,11 +54,11 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
-						InstructionTestURL:                  "http://my-service.com/api/health",
-						InstructionTestExpectedHttpResponse: "200",
+						Name:                                "Install `htop`",
+						Description:                         "Install the famous interactive process viewer",
+						InstructionText:                     "```sudo apt install htop```",
+						InstructionTestURL:                  "",
+						InstructionTestExpectedHttpResponse: "",
 					},
 				),
 				newSetupAlertsStep(RecipeStepMeta{
@@ -226,7 +226,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				}),
 				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
-						Name:        "Installing Jira",
+						Name:        "Install the Jira Datasource plugin",
 						Description: "Some description here...",
 					}, &installPlugin{
 						Id:      "grafana-jira-datasource",
@@ -385,7 +385,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 			Steps: []RecipeStep{
 				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
-						Name:        "Installing Jira",
+						Name:        "Install the Jira Datasource plugin",
 						Description: "Some description here...",
 					}, &installPlugin{
 						Id:      "grafana-jira-datasource",
@@ -435,7 +435,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 			Steps: []RecipeStep{
 				newPluginInstallStep(i, cfg, ps,
 					RecipeStepMeta{
-						Name:        "Installing Jira",
+						Name:        "Install the Jira Datasource plugin",
 						Description: "Some description here...",
 					}, &installPlugin{
 						Id:      "grafana-jira-datasource",

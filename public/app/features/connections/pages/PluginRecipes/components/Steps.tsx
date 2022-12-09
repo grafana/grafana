@@ -38,8 +38,8 @@ export function Steps({ steps = [] }: Props): ReactElement {
           key={i}
           className={cx(styles.stepContainer, isStepActive(i) && isStepExpandable(step) && styles.stepContainerActive)}
         >
-          {/* Step number */}
           <div className={styles.leftColumn}>
+            {/* Step number */}
             <div
               className={cx(
                 styles.stepNumber,
@@ -98,7 +98,7 @@ const errorColor = '#f26f6f';
 const getStyles = () => ({
   stepContainer: css`
     display: flex;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
   `,
 
   stepContainerActive: css`
@@ -115,7 +115,7 @@ const getStyles = () => ({
   verticalLine: css`
     height: calc(100% - 45px);
     width: 2px;
-    background-color: white;
+    background-color: #ffffff66;
     margin-top: 10px;
   `,
 
@@ -138,7 +138,7 @@ const getStyles = () => ({
 
   stepNumberCompleted: css`
     border-color: ${successColor};
-    color: #b8b8b8;
+    color: ${successColor};
   `,
 
   stepNumberError: css`
@@ -148,10 +148,12 @@ const getStyles = () => ({
 
   stepContent: css`
     padding-left: 15px;
+    padding-bottom: 10px;
+    flex-grow: 1;
   `,
 
   stepContentCompleted: css`
-    color: ${successColor};
+    color: #b8b8b8;
   `,
 
   stepContentNotCompleted: css`
@@ -163,6 +165,7 @@ const getStyles = () => ({
   `,
 
   loadingIndicator: css`
-    margin-bottom: 2px;
+    margin-bottom: 0px;
+    margin-left: 1px;
   `,
 });
