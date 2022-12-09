@@ -178,7 +178,7 @@ func (ss *SQLStore) Sync() error {
 // Reset resets database state.
 // If default org and user creation is enabled, it will be ensured they exist in the database.
 func (ss *SQLStore) Reset() error {
-	if ss.skipEnsureDefaultOrgAndUser {
+	if ss.skipEnsureDefaultOrgAndUser || ss.dbCfg.SkipEnsureDefaultOrgAndUser {
 		return nil
 	}
 
@@ -487,6 +487,7 @@ func (ss *SQLStore) readConfig() error {
 
 	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
 	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
+	ss.dbCfg.SkipEnsureDefaultOrgAndUser = sec.Key("skip_ensure_default_org_and_user").MustBool()
 	return nil
 }
 
@@ -713,5 +714,6 @@ type DatabaseConfig struct {
 	// SQLite only
 	QueryRetries int
 	// SQLite only
-	TransactionRetries int
+	TransactionRetries          int
+	SkipEnsureDefaultOrgAndUser bool
 }
