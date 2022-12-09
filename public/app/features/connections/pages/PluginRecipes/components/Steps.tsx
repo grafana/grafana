@@ -144,6 +144,7 @@ const getStyles = () => ({
     padding-left: 15px;
     padding-bottom: 10px;
     flex-grow: 1;
+    color: #b8b8b8;
   `,
 
   stepContentCompleted: css`
