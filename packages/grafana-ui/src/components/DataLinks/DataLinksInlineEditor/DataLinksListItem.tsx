@@ -27,7 +27,7 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
   return (
     <div className={styles.wrapper}>
       <div className={styles.titleWrapper}>
-        <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
+        <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
           {hasTitle ? title : 'Data link title not provided'}
         </div>
         <div className={styles.actionButtons}>
@@ -35,10 +35,7 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
           <IconButton name="times" onClick={onRemove} />
         </div>
       </div>
-      <div
-        className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
-        title={url}
-      >
+      <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
         {hasUrl ? url : 'Data link url not provided'}
       </div>
     </div>
