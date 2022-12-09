@@ -222,21 +222,16 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 // removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.
 // See RFC 7230, section 6.1
 //
-// Based on https://cs.opensource.google/go/go/+/refs/tags/go1.19.4:src/net/http/httputil/reverseproxy.go;l=411-421
+// Based on https://github.com/golang/go/blob/dc04f3ba1f25313bc9c97e728620206c235db9ee/src/net/http/httputil/reverseproxy.go#L411-L421
 func removeConnectionHeaders(h map[string][]string) {
 	for _, f := range h["Connection"] {
 		for _, sf := range strings.Split(f, ",") {
 			if sf = textproto.TrimString(sf); sf != "" {
-				delHeader := ""
 				for k := range h {
 					if textproto.CanonicalMIMEHeaderKey(sf) == textproto.CanonicalMIMEHeaderKey(k) {
-						delHeader = k
+						delete(h, k)
 						break
 					}
-				}
-
-				if delHeader != "" {
-					delete(h, delHeader)
 				}
 			}
 		}
@@ -249,7 +244,7 @@ func removeConnectionHeaders(h map[string][]string) {
 // obsoleted RFC 2616 (section 13.5.1) and are used for backward
 // compatibility.
 //
-// Copied from https://cs.opensource.google/go/go/+/refs/tags/go1.19.4:src/net/http/httputil/reverseproxy.go;l=171-186
+// Copied from https://github.com/golang/go/blob/dc04f3ba1f25313bc9c97e728620206c235db9ee/src/net/http/httputil/reverseproxy.go#L171-L186
 var hopHeaders = []string{
 	"Connection",
 	"Proxy-Connection", // non-standard but still sent by libcurl and rejected by e.g. google
@@ -266,7 +261,7 @@ var hopHeaders = []string{
 // important is "Connection" because we want a persistent
 // connection, regardless of what the client sent to us.
 //
-// Based on https://cs.opensource.google/go/go/+/refs/tags/go1.19.4:src/net/http/httputil/reverseproxy.go;l=276-281
+// Based on https://github.com/golang/go/blob/dc04f3ba1f25313bc9c97e728620206c235db9ee/src/net/http/httputil/reverseproxy.go#L276-L281
 func removeHopByHopHeaders(h map[string][]string) {
 	for _, hh := range hopHeaders {
 		for k := range h {
