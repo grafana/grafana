@@ -204,20 +204,43 @@ var adminCommands = []*cli.Command{
 				Action: runDbCommand(getMigrationsVersion),
 			},
 			{
+				Name:   "force-version",
+				Usage:  "It will force a migration version and reset the dirty state to false without checking any currently active version in database.",
+				Action: runDbCommand(forceMigrationsVersion),
+				Flags: []cli.Flag{
+					&cli.Uint64Flag{
+						Name:     "version",
+						Usage:    "Target version",
+						Required: true,
+					},
+				},
+			},
+			{
 				Name:   "list",
 				Usage:  "List migrations",
 				Action: runDbCommand(listMigrations),
 			},
 			{
-				Name:   "run",
-				Usage:  "It will migrate up if steps > 0, and down if steps < 0.",
+				Name:   "run-steps",
+				Usage:  "If steps are provided it will migrate up if steps > 0, and down if steps < 0.\nIt does nothing if steps is zero",
 				Action: runDbCommand(runMigrationsSteps),
 				Flags: []cli.Flag{
 					&cli.Int64Flag{
 						Name:     "steps",
 						Usage:    "Number of steps",
-						Required: false,
-						Value:    0,
+						Required: true,
+					},
+				},
+			},
+			{
+				Name:   "run",
+				Usage:  "Migrates up or down to the target version",
+				Action: runDbCommand(runMigrations),
+				Flags: []cli.Flag{
+					&cli.Uint64Flag{
+						Name:     "version",
+						Usage:    "Targer version",
+						Required: true,
 					},
 				},
 			},

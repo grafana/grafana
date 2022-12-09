@@ -66,6 +66,60 @@ func runMigrationsSteps(c utils.CommandLine, sqlStore db.DB) error {
 	})
 }
 
+func runMigrations(c utils.CommandLine, sqlStore db.DB) error {
+	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
+		driverName := sqlStore.GetDialect().DriverName()
+		sd, err := migrator.GetMigrateSourceDriver(driverName)
+		if err != nil {
+			return err
+		}
+
+		dd, err := migrator.GetDatabaseDriver(driverName, session.DB().DB)
+		if err != nil {
+			return err
+		}
+
+		m, err := migrate.NewWithInstance("iofs", sd, driverName, dd)
+		if err != nil {
+			return err
+		}
+
+		err = m.Migrate(uint(c.Uint("version")))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func forceMigrationsVersion(c utils.CommandLine, sqlStore db.DB) error {
+	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
+		driverName := sqlStore.GetDialect().DriverName()
+		sd, err := migrator.GetMigrateSourceDriver(driverName)
+		if err != nil {
+			return err
+		}
+
+		dd, err := migrator.GetDatabaseDriver(driverName, session.DB().DB)
+		if err != nil {
+			return err
+		}
+
+		m, err := migrate.NewWithInstance("iofs", sd, driverName, dd)
+		if err != nil {
+			return err
+		}
+
+		err = m.Force(c.Int("version"))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func listMigrations(c utils.CommandLine, sqlStore db.DB) error {
 	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		driverName := sqlStore.GetDialect().DriverName()
