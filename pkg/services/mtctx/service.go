@@ -1,6 +1,7 @@
 package mtctx
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -14,6 +15,7 @@ import (
 
 type Service interface {
 	Middleware(next http.Handler) http.Handler
+	AttachTenantInfo(ctx context.Context) context.Context
 }
 
 var _ Service = (*serviceImpl)(nil)

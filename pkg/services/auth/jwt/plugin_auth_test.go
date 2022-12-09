@@ -13,7 +13,12 @@ import (
 )
 
 func TestJWTGeneration(t *testing.T) {
-	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Login: "admin", Name: "Test User"}
+	usr := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  222,
+		Login:  "admin",
+		Name:   "Test User",
+	}
 	enableFeature := func(t *testing.T, cfg *setting.Cfg) {
 		t.Helper()
 		features = featuremgmt.WithFeatures(featuremgmt.FlagJwtTokenGeneration)
@@ -34,6 +39,9 @@ func TestJWTGeneration(t *testing.T) {
 		claims, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.NoError(t, err)
 		require.Equal(t, strconv.FormatInt(usr.UserID, 10), claims["sub"])
+		require.Equal(t, strconv.FormatInt(usr.OrgID, 10), claims["OrgID"])
+		require.Equal(t, usr.Login, claims["Login"])
+		require.Equal(t, usr.Name, claims["DisplayName"])
 	}, enableFeature)
 
 	pluginScenario(t, "verifies a generated token using the JWK from cfg", func(t *testing.T, sc pluginScenarioContext) {

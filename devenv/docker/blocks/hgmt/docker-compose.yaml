@@ -94,6 +94,12 @@
     image: grafana/grafana:dev-ubuntu
     volumes:
       - ./docker/blocks/hgmt/entity.ini:/etc/grafana/grafana.ini
+    environment:
+      GF_DATABASE_NAME: entitysvc
+      GF_DATABASE_TYPE: mysql
+      GF_DATABASE_HOST: sql
+      GF_DATABASE_USER: grafana
+      GF_DATABASE_PASSWORD: grafana
     links:
       - stack24
       - stack25

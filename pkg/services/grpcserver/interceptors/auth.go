@@ -96,7 +96,7 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 	}
 
 	orgID := int64(0)
-	if id, ok := claims["orgID"].(string); ok {
+	if id, ok := claims["OrgID"].(string); ok {
 		if orgID, err = strconv.ParseInt(id, 10, 64); err != nil {
 			return nil, status.Error(codes.Unauthenticated, "invalid orgID claim")
 		}
@@ -109,16 +109,20 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 
 	// HACK: if stackId exists... skip looking at database and create a new user
 	// This will only work with entity store (for now)
-	if stackId, ok := claims["stackId"].(int64); ok {
+	if stackIdStr, ok := claims["StackID"].(string); ok {
+		stackId := int64(0)
+		if stackId, err = strconv.ParseInt(stackIdStr, 10, 64); err != nil {
+			return nil, status.Error(codes.Unauthenticated, "invalid stackId claim")
+		}
 		usr := &user.SignedInUser{
 			UserID:  userID,
 			StackID: stackId,
 			OrgID:   orgID,
 		}
-		if v, ok := claims["login"].(string); ok {
+		if v, ok := claims["Login"].(string); ok {
 			usr.Login = v
 		}
-		if v, ok := claims["displayName"].(string); ok {
+		if v, ok := claims["DisplayName"].(string); ok {
 			usr.Name = v
 		}
 		return usr, nil

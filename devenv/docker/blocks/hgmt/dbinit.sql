@@ -6,6 +6,5 @@ CREATE DATABASE IF NOT EXISTS `stack26`;
 -- note this should not really be used/shared
 CREATE DATABASE IF NOT EXISTS `entitysvc`;
 
-
 GRANT ALL ON *.* TO 'grafana'@'%';
 

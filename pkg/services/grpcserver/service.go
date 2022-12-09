@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
+	"github.com/grafana/grafana/pkg/services/mtctx"
 	"github.com/grafana/grafana/pkg/setting"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -33,7 +34,7 @@ type GPRCServerService struct {
 	errors  chan error
 }
 
-func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer, mt mtctx.Service) (Provider, error) {
 	s := &GPRCServerService{
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
@@ -50,12 +51,14 @@ func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 			grpc_middleware.ChainUnaryServer(
 				grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
 				interceptors.TracingUnaryInterceptor(tracer),
+				interceptors.StackIdUnaryInterceptor(mt),
 			),
 		),
 		grpc.StreamInterceptor(
 			grpc_middleware.ChainStreamServer(
 				interceptors.TracingStreamInterceptor(tracer),
 				grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
+				interceptors.StackIdStreamInterceptor(mt),
 			),
 		),
 	}...)

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -69,6 +68,47 @@ func (s *serviceImpl) GetStackConfigWatcher(ctx context.Context, stackID int64) 
 }
 
 // MIDDLEWARE: Adds TenantInfo
+func (s *serviceImpl) AttachTenantInfo(ctx context.Context) context.Context {
+	user, err := appcontext.User(ctx)
+	if err != nil || user == nil || user.StackID == 0 {
+		return ctx
+	}
+
+	// Check cache for config by stackID
+	info, ok := s.cache[user.StackID]
+
+	// If no config, get one
+	if !ok {
+		var config *v1.ConfigMap
+		info = &TenantInfo{StackID: user.StackID}
+
+		if true {
+			info.Config = &v1.ConfigMap{
+				Data: make(map[string]string, 0),
+			}
+			info.Config.Data["ini.json"] = `{"database":  { 
+					"type": "mysql",
+					"name": "stack` + fmt.Sprintf("%d", user.StackID) + `",
+					"host": "localhost",
+					"user": "grafana",
+					"password": "grafana"
+				  }}`
+		} else {
+			// get the initial config map
+			if s.clientset != nil {
+				info.Config, info.Err = s.clientset.CoreV1().ConfigMaps(s.namespace).Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
+			} else {
+				info.Err = fmt.Errorf("missing client")
+			}
+		}
+
+		logger.Info("POTATO: context set: %v", config)
+	}
+
+	return ContextWithTenantInfo(ctx, info)
+}
+
+// MIDDLEWARE: Adds TenantInfo
 func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// only run if on api
@@ -77,80 +117,7 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := r.Context()
-		user, err := appcontext.User(ctx)
-		if err != nil {
-			fmt.Println("missing user", err)
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// Try to set it from environment (only relevant for single tenant setup)
-		if user.StackID == 0 {
-			v := os.Getenv("HG_STACK_ID")
-			if v == "" {
-				v = "6" // VSCODE DEBUGGER ENVIRONMENT
-			}
-			stackID, err := strconv.ParseInt(v, 10, 64)
-			if err == nil {
-				user.StackID = stackID
-			}
-		}
-
-		// Check cache for config by stackID
-		info, ok := s.cache[user.StackID]
-
-		// If no config, get one
-		if !ok {
-			var config *v1.ConfigMap
-			info = &TenantInfo{StackID: user.StackID}
-
-			if true {
-				info.Config = &v1.ConfigMap{
-					Data: make(map[string]string, 0),
-				}
-				info.Config.Data["ini.json"] = `{"database":  { 
-					"type": "mysql",
-					"name": "stack` + fmt.Sprintf("%d", user.StackID) + `",
-					"host": "sql",
-					"user": "grafana",
-					"password": "grafana"
-				  }}`
-			} else {
-
-				// get the initial config map
-				if s.clientset != nil {
-					info.Config, info.Err = s.clientset.CoreV1().ConfigMaps(s.namespace).Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
-				} else {
-					info.Err = fmt.Errorf("missing client")
-				}
-			}
-
-			logger.Info("POTATO: context set: %v", config)
-
-			//	s.cache[user.StackID] = info
-
-			// Get config watcher
-			//w, err := s.GetStackConfigWatcher(context.TODO(), stackID)
-			//if err != nil {
-			//fmt.Println("Error getting watcher for stackID:", stackID)
-			//}
-
-			// TODO should we check to see if we already have a watcher?
-			// Also, we don't currently have a scenario where we remove a watcher, but we
-			// should think through this.
-			//if cachedWatcher, ok := s.watchers[stackID]; ok {
-			//  // this should never happen
-
-			//  cachedWatcher.Stop() // make sure we stop listening
-			//  fmt.Println("WARNING: we found a watcher for a tenant that was missing tenantInfo")
-			//}
-
-			//// queue watcher
-			//s.watchers[stackID] = w
-		}
-
-		ctx = ContextWithTenantInfo(ctx, info)
+		ctx := s.AttachTenantInfo(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -106,15 +107,15 @@ func (s *pluginAuthService) Generate(usr *user.SignedInUser, audience string) (s
 	}
 
 	customClaims := struct {
-		orgID       int64
-		stackID     int64
-		login       string
-		displayName string
+		OrgID       string
+		StackID     string
+		Login       string
+		DisplayName string
 	}{
-		orgID:       usr.OrgID,
-		stackID:     usr.StackID,
-		login:       usr.Login,
-		displayName: usr.Name,
+		OrgID:       fmt.Sprintf("%d", usr.OrgID),
+		StackID:     fmt.Sprintf("%d", usr.StackID),
+		Login:       usr.Login,
+		DisplayName: usr.Name,
 	}
 
 	t, err := jwt.Signed(s.signer).Claims(claims).Claims(customClaims).CompactSerialize()
