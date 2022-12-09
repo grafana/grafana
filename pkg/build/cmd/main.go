@@ -152,7 +152,7 @@ func main() {
 		},
 		{
 			Name:   "store-storybook",
-			Usage:  "Integrity check for storybook build",
+			Usage:  "Stores storybook to GCS buckets",
 			Action: StoreStorybook,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -162,12 +162,21 @@ func main() {
 			},
 		},
 		{
+			Name:   "verify-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: VerifyStorybook,
+		},
+		{
 			Name:   "upload-packages",
 			Usage:  "Upload Grafana packages",
 			Action: UploadPackages,
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&editionFlag,
+				&cli.BoolFlag{
+					Name:  "enterprise2",
+					Usage: "Declare if the edition is enterprise2",
+				},
 			},
 		},
 		{

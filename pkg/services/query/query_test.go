@@ -5,24 +5,22 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -33,35 +31,12 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestParseMetricRequest(t *testing.T) {
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t)
-		json, err := simplejson.NewJson([]byte(`{
-			"keepCookies": [ "cookie1", "cookie3", "login" ]
-		}`))
-		require.NoError(t, err)
-		tc.dataSourceCache.dsByUid = func(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-			if datasourceUID == "gIEkMvIVz" {
-				return &datasources.DataSource{
-					Uid:      "gIEkMvIVz",
-					JsonData: json,
-				}, nil
-			}
-
-			return nil, nil
-		}
-
-		token := &oauth2.Token{
-			TokenType:   "bearer",
-			AccessToken: "access-token",
-		}
-		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
-
-		tc.oauthTokenService.passThruEnabled = true
-		tc.oauthTokenService.token = token
-
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -82,61 +57,10 @@ func TestParseMetricRequest(t *testing.T) {
 		assert.Len(t, parsedReq.parsedQueries, 1)
 		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
 		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
-
-		t.Run("createDataSourceQueryEnrichers should return 0 enrichers when no HTTP request", func(t *testing.T) {
-			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{})
-			require.Empty(t, enrichers)
-		})
-
-		t.Run("createDataSourceQueryEnrichers should return 1 enricher", func(t *testing.T) {
-			parsedReq.httpRequest = httptest.NewRequest(http.MethodGet, "/", nil)
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie1"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie2"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie3"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "login"})
-
-			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{"login"})
-			require.Len(t, enrichers, 1)
-			require.NotNil(t, enrichers["gIEkMvIVz"])
-			req := &backend.QueryDataRequest{}
-			ctx := enrichers["gIEkMvIVz"](context.Background(), req)
-			require.Len(t, req.Headers, 3)
-			require.Equal(t, "Bearer access-token", req.Headers["Authorization"])
-			require.Equal(t, "id-token", req.Headers["X-ID-Token"])
-			require.Equal(t, "cookie1=; cookie3=", req.Headers["Cookie"])
-			middlewares := httpclient.ContextualMiddlewareFromContext(ctx)
-			require.Len(t, middlewares, 2)
-			require.Equal(t, httpclientprovider.ForwardedCookiesMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
-			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[1].(httpclient.MiddlewareName).MiddlewareName())
-		})
 	})
 
 	t.Run("Test a single datasource query with expressions", func(t *testing.T) {
 		tc := setup(t)
-		json, err := simplejson.NewJson([]byte(`{
-			"keepCookies": [ "cookie1", "cookie3", "login" ]
-		}`))
-		require.NoError(t, err)
-		tc.dataSourceCache.dsByUid = func(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-			if datasourceUID == "gIEkMvIVz" {
-				return &datasources.DataSource{
-					Uid:      "gIEkMvIVz",
-					JsonData: json,
-				}, nil
-			}
-
-			return nil, nil
-		}
-
-		token := &oauth2.Token{
-			TokenType:   "bearer",
-			AccessToken: "access-token",
-		}
-		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
-
-		tc.oauthTokenService.passThruEnabled = true
-		tc.oauthTokenService.token = token
-
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -156,75 +80,27 @@ func TestParseMetricRequest(t *testing.T) {
 		parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
 		require.NotNil(t, parsedReq)
-		assert.True(t, parsedReq.hasExpression)
-		assert.Len(t, parsedReq.parsedQueries, 2)
-		assert.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
-		assert.Len(t, parsedReq.getFlattenedQueries(), 2)
+		require.True(t, parsedReq.hasExpression)
+		require.Len(t, parsedReq.parsedQueries, 2)
+		require.Contains(t, parsedReq.parsedQueries, "gIEkMvIVz")
+		require.Len(t, parsedReq.getFlattenedQueries(), 2)
 		// Make sure we end up with something valid
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		t.Run("createDataSourceQueryEnrichers should return 1 enricher", func(t *testing.T) {
-			parsedReq.httpRequest = httptest.NewRequest(http.MethodGet, "/", nil)
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie1"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie2"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie3"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "login"})
-
-			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{"login"})
-			require.Len(t, enrichers, 1)
-			require.NotNil(t, enrichers["gIEkMvIVz"])
-
-			req := &backend.QueryDataRequest{}
-			ctx := enrichers["gIEkMvIVz"](context.Background(), req)
-			require.Len(t, req.Headers, 3)
-			require.Equal(t, "Bearer access-token", req.Headers["Authorization"])
-			require.Equal(t, "id-token", req.Headers["X-ID-Token"])
-			require.Equal(t, "cookie1=; cookie3=", req.Headers["Cookie"])
-			middlewares := httpclient.ContextualMiddlewareFromContext(ctx)
-			require.Len(t, middlewares, 2)
-			require.Equal(t, httpclientprovider.ForwardedCookiesMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
-			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewares[1].(httpclient.MiddlewareName).MiddlewareName())
+		t.Run("Should forward user and org ID to QueryData from expression request", func(t *testing.T) {
+			require.NotNil(t, tc.pluginContext.req)
+			require.NotNil(t, tc.pluginContext.req.PluginContext.User)
+			require.Equal(t, tc.signedInUser.Login, tc.pluginContext.req.PluginContext.User.Login)
+			require.Equal(t, tc.signedInUser.Name, tc.pluginContext.req.PluginContext.User.Name)
+			require.Equal(t, tc.signedInUser.Email, tc.pluginContext.req.PluginContext.User.Email)
+			require.Equal(t, string(tc.signedInUser.OrgRole), tc.pluginContext.req.PluginContext.User.Role)
+			require.Equal(t, tc.signedInUser.OrgID, tc.pluginContext.req.PluginContext.OrgID)
 		})
 	})
 
 	t.Run("Test a simple mixed datasource query", func(t *testing.T) {
 		tc := setup(t)
-		json, err := simplejson.NewJson([]byte(`{
-			"keepCookies": [ "cookie1", "cookie3", "login" ]
-		}`))
-		require.NoError(t, err)
-		json2, err := simplejson.NewJson([]byte(`{
-			"keepCookies": [ "cookie2" ]
-		}`))
-		require.NoError(t, err)
-		tc.dataSourceCache.dsByUid = func(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-			if datasourceUID == "gIEkMvIVz" {
-				return &datasources.DataSource{
-					Uid:      "gIEkMvIVz",
-					JsonData: json,
-				}, nil
-			}
-
-			if datasourceUID == "sEx6ZvSVk" {
-				return &datasources.DataSource{
-					Uid:      "sEx6ZvSVk",
-					JsonData: json2,
-				}, nil
-			}
-
-			return nil, nil
-		}
-
-		token := &oauth2.Token{
-			TokenType:   "bearer",
-			AccessToken: "access-token",
-		}
-		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
-
-		tc.oauthTokenService.passThruEnabled = true
-		tc.oauthTokenService.token = token
-
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -254,43 +130,6 @@ func TestParseMetricRequest(t *testing.T) {
 		assert.Contains(t, parsedReq.parsedQueries, "sEx6ZvSVk")
 		assert.Len(t, parsedReq.parsedQueries["sEx6ZvSVk"], 2)
 		assert.Len(t, parsedReq.getFlattenedQueries(), 3)
-
-		t.Run("createDataSourceQueryEnrichers should return 2 enrichers", func(t *testing.T) {
-			parsedReq.httpRequest = httptest.NewRequest(http.MethodGet, "/", nil)
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie1"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie2"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "cookie3"})
-			parsedReq.httpRequest.AddCookie(&http.Cookie{Name: "login"})
-
-			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{"login"})
-			require.Len(t, enrichers, 2)
-
-			enricherOne := enrichers["gIEkMvIVz"]
-			require.NotNil(t, enricherOne)
-			reqOne := &backend.QueryDataRequest{}
-			ctx := enricherOne(context.Background(), reqOne)
-			require.Len(t, reqOne.Headers, 3)
-			require.Equal(t, "Bearer access-token", reqOne.Headers["Authorization"])
-			require.Equal(t, "id-token", reqOne.Headers["X-ID-Token"])
-			require.Equal(t, "cookie1=; cookie3=", reqOne.Headers["Cookie"])
-			middlewaresOne := httpclient.ContextualMiddlewareFromContext(ctx)
-			require.Len(t, middlewaresOne, 2)
-			require.Equal(t, httpclientprovider.ForwardedCookiesMiddlewareName, middlewaresOne[0].(httpclient.MiddlewareName).MiddlewareName())
-			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewaresOne[1].(httpclient.MiddlewareName).MiddlewareName())
-
-			enricherTwo := enrichers["sEx6ZvSVk"]
-			require.NotNil(t, enricherTwo)
-			reqTwo := &backend.QueryDataRequest{}
-			ctx = enricherTwo(context.Background(), reqTwo)
-			require.Len(t, reqTwo.Headers, 3)
-			require.Equal(t, "Bearer access-token", reqTwo.Headers["Authorization"])
-			require.Equal(t, "id-token", reqTwo.Headers["X-ID-Token"])
-			require.Equal(t, "cookie2=", reqTwo.Headers["Cookie"])
-			middlewaresTwo := httpclient.ContextualMiddlewareFromContext(ctx)
-			require.Len(t, middlewaresTwo, 2)
-			require.Equal(t, httpclientprovider.ForwardedCookiesMiddlewareName, middlewaresTwo[0].(httpclient.MiddlewareName).MiddlewareName())
-			require.Equal(t, httpclientprovider.ForwardedOAuthIdentityMiddlewareName, middlewaresTwo[1].(httpclient.MiddlewareName).MiddlewareName())
-		})
 	})
 
 	t.Run("Test a mixed datasource query with expressions", func(t *testing.T) {
@@ -352,14 +191,6 @@ func TestParseMetricRequest(t *testing.T) {
 		// Make sure we end up with something valid
 		_, err = tc.queryService.handleExpressions(context.Background(), tc.signedInUser, parsedReq)
 		assert.NoError(t, err)
-
-		t.Run("createDataSourceQueryEnrichers should return 2 enrichers", func(t *testing.T) {
-			parsedReq.httpRequest = &http.Request{}
-			enrichers := parsedReq.createDataSourceQueryEnrichers(context.Background(), nil, tc.oauthTokenService, []string{})
-			require.Len(t, enrichers, 2)
-			require.NotNil(t, enrichers["gIEkMvIVz"])
-			require.NotNil(t, enrichers["sEx6ZvSVk"])
-		})
 	})
 
 	t.Run("Header validation", func(t *testing.T) {
@@ -377,23 +208,30 @@ func TestParseMetricRequest(t *testing.T) {
 				"type": "testdata"
 			}
 		}`)
-		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
+		require.NoError(t, err)
+
+		reqCtx := &models.ReqContext{
+			Context: &web.Context{},
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		*httpreq = *httpreq.WithContext(ctx)
+		reqCtx.Req = httpreq
+
 		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
-		mr.HTTPRequest = httpreq
-		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
 
 		// With the second value it is OK
 		httpreq.Header.Add("X-Datasource-Uid", "sEx6ZvSVk")
-		mr.HTTPRequest = httpreq
-		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
 
 		// Single header with comma syntax
 		httpreq, _ = http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
 		httpreq.Header.Set("X-Datasource-Uid", "gIEkMvIVz, sEx6ZvSVk")
-		mr.HTTPRequest = httpreq
-		_, err = tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
 	})
 }
@@ -401,42 +239,6 @@ func TestParseMetricRequest(t *testing.T) {
 func TestQueryDataMultipleSources(t *testing.T) {
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t)
-		query1, err := simplejson.NewJson([]byte(`
-			{
-				"datasource": {
-					"type": "mysql",
-					"uid": "ds1"
-				}
-			}
-		`))
-		require.NoError(t, err)
-		query2, err := simplejson.NewJson([]byte(`
-			{
-				"datasource": {
-					"type": "mysql",
-					"uid": "ds2"
-				}
-			}
-		`))
-		require.NoError(t, err)
-		queries := []*simplejson.Json{query1, query2}
-		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
-			HTTPRequest:                nil,
-		}
-
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
-
-		require.NoError(t, err)
-	})
-
-	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
-		tc := setup(t)
-		// refId does get set if not included, but better to include it explicitly here
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
@@ -452,7 +254,44 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds2"
-				}
+				},
+				"refId": "B"
+			}
+		`))
+		require.NoError(t, err)
+		queries := []*simplejson.Json{query1, query2}
+		reqDTO := dtos.MetricRequest{
+			From:                       "2022-01-01",
+			To:                         "2022-01-02",
+			Queries:                    queries,
+			Debug:                      false,
+			PublicDashboardAccessToken: "abc123",
+		}
+
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
+		tc := setup(t)
+		query1, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds1"
+				},
+				"refId": "A"
+			}
+		`))
+		require.NoError(t, err)
+		query2, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds2"
+				},
+				"refId": "B"
 			}
 		`))
 		require.NoError(t, err)
@@ -477,23 +316,31 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			Queries:                    queries,
 			Debug:                      false,
 			PublicDashboardAccessToken: "abc123",
-			HTTPRequest:                nil,
 		}
 
 		// without query parameter
 		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 
-		httpreq, _ := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
+		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
+		require.NoError(t, err)
+
+		reqCtx := &models.ReqContext{
+			Context: &web.Context{},
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		*httpreq = *httpreq.WithContext(ctx)
+		reqCtx.Req = httpreq
+
 		httpreq.Header.Add("X-Datasource-Uid", "gIEkMvIVz")
-		reqDTO.HTTPRequest = httpreq
 
 		// with query parameter
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		_, err = tc.queryService.QueryData(httpreq.Context(), tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
 	})
 
-	t.Run("error is returned when one of the queries fails", func(t *testing.T) {
+	t.Run("error is returned in query when one of the queries fails", func(t *testing.T) {
 		tc := setup(t)
 
 		query1, _ := simplejson.NewJson([]byte(`
@@ -501,7 +348,8 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				"datasource": {
 					"type": "mysql",
 					"uid": "ds1"
-				}
+				},
+				"refId": "A"
 			}
 		`))
 		query2, _ := simplejson.NewJson([]byte(`
@@ -510,6 +358,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 					"type": "prometheus",
 					"uid": "ds2"
 				},
+				"refId": "B",
 				"queryType": "FAIL"
 			}
 		`))
@@ -522,100 +371,14 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			Queries:                    queries,
 			Debug:                      false,
 			PublicDashboardAccessToken: "abc123",
-			HTTPRequest:                nil,
 		}
 
-		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
 
-		require.Error(t, err)
-	})
-}
-
-func TestQueryData(t *testing.T) {
-	t.Run("it auth custom headers to the request", func(t *testing.T) {
-		token := &oauth2.Token{
-			TokenType:   "bearer",
-			AccessToken: "access-token",
-		}
-		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
-
-		tc := setup(t)
-		tc.oauthTokenService.passThruEnabled = true
-		tc.oauthTokenService.token = token
-
-		metricReq := metricRequest()
-		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
-		metricReq.HTTPRequest = httpReq
-
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricReq)
-		require.Nil(t, err)
-
-		expected := map[string]string{
-			"Authorization": "Bearer access-token",
-			"X-ID-Token":    "id-token",
-		}
-		require.Equal(t, expected, tc.pluginContext.req.Headers)
-	})
-
-	t.Run("it doesn't add cookie header to the request when keepCookies configured and no cookies provided", func(t *testing.T) {
-		tc := setup(t)
-		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
-		require.NoError(t, err)
-		tc.dataSourceCache.ds.JsonData = json
-
-		metricReq := metricRequest()
-		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
-		require.NoError(t, err)
-		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
-		require.NoError(t, err)
-
-		require.Empty(t, tc.pluginContext.req.Headers)
-	})
-
-	t.Run("it adds cookie header to the request when keepCookies configured and cookie provided", func(t *testing.T) {
-		tc := setup(t)
-		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "foo", "bar" ]}`))
-		require.NoError(t, err)
-		tc.dataSourceCache.ds.JsonData = json
-
-		metricReq := metricRequest()
-		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
-		require.NoError(t, err)
-		httpReq.AddCookie(&http.Cookie{Name: "a"})
-		httpReq.AddCookie(&http.Cookie{Name: "bar", Value: "rab"})
-		httpReq.AddCookie(&http.Cookie{Name: "b"})
-		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
-		httpReq.AddCookie(&http.Cookie{Name: "c"})
-		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
-		require.NoError(t, err)
-
-		require.Equal(t, map[string]string{"Cookie": "bar=rab; foo=oof"}, tc.pluginContext.req.Headers)
-	})
-
-	t.Run("it doesn't adds cookie header to the request when keepCookies configured with login cookie name", func(t *testing.T) {
-		tc := setup(t)
-		tc.queryService.cfg.LoginCookieName = "grafana_session"
-		json, err := simplejson.NewJson([]byte(`{"keepCookies": [ "grafana_session", "bar" ]}`))
-		require.NoError(t, err)
-		tc.dataSourceCache.ds.JsonData = json
-
-		metricReq := metricRequest()
-		httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
-		require.NoError(t, err)
-		httpReq.AddCookie(&http.Cookie{Name: "a"})
-		httpReq.AddCookie(&http.Cookie{Name: "bar", Value: "rab"})
-		httpReq.AddCookie(&http.Cookie{Name: "b"})
-		httpReq.AddCookie(&http.Cookie{Name: "foo", Value: "oof"})
-		httpReq.AddCookie(&http.Cookie{Name: "c"})
-		httpReq.AddCookie(&http.Cookie{Name: tc.queryService.cfg.LoginCookieName, Value: "val"})
-		metricReq.HTTPRequest = httpReq
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricReq)
-		require.NoError(t, err)
-
-		require.Equal(t, map[string]string{"Cookie": "bar=rab"}, tc.pluginContext.req.Headers)
+		require.Error(t, res.Responses["B"].Error)
+		// Responses aren't mocked, so a "healthy" query will just return an empty response
+		require.NotContains(t, res.Responses, "A")
 	})
 }
 
@@ -623,7 +386,6 @@ func setup(t *testing.T) *testContext {
 	t.Helper()
 	pc := &fakePluginClient{}
 	dc := &fakeDataSourceCache{ds: &datasources.DataSource{}}
-	tc := &fakeOAuthTokenService{}
 	rv := &fakePluginRequestValidator{}
 
 	sqlStore := db.InitTestDB(t)
@@ -638,15 +400,14 @@ func setup(t *testing.T) *testContext {
 		SimulatePluginFailure: false,
 	}
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, fakeDatasourceService)
-	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc, tc) // provider belonging to this package
+	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, ds, pc) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,
 		dataSourceCache:        dc,
-		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: roletype.RoleAdmin},
 	}
 }
 
@@ -654,20 +415,9 @@ type testContext struct {
 	pluginContext          *fakePluginClient
 	secretStore            secretskvs.SecretsKVStore
 	dataSourceCache        *fakeDataSourceCache
-	oauthTokenService      *fakeOAuthTokenService
 	pluginRequestValidator *fakePluginRequestValidator
 	queryService           *Service // implementation belonging to this package
 	signedInUser           *user.SignedInUser
-}
-
-func metricRequest() dtos.MetricRequest {
-	q, _ := simplejson.NewJson([]byte(`{"datasourceId":1}`))
-	return dtos.MetricRequest{
-		From:    "",
-		To:      "",
-		Queries: []*simplejson.Json{q},
-		Debug:   false,
-	}
 }
 
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
@@ -694,34 +444,8 @@ func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) 
 	return rv.err
 }
 
-type fakeOAuthTokenService struct {
-	passThruEnabled bool
-	token           *oauth2.Token
-}
-
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
-	return ts.token
-}
-
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
-	return ts.passThruEnabled
-}
-
-func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
-	return nil, false, nil
-}
-
-func (ts *fakeOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {
-	return nil
-}
-
-func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(context.Context, *models.UserAuth) error {
-	return nil
-}
-
 type fakeDataSourceCache struct {
-	ds      *datasources.DataSource
-	dsByUid func(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error)
+	ds *datasources.DataSource
 }
 
 func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
@@ -729,10 +453,6 @@ func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID in
 }
 
 func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-	if c.dsByUid != nil {
-		return c.dsByUid(ctx, datasourceUID, user, skipCache)
-	}
-
 	return &datasources.DataSource{
 		Uid: datasourceUID,
 	}, nil

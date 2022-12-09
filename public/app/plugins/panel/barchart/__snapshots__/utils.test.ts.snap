@@ -5,7 +5,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -13,7 +13,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -32,7 +32,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -40,7 +40,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -133,7 +133,6 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -159,7 +158,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -167,7 +166,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -186,7 +185,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -194,7 +193,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -287,7 +286,6 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -313,7 +311,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -340,7 +338,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -348,7 +346,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": 0,
       "scale": "m/s",
       "show": true,
       "side": 3,
@@ -441,7 +439,6 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -467,7 +464,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -475,7 +472,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -494,7 +491,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -502,7 +499,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -595,7 +592,6 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -621,7 +617,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -629,7 +625,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -648,7 +644,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -656,7 +652,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -749,7 +745,6 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -775,7 +770,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -783,7 +778,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -802,7 +797,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -810,7 +805,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -903,7 +898,6 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -929,7 +923,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -937,7 +931,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -956,7 +950,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -964,7 +958,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -1057,7 +1051,6 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",
@@ -1083,7 +1076,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
       "grid": {
         "show": false,
@@ -1091,7 +1084,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -1110,7 +1103,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Roboto", "Helvetica", "Arial", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -1118,7 +1111,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
         "width": 1,
       },
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -1211,7 +1204,6 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
     {
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#808080",

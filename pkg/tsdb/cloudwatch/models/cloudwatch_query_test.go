@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestCloudWatchQuery(t *testing.T) {
@@ -119,7 +120,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				Period:     300,
 				Id:         "id1",
 				MatchExact: true,
-				AccountId:  pointer("123456789"),
+				AccountId:  utils.Pointer("123456789"),
 				Label:      "${PROP('Namespace')}",
 				Dimensions: map[string][]string{
 					"InstanceId": {"i-12345678"},
@@ -141,7 +142,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				Region:           "us-east-1",
 				Statistic:        "Average",
 				Expression:       "SEARCH(someexpression)",
-				AccountId:        pointer("123456789"),
+				AccountId:        utils.Pointer("123456789"),
 				Period:           300,
 				Id:               "id1",
 				MatchExact:       true,
@@ -1059,7 +1060,6 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 				dynamicLabelsFeatureToggleEnabled: false,
 				expectedLabel:                     "some label"},
 		}
-
 		for name, tc := range testCases {
 			t.Run(name, func(t *testing.T) {
 				query := []backend.DataQuery{
@@ -1195,5 +1195,3 @@ func Test_ParseMetricDataQueries_account_Id(t *testing.T) {
 		assert.Nil(t, actual[0].AccountId)
 	})
 }
-
-func pointer[T any](arg T) *T { return &arg }

@@ -59,8 +59,6 @@ You can share a dashboard as a direct link or as a snapshot. You can also export
 
    The share dialog opens and shows the **Link** tab.
 
-   ![Dashboard share direct link](/static/img/docs/sharing/share-dashboard-direct-link-7-3.png)
-
 ### Share a direct link
 
 The **Link** tab shows the current time range, template variables, and the default theme. You can also share a shortened URL.
@@ -77,8 +75,6 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
-![Dashboard share snapshot](/static/img/docs/sharing/share-dashboard-snapshot-7-3.png)
-
 1. Click **Local Snapshot** or **Publish to snapshots.raintank.io**.
 
    Grafana generates a link of the snapshot.
@@ -90,8 +86,6 @@ If you created a snapshot by mistake, click **Delete snapshot** to remove the sn
 ### Dashboard export
 
 Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "./manage-dashboards/#export-and-import-dashboards" >}}).
-
-![Export](/static/img/docs/sharing/share-dashboard-export-7-3.png)
 
 ## Export dashboard as PDF
 
@@ -113,8 +107,6 @@ You can share a panel as a direct link, as a snapshot, or as an embedded link. Y
 1. Click **Share**.
 
    The share dialog opens and shows the **Link** tab.
-
-   ![Panel share direct link](/static/img/docs/sharing/share-panel-direct-link-8-0.png)
 
 ### Use direct link
 
@@ -149,8 +141,6 @@ A panel snapshot shares an interactive panel publicly. Grafana strips sensitive 
 
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
 
-![Panel share snapshot](/static/img/docs/sharing/share-panel-snapshot-8-0.png)
-
 1. In the **Share Panel** dialog, click **Snapshot** to open the tab.
 1. Click **Local Snapshot** or **Publish to snapshots.raintank.io**.
 
@@ -166,8 +156,6 @@ You can embed a panel using an iframe on another web site. A viewer must be sign
 
 **> Note:** As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
 
-![Panel share embed](/static/img/docs/sharing/share-panel-embedded-link-8-0.png)
-
 Here is an example of the HTML code:
 
 ```html
@@ -179,16 +167,13 @@ Here is an example of the HTML code:
 ></iframe>
 ```
 
-The result is an interactive Grafana graph embedded in an iframe:
-
-<iframe src="https://snapshots.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
+The result is an interactive Grafana graph embedded in an iframe.
 
 ### Library panel
 
 To create a library panel from the **Share Panel** dialog:
 
 1. Click **Library panel**.
-   {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the create library panel dialog" >}}
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder in which to save the library panel. By default, the General folder is selected.
 1. Click **Create library panel** to save your changes.
