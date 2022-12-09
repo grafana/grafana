@@ -1,7 +1,7 @@
 import { Editor as SlateEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 
-import { AbstractLabelOperator, HistoryItem, Labels } from '@grafana/data';
+import { AbstractLabelOperator, HistoryItem } from '@grafana/data';
 import { SearchFunctionType } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';

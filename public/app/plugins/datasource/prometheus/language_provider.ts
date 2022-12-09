@@ -99,6 +99,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *  10 as a max size is totally arbitrary right now.
    */
   private labelsCache = new LRU<string, Record<string, string[]>>({ max: 10 });
+  private labelValuesCache = new LRU<string, string[]>({ max: 10 });
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -529,7 +530,23 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...range,
       ...(match && { 'match[]': match }),
     };
-    return await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+
+    const cacheParams = new URLSearchParams({
+      'match[]': interpolatedName ?? '',
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      name: name,
+    });
+
+    const cacheKey = `/api/v1/label/?${cacheParams.toString()}/values`;
+    let value: string[] | undefined = this.labelValuesCache.get(cacheKey);
+    if (!value) {
+      value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+      if (value) {
+        this.labelValuesCache.set(cacheKey, value);
+      }
+    }
+    return value ?? [];
   };
 
   /**
