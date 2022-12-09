@@ -77,6 +77,7 @@ export const language: monacoType.languages.IMonarchLanguage = {
     root: [{ include: '@nonNestableStates' }, { include: '@strings' }],
     nonNestableStates: [
       { include: '@variables' },
+      { include: '@macros' },
       { include: '@whitespace' },
       { include: '@numbers' },
       { include: '@assignment' },
@@ -92,6 +93,7 @@ export const language: monacoType.languages.IMonarchLanguage = {
     variables: [
       [/\$[a-zA-Z0-9-_]+/, 'variable'], // $ followed by any letter/number we assume could be grafana template variable
     ],
+    macros: [[/\$__[a-zA-Z0-9-_]+/, 'type']],
     whitespace: [[/\s+/, 'white']],
     assignment: [[/=/, 'tag']],
     numbers: [

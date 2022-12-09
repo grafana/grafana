@@ -99,6 +99,11 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
           break;
 
         case SuggestionKind.Period:
+          addSuggestion('$__period_auto', {
+            kind: monaco.languages.CompletionItemKind.Variable,
+            sortText: 'a',
+            detail: 'Will be expanded to period in seconds matching the time range.',
+          });
           METRIC_MATH_PERIODS.map((s, idx) =>
             addSuggestion(s.toString(), {
               kind: monaco.languages.CompletionItemKind.Value,

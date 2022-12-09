@@ -1226,3 +1226,74 @@ func Test_ParseMetricDataQueries_default_region(t *testing.T) {
 		assert.Equal(t, region, res[0].Region)
 	})
 }
+
+func Test_ParseMetricDataQueries_ApplyMacros(t *testing.T) {
+	t.Run("should expand $__period_auto macro when a metric search code query is used", func(t *testing.T) {
+		testCases := []struct {
+			startTime      time.Time
+			expectedPeriod string
+		}{
+			{
+				startTime:      time.Now().Add(-2 * time.Hour),
+				expectedPeriod: "60",
+			},
+			{
+				startTime:      time.Now().Add(-100 * time.Hour),
+				expectedPeriod: "300",
+			},
+			{
+				startTime:      time.Now().Add(-1000 * time.Hour),
+				expectedPeriod: "3600",
+			},
+		}
+		for _, tc := range testCases {
+			t.Run(fmt.Sprintf("should expand $__period_auto macro to %s when a metric search code query is used", tc.expectedPeriod), func(t *testing.T) {
+				actual, err := ParseMetricDataQueries(
+					[]backend.DataQuery{
+						{
+							JSON: []byte(`{
+								"refId":"A",
+								"region":"us-east-1",
+								"namespace":"ec2",
+								"metricName":"CPUUtilization",
+								"alias":"{{period}} {{any_other_word}}",
+								"dimensions":{"InstanceId":["test"]},
+								"statistic":"Average",
+								"period":"600",
+								"hide":false,
+								"expression": "SEARCH('{AWS/EC2,InstanceId}', 'Average', $__period_auto)",
+								"metricQueryType":  0,
+								"metricEditorMode": 1
+							 }`),
+						},
+					}, tc.startTime, time.Now(), "us-east-1", false, false)
+				assert.NoError(t, err)
+				assert.Equal(t, fmt.Sprintf("SEARCH('{AWS/EC2,InstanceId}', 'Average', %s)", tc.expectedPeriod), actual[0].Expression)
+			})
+		}
+	})
+
+	t.Run("should not expand __period_auto macro if it's a metric query code query", func(t *testing.T) {
+		actual, err := ParseMetricDataQueries(
+			[]backend.DataQuery{
+				{
+					JSON: []byte(`{
+						"refId":"A",
+						"region":"us-east-1",
+						"namespace":"ec2",
+						"metricName":"CPUUtilization",
+						"alias":"{{period}} {{any_other_word}}",
+						"dimensions":{"InstanceId":["test"]},
+						"statistic":"Average",
+						"period":"600",
+						"hide":false,
+						"expression": "SEARCH('{AWS/EC2,InstanceId}', 'Average', $__period_auto)",
+						"metricQueryType":  1,
+						"metricEditorMode": 1
+					 }`),
+				},
+			}, time.Now(), time.Now(), "us-east-1", false, false)
+		assert.NoError(t, err)
+		assert.Equal(t, "SEARCH('{AWS/EC2,InstanceId}', 'Average', $__period_auto)", actual[0].Expression)
+	})
+}

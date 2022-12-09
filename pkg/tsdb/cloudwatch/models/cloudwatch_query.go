@@ -266,12 +266,20 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			return nil, &QueryError{Err: err, RefID: refId}
 		}
 
+		cwQuery.applyMacros(startTime, endTime)
+
 		cwQuery.migrateLegacyQuery(mdq, dynamicLabelsEnabled)
 
 		result = append(result, cwQuery)
 	}
 
 	return result, nil
+}
+
+func (q *CloudWatchQuery) applyMacros(startTime, endTime time.Time) {
+	if q.GetGMDAPIMode(nil) == GMDApiModeMathExpression {
+		q.Expression = strings.ReplaceAll(q.Expression, "$__period_auto", strconv.Itoa(calculatePeriodBasedOnTimeRange(startTime, endTime)))
+	}
 }
 
 func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery, dynamicLabelsEnabled bool) {
@@ -396,21 +404,27 @@ func getLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
 	return result
 }
 
+func calculatePeriodBasedOnTimeRange(startTime, endTime time.Time) int {
+	deltaInSeconds := endTime.Sub(startTime).Seconds()
+	periods := getRetainedPeriods(time.Since(startTime))
+	datapoints := int(math.Ceil(deltaInSeconds / 2000))
+	period := periods[len(periods)-1]
+	for _, value := range periods {
+		if datapoints <= value {
+			period = value
+			break
+		}
+	}
+
+	return period
+}
+
 func getPeriod(query metricsDataQuery, startTime, endTime time.Time) (int, error) {
 	periodString := query.Period
 	var period int
 	var err error
 	if strings.ToLower(periodString) == "auto" || periodString == "" {
-		deltaInSeconds := endTime.Sub(startTime).Seconds()
-		periods := getRetainedPeriods(time.Since(startTime))
-		datapoints := int(math.Ceil(deltaInSeconds / 2000))
-		period = periods[len(periods)-1]
-		for _, value := range periods {
-			if datapoints <= value {
-				period = value
-				break
-			}
-		}
+		period = calculatePeriodBasedOnTimeRange(startTime, endTime)
 	} else {
 		period, err = strconv.Atoi(periodString)
 		if err != nil {
