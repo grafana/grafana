@@ -337,25 +337,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           field
         )
       );
-
-      builder.addAxis(
-        tweakAxis(
-          {
-            scaleKey,
-            label: customConfig.axisLabel,
-            size: customConfig.axisWidth,
-            placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
-            theme,
-            grid: { show: customConfig.axisGridShow },
-            decimals: field.config.decimals,
-            distr: customConfig.scaleDistribution?.type,
-            incrs,
-            ...axisColorOpts,
-          },
-          field
-        )
-      );
     }
 
     const showPoints =
