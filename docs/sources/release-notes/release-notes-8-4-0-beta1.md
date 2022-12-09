@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/release-notes/release-notes-8-4-0-beta1/
+  - /docs/grafana/next/release-notes/release-notes-8-4-0-beta1/
 hide_menu: true
 title: Release notes for Grafana 8.4.0-beta1
 ---

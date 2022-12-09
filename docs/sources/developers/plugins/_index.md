@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../plugins/developing/
-  - /docs/grafana/latest/developers/plugins/
+  - /docs/grafana/next/developers/plugins/
 description: Resources for creating Grafana plugins
 title: Build a plugin
 weight: 200

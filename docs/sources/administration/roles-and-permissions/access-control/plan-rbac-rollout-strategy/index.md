@@ -2,7 +2,7 @@
 aliases:
   - ../../../enterprise/access-control/plan-rbac-rollout-strategy/
   - ../../../enterprise/access-control/usage-scenarios/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+  - /docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
 description: Plan your RBAC rollout strategy before you begin assigning roles to users
   and teams.
 menuTitle: Plan your RBAC rollout strategy
@@ -158,13 +158,13 @@ By default, only a Grafana Server Admin can create and manage custom roles. If y
 apiVersion: 2
 
 roles:
-  - name: 'basic:editor'
+  - name: "basic:editor"
     global: true
     version: 3
     from:
-      - name: 'basic:editor'
+      - name: "basic:editor"
         global: true
-      - name: 'fixed:roles:writer'
+      - name: "fixed:roles:writer"
         global: true
 ```
 
@@ -188,13 +188,13 @@ If you want your `Viewers` to create reports, [update the `Viewer` basic role pe
 apiVersion: 2
 
 roles:
-  - name: 'basic:viewer'
+  - name: "basic:viewer"
     global: true
     version: 3
     from:
-      - name: 'basic:viewer'
+      - name: "basic:viewer"
         global: true
-      - name: 'fixed:reports:writer'
+      - name: "fixed:reports:writer"
         global: true
 ```
 
@@ -227,18 +227,18 @@ There are two ways to achieve this:
 apiVersion: 2
 
 roles:
-  - name: 'basic:editor'
+  - name: "basic:editor"
     global: true
     version: 3
     from:
-      - name: 'basic:editor'
+      - name: "basic:editor"
         global: true
     permissions:
-      - action: 'users:create'
-        state: 'absent'
-      - action: 'org.users:add'
-        scope: 'users:*'
-        state: 'absent'
+      - action: "users:create"
+        state: "absent"
+      - action: "org.users:add"
+        scope: "users:*"
+        state: "absent"
 ```
 
 - Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
@@ -276,19 +276,19 @@ Here are two ways to achieve this:
 apiVersion: 2
 
 roles:
-  - name: 'basic:viewer'
+  - name: "basic:viewer"
     version: 8
     global: true
     from:
-      - name: 'basic:viewer'
+      - name: "basic:viewer"
         global: true
     permissions:
-      - action: 'plugins.app:access'
-        scope: 'plugins:*'
-        state: 'absent'
-      - action: 'plugins.app:access'
-        scope: 'plugins:id:kentik-connect-app'
-        state: 'present'
+      - action: "plugins.app:access"
+        scope: "plugins:*"
+        state: "absent"
+      - action: "plugins.app:access"
+        scope: "plugins:id:kentik-connect-app"
+        state: "present"
 ```
 
 - Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).

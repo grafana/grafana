@@ -2,7 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/release-notes/release-notes-7-5-11/
+  - /docs/grafana/next/release-notes/release-notes-7-5-11/
 title: Release notes for Grafana 7.5.11
 ---
 

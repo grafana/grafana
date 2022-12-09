@@ -2,7 +2,7 @@
 aliases:
   - ../../panels/visualizations/node-graph/
   - ../../visualizations/node-graph/
-  - /docs/grafana/latest/panels-visualizations/visualizations/node-graph/
+  - /docs/grafana/next/panels-visualizations/visualizations/node-graph/
 keywords:
   - grafana
   - dashboard
@@ -20,7 +20,7 @@ weight: 850
 
 The _Node graph_ can visualize directed graphs or networks. It uses a directed force layout to effectively position the nodes, so it can display complex infrastructure maps, hierarchies, or execution diagrams.
 
-![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
+![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png "Node graph")
 
 ## Data requirements
 
@@ -41,7 +41,7 @@ Usually, nodes show two statistical values inside the node and two identifiers j
 
 For example, you can have the percentage of errors represented by a red portion of the circle. Additional details can be displayed in a context menu which is displayed when you click on the node. There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-![Node graph navigation](/static/img/docs/node-graph/node-graph-navigation-7-4.gif 'Node graph navigation')
+![Node graph navigation](/static/img/docs/node-graph/node-graph-navigation-7-4.gif "Node graph navigation")
 
 ### Edges
 
@@ -65,21 +65,21 @@ Use the buttons in the upper left corner or use the mouse wheel, touchpad scroll
 
 The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
 
-![Node graph exploration](/static/img/docs/node-graph/node-graph-exploration-8-0.png 'Node graph exploration')
+![Node graph exploration](/static/img/docs/node-graph/node-graph-exploration-8-0.png "Node graph exploration")
 
 ### Grid view
 
 You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
 
-![Node graph grid](/static/img/docs/node-graph/node-graph-grid-8-0.png 'Node graph grid')
+![Node graph grid](/static/img/docs/node-graph/node-graph-grid-8-0.png "Node graph grid")
 
 To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
 
-![Node graph legend](/static/img/docs/node-graph/node-graph-legend-8-0.png 'Node graph legend')
+![Node graph legend](/static/img/docs/node-graph/node-graph-legend-8-0.png "Node graph legend")
 
 Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
 
-![Node graph grid to default](/static/img/docs/node-graph/node-graph-grid-to-default-8-0.png 'Node graph grid to default')
+![Node graph grid to default](/static/img/docs/node-graph/node-graph-grid-to-default-8-0.png "Node graph grid to default")
 
 ## Data API
 

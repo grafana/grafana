@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/graphite/
   - ../features/datasources/graphite/
-  - /docs/grafana/latest/datasources/graphite/
+  - /docs/grafana/next/datasources/graphite/
 description: Guide for using Graphite in Grafana
 keywords:
   - grafana
@@ -75,7 +75,7 @@ datasources:
     access: proxy
     url: http://localhost:8080
     jsonData:
-      graphiteVersion: '1.1'
+      graphiteVersion: "1.1"
 ```
 
 ## Query the data source

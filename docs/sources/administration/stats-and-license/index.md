@@ -2,7 +2,7 @@
 aliases:
   - ../admin/view-server-settings/
   - ../admin/view-server-stats/
-  - /docs/grafana/latest/administration/stats-and-license/
+  - /docs/grafana/next/administration/stats-and-license/
   - view-server/
   - view-server/view-server-settings/
   - view-server/view-server-stats/

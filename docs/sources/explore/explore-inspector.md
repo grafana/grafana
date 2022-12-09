@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/explore/explore-inspector/
+  - /docs/grafana/next/explore/explore-inspector/
 title: Inspector in Explore
 weight: 400
 ---

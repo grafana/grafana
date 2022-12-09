@@ -4,7 +4,7 @@ aliases:
   - ../../panels/visualizations/logs-panel/
   - ../../reference/logs/
   - ../../visualizations/logs-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/logs/
+  - /docs/grafana/next/panels-visualizations/visualizations/logs/
 keywords:
   - grafana
   - dashboard

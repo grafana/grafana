@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/
+  - /docs/grafana/next/
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
   - guides/reference/admin/

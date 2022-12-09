@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/migration-guide/
+  - /docs/grafana/next/developers/plugins/migration-guide/
 title: Plugin migration guide
 ---
 
@@ -98,17 +98,17 @@ Example:
 ```ts
 // before
 const model: NavModelItem = {
-  id: 'settings',
-  text: 'Settings',
-  icon: 'fa fa-cog',
+  id: "settings",
+  text: "Settings",
+  icon: "fa fa-cog",
   url: `${baseUrl}/settings`,
 };
 
 // after
 const model: NavModelItem = {
-  id: 'settings',
-  text: 'Settings',
-  icon: 'cog',
+  id: "settings",
+  text: "Settings",
+  icon: "cog",
   url: `${baseUrl}/settings`,
 };
 ```
@@ -120,7 +120,7 @@ FieldProps, ModalProps, and QueryFieldProps are now exposed from `@grafana/ui`. 
 Example:
 
 ```ts
-import { FieldProps, ModalProps, QueryFieldProps } from '@grafana/ui';
+import { FieldProps, ModalProps, QueryFieldProps } from "@grafana/ui";
 ```
 
 ## From version 8.x to 9.x
@@ -189,14 +189,14 @@ The `@grafana/ui` package helper function `selectOptionInTest` used in frontend 
 
 ```ts
 // before
-import { selectOptionInTest } from '@grafana/ui';
+import { selectOptionInTest } from "@grafana/ui";
 // ...test usage
-await selectOptionInTest(selectEl, 'Option 2');
+await selectOptionInTest(selectEl, "Option 2");
 
 // after
-import { select } from 'react-select-event';
+import { select } from "react-select-event";
 // ...test usage
-await select(selectEl, 'Option 2', { container: document.body });
+await select(selectEl, "Option 2", { container: document.body });
 ```
 
 #### Toolkit 9 and webpack
@@ -213,9 +213,9 @@ module.exports.getWebpackConfig = (config, options) => ({
   resolve: {
     ...config.resolve,
     fallback: {
-      os: require.resolve('os-browserify/browser'),
-      stream: require.resolve('stream-browserify'),
-      timers: require.resolve('timers-browserify'),
+      os: require.resolve("os-browserify/browser"),
+      stream: require.resolve("stream-browserify"),
+      timers: require.resolve("timers-browserify"),
     },
   },
 });
@@ -245,10 +245,10 @@ In a previous release, we migrated to use a new routing system and introduced a 
 
 ```ts
 // before
-import { getLocationSrv } from '@grafana/runtime';
+import { getLocationSrv } from "@grafana/runtime";
 
 // after
-import { locationService } from '@grafana/runtime';
+import { locationService } from "@grafana/runtime";
 ```
 
 **Example:** Navigate to a path and add a new record in the navigation history so that you can navigate back to the previous one.
@@ -256,12 +256,12 @@ import { locationService } from '@grafana/runtime';
 ```ts
 // before
 getLocationSrv.update({
-  path: '/route-to-navigate-to',
+  path: "/route-to-navigate-to",
   replace: false,
 });
 
 // after
-locationService.push('/route-to-navigate-to');
+locationService.push("/route-to-navigate-to");
 ```
 
 **Example:** Navigate to a path and replace the current record in the navigation history.
@@ -269,12 +269,12 @@ locationService.push('/route-to-navigate-to');
 ```ts
 // before
 getLocationSrv.update({
-  path: '/route-to-navigate-to',
+  path: "/route-to-navigate-to",
   replace: true,
 });
 
 // after
-locationService.replace('/route-to-navigate-to');
+locationService.replace("/route-to-navigate-to");
 ```
 
 **Example:** Update the search or query parameter for the current route and add a new record in the navigation history so that you can navigate back to the previous one.
@@ -300,14 +300,14 @@ locationService.partial({ value: 1 });
 // before
 getLocationSrv.update({
   query: {
-    'var-variable': 1,
+    "var-variable": 1,
   },
   partial: true,
   replace: true,
 });
 
 // after
-locationService.partial({ 'var-variable': 1 }, true);
+locationService.partial({ "var-variable": 1 }, true);
 ```
 
 ## From version 7.x.x to 8.x.x
@@ -487,10 +487,10 @@ Grafana uses Emotion library to manage frontend styling. We have updated the Emo
 
 ```ts
 // before
-import { cx, css } from 'emotion';
+import { cx, css } from "emotion";
 
 // after
-import { cx, css } from '@emotion/css';
+import { cx, css } from "@emotion/css";
 ```
 
 ### Update needed for app plugins using dashboards
@@ -543,10 +543,10 @@ The `useStyles` hook is the preferred way to access the theme when styling. It p
 
 ```ts
 // before
-import React, { ReactElement } from 'react';
-import css from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import React, { ReactElement } from "react";
+import css from "emotion";
+import { GrafanaTheme } from "@grafana/data";
+import { useStyles } from "@grafana/ui";
 
 function Component(): ReactElement | null {
   const styles = useStyles(getStyles);
@@ -560,10 +560,10 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 // after
-import React, { ReactElement } from 'react';
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import React, { ReactElement } from "react";
+import { css } from "@emotion/css";
+import { GrafanaTheme2 } from "@grafana/data";
+import { useStyles2 } from "@grafana/ui";
 
 function Component(): ReactElement | null {
   const theme = useStyles2(getStyles);
@@ -581,16 +581,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 ```ts
 // before
-import React, { ReactElement } from 'react';
-import { useTheme } from '@grafana/ui';
+import React, { ReactElement } from "react";
+import { useTheme } from "@grafana/ui";
 
 function Component(): ReactElement | null {
   const theme = useTheme();
 }
 
 // after
-import React, { ReactElement } from 'react';
-import { useTheme2 } from '@grafana/ui';
+import React, { ReactElement } from "react";
+import { useTheme2 } from "@grafana/ui";
 
 function Component(): ReactElement | null {
   const theme = useTheme2();
@@ -602,8 +602,8 @@ function Component(): ReactElement | null {
 
 ```ts
 // before
-import React from 'react';
-import { Themeable, withTheme } from '@grafana/ui';
+import React from "react";
+import { Themeable, withTheme } from "@grafana/ui";
 
 type Props = {} & Themeable;
 
@@ -617,8 +617,8 @@ class Component extends React.Component<Props> {
 export default withTheme(Component);
 
 // after
-import React from 'react';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import React from "react";
+import { Themeable2, withTheme2 } from "@grafana/ui";
 
 type Props = {} & Themeable2;
 
@@ -655,10 +655,10 @@ The Legend components have been refactored and introduced the following changes 
 
 ```ts
 // before
-import { LegendItem, LegendOptions, GraphLegend } from '@grafana/ui';
+import { LegendItem, LegendOptions, GraphLegend } from "@grafana/ui";
 
 // after
-import { VizLegendItem, VizLegendOptions, VizLegend } from '@grafana/ui';
+import { VizLegendItem, VizLegendOptions, VizLegend } from "@grafana/ui";
 ```
 
 - `LegendPlacement` has been updated from `'under' | 'right' | 'over'` to `'bottom' | 'right'` so you can not place the legend above the visualization anymore.
@@ -745,7 +745,7 @@ Prior to Grafana 7.0, you would export a MetricsPanelCtrl from module.ts.
 **src/module.ts**
 
 ```ts
-import { MetricsPanelCtrl } from 'grafana/app/plugins/sdk';
+import { MetricsPanelCtrl } from "grafana/app/plugins/sdk";
 
 class MyPanelCtrl extends MetricsPanelCtrl {
   // ...
@@ -759,7 +759,7 @@ Starting with 7.0, plugins now export a PanelPlugin from module.ts where MyPanel
 **src/module.ts**
 
 ```ts
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from "@grafana/data";
 
 export const plugin = new PanelPlugin<MyOptions>(MyPanel);
 ```
@@ -767,7 +767,7 @@ export const plugin = new PanelPlugin<MyOptions>(MyPanel);
 **src/MyPanel.tsx**
 
 ```ts
-import { PanelProps } from '@grafana/data';
+import { PanelProps } from "@grafana/data";
 
 interface Props extends PanelProps<SimpleOptions> {}
 
@@ -800,7 +800,7 @@ The `DataQueryResponse` returned by the `query` method can be either a [LegacyRe
 The [toDataFrame()](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/dataframe/processDataFrame.ts#L309) function converts a legacy response, such as `TimeSeries` or `Table`, to a `DataFrame`. Use it to gradually move your code to the new format.
 
 ```ts
-import { toDataFrame } from '@grafana/data';
+import { toDataFrame } from "@grafana/data";
 ```
 
 ```ts

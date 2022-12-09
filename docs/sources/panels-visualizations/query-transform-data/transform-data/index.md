@@ -13,7 +13,7 @@ aliases:
   - ../../panels/transformations/config-from-query/
   - ../../panels/transformations/rows-to-fields/
   - ../../panels/transformations/types-options/
-  - /docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
+  - /docs/grafana/next/panels-visualizations/query-transform-data/transform-data/
 title: Transform data
 weight: 100
 ---

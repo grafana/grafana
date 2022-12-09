@@ -6,7 +6,7 @@ aliases:
   - ../enterprise/query-caching/
   - ../features/datasources/add-a-data-source/
   - ../permissions/datasource_permissions/
-  - /docs/grafana/latest/administration/data-source-management/
+  - /docs/grafana/next/administration/data-source-management/
 description: Data source management information for Grafana administrators
 title: Data source management
 weight: 100

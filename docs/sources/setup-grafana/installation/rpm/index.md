@@ -2,7 +2,7 @@
 aliases:
   - ../../installation/installation/rpm/
   - ../../installation/rpm/
-  - /docs/grafana/latest/setup-grafana/installation/rpm/
+  - /docs/grafana/next/setup-grafana/installation/rpm/
 description: Grafana Installation guide for RPM-based Linux, such as Centos, Fedora,
   OpenSuse, and Red Hat.
 title: Install on RPM-based Linux

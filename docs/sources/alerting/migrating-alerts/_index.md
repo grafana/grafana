@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/migrating-alerts/
+  - /docs/grafana/next/alerting/migrating-alerts/
   - difference-old-new/
   - unified-alerting/
   - unified-alerting/difference-old-new/

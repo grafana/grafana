@@ -3,7 +3,7 @@ aliases:
   - ../data-sources/influxdb/
   - ../data-sources/influxdb/provision-influxdb/
   - ../features/datasources/influxdb/
-  - /docs/grafana/latest/datasources/influxdb/
+  - /docs/grafana/next/datasources/influxdb/
   - provision-influxdb/
 description: Guide for using InfluxDB in Grafana
 keywords:
@@ -168,9 +168,9 @@ datasources:
     database: site
     jsonData:
       httpMode: GET
-      httpHeaderName1: 'Authorization'
+      httpHeaderName1: "Authorization"
     secureJsonData:
-      httpHeaderValue1: 'Token <token>'
+      httpHeaderValue1: "Token <token>"
 ```
 
 ## Query the data source

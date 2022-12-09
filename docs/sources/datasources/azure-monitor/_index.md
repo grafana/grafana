@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/azure-monitor/
   - ../features/datasources/azuremonitor/
-  - /docs/grafana/latest/datasources/azure-monitor/
+  - /docs/grafana/next/datasources/azure-monitor/
   - azuremonitor/
   - azuremonitor/deprecated-application-insights/
 description: Guide for using Azure Monitor in Grafana

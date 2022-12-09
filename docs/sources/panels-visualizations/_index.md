@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels-visualizations/
+  - /docs/grafana/next/panels-visualizations/
   - dashboards/configure-panels-visualizations/
   - features/panels/panels/
   - panels/

@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../image-rendering/monitoring/
-  - /docs/grafana/latest/setup-grafana/image-rendering/monitoring/
+  - /docs/grafana/next/setup-grafana/image-rendering/monitoring/
 description: Image rendering monitoring
 keywords:
   - grafana

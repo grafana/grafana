@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/grafana/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/grafana/
+  - /docs/grafana/next/setup-grafana/configure-security/configure-authentication/grafana/
 description: Grafana OAuthentication Guide
 title: Configure Grafana authentication
 weight: 1000

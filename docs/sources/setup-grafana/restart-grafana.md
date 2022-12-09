@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../installation/restart-grafana/
-  - /docs/grafana/latest/setup-grafana/restart-grafana/
+  - /docs/grafana/next/setup-grafana/restart-grafana/
 description: Instructions for restarting Grafana
 title: Restart Grafana
 weight: 300

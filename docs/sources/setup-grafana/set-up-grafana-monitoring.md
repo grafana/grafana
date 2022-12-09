@@ -3,7 +3,7 @@ aliases:
   - ../admin/metrics/
   - ../administration/jaeger-instrumentation/
   - ../administration/view-server/internal-metrics/
-  - /docs/grafana/latest/setup-grafana/set-up-grafana-monitoring/
+  - /docs/grafana/next/setup-grafana/set-up-grafana-monitoring/
 description: Jaeger traces emitted and propagation by Grafana
 keywords:
   - grafana

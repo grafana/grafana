@@ -17,7 +17,7 @@ aliases:
   - ../../visualizations/time-series/graph-time-series-as-lines/
   - ../../visualizations/time-series/graph-time-series-as-points/
   - ../../visualizations/time-series/graph-time-series-stacking/
-  - /docs/grafana/latest/panels-visualizations/visualizations/time-series/
+  - /docs/grafana/next/panels-visualizations/visualizations/time-series/
 keywords:
   - grafana
   - graph panel

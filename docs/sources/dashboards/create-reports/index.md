@@ -4,7 +4,7 @@ aliases:
   - ../enterprise/export-pdf/
   - ../enterprise/reporting/
   - ../panels/create-reports/
-  - /docs/grafana/latest/dashboards/create-reports/
+  - /docs/grafana/next/dashboards/create-reports/
   - reporting/
 keywords:
   - grafana

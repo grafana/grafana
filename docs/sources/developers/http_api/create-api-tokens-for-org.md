@@ -2,7 +2,7 @@
 aliases:
   - ../../http_api/create-api-tokens-for-org/
   - ../../tutorials/api_org_token_howto/
-  - /docs/grafana/latest/developers/http_api/create-api-tokens-for-org/
+  - /docs/grafana/next/developers/http_api/create-api-tokens-for-org/
 keywords:
   - grafana
   - tutorials
@@ -10,7 +10,7 @@ keywords:
   - Token
   - Org
   - Organization
-title: 'API Tutorial: Create API tokens and dashboards for an organization'
+title: "API Tutorial: Create API tokens and dashboards for an organization"
 weight: 150
 ---
 

@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../alerting/troubleshoot-alerts/
-  - /docs/grafana/latest/old-alerting/troubleshoot-alerts/
+  - /docs/grafana/next/old-alerting/troubleshoot-alerts/
 description: Troubleshoot alert rules
 draft: true
 keywords:

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/build-a-streaming-data-source-plugin/
+  - /docs/grafana/next/developers/plugins/build-a-streaming-data-source-plugin/
 title: Build a streaming data source plugin
 ---
 
@@ -31,7 +31,7 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 1. Change the signature of the `query` method to return an `Observable` from the `rxjs` package. Make sure you remove the `async` keyword.
 
    ```ts
-   import { Observable } from 'rxjs';
+   import { Observable } from "rxjs";
    ```
 
    ```ts
@@ -43,7 +43,7 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 1. Create an `Observable` for each query, and then combine them all using the `merge` function from the `rxjs` package.
 
    ```ts
-   import { Observable, merge } from 'rxjs';
+   import { Observable, merge } from "rxjs";
    ```
 
    ```ts
@@ -59,18 +59,18 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 1. In the `subscribe` function, create a `CircularDataFrame`.
 
    ```ts
-   import { CircularDataFrame } from '@grafana/data';
+   import { CircularDataFrame } from "@grafana/data";
    ```
 
    ```ts
    const frame = new CircularDataFrame({
-     append: 'tail',
+     append: "tail",
      capacity: 1000,
    });
 
    frame.refId = query.refId;
-   frame.addField({ name: 'time', type: FieldType.time });
-   frame.addField({ name: 'value', type: FieldType.number });
+   frame.addField({ name: "time", type: FieldType.time });
+   frame.addField({ name: "value", type: FieldType.number });
    ```
 
    Circular data frames have a limited capacity. When a circular data frame reaches its capacity, the oldest data point is removed.
@@ -78,7 +78,7 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 1. Use `subscriber.next()` to send the updated data frame whenever you receive new updates.
 
    ```ts
-   import { LoadingState } from '@grafana/data';
+   import { LoadingState } from "@grafana/data";
    ```
 
    ```ts

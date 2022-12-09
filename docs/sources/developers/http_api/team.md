@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/team/
-  - /docs/grafana/latest/developers/http_api/team/
+  - /docs/grafana/next/developers/http_api/team/
 description: Grafana Team HTTP API
 keywords:
   - grafana

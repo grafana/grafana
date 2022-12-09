@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/explore/trace-integration/
+  - /docs/grafana/next/explore/trace-integration/
 description: Tracing in Explore
 keywords:
   - explore
@@ -69,7 +69,7 @@ Clicking anywhere on the span row shows span details.
 
 You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
 
-![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png 'Node graph')
+![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png "Node graph")
 
 ### Trace to logs
 

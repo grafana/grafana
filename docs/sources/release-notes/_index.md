@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/release-notes/
+  - /docs/grafana/next/release-notes/
 title: Release notes
 weight: 10000
 ---

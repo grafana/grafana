@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/loki/
   - ../features/datasources/loki/
-  - /docs/grafana/latest/datasources/loki/
+  - /docs/grafana/next/datasources/loki/
 description: Guide for using Loki in Grafana
 keywords:
   - grafana
@@ -121,12 +121,12 @@ datasources:
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           # url will be interpreted as query for the datasource
-          url: '$${__value.raw}'
+          url: "$${__value.raw}"
 
         # Field with external link.
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
-          url: 'http://localhost:16686/trace/$${__value.raw}'
+          url: "http://localhost:16686/trace/$${__value.raw}"
     secureJsonData:
       basicAuthPassword: test_password
 ```

@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/correlations/
-  - /docs/grafana/latest/developers/http_api/correlations/
+  - /docs/grafana/next/developers/http_api/correlations/
 description: Grafana Correlations HTTP API
 keywords:
   - grafana
@@ -10,7 +10,7 @@ keywords:
   - api
   - correlations
   - Glue
-title: 'Correlations HTTP API '
+title: "Correlations HTTP API "
 ---
 
 # Correlations API

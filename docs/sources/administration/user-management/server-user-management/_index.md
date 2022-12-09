@@ -8,7 +8,7 @@ aliases:
   - ../manage-users-and-permissions/manage-server-users/view-edit-user-account/
   - ../manage-users-and-permissions/manage-server-users/view-list-users/
   - ../manage-users-and-permissions/manage-server-users/view-user-account-details/
-  - /docs/grafana/latest/administration/user-management/server-user-management/
+  - /docs/grafana/next/administration/user-management/server-user-management/
 title: Server user management
 weight: 100
 ---

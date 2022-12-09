@@ -2,7 +2,7 @@
 aliases:
   - ../../panels/visualizations/state-timeline/
   - ../../visualizations/state-timeline/
-  - /docs/grafana/latest/panels-visualizations/visualizations/state-timeline/
+  - /docs/grafana/next/panels-visualizations/visualizations/state-timeline/
 description: State timeline visualization
 keywords:
   - grafana

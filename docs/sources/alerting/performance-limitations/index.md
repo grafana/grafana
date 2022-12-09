@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/performance-limitations/
+  - /docs/grafana/next/alerting/performance-limitations/
   - alerting-limitations/
 description: Performance considerations and limitations
 keywords:

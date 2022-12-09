@@ -2,7 +2,7 @@
 aliases:
   - ../guides/getting_started/
   - ../guides/gettingstarted/
-  - /docs/grafana/latest/getting-started/build-first-dashboard/
+  - /docs/grafana/next/getting-started/build-first-dashboard/
   - getting-started/
 description: Learn how to get started with Grafana by adding a preconfigured dashboard.
 title: Build your first dashboard

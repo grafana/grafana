@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/other/
-  - /docs/grafana/latest/developers/http_api/other/
+  - /docs/grafana/next/developers/http_api/other/
 description: Grafana Other HTTP API
 keywords:
   - grafana
@@ -9,7 +9,7 @@ keywords:
   - documentation
   - api
   - other
-title: 'Other HTTP API '
+title: "Other HTTP API "
 ---
 
 # Frontend Settings API

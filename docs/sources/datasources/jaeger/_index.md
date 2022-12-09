@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/jaeger/
   - ../features/datasources/jaeger/
-  - /docs/grafana/latest/datasources/jaeger/
+  - /docs/grafana/next/datasources/jaeger/
 description: Guide for using Jaeger in Grafana
 keywords:
   - grafana
@@ -127,20 +127,20 @@ datasources:
       tracesToLogs:
         # Field with internal link pointing to a logs data source in Grafana.
         # datasourceUid value must match the datasourceUid value of the logs data source.
-        datasourceUid: 'loki'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        mappedTags: [{ key: 'service.name', value: 'service' }]
+        datasourceUid: "loki"
+        tags: ["job", "instance", "pod", "namespace"]
+        mappedTags: [{ key: "service.name", value: "service" }]
         mapTagNamesEnabled: false
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '1h'
+        spanStartTimeShift: "1h"
+        spanEndTimeShift: "1h"
         filterByTraceID: false
         filterBySpanID: false
       tracesToMetrics:
-        datasourceUid: 'prom'
-        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        datasourceUid: "prom"
+        tags: [{ key: "service.name", value: "service" }, { key: "job" }]
         queries:
-          - name: 'Sample query'
-            query: 'sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))'
+          - name: "Sample query"
+            query: "sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))"
     secureJsonData:
       basicAuthPassword: my_password
 ```

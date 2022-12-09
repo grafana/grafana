@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/tempo/
   - ../features/datasources/tempo/
-  - /docs/grafana/latest/datasources/tempo/
+  - /docs/grafana/next/datasources/tempo/
 description: Guide for using Tempo in Grafana
 keywords:
   - grafana
@@ -153,28 +153,28 @@ datasources:
     jsonData:
       httpMethod: GET
       tracesToLogs:
-        datasourceUid: 'loki'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        mappedTags: [{ key: 'service.name', value: 'service' }]
+        datasourceUid: "loki"
+        tags: ["job", "instance", "pod", "namespace"]
+        mappedTags: [{ key: "service.name", value: "service" }]
         mapTagNamesEnabled: false
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '1h'
+        spanStartTimeShift: "1h"
+        spanEndTimeShift: "1h"
         filterByTraceID: false
         filterBySpanID: false
       tracesToMetrics:
-        datasourceUid: 'prom'
-        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        datasourceUid: "prom"
+        tags: [{ key: "service.name", value: "service" }, { key: "job" }]
         queries:
-          - name: 'Sample query'
-            query: 'sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))'
+          - name: "Sample query"
+            query: "sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))"
       serviceMap:
-        datasourceUid: 'prometheus'
+        datasourceUid: "prometheus"
       search:
         hide: false
       nodeGraph:
         enabled: true
       lokiSearch:
-        datasourceUid: 'loki'
+        datasourceUid: "loki"
 ```
 
 ## Query the data source

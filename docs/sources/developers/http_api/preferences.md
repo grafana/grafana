@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/preferences/
-  - /docs/grafana/latest/developers/http_api/preferences/
+  - /docs/grafana/next/developers/http_api/preferences/
 description: Grafana HTTP API
 keywords:
   - grafana
@@ -9,7 +9,7 @@ keywords:
   - documentation
   - api
   - preferences
-title: 'HTTP Preferences API '
+title: "HTTP Preferences API "
 ---
 
 # User and Org Preferences API

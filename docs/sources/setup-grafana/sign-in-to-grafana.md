@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/setup-grafana/sign-in-to-grafana/
+  - /docs/grafana/next/setup-grafana/sign-in-to-grafana/
 description: Learn how to sign in to Grafana
 title: Sign in to Grafana
 weight: 400

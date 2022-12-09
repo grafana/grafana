@@ -6,7 +6,7 @@ aliases:
   - ../../best-practices/common-observability-strategies/
   - ../../best-practices/dashboard-management-maturity-levels/
   - ../../getting-started/strategies/
-  - /docs/grafana/latest/dashboards/build-dashboards/best-practices/
+  - /docs/grafana/next/dashboards/build-dashboards/best-practices/
 description: Best practices for working with Grafana
 menuTitle: Best practices
 title: Grafana dashboard best practices

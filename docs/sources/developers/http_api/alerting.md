@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/alerting/
-  - /docs/grafana/latest/developers/http_api/alerting/
+  - /docs/grafana/next/developers/http_api/alerting/
 description: Grafana Alerts HTTP API
 keywords:
   - grafana
@@ -10,7 +10,7 @@ keywords:
   - api
   - alerting
   - alerts
-title: 'Alerting HTTP API '
+title: "Alerting HTTP API "
 ---
 
 # Alerting API

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/release-notes/release-notes-8-5-2/
+  - /docs/grafana/next/release-notes/release-notes-8-5-2/
 hide_menu: true
 title: Release notes for Grafana 8.5.2
 ---

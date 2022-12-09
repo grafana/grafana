@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/library_element/
-  - /docs/grafana/latest/developers/http_api/library_element/
+  - /docs/grafana/next/developers/http_api/library_element/
 description: Grafana Library Element HTTP API
 keywords:
   - grafana
@@ -9,7 +9,7 @@ keywords:
   - documentation
   - api
   - library-element
-title: 'Library Element HTTP API '
+title: "Library Element HTTP API "
 ---
 
 # Library Element API

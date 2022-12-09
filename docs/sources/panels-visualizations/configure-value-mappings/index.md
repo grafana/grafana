@@ -9,7 +9,7 @@ aliases:
   - ../panels/format-data/map-a-special-value/
   - ../panels/format-data/map-a-value/
   - ../panels/value-mappings/
-  - /docs/grafana/latest/panels-visualizations/configure-value-mappings/
+  - /docs/grafana/next/panels-visualizations/configure-value-mappings/
 menuTitle: Configure value mappings
 title: Configure value mappings
 weight: 600

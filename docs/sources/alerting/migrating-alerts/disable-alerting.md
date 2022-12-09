@@ -2,7 +2,7 @@
 aliases:
   - ../disable-alerting/
   - ../unified-alerting/disable-alerting/
-  - /docs/grafana/latest/alerting/migrating-alerts/disable-alerting/
+  - /docs/grafana/next/alerting/migrating-alerts/disable-alerting/
 description: Disable alerting in Grafana
 title: Disable alerting in Grafana
 weight: 105

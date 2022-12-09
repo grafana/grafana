@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/
+  - /docs/grafana/next/developers/
   - plugins/developing/
 title: Developers
 weight: 190

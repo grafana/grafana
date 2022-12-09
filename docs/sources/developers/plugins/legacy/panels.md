@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../plugins/developing/panels/
-  - /docs/grafana/latest/developers/plugins/legacy/panels/
+  - /docs/grafana/next/developers/plugins/legacy/panels/
 keywords:
   - grafana
   - plugins

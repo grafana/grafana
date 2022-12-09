@@ -3,13 +3,13 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v8-1/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v8-1/
+  - /docs/grafana/next/whatsnew/whats-new-in-v8-1/
 description: Feature and improvement highlights for Grafana v8.1
 keywords:
   - grafana
   - new
   - documentation
-  - '8.1'
+  - "8.1"
   - release notes
 title: What's new in Grafana v8.1
 weight: -33

@@ -25,7 +25,7 @@ aliases:
   - ../../variables/variable-types/add-text-box-variable/
   - ../../variables/variable-types/chained-variables/
   - ../../variables/variable-types/global-variables/
-  - /docs/grafana/latest/dashboards/variables/add-template-variables/
+  - /docs/grafana/next/dashboards/variables/add-template-variables/
 keywords:
   - grafana
   - documentation

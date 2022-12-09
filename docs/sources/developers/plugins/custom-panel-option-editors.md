@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/custom-panel-option-editors/
+  - /docs/grafana/next/developers/plugins/custom-panel-option-editors/
 title: Custom panel option editors
 ---
 
@@ -15,12 +15,12 @@ The editor in the example below lets the user toggle a boolean value by clicking
 **SimpleEditor.tsx**
 
 ```ts
-import React from 'react';
-import { Button } from '@grafana/ui';
-import { StandardEditorProps } from '@grafana/data';
+import React from "react";
+import { Button } from "@grafana/ui";
+import { StandardEditorProps } from "@grafana/data";
 
 export const SimpleEditor: React.FC<StandardEditorProps<boolean>> = ({ value, onChange }) => {
-  return <Button onClick={() => onChange(!value)}>{value ? 'Disable' : 'Enable'}</Button>;
+  return <Button onClick={() => onChange(!value)}>{value ? "Disable" : "Enable"}</Button>;
 };
 ```
 
@@ -31,9 +31,9 @@ To use a custom panel option editor, use the `addCustomEditor` on the `OptionsUI
 ```ts
 export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions((builder) => {
   return builder.addCustomEditor({
-    id: 'label',
-    path: 'label',
-    name: 'Label',
+    id: "label",
+    path: "label",
+    name: "Label",
     editor: SimpleEditor,
   });
 });
@@ -76,9 +76,9 @@ You can now configure the editor for each option, by configuring the `settings` 
 ```ts
 export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions((builder) => {
   return builder.addCustomEditor({
-    id: 'index',
-    path: 'index',
-    name: 'Index',
+    id: "index",
+    path: "index",
+    name: "Index",
     editor: SimpleEditor,
     settings: {
       from: 1,

@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../plugins/development/
-  - /docs/grafana/latest/developers/plugins/legacy/
+  - /docs/grafana/next/developers/plugins/legacy/
   - /docs/grafana/next/plugins/apps/
   - /docs/grafana/next/plugins/datasources/
   - /docs/grafana/next/plugins/developing/development/
@@ -68,7 +68,7 @@ The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and
 Example:
 
 ```javascript
-import { ClockCtrl } from './clock_ctrl';
+import { ClockCtrl } from "./clock_ctrl";
 
 export { ClockCtrl as PanelCtrl };
 ```
@@ -76,12 +76,12 @@ export { ClockCtrl as PanelCtrl };
 The module class is also where css for the dark and light themes is imported:
 
 ```javascript
-import { loadPluginCss } from 'app/plugins/sdk';
-import WorldmapCtrl from './worldmap_ctrl';
+import { loadPluginCss } from "app/plugins/sdk";
+import WorldmapCtrl from "./worldmap_ctrl";
 
 loadPluginCss({
-  dark: 'plugins/grafana-worldmap-panel/css/worldmap.dark.css',
-  light: 'plugins/grafana-worldmap-panel/css/worldmap.light.css',
+  dark: "plugins/grafana-worldmap-panel/css/worldmap.dark.css",
+  light: "plugins/grafana-worldmap-panel/css/worldmap.light.css",
 });
 
 export { WorldmapCtrl as PanelCtrl };

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/add-support-for-explore-queries/
+  - /docs/grafana/next/developers/plugins/add-support-for-explore-queries/
 title: Add support for Explore queries
 ---
 
@@ -21,12 +21,12 @@ To extend Explore functionality for your data source, you can define an Explore-
 1. Create a file `ExploreQueryEditor.tsx` in the `src` directory of your plugin, with the following content:
 
    ```ts
-   import React from 'react';
+   import React from "react";
 
-   import { QueryEditorProps } from '@grafana/data';
-   import { QueryField } from '@grafana/ui';
-   import { DataSource } from './DataSource';
-   import { MyQuery, MyDataSourceOptions } from './types';
+   import { QueryEditorProps } from "@grafana/data";
+   import { QueryField } from "@grafana/ui";
+   import { DataSource } from "./DataSource";
+   import { MyQuery, MyDataSourceOptions } from "./types";
 
    type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -39,8 +39,8 @@ To extend Explore functionality for your data source, you can define an Explore-
 
    ```ts
    // [...]
-   import { CoreApp } from '@grafana/data';
-   import ExploreQueryEditor from './ExploreQueryEditor';
+   import { CoreApp } from "@grafana/data";
+   import ExploreQueryEditor from "./ExploreQueryEditor";
 
    type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 

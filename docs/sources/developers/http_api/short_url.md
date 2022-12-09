@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/short_url/
-  - /docs/grafana/latest/developers/http_api/short_url/
+  - /docs/grafana/next/developers/http_api/short_url/
 description: Grafana Short URL HTTP API
 keywords:
   - grafana
@@ -9,7 +9,7 @@ keywords:
   - documentation
   - api
   - shortUrl
-title: 'Short URL HTTP API '
+title: "Short URL HTTP API "
 ---
 
 # Short URL API

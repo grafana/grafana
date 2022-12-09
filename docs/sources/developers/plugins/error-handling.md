@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/error-handling/
+  - /docs/grafana/next/developers/plugins/error-handling/
 title: Error handling
 ---
 
@@ -28,7 +28,7 @@ const numberField = frame.fields.find((field) =>
 To display an error message to the user, `throw` an `Error` with the message you want to display:
 
 ```ts
-throw new Error('An error occurred');
+throw new Error("An error occurred");
 ```
 
 Grafana displays the error message in the top-left corner of the panel.
@@ -42,7 +42,7 @@ try {
   failingFunction();
 } catch (err) {
   console.error(err);
-  throw new Error('Something went wrong');
+  throw new Error("Something went wrong");
 }
 ```
 
@@ -56,10 +56,10 @@ Users have full freedom when they create data source queries for panels. If your
 
 ```ts
 if (!numberField) {
-  throw new Error('Query result is missing a number field');
+  throw new Error("Query result is missing a number field");
 }
 
 if (frame.length === 0) {
-  throw new Error('Query returned an empty result');
+  throw new Error("Query returned an empty result");
 }
 ```

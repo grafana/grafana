@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/
+  - /docs/grafana/next/alerting/
   - about-alerting/
   - unified-alerting/alerting/
 title: Alerting

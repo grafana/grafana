@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/add-anonymous-usage-reporting/
+  - /docs/grafana/next/developers/plugins/add-anonymous-usage-reporting/
 title: Add anonymous usage reporting
 ---
 
@@ -13,21 +13,21 @@ By adding usage tracking to your plugin you will send events of how your plugin 
 Lets say we have a QueryEditor that looks something like the example below. It has an editor field where you can write your query and a query type selector so you can select what kind of query result you are expecting that query to return.
 
 ```ts
-import React, { ReactElement } from 'react';
-import { InlineFieldRow, InlineField, Select, CodeEditor } from '@grafana/ui';
-import type { EditorProps } from './types';
+import React, { ReactElement } from "react";
+import { InlineFieldRow, InlineField, Select, CodeEditor } from "@grafana/ui";
+import type { EditorProps } from "./types";
 
 export function QueryEditor(props: EditorProps): ReactElement {
   const { datasource, query, onChange, onRunQuery } = props;
-  const queryType = { value: query.value ?? 'timeserie' };
+  const queryType = { value: query.value ?? "timeserie" };
   const queryTypes = [
     {
-      label: 'Timeserie',
-      value: 'timeserie',
+      label: "Timeserie",
+      value: "timeserie",
     },
     {
-      label: 'Table',
-      value: 'table',
+      label: "Table",
+      value: "table",
     },
   ];
 
@@ -71,24 +71,24 @@ export function QueryEditor(props: EditorProps): ReactElement {
 Lets say that we would like to track how the usage looks between time series and table queries. All you need to do is to add the `usePluginInteractionReporter` to fetch a report function which takes two arguments. The first one is the event name which is used to identify the interaction being made. It need to start with `grafana_plugin_` which makes it easier to differentiate plugin events from Grafana core events. The second argument is optional and should be used to attach contextual data to the event. In our example, that would be the query type. It is optional because it does not make sense to pass contextual data for all user interactions.
 
 ```ts
-import React, { ReactElement } from 'react';
-import { InlineFieldRow, InlineField, Select, CodeEditor } from '@grafana/ui';
-import { usePluginInteractionReporter } from '@grafana/runtime';
-import type { EditorProps } from './types';
+import React, { ReactElement } from "react";
+import { InlineFieldRow, InlineField, Select, CodeEditor } from "@grafana/ui";
+import { usePluginInteractionReporter } from "@grafana/runtime";
+import type { EditorProps } from "./types";
 
 export function QueryEditor(props: EditorProps): ReactElement {
   const { datasource, query, onChange, onRunQuery } = props;
   const report = usePluginInteractionReporter();
 
-  const queryType = { value: query.value ?? 'timeserie' };
+  const queryType = { value: query.value ?? "timeserie" };
   const queryTypes = [
     {
-      label: 'Timeserie',
-      value: 'timeserie',
+      label: "Timeserie",
+      value: "timeserie",
     },
     {
-      label: 'Table',
-      value: 'table',
+      label: "Table",
+      value: "table",
     },
   ];
 
@@ -106,7 +106,7 @@ export function QueryEditor(props: EditorProps): ReactElement {
       rawQuery: type,
     });
 
-    report('grafana_plugin_executed_query', {
+    report("grafana_plugin_executed_query", {
       query_type: queryType.value,
     });
 

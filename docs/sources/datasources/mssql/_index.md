@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/mssql/
   - ../features/datasources/mssql/
-  - /docs/grafana/latest/datasources/mssql/
+  - /docs/grafana/next/datasources/mssql/
 description: Guide for using Microsoft SQL Server in Grafana
 keywords:
   - grafana
@@ -125,7 +125,7 @@ datasources:
       connMaxLifetime: 14400 # Grafana v5.4+
       connectionTimeout: 0 # Grafana v9.3+
     secureJsonData:
-      password: 'Password!'
+      password: "Password!"
 ```
 
 ## Query the data source

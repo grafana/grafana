@@ -4,7 +4,7 @@ aliases:
   - ../data-sources/google-cloud-monitoring/preconfig-cloud-monitoring-dashboards/
   - ../features/datasources/cloudmonitoring/
   - ../features/datasources/stackdriver/
-  - /docs/grafana/latest/datasources/google-cloud-monitoring/
+  - /docs/grafana/next/datasources/google-cloud-monitoring/
   - cloudmonitoring/
   - preconfig-cloud-monitoring-dashboards/
 description: Guide for using Google Cloud Monitoring in Grafana

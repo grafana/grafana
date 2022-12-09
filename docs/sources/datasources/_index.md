@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/
+  - /docs/grafana/next/datasources/
   - data-sources/
   - overview/
 title: Data sources

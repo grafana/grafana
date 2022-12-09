@@ -3,13 +3,13 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v7-2/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-2/
+  - /docs/grafana/next/whatsnew/whats-new-in-v7-2/
 description: Feature and improvement highlights for Grafana v7.2
 keywords:
   - grafana
   - new
   - documentation
-  - '7.2'
+  - "7.2"
   - release notes
 title: What's New in Grafana v7.2
 weight: -29

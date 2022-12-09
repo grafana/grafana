@@ -3,7 +3,7 @@ aliases:
   - ../data-sources/aws-cloudwatch/
   - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
   - ../data-sources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/
+  - /docs/grafana/next/datasources/aws-cloudwatch/
   - cloudwatch/
   - preconfig-cloudwatch-dashboards/
   - provision-cloudwatch/
@@ -258,7 +258,7 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
-      customMetricsNamespaces: 'CWAgent,CustomNameSpace'
+      customMetricsNamespaces: "CWAgent,CustomNameSpace"
       profile: secondary
 ```
 
@@ -274,8 +274,8 @@ datasources:
       authType: keys
       defaultRegion: eu-west-2
     secureJsonData:
-      accessKey: '<your access key>'
-      secretKey: '<your secret key>'
+      accessKey: "<your access key>"
+      secretKey: "<your secret key>"
 ```
 
 **Using AWS SDK Default and ARN of IAM Role to Assume:**

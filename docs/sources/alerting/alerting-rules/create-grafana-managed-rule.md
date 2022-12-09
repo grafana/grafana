@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
-  - /docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
+  - /docs/grafana/next/alerting/alerting-rules/create-grafana-managed-rule/
 description: Create Grafana managed alert rule
 keywords:
   - grafana
@@ -63,7 +63,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 - Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../fundamentals/evaluate-grafana-alerts/#alerting-on-numeric-data-1" >}})).
 - Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
-![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
+![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png "Query section multi dimensional screenshot")
 
 > **Note:** Grafana does not support alert queries with template variables. More information is available at <https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514>.
 
