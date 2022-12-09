@@ -345,6 +345,16 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add configuration_hash column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
 		Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32,
 	}))
+
+	// TODO: This must be run AFTER we move records to the history table.
+	// TODO: Does this conflict with the add index above? Do we need to drop that one and add this one?
+	mg.AddMigration("drop non-unique orgID index", migrator.NewDropIndexMigration(alertConfiguration, &migrator.Index{
+		Cols: []string{"org_id"},
+	}))
+	mg.AddMigration("add unique index on orgID", migrator.NewAddIndexMigration(alertConfiguration, &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id"},
+	}))
 }
 
 func AddAlertmanagerConfigHistoryMigrations(mg *migrator.Migrator) {
