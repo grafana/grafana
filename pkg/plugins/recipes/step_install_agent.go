@@ -2,13 +2,14 @@ package recipes
 
 import "github.com/grafana/grafana/pkg/models"
 
-func newInstallAgentStep(meta RecipeStepMeta, metrics []AgentMetrics) *installAgentStep {
+func newInstallAgentStep(settings *installAgentSettings) *installAgentStep {
 	return &installAgentStep{
 		Action: "install-agent",
-		Meta:   meta,
-		Settings: &installAgentSettings{
-			Metrics: metrics,
+		Meta: RecipeStepMeta{
+			Name:        "Installing Grafana agent on server",
+			Description: "Grafana agent is used to collect and ship metrics to Prometheus",
 		},
+		Settings: settings,
 	}
 }
 

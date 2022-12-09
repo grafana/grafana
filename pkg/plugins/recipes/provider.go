@@ -29,7 +29,7 @@ func (s *staticRecipesProvider) GetAll() []*Recipe {
 	return s.recipes
 }
 
-func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, datasourceService datasources.DataSourceService, dashboardService dashboards.DashboardService) RecipesProvider {
+func ProvideService(cfg *setting.Cfg, pi plugins.Installer, ps plugins.Store, ds datasources.DataSourceService, dash dashboards.DashboardService) RecipesProvider {
 
 	recipes := []*Recipe{
 		// Linux Server
@@ -42,15 +42,10 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/linux.png",
 			},
 			Steps: []RecipeStep{
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing Jira",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "grafana-jira-datasource",
-						Version: "1.0.9",
-					},
-				),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "grafana-jira-datasource",
+					Version: "1.0.9",
+				}),
 				newInstructionStep(
 					InstructionStepMeta{
 						Name:                                "Some instruction",
@@ -174,63 +169,54 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/docker.png",
 			},
 			Steps: []RecipeStep{
-				newInstallAgentStep(RecipeStepMeta{
-					Name:        "Install Grafana Agent",
-					Description: "Install the Grafana Agent to collect metrics from your server",
-				}, []AgentMetrics{
-					{
-						Name: "container_last_seen",
-					},
-					{
-						Name: "container_memory_usage_bytes",
-					},
-					{
-						Name: "container_fs_inodes_total",
-					},
-					{
-						Name: "container_cpu_usage_seconds_total",
-					},
-					{
-						Name: "machine_memory_bytes",
-					},
-					{
-						Name: "container_fs_usage_bytes",
-					},
-					{
-						Name: "container_network_receive_bytes_total",
-					},
-					{
-						Name: "machine_scrape_error",
-					},
-					{
-						Name: "container_spec_memory_reservation_limit_bytes",
-					},
-					{
-						Name: "container_network_transmit_bytes_total",
-					},
-					{
-						Name: "container_network_tcp_usage_total",
-					},
-					{
-						Name: "container_fs_limit_bytes",
-					},
-					{
-						Name: "container_fs_inodes_free",
+				newInstallAgentStep(&installAgentSettings{
+					Metrics: []AgentMetrics{
+						{
+							Name: "container_last_seen",
+						},
+						{
+							Name: "container_memory_usage_bytes",
+						},
+						{
+							Name: "container_fs_inodes_total",
+						},
+						{
+							Name: "container_cpu_usage_seconds_total",
+						},
+						{
+							Name: "machine_memory_bytes",
+						},
+						{
+							Name: "container_fs_usage_bytes",
+						},
+						{
+							Name: "container_network_receive_bytes_total",
+						},
+						{
+							Name: "machine_scrape_error",
+						},
+						{
+							Name: "container_spec_memory_reservation_limit_bytes",
+						},
+						{
+							Name: "container_network_transmit_bytes_total",
+						},
+						{
+							Name: "container_network_tcp_usage_total",
+						},
+						{
+							Name: "container_fs_limit_bytes",
+						},
+						{
+							Name: "container_fs_inodes_free",
+						},
 					},
 				}),
-				newSetupDatasourceStep(datasourceService, RecipeStepMeta{
-					Name:        "Setting up datasource",
-					Description: "something here..",
+				newSetupDatasourceStep(ds, &datasourceSettings{}),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "grafana-jira-datasource",
+					Version: "1.0.9",
 				}),
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing Jira",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "grafana-jira-datasource",
-						Version: "1.0.9",
-					},
-				),
 				newInstructionStep(
 					InstructionStepMeta{
 						Name:                                "Some instruction",
@@ -341,7 +327,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 						Summary:   "Kernel is predicted to exhaust file descriptors limit soon.",
 					},
 				}),
-				newSetupDashboardStep(dashboardService, RecipeStepMeta{
+				newSetupDashboardStep(dash, RecipeStepMeta{
 					Name:        "Setup dashboards to view docker metrics",
 					Description: "Dashboard to visualize metrics gathered by this recipe",
 				},
@@ -354,7 +340,7 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 						},
 					},
 				),
-				newSetupDashboardStep(dashboardService, RecipeStepMeta{
+				newSetupDashboardStep(dash, RecipeStepMeta{
 					Name:        "Setup dashboard to view docker logs",
 					Description: "Dashboard to visualize logs gathered by this recipe.",
 				},
@@ -380,15 +366,10 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/mysql.png",
 			},
 			Steps: []RecipeStep{
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing Jira",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "grafana-jira-datasource",
-						Version: "1.0.9",
-					},
-				),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "grafana-jira-datasource",
+					Version: "1.0.9",
+				}),
 				newInstructionStep(
 					InstructionStepMeta{
 						Name:                                "Some instruction",
@@ -398,24 +379,14 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 						InstructionTestExpectedHttpResponse: "200",
 					},
 				),
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing K6 app",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "grafana-k6-app",
-						Version: "0.4.1",
-					},
-				),
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing Anodot panel",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "anodot-panel",
-						Version: "2.0.1",
-					},
-				),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "grafana-k6-app",
+					Version: "0.4.1",
+				}),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "anodot-panel",
+					Version: "2.0.1",
+				}),
 			},
 		},
 
@@ -429,15 +400,10 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/apple.svg",
 			},
 			Steps: []RecipeStep{
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing Jira",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "grafana-jira-datasource",
-						Version: "1.0.9",
-					},
-				),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "grafana-jira-datasource",
+					Version: "1.0.9",
+				}),
 				newInstructionStep(
 					InstructionStepMeta{
 						Name:                                "Some instruction",
@@ -447,24 +413,38 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 						InstructionTestExpectedHttpResponse: "200",
 					},
 				),
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing K6 app",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "grafana-k6-app",
-						Version: "0.4.1",
-					},
-				),
-				newPluginInstallStep(i, cfg, ps,
-					RecipeStepMeta{
-						Name:        "Installing Anodot panel",
-						Description: "Some description here...",
-					}, &installPlugin{
-						Id:      "anodot-panel",
-						Version: "2.0.1",
-					},
-				),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "grafana-k6-app",
+					Version: "0.4.1",
+				}),
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "anodot-panel",
+					Version: "2.0.1",
+				}),
+			},
+		},
+
+		// postgres collect metrics
+		{
+			Id:   "metrics-postgres",
+			Name: "Postgres",
+			Meta: RecipeMeta{
+				Summary:     "Collect metrics and logs related to PostgreSQL",
+				Description: "This recipe configures the Grafana agent to collect metrics related to the PostgreSQL server and send them to Prometheus.\n\nIt will configure a useful default dashboard for visualization of the collected metrics.",
+				Logo:        "https://storage.googleapis.com/grafanalabs-integration-logos/postgres.svg",
+			},
+			Steps: []RecipeStep{
+				newPluginInstallStep(pi, cfg, ps, &installPluginSettings{
+					Id:      "prometheus",
+					Version: "5.0.0",
+				}),
+				newSetupDatasourceStep(ds, &datasourceSettings{
+					Name:      "Recipes/Agent/Cortext",
+					Type:      "prometheus",
+					Access:    "proxy",
+					Url:       "http://localhost:9009/api/prom",
+					BasicAuth: false,
+				}),
 			},
 		},
 	}

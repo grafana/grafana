@@ -2,22 +2,31 @@ package recipes
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-func newSetupDatasourceStep(ds datasources.DataSourceService, meta RecipeStepMeta) *setupDatasourceStep {
+func newSetupDatasourceStep(ds datasources.DataSourceService, settings *datasourceSettings) *setupDatasourceStep {
 	return &setupDatasourceStep{
 		Action: "setup-datasource",
-		Meta:   meta,
-		ds:     ds,
+		Meta: RecipeStepMeta{
+			Name:        fmt.Sprintf("Configuring %s data source", settings.Type),
+			Description: fmt.Sprintf("Configuring so Grafana can connect to the %s instance to query data", settings.Type),
+		},
+		Settings: *settings,
+		ds:       ds,
 	}
 }
 
 // TODO: add fields needed to setup datasource
 type datasourceSettings struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	Access    string `json:"access"`
+	Url       string `json:"url"`
+	BasicAuth bool   `json:"basicAuth"`
 }
 
 type setupDatasourceStep struct {
@@ -38,8 +47,14 @@ func (s *setupDatasourceStep) Apply(c *models.ReqContext) error {
 
 	// TODO: map config to AddDataSourceCommand
 	cmd := datasources.AddDataSourceCommand{
-		UserId: c.UserID,
-		OrgId:  c.OrgID,
+		UserId:    c.UserID,
+		OrgId:     c.OrgID,
+		Type:      s.Settings.Type,
+		Name:      s.Settings.Name,
+		Access:    datasources.DsAccess(s.Settings.Access),
+		Url:       s.Settings.Url,
+		BasicAuth: s.Settings.BasicAuth,
+		ReadOnly:  true,
 	}
 
 	if err := s.ds.AddDataSource(c.Req.Context(), &cmd); err != nil {

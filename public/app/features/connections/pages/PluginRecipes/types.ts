@@ -40,10 +40,8 @@ export type Screenshot = { name: string; url: string };
 // Step - Install Plugin
 // ---------------------
 export type InstallPluginStepSettings = {
-  plugin: {
-    id: string;
-    version: string;
-  };
+  id: string;
+  version: string;
 };
 
 // Step - Prompt

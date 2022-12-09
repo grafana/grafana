@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -11,22 +12,20 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type installPlugin struct {
+type installPluginSettings struct {
 	Id      string `json:"id"`
 	Version string `json:"version"`
 }
-type installPluginSettings struct {
-	Plugin *installPlugin `json:"plugin"`
-}
 
-func newPluginInstallStep(installer plugins.Installer, cfg *setting.Cfg, store plugins.Store, meta RecipeStepMeta, plugin *installPlugin) *installPluginRecipeStep {
+func newPluginInstallStep(installer plugins.Installer, cfg *setting.Cfg, store plugins.Store, settings *installPluginSettings) *installPluginRecipeStep {
 	// TODO: add logic to check for version missmatch between installed plugin and plugin required by recipe.
 	return &installPluginRecipeStep{
 		Action: "install-plugin",
-		Meta:   meta,
-		Settings: &installPluginSettings{
-			Plugin: plugin,
+		Meta: RecipeStepMeta{
+			Name:        fmt.Sprintf("Installing %s plugin", settings.Id),
+			Description: fmt.Sprintf("Adding support for %s to Grafana", settings.Id),
 		},
+		Settings:  settings,
 		installer: installer,
 		cfg:       cfg,
 		store:     store,
@@ -51,8 +50,7 @@ func (s *installPluginRecipeStep) Apply(c *models.ReqContext) error {
 		return nil
 	}
 
-	p := s.Settings.Plugin
-	err = s.installer.Add(c.Req.Context(), p.Id, p.Version, plugins.CompatOpts{
+	err = s.installer.Add(c.Req.Context(), s.Settings.Id, s.Settings.Version, plugins.CompatOpts{
 		GrafanaVersion: s.cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -95,8 +93,7 @@ func (s *installPluginRecipeStep) Revert(c *models.ReqContext) error {
 		return nil
 	}
 
-	p := s.Settings.Plugin
-	err = s.installer.Remove(c.Req.Context(), p.Id)
+	err = s.installer.Remove(c.Req.Context(), s.Settings.Id)
 
 	if err == nil {
 		return nil
@@ -118,7 +115,7 @@ func (s *installPluginRecipeStep) Revert(c *models.ReqContext) error {
 }
 
 func (s *installPluginRecipeStep) Status(c *models.ReqContext) (StepStatus, error) {
-	if _, exists := s.store.Plugin(c.Req.Context(), s.Settings.Plugin.Id); exists {
+	if _, exists := s.store.Plugin(c.Req.Context(), s.Settings.Id); exists {
 		return Completed, nil
 	}
 	return NotCompleted, nil
