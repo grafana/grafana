@@ -111,7 +111,7 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
         isLoading={loadState.loading}
         formatCreateLabel={formatCreateLabel}
         autoFocus
-        isOpen={Boolean(loadState.value)}
+        isOpen={!loadState.loading}
         onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         options={loadState.value ?? []}
