@@ -3,10 +3,12 @@ import React, { ReactElement } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-import { PluginRecipeStep, PromptStepSettings } from '../types';
+import { PluginRecipe, PluginRecipeStep, PromptStepSettings } from '../types';
 
 type Props = {
+  recipe: PluginRecipe;
   step: PluginRecipeStep<PromptStepSettings>;
+  stepIndex: number;
 };
 
 export function StepPrompt({ step }: Props): ReactElement {

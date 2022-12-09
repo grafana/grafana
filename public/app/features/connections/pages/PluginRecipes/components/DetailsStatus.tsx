@@ -9,24 +9,24 @@ import { Steps } from './Steps';
 
 type Props = {
   recipe: PluginRecipe;
-  // Can be called to start or continue the install
-  onInstall: () => void;
 
   // Tells if the whole recipe is installed
   isInstalled: boolean;
 
   // Tells if the install is in progress
   isInstallInProgress: boolean;
+
+  onRunInstall: () => void;
 };
 
-export function DetailsStatus({ recipe, onInstall, isInstalled, isInstallInProgress }: Props): ReactElement {
+export function DetailsStatus({ recipe, isInstalled, isInstallInProgress, onRunInstall }: Props): ReactElement {
   const styles = useStyles2(getStyles);
 
   // Display the steps immadiately after clicking install (and also if the recipe has been installed)
   if (isInstallInProgress || isInstalled) {
     return (
       <div>
-        <Steps steps={recipe.steps} />
+        <Steps recipe={recipe} />
       </div>
     );
   }
@@ -35,7 +35,7 @@ export function DetailsStatus({ recipe, onInstall, isInstalled, isInstallInProgr
     <div className={styles.notInstalledContainer}>
       <div className={styles.notInstalledText}>Start monitoring your service now!</div>
       <div>
-        <Button size="lg" onClick={onInstall}>
+        <Button size="lg" onClick={onRunInstall}>
           Install
         </Button>
       </div>

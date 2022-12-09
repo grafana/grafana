@@ -5,10 +5,11 @@ import { useParams } from 'react-router-dom';
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { useGetSingle, applyStep } from './api';
+import { useGetSingle } from './api';
 import { DetailsOverview, DetailsStatus, DetailsHeaderActions } from './components';
 import { tabIds, usePluginRecipeDetailsPageTabs } from './hooks';
-import { PluginRecipeAction, PluginRecipeStep, StepStatus } from './types';
+import { PluginRecipeStep, StepStatus } from './types';
+import { installRecipe } from './utils';
 
 const navId = 'connections-plugin-recipes';
 
@@ -17,47 +18,14 @@ export function PluginRecipeDetailsPage() {
   const { status, error, data, refetch } = useGetSingle(params.id);
   const { tabId, tabs } = usePluginRecipeDetailsPageTabs();
   const styles = useStyles2(getStyles);
-  // Tells if the user instantiated the install, but it hasn't been recorded by the backend yet
   const [isInstallStarted, setIsInstallStarted] = useState(false);
   const isStepCompleted = (step: PluginRecipeStep) => step.status?.code === StepStatus.Completed;
   const isInstalled = useMemo(() => (data ? data.steps.every(isStepCompleted) : false), [data]);
-  // Tells if the install is in progress in the backend
   const isInstallInProgress = useMemo(() => (data ? Boolean(data.isInstallStarted) : false), [data]);
 
-  // Finds the steps that can be auto-applied starting from an index
-  const getAutoApplicapleStepsFromIndex = (index = 0) => {
-    if (!data) {
-      return [];
-    }
-
-    const autoApplicableSteps = [];
-
-    for (const step of data.steps.slice(index)) {
-      if (step.action === PluginRecipeAction.DisplayInfo || step.action === PluginRecipeAction.Prompt) {
-        break;
-      }
-
-      autoApplicableSteps.push(step);
-    }
-    return autoApplicableSteps;
-  };
-
-  // Can be used to either start or continue an install process
-  const onRunInstall = async (startFromStepIndex = 0) => {
-    if (!data) {
-      return;
-    }
-
+  const onRunInstall = async () => {
     setIsInstallStarted(true);
-
-    // Find the steps that:
-    //   - are not applied yet
-    //   - can be auto-applied (without user-interaction)
-    // Apply them sequentally
-    const autoApplicableSteps = getAutoApplicapleStepsFromIndex(startFromStepIndex);
-    await Promise.all(autoApplicableSteps.map((_, i) => applyStep(data.id, i)));
-
-    // Instantiate a periodic refetch
+    await installRecipe(data);
     refetch();
   };
 
@@ -131,7 +99,7 @@ export function PluginRecipeDetailsPage() {
               recipe={data}
               isInstalled={isInstalled}
               isInstallInProgress={isInstallStarted || isInstallInProgress}
-              onInstall={onRunInstall}
+              onRunInstall={onRunInstall}
             />
           )}
         </div>

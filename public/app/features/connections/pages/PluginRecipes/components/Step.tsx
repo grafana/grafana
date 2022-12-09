@@ -3,23 +3,22 @@ import React, { ReactElement } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-import { PluginRecipeStep, isInstrucitonStep, isPromptStep, StepStatus } from '../types';
+import { isInstrucitonStep, isPromptStep, StepStatus, PluginRecipe } from '../types';
 
 import { StepInstruction } from './StepInstruction';
 import { StepPrompt } from './StepPrompt';
 
 type Props = {
-  // The step information
-  step: PluginRecipeStep;
+  recipe: PluginRecipe;
+
+  stepIndex: number;
 
   // Displays the step content if set to TRUE
   isOpen: boolean;
-
-  // Called when the step is completed
-  onComplete: () => void;
 };
 
-export function Step({ step, isOpen, onComplete }: Props): ReactElement {
+export function Step({ recipe, stepIndex, isOpen }: Props): ReactElement {
+  const step = recipe.steps[stepIndex];
   const styles = useStyles2(getStyles);
 
   return (
@@ -41,20 +40,22 @@ export function Step({ step, isOpen, onComplete }: Props): ReactElement {
           {Boolean(step.description) && <div className={styles.stepDescription}>{step.description}</div>}
 
           {/* Content */}
-          <StepContent step={step} onComplete={onComplete} />
+          <StepContent recipe={recipe} stepIndex={stepIndex} />
         </>
       )}
     </div>
   );
 }
 
-export function StepContent({ step, onComplete }: Omit<Props, 'isOpen'>): ReactElement | null {
+export function StepContent({ recipe, stepIndex }: Omit<Props, 'isOpen'>): ReactElement | null {
+  const step = recipe.steps[stepIndex];
+
   if (isInstrucitonStep(step)) {
-    return <StepInstruction step={step} />;
+    return <StepInstruction recipe={recipe} step={step} stepIndex={stepIndex} />;
   }
 
   if (isPromptStep(step)) {
-    return <StepPrompt step={step} />;
+    return <StepPrompt recipe={recipe} step={step} stepIndex={stepIndex} />;
   }
 
   return null;

@@ -4,21 +4,34 @@ import React, { ReactElement, useState } from 'react';
 import { renderMarkdown } from '@grafana/data';
 import { useStyles2, Button, HorizontalGroup, Tab, TabsBar, TabContent } from '@grafana/ui';
 
-import { InstructionStepSettings, PluginRecipeStep } from '../types';
+import { applyStep, useGetSingle } from '../api';
+import { InstructionStepSettings, PluginRecipe, PluginRecipeStep } from '../types';
+import { installRecipe } from '../utils';
 
 type Props = {
+  recipe: PluginRecipe;
   step: PluginRecipeStep<InstructionStepSettings>;
+  stepIndex: number;
 };
 
-export function StepInstruction({ step }: Props): ReactElement {
+export function StepInstruction({ recipe, step, stepIndex }: Props): ReactElement {
+  const { refetch } = useGetSingle(recipe.id);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const styles = useStyles2(getStyles);
+  const { instruction, instructionTestURL } = step.settings;
+
+  const onDone = async () => {
+    await applyStep(recipe.id, stepIndex);
+    refetch();
+    await installRecipe(recipe, stepIndex + 1);
+    refetch();
+  };
 
   return (
     <>
       {/* Instructions as Markdown */}
       <TabsBar>
-        {step.settings.instruction.map((instruction, index) => (
+        {instruction.map((instruction, index) => (
           <Tab
             key={index}
             label={instruction.os}
@@ -30,18 +43,20 @@ export function StepInstruction({ step }: Props): ReactElement {
       <TabContent>
         <div
           className={styles.container}
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(step.settings.instruction[activeTabIndex].markdown) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(instruction[activeTabIndex].markdown) }}
         />
       </TabContent>
 
       {/* Actions */}
       <div className={styles.buttonGroup}>
         <HorizontalGroup>
-          <Button onClick={() => {}} variant="secondary">
-            Test
-          </Button>
+          {instructionTestURL && (
+            <Button onClick={() => {}} variant="secondary">
+              Test
+            </Button>
+          )}
 
-          <Button onClick={() => {}} icon="check">
+          <Button onClick={onDone} icon="check">
             Done
           </Button>
         </HorizontalGroup>

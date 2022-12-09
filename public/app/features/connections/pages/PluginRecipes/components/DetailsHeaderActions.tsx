@@ -14,21 +14,21 @@ export type Props = {
 };
 
 export const DetailsHeaderActions = ({ onInstall, isInstalled, isInstallInProgress }: Props) => {
-  if (isInstallInProgress) {
+  if (isInstalled) {
     return (
       <>
-        <Button icon="check" onClick={onInstall} disabled>
-          Installing...
+        <Button onClick={onInstall} variant="destructive">
+          Uninstall
         </Button>
       </>
     );
   }
 
-  if (isInstalled) {
+  if (isInstallInProgress) {
     return (
       <>
-        <Button icon="plus" onClick={onInstall} variant="destructive">
-          Uninstall
+        <Button icon="check" onClick={onInstall} disabled>
+          Installing...
         </Button>
       </>
     );

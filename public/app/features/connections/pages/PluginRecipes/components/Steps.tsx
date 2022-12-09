@@ -3,17 +3,18 @@ import React, { ReactElement, useState } from 'react';
 
 import { Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
-import { PluginRecipeStep, PluginRecipeAction, StepStatus } from '../types';
+import { PluginRecipeStep, PluginRecipeAction, StepStatus, PluginRecipe } from '../types';
 
 import { Step } from './Step';
 
 type Props = {
-  steps: PluginRecipeStep[];
+  recipe: PluginRecipe;
 };
 
-export function Steps({ steps = [] }: Props): ReactElement {
+export function Steps({ recipe }: Props): ReactElement {
+  const { steps } = recipe;
   const styles = useStyles2(getStyles);
-  const [activeStepIndex, setActiveStepIndex] = useState(findActiveStepIndex(steps));
+  const [activeStepIndex] = useState(findActiveStepIndex(steps));
   const isStepCompleted = (step: PluginRecipeStep) => step.status.code === StepStatus.Completed;
   const isStepNotCompleted = (step: PluginRecipeStep) => step.status.code === StepStatus.NotCompleted;
   const isStepLoading = (step: PluginRecipeStep) => step.status.code === StepStatus.Loading;
@@ -25,11 +26,6 @@ export function Steps({ steps = [] }: Props): ReactElement {
     isStepLoading(step) || (isStepNotCompleted(step) && isStepActive(i) && isStepExpandable(step));
   const shouldExpandStep = (step: PluginRecipeStep, i: number) =>
     isStepNotCompleted(step) && isStepActive(i) && isStepExpandable(step);
-
-  // TODO: make this listen to changes from the backend as well
-  const goToNextStep = () => {
-    setActiveStepIndex(activeStepIndex + 1);
-  };
 
   return (
     <div>
@@ -73,7 +69,7 @@ export function Steps({ steps = [] }: Props): ReactElement {
               isStepError(step) && styles.stepContentError
             )}
           >
-            <Step step={step} isOpen={shouldExpandStep(step, i)} onComplete={goToNextStep} />
+            <Step recipe={recipe} stepIndex={i} isOpen={shouldExpandStep(step, i)} />
           </div>
         </div>
       ))}
