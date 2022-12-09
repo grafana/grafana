@@ -4,10 +4,10 @@
 import React, { useMemo } from 'react';
 import uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
+import { Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
+import { TimeSeries, TooltipPlugin, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { config } from 'app/core/config';
@@ -21,7 +21,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 
 import { prepareCandlestickFields } from './fields';
-import { defaultColors, CandlestickOptions, VizDisplayMode } from './models.gen';
+import { CandlestickOptions, defaultColors, VizDisplayMode } from './models.gen';
 import { drawMarkers, FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
@@ -47,7 +47,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   const theme = useTheme2();
 
   const info = useMemo(() => {
-    return prepareCandlestickFields(data?.series, options, theme, timeRange);
+    return prepareCandlestickFields(data.series, options, theme, timeRange);
   }, [data, options, theme, timeRange]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
@@ -212,7 +212,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       tweakAxis,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev]);
+  }, [options, data.structureRev, data.series.length]);
 
   if (!info) {
     return (
@@ -243,6 +243,16 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       options={options}
     >
       {(config, alignedDataFrame) => {
+        alignedDataFrame.fields.forEach((field) => {
+          field.getLinks = getLinksSupplier(
+            alignedDataFrame,
+            field,
+            field.state!.scopedVars!,
+            replaceVariables,
+            timeZone
+          );
+        });
+
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />

@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/urfave/cli/v2"
 )
@@ -122,7 +122,10 @@ func UpdateDebRepo(cfg PublishConfig, workDir string) error {
 		repoName = "beta"
 	}
 
-	repoRoot := path.Join(os.TempDir(), "deb-repo")
+	repoRoot, err := fsutil.CreateTempDir("deb-repo")
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := os.RemoveAll(repoRoot); err != nil {
 			log.Printf("Failed to remove temporary directory %q: %s\n", repoRoot, err.Error())

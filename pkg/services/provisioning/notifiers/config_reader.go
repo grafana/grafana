@@ -13,15 +13,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type configReader struct {
 	encryptionService   encryption.Internal
 	notificationService *notifications.NotificationService
-	orgStore            utils.OrgStore
+	orgService          org.Service
 	log                 log.Logger
 }
 
@@ -94,7 +95,7 @@ func (cr *configReader) checkOrgIDAndOrgName(ctx context.Context, notifications 
 					notification.OrgID = 0
 				}
 			} else {
-				if err := utils.CheckOrgExists(ctx, cr.orgStore, notification.OrgID); err != nil {
+				if err := utils.CheckOrgExists(ctx, cr.orgService, notification.OrgID); err != nil {
 					return fmt.Errorf("failed to provision %q notification: %w", notification.Name, err)
 				}
 			}

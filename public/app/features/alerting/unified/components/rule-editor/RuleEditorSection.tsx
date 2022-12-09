@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FieldSet, useStyles2 } from '@grafana/ui';
@@ -10,7 +10,12 @@ export interface RuleEditorSectionProps {
   description?: string;
 }
 
-export const RuleEditorSection: FC<RuleEditorSectionProps> = ({ title, stepNo, children, description }) => {
+export const RuleEditorSection = ({
+  title,
+  stepNo,
+  children,
+  description,
+}: React.PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
 
   return (

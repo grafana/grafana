@@ -17,6 +17,7 @@ export const SectionNavToggle = ({ className, isExpanded, onClick }: Props) => {
 
   return (
     <IconButton
+      tooltip={'Toggle section navigation'}
       aria-label={isExpanded ? 'Close section navigation' : 'Open section navigation'}
       name={isExpanded ? 'angle-left' : 'angle-right'}
       className={classnames(className, styles.icon)}

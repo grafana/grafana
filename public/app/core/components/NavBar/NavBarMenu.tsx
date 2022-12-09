@@ -15,7 +15,7 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
-import getNavTranslation from './navBarItem-translations';
+import { getNavTitle } from './navBarItem-translations';
 import { isMatchOrChildMatch } from './utils';
 
 const MENU_WIDTH = '350px';
@@ -256,7 +256,7 @@ export function NavItem({
                   }}
                   styleOverrides={styles.item}
                   target={childLink.target}
-                  text={childLink.text}
+                  text={getNavTitle(childLink.id) ?? childLink.text}
                   url={childLink.url}
                   isMobile={true}
                 />
@@ -267,7 +267,7 @@ export function NavItem({
       </CollapsibleNavItem>
     );
   } else if (link.emptyMessageId) {
-    const emptyMessageTranslated = getNavTranslation(link.emptyMessageId);
+    const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
@@ -297,7 +297,7 @@ export function NavItem({
                 <NavBarItemIcon link={link} />
               </FeatureHighlightWrapper>
             </div>
-            <span className={styles.linkText}>{link.text}</span>
+            <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
       </li>
@@ -398,7 +398,7 @@ function CollapsibleNavItem({
           contentClassName={styles.collapseContent}
           label={
             <div className={cx(styles.labelWrapper, { [styles.primary]: isActive })}>
-              <span className={styles.linkText}>{link.text}</span>
+              <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
             </div>
           }
         >

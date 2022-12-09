@@ -5,6 +5,7 @@ import { lastPointTracker } from './lastPointTracker';
 import { routeLayer } from './routeLayer';
 import { dayNightLayer } from './dayNightLayer';
 import { dynamicGeoJSONLayer } from './geojsonDynamic';
+import { photosLayer } from './photosLayer';
 
 /**
  * Registry for layer handlers
@@ -17,4 +18,5 @@ export const dataLayers = [
     dynamicGeoJSONLayer, 
     dayNightLayer, 
     routeLayer,
+    photosLayer
 ];

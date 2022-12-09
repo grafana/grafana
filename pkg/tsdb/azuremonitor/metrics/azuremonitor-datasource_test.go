@@ -15,11 +15,14 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
@@ -207,6 +210,19 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
 		},
 		{
+			name: "Includes a region and a filter",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain": "PT1M",
+				"top":       "10",
+				"region":    "westus",
+				"resources": []types.AzureMonitorResource{{ResourceGroup: "rg", ResourceName: "vm"}},
+			},
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
+			expectedFilter:          "Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm'",
+		},
+		{
 			name: "includes a resource as a filter",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain": "PT1M",
@@ -264,6 +280,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
+			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
+			require.NoError(t, err)
+
 			azureMonitorQuery := &types.AzureMonitorQuery{
 				URL:    tt.expectedURL,
 				Target: tt.azureMonitorQueryTarget,
@@ -273,14 +292,22 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				Filter: tt.expectedFilter,
+			}
+			if tt.azureMonitorVariedProperties["region"] != nil {
+				// If the region is included, the filter will be added in the Body of the request
+				azureMonitorQuery.BodyFilter = tt.expectedFilter
+			} else {
+				// In other case, the filter will be added in the URL
+				if tt.expectedFilter != "" {
+					assert.Equal(t, tt.expectedFilter, queries[0].Params.Get("$filter"))
+				} else {
+					assert.Equal(t, false, queries[0].Params.Has("$filter"))
+				}
 			}
 			if azureMonitorQuery.URL == "" {
 				azureMonitorQuery.URL = "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics"
 			}
 
-			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
-			require.NoError(t, err)
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -310,7 +337,7 @@ func TestCustomNamespace(t *testing.T) {
 			},
 		}
 
-		result, err := datasource.buildQueries(q, types.DatasourceInfo{})
+		result, err := datasource.buildQueries(log.New("test"), q, types.DatasourceInfo{})
 		require.NoError(t, err)
 		expected := "custom/namespace"
 		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
@@ -737,7 +764,6 @@ func loadTestFile(t *testing.T, name string) types.AzureMonitorResponse {
 
 func TestAzureMonitorCreateRequest(t *testing.T) {
 	ctx := context.Background()
-	dsInfo := types.DatasourceInfo{}
 	url := "http://ds/"
 
 	tests := []struct {
@@ -759,7 +785,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureMonitorDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo, url)
+			req, err := ds.createRequest(ctx, log.New("test"), url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())

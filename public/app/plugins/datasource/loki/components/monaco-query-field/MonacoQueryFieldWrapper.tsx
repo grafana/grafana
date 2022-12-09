@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { MonacoQueryFieldLazy } from './MonacoQueryFieldLazy';
 import { Props as MonacoProps } from './MonacoQueryFieldProps';
 
-type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
+export type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
   onChange: (query: string) => void;
   onRunQuery: () => void;
   runQueryOnBlur: boolean;

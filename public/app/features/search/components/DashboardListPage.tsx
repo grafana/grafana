@@ -45,7 +45,7 @@ export const DashboardListPage: FC<Props> = memo(({ match, location }) => {
         className={css`
           display: flex;
           flex-direction: column;
-          overflow: hidden;
+          height: 100%;
         `}
       >
         <ManageDashboardsNew folder={value?.folder} />

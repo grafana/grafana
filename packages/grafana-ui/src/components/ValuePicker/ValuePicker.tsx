@@ -32,6 +32,9 @@ export interface ValuePickerProps<T> {
   menuPlacement?: 'auto' | 'bottom' | 'top';
   /** Which ButtonFill to use */
   fill?: ButtonFill;
+
+  /** custom css applied to the button */
+  buttonCss?: string;
 }
 
 export function ValuePicker<T>({
@@ -46,6 +49,7 @@ export function ValuePicker<T>({
   isFullWidth = true,
   menuPlacement,
   fill,
+  buttonCss,
 }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
   const theme = useTheme2();
@@ -55,6 +59,7 @@ export function ValuePicker<T>({
       {!isPicking && (
         <Button
           size={size || 'sm'}
+          className={buttonCss}
           icon={icon || 'plus'}
           onClick={() => setIsPicking(true)}
           variant={variant}

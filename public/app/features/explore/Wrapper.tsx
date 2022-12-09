@@ -1,20 +1,25 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { inRange } from 'lodash';
+import React, { useEffect, useRef, useState } from 'react';
+import { useWindowSize } from 'react-use';
 
+import { isTruthy } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { isTruthy } from 'app/core/utils/types';
-import { useSelector, useDispatch } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
 import { Branding } from '../../core/components/Branding/Branding';
+import { useCorrelations } from '../correlations/useCorrelations';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, resetExploreAction } from './state/main';
+import { lastSavedUrl, saveCorrelationsAction, resetExploreAction, splitSizeUpdateAction } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -32,8 +37,16 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useExplorePageTitle();
   const dispatch = useDispatch();
   const queryParams = props.queryParams;
-  const { keybindings, chrome } = useGrafana();
+  const { keybindings, chrome, config } = useGrafana();
   const navModel = useNavModel('explore');
+  const { get } = useCorrelations();
+  const { warning } = useAppNotification();
+  const panelCtx = usePanelContext();
+  const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
+  const [rightPaneWidthRatio, setRightPaneWidthRatio] = useState(0.5);
+  const { width: windowWidth } = useWindowSize();
+  const minWidth = 200;
+  const exploreState = useSelector((state) => state.explore);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -44,6 +57,27 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
   }, [keybindings]);
+
+  useEffect(() => {
+    if (!config.featureToggles.correlations) {
+      dispatch(saveCorrelationsAction([]));
+    } else {
+      get.execute();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (get.value) {
+      dispatch(saveCorrelationsAction(get.value));
+    } else if (get.error) {
+      dispatch(saveCorrelationsAction([]));
+      warning(
+        'Could not load correlations.',
+        'Correlations data could not be loaded, DataLinks may have partial data.'
+      );
+    }
+  }, [get.value, get.error, dispatch, warning]);
 
   useEffect(() => {
     lastSavedUrl.left = undefined;
@@ -70,20 +104,65 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
   }, []);
 
+  const updateSplitSize = (size: number) => {
+    const evenSplitWidth = windowWidth / 2;
+    const areBothSimilar = inRange(size, evenSplitWidth - 100, evenSplitWidth + 100);
+    if (areBothSimilar) {
+      dispatch(splitSizeUpdateAction({ largerExploreId: undefined }));
+    } else {
+      dispatch(
+        splitSizeUpdateAction({
+          largerExploreId: size > evenSplitWidth ? ExploreId.right : ExploreId.left,
+        })
+      );
+    }
+
+    setRightPaneWidthRatio(size / windowWidth);
+  };
+
   const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
+  let widthCalc = 0;
+  if (hasSplit) {
+    if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
+      widthCalc = exploreState.maxedExploreId === ExploreId.right ? windowWidth - minWidth : minWidth;
+    } else if (exploreState.evenSplitPanes) {
+      widthCalc = Math.floor(windowWidth / 2);
+    } else if (rightPaneWidthRatio !== undefined) {
+      widthCalc = windowWidth * rightPaneWidthRatio;
+    }
+  }
 
   return (
     <div className={styles.pageScrollbarWrapper}>
       <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
       <div className={styles.exploreWrapper}>
-        <ErrorBoundaryAlert style="page">
-          <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={queryParams.left} />
-        </ErrorBoundaryAlert>
-        {hasSplit && (
+        <SplitPaneWrapper
+          splitOrientation="vertical"
+          paneSize={widthCalc}
+          minSize={minWidth}
+          maxSize={minWidth * -1}
+          primary="second"
+          splitVisible={hasSplit}
+          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
+          onDragFinished={(size) => {
+            if (size) {
+              updateSplitSize(size);
+            }
+          }}
+        >
           <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={queryParams.right} />
+            <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
           </ErrorBoundaryAlert>
-        )}
+          {hasSplit && (
+            <ErrorBoundaryAlert style="page">
+              <ExplorePaneContainer
+                exploreId={ExploreId.right}
+                urlQuery={queryParams.right}
+                eventBus={eventBus.current}
+              />
+            </ErrorBoundaryAlert>
+          )}
+        </SplitPaneWrapper>
       </div>
     </div>
   );
@@ -95,8 +174,7 @@ const useExplorePageTitle = () => {
     [state.explore.left.datasourceInstance?.name, state.explore.right?.datasourceInstance?.name].filter(isTruthy)
   );
 
-  const documentTitle = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;
-  document.title = documentTitle;
+  document.title = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;
 };
 
 export default Wrapper;

@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -26,6 +28,7 @@ type DashboardService interface {
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error
 	DeleteACLByUser(ctx context.Context, userID int64) error
+	CountDashboardsInFolder(ctx context.Context, query *CountDashboardsInFolderQuery) (int64, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -76,6 +79,11 @@ type Store interface {
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *models.Dashboard, overwrite bool) (bool, error)
 	DeleteACLByUser(context.Context, int64) error
 
+	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
+	// CountDashboardsInFolder returns the number of dashboards associated with
+	// the given parent folder ID.
+	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
+
 	FolderStore
 }
 
@@ -84,9 +92,9 @@ type Store interface {
 //go:generate mockery --name FolderStore --structname FakeFolderStore --inpackage --filename folder_store_mock.go
 type FolderStore interface {
 	// GetFolderByTitle retrieves a folder by its title
-	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error)
+	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error)
 	// GetFolderByUID retrieves a folder by its UID
-	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*models.Folder, error)
+	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error)
 	// GetFolderByID retrieves a folder by its ID
-	GetFolderByID(ctx context.Context, orgID int64, id int64) (*models.Folder, error)
+	GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error)
 }

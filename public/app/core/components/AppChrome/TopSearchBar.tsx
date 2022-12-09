@@ -8,8 +8,10 @@ import { useSelector } from 'app/types';
 
 import { NewsContainer } from './News/NewsContainer';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
+import { QuickAdd } from './QuickAdd/QuickAdd';
 import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
+import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
 import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -21,26 +23,27 @@ export function TopSearchBar() {
   const profileNode = navIndex['profile'];
 
   return (
-    <div className={styles.container}>
-      <div className={styles.leftContent}>
+    <div className={styles.layout}>
+      <TopSearchBarSection>
         <a className={styles.logo} href="/" title="Go to home">
           <Icon name="grafana" size="xl" />
         </a>
         <OrganizationSwitcher />
-      </div>
-      <div className={styles.searchWrapper}>
+      </TopSearchBarSection>
+      <TopSearchBarSection>
         <TopSearchBarInput />
-      </div>
-      <div className={styles.actions}>
+      </TopSearchBarSection>
+      <TopSearchBarSection align="right">
+        <QuickAdd />
         {helpNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />}>
+          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        <NewsContainer />
+        <NewsContainer className={styles.newsButton} />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
-          <Dropdown overlay={<TopNavBarMenu node={profileNode} />}>
+          <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
             <ToolbarButton
               className={styles.profileButton}
               imgSrc={contextSrv.user.gravatarUrl}
@@ -49,45 +52,42 @@ export function TopSearchBar() {
             />
           </Dropdown>
         )}
-      </div>
+      </TopSearchBarSection>
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      height: TOP_BAR_LEVEL_HEIGHT,
+const getStyles = (theme: GrafanaTheme2) => ({
+  layout: css({
+    height: TOP_BAR_LEVEL_HEIGHT,
+    display: 'flex',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+    padding: theme.spacing(0, 2),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    justifyContent: 'space-between',
+
+    [theme.breakpoints.up('sm')]: {
+      gridTemplateColumns: '1fr 1fr 1fr',
       display: 'grid',
-      gap: theme.spacing(0.5),
-      gridTemplateColumns: '1fr 2fr 1fr',
-      padding: theme.spacing(0, 2),
-      alignItems: 'center',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
-    leftContent: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-    }),
-    logo: css({
-      display: 'flex',
-    }),
-    searchWrapper: css({}),
-    searchInput: css({}),
-    actions: css({
-      display: 'flex',
-      gap: theme.spacing(0.5),
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-    }),
-    profileButton: css({
-      img: {
-        borderRadius: '50%',
-        height: '24px',
-        marginRight: 0,
-        width: '24px',
-      },
-    }),
-  };
-};
+
+      justifyContent: 'flex-start',
+    },
+  }),
+  logo: css({
+    display: 'flex',
+  }),
+  profileButton: css({
+    img: {
+      borderRadius: '50%',
+      height: '24px',
+      marginRight: 0,
+      width: '24px',
+    },
+  }),
+  newsButton: css({
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+  }),
+});

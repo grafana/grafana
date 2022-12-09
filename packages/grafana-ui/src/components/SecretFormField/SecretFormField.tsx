@@ -18,6 +18,7 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
   inputWidth?: number;
   // Placeholder of the input field when in non configured state.
   placeholder?: string;
+  interactive?: boolean;
 }
 
 const getSecretFormFieldStyles = () => {
@@ -46,6 +47,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
   isConfigured,
   tooltip,
   placeholder = 'Password',
+  interactive,
   ...inputProps
 }: Props) => {
   const styles = getSecretFormFieldStyles();
@@ -53,6 +55,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
     <FormField
       label={label!}
       tooltip={tooltip}
+      interactive={interactive}
       labelWidth={labelWidth}
       inputEl={
         isConfigured ? (

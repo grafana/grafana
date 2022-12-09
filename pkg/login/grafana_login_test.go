@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 func TestLoginUsingGrafanaDB(t *testing.T) {
@@ -55,7 +57,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 }
 
 type grafanaLoginScenarioContext struct {
-	store                  *mockstore.SQLStoreMock
+	store                  db.DB
 	userService            *usertest.FakeUserService
 	loginUserQuery         *models.LoginUserQuery
 	validatePasswordCalled bool
@@ -70,7 +72,7 @@ func grafanaLoginScenario(t *testing.T, desc string, fn grafanaLoginScenarioFunc
 		origValidatePassword := validatePassword
 
 		sc := &grafanaLoginScenarioContext{
-			store: mockstore.NewSQLStoreMock(),
+			store: dbtest.NewFakeDB(),
 			loginUserQuery: &models.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
@@ -100,11 +102,9 @@ func mockPasswordValidation(valid bool, sc *grafanaLoginScenarioContext) {
 }
 
 func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(usr *user.User) {
-	sc.store.ExpectedUser = usr
 	sc.userService = usertest.NewUserServiceFake()
 	sc.userService.ExpectedUser = usr
 	if usr == nil {
-		sc.store.ExpectedError = user.ErrUserNotFound
 		sc.userService.ExpectedError = user.ErrUserNotFound
 	}
 }

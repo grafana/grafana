@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"net/url"
 	"strings"
 
@@ -34,18 +33,21 @@ func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedVal
 	if urlStr == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
-	var urls []*url.URL
-	for _, uS := range strings.Split(urlStr, ",") {
+
+	urlParts := strings.Split(urlStr, ",")
+	urls := make([]*url.URL, 0, len(urlParts))
+
+	for _, uS := range urlParts {
 		uS = strings.TrimSpace(uS)
 		if uS == "" {
 			continue
 		}
 		uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
-		url, err := url.Parse(uS)
+		u, err := url.Parse(uS)
 		if err != nil {
 			return nil, fmt.Errorf("invalid url property in settings: %w", err)
 		}
-		urls = append(urls, url)
+		urls = append(urls, u)
 	}
 	return &AlertmanagerConfig{
 		NotificationChannelConfig: config,
@@ -126,7 +128,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			password: n.basicAuthPassword,
 			body:     body,
 		}, n.logger); err != nil {
-			n.logger.Warn("failed to send to Alertmanager", "err", err, "alertmanager", n.Name, "url", u.String())
+			n.logger.Warn("failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
 			lastErr = err
 			numErrs++
 		}

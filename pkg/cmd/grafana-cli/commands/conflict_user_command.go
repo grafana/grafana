@@ -9,20 +9,27 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/urfave/cli/v2"
 )
 
 func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
@@ -33,6 +40,7 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		HomePath: cmd.HomePath(),
 		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +60,21 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
-	resolver := ConflictResolver{Users: conflicts}
+	quotaService := quotaimpl.ProvideService(s, cfg)
+	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, quotaService)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
+	}
+	routing := routing.ProvideRegister()
+	featMgmt, err := featuremgmt.ProvideManagerService(cfg, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get feature management service", err)
+	}
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, featMgmt)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
+	}
+	resolver := ConflictResolver{Users: conflicts, Store: s, userService: userService, ac: acService}
 	resolver.BuildConflictBlocks(conflicts, f)
 	return &resolver, nil
 }
@@ -125,17 +147,20 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 		// read in the file to ingest
 		arg := cmd.Args().First()
 		if arg == "" {
-			return errors.New("please specify a absolute path to file to read from")
+			return fmt.Errorf("please specify a absolute path to file to read from")
 		}
 		b, err := os.ReadFile(filepath.Clean(arg))
 		if err != nil {
-			return fmt.Errorf("could not read file with error %e", err)
+			logger.Error(color.RedString("validation failed with an error"))
+			return fmt.Errorf("could not read file with error %s", err)
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", err)
+			logger.Error(color.RedString("validation failed with an error"))
+			return fmt.Errorf("could not validate file with error:\n%s", validErr)
 		}
-		logger.Info("File validation complete without errors.\n\n File can be used with ingesting command `ingest-file`.\n\n")
+		logger.Info(color.GreenString("File validation complete.\n"))
+		logger.Info("File can be used with the `ingest-file` command.\n\n")
 		return nil
 	}
 }
@@ -159,7 +184,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		}
 		validErr := getValidConflictUsers(r, b)
 		if validErr != nil {
-			return fmt.Errorf("could not validate file with error %s", validErr)
+			return fmt.Errorf("could not validate file with error:\n%s", validErr)
 		}
 		// should we rebuild blocks here?
 		// kind of a weird thing maybe?
@@ -167,7 +192,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 			return fmt.Errorf("no users")
 		}
 		r.showChanges()
-		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation?") {
+		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation") {
 			return fmt.Errorf("user cancelled")
 		}
 		err = r.MergeConflictingUsers(context.Context)
@@ -197,6 +222,12 @@ func getDocumentationForFile() string {
 #
 # If you feel like you want to wait with a specific block,
 # delete all lines regarding that conflict block.
+# email - the user’s email
+# login - the user’s login/username
+# last_seen_at - the user’s last login
+# auth_module - if the user was created/signed in using an authentication provider
+# conflict_email - a boolean if we consider the email to be a conflict
+# conflict_login - a boolean if we consider the login to be a conflict
 #
 `
 }
@@ -228,7 +259,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			previouslySeenLogins[strings.ToLower(u.Login)] = true
 		}
 	}
-
 	// tested in https://regex101.com/r/una3zC/1
 	diffPattern := `^[+-]`
 	// compiling since in a loop
@@ -236,23 +266,50 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	if err != nil {
 		return fmt.Errorf("unable to compile regex %s: %w", diffPattern, err)
 	}
-	for _, row := range strings.Split(string(b), "\n") {
+	counterKeepUsersForBlock := map[string]int{}
+	counterDeleteUsersForBlock := map[string]int{}
+	currentBlock := ""
+	for rowNumber, row := range strings.Split(string(b), "\n") {
+		// end of file
 		if row == "" {
-			// end of file
 			break
 		}
 		// if the row starts with a #, it is a comment
 		if row[0] == '#' {
-			// comment
-			continue
-		}
-		entryRow := matchingExpression.Match([]byte(row))
-		if !entryRow {
-			// block row
-			// conflict: hej
 			continue
 		}
 
+		entryRow := matchingExpression.Match([]byte(row))
+		// not an entry row -> is a conflict block row
+		if !entryRow {
+			// check for malformed row
+			// rows should be of the form
+			// conflict: <conflict>
+			// or
+			// + id: <id>
+			// - id: <id>
+			if (row[0] != '-') && (row[0] != '+') && (row[0] != 'c') {
+				return fmt.Errorf("invalid start character (expected '+,-') found %c for row number %d", row[0], rowNumber+1)
+			}
+
+			// is a conflict block row
+			// conflict: hej
+			currentBlock = row
+			continue
+		}
+		// need to track how many keep users we have for a block
+		if _, ok := counterKeepUsersForBlock[currentBlock]; !ok {
+			counterKeepUsersForBlock[currentBlock] = 0
+		}
+		if _, ok := counterDeleteUsersForBlock[currentBlock]; !ok {
+			counterDeleteUsersForBlock[currentBlock] = 0
+		}
+		if row[0] == '+' {
+			counterKeepUsersForBlock[currentBlock] += 1
+		}
+		if row[0] == '-' {
+			counterDeleteUsersForBlock[currentBlock] += 1
+		}
 		newUser := &ConflictingUser{}
 		err := newUser.Marshal(row)
 		if err != nil {
@@ -266,6 +323,18 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		}
 		// valid entry
 		newConflicts = append(newConflicts, *newUser)
+	}
+	for block, count := range counterKeepUsersForBlock {
+		// check if we only have one addition for each block
+		if count != 1 {
+			return fmt.Errorf("invalid number of users to keep, expected 1, got %d for block: %s", count, block)
+		}
+	}
+	for block, count := range counterDeleteUsersForBlock {
+		// check if we have at least one deletion for each block
+		if count < 1 {
+			return fmt.Errorf("invalid number of users to delete, should be at least 1, got %d for block %s", count, block)
+		}
 	}
 	r.ValidUsers = newConflicts
 	r.BuildConflictBlocks(newConflicts, fmt.Sprintf)
@@ -283,11 +352,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
-		if err := r.Store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			err := sess.Begin()
-			if err != nil {
-				return fmt.Errorf("could not open a db session: %w", err)
-			}
+		if err := r.Store.InTransaction(ctx, func(ctx context.Context) error {
 			for _, u := range users {
 				if u.Direction == "+" {
 					id, err := strconv.ParseInt(u.ID, 10, 64)
@@ -303,36 +368,34 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 					fromUserIds = append(fromUserIds, id)
 				}
 			}
-			if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&intoUser); err != nil {
+			if _, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: intoUserId}); err != nil {
 				return fmt.Errorf("could not find intoUser: %w", err)
 			}
-
 			for _, fromUserId := range fromUserIds {
-				var fromUser user.User
-				exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&fromUser)
+				_, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: fromUserId})
+				if err != nil && errors.Is(err, user.ErrUserNotFound) {
+					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
+				}
 				if err != nil {
 					return fmt.Errorf("could not find fromUser: %w", err)
 				}
-				if !exists {
-					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
-				}
-				// // delete the user
-				delErr := r.Store.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+				//  delete the user
+				delErr := r.userService.Delete(ctx, &user.DeleteUserCommand{UserID: fromUserId})
 				if delErr != nil {
 					return fmt.Errorf("error during deletion of user: %w", delErr)
 				}
+				delACErr := r.ac.DeleteUserPermissions(ctx, 0, fromUserId)
+				if delACErr != nil {
+					return fmt.Errorf("error during deletion of user access control: %w", delACErr)
+				}
 			}
-			commitErr := sess.Commit()
-			if commitErr != nil {
-				return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
-			}
-			userStore := userimpl.ProvideStore(r.Store, setting.NewCfg())
+
 			updateMainCommand := &user.UpdateUserCommand{
 				UserID: intoUser.ID,
 				Login:  strings.ToLower(intoUser.Login),
 				Email:  strings.ToLower(intoUser.Email),
 			}
-			updateErr := userStore.Update(ctx, updateMainCommand)
+			updateErr := r.userService.Update(ctx, updateMainCommand)
 			if updateErr != nil {
 				return fmt.Errorf("could not update user: %w", updateErr)
 			}
@@ -376,7 +439,14 @@ func (r *ConflictResolver) showChanges() {
 		}
 		b.WriteString("Keep the following user.\n")
 		b.WriteString(fmt.Sprintf("%s\n", block))
-		b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login))
+		b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, mainUser.Email, mainUser.Login)))
+		for _, r := range fmt.Sprintf("%s%s", mainUser.Email, mainUser.Login) {
+			if unicode.IsUpper(r) {
+				b.WriteString("Will be change to:\n")
+				b.WriteString(color.GreenString(fmt.Sprintf("id: %s, email: %s, login: %s\n", mainUser.ID, strings.ToLower(mainUser.Email), strings.ToLower(mainUser.Login))))
+				break
+			}
+		}
 		b.WriteString("\n\n")
 		b.WriteString("The following user(s) will be deleted.\n")
 		for _, user := range users {
@@ -384,7 +454,7 @@ func (r *ConflictResolver) showChanges() {
 				continue
 			}
 			// mergeable users
-			b.WriteString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login))
+			b.WriteString(color.RedString(fmt.Sprintf("id: %s, email: %s, login: %s\n", user.ID, user.Email, user.Login)))
 		}
 		b.WriteString("\n\n")
 	}
@@ -419,6 +489,14 @@ func (r *ConflictResolver) BuildConflictBlocks(users ConflictingUsers, f Formatt
 	for _, user := range users {
 		// conflict blocks is how we identify a conflict in the user base.
 		var conflictBlock string
+		// sqlite   generates string : ""/true
+		// postgres generates string : false/true
+		if user.ConflictEmail == "false" {
+			user.ConflictEmail = ""
+		}
+		if user.ConflictLogin == "false" {
+			user.ConflictLogin = ""
+		}
 		if user.ConflictEmail != "" {
 			conflictBlock = f("conflict: %s", strings.ToLower(user.Email))
 		} else if user.ConflictLogin != "" {
@@ -533,6 +611,8 @@ func (r *ConflictResolver) ToStringPresentation() string {
 
 type ConflictResolver struct {
 	Store           *sqlstore.SQLStore
+	userService     user.Service
+	ac              accesscontrol.Service
 	Config          *setting.Cfg
 	Users           ConflictingUsers
 	ValidUsers      ConflictingUsers
@@ -607,8 +687,13 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 
 func GetUsersWithConflictingEmailsOrLogins(ctx *cli.Context, s *sqlstore.SQLStore) (ConflictingUsers, error) {
 	queryUsers := make([]ConflictingUser, 0)
-	outerErr := s.WithDbSession(ctx.Context, func(dbSession *sqlstore.DBSession) error {
-		rawSQL := conflictingUserEntriesSQL(s)
+	outerErr := s.WithDbSession(ctx.Context, func(dbSession *db.Session) error {
+		var rawSQL string
+		if s.GetDialect().DriverName() == migrator.Postgres {
+			rawSQL = conflictUserEntriesSQLPostgres()
+		} else if s.GetDialect().DriverName() == migrator.SQLite {
+			rawSQL = conflictingUserEntriesSQL(s)
+		}
 		err := dbSession.SQL(rawSQL).Find(&queryUsers)
 		return err
 	})
@@ -647,6 +732,36 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 		OR conflict_login IS NOT NULL)
 		AND (u1.` + notServiceAccount(s) + `)
 	ORDER BY conflict_email, conflict_login, u1.id`
+	return sqlQuery
+}
+
+func conflictUserEntriesSQLPostgres() string {
+	sqlQuery := `
+SELECT DISTINCT
+	u1.id,
+	u1.email,
+	u1.login,
+	u1.last_seen_at,
+	ua.auth_module,
+	((LOWER(u1.email) = LOWER(u2.email))
+		AND(u1.email != u2.email)) AS conflict_email,
+	((LOWER(u1.login) = LOWER(u2.login))
+		AND(u1.login != u2.login)) AS conflict_login
+FROM
+	"user" AS u1,
+	"user" AS u2
+	LEFT JOIN user_auth AS ua ON ua.user_id = u2.id
+WHERE ((LOWER(u1.email) = LOWER(u2.email))
+	AND(u1.email != u2.email)) IS TRUE
+	OR((LOWER(u1.login) = LOWER(u2.login))
+	AND(u1.login != u2.login)) IS TRUE
+	AND(u1.is_service_account = FALSE)
+ORDER BY
+	conflict_email,
+	conflict_login,
+	u1.id;
+;
+	`
 	return sqlQuery
 }
 

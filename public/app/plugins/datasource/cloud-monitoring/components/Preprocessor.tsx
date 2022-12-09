@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, RadioButtonGroup } from '@grafana/ui';
+import { EditorField } from '@grafana/experimental';
+import { RadioButtonGroup } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../functions';
 import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../types';
@@ -19,7 +20,7 @@ export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor
   return (
     <EditorField
       label="Pre-processing"
-      tooltip="Preprocessing options are displayed when the selected metric has a metric kind of delta or cumulative. The specific options available are determined by the metic's value type. If you select 'Rate', data points are aligned and converted to a rate per time series. If you select 'Delta', data points are aligned by their delta (difference) per time series"
+      tooltip="Preprocessing options are displayed when the selected metric has a metric kind of delta or cumulative. The specific options available are determined by the metric's value type. If you select 'Rate', data points are aligned and converted to a rate per time series. If you select 'Delta', data points are aligned by their delta (difference) per time series"
     >
       <RadioButtonGroup
         onChange={(value: PreprocessorType) => {

@@ -22,7 +22,7 @@ function getDefaultEditorMode(expr: string) {
     return QueryEditorMode.Code;
   }
 
-  const value = store.get(queryEditorModeDefaultLocalStorageKey) as QueryEditorMode;
+  const value: QueryEditorMode = store.get(queryEditorModeDefaultLocalStorageKey);
   switch (value) {
     case QueryEditorMode.Builder:
     case QueryEditorMode.Code:
@@ -54,6 +54,12 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined)
     if (app === CoreApp.Explore) {
       result.instant = true;
     }
+  }
+
+  // Unified Alerting does not support "both" for query type – fall back to "range".
+  const isBothInstantAndRange = query.instant && query.range;
+  if (app === CoreApp.UnifiedAlerting && isBothInstantAndRange) {
+    result = { ...result, instant: false, range: true };
   }
 
   return result;

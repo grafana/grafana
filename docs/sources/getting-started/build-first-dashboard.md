@@ -43,7 +43,7 @@ To create your first dashboard:
 1. Click the **New dashboard** item under the **Dashboards** icon in the side menu.
 1. On the dashboard, click **Add an empty panel**.
 1. In the New dashboard/Edit panel view, go to the **Query** tab.
-1. Configure your [query]({{< relref "../panels/query-a-data-source/add-a-query/" >}}) by selecting `-- Grafana --` from the data source selector.
+1. Configure your [query]({{< relref "../panels-visualizations/query-transform-data/#add-a-query" >}}) by selecting `-- Grafana --` from the data source selector.
 
    This generates the Random Walk dashboard.
 
@@ -54,9 +54,9 @@ Congratulations, you have created your first dashboard and it is displaying resu
 
 #### Next steps
 
-Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources/" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source/" >}}). The following topics will be of interest to you:
+Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources/" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../administration/data-source-management#add-a-data-source" >}}). The following topics will be of interest to you:
 
-- [Panels]({{< relref "../panels/" >}})
+- [Panels and visualizations]({{< relref "../panels-visualizations/" >}})
 - [Dashboards]({{< relref "../dashboards/" >}})
 - [Keyboard shortcuts]({{< relref "../dashboards/use-dashboards/#keyboard-shortcuts" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)

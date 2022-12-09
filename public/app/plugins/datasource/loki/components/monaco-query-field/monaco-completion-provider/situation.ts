@@ -17,6 +17,8 @@ import {
   Identifier,
   Grouping,
   Expr,
+  LiteralExpr,
+  MetricExpr,
 } from '@grafana/lezer-logql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -162,7 +164,7 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogRangeFromError,
   },
   {
-    path: [ERROR_NODE_ID, VectorAggregationExpr],
+    path: [ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr, MetricExpr, Expr, LogQL],
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {

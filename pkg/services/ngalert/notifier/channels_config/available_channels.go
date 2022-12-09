@@ -1,11 +1,15 @@
 package channels_config
 
 import (
+	"os"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
+	hostname, _ := os.Hostname()
+
 	pushoverSoundOptions := []SelectOption{
 		{
 			Value: "default",
@@ -132,9 +136,18 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						},
 					},
 				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated title of the message",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+					PropertyName: "title",
+				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
+					Description:  "Custom DingDing message. You can use template variables.",
 					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
@@ -161,6 +174,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "topic1",
 					PropertyName: "kafkaTopic",
 					Required:     true,
+				},
+				{
+					Label:        "Description",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated description of the Kafka message",
+					PropertyName: "description",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{
+					Label:        "Details",
+					Element:      ElementTypeTextArea,
+					Description:  "Custom details to include with the message. You can use template variables.",
+					PropertyName: "details",
+					Placeholder:  channels.DefaultMessageEmbed,
 				},
 			},
 		},
@@ -195,7 +223,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated subject of the email",
 					PropertyName: "subject",
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
 			},
 		},
@@ -215,26 +243,11 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 				},
 				{
-					Label:   "Severity",
-					Element: ElementTypeSelect,
-					SelectOptions: []SelectOption{
-						{
-							Value: "critical",
-							Label: "Critical",
-						},
-						{
-							Value: "error",
-							Label: "Error",
-						},
-						{
-							Value: "warning",
-							Label: "Warning",
-						},
-						{
-							Value: "info",
-							Label: "Info",
-						},
-					},
+					Label:        "Severity",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "error",
+					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is error. You can use templates",
 					PropertyName: "severity",
 				},
 				{ // New in 8.0.
@@ -262,9 +275,34 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Summary",
 					Description:  "You can use templates for summary",
-					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 					PropertyName: "summary",
+				},
+				{ // New in 9.4.
+					Label:        "Source",
+					Description:  "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  hostname,
+					PropertyName: "source",
+				},
+				{ // New in 9.4.
+					Label:        "Client",
+					Description:  "The name of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "Grafana",
+					PropertyName: "client",
+				},
+				{ // New in 9.4.
+					Label:        "Client URL",
+					Description:  "The URL of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "{{ .ExternalURL }}",
+					PropertyName: "client_url",
 				},
 			},
 		},
@@ -295,6 +333,22 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 							Label: "WARNING",
 						},
 					},
+				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated title to display",
+					PropertyName: "title",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{ // New in 9.3.
+					Label:        "Description",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated description of the message",
+					PropertyName: "description",
+					Placeholder:  channels.DefaultMessageEmbed,
 				},
 			},
 		},
@@ -368,6 +422,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:       ElementTypeSelect,
 					SelectOptions: pushoverSoundOptions,
 					PropertyName:  "okSound",
+				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+					PropertyName: "title",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
@@ -575,7 +636,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the Teams message.",
 					PropertyName: "title",
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 				},
 				{
 					Label:        "Section Title",
@@ -687,6 +748,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "maxAlerts",
 				},
+				{ // New in 9.3.
+					Label:        "Title",
+					Description:  "Templated title of the message.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "title",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{ // New in 9.3.
+					Label:        "Message",
+					Description:  "Custom message. You can use template variables.",
+					Element:      ElementTypeTextArea,
+					PropertyName: "message",
+					Placeholder:  channels.DefaultMessageEmbed,
+				},
 			},
 		},
 		{
@@ -696,13 +772,62 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			Heading:     "WeCom settings",
 			Options: []NotifierOption{
 				{
-					Label:        "URL",
+					Label:        "Webhook URL",
+					Description:  "Required if using GroupRobot",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Placeholder:  "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx",
 					PropertyName: "url",
-					Required:     true,
 					Secure:       true,
+					Required:     true,
+					DependsOn:    "secret",
+				},
+				{
+					Label:        "Agent ID",
+					Description:  "Required if using APIAPP, see https://work.weixin.qq.com/wework_admin/frame#apps create ApiApp",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "1000002",
+					PropertyName: "agent_id",
+					Required:     true,
+					DependsOn:    "url",
+				},
+				{
+					Label:        "Corp ID",
+					Description:  "Required if using APIAPP, see https://work.weixin.qq.com/wework_admin/frame#profile",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "wwxxxxxxxxx",
+					PropertyName: "corp_id",
+					Required:     true,
+					DependsOn:    "url",
+				},
+				{
+					Label:        "Secret",
+					Description:  "Required if using APIAPP",
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
+					Placeholder:  "secret",
+					PropertyName: "secret",
+					Secure:       true,
+					Required:     true,
+					DependsOn:    "url",
+				},
+				{
+					Label:        "Message Type",
+					Element:      ElementTypeSelect,
+					PropertyName: "msgtype",
+					SelectOptions: []SelectOption{
+						{
+							Value: "text",
+							Label: "Text",
+						},
+						{
+							Value: "markdown",
+							Label: "Markdown",
+						},
+					},
+					Placeholder: "Text",
 				},
 				{
 					Label:        "Message",
@@ -717,7 +842,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the message",
 					PropertyName: "title",
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{
+					Label:        "To User",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "@all",
+					PropertyName: "touser",
 				},
 			},
 		},
@@ -756,6 +888,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			Heading:     "Discord settings",
 			Description: "Sends notifications to Discord",
 			Options: []NotifierOption{
+				{
+					Label:        "Title",
+					Description:  "Templated title of the message",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+					PropertyName: "title",
+				},
 				{
 					Label:        "Message Content",
 					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
@@ -801,6 +941,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Required:     true,
 				},
 				{
+					Label:        "Title",
+					Description:  "Templated title of the message",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+					PropertyName: "title",
+				},
+				{
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
 					Placeholder:  channels.DefaultMessageEmbed,
@@ -822,7 +970,24 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "token",
 					Required:     true,
 					Secure:       true,
-				}},
+				},
+				{ // New in 9.3
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated title of the message",
+					PropertyName: "title",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{ // New in 9.3
+					Label:        "Description",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated description of the message",
+					PropertyName: "description",
+					Placeholder:  channels.DefaultMessageEmbed,
+				},
+			},
 		},
 		{
 			Type:        "threema",
@@ -861,6 +1026,22 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Required:     true,
 					Secure:       true,
 				},
+				{ // New in 9.3
+					Label:        "Title",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated title of the message.",
+					PropertyName: "title",
+					Placeholder:  channels.DefaultMessageTitleEmbed,
+				},
+				{ // New in 9.3
+					Label:        "Description",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated description of the message.",
+					PropertyName: "description",
+					Placeholder:  channels.DefaultMessageEmbed,
+				},
 			},
 		},
 		{
@@ -891,7 +1072,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Alert text limited to 130 characters.",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  `{{ template "default.title" . }}`,
+					Placeholder:  channels.DefaultMessageTitleEmbed,
 					PropertyName: "message",
 				},
 				{
@@ -930,6 +1111,50 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					},
 					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
 					PropertyName: "sendTagsAs",
+				},
+			},
+		},
+		{
+			Type:        "webex",
+			Name:        "Cisco Webex Teams",
+			Description: "Sends notifications to Cisco Webex Teams",
+			Heading:     "Webex settings",
+			Info:        "Notifications can be configured for any Cisco Webex Teams",
+			Options: []NotifierOption{
+				{
+					Label:        "Cisco Webex API URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "https://api.ciscospark.com/v1/messages",
+					Description:  "API endpoint at which we'll send webhooks to.",
+					PropertyName: "api_url",
+				},
+				{
+					Label:        "Room ID",
+					Description:  "The room ID to send messages to.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "GMtOWY0ZGJkNzMyMGFl",
+					PropertyName: "room_id",
+					Required:     true,
+				},
+				{
+					Label:        "Bot Token",
+					Description:  "Non-expiring access token of the bot that will post messages on our behalf.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  `GMtOWY0ZGJkNzMyMGFl-12535454-123213`,
+					PropertyName: "bot_token",
+					Secure:       true,
+					Required:     true,
+				},
+				{
+					Label:        "Message Template",
+					Description:  "Message template to use. Markdown is supported.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
 				},
 			},
 		},

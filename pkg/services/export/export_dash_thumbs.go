@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportDashboardThumbnails(helper *commitHelper, job *gitExportJob) error {
@@ -22,7 +22,7 @@ func exportDashboardThumbnails(helper *commitHelper, job *gitExportJob) error {
 		return err
 	}
 
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	return job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type dashboardThumb struct {
 			UID      string `xorm:"uid"`
 			Image    []byte `xorm:"image"`
@@ -46,7 +46,7 @@ func exportDashboardThumbnails(helper *commitHelper, job *gitExportJob) error {
 
 		err := sess.Find(&rows)
 		if err != nil {
-			if strings.HasPrefix(err.Error(), "no such table") {
+			if isTableNotExistsError(err) {
 				return nil
 			}
 			return err

@@ -14,7 +14,7 @@ func hello(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	safeBody := strings.Replace(string(body), "\n", "", -1)
+	safeBody := strings.ReplaceAll(string(body), "\n", "")
 	line := fmt.Sprintf("webbhook: -> %s", safeBody)
 	fmt.Println(line)
 	if _, err := io.WriteString(w, line); err != nil {

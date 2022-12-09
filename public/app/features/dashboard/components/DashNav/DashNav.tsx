@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useContext, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
@@ -13,6 +13,7 @@ import {
   useForceUpdate,
   Tag,
   ToolbarButtonRow,
+  ModalsContext,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
@@ -51,6 +52,7 @@ export interface OwnProps {
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
+  shareModalActiveTab?: string;
   onAddPanel: () => void;
 }
 
@@ -76,6 +78,7 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
   const { chrome } = useGrafana();
+  const { showModal, hideModal } = useContext(ModalsContext);
 
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
@@ -84,7 +87,7 @@ export const DashNav = React.memo<Props>((props) => {
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
-    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState) => {
+    dashboardSrv.starDashboard(dashboard.id, Boolean(dashboard.meta.isStarred)).then((newState) => {
       setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
@@ -127,6 +130,25 @@ export const DashNav = React.memo<Props>((props) => {
   const isPlaylistRunning = () => {
     return playlistSrv.isPlaying;
   };
+
+  // Open/Close
+  useEffect(() => {
+    const dashboard = props.dashboard;
+    const shareModalActiveTab = props.shareModalActiveTab;
+    const { canShare } = dashboard.meta;
+
+    if (canShare && shareModalActiveTab) {
+      // automagically open modal
+      showModal(ShareModal, {
+        dashboard,
+        onDismiss: hideModal,
+        activeTab: shareModalActiveTab,
+      });
+    }
+    return () => {
+      hideModal();
+    };
+  }, [showModal, hideModal, props.dashboard, props.shareModalActiveTab]);
 
   const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
@@ -316,6 +338,17 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
     buttons.push(tvButton);
+
+    if (config.featureToggles.scenes) {
+      buttons.push(
+        <ToolbarButton
+          key="button-scenes"
+          tooltip={'View as Scene'}
+          icon="apps"
+          onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
+        />
+      );
+    }
     return buttons;
   };
 
@@ -327,7 +360,7 @@ export const DashNav = React.memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   const location = useLocation();
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
-  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
+  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', query: 'folder:current' });
   const onGoBack = isFullscreen ? onClose : undefined;
 
   if (config.featureToggles.topnav) {

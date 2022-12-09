@@ -192,7 +192,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
       onBlur();
     } else {
       // Run query by default on blur
-      const previousValue = this.lastExecutedValue ? Plain.serialize(this.lastExecutedValue) : null;
+      const previousValue = this.lastExecutedValue ? Plain.serialize(this.lastExecutedValue) : '';
       const currentValue = Plain.serialize(editor.value);
 
       if (previousValue !== currentValue) {

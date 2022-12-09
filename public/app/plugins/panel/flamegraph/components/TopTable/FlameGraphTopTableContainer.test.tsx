@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { DataFrameView, MutableDataFrame } from '@grafana/data';
+import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
 
 import { Item, nestedSetToLevels } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -21,6 +21,7 @@ describe('FlameGraphTopTableContainer', () => {
     return (
       <FlameGraphTopTableContainer
         data={flameGraphData}
+        app={CoreApp.Explore}
         totalLevels={levels.length}
         selectedView={selectedView}
         search={search}

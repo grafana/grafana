@@ -16,18 +16,19 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/coremodel/dashboard"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -100,13 +101,22 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	var (
-		hasPublicDashboard bool
-		err                error
+		hasPublicDashboard     = false
+		publicDashboardEnabled = false
+		err                    error
 	)
+
+	// If public dashboards is enabled and we have a public dashboard, update meta
+	// values
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		hasPublicDashboard, err = hs.PublicDashboardsApi.PublicDashboardService.PublicDashboardEnabled(c.Req.Context(), dash.Uid)
-		if err != nil {
+		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dash.Uid)
+		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(500, "Error while retrieving public dashboards", err)
+		}
+
+		if publicDashboard != nil {
+			hasPublicDashboard = true
+			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}
 
@@ -172,7 +182,8 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		Url:                    dash.GetUrl(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
-		PublicDashboardEnabled: hasPublicDashboard,
+		PublicDashboardEnabled: publicDashboardEnabled,
+		HasPublicDashboard:     hasPublicDashboard,
 	}
 
 	// lookup folder title
@@ -214,10 +225,10 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
-	// load library panels JSON for this dashboard
-	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c.Req.Context(), dash)
-	if err != nil {
-		return response.Error(500, "Error while loading library panels", err)
+	if hs.QueryLibraryService != nil && !hs.QueryLibraryService.IsDisabled() {
+		if err := hs.QueryLibraryService.UpdateDashboardQueries(c.Req.Context(), c.SignedInUser, dash); err != nil {
+			return response.Error(500, "Error while loading saved queries", err)
+		}
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -354,21 +365,22 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagValidateDashboardsOnSave) {
-		cm := hs.Coremodels.Dashboard()
+		kind := hs.Kinds.Dashboard()
 
+		dashbytes, err := cmd.Dashboard.Bytes()
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "unable to parse dashboard", err)
+		}
 		// Ideally, coremodel validation calls would be integrated into the web
 		// framework. But this does the job for now.
 		schv, err := cmd.Dashboard.Get("schemaVersion").Int()
 
 		// Only try to validate if the schemaVersion is at least the handoff version
 		// (the minimum schemaVersion against which the dashboard schema is known to
-		// work), or if schemaVersion is absent (which will happen once the Thema
-		// schema becomes canonical).
+		// work), or if schemaVersion is absent (which will happen once the kind schema
+		// becomes canonical).
 		if err != nil || schv >= dashboard.HandoffSchemaVersion {
-			// Can't fail, web.Bind() already ensured it's valid JSON
-			b, _ := cmd.Dashboard.Bytes()
-			v, _ := cuectx.JSONtoCUE("dashboard.json", b)
-			if _, err := cm.CurrentSchema().Validate(v); err != nil {
+			if _, _, err := kind.JSONValueMux(dashbytes); err != nil {
 				return response.Error(http.StatusBadRequest, "invalid dashboard json", err)
 			}
 		}
@@ -383,20 +395,24 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.OrgId = c.OrgID
 	cmd.UserId = c.UserID
 	if cmd.FolderUid != "" {
-		folder, err := hs.folderService.GetFolderByUID(ctx, c.SignedInUser, c.OrgID, cmd.FolderUid)
+		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID:        c.OrgID,
+			UID:          &cmd.FolderUid,
+			SignedInUser: c.SignedInUser,
+		})
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(400, "Folder not found", err)
 			}
 			return response.Error(500, "Error while checking folder ID", err)
 		}
-		cmd.FolderId = folder.Id
+		cmd.FolderId = folder.ID
 	}
 
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.Id == 0
 	if newDashboard {
-		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
+		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
 		if err != nil {
 			return response.Error(500, "failed to get quota", err)
 		}
@@ -423,12 +439,6 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	allowUiUpdate := true
 	if provisioningData != nil {
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
-	}
-
-	// clean up all unnecessary library panels JSON properties so we store a minimum JSON
-	err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
-	if err != nil {
-		return response.Error(500, "Error while cleaning library panels", err)
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{
@@ -461,12 +471,18 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 
 		if liveerr != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", liveerr)
 		}
 	}
 
 	if err != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
+	}
+
+	// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	if newDashboard && !hs.accesscontrolService.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
@@ -744,6 +760,69 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	}
 
 	return response.JSON(http.StatusOK, dashVersionMeta)
+}
+
+// swagger:route POST /dashboards/validate dashboards alpha validateDashboard
+//
+// Validates a dashboard JSON against the schema.
+//
+// Produces:
+// - application/json
+//
+// Responses:
+// 200: validateDashboardResponse
+// 412: validateDashboardResponse
+// 422: validateDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response {
+	cmd := models.ValidateDashboardCommand{}
+
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	dk := hs.Kinds.Dashboard()
+	dashboardBytes := []byte(cmd.Dashboard)
+
+	// POST api receives dashboard as a string of json (so line numbers for errors stay consistent),
+	// but we need to parse the schema version out of it
+	dashboardJson, err := simplejson.NewJson(dashboardBytes)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "unable to parse dashboard", err)
+	}
+
+	schemaVersion, err := dashboardJson.Get("schemaVersion").Int()
+
+	isValid := false
+	statusCode := http.StatusOK
+	validationMessage := ""
+
+	// Only try to validate if the schemaVersion is at least the handoff version
+	// (the minimum schemaVersion against which the dashboard schema is known to
+	// work), or if schemaVersion is absent (which will happen once the Thema
+	// schema becomes canonical).
+	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
+		_, _, validationErr := dk.JSONValueMux(dashboardBytes)
+
+		if validationErr == nil {
+			isValid = true
+		} else {
+			validationMessage = validationErr.Error()
+			statusCode = http.StatusUnprocessableEntity
+		}
+	} else {
+		validationMessage = "invalid schema version"
+		statusCode = http.StatusPreconditionFailed
+	}
+
+	respData := &ValidateDashboardResponse{
+		IsValid: isValid,
+		Message: validationMessage,
+	}
+
+	return response.JSON(statusCode, respData)
 }
 
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
@@ -1178,4 +1257,10 @@ type DashboardVersionsResponse struct {
 type DashboardVersionResponse struct {
 	// in: body
 	Body *dashver.DashboardVersionMeta `json:"body"`
+}
+
+// swagger:response validateDashboardResponse
+type ValidateDashboardResponse struct {
+	IsValid bool   `json:"isValid"`
+	Message string `json:"message,omitempty"`
 }

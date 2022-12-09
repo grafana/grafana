@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { ChangeEvent, FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, InlineField, InlineLabel, Stack, TextArea, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Icon, InlineField, InlineLabel, TextArea, useStyles2 } from '@grafana/ui';
 import { HoverCard } from 'app/features/alerting/unified/components/HoverCard';
 
 import { ExpressionQuery } from '../types';

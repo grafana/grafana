@@ -1,13 +1,15 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
 import { Alert, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { featureDiscoveryApi } from './api/featureDiscoveryApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
@@ -19,11 +21,12 @@ import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
-const Silences: FC = () => {
+const Silences = () => {
   const alertManagers = useAlertManagersByPermission('instance');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const dispatch = useDispatch();
+  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const silences = useUnifiedAlertingSelector((state) => state.silences);
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
   const alertsRequest = alertManagerSourceName
@@ -38,6 +41,8 @@ const Silences: FC = () => {
     { amSourceName: alertManagerSourceName ?? '' },
     { skip: !alertManagerSourceName }
   );
+
+  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
   useEffect(() => {
     function fetchAll() {
@@ -78,6 +83,10 @@ const Silences: FC = () => {
         current={alertManagerSourceName}
         onChange={setAlertManagerSourceName}
         dataSources={alertManagers}
+      />
+      <GrafanaAlertmanagerDeliveryWarning
+        currentAlertmanager={alertManagerSourceName}
+        alertmanagerChoice={alertmanagerChoice}
       />
 
       {mimirLazyInitError && (

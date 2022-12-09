@@ -1,13 +1,30 @@
-import { render, waitFor, screen, fireEvent } from '@testing-library/react';
+import {
+  render,
+  waitFor,
+  screen,
+  fireEvent,
+  waitForElementToBeRemoved,
+  within,
+  Matcher,
+  getByRole,
+} from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { Observable } from 'rxjs';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourcePluginMeta } from '@grafana/data';
-import { BackendSrv, FetchError, FetchResponse, setDataSourceSrv, BackendSrvRequest } from '@grafana/runtime';
+import {
+  BackendSrv,
+  FetchError,
+  FetchResponse,
+  setDataSourceSrv,
+  BackendSrvRequest,
+  reportInteraction,
+} from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -45,12 +62,6 @@ function createFetchError(overrides?: DeepPartial<FetchError>): FetchError {
     overrides
   );
 }
-
-jest.mock('app/core/services/context_srv');
-
-const mocks = {
-  contextSrv: jest.mocked(contextSrv),
-};
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -127,20 +138,108 @@ const renderWithContext = async (
   } as unknown as BackendSrv;
   const grafanaContext = getGrafanaContextMock({ backend });
 
-  setDataSourceSrv(new MockDataSourceSrv(datasources));
+  const dsServer = new MockDataSourceSrv(datasources);
+  dsServer.get = (name: string) => {
+    const dsApi = new MockDataSourceApi(name);
+    dsApi.components = {
+      QueryEditor: () => <>{name} query editor</>,
+    };
+    return Promise.resolve(dsApi);
+  };
 
-  render(
+  setDataSourceSrv(dsServer);
+
+  const renderResult = render(
     <Provider store={configureStore({})}>
       <GrafanaContext.Provider value={grafanaContext}>
         <CorrelationsPage />
       </GrafanaContext.Provider>
-    </Provider>
+    </Provider>,
+    {
+      queries: {
+        /**
+         * Gets all the rows in the table having the given text in the given column
+         */
+        queryRowsByCellValue: (
+          container: HTMLElement,
+          columnName: Matcher,
+          textValue: Matcher
+        ): HTMLTableRowElement[] => {
+          const table = within(container).getByRole('table');
+          const headers = within(table).getAllByRole('columnheader');
+          const headerIndex = headers.findIndex((h) => {
+            return within(h).queryByText(columnName);
+          });
+
+          // the first rowgroup is the header
+          const tableBody = within(table).getAllByRole('rowgroup')[1];
+
+          return within(tableBody)
+            .getAllByRole<HTMLTableRowElement>('row')
+            .filter((row) => {
+              const rowCells = within(row).getAllByRole('cell');
+              const cell = rowCells[headerIndex];
+              return within(cell).queryByText(textValue);
+            });
+        },
+        /**
+         * Gets all the cells in the table for the given column name
+         */
+        queryCellsByColumnName: (container: HTMLElement, columnName: Matcher) => {
+          const table = within(container).getByRole('table');
+          const headers = within(table).getAllByRole('columnheader');
+          const headerIndex = headers.findIndex((h) => {
+            return within(h).queryByText(columnName);
+          });
+          const tbody = table.querySelector('tbody');
+          if (!tbody) {
+            return [];
+          }
+          return within(tbody)
+            .getAllByRole('row')
+            .map((r) => {
+              const cells = within(r).getAllByRole<HTMLTableCellElement>('cell');
+              return cells[headerIndex];
+            });
+        },
+        /**
+         * Gets the table header cell matching the given name
+         */
+        getHeaderByName: (container: HTMLElement, columnName: Matcher): HTMLTableCellElement => {
+          const table = within(container).getByRole('table');
+          const headers = within(table).getAllByRole<HTMLTableCellElement>('columnheader');
+          const header = headers.find((h) => {
+            return within(h).queryByText(columnName);
+          });
+          if (!header) {
+            throw new Error(`Could not find header with name ${columnName}`);
+          }
+          return header;
+        },
+      },
+    }
   );
 
   await waitFor(() => {
     expect(screen.queryByText('Loading')).not.toBeInTheDocument();
   });
+
+  return renderResult;
 };
+
+jest.mock('app/core/services/context_srv');
+
+const mocks = {
+  contextSrv: jest.mocked(contextSrv),
+  reportInteraction: jest.fn(),
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
+    mocks.reportInteraction(...args);
+  },
+}));
 
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
@@ -179,6 +278,10 @@ describe('CorrelationsPage', () => {
       });
     });
 
+    afterEach(() => {
+      mocks.reportInteraction.mockClear();
+    });
+
     it('shows CTA', async () => {
       // insert form should not be present
       expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
@@ -193,6 +296,9 @@ describe('CorrelationsPage', () => {
       expect(CTAButton).toBeInTheDocument();
 
       fireEvent.click(CTAButton);
+
+      // wait for the form to be rendered and query editor to be mounted
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       // form's submit button
       expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
@@ -218,12 +324,16 @@ describe('CorrelationsPage', () => {
       fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
       fireEvent.click(screen.getByText('prometheus'));
 
+      fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       // Waits for the form to be removed, meaning the correlation got successfully saved
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
 
       // the table showing correlations should have appeared
       expect(screen.getByRole('table')).toBeInTheDocument();
@@ -231,8 +341,16 @@ describe('CorrelationsPage', () => {
   });
 
   describe('With correlations', () => {
+    afterEach(() => {
+      mocks.reportInteraction.mockClear();
+    });
+
+    let queryRowsByCellValue: (columnName: Matcher, textValue: Matcher) => HTMLTableRowElement[];
+    let getHeaderByName: (columnName: Matcher) => HTMLTableCellElement;
+    let queryCellsByColumnName: (columnName: Matcher) => HTMLTableCellElement[];
+
     beforeEach(async () => {
-      await renderWithContext(
+      const renderResult = await renderWithContext(
         {
           loki: mockDataSource(
             {
@@ -275,14 +393,51 @@ describe('CorrelationsPage', () => {
             }
           ),
         },
-        [{ sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label' }]
+        [
+          {
+            sourceUID: 'loki',
+            targetUID: 'loki',
+            uid: '1',
+            label: 'Some label',
+            config: { field: 'line', target: {}, type: 'query' },
+          },
+          {
+            sourceUID: 'prometheus',
+            targetUID: 'loki',
+            uid: '2',
+            label: 'Prometheus to Loki',
+            config: { field: 'label', target: {}, type: 'query' },
+          },
+        ]
       );
+      queryRowsByCellValue = renderResult.queryRowsByCellValue;
+      queryCellsByColumnName = renderResult.queryCellsByColumnName;
+      getHeaderByName = renderResult.getHeaderByName;
     });
 
     it('shows a table with correlations', async () => {
-      await renderWithContext();
-
       expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+
+    it('correctly sorts by source', async () => {
+      const sourceHeader = getByRole(getHeaderByName('Source'), 'button');
+      fireEvent.click(sourceHeader);
+      let cells = queryCellsByColumnName('Source');
+      cells.forEach((cell, i, allCells) => {
+        const prevCell = allCells[i - 1];
+        if (prevCell && prevCell.textContent) {
+          expect(cell.textContent?.localeCompare(prevCell.textContent)).toBeGreaterThanOrEqual(0);
+        }
+      });
+
+      fireEvent.click(sourceHeader);
+      cells = queryCellsByColumnName('Source');
+      cells.forEach((cell, i, allCells) => {
+        const prevCell = allCells[i - 1];
+        if (prevCell && prevCell.textContent) {
+          expect(cell.textContent?.localeCompare(prevCell.textContent)).toBeLessThanOrEqual(0);
+        }
+      });
     });
 
     it('correctly adds correlations', async () => {
@@ -295,18 +450,22 @@ describe('CorrelationsPage', () => {
 
       // set source datasource picker value
       fireEvent.keyDown(screen.getByLabelText(/^source$/i), { keyCode: 40 });
-      fireEvent.click(screen.getByText('prometheus'));
+      fireEvent.click(within(screen.getByLabelText('Select options menu')).getByText('prometheus'));
 
       // set target datasource picker value
       fireEvent.keyDown(screen.getByLabelText(/^target$/i), { keyCode: 40 });
       fireEvent.click(screen.getByText('elastic'));
 
+      fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       // the form should get removed after successful submissions
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
     });
 
     it('correctly closes the form when clicking on the close icon', async () => {
@@ -316,34 +475,40 @@ describe('CorrelationsPage', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /close$/i }));
 
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
-      });
+      expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
     });
 
     it('correctly deletes correlations', async () => {
       // A row with the correlation should exist
       expect(screen.getByRole('cell', { name: /some label/i })).toBeInTheDocument();
 
-      const deleteButton = screen.getByRole('button', { name: /delete correlation/i });
+      const tableRows = queryRowsByCellValue('Source', 'loki');
+
+      const deleteButton = within(tableRows[0]).getByRole('button', { name: /delete correlation/i });
 
       expect(deleteButton).toBeInTheDocument();
 
       fireEvent.click(deleteButton);
 
-      const confirmButton = screen.getByRole('button', { name: /delete$/i });
+      const confirmButton = within(tableRows[0]).getByRole('button', { name: /delete$/i });
       expect(confirmButton).toBeInTheDocument();
 
       fireEvent.click(confirmButton);
 
-      await waitFor(() => {
-        expect(screen.queryByRole('cell', { name: /some label/i })).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(() => screen.queryByRole('cell', { name: /some label$/i }));
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_deleted');
     });
 
     it('correctly edits correlations', async () => {
-      const rowExpanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
+      const tableRows = queryRowsByCellValue('Source', 'loki');
+
+      const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
       fireEvent.click(rowExpanderButton);
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       fireEvent.change(screen.getByRole('textbox', { name: /label/i }), { target: { value: 'edited label' } });
       fireEvent.change(screen.getByRole('textbox', { name: /description/i }), {
@@ -357,11 +522,21 @@ describe('CorrelationsPage', () => {
       await waitFor(() => {
         expect(screen.queryByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
       });
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
     });
   });
 
   describe('Read only correlations', () => {
-    const correlations = [{ sourceUID: 'loki', targetUID: 'loki', uid: '1', label: 'Some label' }];
+    const correlations: Correlation[] = [
+      {
+        sourceUID: 'loki',
+        targetUID: 'loki',
+        uid: '1',
+        label: 'Some label',
+        config: { field: 'line', target: {}, type: 'query' },
+      },
+    ];
 
     beforeEach(async () => {
       await renderWithContext(
@@ -392,6 +567,11 @@ describe('CorrelationsPage', () => {
       const rowExpanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
 
       fireEvent.click(rowExpanderButton);
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
+
+      // wait for the form to be rendered and query editor to be mounted
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       // form elements should be readonly
       const labelInput = screen.getByRole('textbox', { name: /label/i });

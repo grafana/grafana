@@ -9,10 +9,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
-	models2 "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -21,14 +22,14 @@ import (
 
 func Test_subscribeToFolderChanges(t *testing.T) {
 	orgID := rand.Int63()
-	folder := &models2.Folder{
-		Id:    0,
-		Uid:   util.GenerateShortUID(),
+	folder := &folder.Folder{
+		ID:    0,
+		UID:   util.GenerateShortUID(),
 		Title: "Folder" + util.GenerateShortUID(),
 	}
 	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(orgID), models.WithNamespace(folder)))
 
-	bus := busmock.New()
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	db := fakes.NewRuleStore(t)
 	db.Folders[orgID] = append(db.Folders[orgID], folder)
 	db.PutRule(context.Background(), rules...)
@@ -41,8 +42,8 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	err := bus.Publish(context.Background(), &events.FolderTitleUpdated{
 		Timestamp: time.Now(),
 		Title:     "Folder" + util.GenerateShortUID(),
-		ID:        folder.Id,
-		UID:       folder.Uid,
+		ID:        folder.ID,
+		UID:       folder.UID,
 		OrgID:     orgID,
 	})
 	require.NoError(t, err)

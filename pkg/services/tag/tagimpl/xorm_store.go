@@ -3,8 +3,7 @@ package tagimpl
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/tag"
 )
 
@@ -13,7 +12,7 @@ type sqlStore struct {
 }
 
 func (s *sqlStore) EnsureTagsExist(ctx context.Context, tags []*tag.Tag) ([]*tag.Tag, error) {
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		for _, tagElement := range tags {
 			var existingTag tag.Tag
 			exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tagElement.Key, tagElement.Value).Get(&existingTag)

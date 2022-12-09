@@ -5,24 +5,24 @@ import (
 	"io/fs"
 	"sort"
 	"strings"
-	"sync"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
 	"github.com/grafana/grafana"
-	"github.com/grafana/grafana/pkg/coremodel/pluginmeta"
-	"github.com/grafana/grafana/pkg/framework/coremodel"
-	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
+	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
 )
 
 // PermittedCUEImports returns the list of packages that may be imported in a
 // plugin models.cue file.
+//
+// TODO probably move this into kindsys
 func PermittedCUEImports() []string {
 	return []string{
 		"github.com/grafana/thema",
@@ -41,30 +41,21 @@ func importAllowed(path string) bool {
 
 var allowedImportsStr string
 
-// Name expected to be used for all models.cue files in Grafana plugins
-const pkgname = "grafanaplugin"
-
 type slotandname struct {
 	name string
-	slot *coremodel.Slot
+	slot *kindsys.Slot
 }
 
 var allslots []slotandname
 
-var plugmux kernel.InputKernel
-
-// TODO re-enable after go1.18
-// var tsch thema.TypedSchema[pluginmeta.Model]
-// var plugmux vmux.ValueMux[pluginmeta.Model]
-
 func init() {
-	var all []string
+	all := make([]string, 0, len(PermittedCUEImports()))
 	for _, im := range PermittedCUEImports() {
 		all = append(all, fmt.Sprintf("\t%s", im))
 	}
 	allowedImportsStr = strings.Join(all, "\n")
 
-	for n, s := range coremodel.AllSlots() {
+	for n, s := range kindsys.AllSlots(nil) {
 		allslots = append(allslots, slotandname{
 			name: n,
 			slot: s,
@@ -75,46 +66,6 @@ func init() {
 		return allslots[i].name < allslots[j].name
 	})
 }
-
-var muxonce sync.Once
-
-func loadMux() kernel.InputKernel {
-	muxonce.Do(func() {
-		plugmux = coremodel.Mux(registry.NewBase().Pluginmeta(), coremodel.Filename("plugin.json"))
-	})
-	return plugmux
-}
-
-// This used to be in init(), but that creates a risk for codegen.
-//
-// thema.BindType ensures that Go type and Thema schema are aligned. If we were
-// to call it during init(), then the code generator that fixes misalignments
-// between those two could trigger it if it depends on this package. That would
-// mean that schema changes to pluginmeta get caught in a loop where the codegen
-// process can't heal itself.
-//
-// In theory, that dependency shouldn't exist - this package should only be
-// imported for plugin codegen, which should all happen after coremodel codegen.
-// But in practice, it might exist. And it's really brittle and confusing to
-// fix if that does happen.
-//
-// Better to be resilient to the possibility instead. So, this is a standalone function,
-// called as needed to get our muxer, and internally relies on a sync.Once to avoid
-// repeated processing of thema.BindType.
-// TODO mux loading is easily generalizable in pkg/f/coremodel, shouldn't need one-off
-// TODO switch to this generic signature after go1.18
-// func loadMux() (thema.TypedSchema[pluginmeta.Model], vmux.ValueMux[pluginmeta.Model]) {
-// 	muxonce.Do(func() {
-// 		var err error
-// 		var t pluginmeta.Model
-// 		tsch, err = thema.BindType[pluginmeta.Model](pm.CurrentSchema(), t)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 		plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
-// 	})
-// 	return tsch, plugmux
-// }
 
 // Tree represents the contents of a plugin filesystem tree.
 type Tree struct {
@@ -160,7 +111,7 @@ func (tl TreeList) LineagesForSlot(slotname string) map[string]thema.Lineage {
 // PluginInfo represents everything knowable about a single plugin from static
 // analysis of its filesystem tree contents.
 type PluginInfo struct {
-	meta      pluginmeta.Model
+	meta      plugindef.PluginDef
 	slotimpls map[string]thema.Lineage
 	imports   []*ast.ImportSpec
 }
@@ -180,7 +131,7 @@ func (pi PluginInfo) SlotImplementations() map[string]thema.Lineage {
 }
 
 // Meta returns the metadata declared in the plugin's plugin.json file.
-func (pi PluginInfo) Meta() pluginmeta.Model {
+func (pi PluginInfo) Meta() plugindef.PluginDef {
 	return pi.meta
 }
 
@@ -189,14 +140,22 @@ func (pi PluginInfo) Meta() pluginmeta.Model {
 //
 // It does not descend into subdirectories to search for additional plugin.json
 // files.
+//
+// Calling this with a nil thema.Runtime will take advantage of memoization.
+// Prefer this approach unless a different thema.Runtime is specifically
+// required.
+//
 // TODO no descent is ok for core plugins, but won't cut it in general
-func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
+func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 	if f == nil {
 		return nil, ErrEmptyFS
 	}
-	// _, mux := loadMux()
-	mux := loadMux()
-	ctx := lib.Context()
+	lin, err := plugindef.Lineage(rt)
+	if err != nil {
+		panic(fmt.Sprintf("plugindef lineage is invalid or broken, needs dev attention: %s", err))
+	}
+	mux := vmux.NewValueMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))
+	ctx := rt.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")
 	if err != nil {
@@ -214,15 +173,14 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	}
 	r := &tree.rootinfo
 
-	// Pass the raw bytes into the muxer, get the populated Model type out that we want.
-	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the pluginmeta lineage)
-	metaany, _, err := mux.Converge(b)
+	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
+	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
+	pmeta, _, err := mux(b)
 	if err != nil {
 		// TODO more nuanced error handling by class of Thema failure
-		// return nil, fmt.Errorf("plugin.json was invalid: %w", err)
 		return nil, ewrap(err, ErrInvalidRootFile)
 	}
-	r.meta = *metaany.(*pluginmeta.Model)
+	r.meta = *pmeta
 
 	if modbyt, err := fs.ReadFile(f, "models.cue"); err == nil {
 		// TODO introduce layered CUE dependency-injecting loader
@@ -237,9 +195,9 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 
 		mfs := merged_fs.NewMergedFS(f, grafana.CueSchemaFS)
 
-		// Note that this actually will load any .cue files in the fs.FS root dir in the pkgname.
+		// Note that this actually will load any .cue files in the fs.FS root dir in the plugindef.PkgName.
 		// That's...maybe good? But not what it says on the tin
-		bi, err := load.InstancesWithThema(mfs, "", load.Package(pkgname))
+		bi, err := load.InstanceWithThema(mfs, "", load.Package(plugindef.PkgName))
 		if err != nil {
 			return nil, fmt.Errorf("loading models.cue failed: %w", err)
 		}
@@ -260,7 +218,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		}
 		for _, s := range allslots {
 			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
-			lin, err := bindSlotLineage(iv, s.slot, r.meta, lib)
+			lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
 			if lin != nil {
 				r.slotimpls[s.slot.Name()] = lin
 			}
@@ -273,7 +231,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	return tree, nil
 }
 
-func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
+func bindSlotLineage(v cue.Value, s *kindsys.Slot, meta plugindef.PluginDef, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	accept, required := s.ForPluginType(string(meta.Type))
 	exists := v.Exists()
 
@@ -292,8 +250,8 @@ func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib 
 	}
 
 	// TODO make this opt real in thema, then uncomment to enforce joinSchema
-	// lin, err := thema.BindLineage(iv, lib, thema.SatisfiesJoinSchema(s.MetaSchema()))
-	lin, err := thema.BindLineage(v, lib, opts...)
+	// lin, err := thema.BindLineage(iv, rt, thema.SatisfiesJoinSchema(s.MetaSchema()))
+	lin, err := thema.BindLineage(v, rt, opts...)
 	if err != nil {
 		return nil, ewrap(fmt.Errorf("%s: invalid thema lineage for slot %s: %w", meta.Id, s.Name(), err), ErrInvalidLineage)
 	}

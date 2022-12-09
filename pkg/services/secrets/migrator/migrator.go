@@ -5,18 +5,18 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type SecretsMigrator struct {
 	encryptionSrv encryption.Internal
 	secretsSrv    *manager.SecretsService
-	sqlStore      *sqlstore.SQLStore
+	sqlStore      db.DB
 	settings      setting.Provider
 	features      featuremgmt.FeatureToggles
 }
@@ -24,7 +24,7 @@ type SecretsMigrator struct {
 func ProvideSecretsMigrator(
 	encryptionSrv encryption.Internal,
 	service *manager.SecretsService,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	settings setting.Provider,
 	features featuremgmt.FeatureToggles,
 ) *SecretsMigrator {
@@ -44,7 +44,7 @@ func (m *SecretsMigrator) ReEncryptSecrets(ctx context.Context) (bool, error) {
 	}
 
 	toReencrypt := []interface {
-		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore) bool
+		reencrypt(context.Context, *manager.SecretsService, db.DB) bool
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, encoding: base64.StdEncoding},
@@ -74,7 +74,7 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 	}
 
 	toRollback := []interface {
-		rollback(context.Context, *manager.SecretsService, encryption.Internal, *sqlstore.SQLStore, string) bool
+		rollback(context.Context, *manager.SecretsService, encryption.Internal, db.DB, string) bool
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
 		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, encoding: base64.StdEncoding},
@@ -104,7 +104,7 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	if sqlErr := m.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if sqlErr := m.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM data_keys")
 		return err
 	}); sqlErr != nil {

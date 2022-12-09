@@ -223,4 +223,4 @@ export const ServiceAccountPageUnconnected = ({
   );
 };
 
-export const ServiceAccountPage = connector(ServiceAccountPageUnconnected);
+export default connector(ServiceAccountPageUnconnected);

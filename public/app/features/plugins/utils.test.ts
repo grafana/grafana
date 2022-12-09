@@ -1,6 +1,4 @@
-import { Location as HistoryLocation } from 'history';
-
-import { NavIndex, NavModelItem } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
@@ -30,14 +28,16 @@ describe('buildPluginSectionNav', () => {
     children: [app1],
   };
 
+  const home = {
+    id: HOME_NAV_ID,
+    text: 'Home',
+  };
+
   const adminSection: NavModelItem = {
     text: 'Admin',
     id: 'admin',
     children: [],
-    parentItem: {
-      id: HOME_NAV_ID,
-      text: 'Home',
-    },
+    parentItem: home,
   };
 
   const standalonePluginPage = {
@@ -50,74 +50,36 @@ describe('buildPluginSectionNav', () => {
 
   app1.parentItem = appsSection;
 
-  const navIndex: NavIndex = {
-    apps: appsSection,
-    [app1.id!]: appsSection.children[0],
-    [standalonePluginPage.id]: standalonePluginPage,
-  };
-
   it('Should return pluginNav if topnav is disabled', () => {
     config.featureToggles.topnav = false;
-    const result = buildPluginSectionNav({} as HistoryLocation, pluginNav, {}, 'app1');
+    const result = buildPluginSectionNav(appsSection, pluginNav, '/a/plugin1/page1');
     expect(result).toBe(pluginNav);
   });
 
   it('Should return return section nav if topnav is enabled', () => {
     config.featureToggles.topnav = true;
-    const result = buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app1');
+    const result = buildPluginSectionNav(appsSection, pluginNav, '/a/plugin1/page1');
     expect(result?.main.text).toBe('apps');
   });
 
   it('Should set active page', () => {
     config.featureToggles.topnav = true;
-    const result = buildPluginSectionNav(
-      { pathname: '/a/plugin1/page2', search: '' } as HistoryLocation,
-      null,
-      navIndex,
-      'app1'
-    );
+    const result = buildPluginSectionNav(appsSection, null, '/a/plugin1/page2');
     expect(result?.main.children![0].children![1].active).toBe(true);
     expect(result?.node.text).toBe('page2');
   });
 
   it('Should set app section to active', () => {
     config.featureToggles.topnav = true;
-    const result = buildPluginSectionNav(
-      { pathname: '/a/plugin1', search: '' } as HistoryLocation,
-      null,
-      navIndex,
-      'app1'
-    );
+    const result = buildPluginSectionNav(appsSection, null, '/a/plugin1');
     expect(result?.main.children![0].active).toBe(true);
     expect(result?.node.text).toBe('App1');
   });
 
   it('Should handle standalone page', () => {
     config.featureToggles.topnav = true;
-    const result = buildPluginSectionNav(
-      { pathname: '/a/app2/config', search: '' } as HistoryLocation,
-      pluginNav,
-      navIndex,
-      'app2'
-    );
+    const result = buildPluginSectionNav(adminSection, pluginNav, '/a/app2/config');
     expect(result?.main.text).toBe('Admin');
     expect(result?.node.text).toBe('Standalone page');
-  });
-
-  it('Should not throw error just return a root nav model without children for plugins that dont exist in navtree', () => {
-    config.featureToggles.topnav = true;
-    const result = buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app3');
-    expect(result?.main.id).toBe('root-plugin-page');
-    expect(result?.main.hideFromBreadcrumbs).toBe(true);
-    expect(result?.main.children?.length).toBe(0);
-  });
-
-  it('Should throw error if app has no section', () => {
-    config.featureToggles.topnav = true;
-    app1.parentItem = undefined;
-    const action = () => {
-      buildPluginSectionNav({} as HistoryLocation, pluginNav, navIndex, 'app1');
-    };
-    expect(action).toThrowError();
   });
 });

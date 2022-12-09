@@ -8,12 +8,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationReadCorrelation(t *testing.T) {
@@ -94,7 +95,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	// Given all tests in this file work on the assumption that only a single correlation exists,
 	// this covers the case where bad data exists in the database.
 	nonExistingDsUID := "THIS-DOES-NOT_EXIST"
-	err := ctx.env.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := ctx.env.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		created, err := sess.InsertMulti(&[]correlations.Correlation{
 			{
 				UID:       "uid-1",

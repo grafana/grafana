@@ -1,0 +1,60 @@
+package {{ .PackageName }}
+
+import (
+	"fmt"
+	"sync"
+
+	{{range .Kinds }}
+	"{{ $.KindPackagePrefix }}/{{ .Properties.MachineName }}"{{end}}
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/thema"
+)
+
+// Base is a registry of kindsys.Interface. It provides two modes for accessing
+// kinds: individually via literal named methods, or as a slice returned from
+// an All*() method.
+//
+// Prefer the individual named methods for use cases where the particular kind(s) that
+// are needed are known to the caller. For example, a dashboard linter can know that it
+// specifically wants the dashboard kind.
+//
+// Prefer All*() methods when performing operations generically across all kinds.
+// For example, a validation HTTP middleware for any kind-schematized object type.
+type Base struct {
+	all []kindsys.Interface
+	numRaw, numStructured int
+	{{- range .Kinds }}
+	{{ .Properties.MachineName }} *{{ .Properties.MachineName }}.Kind{{end}}
+}
+
+// type guards
+var (
+{{- range .Kinds }}
+	_ kindsys.{{ if .IsRaw }}Raw{{ else }}Structured{{ end }} = &{{ .Properties.MachineName }}.Kind{}{{end}}
+)
+
+{{range .Kinds }}
+// {{ .Properties.Name }} returns the [kindsys.Interface] implementation for the {{ .Properties.MachineName }} kind.
+func (b *Base) {{ .Properties.Name }}() *{{ .Properties.MachineName }}.Kind {
+	return b.{{ .Properties.MachineName }}
+}
+{{end}}
+
+func doNewBase(rt *thema.Runtime) *Base {
+	var err error
+	reg := &Base{
+	  numRaw: {{ .NumRaw }},
+	  numStructured: {{ .NumStructured }},
+	}
+
+{{range .Kinds }}
+	reg.{{ .Properties.MachineName }}, err = {{ .Properties.MachineName }}.NewKind({{ if .IsCoreStructured }}rt{{ end }})
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the {{ .Properties.MachineName }} Kind: %s", err))
+	}
+  reg.all = append(reg.all, reg.{{ .Properties.MachineName }})
+{{end}}
+
+	return reg
+}
