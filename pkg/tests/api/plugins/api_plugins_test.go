@@ -30,7 +30,11 @@ const (
 
 var updateSnapshotFlag = false
 
-func TestPlugins(t *testing.T) {
+func TestIntegrationPlugins(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		PluginAdminEnabled: true,
 	})
