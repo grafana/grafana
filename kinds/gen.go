@@ -45,6 +45,9 @@ func main() {
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 		codegen.SummarizerJenny(bkkind),
 		codegen.BackendKindRegistryJenny(bkkind, bkkind),
+		codegen.CRDTypesJenny(kindsys.GoCoreKindParentPath),
+		codegen.YamlCRDJenny(kindsys.GoCoreKindParentPath),
+		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 	)
 
 	coreKindsGen.AddPostprocessors(codegen.SlashHeaderMapper("kinds/gen.go"))

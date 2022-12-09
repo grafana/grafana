@@ -54,10 +54,10 @@ func NewClientset(cfg *rest.Config) (*Clientset, error) {
 }
 
 // RegisterSchema registers a new client and CRD for kind k
-func (c *Clientset) RegisterSchema(ctx context.Context, s kindsys.Interface) error {
+func (c *Clientset) RegisterSchema(ctx context.Context, k kindsys.Interface) error {
 	ver := k8schema.GroupVersion{
-		Group:   s.GroupName(),
-		Version: s.GroupVersion(),
+		Group:   k.GroupName(),
+		Version: k.GroupVersion(),
 	}
 
 	c.lock.RLock()
@@ -67,7 +67,7 @@ func (c *Clientset) RegisterSchema(ctx context.Context, s kindsys.Interface) err
 		return ErrCRDAlreadyRegistered
 	}
 
-	crdObj := newCRD(s.Name(), s.GroupName(), s.GroupVersion(), s.OpenAPISchema())
+	crdObj := newCRD(k.Name(), k.GroupName(), k.GroupVersion(), k.OpenAPISchema())
 	crd, err := c.extset.
 		ApiextensionsV1().
 		CustomResourceDefinitions().

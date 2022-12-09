@@ -135,10 +135,10 @@ func LoadRestConfig(cfg *setting.Cfg) (*rest.Config, error) {
 }
 
 // GenerateScheme generates a kubernetes runtime Scheme from a list of models.
-func GenerateScheme(models []kindsys.Interface) (*runtime.Scheme, error) {
+func GenerateScheme(kinds []kindsys.Interface) (*runtime.Scheme, error) {
 	res := runtime.NewScheme()
 
-	for _, m := range models {
+	for _, m := range kinds {
 		s := m.CRD()
 
 		schemaBuilder := &scheme.Builder{

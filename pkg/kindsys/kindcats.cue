@@ -147,9 +147,19 @@ _rootKind: {
 
 // CoreStructured specifies the Kind category for core types that are declared with schemas.
 // This includes Grafana's most common types, such as dashboards and datasources.
-#CoreStructured: {
+#CoreStructured: S={
 	#SummaryCore
 	#Structured
+
+	// crd contains properties specific to converting this kind to a Kubernetes CRD.
+	crd: {
+			// group is used as the CRD group name in the GVK.
+			group: "\(S.machineName).core.grafana"
+
+			// deepCopy determines whether a generic implementation of copying should be
+			// generated, or a passthrough call to a Go function.
+//			deepCopy: *"generic" | "passthrough"
+	}
 
 	lineageIsGroup: false
 }
