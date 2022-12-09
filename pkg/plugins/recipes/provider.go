@@ -54,9 +54,18 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Install `htop`",
-						Description:                         "Install the famous interactive process viewer",
-						InstructionText:                     "```sudo apt install htop```",
+						Name:        "Install `htop`",
+						Description: "Install the famous interactive process viewer",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
 						InstructionTestURL:                  "",
 						InstructionTestExpectedHttpResponse: "",
 					},
@@ -235,9 +244,18 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
+						Name:        "Some instruction",
+						Description: "Some description here...",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
 						InstructionTestURL:                  "http://my-service.com/api/health",
 						InstructionTestExpectedHttpResponse: "200",
 					},
@@ -394,11 +412,20 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
-						InstructionTestURL:                  "http://my-service.com/api/health",
-						InstructionTestExpectedHttpResponse: "200",
+						Name:        "Install `htop`",
+						Description: "Install the famous interactive process viewer",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
+						InstructionTestURL:                  "",
+						InstructionTestExpectedHttpResponse: "",
 					},
 				),
 				newPluginInstallStep(i, cfg, ps,
@@ -444,11 +471,20 @@ func ProvideService(i plugins.Installer, cfg *setting.Cfg, ps plugins.Store, dat
 				),
 				newInstructionStep(
 					InstructionStepMeta{
-						Name:                                "Some instruction",
-						Description:                         "Some description here...",
-						InstructionText:                     "Some markdown here...",
-						InstructionTestURL:                  "http://my-service.com/api/health",
-						InstructionTestExpectedHttpResponse: "200",
+						Name:        "Install `htop`",
+						Description: "Install the famous interactive process viewer",
+						Instruction: []Instruction{
+							{
+								Os:       "ubuntu",
+								Markdown: "```sudo apt install htop```",
+							},
+							{
+								Os:       "macos",
+								Markdown: "```sudo apt install htop```",
+							},
+						},
+						InstructionTestURL:                  "",
+						InstructionTestExpectedHttpResponse: "",
 					},
 				),
 				newPluginInstallStep(i, cfg, ps,
