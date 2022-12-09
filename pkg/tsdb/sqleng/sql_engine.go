@@ -853,7 +853,7 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 
 	origin := frame.Fields[timeIndex]
 	valueType := origin.Type()
-	if valueType == data.FieldTypeTime || valueType == data.FieldTypeNullableTime {
+	if valueType == data.FieldTypeTime || valueType == data.FieldTypeNullableTime || valueType == data.FieldTypeNullableString {
 		return nil
 	}
 
