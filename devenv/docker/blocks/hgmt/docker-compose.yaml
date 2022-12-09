@@ -15,8 +15,8 @@
   #   - .:/output
   #   ports:
   #   - 6443:6443
-  
-  mysql25:
+
+  sql:
     image: arm64v8/mysql:oracle
     environment:
       MYSQL_ROOT_PASSWORD: grafana
@@ -24,27 +24,33 @@
       MYSQL_USER: grafana
       MYSQL_PASSWORD: grafana
     ports:
-      - "3325:3306"
+      - "3306:3306"
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
+    volumes:
+      - ./docker/blocks/hgmt/dbinit.sql:/docker-entrypoint-initdb.d/dbinit.sql
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 10s
       retries: 10
 
-  mysql26:
-    image: arm64v8/mysql:oracle
-    environment:
-      MYSQL_ROOT_PASSWORD: grafana
-      MYSQL_DATABASE: grafana
-      MYSQL_USER: grafana
-      MYSQL_PASSWORD: grafana
+  stack24:
+    image: grafana/grafana:dev-ubuntu
     ports:
-      - "3326:3306"
-    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 10s
-      retries: 10
+      - 3024:3000
+    volumes:
+      - ./docker/blocks/hgmt/core.ini:/etc/grafana/grafana.ini
+    environment:
+      HG_STACK_ID: 24
+      GF_DATABASE_NAME: stack24
+      GF_DATABASE_TYPE: mysql
+      GF_DATABASE_HOST: sql
+      GF_DATABASE_USER: grafana
+      GF_DATABASE_PASSWORD: grafana
+    links:
+      - sql
+    depends_on:
+      sql:
+        condition: service_healthy
 
   stack25:
     image: grafana/grafana:dev-ubuntu
@@ -54,15 +60,15 @@
       - ./docker/blocks/hgmt/core.ini:/etc/grafana/grafana.ini
     environment:
       HG_STACK_ID: 25
+      GF_DATABASE_NAME: stack25
       GF_DATABASE_TYPE: mysql
-      GF_DATABASE_HOST: mysql25
+      GF_DATABASE_HOST: sql
       GF_DATABASE_USER: grafana
       GF_DATABASE_PASSWORD: grafana
-      GF_DATABASE_NAME: grafana
     links:
-      - mysql25
+      - sql
     depends_on:
-      mysql25:
+      sql:
         condition: service_healthy
 
   stack26:
@@ -73,15 +79,15 @@
       - ./docker/blocks/hgmt/core.ini:/etc/grafana/grafana.ini
     environment:
       HG_STACK_ID: 26
+      GF_DATABASE_NAME: stack26
       GF_DATABASE_TYPE: mysql
-      GF_DATABASE_HOST: mysql26
+      GF_DATABASE_HOST: sql
       GF_DATABASE_USER: grafana
       GF_DATABASE_PASSWORD: grafana
-      GF_DATABASE_NAME: grafana
     links:
-      - mysql26
+      - sql
     depends_on:
-      mysql25:
+      sql:
         condition: service_healthy
   
   entity-store:
@@ -89,7 +95,7 @@
     volumes:
       - ./docker/blocks/hgmt/entity.ini:/etc/grafana/grafana.ini
     links:
+      - stack24
       - stack25
       - stack26
-      - mysql25
-      - mysql26
+      - sql

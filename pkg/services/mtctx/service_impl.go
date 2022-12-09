@@ -46,6 +46,14 @@ func (s *serviceImpl) showTenantInfo(c *models.ReqContext) response.Response {
 		_ = t.GetSessionDB()
 	}
 
+	if t.Err != nil {
+		return response.JSON(500, map[string]interface{}{
+			"error": t.Err.Error(),
+			"user":  c.SignedInUser,
+			"info":  t,
+		})
+	}
+
 	return response.JSON(200, t)
 }
 
@@ -97,11 +105,25 @@ func (s *serviceImpl) Middleware(next http.Handler) http.Handler {
 			var config *v1.ConfigMap
 			info = &TenantInfo{StackID: user.StackID}
 
-			// get the initial config map
-			if s.clientset != nil {
-				info.Config, info.Err = s.clientset.CoreV1().ConfigMaps(s.namespace).Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
+			if true {
+				info.Config = &v1.ConfigMap{
+					Data: make(map[string]string, 0),
+				}
+				info.Config.Data["ini.json"] = `{"database":  { 
+					"type": "mysql",
+					"name": "stack` + fmt.Sprintf("%d", user.StackID) + `",
+					"host": "sql",
+					"user": "grafana",
+					"password": "grafana"
+				  }}`
 			} else {
-				info.Err = fmt.Errorf("missing client")
+
+				// get the initial config map
+				if s.clientset != nil {
+					info.Config, info.Err = s.clientset.CoreV1().ConfigMaps(s.namespace).Get(context.TODO(), stackName(user.StackID), metav1.GetOptions{})
+				} else {
+					info.Err = fmt.Errorf("missing client")
+				}
 			}
 
 			logger.Info("POTATO: context set: %v", config)

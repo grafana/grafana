@@ -1,19 +1,34 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: 24-mt-config
+data:
+  hello: mysql
+  ini.json: |
+    {"database":  { 
+      "type": "mysql",
+      "name": "stack24",
+      "host": "sql",
+      "user": "grafana",
+      "password": "grafana"
+    }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: 25-mt-config
 data:
   hello: mysql
   ini.json: |
     {"database":  { 
       "type": "mysql",
-      "host": "localhost:3306",
-      "database": "grafana",
-      "name": "grafana",
+      "name": "stack25",
+      "host": "sql",
       "user": "grafana",
-      "password": "password"
+      "password": "grafana"
     }}
-    
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -23,12 +38,9 @@ data:
   hello: postgresql
   ini.json: |
     {"database":  { 
-      "type": "postgres",
-      "host": "localhost:5432",
-      "database": "grafana",
-      "name": "grafana",
+      "type": "mysql",
+      "name": "stack26",
+      "host": "sql",
       "user": "grafana",
-      "password": "password"
+      "password": "grafana"
     }}
-
-
