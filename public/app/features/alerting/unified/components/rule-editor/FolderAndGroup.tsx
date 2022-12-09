@@ -93,6 +93,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     formState: { errors },
     watch,
     control,
+    setValue,
   } = useFormContext<RuleFormValues>();
 
   const styles = useStyles2(getStyles);
@@ -119,6 +120,10 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     }
     initialRender.current = false;
   }, [group, folder?.title]);
+
+  useEffect(() => {
+    setValue('group', selectedGroup);
+  }, [selectedGroup, setValue]);
 
   const groupIsInGroupOptions = useCallback(
     (group_: string) => {

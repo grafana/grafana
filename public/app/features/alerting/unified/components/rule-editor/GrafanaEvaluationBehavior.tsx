@@ -13,7 +13,7 @@ import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
-import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
+import { EditCloudGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { MINUTE } from './AlertRuleForm';
 import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
@@ -79,6 +79,49 @@ const useIsNewGroup = (folder: string, group: string) => {
   return !groupIsInGroupOptions(group);
 };
 
+export const EvaluateEveryNewGroup = ({ rules }: { rules: RulerRulesConfigDTO | null | undefined }) => {
+  const {
+    watch,
+    register,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
+  const styles = useStyles2(getStyles);
+  const evaluateEveryId = 'eval-every-input';
+  return (
+    <Field
+      label="Evaluation interval"
+      description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."
+    >
+      <Stack direction="row" justify-content="left" align-items="center">
+        <InlineLabel
+          htmlFor={evaluateEveryId}
+          width={16}
+          tooltip="How often the alert will be evaluated to see if it fires"
+        >
+          Evaluate every
+        </InlineLabel>
+        <div className={styles.marginTop}>
+          <Field
+            className={styles.inlineField}
+            error={errors.evaluateEvery?.message}
+            invalid={!!errors.evaluateEvery}
+            validationMessageHorizontalOverflow={true}
+          >
+            <Input
+              id={evaluateEveryId}
+              width={8}
+              {...register(
+                'evaluateEvery',
+                evaluateEveryValidationOptions(rules, watch('group'), watch('folder.title'))
+              )}
+            />
+          </Field>
+        </div>
+      </Stack>
+    </Field>
+  );
+};
+
 function FolderGroupAndEvaluationInterval({
   initialFolder,
   evaluateEvery,
@@ -89,7 +132,7 @@ function FolderGroupAndEvaluationInterval({
   setEvaluateEvery: (value: string) => void;
 }) {
   const styles = useStyles2(getStyles);
-  const { watch } = useFormContext<RuleFormValues>();
+  const { watch, setValue } = useFormContext<RuleFormValues>();
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const group = watch('group');
@@ -101,10 +144,15 @@ function FolderGroupAndEvaluationInterval({
   const isNewGroup = useIsNewGroup(folder?.title ?? '', group);
 
   useEffect(() => {
-    group &&
-      folder &&
-      setEvaluateEvery(getIntervalForGroup(groupfoldersForGrafana?.result, group, folder?.title ?? ''));
-  }, [group, folder, groupfoldersForGrafana?.result, setEvaluateEvery]);
+    if (!isNewGroup) {
+      group &&
+        folder &&
+        setEvaluateEvery(getIntervalForGroup(groupfoldersForGrafana?.result, group, folder?.title ?? ''));
+    } else {
+      setEvaluateEvery(MINUTE);
+      setValue('evaluateEvery', MINUTE);
+    }
+  }, [group, folder, groupfoldersForGrafana?.result, setEvaluateEvery, isNewGroup, setValue]);
 
   const closeEditGroupModal = (saved = false) => {
     if (!saved) {
@@ -133,37 +181,39 @@ function FolderGroupAndEvaluationInterval({
         <Card className={styles.cardContainer}>
           <Card.Heading>Evaluation behavior</Card.Heading>
           <Card.Meta>
-            <Stack direction="column">
-              <div className={styles.evaluateLabel}>
-                {`Alert rules in the `} <span className={styles.bold}>{group}</span> group are evaluated every{' '}
-                <span className={styles.bold}>{evaluateEvery}</span>.
-              </div>
-
-              <br />
-              {!isNewGroup && (
-                <div>
-                  {`Evaluation group interval applies to every rule within a group. It overwrites intervals defined for existing alert rules.`}
-                </div>
+            <div className={styles.marginTop}>
+              {isNewGroup && group ? (
+                <EvaluateEveryNewGroup rules={groupfoldersForGrafana?.result} />
+              ) : (
+                <Stack direction="column">
+                  <div className={styles.evaluateLabel}>
+                    {`Alert rules in the `} <span className={styles.bold}>{group}</span> group are evaluated every{' '}
+                    <span className={styles.bold}>{evaluateEvery}</span>.
+                  </div>
+                  <br />
+                  {!isNewGroup && (
+                    <div>
+                      {`Evaluation group interval applies to every rule within a group. It overwrites intervals defined for existing alert rules.`}
+                    </div>
+                  )}
+                  <br />
+                </Stack>
               )}
-              <br />
-            </Stack>
+            </div>
           </Card.Meta>
           <Card.Actions>
             <Stack direction="row" justify-content="right" align-items="center">
-              {isNewGroup && (
-                <div className={styles.warningMessage}>
-                  {`To edit the evaluation group interval, save the alert rule.`}
-                </div>
+              {!isNewGroup && (
+                <Button
+                  icon={'edit'}
+                  type="button"
+                  variant="secondary"
+                  disabled={editGroupDisabled}
+                  onClick={onOpenEditGroupModal}
+                >
+                  <span>{'Edit evaluation group'}</span>
+                </Button>
               )}
-              <Button
-                icon={'edit'}
-                type="button"
-                variant="secondary"
-                disabled={editGroupDisabled}
-                onClick={onOpenEditGroupModal}
-              >
-                <span>{'Edit evaluation group'}</span>
-              </Button>
             </Stack>
           </Card.Actions>
         </Card>
@@ -296,5 +346,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   bold: css`
     font-weight: bold;
+  `,
+  marginTop: css`
+    margin-top: ${theme.spacing(1)};
   `,
 });
