@@ -8,7 +8,7 @@ keywords:
   - grafana
   - new
   - documentation
-  - "7.0"
+  - '7.0'
   - release notes
 title: What's New in Grafana v7.0
 weight: -27

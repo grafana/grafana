@@ -38,19 +38,19 @@ To access Phlare settings, click the **Configuration** (gear) icon, then click *
 
 ### Query Editor
 
-![Query editor](/static/img/docs/phlare/query-editor.png "Query editor")
+![Query editor](/static/img/docs/phlare/query-editor.png 'Query editor')
 
 Query editor gives you access to a profile type selector, a label selector, and collapsible options.
 
-![Profile selector](/static/img/docs/phlare/select-profile.png "Profile selector")
+![Profile selector](/static/img/docs/phlare/select-profile.png 'Profile selector')
 
 Select a profile type from the drop-down menu. While the label selector can be left empty to query all profiles without filtering by labels, the profile type must be selected for the query to be valid. Grafana does not show any data if the profile type isn’t selected when a query is run.
 
-![Labels selector](/static/img/docs/phlare/labels-selector.png "Labels selector")
+![Labels selector](/static/img/docs/phlare/labels-selector.png 'Labels selector')
 
 Use the labels selector input to filter by labels. Phlare uses similar syntax to Prometheus to filter labels. Refer to [Phlare documentation](https://grafana.com/docs/phlare/latest/) for available operators and syntax.
 
-![Options section](/static/img/docs/phlare/options-section.png "Options section")
+![Options section](/static/img/docs/phlare/options-section.png 'Options section')
 
 Options section contains a switch for Query Type and Group by.
 
@@ -62,7 +62,7 @@ Group by allows you to group metric data by a specified label. Without any Group
 
 Profiles can be visualized in a flame graph. See the [Flame Graph documentation]({{< relref "../panels-visualizations/visualizations/flame-graph" >}}) to learn about the visualization and its features.
 
-![Flame graph](/static/img/docs/phlare/flame-graph.png "Flame graph")
+![Flame graph](/static/img/docs/phlare/flame-graph.png 'Flame graph')
 
 Phlare returns profiles aggregated over a selected time range, and the absolute values in the flame graph grow as the time range gets bigger while keeping the relative values meaningful. You can zoom in on the time range to get a higher granularity profile up to the point of a single Phlare scrape interval.
 
@@ -70,7 +70,7 @@ Phlare returns profiles aggregated over a selected time range, and the absolute 
 
 Metrics results represent the aggregated sum value over time of the selected profile type.
 
-![Metrics graph](/static/img/docs/phlare/metric-graph.png "Metrics graph")
+![Metrics graph](/static/img/docs/phlare/metric-graph.png 'Metrics graph')
 
 This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
 
@@ -88,5 +88,5 @@ datasources:
     type: phlare
     url: http://localhost:4100
     jsonData:
-      minStep: "15s"
+      minStep: '15s'
 ```

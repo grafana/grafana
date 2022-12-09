@@ -8,7 +8,7 @@ keywords:
   - documentation
   - api
   - snapshot
-title: "HTTP Snapshot API "
+title: 'HTTP Snapshot API '
 ---
 
 # Snapshot API

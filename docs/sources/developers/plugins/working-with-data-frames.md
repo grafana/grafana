@@ -23,10 +23,10 @@ const numberValues = [12.3, 28.6];
 
 // Create data frame from values.
 const frame = toDataFrame({
-  name: "http_requests_total",
+  name: 'http_requests_total',
   fields: [
-    { name: "Time", type: FieldType.time, values: timeValues },
-    { name: "Value", type: FieldType.number, values: numberValues },
+    { name: 'Time', type: FieldType.time, values: timeValues },
+    { name: 'Value', type: FieldType.number, values: numberValues },
   ],
 });
 ```
@@ -42,7 +42,7 @@ const series = [
 ];
 
 const frame = toDataFrame(series);
-frame.name = "http_requests_total";
+frame.name = 'http_requests_total';
 ```
 
 ## Read values from a data frame
@@ -104,7 +104,7 @@ return (
           const displayValue = valueField.display!(value);
           return (
             <p style={{ color: displayValue.color }}>
-              {displayValue.text} {displayValue.suffix ? displayValue.suffix : ""}
+              {displayValue.text} {displayValue.suffix ? displayValue.suffix : ''}
             </p>
           );
         })

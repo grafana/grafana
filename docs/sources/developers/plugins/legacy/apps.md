@@ -39,10 +39,10 @@ export class ConfigCtrl {
     }
 
     // TODO, whatever you want
-    console.log("Post Update:", this);
+    console.log('Post Update:', this);
   }
 }
-ConfigCtrl.templateUrl = "components/config/config.html";
+ConfigCtrl.templateUrl = 'components/config/config.html';
 ```
 
 If possible, a link to a dashboard or custom page should be shown after enabling the app to guide the user to the appropriate place.

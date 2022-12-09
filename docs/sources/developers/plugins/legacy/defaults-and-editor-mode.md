@@ -65,7 +65,7 @@ Grafana conventions mean all you need to do is to hook up an Angular template wi
 To add an editor tab you need to hook into the event model so that the tab is added when the _init-edit-mode_ event is triggered. The following code should be added to the constructor of the plugin Ctrl class:
 
 ```javascript
-this.events.on("init-edit-mode", this.onInitEditMode.bind(this));
+this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 ```
 
 Then you need to create a handler function that is bound to the event. In the example above, the handler is called onInitEditMode. The tab is added by calling the controller function, _addEditorTab_. This function has three parameters; the tab name, the path to a html template for the new editor tab and the tab number. It can be a bit tricky to figure out the path, the path name will be based on the id that is specified in the plugin.json file - for example **grafana-clock-panel**. The code below hooks up an Angular template called editor.html that is located in the `src/partials` directory.

@@ -8,7 +8,7 @@ keywords:
   - documentation
   - api
   - admin
-title: "Admin HTTP API "
+title: 'Admin HTTP API '
 ---
 
 # Admin API

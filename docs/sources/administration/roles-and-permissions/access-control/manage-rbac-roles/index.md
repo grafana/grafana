@@ -131,15 +131,15 @@ apiVersion: 2
 
 roles:
   - name: custom:users:writer
-    description: "List, create, or update other users."
+    description: 'List, create, or update other users.'
     version: 1
     orgId: 1
     permissions:
-      - action: "users:read"
-        scope: "global.users:*"
-      - action: "users:write"
-        scope: "global.users:*"
-      - action: "users:create"
+      - action: 'users:read'
+        scope: 'global.users:*'
+      - action: 'users:write'
+        scope: 'global.users:*'
+      - action: 'users:create'
 ```
 
 The following example creates a hidden global role. The `global: true` option creates a global role, and the `hidden: true` option hides the role from the role picker.
@@ -150,16 +150,16 @@ apiVersion: 2
 
 roles:
   - name: custom:users:writer
-    description: "List, create, or update other users."
+    description: 'List, create, or update other users.'
     version: 1
     global: true
     hidden: true
     permissions:
-      - action: "users:read"
-        scope: "global.users:*"
-      - action: "users:write"
-        scope: "global.users:*"
-      - action: "users:create"
+      - action: 'users:read'
+        scope: 'global.users:*'
+      - action: 'users:write'
+        scope: 'global.users:*'
+      - action: 'users:create'
 ```
 
 The following example creates a global role based on other fixed roles. The `from` option contains the roles from which we want to
@@ -171,21 +171,21 @@ apiVersion: 2
 
 roles:
   - name: custom:org.users:writer
-    description: "List and remove other users from the organization."
+    description: 'List and remove other users from the organization.'
     version: 1
     global: true
     from:
-      - name: "fixed:org.users:reader"
+      - name: 'fixed:org.users:reader'
         global: true
-      - name: "fixed:org.users:writer"
+      - name: 'fixed:org.users:writer'
         global: true
     permissions:
-      - action: "org.users:write"
-        scope: "users:*"
-        state: "absent"
-      - action: "org.users:add"
-        scope: "users:*"
-        state: "absent"
+      - action: 'org.users:write'
+        scope: 'users:*'
+        state: 'absent'
+      - action: 'org.users:add'
+        scope: 'users:*'
+        state: 'absent'
 ```
 
 ### Create custom roles using the HTTP API
@@ -277,28 +277,28 @@ The following example modifies the `Grafana Admin` basic role permissions.
 apiVersion: 2
 
 roles:
-  - name: "basic:grafana_admin"
+  - name: 'basic:grafana_admin'
     global: true
     version: 3
     from:
-      - name: "basic:grafana_admin"
+      - name: 'basic:grafana_admin'
         global: true
     permissions:
       # Permissions to remove
-      - action: "teams.roles:read"
-        scope: "teams:*"
-        state: "absent"
-      - action: "teams.roles:remove"
-        scope: "permissions:type:delegate"
-        state: "absent"
-      - action: "teams.roles:add"
-        scope: "permissions:type:delegate"
-        state: "absent"
+      - action: 'teams.roles:read'
+        scope: 'teams:*'
+        state: 'absent'
+      - action: 'teams.roles:remove'
+        scope: 'permissions:type:delegate'
+        state: 'absent'
+      - action: 'teams.roles:add'
+        scope: 'permissions:type:delegate'
+        state: 'absent'
       # Permissions to add
-      - action: "folders:read"
-        scope: "folder:*"
-      - action: "folders:write"
-        scope: "folder:*"
+      - action: 'folders:read'
+        scope: 'folder:*'
+      - action: 'folders:write'
+        scope: 'folder:*'
 ```
 
 > **Note**: You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
@@ -339,16 +339,16 @@ An alternative to the configuration option is to use the HTTP endpoint.
    ```yaml
    apiVersion: 2
    roles:
-     - name: "basic:grafana_admin"
+     - name: 'basic:grafana_admin'
        global: true
        version: 3
        from:
-         - name: "basic:grafana_admin"
+         - name: 'basic:grafana_admin'
            global: true
        permissions:
          # Permission allowing to reset basic roles
-         - action: "roles:write"
-           scope: "permissions:type:escalate"
+         - action: 'roles:write'
+           scope: 'permissions:type:escalate'
    ```
 
 1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#reset-basic-roles-to-their-default" >}}) for more details.
@@ -386,9 +386,9 @@ The following example deletes a custom role:
 apiVersion: 2
 
 roles:
-  - name: "custom:reports:editor"
+  - name: 'custom:reports:editor'
     orgId: 1
-    state: "absent"
+    state: 'absent'
     force: true
 ```
 

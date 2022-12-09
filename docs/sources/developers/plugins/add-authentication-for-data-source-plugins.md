@@ -74,8 +74,8 @@ Next, define a component that can accept user input.
 ```ts
 <Input
   type="password"
-  placeholder={secureJsonFields?.apiKey ? "configured" : ""}
-  value={secureJsonData.apiKey ?? ""}
+  placeholder={secureJsonFields?.apiKey ? 'configured' : ''}
+  value={secureJsonData.apiKey ?? ''}
   onChange={onAPIKeyChange}
 />
 ```
@@ -92,7 +92,7 @@ const onResetAPIKey = () => {
     },
     secureJsonData: {
       ...options.secureJsonData,
-      apiKey: "",
+      apiKey: '',
     },
   });
 };
@@ -142,15 +142,15 @@ To forward requests through the Grafana proxy, you need to configure one or more
 1. In the `query` method, make a request using `BackendSrv`. The first section of the URL path needs to match the `path` of your proxy route. The data source proxy replaces `this.url + routePath` with the `url` of the route. The following request will be made to `https://api.example.com/v1/users`.
 
    ```ts
-   import { getBackendSrv } from "@grafana/runtime";
+   import { getBackendSrv } from '@grafana/runtime';
    ```
 
    ```ts
-   const routePath = "/example";
+   const routePath = '/example';
 
    getBackendSrv().datasourceRequest({
-     url: this.url + routePath + "/v1/users",
-     method: "GET",
+     url: this.url + routePath + '/v1/users',
+     method: 'GET',
    });
    ```
 

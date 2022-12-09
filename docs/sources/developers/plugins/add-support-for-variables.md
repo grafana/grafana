@@ -30,7 +30,7 @@ Add `replaceVariables` to the argument list, and pass it a user-defined template
 
 ```ts
 export function SimplePanel({ options, data, width, height, replaceVariables }: Props) {
-  const query = replaceVariables("Now displaying $service");
+  const query = replaceVariables('Now displaying $service');
 
   return <div>{query}</div>;
 }
@@ -43,7 +43,7 @@ For data sources, you need to use the getTemplateSrv, which returns an instance 
 1. Import `getTemplateSrv` from the `runtime` package.
 
    ```ts
-   import { getTemplateSrv } from "@grafana/runtime";
+   import { getTemplateSrv } from '@grafana/runtime';
    ```
 
 1. In your `query` method, call the `replace` method with a user-defined template string.
@@ -67,7 +67,7 @@ A data source can define the default format option when no format is specified b
 Let's change the SQL query to use CSV format by default:
 
 ```ts
-getTemplateSrv().replace("SELECT * FROM services WHERE id IN ($service)", options.scopedVars, "csv");
+getTemplateSrv().replace('SELECT * FROM services WHERE id IN ($service)', options.scopedVars, 'csv');
 ```
 
 Now, when users write `$service`, the query looks like this:
@@ -88,11 +88,11 @@ The following example shows how to update a variable called `service`.
 - `replace: true` tells Grafana to update the current URL state, rather than creating a new history entry.
 
 ```ts
-import { locationService } from "@grafana/runtime";
+import { locationService } from '@grafana/runtime';
 ```
 
 ```ts
-locationService.partial({ "var-service": "billing" }, true);
+locationService.partial({ 'var-service': 'billing' }, true);
 ```
 
 > **Note:** Grafana queries your data source whenever you update a variable. Excessive updates to variables can slow down Grafana and lead to a poor user experience.
@@ -135,8 +135,8 @@ Let's create a custom query editor to allow the user to edit the query model.
 1. Create a `VariableQueryEditor` component.
 
    ```ts
-   import React, { useState } from "react";
-   import { MyVariableQuery } from "./types";
+   import React, { useState } from 'react';
+   import { MyVariableQuery } from './types';
 
    interface VariableQueryProps {
      query: MyVariableQuery;
@@ -190,7 +190,7 @@ Let's create a custom query editor to allow the user to edit the query model.
 1. Finally, configure your plugin to use the query editor.
 
    ```ts
-   import { VariableQueryEditor } from "./VariableQueryEditor";
+   import { VariableQueryEditor } from './VariableQueryEditor';
 
    export const plugin = new DataSourcePlugin<DataSource, MyQuery, MyDataSourceOptions>(DataSource)
      .setQueryEditor(QueryEditor)

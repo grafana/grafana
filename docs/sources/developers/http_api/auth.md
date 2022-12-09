@@ -9,7 +9,7 @@ keywords:
   - documentation
   - api
   - authentication
-title: "Authentication HTTP API "
+title: 'Authentication HTTP API '
 ---
 
 # Authentication API

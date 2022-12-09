@@ -9,7 +9,7 @@ keywords:
   - Token
   - Org
   - Organization
-title: "API Tutorial: Create API tokens and dashboards for an organization"
+title: 'API Tutorial: Create API tokens and dashboards for an organization'
 weight: 150
 ---
 

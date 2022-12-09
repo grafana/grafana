@@ -10,7 +10,7 @@ keywords:
   - alerting
   - alerts
   - notifications
-title: "Alerting Notification Channels HTTP API "
+title: 'Alerting Notification Channels HTTP API '
 ---
 
 # Alerting Notification Channels API

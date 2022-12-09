@@ -9,7 +9,7 @@ keywords:
   - api
   - correlations
   - Glue
-title: "Correlations HTTP API "
+title: 'Correlations HTTP API '
 ---
 
 # Correlations API

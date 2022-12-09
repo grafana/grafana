@@ -167,9 +167,9 @@ datasources:
     database: site
     jsonData:
       httpMode: GET
-      httpHeaderName1: "Authorization"
+      httpHeaderName1: 'Authorization'
     secureJsonData:
-      httpHeaderValue1: "Token <token>"
+      httpHeaderValue1: 'Token <token>'
 ```
 
 ## Query the data source

@@ -124,7 +124,7 @@ datasources:
       connMaxLifetime: 14400 # Grafana v5.4+
       connectionTimeout: 0 # Grafana v9.3+
     secureJsonData:
-      password: "Password!"
+      password: 'Password!'
 ```
 
 ## Query the data source

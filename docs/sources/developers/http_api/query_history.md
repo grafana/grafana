@@ -8,7 +8,7 @@ keywords:
   - documentation
   - api
   - queryHistory
-title: "Query History HTTP API "
+title: 'Query History HTTP API '
 ---
 
 # Query history API

@@ -160,11 +160,11 @@ datasources:
   - name: Elastic
     type: elasticsearch
     access: proxy
-    database: "[metrics-]YYYY.MM.DD"
+    database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
       interval: Daily
-      timeField: "@timestamp"
+      timeField: '@timestamp'
 ```
 
 **Provision for logs:**
@@ -176,18 +176,18 @@ datasources:
   - name: elasticsearch-v7-filebeat
     type: elasticsearch
     access: proxy
-    database: "[filebeat-]YYYY.MM.DD"
+    database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
       interval: Daily
-      timeField: "@timestamp"
-      esVersion: "7.0.0"
+      timeField: '@timestamp'
+      esVersion: '7.0.0'
       logMessageField: message
       logLevelField: fields.level
       dataLinks:
         - datasourceUid: my_jaeger_uid # Target UID needs to be known
           field: traceID
-          url: "$${__value.raw}" # Careful about the double "$$" because of env var expansion
+          url: '$${__value.raw}' # Careful about the double "$$" because of env var expansion
 ```
 
 ## Query the data source

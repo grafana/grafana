@@ -38,13 +38,13 @@ To return log data, return a data frame with at least one time field and one tex
 const frame = new MutableDataFrame({
   refId: query.refId,
   fields: [
-    { name: "time", type: FieldType.time },
-    { name: "content", type: FieldType.string },
+    { name: 'time', type: FieldType.time },
+    { name: 'content', type: FieldType.string },
   ],
 });
 
-frame.add({ time: 1589189388597, content: "user registered" });
-frame.add({ time: 1589189406480, content: "user logged in" });
+frame.add({ time: 1589189388597, content: 'user registered' });
+frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
 That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/" >}}) or by adding a [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs/" >}}).
@@ -61,11 +61,11 @@ To make sure Grafana recognizes data as logs and shows logs visualization automa
 const frame = new MutableDataFrame({
   refId: query.refId,
   meta: {
-    preferredVisualisationType: "logs",
+    preferredVisualisationType: 'logs',
   },
   fields: [
-    { name: "time", type: FieldType.time },
-    { name: "content", type: FieldType.string },
+    { name: 'time', type: FieldType.time },
+    { name: 'content', type: FieldType.string },
   ],
 });
 ```
@@ -82,13 +82,13 @@ You can add labels to a stream of logs by setting the labels property on the Fie
 const frame = new MutableDataFrame({
   refId: query.refId,
   fields: [
-    { name: "time", type: FieldType.time },
-    { name: "content", type: FieldType.string, labels: { filename: "file.txt" } },
+    { name: 'time', type: FieldType.time },
+    { name: 'content', type: FieldType.string, labels: { filename: 'file.txt' } },
   ],
 });
 
-frame.add({ time: 1589189388597, content: "user registered" });
-frame.add({ time: 1589189406480, content: "user logged in" });
+frame.add({ time: 1589189388597, content: 'user registered' });
+frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
 ## Extract detected fields from your logs
@@ -109,14 +109,14 @@ To set the level for each log line, add a `level` field.
 const frame = new MutableDataFrame({
   refId: query.refId,
   fields: [
-    { name: "time", type: FieldType.time },
-    { name: "content", type: FieldType.string, labels: { filename: "file.txt" } },
-    { name: "level", type: FieldType.string },
+    { name: 'time', type: FieldType.time },
+    { name: 'content', type: FieldType.string, labels: { filename: 'file.txt' } },
+    { name: 'level', type: FieldType.string },
   ],
 });
 
-frame.add({ time: 1589189388597, content: "user registered", level: "info" });
-frame.add({ time: 1589189406480, content: "unknown error", level: "error" });
+frame.add({ time: 1589189388597, content: 'user registered', level: 'info' });
+frame.add({ time: 1589189406480, content: 'unknown error', level: 'error' });
 ```
 
 ### Unique log lines
@@ -129,13 +129,13 @@ By default, Grafana offers basic support for deduplicating log lines. You can im
 const frame = new MutableDataFrame({
   refId: query.refId,
   fields: [
-    { name: "time", type: FieldType.time },
-    { name: "content", type: FieldType.string, labels: { filename: "file.txt" } },
-    { name: "level", type: FieldType.string },
-    { name: "id", type: FieldType.string },
+    { name: 'time', type: FieldType.time },
+    { name: 'content', type: FieldType.string, labels: { filename: 'file.txt' } },
+    { name: 'level', type: FieldType.string },
+    { name: 'id', type: FieldType.string },
   ],
 });
 
-frame.add({ time: 1589189388597, content: "user registered", level: "info", id: "d3b07384d113edec49eaa6238ad5ff00" });
-frame.add({ time: 1589189406480, content: "unknown error", level: "error", id: "c157a79031e1c40f85931829bc5fc552" });
+frame.add({ time: 1589189388597, content: 'user registered', level: 'info', id: 'd3b07384d113edec49eaa6238ad5ff00' });
+frame.add({ time: 1589189406480, content: 'unknown error', level: 'error', id: 'c157a79031e1c40f85931829bc5fc552' });
 ```

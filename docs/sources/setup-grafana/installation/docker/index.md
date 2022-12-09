@@ -233,14 +233,14 @@ docker run --user 104 --volume "<your volume mapping here>" grafana/grafana-ente
 ##### Specify a user in docker-compose.yml
 
 ```yaml
-version: "2"
+version: '2'
 
 services:
   grafana:
     image: grafana/grafana-enterprise:8.2.0
     ports:
       - 3000:3000
-    user: "104"
+    user: '104'
 ```
 
 #### Modify permissions

@@ -8,7 +8,7 @@ keywords:
   - documentation
   - api
   - preferences
-title: "HTTP Preferences API "
+title: 'HTTP Preferences API '
 ---
 
 # User and Org Preferences API

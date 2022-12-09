@@ -107,33 +107,33 @@ apiVersion: 2
 
 # Roles to insert/update in the database
 roles:
-  - name: "custom:users:writer"
-    description: "List/update other users in the organization"
+  - name: 'custom:users:writer'
+    description: 'List/update other users in the organization'
     version: 1
     global: true
     permissions:
-      - action: "org.users:read"
-        scope: "users:*"
-      - action: "org.users:write"
-        scope: "users:*"
+      - action: 'org.users:read'
+        scope: 'users:*'
+      - action: 'org.users:write'
+        scope: 'users:*'
 
 # Assignments to teams
 teams:
-  - name: "user writers"
+  - name: 'user writers'
     orgId: 1
     roles:
       # Custom role assignment
-      - name: "custom:users:writer"
+      - name: 'custom:users:writer'
         global: true
       # Fixed role assignment
-      - name: "fixed:users:writer"
+      - name: 'fixed:users:writer'
         global: true
-  - name: "user admins"
+  - name: 'user admins'
     orgId: 1
     roles:
-      - name: "custom:users:writer"
+      - name: 'custom:users:writer'
         global: true
-      - name: "fixed:users:writer"
+      - name: 'fixed:users:writer'
         global: true
 ```
 
@@ -155,33 +155,33 @@ apiVersion: 2
 
 # Roles to insert/update in the database
 roles:
-  - name: "custom:users:writer"
-    description: "List/update other users in the organization"
+  - name: 'custom:users:writer'
+    description: 'List/update other users in the organization'
     version: 1
     global: true
     permissions:
-      - action: "org.users:read"
-        scope: "users:*"
-      - action: "org.users:write"
-        scope: "users:*"
+      - action: 'org.users:read'
+        scope: 'users:*'
+      - action: 'org.users:write'
+        scope: 'users:*'
 
 # Assignments to teams
 teams:
-  - name: "user writers"
+  - name: 'user writers'
     orgId: 1
     roles:
-      - name: "fixed:users:writer"
+      - name: 'fixed:users:writer'
         global: true
-        state: "absent" # Remove assignment
-      - name: "custom:users:writer"
+        state: 'absent' # Remove assignment
+      - name: 'custom:users:writer'
         global: true
-        state: "absent" # Remove assignment
-  - name: "user admins"
+        state: 'absent' # Remove assignment
+  - name: 'user admins'
     orgId: 1
     roles:
-      - name: "fixed:users:writer"
+      - name: 'fixed:users:writer'
         global: true
-      - name: "custom:users:writer"
+      - name: 'custom:users:writer'
         global: true
 ```
 

@@ -128,9 +128,9 @@ datasources:
     database: grafana
     user: grafana
     secureJsonData:
-      password: "Password!"
+      password: 'Password!'
     jsonData:
-      sslmode: "disable" # disable/require/verify-ca/verify-full
+      sslmode: 'disable' # disable/require/verify-ca/verify-full
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+

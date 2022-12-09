@@ -9,7 +9,7 @@ keywords:
   - api
   - alerting
   - alerts
-title: "Alerting HTTP API "
+title: 'Alerting HTTP API '
 ---
 
 # Alerting API

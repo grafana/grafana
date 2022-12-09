@@ -8,7 +8,7 @@ keywords:
   - documentation
   - api
   - other
-title: "Other HTTP API "
+title: 'Other HTTP API '
 ---
 
 # Frontend Settings API

@@ -8,7 +8,7 @@ keywords:
   - grafana
   - new
   - documentation
-  - "8.0"
+  - '8.0'
   - release notes
 title: What's new in Grafana v8.0
 weight: -33

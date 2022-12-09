@@ -257,7 +257,7 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
-      customMetricsNamespaces: "CWAgent,CustomNameSpace"
+      customMetricsNamespaces: 'CWAgent,CustomNameSpace'
       profile: secondary
 ```
 
@@ -273,8 +273,8 @@ datasources:
       authType: keys
       defaultRegion: eu-west-2
     secureJsonData:
-      accessKey: "<your access key>"
-      secretKey: "<your secret key>"
+      accessKey: '<your access key>'
+      secretKey: '<your secret key>'
 ```
 
 **Using AWS SDK Default and ARN of IAM Role to Assume:**

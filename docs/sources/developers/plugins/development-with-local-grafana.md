@@ -32,7 +32,7 @@ Another possibility is to run Grafana with docker-compose so it runs in a contai
 **NOTE**: Some plugins already include a docker-compose file so you can skip this step.
 
 ```yaml
-version: "3.7"
+version: '3.7'
 
 services:
   grafana:

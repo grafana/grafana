@@ -74,7 +74,7 @@ datasources:
     access: proxy
     url: http://localhost:8080
     jsonData:
-      graphiteVersion: "1.1"
+      graphiteVersion: '1.1'
 ```
 
 ## Query the data source

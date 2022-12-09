@@ -8,7 +8,7 @@ keywords:
   - documentation
   - api
   - playlist
-title: "Playlist HTTP API "
+title: 'Playlist HTTP API '
 ---
 
 # Playlist API

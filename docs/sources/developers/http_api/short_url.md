@@ -8,7 +8,7 @@ keywords:
   - documentation
   - api
   - shortUrl
-title: "Short URL HTTP API "
+title: 'Short URL HTTP API '
 ---
 
 # Short URL API
