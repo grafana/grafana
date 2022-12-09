@@ -38,10 +38,22 @@ export class Scene extends SceneObjectBase<SceneState> {
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, layout, actions = [], isEditing, $editor, subMenu, standalone } = model.useState();
 
-  if (!standalone) {
+  if (standalone === false) {
     return (
-      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto', minHeight: '100%' }}>
-        <layout.Component model={layout} isEditing={isEditing} />
+      <div
+        style={{
+          flexGrow: 1,
+          display: 'flex',
+          gap: '8px',
+          overflow: 'auto',
+          minHeight: '100%',
+          flexDirection: 'column',
+        }}
+      >
+        {subMenu && <subMenu.Component model={subMenu} />}
+        <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
+          <layout.Component model={layout} isEditing={isEditing} />
+        </div>
       </div>
     );
   }
