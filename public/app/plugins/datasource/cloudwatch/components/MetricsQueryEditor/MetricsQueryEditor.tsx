@@ -5,7 +5,7 @@ import { EditorField, EditorRow, InlineSelect, Space } from '@grafana/experiment
 import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup } from '@grafana/ui';
 
-import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from '../';
+import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor } from '../';
 import { CloudWatchDatasource } from '../../datasource';
 import useMigratedMetricsQuery from '../../migrations/useMigratedMetricsQuery';
 import {
@@ -17,6 +17,7 @@ import {
   MetricStat,
 } from '../../types';
 import { DynamicLabelsField } from '../DynamicLabelsField';
+import { SQLCodeEditor } from '../SQLCodeEditor';
 
 import { Alias } from './Alias';
 

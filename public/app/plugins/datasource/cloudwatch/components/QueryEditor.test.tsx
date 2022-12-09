@@ -3,10 +3,8 @@ import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import * as ui from '@grafana/ui';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
-import { FakeSQLCodeEditor } from '../__mocks__/FakeSQLCodeEditor';
 import {
   validLogsQuery,
   validMetricQueryBuilderQuery,
@@ -35,8 +33,7 @@ const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
 
 const FAKE_EDITOR_LABEL = 'FakeEditor';
 
-jest.mock('.', () => ({
-  ...jest.requireActual('.'),
+jest.mock('./SQLCodeEditor', () => ({
   SQLCodeEditor: ({ sql, onChange }: { sql: string; onChange: (val: string) => void }) => {
     return (
       <>
@@ -45,9 +42,9 @@ jest.mock('.', () => ({
       </>
     );
   },
-  MathExpressionQueryField: () => <></>,
-  SQLBuilderEditor: () => <></>,
 }));
+
+export { SQLCodeEditor } from './SQLCodeEditor';
 
 describe('QueryEditor should render right editor', () => {
   describe('when using grafana 6.3.0 metric query', () => {
