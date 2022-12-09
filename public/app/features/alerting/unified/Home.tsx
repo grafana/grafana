@@ -15,12 +15,9 @@ export default function Home() {
     <AlertingPageWrapper pageId="alert-home">
       <div className={styles.grid}>
         <WelcomeHeader className={styles.ctaContainer} />
-        {/*<ContentBox className={styles.flowBlock}>*/}
-        {/*  <img*/}
-        {/*    src={`public/img/alerting/notification_policy_${theme.name.toLowerCase()}.svg`}*/}
-        {/*    alt="Alerting flow chart"*/}
-        {/*  />*/}
-        {/*</ContentBox>*/}
+        <ContentBox className={styles.flowBlock}>
+          <img src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`} alt="Alerting flow chart" />
+        </ContentBox>
         <ContentBox title="How it works at glance" className={styles.howItWorks}>
           <ul>
             <li>
@@ -107,17 +104,20 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     grid-column: 1 / span 5;
   `,
   flowBlock: css`
-    grid-row: 2 / span 2;
+    width: 100%;
+    grid-column: 1 / span 5;
 
     img {
       display: block;
       margin: 0 auto;
-      height: 100%;
+      height: auto;
+      width: 100%;
     }
   `,
   videoBlock: css`
-    grid-column: 3 / span 3;
-    grid-row: 2 / span 2;
+    grid-column: 3 / span 5;
+    grid-row: 3 / span 1;
+
     // Video required
     position: relative;
     padding: 56.25% 0 0 0; /* 16:9 */
