@@ -7,9 +7,17 @@ import (
 )
 
 // PrepareProxyRequest prepares a request for being proxied.
-// Removes X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto headers.
+// Removes X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto, Origin, Referer headers.
+// Set X-Grafana-Referer based on contents of Referer.
 // Set X-Forwarded-For headers.
 func PrepareProxyRequest(req *http.Request) {
+	// Set X-Grafana-Referer to correlate access logs to dashboards
+	req.Header.Set("X-Grafana-Referer", req.Header.Get("Referer"))
+
+	// Clear Origin and Referer to avoid CORS issues
+	req.Header.Del("Origin")
+	req.Header.Del("Referer")
+
 	req.Header.Del("X-Forwarded-Host")
 	req.Header.Del("X-Forwarded-Port")
 	req.Header.Del("X-Forwarded-Proto")
