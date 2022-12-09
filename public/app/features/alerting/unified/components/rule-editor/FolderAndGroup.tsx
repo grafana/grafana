@@ -194,6 +194,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               <LoadingPlaceholder text="Loading..." />
             ) : (
               <SelectWithAdd
+                disabled={!folder}
                 key={`my_unique_select_key__${folder?.title ?? ''}`}
                 {...field}
                 options={groupOptions}
@@ -203,7 +204,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 value={selectedGroup}
                 custom={isAddingGroup}
                 onCustomChange={(custom: boolean) => setIsAddingGroup(custom)}
-                placeholder="Evaluation group name"
+                placeholder={isAddingGroup ? 'New evaluation group name' : 'Evaluation group name'}
                 onChange={(value: string) => {
                   field.onChange(value);
                   setSelectedGroup(value);
