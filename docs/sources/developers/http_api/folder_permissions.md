@@ -2,7 +2,6 @@
 aliases:
   - ../../http_api/dashboardpermissions/
   - ../../http_api/folder_permissions/
-  - /docs/grafana/latest/developers/http_api/folder_permissions/
 description: Grafana Folder Permissions HTTP API
 keywords:
   - grafana

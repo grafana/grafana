@@ -3,8 +3,6 @@ aliases:
   - ../features/panels/table_panel/
   - ../panels/visualizations/table/filter-table-columns/
   - ../reference/table/
-  - /docs/grafana/latest/visualizations/table/
-  - /docs/grafana/next/panels/visualizations/table/table-field-options/
   - filter-table-columns/
 description: Learn about table panel visualization features.
 keywords:

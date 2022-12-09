@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../features/datasources/tempo/
-  - /docs/grafana/latest/datasources/tempo/
 description: High volume, minimal dependency trace storage. OSS tracing solution from
   Grafana Labs.
 keywords:

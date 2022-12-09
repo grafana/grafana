@@ -2,7 +2,6 @@
 aliases:
   - ../administration/image_rendering/
   - ../image-rendering/
-  - /docs/grafana/latest/setup-grafana/image-rendering/
 description: Image rendering
 keywords:
   - grafana

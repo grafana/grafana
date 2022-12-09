@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../enterprise/vault/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/integrate-with-hashicorp-vault/
 description: Learn how to integrate Grafana with Hashicorp Vault so that you can use
   secrets for configuration and provisioning.
 title: Integrate Grafana with Hashicorp Vault

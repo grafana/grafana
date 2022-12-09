@@ -2,7 +2,6 @@
 aliases:
   - ../../troubleshooting/diagnostics/
   - ../enable-diagnostics/
-  - /docs/grafana/latest/setup-grafana/configure-grafana/configure-tracing/
 menuTitle: Configure tracing
 title: Configure tracing to troubleshoot Grafana
 weight: 200

@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/remove-silence/
 description: Remove alerting silences
 keywords:
   - grafana

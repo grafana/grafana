@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/calculation-types/
   - /docs/sources/panels/reference-calculation-types/
   - calculations-list/
   - reference-calculation-types/

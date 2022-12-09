@@ -9,7 +9,6 @@ aliases:
   - ../panels/visualizations/time-series/graph-time-series-as-lines/
   - ../panels/visualizations/time-series/graph-time-series-as-points/
   - ../panels/visualizations/time-series/graph-time-series-stacking/
-  - /docs/grafana/latest/visualizations/time-series/
   - annotate-time-series/
   - change-axis-display/
   - graph-color-scheme/

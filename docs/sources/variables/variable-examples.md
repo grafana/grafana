@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/variables/variable-examples/
 keywords:
   - grafana
   - templating

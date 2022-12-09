@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../add-constant-variable/
-  - /docs/grafana/latest/variables/variable-types/add-constant-variable/
 title: Add a constant variable
 weight: 400
 ---

@@ -7,7 +7,6 @@ aliases:
   - ../panels/library-panels/manage-library-panel/
   - ../panels/library-panels/unlink-library-panel/
   - ../panels/panel-library/
-  - /docs/grafana/latest/dashboards/manage-library-panels/
 menuTitle: Manage library panels
 title: Manage Grafana library panels
 weight: 3

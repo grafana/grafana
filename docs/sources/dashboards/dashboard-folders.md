@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../reference/dashboard_folders/
-  - /docs/grafana/latest/dashboards/dashboard-folders/
 keywords:
   - grafana
   - dashboard

@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../chained-variables/
-  - /docs/grafana/latest/variables/variable-types/chained-variables/
 keywords:
   - grafana
   - templating

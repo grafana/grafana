@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/
   - /docs/sources/panels/query-a-data-source/_index/
   - expressions/
   - inspect-panel/

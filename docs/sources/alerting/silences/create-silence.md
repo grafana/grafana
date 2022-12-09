@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/create-silence/
 description: Add silence alert notification
 keywords:
   - grafana

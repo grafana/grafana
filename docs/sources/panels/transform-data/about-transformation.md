@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/transform-data/about-transformation/
   - /docs/sources/panels/transform-data/about-transformation/
 title: About transformations
 weight: 10

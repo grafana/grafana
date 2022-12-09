@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/configure-panel-options/
   - add-panels-dynamically/
   - repeat-panels-or-rows/
   - working-with-panels/add-title-and-description/

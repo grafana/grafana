@@ -2,7 +2,6 @@
 aliases:
   - ../../http_api/datasource_permissions/
   - ../../http_api/datasourcepermissions/
-  - /docs/grafana/latest/developers/http_api/datasource_permissions/
 description: Data Source Permissions API
 keywords:
   - grafana

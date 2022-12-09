@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../enterprise/
-  - /docs/grafana/latest/introduction/grafana-enterprise/
 description: Grafana Enterprise overview
 title: Grafana Enterprise
 weight: 200

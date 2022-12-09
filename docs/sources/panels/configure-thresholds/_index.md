@@ -1,7 +1,6 @@
 ---
 aliases:
   - ./
-  - /docs/grafana/latest/panels/configure-thresholds/
   - specify-thresholds/about-thresholds/
   - specify-thresholds/add-a-threshold/
   - specify-thresholds/add-threshold-to-graph/

@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/inspect-query-performance/
   - /docs/sources/panels/query-a-data-source/inspect-query-performance/
 title: Inspect query performance
 weight: 80

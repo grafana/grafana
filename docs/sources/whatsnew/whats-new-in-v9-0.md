@@ -3,7 +3,6 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v9-0/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v9-0/
 description: Feature and improvement highlights for Grafana v9.0
 keywords:
   - grafana

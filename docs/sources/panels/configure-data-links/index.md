@@ -5,7 +5,6 @@ aliases:
   - ../reference/datalinks/
   - ../variables/url-variables/
   - ../variables/variable-types/url-variables/
-  - /docs/grafana/latest/panels/configure-data-links/
 keywords:
   - grafana
   - url variables

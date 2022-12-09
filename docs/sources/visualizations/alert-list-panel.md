@@ -3,7 +3,6 @@ aliases:
   - ../features/panels/alertlist/
   - ../panels/visualizations/alert-list-panel/
   - ../reference/alertlist/
-  - /docs/grafana/latest/visualizations/alert-list-panel/
 keywords:
   - grafana
   - alert list

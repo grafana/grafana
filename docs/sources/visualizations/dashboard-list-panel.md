@@ -3,7 +3,6 @@ aliases:
   - ../features/panels/dashlist/
   - ../panels/visualizations/dashboard-list-panel/
   - ../reference/dashlist/
-  - /docs/grafana/latest/visualizations/dashboard-list-panel/
 keywords:
   - grafana
   - dashboard list

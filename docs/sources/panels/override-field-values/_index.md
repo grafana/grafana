@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/override-field-values/
   - /docs/sources/panels/override-field-values/
   - field-overrides/
 title: Override field values
