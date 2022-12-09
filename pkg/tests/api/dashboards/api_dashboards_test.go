@@ -26,7 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestDashboardQuota(t *testing.T) {
+func TestIntegrationDashboardQuota(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
@@ -105,7 +109,11 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	return u.ID
 }
 
-func TestUpdatingProvisionionedDashboards(t *testing.T) {
+func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,

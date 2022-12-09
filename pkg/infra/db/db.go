@@ -30,6 +30,14 @@ var InitTestDBwithCfg = sqlstore.InitTestDBWithCfg
 var ProvideService = sqlstore.ProvideService
 var NewSqlBuilder = sqlstore.NewSqlBuilder
 
+func IsTestDbSQLite() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); !present || db == "sqlite" {
+		return true
+	}
+
+	return !IsTestDbMySQL() && !IsTestDbPostgres()
+}
+
 func IsTestDbMySQL() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 		return db == migrator.MySQL

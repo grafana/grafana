@@ -22,7 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	const disableOrgID int64 = 3
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
