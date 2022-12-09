@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/add-anonymous-usage-reporting/
 title: Add anonymous usage reporting
 ---
 

@@ -1,19 +1,15 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-folders/
-  - /docs/grafana/latest/reference/dashboard_folders/
-  - /docs/grafana/latest/dashboards/export-import/
-  - /docs/grafana/latest/reference/export_import/
-  - /docs/grafana/latest/troubleshooting/troubleshoot-dashboards/
-  - /docs/grafana/latest/dashboards/time-range-controls/
-  - /docs/grafana/latest/reference/timerange/
-  - /docs/grafana/latest/panels/working-with-panels/organize-dashboard/
-  - /docs/grafana/latest/dashboards/manage-dashboards/
-title: Manage dashboards
-menuTitle: Manage dashboards
-weight: 8
+  - ../features/dashboard/dashboards/
+  - ../panels/working-with-panels/organize-dashboard/
+  - ../reference/dashboard_folders/
+  - ../reference/export_import/
+  - ../reference/timerange/
+  - ../troubleshooting/troubleshoot-dashboards/
+  - dashboard-folders/
+  - dashboard-manage/
+  - export-import/
+  - time-range-controls/
 keywords:
   - grafana
   - dashboard
@@ -25,6 +21,9 @@ keywords:
   - troubleshoot
   - time range
   - scripting
+menuTitle: Manage dashboards
+title: Manage dashboards
+weight: 8
 ---
 
 # Manage dashboards
