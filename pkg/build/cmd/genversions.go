@@ -36,7 +36,7 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 		releaseMode = config.ReleaseMode{Mode: mode}
 	case config.Custom:
 		if edition, _ := os.LookupEnv("EDITION"); edition == string(config.EditionEnterprise2) {
-			releaseMode = config.ReleaseMode{Mode: config.TagMode}
+			releaseMode = config.ReleaseMode{Mode: config.Enterprise2Mode}
 			if tag != "" {
 				version = strings.TrimPrefix(tag, "v")
 			}
@@ -48,7 +48,7 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 		}
 		// if there is a custom event targeting the main branch, that's an enterprise downstream build
 		if mode == config.MainBranch {
-			releaseMode = config.ReleaseMode{Mode: config.CustomMode}
+			releaseMode = config.ReleaseMode{Mode: config.DownstreamMode}
 		} else {
 			releaseMode = config.ReleaseMode{Mode: mode}
 		}

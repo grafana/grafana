@@ -4326,7 +4326,6 @@ __metadata:
     "@types/react-dom": 17.0.14
     "@types/sinon": 10.0.13
     "@types/testing-library__jest-dom": 5.14.5
-    "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 1.4.0
     date-fns: 2.29.3
@@ -4354,7 +4353,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.22
+    uplot: 1.6.23
     xss: 1.0.14
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
@@ -4719,7 +4718,6 @@ __metadata:
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.1
     "@testing-library/user-event": 14.4.3
-    "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
     "@types/enzyme": 3.10.12
@@ -4747,7 +4745,6 @@ __metadata:
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
-    "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
     "@wojtekmaj/enzyme-adapter-react-17": 0.7.0
@@ -4819,7 +4816,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.22
+    uplot: 1.6.23
     uuid: 9.0.0
     webpack: 5.74.0
   peerDependencies:
@@ -4964,15 +4961,14 @@ __metadata:
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.4.3
-    "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
+    "@types/enzyme": 3.10.12
     "@types/hoist-non-react-statics": ^3.3.1
     "@types/jest": 29.2.3
     "@types/lodash": 4.14.187
     "@types/prop-types": 15.7.5
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
-    "@types/reselect": 2.2.0
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
@@ -7998,14 +7994,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:1.8.6":
-  version: 1.8.6
-  resolution: "@reduxjs/toolkit@npm:1.8.6"
+"@reduxjs/toolkit@npm:1.9.1":
+  version: 1.9.1
+  resolution: "@reduxjs/toolkit@npm:1.9.1"
   dependencies:
-    immer: ^9.0.7
-    redux: ^4.1.2
-    redux-thunk: ^2.4.1
-    reselect: ^4.1.5
+    immer: ^9.0.16
+    redux: ^4.2.0
+    redux-thunk: ^2.4.2
+    reselect: ^4.1.7
   peerDependencies:
     react: ^16.9.0 || ^17.0.0 || ^18
     react-redux: ^7.2.1 || ^8.0.2
@@ -8014,7 +8010,7 @@ __metadata:
       optional: true
     react-redux:
       optional: true
-  checksum: f2a5f20f638a981eacd6becb040b923a825013064ece9b1555a658cab1e9f6c46a14d8c50aa095cda49ff0b89518b855ae88c774d95bcc9692e9297d3bc3b2d6
+  checksum: e6700a0d45198ab525c96ff0425fa0125fbdc37ce514f0c77c30225837113279ceec9190ac3da35cb20e77553e56342021788bbf17465819068c4db34cb3d87f
   languageName: node
   linkType: hard
 
@@ -10206,15 +10202,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/classnames@npm:2.3.0, @types/classnames@npm:^2.2.7":
-  version: 2.3.0
-  resolution: "@types/classnames@npm:2.3.0"
-  dependencies:
-    classnames: "*"
-  checksum: e1bd6de60fc5e4ead601838078b10f378d6a66ad21112922856de59a1f450b1361f597aa3ca34f2cc33bc030f950112872fddfde43c5189bec89737a8b237f24
-  languageName: node
-  linkType: hard
-
 "@types/clean-css@npm:*":
   version: 4.2.5
   resolution: "@types/clean-css@npm:4.2.5"
@@ -10794,6 +10781,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/glob@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@types/glob@npm:8.0.0"
+  dependencies:
+    "@types/minimatch": "*"
+    "@types/node": "*"
+  checksum: 1817b05f5a8aed851d102a65b5e926d5c777bef927ea62b36d635860eef5364f2046bb5a692d135b6f2b28f34e4a9d44ade9396122c0845bcc7636d35f624747
+  languageName: node
+  linkType: hard
+
 "@types/google.analytics@npm:^0.0.42":
   version: 0.0.42
   resolution: "@types/google.analytics@npm:0.0.42"
@@ -11332,25 +11329,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/rc-time-picker@npm:3.4.1":
-  version: 3.4.1
-  resolution: "@types/rc-time-picker@npm:3.4.1"
-  dependencies:
-    "@types/react": "*"
-    moment: ^2.19.4
-  checksum: 26d43beb8c5fdbd1932996bee63d3f854ca8e931915463106cbb382d98efcc81a1140f7fda004b6652ca12e87b211b1b70302b854c5ce41e3f87e68537181c06
-  languageName: node
-  linkType: hard
-
-"@types/rc-tree@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@types/rc-tree@npm:3.0.0"
-  dependencies:
-    rc-tree: "*"
-  checksum: bf8e599c5a62c8f8d91fbecdc210119c4c2ad07bdfb8adecb4d1cce9cb967fd6856ad2940431b8fdc9993cd261f127c33588f2988bfc7bc6438993de1c6eeff3
-  languageName: node
-  linkType: hard
-
 "@types/react-beautiful-dnd@npm:13.1.2":
   version: 13.1.2
   resolution: "@types/react-beautiful-dnd@npm:13.1.2"
@@ -11510,7 +11488,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:*, @types/react-test-renderer@npm:17.0.1":
+"@types/react-test-renderer@npm:17.0.1":
   version: 17.0.1
   resolution: "@types/react-test-renderer@npm:17.0.1"
   dependencies:
@@ -11620,15 +11598,6 @@ __metadata:
   version: 0.2.29
   resolution: "@types/relateurl@npm:0.2.29"
   checksum: 33226abf47dc03523f88dacb6c2acd185285e754a8e64dd832156fcfbeee053b3c9c63dcb01c06aa263f6e7cb1e53f819718d41dbf7ede38b9d00893cec4a6f6
-  languageName: node
-  linkType: hard
-
-"@types/reselect@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@types/reselect@npm:2.2.0"
-  dependencies:
-    reselect: "*"
-  checksum: 034b5796c16316b60561fca01503111ecddde638178efc20c7293f07ef7d9cbc2bffce267899381f630fa9ffef3bfed54384fe87756e97132b4dc2881f585e19
   languageName: node
   linkType: hard
 
@@ -11817,15 +11786,6 @@ __metadata:
   dependencies:
     "@types/jest": "*"
   checksum: 77fe7ad3a9d49250972a0e3289b6d536942f95f0d539f32a917cf78c9422113d55c00de53b53dd4de1de49b68c8b500faea62e3017c4a64736cfbfbade749e04
-  languageName: node
-  linkType: hard
-
-"@types/testing-library__react-hooks@npm:^3.2.0":
-  version: 3.4.1
-  resolution: "@types/testing-library__react-hooks@npm:3.4.1"
-  dependencies:
-    "@types/react-test-renderer": "*"
-  checksum: f32a5659330a7c2e555bffa74807f7331b1d2fcdd5fe4c08cc9130a0a12826f5f1c5bdf3210e7b2b4c9b774bddecc283171a347f78dc98d28836b0f773583a03
   languageName: node
   linkType: hard
 
@@ -15485,17 +15445,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:*, classnames@npm:2.x, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.2.6, classnames@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "classnames@npm:2.3.1"
-  checksum: 14db8889d56c267a591f08b0834989fe542d47fac659af5a539e110cc4266694e8de86e4e3bbd271157dbd831361310a8293e0167141e80b0f03a0f175c80960
-  languageName: node
-  linkType: hard
-
 "classnames@npm:2.3.2, classnames@npm:^2.3.2":
   version: 2.3.2
   resolution: "classnames@npm:2.3.2"
   checksum: 2c62199789618d95545c872787137262e741f9db13328e216b093eea91c85ef2bfb152c1f9e63027204e2559a006a92eb74147d46c800a9f96297ae1d9f96f4e
+  languageName: node
+  linkType: hard
+
+"classnames@npm:2.x, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.2.6, classnames@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "classnames@npm:2.3.1"
+  checksum: 14db8889d56c267a591f08b0834989fe542d47fac659af5a539e110cc4266694e8de86e4e3bbd271157dbd831361310a8293e0167141e80b0f03a0f175c80960
   languageName: node
   linkType: hard
 
@@ -20872,7 +20832,7 @@ __metadata:
 
 "fsevents@patch:fsevents@^2.1.2#~builtin<compat/fsevents>, fsevents@patch:fsevents@^2.3.2#~builtin<compat/fsevents>, fsevents@patch:fsevents@~2.3.2#~builtin<compat/fsevents>":
   version: 2.3.2
-  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=18f3a7"
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
   dependencies:
     node-gyp: latest
   conditions: os=darwin
@@ -21545,7 +21505,7 @@ __metadata:
     "@react-types/menu": 3.7.2
     "@react-types/overlays": 3.6.4
     "@react-types/shared": 3.15.0
-    "@reduxjs/toolkit": 1.8.6
+    "@reduxjs/toolkit": 1.9.1
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.19.7
     "@sentry/types": 6.19.7
@@ -21559,7 +21519,6 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
-    "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
     "@types/d3-force": ^2.1.0
@@ -21569,6 +21528,7 @@ __metadata:
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/eslint": 8.4.9
     "@types/file-saver": 2.0.5
+    "@types/glob": ^8.0.0
     "@types/google.analytics": ^0.0.42
     "@types/gtag.js": ^0.0.12
     "@types/history": 4.7.11
@@ -21585,8 +21545,6 @@ __metadata:
     "@types/papaparse": 5.3.5
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
-    "@types/rc-time-picker": 3.4.1
-    "@types/rc-tree": ^3.0.0
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-dom": 17.0.14
@@ -21602,13 +21560,11 @@ __metadata:
     "@types/react-window": 1.8.5
     "@types/react-window-infinite-loader": ^1
     "@types/redux-mock-store": 1.0.3
-    "@types/reselect": 2.2.0
     "@types/semver": 7.3.13
     "@types/slate": 0.47.11
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
-    "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
     "@types/webpack-env": 1.18.0
@@ -21795,7 +21751,7 @@ __metadata:
     ts-node: 10.9.1
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.22
+    uplot: 1.6.23
     uuid: 9.0.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -22798,7 +22754,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:9.0.16":
+"immer@npm:9.0.16, immer@npm:^9.0.16":
   version: 9.0.16
   resolution: "immer@npm:9.0.16"
   checksum: e9a5ca65c929b329da7a3b7beccf7984271cda7bdd47b2cab619eac3277dcd56598c211b55cc340786b6eff0c06652ac018808d9fd744443f06882364dece6bc
@@ -27863,7 +27819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.4":
+"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.20.1, moment@npm:^2.29.4":
   version: 2.29.4
   resolution: "moment@npm:2.29.4"
   checksum: 0ec3f9c2bcba38dc2451b1daed5daded747f17610b92427bebe1d08d48d8b7bdd8d9197500b072d14e326dd0ccf3e326b9e3d07c5895d3d49e39b6803b76e80e
@@ -31813,22 +31769,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:*":
-  version: 5.6.5
-  resolution: "rc-tree@npm:5.6.5"
-  dependencies:
-    "@babel/runtime": ^7.10.1
-    classnames: 2.x
-    rc-motion: ^2.0.1
-    rc-util: ^5.16.1
-    rc-virtual-list: ^3.4.8
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 107efb7dbf6d44faf11072c4c53277f234ecd8d0c5a5cb387d5d9ac18b96098fa9cef3312f52589930c5562fd708f4da50f3b7880b27b2405c6ac558dce9f037
-  languageName: node
-  linkType: hard
-
 "rc-tree@npm:5.7.0, rc-tree@npm:~5.7.0":
   version: 5.7.0
   resolution: "rc-tree@npm:5.7.0"
@@ -33185,12 +33125,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-thunk@npm:2.4.1, redux-thunk@npm:^2.4.1":
+"redux-thunk@npm:2.4.1":
   version: 2.4.1
   resolution: "redux-thunk@npm:2.4.1"
   peerDependencies:
     redux: ^4
   checksum: af5abb425fb9dccda02e5f387d6f3003997f62d906542a3d35fc9420088f550dc1a018bdc246c7d23ee852b4d4ab8b5c64c5be426e45a328d791c4586a3c6b6e
+  languageName: node
+  linkType: hard
+
+"redux-thunk@npm:^2.4.2":
+  version: 2.4.2
+  resolution: "redux-thunk@npm:2.4.2"
+  peerDependencies:
+    redux: ^4
+  checksum: c7f757f6c383b8ec26152c113e20087818d18ed3edf438aaad43539e9a6b77b427ade755c9595c4a163b6ad3063adf3497e5fe6a36c68884eb1f1cfb6f049a5c
   languageName: node
   linkType: hard
 
@@ -33209,15 +33158,6 @@ __metadata:
   dependencies:
     "@babel/runtime": ^7.9.2
   checksum: 99519438a5d20b69404ad3816307ccc189f16df04b64c50d82c415ec488ea68b656d7a2fc81b6345e8d90f095344dfea68246500f72613d76464986660bc0485
-  languageName: node
-  linkType: hard
-
-"redux@npm:^4.1.2":
-  version: 4.1.2
-  resolution: "redux@npm:4.1.2"
-  dependencies:
-    "@babel/runtime": ^7.9.2
-  checksum: 6a839cee5bd580c5298d968e9e2302150e961318253819bcd97f9d945a5a409559eacddf6026f4118bb68b681c593d90e8a2c5bbf278f014aff9bf0d2d8fa084
   languageName: node
   linkType: hard
 
@@ -33659,13 +33599,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:*":
-  version: 4.1.0
-  resolution: "reselect@npm:4.1.0"
-  checksum: ef150c3cccf8c43f7e5f9f35b0f826f82287e84fb5219928b1c7a4c8e99297f004ecd27e4888334115d35c82ab20bc2c95987244d12253480d256a1241495ad2
-  languageName: node
-  linkType: hard
-
 "reselect@npm:4.1.6":
   version: 4.1.6
   resolution: "reselect@npm:4.1.6"
@@ -33673,10 +33606,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:^4.1.5":
-  version: 4.1.5
-  resolution: "reselect@npm:4.1.5"
-  checksum: 54c13c1e795b2ea70cba8384138aebe78adda00cbea303cc94b64da0a70d74c896cc9a03115ae38b8bff990e7a60dcd6452ab68cbec01b0b38c1afda70714cf0
+"reselect@npm:^4.1.7":
+  version: 4.1.7
+  resolution: "reselect@npm:4.1.7"
+  checksum: 738d8e2b8f0dca154ad29de6a209c9fbca2d70ae6788fd85df87f2c74b95a65bbf2d16d43a9e2faff39de34d17a29d706ba08a6b2ee5660c09589edbd19af7e1
   languageName: node
   linkType: hard
 
@@ -33806,7 +33739,7 @@ __metadata:
 
 "resolve@patch:resolve@^1.10.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.9.0#~builtin<compat/resolve>":
   version: 1.20.0
-  resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=07638b"
+  resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=c3c19d"
   dependencies:
     is-core-module: ^2.2.0
     path-parse: ^1.0.6
@@ -33816,7 +33749,7 @@ __metadata:
 
 "resolve@patch:resolve@^1.22.0#~builtin<compat/resolve>":
   version: 1.22.0
-  resolution: "resolve@patch:resolve@npm%3A1.22.0#~builtin<compat/resolve>::version=1.22.0&hash=07638b"
+  resolution: "resolve@patch:resolve@npm%3A1.22.0#~builtin<compat/resolve>::version=1.22.0&hash=c3c19d"
   dependencies:
     is-core-module: ^2.8.1
     path-parse: ^1.0.7
@@ -33829,7 +33762,7 @@ __metadata:
 
 "resolve@patch:resolve@^1.22.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>":
   version: 1.22.1
-  resolution: "resolve@patch:resolve@npm%3A1.22.1#~builtin<compat/resolve>::version=1.22.1&hash=07638b"
+  resolution: "resolve@patch:resolve@npm%3A1.22.1#~builtin<compat/resolve>::version=1.22.1&hash=c3c19d"
   dependencies:
     is-core-module: ^2.9.0
     path-parse: ^1.0.7
@@ -33842,7 +33775,7 @@ __metadata:
 
 "resolve@patch:resolve@^2.0.0-next.3#~builtin<compat/resolve>":
   version: 2.0.0-next.3
-  resolution: "resolve@patch:resolve@npm%3A2.0.0-next.3#~builtin<compat/resolve>::version=2.0.0-next.3&hash=07638b"
+  resolution: "resolve@patch:resolve@npm%3A2.0.0-next.3#~builtin<compat/resolve>::version=2.0.0-next.3&hash=c3c19d"
   dependencies:
     is-core-module: ^2.2.0
     path-parse: ^1.0.6
@@ -34841,7 +34774,7 @@ __metadata:
 
 "slate-dev-environment@patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::locator=grafana%40workspace%3A.":
   version: 0.2.5
-  resolution: "slate-dev-environment@patch:slate-dev-environment@npm%3A0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::version=0.2.5&hash=13521e&locator=grafana%40workspace%3A."
+  resolution: "slate-dev-environment@patch:slate-dev-environment@npm%3A0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::version=0.2.5&hash=18ffc0&locator=grafana%40workspace%3A."
   dependencies:
     is-in-browser: ^1.1.3
   checksum: 1be7514ac0b10b0232f3c19e02bf5f9211850e119a235743fd46ab2f182c8b892dc58edf40130308d85d14f755b348b86ab2daea757e8ee0beb74746f653fc03
@@ -35573,7 +35506,7 @@ __metadata:
 
 "storybook-dark-mode@patch:storybook-dark-mode@npm%3A1.1.2#./.yarn/patches/storybook-dark-mode-npm-1.1.2-ecc4605688.patch::locator=grafana%40workspace%3A.":
   version: 1.1.2
-  resolution: "storybook-dark-mode@patch:storybook-dark-mode@npm%3A1.1.2#./.yarn/patches/storybook-dark-mode-npm-1.1.2-ecc4605688.patch::version=1.1.2&hash=5d30c8&locator=grafana%40workspace%3A."
+  resolution: "storybook-dark-mode@patch:storybook-dark-mode@npm%3A1.1.2#./.yarn/patches/storybook-dark-mode-npm-1.1.2-ecc4605688.patch::version=1.1.2&hash=2c0413&locator=grafana%40workspace%3A."
   dependencies:
     "@storybook/addons": ^6.0.0
     "@storybook/api": ^6.0.0
@@ -37408,7 +37341,7 @@ __metadata:
 
 "typescript@patch:typescript@4.6.4#~builtin<compat/typescript>":
   version: 4.6.4
-  resolution: "typescript@patch:typescript@npm%3A4.6.4#~builtin<compat/typescript>::version=4.6.4&hash=701156"
+  resolution: "typescript@patch:typescript@npm%3A4.6.4#~builtin<compat/typescript>::version=4.6.4&hash=5d3a66"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -37418,7 +37351,7 @@ __metadata:
 
 "typescript@patch:typescript@4.8.2#~builtin<compat/typescript>":
   version: 4.8.2
-  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=701156"
+  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=aae4e6"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -37428,7 +37361,7 @@ __metadata:
 
 "typescript@patch:typescript@4.8.4#~builtin<compat/typescript>, typescript@patch:typescript@^3 || ^4#~builtin<compat/typescript>":
   version: 4.8.4
-  resolution: "typescript@patch:typescript@npm%3A4.8.4#~builtin<compat/typescript>::version=4.8.4&hash=701156"
+  resolution: "typescript@patch:typescript@npm%3A4.8.4#~builtin<compat/typescript>::version=4.8.4&hash=0102e9"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -37438,7 +37371,7 @@ __metadata:
 
 "typescript@patch:typescript@>=2.7#~builtin<compat/typescript>":
   version: 4.7.4
-  resolution: "typescript@patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=701156"
+  resolution: "typescript@patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=65a307"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -37448,7 +37381,7 @@ __metadata:
 
 "typescript@patch:typescript@^4.2.4#~builtin<compat/typescript>":
   version: 4.8.3
-  resolution: "typescript@patch:typescript@npm%3A4.8.3#~builtin<compat/typescript>::version=4.8.3&hash=701156"
+  resolution: "typescript@patch:typescript@npm%3A4.8.3#~builtin<compat/typescript>::version=4.8.3&hash=aae4e6"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
@@ -37905,10 +37838,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.22":
-  version: 1.6.22
-  resolution: "uplot@npm:1.6.22"
-  checksum: 4a73835b93fcbd0f62d99c062aac75d0d9d2e3f383fcc77b022abbecd936cd989188ed60da756e45d4306353c6d0e38baaac73b372a674d9e2f47bff7f7d11a6
+"uplot@npm:1.6.23":
+  version: 1.6.23
+  resolution: "uplot@npm:1.6.23"
+  checksum: 4fd2b6340b09f8cbff5c136238962c4e31621267a17c321e0183d021c72338973ba16fd943858248983edc4cf9307e352f99e806b6ffb5eaff7a132adaff2bff
   languageName: node
   linkType: hard
 

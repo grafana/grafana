@@ -63,7 +63,7 @@ export class UrlSyncManager {
       }
 
       if (Object.keys(mappedUpdated).length > 0) {
-        locationService.partial(mappedUpdated, false);
+        locationService.partial(mappedUpdated, true);
       }
     }
   };

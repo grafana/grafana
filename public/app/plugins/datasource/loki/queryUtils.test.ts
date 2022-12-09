@@ -5,6 +5,7 @@ import {
   isQueryWithLabelFormat,
   isQueryWithParser,
   isValidQuery,
+  parseToNodeNamesArray,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -163,6 +164,39 @@ describe('isValidQuery', () => {
   });
   it('returns true if valid query', () => {
     expect(isValidQuery('{job="grafana"}')).toBe(true);
+  });
+});
+
+describe('parseToArray', () => {
+  it('returns on empty query', () => {
+    expect(parseToNodeNamesArray('{}')).toEqual(['LogQL', 'Expr', 'LogExpr', 'Selector', '⚠']);
+  });
+  it('returns on invalid query', () => {
+    expect(parseToNodeNamesArray('{job="grafana"')).toEqual([
+      'LogQL',
+      'Expr',
+      'LogExpr',
+      'Selector',
+      'Matchers',
+      'Matcher',
+      'Identifier',
+      'Eq',
+      'String',
+      '⚠',
+    ]);
+  });
+  it('returns on valid query', () => {
+    expect(parseToNodeNamesArray('{job="grafana"}')).toEqual([
+      'LogQL',
+      'Expr',
+      'LogExpr',
+      'Selector',
+      'Matchers',
+      'Matcher',
+      'Identifier',
+      'Eq',
+      'String',
+    ]);
   });
 });
 

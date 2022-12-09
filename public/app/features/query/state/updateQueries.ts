@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
+import { CoreApp, DataQuery, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export async function updateQueries(
@@ -9,6 +9,7 @@ export async function updateQueries(
 ): Promise<DataQuery[]> {
   let nextQueries = queries;
   const datasource = { type: nextDS.type, uid: nextDSUidOrVariableExpression };
+  const DEFAULT_QUERY = { ...nextDS?.getDefaultQuery?.(CoreApp.PanelEditor), datasource, refId: 'A' };
 
   // we are changing data source type
   if (currentDS?.meta.id !== nextDS.meta.id) {
@@ -27,12 +28,12 @@ export async function updateQueries(
     }
     // Otherwise clear queries
     else {
-      return [{ refId: 'A', datasource }];
+      return [DEFAULT_QUERY];
     }
   }
 
   if (nextQueries.length === 0) {
-    return [{ refId: 'A', datasource }];
+    return [DEFAULT_QUERY];
   }
 
   // Set data source on all queries except expression queries
