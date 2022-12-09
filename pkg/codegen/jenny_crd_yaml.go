@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 
-	cueopenapi "cuelang.org/go/encoding/openapi"
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/ast"
+	"cuelang.org/go/encoding/openapi"
 	cueyaml "cuelang.org/go/pkg/encoding/yaml"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/thema"
-	"github.com/grafana/thema/encoding/openapi"
 	goyaml "gopkg.in/yaml.v3"
 )
 
@@ -65,7 +66,17 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	latest := thema.LatestVersion(lin)
 
 	for sch != nil {
-		ver, err := valueToCRDSpecVersion(sch, versionString(sch.Version()), sch.Version() == latest)
+		oapi, err := generateOpenAPI(sch, props)
+		if err != nil {
+			return nil, err
+		}
+
+		vstr := versionString(sch.Version())
+		if props.Maturity.Less(kindsys.MaturityStable) {
+			vstr = "v0-0alpha1"
+		}
+
+		ver, err := valueToCRDSpecVersion(oapi, vstr, sch.Version() == latest)
 		if err != nil {
 			return nil, err
 		}
@@ -77,10 +88,7 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-	return &codejen.File{
-		RelativePath: filepath.Join(j.parentpath, props.MachineName, "crd", props.MachineName+".crd.yml"),
-		Data:         contents,
-	}, nil
+	return codejen.NewFile(filepath.Join(j.parentpath, props.MachineName, "crd", props.MachineName+".crd.yml"), contents, j), nil
 }
 
 // customResourceDefinition differs from k8ssys.CustomResourceDefinition in that it doesn't use the metav1
@@ -108,29 +116,15 @@ type cueOpenAPIEncodedComponents struct {
 	Schemas map[string]any `json:"schemas"`
 }
 
-func valueToCRDSpecVersion(sch thema.Schema, name string, stored bool) (k8ssys.CustomResourceDefinitionSpecVersion, error) {
-	f, err := openapi.GenerateSchema(sch, &cueopenapi.Config{
-		ExpandReferences: true,
-	})
-	if err != nil {
-		return k8ssys.CustomResourceDefinitionSpecVersion{}, err
-	}
-
-	str, err := cueyaml.Marshal(sch.Lineage().Runtime().Context().BuildFile(f))
-	if err != nil {
-		return k8ssys.CustomResourceDefinitionSpecVersion{}, err
-	}
-
+func valueToCRDSpecVersion(str string, name string, stored bool) (k8ssys.CustomResourceDefinitionSpecVersion, error) {
 	// Decode the bytes back into an object where we can trim the openAPI clutter out
 	// and grab just the schema as a map[string]any (which is what k8s wants)
 	back := cueOpenAPIEncoded{}
-	err = goyaml.Unmarshal([]byte(str), &back)
+	err := goyaml.Unmarshal([]byte(str), &back)
 	if err != nil {
 		return k8ssys.CustomResourceDefinitionSpecVersion{}, err
 	}
 	if len(back.Components.Schemas) != 1 {
-		fmt.Println(len(back.Components.Schemas))
-		// fmt.Println(back.Components.Schemas)
 		// There should only be one schema here...
 		// TODO: this may change with subresources--but subresources should have defined names
 		return k8ssys.CustomResourceDefinitionSpecVersion{}, fmt.Errorf("version %s has multiple schemas", name)
@@ -165,4 +159,32 @@ func valueToCRDSpecVersion(sch thema.Schema, name string, stored bool) (k8ssys.C
 
 func versionString(version thema.SyntacticVersion) string {
 	return fmt.Sprintf("v%d-%d", version[0], version[1])
+}
+
+// Hoisting this out of thema until we resolve the proper approach there
+func generateOpenAPI(sch thema.Schema, props kindsys.CoreStructuredProperties) (string, error) {
+	ctx := sch.Underlying().Context()
+	v := ctx.CompileString(fmt.Sprintf("#%s: _", props.Name))
+	defpath := cue.MakePath(cue.Def(props.Name))
+	defsch := v.FillPath(defpath, sch.Underlying())
+
+	cfg := &openapi.Config{
+		NameFunc: func(v cue.Value, path cue.Path) string {
+			if path.String() == defpath.String() {
+				return props.Name
+			}
+			return ""
+		},
+		Info: ast.NewStruct( // doesn't matter, we're throwing it away
+			"title", ast.NewString(props.Name),
+			"version", ast.NewString("0.0"),
+		),
+	}
+
+	f, err := openapi.Generate(defsch, cfg)
+	if err != nil {
+		return "", err
+	}
+
+	return cueyaml.Marshal(sch.Lineage().Runtime().Context().BuildFile(f))
 }

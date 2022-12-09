@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -35,7 +35,7 @@ type Service struct {
 
 // ProvideService returns a new Service which registers models from list.
 // It is disabled if the Apiserver flag is disabled in the feature toggles.
-func ProvideService(cfg *setting.Cfg, feat featuremgmt.FeatureToggles, reg *corekind.Base) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, feat featuremgmt.FeatureToggles, reg *corecrd.Registry) (*Service, error) {
 	enabled := feat.IsEnabled(featuremgmt.FlagApiserver)
 	if !enabled {
 		return &Service{
@@ -97,15 +97,15 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 // RegisterModels registers models to clientset and controller manager.
-func (s *Service) RegisterModels(ctx context.Context, models ...kindsys.Interface) error {
-	for _, m := range models {
-		if err := s.clientset.RegisterSchema(ctx, m.CRD()); err != nil {
+func (s *Service) RegisterModels(ctx context.Context, crds ...k8ssys.Kind) error {
+	for _, crd := range crds {
+		if err := s.clientset.RegisterSchema(ctx, crd); err != nil {
 			return err
 		}
 
-		if err := m.RegisterController(s.manager); err != nil {
-			return err
-		}
+		// if err := m.RegisterController(s.manager); err != nil {
+		// 	return err
+		// }
 	}
 
 	return nil
@@ -135,19 +135,19 @@ func LoadRestConfig(cfg *setting.Cfg) (*rest.Config, error) {
 }
 
 // GenerateScheme generates a kubernetes runtime Scheme from a list of models.
-func GenerateScheme(kinds []kindsys.Interface) (*runtime.Scheme, error) {
+func GenerateScheme(kinds []k8ssys.Kind) (*runtime.Scheme, error) {
 	res := runtime.NewScheme()
 
-	for _, m := range kinds {
-		s := m.CRD()
-
+	for _, crd := range kinds {
+		// TODO needs refactor to support custom kinds
+		gvk := crd.GVK()
 		schemaBuilder := &scheme.Builder{
 			GroupVersion: k8schema.GroupVersion{
-				Group:   s.GroupName(),
-				Version: s.GroupVersion(),
+				Group:   gvk.Group,
+				Version: gvk.Version,
 			},
 		}
-		schemaBuilder.Register(s.RuntimeObjects()...)
+		schemaBuilder.Register(crd.Object, crd.ObjectList)
 
 		if err := schemaBuilder.AddToScheme(res); err != nil {
 			return nil, err

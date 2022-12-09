@@ -35,6 +35,7 @@ type (
 		MainGenerator string
 		Using         []codejen.NamedJenny
 		From          string
+		Leader        string
 	}
 	tvars_kind_registry struct {
 		NumRaw, NumStructured int

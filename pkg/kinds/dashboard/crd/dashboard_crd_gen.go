@@ -10,17 +10,25 @@
 package crd
 
 import (
+	_ "embed"
+
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 )
 
-//go:embed dashboard_crd.yaml
-var CRD string
+// The CRD YAML representation of the Dashboard kind.
+//
+//go:embed dashboard.crd.yml
+var CRDYaml []byte
 
 // Dashboard is the Go CRD representation of a single Dashboard object.
 // It implements [runtime.Object], and is used in k8s scheme construction.
-type Dashboard k8ssys.Base[dashboard.Dashboard]
+type Dashboard struct {
+	k8ssys.Base[dashboard.Dashboard]
+}
 
 // DashboardList is the Go CRD representation of a list Dashboard objects.
 // It implements [runtime.Object], and is used in k8s scheme construction.
-type DashboardList k8ssys.ListBase[dashboard.Dashboard]
+type DashboardList struct {
+	k8ssys.ListBase[dashboard.Dashboard]
+}

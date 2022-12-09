@@ -10,14 +10,25 @@
 package crd
 
 import (
+	_ "embed"
+
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 )
 
+// The CRD YAML representation of the Team kind.
+//
+//go:embed team.crd.yml
+var CRDYaml []byte
+
 // Team is the Go CRD representation of a single Team object.
 // It implements [runtime.Object], and is used in k8s scheme construction.
-type Team k8ssys.Base[team.Team]
+type Team struct {
+	k8ssys.Base[team.Team]
+}
 
 // TeamList is the Go CRD representation of a list Team objects.
 // It implements [runtime.Object], and is used in k8s scheme construction.
-type TeamList k8ssys.ListBase[team.Team]
+type TeamList struct {
+	k8ssys.ListBase[team.Team]
+}

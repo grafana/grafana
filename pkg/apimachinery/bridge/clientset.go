@@ -3,11 +3,9 @@ package bridge
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,10 +52,11 @@ func NewClientset(cfg *rest.Config) (*Clientset, error) {
 }
 
 // RegisterSchema registers a new client and CRD for kind k
-func (c *Clientset) RegisterSchema(ctx context.Context, k kindsys.Interface) error {
+func (c *Clientset) RegisterSchema(ctx context.Context, gcrd k8ssys.Kind) error {
+	gvk := gcrd.GVK()
 	ver := k8schema.GroupVersion{
-		Group:   k.GroupName(),
-		Version: k.GroupVersion(),
+		Group:   gvk.Group,
+		Version: gvk.Version,
 	}
 
 	c.lock.RLock()
@@ -67,11 +66,11 @@ func (c *Clientset) RegisterSchema(ctx context.Context, k kindsys.Interface) err
 		return ErrCRDAlreadyRegistered
 	}
 
-	crdObj := newCRD(k.Name(), k.GroupName(), k.GroupVersion(), k.OpenAPISchema())
 	crd, err := c.extset.
 		ApiextensionsV1().
 		CustomResourceDefinitions().
-		Create(ctx, &crdObj, metav1.CreateOptions{})
+		Create(ctx, &gcrd.Schema, metav1.CreateOptions{})
+
 	if err != nil && !kerrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -81,47 +80,4 @@ func (c *Clientset) RegisterSchema(ctx context.Context, k kindsys.Interface) err
 	c.lock.Unlock()
 
 	return nil
-}
-
-func newCRD(
-	objectKind, groupName, groupVersion string, schema apiextensionsv1.JSONSchemaProps,
-) apiextensionsv1.CustomResourceDefinition {
-	return apiextensionsv1.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%ss.%s", objectKind, groupName),
-		},
-		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-			Group: groupName,
-			Scope: apiextensionsv1.NamespaceScoped, // TODO: make configurable?
-			Names: apiextensionsv1.CustomResourceDefinitionNames{
-				Plural:   objectKind + "s", // TODO: figure out better approach?
-				Singular: objectKind,
-				Kind:     capitalize(objectKind),
-			},
-			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
-				{
-					Name:    groupVersion,
-					Served:  true,
-					Storage: true,
-					Schema: &apiextensionsv1.CustomResourceValidation{
-						OpenAPIV3Schema: &schema,
-					},
-				},
-			},
-		},
-	}
-}
-
-func capitalize(s string) string {
-	if s == "" {
-		return s
-	}
-
-	u := strings.ToUpper(string(s[0]))
-
-	if len(s) == 1 {
-		return u
-	}
-
-	return u + s[1:]
 }

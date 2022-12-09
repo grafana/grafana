@@ -81,21 +81,27 @@ func (decl *DeclForGen) ForLatestSchema() SchemaForGen {
 // file.
 func SlashHeaderMapper(maingen string) codejen.FileMapper {
 	return func(f codejen.File) (codejen.File, error) {
+		var leader string
 		// Never inject on certain filetypes, it's never valid
 		switch filepath.Ext(f.RelativePath) {
-		case ".json", ".yml", ".yaml":
+		case ".json":
 			return f, nil
+		case ".yml", ".yaml":
+			leader = "#"
 		default:
-			buf := new(bytes.Buffer)
-			if err := tmpls.Lookup("gen_header.tmpl").Execute(buf, tvars_gen_header{
-				MainGenerator: maingen,
-				Using:         f.From,
-			}); err != nil {
-				return codejen.File{}, fmt.Errorf("failed executing gen header template: %w", err)
-			}
-			fmt.Fprint(buf, string(f.Data))
-			f.Data = buf.Bytes()
+			leader = "//"
 		}
+
+		buf := new(bytes.Buffer)
+		if err := tmpls.Lookup("gen_header.tmpl").Execute(buf, tvars_gen_header{
+			MainGenerator: maingen,
+			Using:         f.From,
+			Leader:        leader,
+		}); err != nil {
+			return codejen.File{}, fmt.Errorf("failed executing gen header template: %w", err)
+		}
+		fmt.Fprint(buf, string(f.Data))
+		f.Data = buf.Bytes()
 		return f, nil
 	}
 }

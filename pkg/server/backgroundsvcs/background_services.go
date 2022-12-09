@@ -2,6 +2,8 @@ package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/apimachinery/bridge"
+	"github.com/grafana/grafana/pkg/apimachinery/srv"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -48,6 +50,7 @@ func ProvideBackgroundServiceRegistry(
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
+	apibridge *bridge.Service, apiserver *srv.HTTPServer,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -83,6 +86,8 @@ func ProvideBackgroundServiceRegistry(
 		processManager,
 		secretMigrationProvider,
 		loginAttemptService,
+		apibridge,
+		apiserver,
 	)
 }
 

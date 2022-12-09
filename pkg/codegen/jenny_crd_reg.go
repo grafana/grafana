@@ -30,11 +30,18 @@ func (j *crdregjenny) JennyName() string {
 }
 
 func (j *crdregjenny) Generate(decls ...*DeclForGen) (*codejen.File, error) {
+	sdecls := make([]*DeclForGen, 0, len(decls))
+	for _, d := range decls {
+		if d.IsCoreStructured() {
+			sdecls = append(sdecls, d)
+		}
+	}
+
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("core_crd_registry.tmpl").Execute(buf, tvars_kind_registry{
 		PackageName:       "corecrd",
 		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", kindsys.GoCoreKindParentPath)),
-		Kinds:             decls,
+		Kinds:             sdecls,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core crd registry template: %w", err)
 	}

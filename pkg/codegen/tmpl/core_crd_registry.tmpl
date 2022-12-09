@@ -28,25 +28,26 @@ type Registry struct {
 {{range $i, $k := .Kinds }}
 // {{ .Properties.Name }} returns the [k8ssys.Kind] instance for the {{ .Properties.Name }} kind.
 func (r *Registry) {{ .Properties.Name }}() k8ssys.Kind {
-	return b.{{ .Properties.MachineName }}
+	return r.all[{{ $i }}]
 }
 {{end}}
 
 func doNewRegistry(breg *corekind.Base) *Registry {
 	var err error
-	var k kindsys.CoreStructuredProperties
+	var kk k8ssys.Kind
 	reg := &Registry{}
 
 {{range $i, $k := .Kinds }}
-  reg.all[{{ $i }}] = k8ssys.Kind{
+  kk = k8ssys.Kind{
     GrafanaKind: breg.{{ $k.Properties.Name }}(),
-    Object: {{ $k.Properties.MachineName }}.{{ $k.Properties.Name }}{},
-    ObjectList: {{ $k.Properties.MachineName }}.{{ $k.Properties.Name }}List{},
+    Object: &{{ $k.Properties.MachineName }}.{{ $k.Properties.Name }}{},
+    ObjectList: &{{ $k.Properties.MachineName }}.{{ $k.Properties.Name }}List{},
   }
-  reg.all[{{ $i }}].Schema, err = yaml.Unmarshal({{ $k.Properties.MachineName }}.CRD)
+  err = yaml.Unmarshal({{ $k.Properties.MachineName }}.CRDYaml, &kk.Schema)
   if err != nil {
-    panic(fmt.Sprintf("generated CRD YAML for {{ $k.Properties.Name }} failed to unmarshal: %w", err))
+    panic(fmt.Sprintf("generated CRD YAML for {{ $k.Properties.Name }} failed to unmarshal: %s", err))
   }
+  reg.all[{{ $i }}] = kk
 {{end}}
 
 	return reg

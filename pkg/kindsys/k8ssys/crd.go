@@ -1,39 +1,39 @@
 package k8ssys
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/kindsys"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Kind struct {
 	GrafanaKind kindsys.Structured
 	Object      runtime.Object // singular type
 	ObjectList  runtime.Object // list type
-	Schema      CustomResourceDefinitionSpec
+	Schema      apiextensionsv1.CustomResourceDefinition
 }
 
-// func ToK8sKind(k kindsys.Structured, obj, list runtime.Object) Kind {
-// 	kk := Kind{
-// 		GrafanaKind: k,
-// 		Object:      obj,
-// 		ObjectList:  list,
-// 	}
-//
-// 	kk.Schema = CustomResourceDefinitionSpec{
-// 		Names: CustomResourceDefinitionSpecNames{
-// 			Kind:   k.Name(),
-// 			Plural: k.Props().Common().PluralName,
-// 		},
-// 		// FIXME no hardcode yo
-// 		Scope: "global",
-// 		Group: k.Props().(kindsys.CoreStructuredProperties).Group,
-// 	}
-//
-// 	kk.Schema.Versions
-// }
+// TODO this could probably be done in CUE/framework
+func (crd Kind) GVK() k8schema.GroupVersionKind {
+	// TODO custom structured
+	props := crd.GrafanaKind.Props().(kindsys.CoreStructuredProperties)
+	gvk := k8schema.GroupVersionKind{
+		Group: fmt.Sprintf("%s.core.grafana", props.MachineName),
+		Kind:  props.Name,
+	}
+	if props.Maturity.Less(kindsys.MaturityStable) {
+		gvk.Version = "v0-0alpha1"
+	} else {
+		gvk.Version = fmt.Sprintf("v%d-%d", props.CurrentVersion[0], props.CurrentVersion[1])
+	}
+
+	return gvk
+}
 
 // CustomResourceDefinitionList is the kubernetes-API-compliant representation of a list of CustomResourceDefinitions
 type CustomResourceDefinitionList struct {
