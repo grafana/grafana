@@ -47,7 +47,7 @@ jobs:
           gh_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Prepare payload"
-        uses: frabert/replace-string-action@v2.0
+        uses: frabert/replace-string-action@v2.4
         id: preparePayload
         with:
           # replace double quotes with single quotes to avoid breaking the JSON payload sent to Slack
