@@ -20,7 +20,7 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  visibleLabels?: { labels: Labels[]; totalSeriesCount: number };
+  visibleSeries?: VisibleExemplarLabels;
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -28,7 +28,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   timeZone,
   getFieldLinks,
   config,
-  visibleLabels,
+  visibleSeries,
 }) => {
   const plotInstance = useRef<uPlot>();
 
@@ -71,9 +71,11 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      // If the parent provided series/labels: filter the exemplars, otherwise default to show all exemplars
-      let showMarker =
-        visibleLabels !== undefined ? showExemplarMarker(visibleLabels, dataFrame, dataFrameFieldIndex) : true;
+      const showMarker =
+        visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, dataFrameFieldIndex) : true;
+
+      const markerColor =
+        visibleSeries !== undefined ? getExemplarColor(dataFrame, dataFrameFieldIndex, visibleSeries) : undefined;
 
       if (!showMarker) {
         return <></>;
@@ -86,10 +88,11 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
           dataFrame={dataFrame}
           dataFrameFieldIndex={dataFrameFieldIndex}
           config={config}
+          exemplarColor={markerColor}
         />
       );
     },
-    [config, timeZone, getFieldLinks, visibleLabels]
+    [config, timeZone, getFieldLinks, visibleSeries]
   );
 
   return (
@@ -103,15 +106,13 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   );
 };
 
+export type VisibleExemplarLabels = { labels: LabelWithExemplarUIData[]; totalSeriesCount: number };
 /**
- * Function to get labels that are currently displayed in the legend
+ * Get labels that are currently visible/active in the legend
  */
-export const getVisibleLabels = (
-  config: UPlotConfigBuilder,
-  frames: DataFrame[] | null
-): { labels: Labels[]; totalSeriesCount: number } => {
+export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[] | null): VisibleExemplarLabels => {
   const visibleSeries = config.series.filter((series) => series.props.show);
-  const visibleLabels: Labels[] = [];
+  const visibleLabels: LabelWithExemplarUIData[] = [];
   if (frames?.length) {
     visibleSeries.forEach((plotInstance) => {
       const frameIndex = plotInstance.props?.dataFrameFieldIndex?.frameIndex;
@@ -121,7 +122,10 @@ export const getVisibleLabels = (
         const field = frames[frameIndex].fields[fieldIndex];
         if (field.labels) {
           // Note that this may be an empty object in the case of a metric being rendered with no labels
-          visibleLabels.push(field.labels);
+          visibleLabels.push({
+            labels: field.labels,
+            color: plotInstance.props?.lineColor ?? '',
+          });
         }
       }
     });
@@ -130,22 +134,59 @@ export const getVisibleLabels = (
   return { labels: visibleLabels, totalSeriesCount: config.series.length };
 };
 
+interface LabelWithExemplarUIData {
+  labels: Labels;
+  color?: string;
+}
+/**
+ * Get color of active series in legend
+ */
+const getExemplarColor = (
+  dataFrame: DataFrame,
+  dataFrameFieldIndex: DataFrameFieldIndex,
+  visibleLabels: VisibleExemplarLabels
+) => {
+  let exemplarColor;
+  visibleLabels.labels.some((visibleLabel) => {
+    const labelKeys = Object.keys(visibleLabel.labels);
+    const fields = dataFrame.fields.filter((field) => {
+      return labelKeys.find((labelKey) => labelKey === field.name);
+    });
+    if (fields.length) {
+      const hasMatch = fields.every((field, index, fields) => {
+        const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+        return visibleLabel.labels[field.name] === value;
+      });
+
+      if (hasMatch) {
+        exemplarColor = visibleLabel.color;
+        return true;
+      }
+    }
+    return false;
+  });
+  return exemplarColor;
+};
+
 /**
  * Determine if the current exemplar marker is filtered by what series are selected in the legend UI
  */
 const showExemplarMarker = (
-  visibleLabels: { labels: Labels[]; totalSeriesCount: number },
+  visibleSeries: VisibleExemplarLabels,
   dataFrame: DataFrame,
   dataFrameFieldIndex: DataFrameFieldIndex
 ) => {
   let showMarker = false;
-  if (visibleLabels.labels.length === visibleLabels.totalSeriesCount) {
+  // If all series are visible, don't filter any exemplars
+  if (visibleSeries.labels.length === visibleSeries.totalSeriesCount) {
     showMarker = true;
   } else {
-    visibleLabels.labels.forEach((visibleLabel) => {
-      const labelKeys = Object.keys(visibleLabel);
+    visibleSeries.labels.some((visibleLabel) => {
+      // Get the label names
+      const labelKeys = Object.keys(visibleLabel.labels);
+
       // If there aren't any labels, the graph is only displaying a single series with exemplars, let's show all exemplars in this case as well
-      if (Object.keys(visibleLabel).length === 0) {
+      if (Object.keys(visibleLabel.labels).length === 0) {
         showMarker = true;
       } else {
         // If there are labels, lets only show the exemplars with labels associated with series that are currently visible
@@ -153,16 +194,17 @@ const showExemplarMarker = (
           return labelKeys.find((labelKey) => labelKey === field.name);
         });
 
-        // Check to see if at least one value matches each field
         if (fields.length) {
-          showMarker = visibleLabels.labels.some((series) => {
-            return Object.keys(series).every((label) => {
-              const value = series[label];
+          // Check to see if at least one value matches each field
+          showMarker = visibleSeries.labels.some((series) => {
+            return Object.keys(series.labels).every((label) => {
+              const value = series.labels[label];
               return fields.find((field) => field.values.get(dataFrameFieldIndex.fieldIndex) === value);
             });
           });
         }
       }
+      return showMarker;
     });
   }
   return showMarker;
