@@ -2,7 +2,6 @@
 aliases:
   - ../../permissions/dashboard_folder_permissions/
   - ../manage-users-and-permissions/manage-dashboard-permissions/
-  - /docs/grafana/next/administration/user-management/manage-dashboard-permissions/
 title: Manage dashboard permissions
 weight: 500
 ---

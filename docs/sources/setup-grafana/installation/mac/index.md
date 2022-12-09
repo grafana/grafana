@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../installation/mac/
-  - /docs/grafana/next/setup-grafana/installation/mac/
 description: Installing Grafana on macOS
 title: Install on macOS
 weight: 600

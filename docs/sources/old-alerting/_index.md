@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/old-alerting/
 draft: true
 title: Legacy Grafana Alerts
 weight: 114

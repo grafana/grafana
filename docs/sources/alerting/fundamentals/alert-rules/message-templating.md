@@ -3,7 +3,6 @@ aliases:
   - ../../contact-points/message-templating/
   - ../../message-templating/
   - ../../unified-alerting/message-templating/
-  - /docs/grafana/next/alerting/fundamentals/alert-rules/message-templating/
 description: Message templating
 keywords:
   - grafana

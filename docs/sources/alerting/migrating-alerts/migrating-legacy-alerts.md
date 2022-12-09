@@ -2,7 +2,6 @@
 aliases:
   - ../migrating-legacy-alerts/
   - ../unified-alerting/opt-in/
-  - /docs/grafana/next/alerting/migrating-alerts/migrating-legacy-alerts/
   - differences-and-limitations/
 description: Migrate legacy dashboard alerts
 title: Differences and limitations

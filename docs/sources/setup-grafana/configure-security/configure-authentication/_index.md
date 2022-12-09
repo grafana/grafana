@@ -2,7 +2,6 @@
 aliases:
   - ../../auth/
   - ../../auth/overview/
-  - /docs/grafana/next/setup-grafana/configure-security/configure-authentication/
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
 title: Configure authentication

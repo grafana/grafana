@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/alerting/fundamentals/alert-rules/
 description: About Grafana alert rules
 keywords:
   - grafana

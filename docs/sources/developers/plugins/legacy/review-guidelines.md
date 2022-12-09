@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../plugins/developing/plugin-review-guidelines/
-  - /docs/grafana/next/developers/plugins/legacy/review-guidelines/
 title: Legacy review guidelines
 ---
 

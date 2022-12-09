@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../enterprise/enterprise-encryption/using-hashicorp-key-vault-to-encrypt-database-secrets/
-  - /docs/grafana/next/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/
 description: Learn how to use Hashicorp Vault to encrypt secrets in the Grafana database.
 title: Encrypt database secrets using Hashicorp Vault
 weight: 200

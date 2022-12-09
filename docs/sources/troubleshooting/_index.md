@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/next/troubleshooting/
   - troubleshoot-dashboards/
 description: Guide to troubleshooting Grafana problems
 keywords:

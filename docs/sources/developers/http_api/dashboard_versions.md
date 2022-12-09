@@ -2,7 +2,6 @@
 aliases:
   - ../../http_api/dashboard_versions/
   - ../../http_api/dashboardversions/
-  - /docs/grafana/next/developers/http_api/dashboard_versions/
 description: Grafana Dashboard Versions HTTP API
 keywords:
   - grafana

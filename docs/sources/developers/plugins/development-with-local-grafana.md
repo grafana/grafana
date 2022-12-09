@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/plugins/development-with-local-grafana/
 title: Development with local Grafana
 ---
 

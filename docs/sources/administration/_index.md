@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/administration/
 description: Administration
 title: Administration
 weight: 40

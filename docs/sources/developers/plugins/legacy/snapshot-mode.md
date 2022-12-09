@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../plugins/developing/snapshot-mode/
-  - /docs/grafana/next/developers/plugins/legacy/snapshot-mode/
 title: Legacy snapshot mode
 ---
 

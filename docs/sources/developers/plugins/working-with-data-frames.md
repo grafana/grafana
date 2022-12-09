@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/plugins/working-with-data-frames/
 title: Working with data frames
 ---
 

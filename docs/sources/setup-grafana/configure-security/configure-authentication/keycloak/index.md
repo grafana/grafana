@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../auth/keycloak/
-  - /docs/grafana/next/setup-grafana/configure-security/configure-authentication/keycloak/
 description: Keycloak Grafana OAuthentication Guide
 keywords:
   - grafana

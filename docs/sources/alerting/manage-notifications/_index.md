@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/alerting/manage-notifications
 description: Manage alert notifications
 keywords:
   - grafana

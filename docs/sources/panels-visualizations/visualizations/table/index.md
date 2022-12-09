@@ -5,7 +5,6 @@ aliases:
   - ../../reference/table/
   - ../../visualizations/table/
   - ../../visualizations/table/filter-table-columns/
-  - /docs/grafana/next/panels-visualizations/visualizations/table/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
 description: Learn about table panel visualization features.
 keywords:

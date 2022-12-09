@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../http_api/other/
-  - /docs/grafana/next/developers/http_api/other/
 description: Grafana Other HTTP API
 keywords:
   - grafana

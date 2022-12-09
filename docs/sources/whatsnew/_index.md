@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/next/whatsnew/
   - guides/
   - guides/whats-new-in-v2-1/
   - guides/whats-new-in-v2-5/

@@ -2,7 +2,6 @@
 aliases:
   - ../../../enterprise/access-control/custom-role-actions-scopes/
   - ../../../enterprise/access-control/permissions/
-  - /docs/grafana/next/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
 description: Learn about Grafana RBAC permissions, actions, and scopes.
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes

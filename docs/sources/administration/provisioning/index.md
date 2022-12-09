@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../installation/provisioning/
-  - /docs/grafana/next/administration/provisioning/
 description: Describes provisioning settings for Grafana using configuration files.
 keywords:
   - grafana

@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../plugins/developing/auth-for-datasources/
-  - /docs/grafana/next/developers/plugins/add-authentication-for-data-source-plugins/
   - /docs/grafana/next/developers/plugins/authentication/
 title: Add authentication for data source plugins
 ---

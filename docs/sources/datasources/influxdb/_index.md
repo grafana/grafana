@@ -3,7 +3,6 @@ aliases:
   - ../data-sources/influxdb/
   - ../data-sources/influxdb/provision-influxdb/
   - ../features/datasources/influxdb/
-  - /docs/grafana/next/datasources/influxdb/
   - provision-influxdb/
 description: Guide for using InfluxDB in Grafana
 keywords:

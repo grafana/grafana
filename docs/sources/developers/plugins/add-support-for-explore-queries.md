@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/plugins/add-support-for-explore-queries/
 title: Add support for Explore queries
 ---
 

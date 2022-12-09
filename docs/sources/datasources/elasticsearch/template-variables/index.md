@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../data-sources/elasticsearch/template-variables/
-  - /docs/grafana/next/datasources/elasticsearch/template-variables/
 description: Using template variables with Elasticsearch in Grafana
 keywords:
   - grafana

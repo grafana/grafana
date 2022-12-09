@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../http_api/curl-examples/
-  - /docs/grafana/next/developers/http_api/curl-examples/
 description: cURL examples
 keywords:
   - grafana

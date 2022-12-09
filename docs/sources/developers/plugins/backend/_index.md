@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../plugins/developing/backend-plugins-guide/
-  - /docs/grafana/next/developers/plugins/backend/
 keywords:
   - grafana
   - plugins

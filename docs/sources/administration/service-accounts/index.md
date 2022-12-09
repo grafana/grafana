@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/next/administration/service-accounts/
   - about-service-accounts/
   - add-service-account-token/
   - create-service-account/

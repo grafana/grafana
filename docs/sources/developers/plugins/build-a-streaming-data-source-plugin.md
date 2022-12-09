@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/plugins/build-a-streaming-data-source-plugin/
 title: Build a streaming data source plugin
 ---
 

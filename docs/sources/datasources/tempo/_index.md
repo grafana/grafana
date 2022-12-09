@@ -2,7 +2,6 @@
 aliases:
   - ../data-sources/tempo/
   - ../features/datasources/tempo/
-  - /docs/grafana/next/datasources/tempo/
 description: Guide for using Tempo in Grafana
 keywords:
   - grafana

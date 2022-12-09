@@ -2,7 +2,6 @@
 aliases:
   - ../../http_api/access_control/
   - ../../http_api/accesscontrol/
-  - /docs/grafana/next/developers/http_api/access_control/
 description: ""
 keywords:
   - grafana

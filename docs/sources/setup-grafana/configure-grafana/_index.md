@@ -2,7 +2,6 @@
 aliases:
   - ../administration/configuration/
   - ../installation/configuration/
-  - /docs/grafana/next/setup-grafana/configure-grafana/
 description: Configuration documentation
 title: Configure Grafana
 weight: 200

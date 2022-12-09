@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/introduction/grafana-cloud/
 title: Grafana Cloud
 weight: 300
 ---

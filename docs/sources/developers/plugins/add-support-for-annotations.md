@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/plugins/add-support-for-annotations/
 title: Add support for annotations
 ---
 

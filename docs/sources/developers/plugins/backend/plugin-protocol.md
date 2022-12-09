@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/plugins/backend/plugin-protocol/
 keywords:
   - grafana
   - plugins

@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/next/alerting/alerting-rules/
   - old-alerting/create-alerts/
   - rules/
   - unified-alerting/alerting-rules/

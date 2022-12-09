@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../plugins/developing/apps/
-  - /docs/grafana/next/developers/plugins/legacy/apps/
 keywords:
   - grafana
   - plugins

@@ -2,7 +2,6 @@
 aliases:
   - ../change-your-password/
   - ../manage-user-preferences/
-  - /docs/grafana/next/administration/user-management/user-preferences/
 description: Learn how to update your user preferences and switch organizations
 keywords:
   - password

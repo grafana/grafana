@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/next/developers/plugins/package-a-plugin/
   - share-a-plugin/
 title: Package a plugin
 type: docs

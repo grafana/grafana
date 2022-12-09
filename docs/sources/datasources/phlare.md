@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../features/datasources/phlare/
-  - /docs/grafana/next/datasources/phlare/
 description: Horizontally-scalable, highly-available, multi-tenant continuous profiling
   aggregation system. OSS profiling solution from Grafana Labs.
 keywords:

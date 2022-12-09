@@ -2,7 +2,6 @@
 aliases:
   - ../../../enterprise/access-control/fine-grained-access-control-references/
   - ../../../enterprise/access-control/rbac-fixed-basic-role-definitions/
-  - /docs/grafana/next/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
 description: This topic includes a table that lists permission associated with Grafana
   fixed and basic roles.
 menuTitle: RBAC role definitions

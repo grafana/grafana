@@ -8,7 +8,6 @@ aliases:
   - ../panels/override-field-values/delete-a-field-override/
   - ../panels/override-field-values/edit-field-override/
   - ../panels/override-field-values/view-field-override/
-  - /docs/grafana/next/panels-visualizations/configure-overrides/
 menuTitle: Configure field overrides
 title: Configure field overrides
 weight: 400

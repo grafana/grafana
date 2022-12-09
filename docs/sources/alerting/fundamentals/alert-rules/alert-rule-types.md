@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/alerting/fundamentals/alert-rules/alert-rule-types/
 description: Learn about the different alert rule types
 keywords:
   - grafana

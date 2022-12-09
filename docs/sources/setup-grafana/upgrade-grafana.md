@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../installation/upgrading/
-  - /docs/grafana/next/setup-grafana/upgrade-grafana/
 description: Guide for upgrading Grafana
 keywords:
   - grafana

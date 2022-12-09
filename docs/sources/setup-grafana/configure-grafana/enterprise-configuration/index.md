@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../enterprise/enterprise-configuration/
-  - /docs/grafana/next/setup-grafana/configure-grafana/enterprise-configuration/
 description: Learn about Grafana Enterprise configuration options that you can specify.
 title: Configure Grafana Enterprise
 weight: 100

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/plugins/publishing-and-signing-criteria/
 title: Plugin publishing and signing criteria
 ---
 

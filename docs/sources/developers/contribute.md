@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/developers/contribute/
 keywords:
   - grafana
   - documentation

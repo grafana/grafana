@@ -2,7 +2,6 @@
 aliases:
   - ../../reference/templating/
   - ../../variables/inspect-variable/
-  - /docs/grafana/next/dashboards/variables/inspect-variable/
 keywords:
   - grafana
   - templating

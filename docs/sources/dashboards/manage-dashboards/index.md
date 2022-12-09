@@ -6,7 +6,6 @@ aliases:
   - ../reference/export_import/
   - ../reference/timerange/
   - ../troubleshooting/troubleshoot-dashboards/
-  - /docs/grafana/next/dashboards/manage-dashboards/
   - dashboard-folders/
   - dashboard-manage/
   - export-import/

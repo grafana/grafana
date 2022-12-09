@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../http_api/snapshot/
-  - /docs/grafana/next/developers/http_api/snapshot/
 description: Grafana HTTP API
 keywords:
   - grafana
