@@ -39,7 +39,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromMs)
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toMs)
 		})
-
 		t.Run("Should clean settings from null values (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
@@ -52,8 +51,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			firstLevel := sr.Aggs[0]
 			secondLevel := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings["script"], "1")
-			// FIXME: This is a bug in implementation, missing is set to "null" instead of being removed
-			// require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings["missing"], nil)
+			require.NotContains(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings, "missing")
 		})
 
 		t.Run("With multiple bucket aggs", func(t *testing.T) {
@@ -312,9 +310,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, firstLevel.Key, "2")
-			// FIXME: This is a bug in the current implementation. The min_doc_count is not set.
-			// termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
-			// require.Equal(t, termsAgg.MinDocCount, "1")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			expectedMinDocCount := 1
+			require.Equal(t, termsAgg.MinDocCount, &expectedMinDocCount)
 		})
 
 		t.Run("With metric percentiles", func(t *testing.T) {

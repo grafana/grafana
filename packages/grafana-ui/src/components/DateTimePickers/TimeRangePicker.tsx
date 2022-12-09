@@ -127,8 +127,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       {isOpen && (
         <>
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-          <FocusScope contain autoFocus>
-            <section className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
+          <section ref={ref} {...overlayProps} {...dialogProps}>
+            <FocusScope contain autoFocus>
               <TimePickerContent
                 timeZone={timeZone}
                 fiscalYearStartMonth={fiscalYearStartMonth}
@@ -142,8 +142,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
               />
-            </section>
-          </FocusScope>
+            </FocusScope>
+          </section>
         </>
       )}
 
