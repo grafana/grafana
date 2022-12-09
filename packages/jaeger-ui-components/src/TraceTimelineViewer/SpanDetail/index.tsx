@@ -203,6 +203,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
       </div>
       {links?.logLinks?.[0] ? (
+        // TODO: Perhaps remove this button
         <DataLinkButton
           link={{ ...links?.logLinks?.[0], title: 'Logs for this span' } as any}
           buttonProps={{ icon: 'gf-logs' }}

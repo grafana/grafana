@@ -10,7 +10,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, TagsInput, useStyles2, InlineSwitch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, TagsInput, useStyles2, InlineSwitch, Button } from '@grafana/ui';
 
 import KeyValueInput from './KeyValueInput';
 
@@ -23,7 +23,13 @@ export interface TraceToLogsOptions {
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
+  queries: TraceToLogsQuery[];
   lokiSearch?: boolean; // legacy
+}
+
+export interface TraceToLogsQuery {
+  name?: string;
+  query?: string;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -215,6 +221,78 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
+
+      {options.jsonData.tracesToLogs?.queries?.map((query, i) => (
+        <div key={i} className={styles.queryRow}>
+          <InlineField label="Link Label" labelWidth={10}>
+            <Input
+              label="Link Label"
+              type="text"
+              allowFullScreen
+              value={query.name}
+              onChange={(e) => {
+                let newQueries = options.jsonData.tracesToLogs?.queries.slice() ?? [];
+                newQueries[i].name = e.currentTarget.value;
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                  ...options.jsonData.tracesToLogs,
+                  queries: newQueries,
+                });
+              }}
+            />
+          </InlineField>
+          <InlineField
+            label="Query"
+            labelWidth={10}
+            tooltip="The logs query that will run when navigating from a trace to logs. Interpolate tags using the `$__tags` keyword."
+            grow
+          >
+            <Input
+              label="Query"
+              type="text"
+              allowFullScreen
+              value={query.query}
+              onChange={(e) => {
+                let newQueries = options.jsonData.tracesToLogs?.queries.slice() ?? [];
+                newQueries[i].query = e.currentTarget.value;
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                  ...options.jsonData.tracesToLogs,
+                  queries: newQueries,
+                });
+              }}
+            />
+          </InlineField>
+
+          <Button
+            variant="destructive"
+            title="Remove query"
+            icon="times"
+            type="button"
+            onClick={() => {
+              let newQueries = options.jsonData.tracesToLogs?.queries.slice();
+              newQueries?.splice(i, 1);
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                queries: newQueries,
+              });
+            }}
+          />
+        </div>
+      ))}
+
+      <Button
+        variant="secondary"
+        title="Add query"
+        icon="plus"
+        type="button"
+        onClick={() => {
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+            ...options.jsonData.tracesToLogs,
+            queries: [...(options.jsonData.tracesToLogs?.queries ?? []), { query: '' }],
+          });
+        }}
+      >
+        Add query
+      </Button>
     </div>
   );
 }
@@ -223,5 +301,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
     padding-bottom: ${theme.spacing(2)};
     color: ${theme.colors.text.secondary};
+  `,
+  queryRow: css`
+    display: flex;
   `,
 });

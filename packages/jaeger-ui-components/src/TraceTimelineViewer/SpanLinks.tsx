@@ -17,7 +17,7 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
           {links.logLinks.map((link, i) => (
             <MenuItem
               key={i}
-              label="Logs for this span"
+              label={link.title ? link.title : 'Logs for this span'}
               onClick={
                 link.onClick
                   ? (event) => {

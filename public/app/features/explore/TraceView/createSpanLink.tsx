@@ -19,13 +19,18 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToLogsQuery, TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { getFieldLinksForExplore } from '../utils/links';
+
+export enum TraceToDatasourceType {
+  logs = 'logs', 
+  metrics = 'metrics'
+}
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -151,6 +156,46 @@ function legacyCreateSpanLinkFactory(
             content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
           },
         ];
+
+        for (const query of traceToLogsOptions.queries) {
+          const expr = buildQuery(query, TraceToDatasourceType.logs, traceToLogsOptions?.mappedTags, span);
+          const dataLink: DataLink<PromQuery> = {
+            title: logsDataSourceSettings.name,
+            url: '',
+            internal: {
+              datasourceUid: logsDataSourceSettings.uid,
+              datasourceName: logsDataSourceSettings.name,
+              query: {
+                expr,
+                refId: 'A',
+              },
+            },
+          };
+  
+          const link = mapInternalLinkToExplore({
+            link: dataLink,
+            internalLink: dataLink.internal!,
+            scopedVars: {},
+            range: getTimeRangeFromSpan(span, {
+              startMs: traceToLogsOptions.spanStartTimeShift
+                ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+                : 0,
+              endMs: traceToLogsOptions.spanEndTimeShift
+                ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
+                : 0,
+            }),
+            field: {} as Field,
+            onClickFn: splitOpenFn,
+            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+          });
+  
+          links.logLinks.push({
+            title: query?.name,
+            href: link.href,
+            onClick: link.onClick,
+            content: <Icon name="chart-line" title="Explore metrics for this span" />,
+          });
+        }
       }
     }
 
@@ -158,7 +203,7 @@ function legacyCreateSpanLinkFactory(
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
       links.metricLinks = [];
       for (const query of traceToMetricsOptions.queries) {
-        const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags, span);
+        const expr = buildQuery(query, TraceToDatasourceType.metrics, traceToMetricsOptions?.tags, span);
         const dataLink: DataLink<PromQuery> = {
           title: metricsDataSourceSettings.name,
           url: '',
@@ -438,9 +483,13 @@ function getTimeRangeFromSpan(
 }
 
 // Interpolates span attributes into trace to metric query, or returns default query
-function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<string>> = [], span: TraceSpan): string {
+function buildQuery(query: TraceToLogsQuery | TraceToMetricQuery, queryType: TraceToDatasourceType, tags: Array<KeyValue<string>> = [], span: TraceSpan): string {
   if (!query.query) {
-    return `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
+    if (queryType === TraceToDatasourceType.metrics) {
+      return `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
+    } else {
+      return '';
+    }
   }
 
   let expr = query.query;
