@@ -79,7 +79,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 			return nil, err
 		}
 
-		dd, err := migrator.GetDatabaseDriver(driverName, s.engine.DB().DB, migrator.SQLiteConfig{})
+		dd, err := migrator.GetDatabaseDriver(driverName, s.engine.DB().DB)
 		if err != nil {
 			return nil, err
 		}

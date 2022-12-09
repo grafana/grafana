@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -20,7 +19,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func runMigrateCommand(command func(commandLine utils.CommandLine, ourceDriver source.Driver, dbDriver database.Driver, m *migrate.Migrate, instance *sql.DB) error) func(context *cli.Context) error {
+func runMigrateCommand(command func(commandLine utils.CommandLine, ourceDriver source.Driver, dbDricer database.Driver, m *migrate.Migrate) error) func(context *cli.Context) error {
 	return func(c *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: c}
 
@@ -48,7 +47,7 @@ func runMigrateCommand(command func(commandLine utils.CommandLine, ourceDriver s
 				return err
 			}
 
-			dd, err := migrator.GetDatabaseDriver(driverName, session.DB().DB, migrator.SQLiteConfig{DryRun: c.Bool("dry-run")})
+			dd, err := migrator.GetDatabaseDriver(driverName, session.DB().DB)
 			if err != nil {
 				return err
 			}
@@ -58,7 +57,7 @@ func runMigrateCommand(command func(commandLine utils.CommandLine, ourceDriver s
 				return err
 			}
 
-			if err := command(cmd, sd, dd, m, session.DB().DB); err != nil {
+			if err := command(cmd, sd, dd, m); err != nil {
 				return err
 			}
 
@@ -79,11 +78,7 @@ func initMigrateCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		Config:   cmd.ConfigFile(),
 		HomePath: cmd.HomePath(),
 		// tailing arguments have precedence over the options string
-		Args: append(configOptions,
-			"cfg:log.level=error",
-			"cfg:default.database.skip_migrations=true",
-			"cfg:default.database.skip_ensure_default_org_and_user=true",
-		), // tailing arguments have precedence over the options string
+		Args: append(configOptions, "cfg:log.level=error", "cfg:default.database.skip_migrations=true", "cfg:default.database.skip_ensure_default_org_and_user=true"), // tailing arguments have precedence over the options string
 	})
 
 	if err != nil {
@@ -97,7 +92,7 @@ func initMigrateCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 	return cfg, nil
 }
 
-func getMigrationsVersion(c utils.CommandLine, sourceDriver source.Driver, dbDriver database.Driver, m *migrate.Migrate, instance *sql.DB) error {
+func getMigrationsVersion(c utils.CommandLine, sourceDriver source.Driver, dbDricer database.Driver, m *migrate.Migrate) error {
 	v, dirty, err := m.Version()
 	if err != nil {
 		return err
@@ -107,20 +102,20 @@ func getMigrationsVersion(c utils.CommandLine, sourceDriver source.Driver, dbDri
 	return nil
 }
 
-func runMigrationsSteps(c utils.CommandLine, sourceDriver source.Driver, dbDriver database.Driver, m *migrate.Migrate, instance *sql.DB) error {
+func runMigrationsSteps(c utils.CommandLine, sourceDriver source.Driver, dbDricer database.Driver, m *migrate.Migrate) error {
 	return m.Steps(c.Int("steps"))
 }
 
-func runMigrations(c utils.CommandLine, sourceDriver source.Driver, dbDriver database.Driver, m *migrate.Migrate, instance *sql.DB) error {
-	return m.Migrate(c.Uint("version"))
+func runMigrations(c utils.CommandLine, sourceDriver source.Driver, dbDricer database.Driver, m *migrate.Migrate) error {
+	return m.Migrate(uint(c.Uint("version")))
 }
 
-func forceMigrationsVersion(c utils.CommandLine, sourceDriver source.Driver, dbDriver database.Driver, m *migrate.Migrate, instance *sql.DB) error {
+func forceMigrationsVersion(c utils.CommandLine, sourceDriver source.Driver, dbDricer database.Driver, m *migrate.Migrate) error {
 	return m.Force(c.Int("version"))
 }
 
-func listMigrations(c utils.CommandLine, sourceDriver source.Driver, dbDriver database.Driver, m *migrate.Migrate, instance *sql.DB) error {
-	r, err := migrator.ListMigrations(sourceDriver, dbDriver)
+func listMigrations(c utils.CommandLine, sourceDriver source.Driver, dbDricer database.Driver, m *migrate.Migrate) error {
+	r, err := migrator.ListMigrations(sourceDriver, dbDricer)
 	if err != nil {
 		return err
 	}
