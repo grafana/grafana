@@ -269,16 +269,11 @@ var hopHeaders = []string{
 // Based on https://cs.opensource.google/go/go/+/refs/tags/go1.19.4:src/net/http/httputil/reverseproxy.go;l=276-281
 func removeHopByHopHeaders(h map[string][]string) {
 	for _, hh := range hopHeaders {
-		delHeader := ""
 		for k := range h {
 			if hh == textproto.CanonicalMIMEHeaderKey(k) {
-				delHeader = k
+				delete(h, k)
 				break
 			}
-		}
-
-		if delHeader != "" {
-			delete(h, delHeader)
 		}
 	}
 }
