@@ -367,7 +367,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
     if (supportedMetricNamespaces.length === 0) {
       throw new Error(
-        'No namespaces returned. Validate the datasource configuration is correct and required permissions have been granted.'
+        'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
       );
     }
     this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
