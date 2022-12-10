@@ -10,14 +10,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,13 +43,13 @@ func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 
 func TestStore_CreateServiceAccount(t *testing.T) {
 	_, store := setupTestDatabase(t)
-	orgQuery := &models.CreateOrgCommand{Name: sqlstore.MainOrgName}
-	err := store.sqlStore.CreateOrg(context.Background(), orgQuery)
+	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
 	require.NoError(t, err)
 
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
-		serviceAccountOrgId := orgQuery.Result.Id
+		serviceAccountOrgId := orgResult.ID
 		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
 		saForm := serviceaccounts.CreateServiceAccountForm{
@@ -112,10 +113,15 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := db.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(db, db.Cfg)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
+	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService := orgimpl.ProvideService(db, setting.NewCfg())
-	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, orgService)
+	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, userSvc, orgService)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
@@ -171,7 +177,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			store.sqlStore.Cfg.AutoAssignOrg = true
 			store.sqlStore.Cfg.AutoAssignOrgId = 1
 			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
-			err := store.sqlStore.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "main"})
+			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 			key := tests.SetupApiKey(t, db, c.key)
 			err = store.MigrateApiKey(context.Background(), key.OrgId, key.Id)
@@ -248,7 +254,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			store.sqlStore.Cfg.AutoAssignOrg = true
 			store.sqlStore.Cfg.AutoAssignOrgId = 1
 			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
-			err := store.sqlStore.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "main"})
+			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
 			for _, key := range c.keys {
@@ -310,7 +316,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			store.sqlStore.Cfg.AutoAssignOrg = true
 			store.sqlStore.Cfg.AutoAssignOrgId = 1
 			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
-			err := store.sqlStore.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "main"})
+			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
 			key := tests.SetupApiKey(t, db, c.key)

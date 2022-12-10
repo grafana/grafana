@@ -76,7 +76,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       showModal(SaveLibraryPanelModal, {
         isUnsavedPrompt: true,
         panel: dashboard.panelInEdit as PanelModelWithLibraryPanel,
-        folderId: dashboard.meta.folderId as number,
+        folderUid: dashboard.meta.folderUid ?? '',
         onConfirm: () => {
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);

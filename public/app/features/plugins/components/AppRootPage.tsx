@@ -2,10 +2,10 @@
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
-import { useLocation, useRouteMatch, useParams } from 'react-router-dom';
+import { useLocation, useRouteMatch } from 'react-router-dom';
 
 import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationSearchToObject } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -35,13 +35,13 @@ const initialState: State = { loading: true, pluginNav: null, plugin: null };
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const match = useRouteMatch();
-  const queryParams = useParams();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, pluginNav } = state;
   const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
+  const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
 
   useEffect(() => {

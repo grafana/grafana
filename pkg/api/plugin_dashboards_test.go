@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -35,13 +36,13 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 		unexpectedErrors: map[string]error{
-			"boom": fmt.Errorf("BOOM"),
+			"boom": errors.New("BOOM"),
 		},
 	}
 
 	s := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.pluginDashboardService = pluginDashboardService
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Not signed in should return 404 Not Found", func(t *testing.T) {

@@ -83,13 +83,13 @@ describe('RulesTable RBAC', () => {
     it('Should render Edit button for users with the update permission', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
       renderRulesTable(grafanaRule);
-      expect(ui.actionButtons.edit.query()).toBeInTheDocument();
+      expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
       renderRulesTable(grafanaRule);
-      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
+      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
     });
   });
 
@@ -110,13 +110,13 @@ describe('RulesTable RBAC', () => {
     it('Should render Edit button for users with the update permission', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
       renderRulesTable(cloudRule);
-      expect(ui.actionButtons.edit.query()).toBeInTheDocument();
+      expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
       renderRulesTable(cloudRule);
-      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
+      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
     });
   });
 });

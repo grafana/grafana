@@ -1,7 +1,7 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -19,7 +19,7 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -37,7 +37,7 @@
 //  
 //  
 //  Frame[2] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -55,7 +55,7 @@
 //  
 //  
 //  Frame[3] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -73,7 +73,7 @@
 //  
 //  
 //  Frame[4] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -91,11 +91,12 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "vector"
           }
@@ -136,7 +137,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "vector"
           }
@@ -177,7 +178,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "vector"
           }
@@ -225,7 +226,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "vector"
           }
@@ -273,7 +274,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "vector"
           }

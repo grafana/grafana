@@ -40,6 +40,7 @@ describe('MetricsQueryHeader', () => {
           query={query}
           onChange={onChange}
           onRunQuery={onRunQuery}
+          isMonitoringAccount={false}
         />
       );
 
@@ -67,6 +68,7 @@ describe('MetricsQueryHeader', () => {
           query={query}
           onChange={onChange}
           onRunQuery={onRunQuery}
+          isMonitoringAccount={false}
         />
       );
 
@@ -94,6 +96,7 @@ describe('MetricsQueryHeader', () => {
           query={query}
           onChange={onChange}
           onRunQuery={onRunQuery}
+          isMonitoringAccount={false}
         />
       );
 
@@ -122,6 +125,7 @@ describe('MetricsQueryHeader', () => {
         query={query}
         onChange={onChange}
         onRunQuery={onRunQuery}
+        isMonitoringAccount={false}
       />
     );
 

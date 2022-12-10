@@ -57,7 +57,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
+	rp := newResponseParser(res.Responses, queries)
 	return rp.getTimeSeries()
 }
 
@@ -227,11 +227,7 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 }
 
 func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
-	// TODO: This might also need to be applied to other bucket aggregations and other fields.
-	switch bucketAgg.Type {
-	case "date_histogram":
-		setIntPath(bucketAgg.Settings, "min_doc_count")
-	}
+	setIntPath(bucketAgg.Settings, "min_doc_count")
 
 	return bucketAgg.Settings.MustMap()
 }
@@ -454,7 +450,16 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 		metric.Hide = metricJSON.Get("hide").MustBool(false)
 		metric.ID = metricJSON.Get("id").MustString()
 		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
-		metric.Settings = simplejson.NewFromAny(metricJSON.Get("settings").MustMap())
+		// In legacy editors, we were storing empty settings values as "null"
+		// The new editor doesn't store empty strings at all
+		// We need to ensures backward compatibility with old queries and remove empty fields
+		settings := metricJSON.Get("settings").MustMap()
+		for k, v := range settings {
+			if v == "null" {
+				delete(settings, k)
+			}
+		}
+		metric.Settings = simplejson.NewFromAny(settings)
 		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
 		metric.Type, err = metricJSON.Get("type").String()
 		if err != nil {
