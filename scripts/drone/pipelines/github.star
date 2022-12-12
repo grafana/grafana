@@ -7,6 +7,8 @@ load(
     'publish_image',
 )
 
+load('scripts/drone/vault.star', 'from_secret')
+
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
@@ -18,6 +20,9 @@ def publish_github_step():
         'image': publish_image,
         'commands': ['./bin/build publish github --repo grafana/grafana-ci-sandbox --path grafana-enterprise2-{}pre-amd64.img --create'.format('0.0.0-test')],
         'depends_on': ['fetch-images-enterprise2'],
+        'environment': {
+            'GH_TOKEN': from_secret('github_token'),
+        },
     }
 
 def publish_github_pipeline(mode):

@@ -4141,6 +4141,9 @@ steps:
     --create
   depends_on:
   - fetch-images-enterprise2
+  environment:
+    GH_TOKEN:
+      from_secret: github_token
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-github
 trigger:
@@ -4200,6 +4203,9 @@ steps:
     --create
   depends_on:
   - fetch-images-enterprise2
+  environment:
+    GH_TOKEN:
+      from_secret: github_token
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-github
 trigger:
@@ -6436,6 +6442,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: a6df105617ba9bb9554244be7450e76576f0309486bba00df7b403cb0ffb8e85
+hmac: 002f2ddd7b13c10987a9a5b628a48b2b609254c71acb6a71e78987a165bb5bac
 
 ...
