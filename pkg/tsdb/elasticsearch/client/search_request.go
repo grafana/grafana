@@ -8,9 +8,9 @@ import (
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
-	interval     intervalv2.Interval
-	index        string
-	size         int
+	interval intervalv2.Interval
+	index    string
+	size     int
 	// Currently sort is map, but based in examples it should be an array https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html
 	sort         map[string]interface{}
 	queryBuilder *QueryBuilder
