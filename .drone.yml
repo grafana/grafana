@@ -575,7 +575,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -1430,7 +1430,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -2155,7 +2155,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -3858,6 +3858,10 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.17/grabpl
   - chmod +x bin/grabpl
@@ -3950,6 +3954,10 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.17/grabpl
   - chmod +x bin/grabpl
@@ -4024,6 +4032,10 @@ platform:
   os: linux
 services: []
 steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
 - commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.17/grabpl
@@ -4687,7 +4699,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -6306,6 +6318,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: e7746a4b35fba9e1a7cb3096b947a874786b082f41e4252448ac6acde7ee3ccf
+hmac: dcf24226fae30872050cdc031430374d811e6bbe13158ce0fbf234c90c1d83f9
 
 ...
