@@ -1,4 +1,5 @@
-import { VizPanel } from '../components';
+import { VariableRefresh } from '@grafana/data';
+
 import { Scene, EmbeddedScene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
@@ -9,48 +10,38 @@ import { VariableValueSelectors } from '../variables/components/VariableValueSel
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { TestVariable } from '../variables/variants/TestVariable';
+import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
-import { getQueryRunnerWithRandomWalkQuery } from './queries';
-
-export function getVariablesDemo(standalone: boolean): Scene {
+export function getQueryVariableDemo(standalone: boolean): Scene {
   const state = {
-    title: 'Variables',
+    title: 'Query variable',
     $variables: new SceneVariableSet({
       variables: [
-        new TestVariable({
-          name: 'server',
-          query: 'A.*',
-          value: 'server',
-          text: '',
-          delayMs: 1000,
-          options: [],
-        }),
-        new TestVariable({
-          name: 'pod',
-          query: 'A.$server.*',
-          value: 'pod',
-          delayMs: 1000,
-          isMulti: true,
-          text: '',
-          options: [],
-        }),
-        new TestVariable({
-          name: 'handler',
-          query: 'A.$server.$pod.*',
-          value: 'handler',
-          delayMs: 1000,
-          //isMulti: true,
-          text: '',
-          options: [],
-        }),
         new CustomVariable({
-          name: 'custom',
-          query: 'A : 10,B : 20',
+          name: 'metric',
+          query: 'job : job, instance : instance',
         }),
         new DataSourceVariable({
-          name: 'ds',
-          query: 'testdata',
+          name: 'datasource',
+          query: 'prometheus',
+        }),
+        new QueryVariable({
+          name: 'instance (using datasource variable)',
+          refresh: VariableRefresh.onTimeRangeChanged,
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
+          datasource: '${datasource}',
+        }),
+        new QueryVariable({
+          name: 'label values (on time range refresh)',
+          refresh: VariableRefresh.onTimeRangeChanged,
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
+          datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+        }),
+        new QueryVariable({
+          name: 'legacy (graphite)',
+          refresh: VariableRefresh.onTimeRangeChanged,
+          query: { queryType: 'Default', target: 'stats.response.*' },
+          datasource: { uid: 'gdev-graphite', type: 'graphite' },
         }),
       ],
     }),
@@ -59,16 +50,9 @@ export function getVariablesDemo(standalone: boolean): Scene {
       children: [
         new SceneFlexLayout({
           children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'handler: $handler',
-              $data: getQueryRunnerWithRandomWalkQuery({
-                alias: 'handler: $handler',
-              }),
-            }),
             new SceneCanvasText({
               size: { width: '40%' },
-              text: 'server: ${server} pod:${pod}',
+              text: 'metric: ${metric}',
               fontSize: 20,
               align: 'center',
             }),
