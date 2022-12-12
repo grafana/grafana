@@ -79,18 +79,51 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	}
 
 	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "raw_data") {
-			result.Responses[q.RefID] = backend.DataResponse{
+		// If no metrics, then the query is invalid
+		if len(q.Metrics) == 0 {
+				result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
+
 		metric := q.Metrics[0]
-		b.Size(metric.Settings.Get("size").MustInt(500))
-		b.SortDesc(e.client.GetTimeField(), "boolean")
-		b.SortDesc("_doc", "")
-		b.AddDocValueField(e.client.GetTimeField())
-		return nil
+		isLogs := metric.Type == "logs"
+		// Let's group these into 1, as the resulting query is the same
+		isRawData := metric.Type == "raw_data" || metric.Type == "raw_document"
+
+		// Only raw data and logs queries can be without aggregations
+		if !(isRawData || isLogs) {
+				result.Responses[q.RefID] = backend.DataResponse{
+				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
+			}
+			return nil
+		}
+ 
+		if (isRawData) {
+			b.Size(metric.Settings.Get("size").MustInt(500))
+			b.SortDesc(e.client.GetTimeField(), "boolean")
+			b.SortDesc("_doc", "")
+			b.AddDocValueField(e.client.GetTimeField())
+			return nil
+		}
+
+		if (isLogs) {
+			b.Size(metric.Settings.Get("limit").MustInt(500))
+			b.SortDesc(e.client.GetTimeField(), "boolean")
+			b.SortDesc("_doc", "")
+			b.AddDocValueField(e.client.GetTimeField())
+
+			// Here we don't want to return and we add date histogram aggregation used to get bucketed logs
+			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
+				Type: dateHistType,
+				Field: e.client.GetTimeField(),
+				ID: "1",
+				Settings: simplejson.NewFromAny(map[string]interface{}{
+					"interval": "auto",
+				}),
+			})
+		}
 	}
 
 	aggBuilder := b.Agg()
