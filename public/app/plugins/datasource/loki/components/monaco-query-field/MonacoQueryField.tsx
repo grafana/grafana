@@ -116,6 +116,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
           ensureLogQL(monaco);
         }}
         onMount={(editor, monaco) => {
+          // Monaco has a bug where it runs actions on all instances (https://github.com/microsoft/monaco-editor/issues/2947), so we ensure actions are executed on instance-level with this ContextKey.
           const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
@@ -174,7 +175,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
             },
             'isEditorFocused' + id
           );
-          
+
           editor.onDidFocusEditorText(() => {
             isEditorFocused.set(true);
             if (editor.getValue().trim() === '') {
