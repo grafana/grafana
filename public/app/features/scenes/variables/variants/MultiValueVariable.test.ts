@@ -10,6 +10,17 @@ export interface ExampleVariableState extends MultiValueVariableState {
 }
 
 class ExampleVariable extends MultiValueVariable<ExampleVariableState> {
+  public constructor(initialState: Partial<ExampleVariableState>) {
+    super({
+      type: 'custom',
+      optionsToReturn: [],
+      value: '',
+      text: '',
+      name: '',
+      options: [],
+      ...initialState,
+    });
+  }
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     return of(this.state.optionsToReturn);
   }
@@ -151,6 +162,66 @@ describe('MultiValueVariable', () => {
       });
 
       expect(variable.getValue()).toEqual(['1', '2']);
+    });
+  });
+
+  describe('Url syncing', () => {
+    it('getUrlState should return single value state if value is single value', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        optionsToReturn: [],
+        value: '1',
+        text: 'A',
+      });
+
+      expect(variable.urlSync?.getUrlState(variable.state)).toEqual({ ['var-test']: '1' });
+    });
+
+    it('getUrlState should return string array if value is string array', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [],
+        optionsToReturn: [],
+        value: ['1', '2'],
+        text: ['A', 'B'],
+      });
+
+      expect(variable.urlSync?.getUrlState(variable.state)).toEqual({ ['var-test']: ['1', '2'] });
+    });
+
+    it('fromUrlState should update value for single value', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [
+          { label: 'A', value: '1' },
+          { label: 'B', value: '2' },
+        ],
+        optionsToReturn: [],
+        value: '1',
+        text: 'A',
+      });
+
+      variable.urlSync?.updateFromUrl({ ['var-test']: '2' });
+      expect(variable.state.value).toEqual('2');
+      expect(variable.state.text).toEqual('B');
+    });
+
+    it('fromUrlState should update value for array value', async () => {
+      const variable = new ExampleVariable({
+        name: 'test',
+        options: [
+          { label: 'A', value: '1' },
+          { label: 'B', value: '2' },
+        ],
+        optionsToReturn: [],
+        value: '1',
+        text: 'A',
+      });
+
+      variable.urlSync?.updateFromUrl({ ['var-test']: ['2', '1'] });
+      expect(variable.state.value).toEqual(['2', '1']);
+      expect(variable.state.text).toEqual(['B', 'A']);
     });
   });
 });

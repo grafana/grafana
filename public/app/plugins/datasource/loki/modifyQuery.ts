@@ -18,6 +18,7 @@ import {
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
+import { unescapeLabelValue } from './languageUtils';
 import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 
@@ -329,7 +330,9 @@ function addFilterAsLabelFilter(
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
 
-    const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
+    // we now unescape all escaped values again, because we are using backticks which can handle those cases.
+    // we also don't care about the operator here, because we need to unescape for both, regex and equal.
+    const labelFilter = ` | ${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
     newQuery += start + labelFilter + end;
     prev = match.to;
   }

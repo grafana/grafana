@@ -20,46 +20,46 @@ import (
 )
 
 type KindRegistry interface {
-	Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error
-	GetSummaryBuilder(kind string) models.ObjectSummaryBuilder
-	GetInfo(kind string) (models.ObjectKindInfo, error)
-	GetFromExtension(suffix string) (models.ObjectKindInfo, error)
-	GetKinds() []models.ObjectKindInfo
+	Register(info models.EntityKindInfo, builder models.EntitySummaryBuilder) error
+	GetSummaryBuilder(kind string) models.EntitySummaryBuilder
+	GetInfo(kind string) (models.EntityKindInfo, error)
+	GetFromExtension(suffix string) (models.EntityKindInfo, error)
+	GetKinds() []models.EntityKindInfo
 }
 
 func NewKindRegistry() KindRegistry {
 	kinds := make(map[string]*kindValues)
 	kinds[models.StandardKindPlaylist] = &kindValues{
-		info:    playlist.GetObjectKindInfo(),
-		builder: playlist.GetObjectSummaryBuilder(),
+		info:    playlist.GetEntityKindInfo(),
+		builder: playlist.GetEntitySummaryBuilder(),
 	}
 	kinds[models.StandardKindDashboard] = &kindValues{
-		info:    dashboard.GetObjectKindInfo(),
-		builder: dashboard.GetObjectSummaryBuilder(),
+		info:    dashboard.GetEntityKindInfo(),
+		builder: dashboard.GetEntitySummaryBuilder(),
 	}
 	kinds[models.StandardKindSnapshot] = &kindValues{
-		info:    snapshot.GetObjectKindInfo(),
-		builder: snapshot.GetObjectSummaryBuilder(),
+		info:    snapshot.GetEntityKindInfo(),
+		builder: snapshot.GetEntitySummaryBuilder(),
 	}
 	kinds[models.StandardKindFolder] = &kindValues{
-		info:    folder.GetObjectKindInfo(),
-		builder: folder.GetObjectSummaryBuilder(),
+		info:    folder.GetEntityKindInfo(),
+		builder: folder.GetEntitySummaryBuilder(),
 	}
 	kinds[models.StandardKindPNG] = &kindValues{
-		info:    png.GetObjectKindInfo(),
-		builder: png.GetObjectSummaryBuilder(),
+		info:    png.GetEntityKindInfo(),
+		builder: png.GetEntitySummaryBuilder(),
 	}
 	kinds[models.StandardKindGeoJSON] = &kindValues{
-		info:    geojson.GetObjectKindInfo(),
-		builder: geojson.GetObjectSummaryBuilder(),
+		info:    geojson.GetEntityKindInfo(),
+		builder: geojson.GetEntitySummaryBuilder(),
 	}
 	kinds[models.StandardKindDataFrame] = &kindValues{
-		info:    dataframe.GetObjectKindInfo(),
-		builder: dataframe.GetObjectSummaryBuilder(),
+		info:    dataframe.GetEntityKindInfo(),
+		builder: dataframe.GetEntitySummaryBuilder(),
 	}
 	kinds[models.StandardKindJSONObj] = &kindValues{
-		info:    jsonobj.GetObjectKindInfo(),
-		builder: jsonobj.GetObjectSummaryBuilder(),
+		info:    jsonobj.GetEntityKindInfo(),
+		builder: jsonobj.GetEntitySummaryBuilder(),
 	}
 
 	// create a registry
@@ -77,29 +77,29 @@ func ProvideService(cfg *setting.Cfg, renderer rendering.Service) KindRegistry {
 
 	// Register SVG support
 	//-----------------------
-	info := svg.GetObjectKindInfo()
+	info := svg.GetEntityKindInfo()
 	allowUnsanitizedSvgUpload := cfg != nil && cfg.Storage.AllowUnsanitizedSvgUpload
-	support := svg.GetObjectSummaryBuilder(allowUnsanitizedSvgUpload, renderer)
+	support := svg.GetEntitySummaryBuilder(allowUnsanitizedSvgUpload, renderer)
 	_ = reg.Register(info, support)
 
 	return reg
 }
 
 type kindValues struct {
-	info    models.ObjectKindInfo
-	builder models.ObjectSummaryBuilder
+	info    models.EntityKindInfo
+	builder models.EntitySummaryBuilder
 }
 
 type registry struct {
 	mutex  sync.RWMutex
 	kinds  map[string]*kindValues
-	info   []models.ObjectKindInfo
-	suffix map[string]models.ObjectKindInfo
+	info   []models.EntityKindInfo
+	suffix map[string]models.EntityKindInfo
 }
 
 func (r *registry) updateInfoArray() {
-	suffix := make(map[string]models.ObjectKindInfo)
-	info := make([]models.ObjectKindInfo, 0, len(r.kinds))
+	suffix := make(map[string]models.EntityKindInfo)
+	info := make([]models.EntityKindInfo, 0, len(r.kinds))
 	for _, v := range r.kinds {
 		info = append(info, v.info)
 		if v.info.FileExtension != "" {
@@ -113,7 +113,7 @@ func (r *registry) updateInfoArray() {
 	r.suffix = suffix
 }
 
-func (r *registry) Register(info models.ObjectKindInfo, builder models.ObjectSummaryBuilder) error {
+func (r *registry) Register(info models.EntityKindInfo, builder models.EntitySummaryBuilder) error {
 	if info.ID == "" || builder == nil {
 		return fmt.Errorf("invalid kind")
 	}
@@ -134,7 +134,7 @@ func (r *registry) Register(info models.ObjectKindInfo, builder models.ObjectSum
 }
 
 // GetSummaryBuilder returns a builder or nil if not found
-func (r *registry) GetSummaryBuilder(kind string) models.ObjectSummaryBuilder {
+func (r *registry) GetSummaryBuilder(kind string) models.EntitySummaryBuilder {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -146,7 +146,7 @@ func (r *registry) GetSummaryBuilder(kind string) models.ObjectSummaryBuilder {
 }
 
 // GetInfo returns the registered info
-func (r *registry) GetInfo(kind string) (models.ObjectKindInfo, error) {
+func (r *registry) GetInfo(kind string) (models.EntityKindInfo, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -154,11 +154,11 @@ func (r *registry) GetInfo(kind string) (models.ObjectKindInfo, error) {
 	if ok {
 		return v.info, nil
 	}
-	return models.ObjectKindInfo{}, fmt.Errorf("not found")
+	return models.EntityKindInfo{}, fmt.Errorf("not found")
 }
 
 // GetInfo returns the registered info
-func (r *registry) GetFromExtension(suffix string) (models.ObjectKindInfo, error) {
+func (r *registry) GetFromExtension(suffix string) (models.EntityKindInfo, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -166,11 +166,11 @@ func (r *registry) GetFromExtension(suffix string) (models.ObjectKindInfo, error
 	if ok {
 		return v, nil
 	}
-	return models.ObjectKindInfo{}, fmt.Errorf("not found")
+	return models.EntityKindInfo{}, fmt.Errorf("not found")
 }
 
 // GetSummaryBuilder returns a builder or nil if not found
-func (r *registry) GetKinds() []models.ObjectKindInfo {
+func (r *registry) GetKinds() []models.EntityKindInfo {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 

@@ -10,6 +10,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -170,7 +171,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
-	foldr.Url = models.GetFolderUrl(foldr.UID, models.SlugifyTitle(foldr.Title))
+	foldr.Url = models.GetFolderUrl(foldr.UID, slugify.Slugify(foldr.Title))
 	return foldr, err
 }
 
@@ -262,4 +263,28 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 		return nil
 	})
 	return util.Reverse(folders), err
+}
+
+func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
+	height := -1
+	queue := []string{foldrUID}
+	for len(queue) > 0 {
+		length := len(queue)
+		height++
+		for i := 0; i < length; i++ {
+			ele := queue[0]
+			queue = queue[1:]
+			if parentUID != nil && *parentUID == ele {
+				return 0, folder.ErrCircularReference
+			}
+			folders, err := ss.GetChildren(ctx, folder.GetTreeQuery{UID: ele, OrgID: orgID})
+			if err != nil {
+				return 0, err
+			}
+			for _, f := range folders {
+				queue = append(queue, f.UID)
+			}
+		}
+	}
+	return height, nil
 }

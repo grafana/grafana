@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting/
-  - /docs/grafana/latest/about-alerting
+  - about-alerting/
+  - unified-alerting/alerting/
 title: Alerting
 weight: 114
 ---
@@ -68,7 +67,5 @@ With mute timings, you can specify a time interval when you don’t want new not
 - [Fundamental concepts]({{< relref "fundamentals/" >}}) of Grafana Alerting.
 
 - [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise.
-
-- [Alertmanager]({{< relref "fundamentals/alertmanager/" >}})
 
 - [High availability](https://grafana.com/docs/grafana/next/alerting/fundamentals/high-availability/)
