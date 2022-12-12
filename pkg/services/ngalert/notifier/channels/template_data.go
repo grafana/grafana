@@ -92,13 +92,13 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 
 		generatorUrl, err := url.Parse(extended.GeneratorURL)
 		if err != nil {
-			logger.Debug("Failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "err", err.Error())
+			logger.Debug("Failed to parse generator URL while extending template data", "url", extended.GeneratorURL, "error", err.Error())
 			return extended
 		}
 
 		dashboardUrl, err := url.Parse(extended.DashboardURL)
 		if err != nil {
-			logger.Debug("Failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "err", err.Error())
+			logger.Debug("Failed to parse dashboard URL while extending template data", "url", extended.DashboardURL, "error", err.Error())
 			return extended
 		}
 

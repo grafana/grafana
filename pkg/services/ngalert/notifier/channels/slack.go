@@ -204,13 +204,13 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 
 	m, err := sn.createSlackMessage(ctx, alerts)
 	if err != nil {
-		sn.log.Error("Failed to create Slack message", "err", err)
+		sn.log.Error("Failed to create Slack message", "error", err)
 		return false, fmt.Errorf("failed to create Slack message: %w", err)
 	}
 
 	thread_ts, err := sn.sendSlackMessage(ctx, m)
 	if err != nil {
-		sn.log.Error("Failed to send Slack message", "err", err)
+		sn.log.Error("Failed to send Slack message", "error", err)
 		return false, fmt.Errorf("failed to send Slack message: %w", err)
 	}
 
@@ -225,7 +225,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 					Text:     maxImagesPerThreadTsMessage,
 					ThreadTs: thread_ts,
 				}); err != nil {
-					sn.log.Error("Failed to send Slack message", "err", err)
+					sn.log.Error("Failed to send Slack message", "error", err)
 				}
 				return ErrImagesDone
 			}
@@ -233,7 +233,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			return sn.uploadImage(ctx, image, sn.settings.Recipient, comment, thread_ts)
 		}, alerts...); err != nil {
 			// Do not return an error here as we might have exceeded the rate limit for uploading files
-			sn.log.Error("Failed to upload image", "err", err)
+			sn.log.Error("Failed to upload image", "error", err)
 		}
 	}
 
@@ -337,12 +337,12 @@ func handleSlackJSONResponse(resp *http.Response, logger log.Logger) (string, er
 	}{}
 
 	if err := json.Unmarshal(b, &result); err != nil {
-		logger.Error("Failed to unmarshal response", "body", string(b), "err", err)
+		logger.Error("Failed to unmarshal response", "body", string(b), "error", err)
 		return "", fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	if !result.OK {
-		logger.Error("The request was unsuccessful", "body", string(b), "err", result.Err)
+		logger.Error("The request was unsuccessful", "body", string(b), "error", result.Err)
 		return "", fmt.Errorf("failed to send request: %s", result.Err)
 	}
 
@@ -465,7 +465,7 @@ func (sn *SlackNotifier) createImageMultipart(image ngmodels.Image, channel, com
 	w := multipart.NewWriter(&buf)
 	defer func() {
 		if err := w.Close(); err != nil {
-			sn.log.Error("Failed to close multipart writer", "err", err)
+			sn.log.Error("Failed to close multipart writer", "error", err)
 		}
 	}()
 
