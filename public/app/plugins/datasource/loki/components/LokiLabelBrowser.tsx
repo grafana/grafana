@@ -189,7 +189,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   onClickRunLogsQuery = () => {
     reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
-      closeType: 'showLogsButton',
     });
     const selector = buildSelector(this.state.labels);
     this.props.onChange(selector);
@@ -198,7 +197,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   onClickRunMetricsQuery = () => {
     reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
-      closeType: 'showLogsRateButton',
     });
     const selector = buildSelector(this.state.labels);
     const query = `rate(${selector}[$__interval])`;
