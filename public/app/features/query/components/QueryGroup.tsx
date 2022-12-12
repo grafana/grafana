@@ -517,7 +517,7 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
-        <DropZone onDrop={this.onFileDrop}>
+        <DropZone onDrop={this.onFileDrop} noClick>
           {({ getRootProps, isDragActive }) => {
             const styles = getStyles(this.props.theme, isDragActive);
             return (
