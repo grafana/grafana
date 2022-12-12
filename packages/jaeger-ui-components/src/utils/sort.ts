@@ -12,19 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export function localeStringComparator(itemA, itemB) {
+import sinon from 'sinon';
+
+export function localeStringComparator(itemA: string, itemB: string) {
   return itemA.localeCompare(itemB);
 }
 
-export function numberSortComparator(itemA, itemB) {
+export function numberSortComparator(itemA: number, itemB: number) {
   return itemA - itemB;
 }
 
-export function classNameForSortDir(dir) {
+export function classNameForSortDir(dir: number) {
   return `sorted ${dir === 1 ? 'ascending' : 'descending'}`;
 }
 
-export function getNewSortForClick(prevSort, column) {
+export function getNewSortForClick(
+  prevSort: { key: string; dir: number },
+  column: { name: string; defaultDir?: number }
+) {
   const { defaultDir = 1 } = column;
 
   return {
@@ -33,7 +38,12 @@ export function getNewSortForClick(prevSort, column) {
   };
 }
 
-export function createSortClickHandler(column, currentSortKey, currentSortDir, updateSort) {
+export function createSortClickHandler(
+  column: { name: string },
+  currentSortKey: string,
+  currentSortDir: number,
+  updateSort: sinon.SinonSpy
+) {
   return function onClickSortingElement() {
     const { key, dir } = getNewSortForClick({ key: currentSortKey, dir: currentSortDir }, column);
     updateSort(key, dir);

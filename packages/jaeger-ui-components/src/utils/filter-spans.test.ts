@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceSpan } from 'src/types/trace';
+
 import filterSpans from './filter-spans';
 
 describe('filterSpans', () => {
@@ -57,7 +59,7 @@ describe('filterSpans', () => {
         ],
       },
     ],
-  };
+  } as TraceSpan;
   // span2 contains strings that end in 1 or 2, for overlap with span0
   // KVs in span2 have different numbers for key and value to facilitate excludesKey testing
   const spanID2 = 'span-id-2';
@@ -102,7 +104,7 @@ describe('filterSpans', () => {
       },
     ],
   };
-  const spans = [span0, span2];
+  const spans = [span0, span2] as TraceSpan[];
 
   it('should return `undefined` if spans is falsy', () => {
     expect(filterSpans('operationName', null)).toBe(undefined);
@@ -184,6 +186,6 @@ describe('filterSpans', () => {
 
   it('should return no spans when logs is null', () => {
     const nullSpan = { ...span0, logs: null };
-    expect(filterSpans('logFieldKey1', [nullSpan])).toEqual(new Set([]));
+    expect(filterSpans('logFieldKey1', [nullSpan] as unknown as TraceSpan[])).toEqual(new Set([]));
   });
 });

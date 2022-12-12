@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v9-3/
+  - ../guides/whats-new-in-v9-3/
 description: Feature and improvement highlights for Grafana v9.3
 keywords:
   - grafana
