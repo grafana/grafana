@@ -18,15 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -56,15 +51,7 @@ func createTokenforSA(t *testing.T, service serviceaccounts.Service, keyName str
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
-	require.NoError(t, err)
-	kvStore := kvstore.ProvideService(store)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
-	require.Nil(t, err)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
-	svcmock := tests.ServiceAccountMock{Store: saStore, Calls: tests.Calls{}, Stats: nil, SecretScanEnabled: false}
-
+	services := setupTestServices(t, store)
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
@@ -144,7 +131,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				bodyString = string(b)
 			}
 
-			server, _ := setupTestServer(t, store, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
 			actual := requestResponse(server, http.MethodPost, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -158,7 +145,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				assert.Equal(t, tc.body["name"], actualBody["name"])
 
 				query := apikey.GetByNameQuery{KeyName: tc.body["name"].(string), OrgId: sa.OrgID}
-				err = apiKeyService.GetApiKeyByName(context.Background(), &query)
+				err = services.APIKeyService.GetApiKeyByName(context.Background(), &query)
 				require.NoError(t, err)
 
 				assert.Equal(t, sa.ID, *query.Result.ServiceAccountId)
@@ -178,14 +165,8 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
-	require.NoError(t, err)
-	kvStore := kvstore.ProvideService(store)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
-	require.Nil(t, err)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
-	svcMock := tests.ServiceAccountMock{Store: saStore, Calls: tests.Calls{}, Stats: nil, SecretScanEnabled: false}
+	services := setupTestServices(t, store)
+
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
@@ -245,11 +226,11 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			token := createTokenforSA(t, saStore, tc.keyName, sa.OrgID, sa.ID, 1)
+			token := createTokenforSA(t, &services.SAService, tc.keyName, sa.OrgID, sa.ID, 1)
 
 			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.ID, token.Id)
 			bodyString := ""
-			server, _ := setupTestServer(t, store, &svcMock, routing.NewRouteRegister(), tc.acmock, store)
+			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
 			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
@@ -259,7 +240,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
 
 			query := apikey.GetByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgID}
-			err := apiKeyService.GetApiKeyByName(context.Background(), &query)
+			err := services.APIKeyService.GetApiKeyByName(context.Background(), &query)
 			if actualCode == http.StatusOK {
 				require.Error(t, err)
 			} else {
@@ -271,14 +252,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 	store := db.InitTestDB(t)
-	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, store.Cfg, quotaService)
-	require.NoError(t, err)
-	kvStore := kvstore.ProvideService(store)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
-	require.Nil(t, err)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
-	svcMock := tests.ServiceAccountMock{Store: saStore, Calls: tests.Calls{}, Stats: nil, SecretScanEnabled: false}
+	services := setupTestServices(t, store)
 
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 	type testCreateSAToken struct {
@@ -369,8 +343,8 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			endpoint := fmt.Sprintf(serviceAccountIDPath+"/tokens", sa.ID)
-			svcMock.ExpectedTokens = tc.tokens
-			server, _ := setupTestServer(t, store, &svcMock, routing.NewRouteRegister(), tc.acmock, store)
+			services.SAService.ExpectedTokens = tc.tokens
+			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
 			actual := requestResponse(server, http.MethodGet, endpoint, http.NoBody)
 
 			actualCode := actual.Code

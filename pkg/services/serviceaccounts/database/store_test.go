@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -118,7 +119,9 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	kvStore := kvstore.ProvideService(db)
 	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
 	require.NoError(t, err)
-	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, orgService)
+	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+	return db, ProvideServiceAccountsStore(db.Cfg, db, apiKeyService, kvStore, userSvc, orgService)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
@@ -171,9 +174,9 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.sqlStore.Cfg.AutoAssignOrg = true
-			store.sqlStore.Cfg.AutoAssignOrgId = 1
-			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			store.Cfg.AutoAssignOrg = true
+			store.Cfg.AutoAssignOrgId = 1
+			store.Cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 			key := tests.SetupApiKey(t, db, c.key)
@@ -248,9 +251,9 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.sqlStore.Cfg.AutoAssignOrg = true
-			store.sqlStore.Cfg.AutoAssignOrgId = 1
-			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			store.Cfg.AutoAssignOrg = true
+			store.Cfg.AutoAssignOrgId = 1
+			store.Cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
@@ -310,9 +313,9 @@ func TestStore_RevertApiKey(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.sqlStore.Cfg.AutoAssignOrg = true
-			store.sqlStore.Cfg.AutoAssignOrgId = 1
-			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			store.Cfg.AutoAssignOrg = true
+			store.Cfg.AutoAssignOrgId = 1
+			store.Cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 

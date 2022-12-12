@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -13,10 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
-
-var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *datasources.DataSource) bool {
-	return oAuthTokenService.IsOAuthPassThruEnabled(ds)
-}
 
 type Service struct {
 	pluginsClient      plugins.Client
@@ -43,13 +38,6 @@ func (h *Service) HandleRequest(ctx context.Context, ds *datasources.DataSource,
 	req, err := generateRequest(ctx, ds, decryptedJsonData, query)
 	if err != nil {
 		return legacydata.DataResponse{}, err
-	}
-
-	// Attach Auth information
-	if oAuthIsOAuthPassThruEnabledFunc(h.oAuthTokenService, ds) {
-		if token := h.oAuthTokenService.GetCurrentOAuthToken(ctx, query.User); token != nil {
-			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-		}
 	}
 
 	resp, err := h.pluginsClient.QueryData(ctx, req)
