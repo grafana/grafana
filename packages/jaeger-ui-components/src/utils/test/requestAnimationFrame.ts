@@ -14,15 +14,15 @@
 
 const DEFAULT_ELAPSE = 0;
 
-export default function requestAnimationFrame(callback) {
+export default function requestAnimationFrame(callback: FrameRequestCallback) {
   return setTimeout(callback, DEFAULT_ELAPSE);
 }
 
-export function cancelAnimationFrame(id) {
+export function cancelAnimationFrame(id: string | number | NodeJS.Timeout | undefined) {
   return clearTimeout(id);
 }
 
-export function polyfill(target, msElapse = DEFAULT_ELAPSE) {
+export function polyfill(target: Window & typeof globalThis, msElapse = DEFAULT_ELAPSE) {
   const _target = target || global;
   if (!_target.requestAnimationFrame) {
     if (msElapse === DEFAULT_ELAPSE) {
