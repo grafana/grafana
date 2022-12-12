@@ -12,7 +12,7 @@ weight: 500
 
 # Template examples
 
-Here are number of more complex examples that you might want to use as a reference for customizing your notifications.
+Here are number of more complex examples to use as a reference for customizing your notifications.
 
 ## Template the subject of an email
 
@@ -82,7 +82,7 @@ Resolved alerts:
 {{ end }}
 ```
 
-## Templating the labels, annotations, SilenceURL and DashboardURL of all alerts
+## Template labels, annotations, SilenceURL and DashboardURL of all alerts
 
 Here is an example of another notification with the following message:
 

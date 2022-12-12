@@ -25,6 +25,14 @@ You cannot use message templates to:
 - Change the data in webhook notifications, including the structure of the JSON request or sending data in other formats such as XML
 - Add or remove HTTP headers in webhook notifications other than those in the contact point configuration
 
+## [Create message templates]({{< relref "./create-message-templates" >}})
+
+## [Use templates]({{< relref "./use-templates" >}})
+
+## [Write templates]({{< relref "./write-templates" >}})
+
+## [Template examples]({{< relref "./template-examples" >}})
+
 ## Useful links
 
-- If looking to template labels and annotations themselves see the documentation on [Templating labels and annotations]({{< relref "../fundamentals/annotation-label/variables-label-annotation/" >}}).
+- To template labels and annotations, refer to [Templating labels and annotations]({{< relref "../fundamentals/annotation-label/variables-label-annotation/" >}}).

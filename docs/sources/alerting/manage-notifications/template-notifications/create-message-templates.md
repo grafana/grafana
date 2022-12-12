@@ -12,13 +12,13 @@ title: Create, edit and delete message templates
 weight: 200
 ---
 
-# Create, edit and delete message templates
+# Create, message templates
 
 Message templates can be found in the Contact points tab on the Alerting page. Here you can see a list of all your message templates. A message template can contain more than one template. For example, you might want to create a message template called `email` that contains all email templates.
 
 ## Create message templates
 
-Step 1: Click the New template button:
+Step 1: Click New template:
 
 {{< figure max-width="940px" src="/static/img/docs/alerting/unified/list-message-templates-9-3.png" caption="List message templates" >}}
 

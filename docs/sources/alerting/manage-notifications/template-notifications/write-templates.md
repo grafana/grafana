@@ -196,7 +196,7 @@ To prevent comments from adding line breaks use:
 {{- /* This is a comment with no leading or trailing line breaks */ -}}
 ```
 
-## Defining a template
+## Define templates
 
 You can define templates using `define` and the name of the template in double quotes. You should not define templates with the same name as other templates, including default templates such as `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`. Where a template has been created with the same name as a default template, or a template in another message template, Grafana might use either template. Grafana does not prevent, or show an error message, when there are two or more templates with the same name.
 
@@ -205,7 +205,7 @@ You can define templates using `define` and the name of the template in double q
 {{ end }}
 ```
 
-## Executing a template
+## Execute templates
 
 You can execute defined templates using `template`, the name of the template in double quotes, and the cursor that should be passed to the template:
 
@@ -213,7 +213,7 @@ You can execute defined templates using `template`, the name of the template in 
 {{ template "print_labels" . }}
 ```
 
-## Passing data to templates
+## Pass data to templates
 
 Within a template dot refers to the value that is passed to the template.
 
