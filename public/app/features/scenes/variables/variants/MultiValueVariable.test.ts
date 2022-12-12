@@ -55,8 +55,6 @@ describe('MultiValueVariable', () => {
           { label: 'C', value: 'C' },
         ],
         defaultToAll: true,
-        value: 'A',
-        text: 'A',
       });
 
       await lastValueFrom(variable.validateAndUpdate());
@@ -207,8 +205,6 @@ describe('MultiValueVariable', () => {
         isMulti: true,
         defaultToAll: true,
         optionsToReturn: [],
-        value: ['1'],
-        text: ['A'],
       });
 
       variable.changeValueTo([ALL_VARIABLE_VALUE, '1']);
