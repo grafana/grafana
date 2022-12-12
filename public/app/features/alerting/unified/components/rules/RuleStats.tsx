@@ -1,4 +1,5 @@
-import React, { FC, useMemo } from 'react';
+import pluralize from 'pluralize';
+import React, { FC, Fragment, useMemo } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Badge } from '@grafana/ui';
@@ -8,6 +9,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { isAlertingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
 
 interface Props {
+  includeTotal?: boolean;
   group?: CombinedRuleGroup;
   namespaces?: CombinedRuleNamespace[];
 }
@@ -21,7 +23,7 @@ const emptyStats = {
   error: 0,
 } as const;
 
-export const RuleStats: FC<Props> = ({ group, namespaces }) => {
+export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
   const evaluationInterval = group?.interval;
 
   const calculated = useMemo(() => {
@@ -55,6 +57,14 @@ export const RuleStats: FC<Props> = ({ group, namespaces }) => {
   }, [group, namespaces]);
 
   const statsComponents: React.ReactNode[] = [];
+
+  if (includeTotal) {
+    statsComponents.push(
+      <Fragment key="total">
+        {calculated.total} {pluralize('rule', calculated.total)}
+      </Fragment>
+    );
+  }
 
   if (calculated[PromAlertingRuleState.Firing]) {
     statsComponents.push(
