@@ -73,6 +73,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   width,
   height,
   timeZone,
+  customTooltipFn,
   id,
 }) => {
   const theme = useTheme2();
@@ -190,8 +191,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
             />
           </div>
         )}
-        {options.customTooltipJSX && options.customTooltipJSX(info.aligned, datapointIdx, seriesIdx)}
-        {!options.customTooltipJSX && (
+        {customTooltipFn &&
+          customTooltipFn(info.aligned, datapointIdx!, seriesIdx!, options.tooltip.sort, options.tooltip.mode)}
+        {!customTooltipFn && (
           <DataHoverView
             data={info.aligned}
             rowIndex={datapointIdx}

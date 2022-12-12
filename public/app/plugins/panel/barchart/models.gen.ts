@@ -8,7 +8,6 @@
 
 
 
-import { DataFrame } from '@grafana/data';
 import * as ui from '@grafana/schema';
 
 export const PanelModelVersion = Object.freeze([0, 0]);
@@ -59,10 +58,6 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    * negative values indicate backwards skipping behavior
    */
   xTickLabelSpacing?: number;
-  /**
-   * TEST. NOT ADDED TO CUE YET
-   */
-  customTooltipJSX?: (data: DataFrame, rowIdx?: number | null, colIdx?: number | null) => JSX.Element
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {

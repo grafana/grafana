@@ -42,4 +42,5 @@ export {
   TooltipDisplayMode,
   type VizTooltipOptions,
   type OptionsWithTooltip,
+  SortOrder,
 } from '@grafana/schema';

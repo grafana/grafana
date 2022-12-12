@@ -33,6 +33,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     onChangeTimeRange = () => {},
     onFieldConfigChange = () => {},
     fieldConfig = defaultFieldConfig,
+    customTooltipFn,
   } = props;
 
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
@@ -92,6 +93,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
           onFieldConfigChange={onFieldConfigChange}
           onChangeTimeRange={onChangeTimeRange}
           eventBus={appEvents}
+          customTooltipFn={customTooltipFn}
         />
       </PluginContextProvider>
     </ErrorBoundaryAlert>
