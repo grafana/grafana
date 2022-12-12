@@ -76,6 +76,7 @@ type AlertRuleV1 struct {
 	NoDataState  values.StringValue    `json:"noDataState" yaml:"noDataState"`
 	ExecErrState values.StringValue    `json:"execErrState" yaml:"execErrState"`
 	For          values.StringValue    `json:"for" yaml:"for"`
+	ForError     values.StringValue    `json:"forError" yaml:"forError"`
 	Annotations  values.StringMapValue `json:"annotations" yaml:"annotations"`
 	Labels       values.StringMapValue `json:"labels" yaml:"labels"`
 	IsPaused     values.BoolValue      `json:"isPaused" yaml:"isPaused"`
@@ -97,6 +98,13 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
 	alertRule.For = time.Duration(duration)
+	if rule.ForError.Value() != "" {
+		errorDuration, err := model.ParseDuration(rule.ForError.Value())
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
+		}
+		alertRule.ForError = time.Duration(errorDuration)
+	}
 	dashboardUID := rule.DashboardUID.Value()
 	alertRule.DashboardUID = &dashboardUID
 	panelID := rule.PanelID.Value()

@@ -10,12 +10,37 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { GrafanaAlertStateDecision } from "../../../types/unified-alerting-dto";
+
 import { RuleViewer } from './RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule, grantUserPermissions } from './mocks';
 
-const mockGrafanaRule = getGrafanaRule({ name: 'Test alert' });
+const mockGrafanaRule = getGrafanaRule({
+  name: 'Test alert',
+  query: 'up',
+  group: {
+    name: 'Prom up alert',
+    rules: [],
+  },
+  rulerRule: {
+    for: '',
+    for_error: '',
+    annotations: {},
+    labels: {},
+    grafana_alert: {
+      condition: 'B',
+      exec_err_state: GrafanaAlertStateDecision.Alerting,
+      namespace_id: 11,
+      namespace_uid: 'namespaceuid123',
+      no_data_state: GrafanaAlertStateDecision.NoData,
+      title: 'Test alert',
+      uid: 'asdf23',
+      data: [],
+    },
+  },
+});
 const mockCloudRule = getCloudRule({ name: 'cloud test alert' });
 const mockRoute: GrafanaRouteComponentProps<{ id?: string; sourceName?: string }> = {
   route: {

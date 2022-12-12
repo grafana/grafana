@@ -486,8 +486,10 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 		},
 	}
 	forDuration := model.Duration(r.For)
+	forErrorDuration := model.Duration(r.ForError)
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
 		For:         &forDuration,
+		ForError:    &forErrorDuration,
 		Annotations: r.Annotations,
 		Labels:      r.Labels,
 	}

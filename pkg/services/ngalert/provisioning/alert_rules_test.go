@@ -382,6 +382,7 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 		NamespaceUID: "my-namespace",
 		RuleGroup:    groupTitle,
 		For:          time.Second * 60,
+		ForError:     time.Second * 60,
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
 	}

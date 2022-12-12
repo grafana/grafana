@@ -24,6 +24,7 @@ describe('alertRuleToQueries', () => {
       },
       rulerRule: {
         for: '',
+        for_error: '',
         annotations: {},
         labels: {},
         grafana_alert: grafanaAlert,

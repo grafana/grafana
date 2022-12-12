@@ -53,6 +53,7 @@ describe('hashRulerRule', () => {
     const grafanaRule: RulerGrafanaRuleDTO = {
       grafana_alert: grafanaAlertDefinition,
       for: '30s',
+      for_error: '3m',
       labels: { type: 'cpu' },
       annotations: { description: 'CPU usage too high' },
     };

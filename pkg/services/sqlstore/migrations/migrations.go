@@ -105,6 +105,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	addFolderMigrations(mg)
+	ualert.AddForErrorColumnMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

@@ -61,11 +61,13 @@ interface EvaluationBehaviorSummaryProps {
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
   let forDuration: string | undefined;
+  let forErrorDuration: string | undefined;
   let every = rule.group.interval;
 
   // recording rules don't have a for duration
   if (!isRecordingRulerRule(rule.rulerRule)) {
     forDuration = rule.rulerRule?.for;
+    forErrorDuration = rule.rulerRule?.for_error;
   }
 
   return (
@@ -78,6 +80,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       {forDuration && (
         <DetailsField label="For" horizontal={true}>
           {forDuration}
+        </DetailsField>
+      )}
+      {forErrorDuration && (
+        <DetailsField label="Error For" horizontal={true}>
+          {forErrorDuration}
         </DetailsField>
       )}
     </>

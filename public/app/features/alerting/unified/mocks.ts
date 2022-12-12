@@ -95,6 +95,7 @@ export const mockRulerGrafanaRule = (
 ): RulerGrafanaRuleDTO => {
   return {
     for: '1m',
+    for_error: '3m',
     grafana_alert: {
       uid: '123',
       title: 'myalert',

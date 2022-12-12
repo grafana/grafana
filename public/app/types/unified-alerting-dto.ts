@@ -168,6 +168,7 @@ export interface RulerRecordingRuleDTO extends RulerRuleBaseDTO {
 export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
   alert: string;
   for?: string;
+  for_error?: string;
   annotations?: Annotations;
 }
 
@@ -213,6 +214,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
 export interface RulerGrafanaRuleDTO {
   grafana_alert: GrafanaRuleDefinition;
   for: string;
+  for_error: string;
   annotations: Annotations;
   labels: Labels;
 }
@@ -220,6 +222,7 @@ export interface RulerGrafanaRuleDTO {
 export interface PostableRuleGrafanaRuleDTO {
   grafana_alert: PostableGrafanaRuleDefinition;
   for: string;
+  for_error: string;
   annotations: Annotations;
   labels: Labels;
 }

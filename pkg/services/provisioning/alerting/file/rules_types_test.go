@@ -125,6 +125,24 @@ func TestRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 48*time.Hour, ruleMapped.For)
 	})
+	t.Run("a rule with a forError duration containing 'd' should work", func(t *testing.T) {
+		rule := validRuleV1(t)
+		forErrorDuration := values.StringValue{}
+		err := yaml.Unmarshal([]byte("2d"), &forErrorDuration)
+		rule.ForError = forErrorDuration
+		require.NoError(t, err)
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, 48*time.Hour, ruleMapped.ForError)
+	})
+	t.Run("a rule with an empty forError duration should work", func(t *testing.T) {
+		rule := validRuleV1(t)
+		forErrorDuration := values.StringValue{}
+		rule.ForError = forErrorDuration
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, 0*time.Second, ruleMapped.ForError)
+	})
 	t.Run("a rule with out a condition should error", func(t *testing.T) {
 		rule := validRuleV1(t)
 		rule.Condition = values.StringValue{}

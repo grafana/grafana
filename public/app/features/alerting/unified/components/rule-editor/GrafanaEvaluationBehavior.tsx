@@ -219,22 +219,26 @@ function FolderGroupAndEvaluationInterval({
   );
 }
 
-function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
+function ForInput({
+  evaluateId,
+  evaluateName,
+  evaluateEvery,
+  tooltip,
+}: {
+  evaluateId: string;
+  evaluateName: 'evaluateFor' | 'evaluateForError';
+  evaluateEvery: string;
+  tooltip: string;
+}) {
   const styles = useStyles2(getStyles);
   const {
     register,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
 
-  const evaluateForId = 'eval-for-input';
-
   return (
     <Stack direction="row" justify-content="flex-start" align-items="flex-start">
-      <InlineLabel
-        htmlFor={evaluateForId}
-        width={7}
-        tooltip='Once the condition is breached, the alert goes into pending state. If the alert is pending longer than the "for" value, it becomes a firing alert.'
-      >
+      <InlineLabel htmlFor={evaluateId} width={7} tooltip={tooltip}>
         for
       </InlineLabel>
       <Field
@@ -243,7 +247,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         invalid={!!errors.evaluateFor?.message}
         validationMessageHorizontalOverflow={true}
       >
-        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+        <Input id={evaluateId} width={8} {...register(evaluateName, forValidationOptions(evaluateEvery))} />
       </Field>
     </Stack>
   );
@@ -262,6 +266,8 @@ export function GrafanaEvaluationBehavior({
 }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
+  const evaluateForId = 'eval-for-input';
+  const evaluateForErrorId = 'eval-for-error-input';
 
   const { watch, setValue } = useFormContext<RuleFormValues>();
 
@@ -276,7 +282,12 @@ export function GrafanaEvaluationBehavior({
           setEvaluateEvery={setEvaluateEvery}
           evaluateEvery={evaluateEvery}
         />
-        <ForInput evaluateEvery={evaluateEvery} />
+        <ForInput
+          evaluateId={evaluateForId}
+          evaluateName="evaluateFor"
+          evaluateEvery={evaluateEvery}
+          tooltip='Once the condition is breached, the alert goes into pending state. If the alert is pending longer than the "for" value, it becomes a firing alert.'
+        />
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -326,21 +337,31 @@ export function GrafanaEvaluationBehavior({
               name="noDataState"
             />
           </Field>
-          <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
-            <InputControl
-              render={({ field: { onChange, ref, ...field } }) => (
-                <GrafanaAlertStatePicker
-                  {...field}
-                  inputId="exec-err-state-input"
-                  width={42}
-                  includeNoData={false}
-                  includeError={true}
-                  onChange={(value) => onChange(value?.value)}
-                />
-              )}
-              name="execErrState"
-            />
-          </Field>
+          <Stack direction="row" justify-content="flex-start" align-items="flex-start">
+            <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
+              <InputControl
+                render={({ field: { onChange, ref, ...field } }) => (
+                  <GrafanaAlertStatePicker
+                    {...field}
+                    inputId="exec-err-state-input"
+                    width={42}
+                    includeNoData={false}
+                    includeError={true}
+                    onChange={(value) => onChange(value?.value)}
+                  />
+                )}
+                name="execErrState"
+              />
+            </Field>
+            <Field htmlFor="exec-for-err-input" label="">
+              <ForInput
+                evaluateId={evaluateForErrorId}
+                evaluateName="evaluateForError"
+                evaluateEvery={evaluateEvery}
+                tooltip='Once an error is thrown, the alert state freezes. If the error continues to be thrown longer than the "for" value, it becomes an error alert. If not, the alert state unfreezes and continues.'
+              />
+            </Field>
+          </Stack>
         </>
       )}
     </RuleEditorSection>
