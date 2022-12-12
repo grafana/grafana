@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/folder_permissions/
-  - /docs/grafana/latest/http_api/dashboardpermissions/
-  - /docs/grafana/latest/http_api/folder_permissions/
+  - ../../http_api/dashboardpermissions/
+  - ../../http_api/folder_permissions/
 description: Grafana Folder Permissions HTTP API
 keywords:
   - grafana
@@ -13,7 +12,7 @@ keywords:
   - permission
   - permissions
   - acl
-title: 'Folder Permissions HTTP API'
+title: Folder Permissions HTTP API
 ---
 
 # Folder Permissions API

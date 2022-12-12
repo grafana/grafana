@@ -1,27 +1,26 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/
-  - /docs/grafana/latest/panels/visualizations/geomap/
-  - /docs/grafana/latest/visualizations/geomap/
-  - /docs/grafana/latest/features/panels/geomap/arcgis/
-  - /docs/grafana/latest/panels/visualizations/geomap/arcgis/
-  - /docs/grafana/latest/features/panels/geomap/carto/
-  - /docs/grafana/latest/panels/visualizations/geomap/carto/
-  - /docs/grafana/latest/features/panels/geomap/controls/
-  - /docs/grafana/latest/panels/visualizations/geomap/controls/
-  - /docs/grafana/latest/features/panels/geomap/daynight/
-  - /docs/grafana/latest/panels/visualizations/geomap/daynight/
-  - /docs/grafana/latest/features/panels/geomap/geojson/
-  - /docs/grafana/latest/panels/visualizations/geomap/geojson/
-  - /docs/grafana/latest/features/panels/geomap/heatmap/
-  - /docs/grafana/latest/panels/visualizations/geomap/heatmap/
-  - /docs/grafana/latest/features/panels/geomap/markers/
-  - /docs/grafana/latest/panels/visualizations/geomap/markers/
-  - /docs/grafana/latest/features/panels/geomap/osm/
-  - /docs/grafana/latest/panels/visualizations/geomap/osm/
-  - /docs/grafana/latest/features/panels/geomap/zyx/
-  - /docs/grafana/latest/panels/visualizations/geomap/zyx/
-  - /docs/grafana/latest/panels-visualizations/visualizations/geomap/
+  - ../../features/panels/geomap/
+  - ../../features/panels/geomap/arcgis/
+  - ../../features/panels/geomap/carto/
+  - ../../features/panels/geomap/controls/
+  - ../../features/panels/geomap/daynight/
+  - ../../features/panels/geomap/geojson/
+  - ../../features/panels/geomap/heatmap/
+  - ../../features/panels/geomap/markers/
+  - ../../features/panels/geomap/osm/
+  - ../../features/panels/geomap/zyx/
+  - ../../panels/visualizations/geomap/
+  - ../../panels/visualizations/geomap/arcgis/
+  - ../../panels/visualizations/geomap/carto/
+  - ../../panels/visualizations/geomap/controls/
+  - ../../panels/visualizations/geomap/daynight/
+  - ../../panels/visualizations/geomap/geojson/
+  - ../../panels/visualizations/geomap/heatmap/
+  - ../../panels/visualizations/geomap/markers/
+  - ../../panels/visualizations/geomap/osm/
+  - ../../panels/visualizations/geomap/zyx/
+  - ../../visualizations/geomap/
 description: Geomap visualization documentation
 keywords:
   - grafana

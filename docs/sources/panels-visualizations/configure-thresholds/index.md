@@ -1,13 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/
-  - /docs/grafana/latest/panels/configure-thresholds/
-  - /docs/grafana/latest/panels/specify-thresholds/about-thresholds/
-  - /docs/grafana/latest/panels/specify-thresholds/add-a-threshold/
-  - /docs/grafana/latest/panels/specify-thresholds/add-threshold-to-graph/
-  - /docs/grafana/latest/panels/specify-thresholds/delete-a-threshold/
-  - /docs/grafana/latest/panels/thresholds/
-  - /docs/grafana/latest/panels-visualizations/configure-thresholds/
+  - ../panels/
+  - ../panels/configure-thresholds/
+  - ../panels/specify-thresholds/about-thresholds/
+  - ../panels/specify-thresholds/add-a-threshold/
+  - ../panels/specify-thresholds/add-threshold-to-graph/
+  - ../panels/specify-thresholds/delete-a-threshold/
+  - ../panels/thresholds/
 description: This section includes information about using thresholds in your visualizations.
 menuTitle: Configure thresholds
 title: Configure thresholds

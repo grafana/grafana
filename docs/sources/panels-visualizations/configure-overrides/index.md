@@ -1,16 +1,15 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/field-overrides/
-  - /docs/grafana/latest/panels/override-field-values/
-  - /docs/grafana/latest/panels/override-field-values/about-field-overrides/
-  - /docs/grafana/latest/panels/override-field-values/add-a-field-override/
-  - /docs/grafana/latest/panels/override-field-values/delete-a-field-override/
-  - /docs/grafana/latest/panels/override-field-values/edit-field-override/
-  - /docs/grafana/latest/panels/override-field-values/view-field-override/
-  - /docs/grafana/latest/panels/configure-overrides/
-  - /docs/grafana/latest/panels-visualizations/configure-overrides/
-title: Configure field overrides
+  - ../panels/configure-overrides/
+  - ../panels/field-overrides/
+  - ../panels/override-field-values/
+  - ../panels/override-field-values/about-field-overrides/
+  - ../panels/override-field-values/add-a-field-override/
+  - ../panels/override-field-values/delete-a-field-override/
+  - ../panels/override-field-values/edit-field-override/
+  - ../panels/override-field-values/view-field-override/
 menuTitle: Configure field overrides
+title: Configure field overrides
 weight: 400
 ---
 
