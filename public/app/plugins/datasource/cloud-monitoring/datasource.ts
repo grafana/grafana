@@ -261,10 +261,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           filters: query.metricQuery.filters,
           view: query.metricQuery.view,
         };
-        query.timeSeriesList.filters = this.migrateMetricTypeFilter(
-          query.metricQuery.metricType,
-          query.timeSeriesList.filters
-        );
+        if (query.metricQuery.metricType) {
+          query.timeSeriesList.filters = this.migrateMetricTypeFilter(
+            query.metricQuery.metricType,
+            query.timeSeriesList.filters
+          );
+        }
         if (query.metricQuery.preprocessor) {
           query.timeSeriesList = this.migratePreprocessor(query.timeSeriesList, query.metricQuery.preprocessor);
         }
