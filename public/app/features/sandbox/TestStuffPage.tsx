@@ -1,18 +1,15 @@
-/* eslint-disable jsx-a11y/heading-has-content */
 import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   ApplyFieldOverrideOptions,
-  DataFrame,
   DataTransformerConfig,
   dateMath,
   FieldColorModeId,
   NavModelItem,
   PanelData,
 } from '@grafana/data';
-import { SortOrder } from '@grafana/schema';
 import { Button, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
@@ -66,42 +63,6 @@ export const TestStuffPage = () => {
 
   const notifyApp = useAppNotification();
 
-  const customJSX = (data: DataFrame, rowIndex?: number, columnIndex?: number) => {
-    if (!data || rowIndex == null) {
-      return null;
-    }
-
-    const date = data.fields[0].values.get(rowIndex);
-    const hour = data.fields[1].values.get(rowIndex);
-    const value = data.fields[2].values.get(rowIndex);
-    const status = data.fields[3].values.get(rowIndex);
-
-    let statusColor = '';
-    switch (status) {
-      case 'FINISHED':
-        statusColor = 'green';
-        break;
-      case 'FAILED':
-        statusColor = 'red';
-        break;
-      case 'RUNNING':
-        statusColor = 'yellow';
-        break;
-    }
-
-    return (
-      <>
-        <div style={{ width: '100%', backgroundColor: statusColor, textAlign: 'center' }}>
-          <h2>{status}</h2>
-        </div>
-        <h1 style={{ textAlign: 'center' }}>{value} ms</h1>
-        <h2 style={{ textAlign: 'center' }}>
-          {date} at {hour}
-        </h2>
-      </>
-    );
-  };
-
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
@@ -112,15 +73,15 @@ export const TestStuffPage = () => {
                 <div>
                   <PanelRenderer
                     title="Hello"
-                    pluginId="barchart"
+                    pluginId="timeseries"
                     width={width}
                     height={300}
                     data={data}
-                    options={{ customTooltipJSX: customJSX }}
+                    options={{}}
                     fieldConfig={{ defaults: {}, overrides: [] }}
                     timeZone="browser"
                   />
-                  {data.series[0] && <Table data={data.series[0]} width={width} height={300} />}
+                  <Table data={data.series[0]} width={width} height={300} />
                 </div>
               );
             }}
