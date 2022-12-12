@@ -1,13 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/silences/create-silence/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/edit-silence/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/linking-to-silence-form/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/remove-silence/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
+  - ../silences/create-silence/
+  - ../silences/edit-silence/
+  - ../silences/linking-to-silence-form/
+  - ../silences/remove-silence/
+  - ../unified-alerting/silences/
 description: Add silence alert notification
 keywords:
   - grafana

@@ -8,9 +8,9 @@ import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@
 
 import { Button, ClickOutsideWrapper, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
+import { getModalStyles } from '../../Modal/getModalStyles';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
-import { getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { isValid } from '../utils';
 
 export interface Props {
@@ -30,8 +30,8 @@ export const DateTimePicker: FC<Props> = ({ date, maxDate, label, onChange }) =>
   const [isOpen, setOpen] = useState(false);
 
   const theme = useTheme2();
+  const { modalBackdrop } = getModalStyles(theme);
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
-  const containerStyles = useStyles2(getCalendarStyles);
   const styles = useStyles2(getStyles);
 
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
@@ -88,7 +88,7 @@ export const DateTimePicker: FC<Props> = ({ date, maxDate, label, onChange }) =>
               <div className={styles.modal} onClick={stopPropagation}>
                 <DateTimeCalendar date={date} onChange={onApply} isFullscreen={false} onClose={() => setOpen(false)} />
               </div>
-              <div className={containerStyles.backdrop} onClick={stopPropagation} />
+              <div className={modalBackdrop} onClick={stopPropagation} />
             </ClickOutsideWrapper>
           </Portal>
         )
