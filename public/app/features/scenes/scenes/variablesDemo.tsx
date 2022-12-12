@@ -1,5 +1,5 @@
 import { VizPanel } from '../components';
-import { EmbeddedScene, Scene } from '../components/Scene';
+import { Scene, EmbeddedScene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';

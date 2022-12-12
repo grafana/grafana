@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import DraggableManager from './DraggableManager';
+import React from 'react';
+
+import DraggableManager, { DraggableManagerOptions } from './DraggableManager';
 import EUpdateTypes from './EUpdateTypes';
 
 describe('DraggableManager', () => {
@@ -20,13 +22,13 @@ describe('DraggableManager', () => {
   // left button mouse events have `.button === 0`
   const baseMouseEvt = { button: 0, clientX: baseClientX };
   const tag = 'some-tag';
-  let bounds;
-  let getBounds;
-  let ctorOpts;
-  let instance;
+  let bounds: { clientXLeft: number; width: number; minValue: number; maxValue: number };
+  let getBounds: jest.Mock<typeof bounds, []>;
+  let ctorOpts: DraggableManagerOptions;
+  let instance: DraggableManager;
 
-  function startDragging(dragManager) {
-    dragManager.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' });
+  function startDragging(dragManager: DraggableManager) {
+    dragManager.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' } as React.MouseEvent);
     expect(dragManager.isDragging()).toBe(true);
   }
 
@@ -55,7 +57,7 @@ describe('DraggableManager', () => {
   describe('_getPosition()', () => {
     it('invokes the getBounds ctor argument', () => {
       instance._getPosition(0);
-      expect(ctorOpts.getBounds.mock.calls).toEqual([[tag]]);
+      expect(jest.mocked(ctorOpts.getBounds).mock.calls).toEqual([[tag]]);
     });
 
     it('converts clientX to x and [0, 1] value', () => {
@@ -93,10 +95,10 @@ describe('DraggableManager', () => {
 
       ctorOpts.resetBoundsOnResize = false;
       instance = new DraggableManager(ctorOpts);
-      expect(window.addEventListener.mock.calls).toEqual([]);
+      expect(jest.mocked(window.addEventListener).mock.calls).toEqual([]);
       ctorOpts.resetBoundsOnResize = true;
       instance = new DraggableManager(ctorOpts);
-      expect(window.addEventListener.mock.calls).toEqual([['resize', expect.any(Function)]]);
+      expect(jest.mocked(window.addEventListener).mock.calls).toEqual([['resize', expect.any(Function)]]);
 
       window.addEventListener = oldFn;
     });
@@ -108,11 +110,11 @@ describe('DraggableManager', () => {
       ctorOpts.resetBoundsOnResize = false;
       instance = new DraggableManager(ctorOpts);
       instance.dispose();
-      expect(window.removeEventListener.mock.calls).toEqual([]);
+      expect(jest.mocked(window.removeEventListener).mock.calls).toEqual([]);
       ctorOpts.resetBoundsOnResize = true;
       instance = new DraggableManager(ctorOpts);
       instance.dispose();
-      expect(window.removeEventListener.mock.calls).toEqual([['resize', expect.any(Function)]]);
+      expect(jest.mocked(window.removeEventListener).mock.calls).toEqual([['resize', expect.any(Function)]]);
 
       window.removeEventListener = oldFn;
     });
@@ -122,9 +124,9 @@ describe('DraggableManager', () => {
     it('throws an error for invalid event types', () => {
       const type = 'invalid-event-type';
       const throwers = [
-        () => instance.handleMouseEnter({ ...baseMouseEvt, type }),
-        () => instance.handleMouseMove({ ...baseMouseEvt, type }),
-        () => instance.handleMouseLeave({ ...baseMouseEvt, type }),
+        () => instance.handleMouseEnter({ ...baseMouseEvt, type } as React.MouseEvent),
+        () => instance.handleMouseMove({ ...baseMouseEvt, type } as React.MouseEvent),
+        () => instance.handleMouseLeave({ ...baseMouseEvt, type } as React.MouseEvent),
       ];
       throwers.forEach((thrower) => expect(thrower).toThrow());
     });
@@ -133,14 +135,14 @@ describe('DraggableManager', () => {
       startDragging(instance);
       expect(getBounds.mock.calls.length).toBe(1);
 
-      instance.handleMouseEnter({ ...baseMouseEvt, type: 'mouseenter' });
-      instance.handleMouseMove({ ...baseMouseEvt, type: 'mousemove' });
-      instance.handleMouseLeave({ ...baseMouseEvt, type: 'mouseleave' });
+      instance.handleMouseEnter({ ...baseMouseEvt, type: 'mouseenter' } as React.MouseEvent);
+      instance.handleMouseMove({ ...baseMouseEvt, type: 'mousemove' } as React.MouseEvent);
+      instance.handleMouseLeave({ ...baseMouseEvt, type: 'mouseleave' } as React.MouseEvent);
       expect(ctorOpts.onMouseEnter).not.toHaveBeenCalled();
       expect(ctorOpts.onMouseMove).not.toHaveBeenCalled();
       expect(ctorOpts.onMouseLeave).not.toHaveBeenCalled();
 
-      const evt = { ...baseMouseEvt, type: 'invalid-type' };
+      const evt = { ...baseMouseEvt, type: 'invalid-type' } as React.MouseEvent;
       expect(() => instance.handleMouseEnter(evt)).not.toThrow();
 
       expect(getBounds.mock.calls.length).toBe(1);
@@ -172,16 +174,18 @@ describe('DraggableManager', () => {
 
       cases.forEach((testCase) => {
         const { type, handler, callback, updateType } = testCase;
-        const event = { ...baseMouseEvt, type };
+        const event = { ...baseMouseEvt, type } as React.MouseEvent;
         handler(event);
-        expect(callback.mock.calls).toEqual([[{ event, tag, value, x, manager: instance, type: updateType }]]);
+        expect(jest.mocked(callback)?.mock.calls).toEqual([
+          [{ event, tag, value, x, manager: instance, type: updateType }],
+        ]);
       });
     });
   });
 
   describe('drag events', () => {
-    let realWindowAddEvent;
-    let realWindowRmEvent;
+    let realWindowAddEvent: typeof window.addEventListener;
+    let realWindowRmEvent: typeof window.removeEventListener;
 
     beforeEach(() => {
       realWindowAddEvent = window.addEventListener;
@@ -196,17 +200,19 @@ describe('DraggableManager', () => {
     });
 
     it('throws an error for invalid event types', () => {
-      expect(() => instance.handleMouseDown({ ...baseMouseEvt, type: 'invalid-event-type' })).toThrow();
+      expect(() =>
+        instance.handleMouseDown({ ...baseMouseEvt, type: 'invalid-event-type' } as React.MouseEvent)
+      ).toThrow();
     });
 
     describe('mousedown', () => {
       it('is ignored if already dragging', () => {
         startDragging(instance);
-        window.addEventListener.mockReset();
-        ctorOpts.onDragStart.mockReset();
+        jest.mocked(window.addEventListener).mockReset();
+        jest.mocked(ctorOpts.onDragStart)?.mockReset();
 
         expect(getBounds.mock.calls.length).toBe(1);
-        instance.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' });
+        instance.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' } as React.MouseEvent);
         expect(getBounds.mock.calls.length).toBe(1);
 
         expect(window.addEventListener).not.toHaveBeenCalled();
@@ -214,13 +220,13 @@ describe('DraggableManager', () => {
       });
 
       it('sets `isDragging()` to true', () => {
-        instance.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' });
+        instance.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' } as React.MouseEvent);
         expect(instance.isDragging()).toBe(true);
       });
 
       it('adds the window mouse listener events', () => {
-        instance.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' });
-        expect(window.addEventListener.mock.calls).toEqual([
+        instance.handleMouseDown({ ...baseMouseEvt, type: 'mousedown' } as React.MouseEvent);
+        expect(jest.mocked(window.addEventListener).mock.calls).toEqual([
           ['mousemove', expect.any(Function)],
           ['mouseup', expect.any(Function)],
         ]);
@@ -229,35 +235,35 @@ describe('DraggableManager', () => {
 
     describe('mousemove', () => {
       it('is ignored if not already dragging', () => {
-        instance._handleDragEvent({ ...baseMouseEvt, type: 'mousemove' });
+        instance._handleDragEvent({ ...baseMouseEvt, type: 'mousemove' } as React.MouseEvent);
         expect(ctorOpts.onDragMove).not.toHaveBeenCalled();
         startDragging(instance);
-        instance._handleDragEvent({ ...baseMouseEvt, type: 'mousemove' });
+        instance._handleDragEvent({ ...baseMouseEvt, type: 'mousemove' } as React.MouseEvent);
         expect(ctorOpts.onDragMove).toHaveBeenCalled();
       });
     });
 
     describe('mouseup', () => {
       it('is ignored if not already dragging', () => {
-        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' });
+        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' } as React.MouseEvent);
         expect(ctorOpts.onDragEnd).not.toHaveBeenCalled();
         startDragging(instance);
-        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' });
+        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' } as React.MouseEvent);
         expect(ctorOpts.onDragEnd).toHaveBeenCalled();
       });
 
       it('sets `isDragging()` to false', () => {
         startDragging(instance);
         expect(instance.isDragging()).toBe(true);
-        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' });
+        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' } as React.MouseEvent);
         expect(instance.isDragging()).toBe(false);
       });
 
       it('removes the window mouse listener events', () => {
         startDragging(instance);
         expect(window.removeEventListener).not.toHaveBeenCalled();
-        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' });
-        expect(window.removeEventListener.mock.calls).toEqual([
+        instance._handleDragEvent({ ...baseMouseEvt, type: 'mouseup' } as React.MouseEvent);
+        expect(jest.mocked(window.removeEventListener).mock.calls).toEqual([
           ['mousemove', expect.any(Function)],
           ['mouseup', expect.any(Function)],
         ]);
@@ -290,9 +296,11 @@ describe('DraggableManager', () => {
 
       cases.forEach((testCase) => {
         const { type, handler, callback, updateType } = testCase;
-        const event = { ...baseMouseEvt, type };
+        const event = { ...baseMouseEvt, type } as React.MouseEvent;
         handler(event);
-        expect(callback.mock.calls).toEqual([[{ event, tag, value, x, manager: instance, type: updateType }]]);
+        expect(jest.mocked(callback)?.mock.calls).toEqual([
+          [{ event, tag, value, x, manager: instance, type: updateType }],
+        ]);
       });
     });
   });

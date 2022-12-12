@@ -62,7 +62,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
           });
         }
       : undefined,
-    target: '_self',
+    target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
   };
 }
