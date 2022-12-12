@@ -23,6 +23,8 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertRuleMigrations(mg, 60)
 	AddAlertRuleVersionMigrations(mg)
 
+	AddAlertmanagerConfigHistoryMigrations(mg)
+
 	// Create Alertmanager configurations
 	AddAlertmanagerConfigMigrations(mg)
 
@@ -33,8 +35,6 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddProvisioningMigrations(mg)
 
 	AddAlertImageMigrations(mg)
-
-	AddAlertmanagerConfigHistoryMigrations(mg)
 }
 
 // AddAlertDefinitionMigrations should not be modified.
