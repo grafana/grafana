@@ -4792,6 +4792,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/eslint-config@npm:5.1.0":
+  version: 5.1.0
+  resolution: "@grafana/eslint-config@npm:5.1.0"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": 5.42.0
+    "@typescript-eslint/parser": 5.42.0
+    eslint: 8.26.0
+    eslint-config-prettier: 8.5.0
+    eslint-plugin-jsdoc: 39.6.2
+    eslint-plugin-react: 7.31.10
+    eslint-plugin-react-hooks: 4.6.0
+    typescript: 4.8.4
+  checksum: 525b3dfd956a895219979850b65a760ab19c9872e1c2432cc4f6a831fd3da1dd4e97bb1e046de2012dccd018f71ad88df57e2e1af357ad540d1f0107116d3550
+  languageName: node
+  linkType: hard
+
 "@grafana/experimental@npm:1.0.1":
   version: 1.0.1
   resolution: "@grafana/experimental@npm:1.0.1"
@@ -21819,7 +21835,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 5.0.0
+    "@grafana/eslint-config": 5.1.0
     "@grafana/experimental": 1.0.1
     "@grafana/faro-core": 1.0.0-beta2
     "@grafana/faro-web-sdk": 1.0.0-beta2
