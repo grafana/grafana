@@ -1,25 +1,11 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2, isIconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
-import { IconName } from '../../types/icon';
 import { Dropdown } from '../Dropdown/Dropdown';
-import { Icon } from '../Icon/Icon';
-import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
-import { PopoverContent, Tooltip } from '../Tooltip';
-
-/**
- * @internal
- */
-export interface PanelChromeInfoState {
-  icon: IconName;
-  label?: string | ReactNode;
-  tooltip?: PopoverContent;
-  variant?: IconButtonVariant;
-  onClick?: () => void;
-}
+import { IconButton } from '../IconButton/IconButton';
 
 /**
  * @internal
@@ -30,7 +16,7 @@ export interface PanelChromeProps {
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
   title?: string;
-  titleItems?: PanelChromeInfoState[];
+  titleItems?: ReactNode[];
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
@@ -98,19 +84,9 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
 
           {titleItems.length > 0 && (
             <div className={styles.items} data-testid="title-items-container">
-              {titleItems
-                .filter((item) => isIconName(item.icon))
-                .map((item, i) => (
-                  <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
-                    {item.onClick ? (
-                      <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
-                    ) : (
-                      <Tooltip content={item.tooltip ?? ''}>
-                        <Icon name={item.icon} size="sm" />
-                      </Tooltip>
-                    )}
-                  </div>
-                ))}
+              {itemsRenderer(titleItems, (item) => {
+                return <div data-testid="title-item">{item}</div>;
+              })}
             </div>
           )}
 

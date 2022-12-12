@@ -34,6 +34,7 @@ import {
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
 
@@ -46,6 +47,7 @@ import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
+import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -589,9 +591,26 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
     ];
 
+    const titleItems = [
+      <PanelHeaderTitleItems
+        key="title-items"
+        panelDescription={panel.description}
+        links={getPanelLinksSupplier(panel)}
+        scopedVars={panel.scopedVars}
+        replaceVariables={panel.replaceVariables}
+        alertState={alertState}
+      />,
+    ];
     if (config.featureToggles.newPanelChromeUI) {
       return (
-        <PanelChrome width={width} height={height} title={title} leftItems={leftItems} padding={noPadding}>
+        <PanelChrome
+          width={width}
+          height={height}
+          title={title}
+          titleItems={titleItems}
+          leftItems={leftItems}
+          padding={noPadding}
+        >
           {(innerWidth, innerHeight) => (
             <>
               <ErrorBoundary
