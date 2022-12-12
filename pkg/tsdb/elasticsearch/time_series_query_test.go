@@ -1390,11 +1390,29 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
-				"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": 1000}}]
+				"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": 1000 }}]
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			require.Equal(t, sr.Size, 1000)
+		})
+
+		t.Run("With log query should return highlight properties", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "logs", "id": "1" }]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			require.Equal(t, sr.CustomProps["highlight"], map[string]interface {}{
+				"fields":map[string]interface {}{
+					"*":map[string]interface {}{},
+				}, 
+				"fragment_size":2147483647, 
+				"post_tags":[]string{"@/HIGHLIGHT@"}, 
+				"pre_tags":[]string{"@HIGHLIGHT@"},
+			})
 		})
 	})
 }

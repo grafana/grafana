@@ -89,7 +89,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 		metric := q.Metrics[0]
 		isLogs := metric.Type == "logs"
-		// Let's group these into 1, as the resulting query is the same
+
+		// Let's group these into the same variable, as the resulting query is the same
 		isRawData := metric.Type == "raw_data" || metric.Type == "raw_document"
 
 		// Only raw data and logs queries can be without aggregations
@@ -113,8 +114,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			b.SortDesc(e.client.GetTimeField(), "boolean")
 			b.SortDesc("_doc", "")
 			b.AddDocValueField(e.client.GetTimeField())
+			b.AddHighlight()
 
-			// Here we don't want to return and we add date histogram aggregation used to get bucketed logs
+			// Here we don't want to return and we add date histogram aggregation used to get logs
 			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
 				Type: dateHistType,
 				Field: e.client.GetTimeField(),

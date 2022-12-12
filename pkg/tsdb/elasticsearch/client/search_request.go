@@ -92,6 +92,19 @@ func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuil
 	return b
 }
 
+// Add highlights to the search request for log queries
+func (b *SearchRequestBuilder) AddHighlight() *SearchRequestBuilder {
+	b.customProps["highlight"] = map[string]interface{}{
+		"fields": map[string]interface{}{
+			"*": map[string]interface{}{},
+		},
+		"pre_tags":      []string{"@HIGHLIGHT@"},
+		"post_tags":     []string{"@/HIGHLIGHT@"},
+		"fragment_size": 2147483647,
+	}
+	return b
+}
+
 // Query creates and return a query builder
 func (b *SearchRequestBuilder) Query() *QueryBuilder {
 	if b.queryBuilder == nil {
