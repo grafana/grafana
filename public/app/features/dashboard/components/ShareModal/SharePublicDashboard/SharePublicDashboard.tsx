@@ -31,6 +31,7 @@ import { Description } from 'app/features/dashboard/components/ShareModal/ShareP
 import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
+  getUnsupportedDashboardDatasources,
   publicDashboardPersisted,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
@@ -181,6 +182,23 @@ export const SharePublicDashboard = (props: Props) => {
         {(isGetLoading || isFetching) && <Spinner />}
       </HorizontalGroup>
       <div className={styles.content}>
+        {getUnsupportedDashboardDatasources(props.dashboard.panels).length > 0 ? (
+          <Alert
+            severity="warning"
+            title="Unsupported Datasources"
+            data-testid={selectors.UnsupportedDatasourcesWarningAlert}
+          >
+            <div>
+              {`There are datasources in this dashboard that are unsupported for public dashboards. Panels that use these datasources may not function properly: ${getUnsupportedDashboardDatasources(
+                props.dashboard.panels
+              ).join(', ')}. See the `}
+              <a href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/" className="text-link">
+                docs
+              </a>{' '}
+              for supported datasources.
+            </div>
+          </Alert>
+        ) : null}
         {dashboardHasTemplateVariables(dashboardVariables) && !publicDashboardPersisted(publicDashboard) ? (
           <Alert
             severity="warning"

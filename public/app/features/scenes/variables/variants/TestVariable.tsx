@@ -31,6 +31,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
 
   public constructor(initialState: Partial<TestVariableState>) {
     super({
+      type: 'custom',
       name: 'Test',
       value: 'Value',
       text: 'Text',

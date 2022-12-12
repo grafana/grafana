@@ -4,7 +4,7 @@ import { Plugin, Node } from 'slate';
 import { Editor } from 'slate-react';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -133,20 +133,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
         onRunQuery();
       }
     }
-  };
-
-  onClickChooserButton = () => {
-    if (!this.state.labelBrowserVisible) {
-      reportInteraction('grafana_loki_log_browser_opened', {
-        app: this.props.app,
-      });
-    } else {
-      reportInteraction('grafana_loki_log_browser_closed', {
-        app: this.props.app,
-        closeType: 'logBrowserButton',
-      });
-    }
-    this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {

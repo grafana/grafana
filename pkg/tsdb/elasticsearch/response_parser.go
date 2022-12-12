@@ -28,71 +28,41 @@ const (
 	geohashGridType = "geohash_grid"
 )
 
-type responseParser struct {
-	Responses []*es.SearchResponse
-	Targets   []*Query
-	DebugInfo *es.SearchDebugInfo
-}
-
-var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
-	return &responseParser{
-		Responses: responses,
-		Targets:   targets,
-		DebugInfo: debugInfo,
-	}
-}
-
-func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
+func parseResponse(responses []*es.SearchResponse, targets []*Query) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
-	if rp.Responses == nil {
+	if responses == nil {
 		return &result, nil
 	}
 
-	for i, res := range rp.Responses {
-		target := rp.Targets[i]
-
-		var debugInfo *simplejson.Json
-		if rp.DebugInfo != nil && i == 0 {
-			debugInfo = simplejson.NewFromAny(rp.DebugInfo)
-		}
+	for i, res := range responses {
+		target := targets[i]
 
 		if res.Error != nil {
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: errors.New(errResult),
-				Frames: data.Frames{
-					&data.Frame{
-						Meta: &data.FrameMeta{
-							Custom: debugInfo,
-						},
-					},
-				}}
+			}
 			continue
 		}
 
 		queryRes := backend.DataResponse{}
 
 		props := make(map[string]string)
-		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
+		err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
 		if err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
-		rp.nameFields(queryRes, target)
-		rp.trimDatapoints(queryRes, target)
+		nameFields(queryRes, target)
+		trimDatapoints(queryRes, target)
 
-		for _, frame := range queryRes.Frames {
-			frame.Meta = &data.FrameMeta{
-				Custom: debugInfo,
-			}
-		}
 		result.Responses[target.RefID] = queryRes
 	}
 	return &result, nil
 }
 
-func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query,
+func processBuckets(aggs map[string]interface{}, target *Query,
 	queryResult *backend.DataResponse, props map[string]string, depth int) error {
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
@@ -112,9 +82,9 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 		if depth == maxDepth {
 			if aggDef.Type == dateHistType {
-				err = rp.processMetrics(esAgg, target, queryResult, props)
+				err = processMetrics(esAgg, target, queryResult, props)
 			} else {
-				err = rp.processAggregationDocs(esAgg, aggDef, target, queryResult, props)
+				err = processAggregationDocs(esAgg, aggDef, target, queryResult, props)
 			}
 			if err != nil {
 				return err
@@ -137,7 +107,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 				if key, err := bucket.Get("key_as_string").String(); err == nil {
 					newProps[aggDef.Field] = key
 				}
-				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
+				err = processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -160,7 +130,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 				newProps["filter"] = bucketKey
 
-				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
+				err = processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -171,7 +141,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 }
 
 // nolint:gocyclo
-func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
+func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
 	props map[string]string) error {
 	frames := data.Frames{}
 	esAggBuckets := esAgg.Get("buckets").MustArray()
@@ -363,7 +333,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
-func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
+func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
 	queryResult *backend.DataResponse, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
@@ -442,7 +412,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 		for _, metric := range target.Metrics {
 			switch metric.Type {
 			case countType:
-				addMetricValue(values, rp.getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
+				addMetricValue(values, getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
 				metaKeys := make([]string, 0)
 				meta := metric.Meta.MustMap()
@@ -466,11 +436,11 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 						value = castToFloat(bucket.GetPath(metric.ID, statName))
 					}
 
-					addMetricValue(values, rp.getMetricName(metric.Type), value)
+					addMetricValue(values, getMetricName(metric.Type), value)
 					break
 				}
 			default:
-				metricName := rp.getMetricName(metric.Type)
+				metricName := getMetricName(metric.Type)
 				otherMetrics := make([]*MetricAgg, 0)
 
 				for _, m := range target.Metrics {
@@ -514,7 +484,7 @@ func extractDataField(name string, v interface{}) *data.Field {
 	}
 }
 
-func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, target *Query) {
+func trimDatapoints(queryResult backend.DataResponse, target *Query) {
 	var histogram *BucketAgg
 	for _, bucketAgg := range target.BucketAggs {
 		if bucketAgg.Type == dateHistType {
@@ -551,7 +521,7 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 	}
 }
 
-func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Query) {
+func nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -565,7 +535,7 @@ func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Q
 	}
 	metricTypeCount := len(set)
 	for i := range frames {
-		fieldName := rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
+		fieldName := getFieldName(*frames[i].Fields[1], target, metricTypeCount)
 		for _, field := range frames[i].Fields {
 			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
 		}
@@ -574,9 +544,9 @@ func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Q
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
+func getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
 	metricType := dataField.Labels["metric"]
-	metricName := rp.getMetricName(metricType)
+	metricName := getMetricName(metricType)
 	delete(dataField.Labels, "metric")
 
 	field := ""
@@ -666,7 +636,7 @@ func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metr
 	return strings.TrimSpace(name) + " " + metricName
 }
 
-func (rp *responseParser) getMetricName(metric string) string {
+func getMetricName(metric string) string {
 	if text, ok := metricAggType[metric]; ok {
 		return text
 	}
