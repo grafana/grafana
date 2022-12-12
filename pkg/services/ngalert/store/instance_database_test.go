@@ -59,9 +59,9 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	orgIDs := []int64{1, 2, 3, 4, 5}
-	counts := []int{20_000, 200, 503, 0, 1256}
-	instances := []models.AlertInstance{}
-	keys := []models.AlertInstanceKey{}
+	counts := []int{10_000, 200, 503, 0, 1256}
+	instances := make([]models.AlertInstance, 0, 10_000+200+503+0+1256)
+	keys := make([]models.AlertInstanceKey, 0, 10_000+200+503+0+1256)
 
 	for i, id := range orgIDs {
 		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, id)

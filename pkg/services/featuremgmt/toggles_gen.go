@@ -7,6 +7,10 @@
 package featuremgmt
 
 const (
+	// FlagReturnUnameHeader
+	// Return user login as header for authenticated requests
+	FlagReturnUnameHeader = "returnUnameHeader"
+
 	// FlagAlertingBigTransactions
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
@@ -231,10 +235,6 @@ const (
 	// Enable more in memory caching for database queries
 	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
 
-	// FlagInterFont
-	// Switch to inter font
-	FlagInterFont = "interFont"
-
 	// FlagNewPanelChromeUI
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
 	FlagNewPanelChromeUI = "newPanelChromeUI"
@@ -271,6 +271,10 @@ const (
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 
+	// FlagDatasourceOnboarding
+	// Enable data source onboarding page
+	FlagDatasourceOnboarding = "datasourceOnboarding"
+
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources
 	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
@@ -278,4 +282,8 @@ const (
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
+
+	// FlagSessionRemoteCache
+	// Enable using remote cache for user sessions
+	FlagSessionRemoteCache = "sessionRemoteCache"
 )

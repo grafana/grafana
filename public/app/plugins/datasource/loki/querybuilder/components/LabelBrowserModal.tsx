@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
@@ -50,8 +51,16 @@ export const LabelBrowserModal = (props: Props) => {
     onClose();
   };
 
+  const reportInteractionAndClose = () => {
+    reportInteraction('grafana_loki_label_browser_closed', {
+      app,
+      closeType: 'modalClose',
+    });
+    onClose();
+  };
+
   return (
-    <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose} className={styles.modal}>
+    <Modal isOpen={isOpen} title="Label browser" onDismiss={reportInteractionAndClose} className={styles.modal}>
       {!labelsLoaded && <LoadingPlaceholder text="Loading labels..." />}
       {labelsLoaded && !hasLogLabels && <p>No labels found.</p>}
       {labelsLoaded && hasLogLabels && (

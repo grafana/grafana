@@ -15,7 +15,7 @@ import (
 
 // TODO standard generated docs
 type Kind struct {
-	decl kindsys.Decl[kindsys.RawMeta]
+	decl kindsys.Decl[kindsys.RawProperties]
 }
 
 // type guard
@@ -23,7 +23,7 @@ var _ kindsys.Raw = &Kind{}
 
 // TODO standard generated docs
 func NewKind() (*Kind, error) {
-	decl, err := kindsys.LoadCoreKind[kindsys.RawMeta]("kinds/raw/svg", nil, nil)
+	decl, err := kindsys.LoadCoreKind[kindsys.RawProperties]("kinds/raw/svg", nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +45,20 @@ func (k *Kind) MachineName() string {
 
 // TODO standard generated docs
 func (k *Kind) Maturity() kindsys.Maturity {
-	return k.decl.Meta.Maturity
+	return k.decl.Properties.Maturity
 }
 
-// TODO standard generated docs
-func (k *Kind) Decl() *kindsys.Decl[kindsys.RawMeta] {
+// Decl returns the [kindsys.Decl] containing both CUE and Go representations of the
+// svg declaration in .cue files.
+func (k *Kind) Decl() *kindsys.Decl[kindsys.RawProperties] {
 	d := k.decl
 	return &d
+}
+
+// Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.RawProperties],
+// representing the static properties declared in the svg kind.
+//
+// This method is identical to calling Decl().Props. It is provided to satisfy [kindsys.Interface].
+func (k *Kind) Props() kindsys.SomeKindProperties {
+	return k.decl.Properties
 }

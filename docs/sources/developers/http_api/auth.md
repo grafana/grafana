@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/auth/
-  - /docs/grafana/latest/http_api/auth/
-  - /docs/grafana/latest/http_api/authentication/
+  - ../../http_api/auth/
+  - ../../http_api/authentication/
 description: Grafana Authentication HTTP API
 keywords:
   - grafana
@@ -56,8 +55,6 @@ curl http://admin:admin@localhost:3000/api/org
 ## Create API Token
 
 Open the sidemenu and click the organization dropdown and select the `API Keys` option.
-
-![](/static/img/docs/v2/orgdropdown_api_keys.png)
 
 You use the token in all requests in the `Authorization` header, like this:
 

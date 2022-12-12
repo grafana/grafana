@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/provision-alerting-resources
-  - /docs/grafana/latest/alerting/provision-alerting-resources
+  - ../provision-alerting-resources/
 description: Provision alerting resources
 keywords:
   - grafana
