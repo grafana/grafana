@@ -7,7 +7,10 @@
       "pluralMachineName": "dashboards",
       "lineageIsGroup": false,
       "maturity": "merged",
-      "currentVersion": [0, 0]
+      "currentVersion": [
+        0,
+        0
+      ]
     },
     {
       "name": "Playlist",
@@ -16,7 +19,10 @@
       "pluralMachineName": "playlists",
       "lineageIsGroup": false,
       "maturity": "merged",
-      "currentVersion": [0, 0]
+      "currentVersion": [
+        0,
+        0
+      ]
     },
     {
       "name": "Team",
@@ -25,7 +31,10 @@
       "pluralMachineName": "teams",
       "lineageIsGroup": false,
       "maturity": "merged",
-      "currentVersion": [0, 0]
+      "currentVersion": [
+        0,
+        0
+      ]
     }
   ],
   "raw": [
@@ -36,7 +45,9 @@
       "pluralMachineName": "svgs",
       "lineageIsGroup": false,
       "maturity": "merged",
-      "extensions": ["svg"]
+      "extensions": [
+        "svg"
+      ]
     }
   ],
   "composable": []
