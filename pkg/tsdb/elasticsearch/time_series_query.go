@@ -87,11 +87,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		}
 		metric := q.Metrics[0]
 		b.Size(metric.Settings.Get("size").MustInt(500))
-		// Should this be time field (data source or query?)
-		b.SortDesc("@timestamp", "boolean")
+		b.SortDesc(e.client.GetTimeField(), "boolean")
 		b.SortDesc("_doc", "")
-		// Should this be time field (data source or query?)
-		b.AddDocValueField("@timestamp")
+		b.AddDocValueField(e.client.GetTimeField())
 		return nil
 	}
 
