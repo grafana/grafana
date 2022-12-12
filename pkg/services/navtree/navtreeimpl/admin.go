@@ -152,13 +152,24 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 	}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
-		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+		storage := &navtree.NavLink{
 			Text:     "Storage",
 			Id:       "storage",
 			SubTitle: "Manage file storage",
 			Icon:     "cube",
 			Url:      s.cfg.AppSubURL + "/admin/storage",
-		})
+		}
+		adminNavLinks = append(adminNavLinks, storage)
+
+		if true {
+			storage.Children = append(storage.Children, &navtree.NavLink{
+				Text:     "K8S",
+				Id:       "k8s",
+				SubTitle: "Manage k8s storage",
+				Icon:     "cube",
+				Url:      s.cfg.AppSubURL + "/admin/storage/k8s",
+			})
+		}
 	}
 
 	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
