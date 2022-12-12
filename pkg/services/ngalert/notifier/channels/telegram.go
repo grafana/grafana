@@ -168,15 +168,28 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*types.Alert) (map[string]string, error) {
 	var tmplErr error
-	defer func() {
-		if tmplErr != nil {
-			tn.log.Warn("failed to template Telegram message", "error", tmplErr)
-		}
-	}()
-
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+	messageText := tmpl(tn.settings.Message)
+	if tmplErr != nil {
+		tn.log.Warn("Failed to template Telegram message", "error", tmplErr, "template", tn.settings.Message)
+		tmplErr = nil
+	}
+	// message is required field by the Telegram API. However, template expansion can result in an empty message. In that case, sending a notification is a better way forward than failing.
+	if messageText == "" {
+		if tn.settings.Message != DefaultMessageEmbed {
+			tn.log.Warn("Expansion of the message template resulted in an empty string. Using the default template", "template", tn.settings.Message)
+			// save the error occurred while processing user template to make it visible too
+			messageText = tmpl(DefaultMessageEmbed)
+			if tmplErr != nil {
+				tn.log.Warn("Failed to expand the default template as a fallback to the customer template resulted in empty string", "error", tmplErr)
+				tmplErr = nil
+			}
+		} else {
+			tn.log.Warn("Expansion of the message template resulted in an empty string.", "template", tn.settings.Message)
+		}
+	}
 	// Telegram supports 4096 chars max
-	messageText, truncated := TruncateInRunes(tmpl(tn.settings.Message), telegramMaxMessageLenRunes)
+	truncatedMessage, truncated := TruncateInRunes(messageText, telegramMaxMessageLenRunes)
 	if truncated {
 		key, err := notify.ExtractGroupKey(ctx)
 		if err != nil {
@@ -186,7 +199,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	}
 
 	m := make(map[string]string)
-	m["text"] = messageText
+	m["text"] = truncatedMessage
 	if tn.settings.ParseMode != "" {
 		m["parse_mode"] = tn.settings.ParseMode
 	}
