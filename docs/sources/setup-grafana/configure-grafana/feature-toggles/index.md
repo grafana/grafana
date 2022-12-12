@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
 description: Learn about toggles for experimental and beta features, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
