@@ -16,8 +16,9 @@ import Positions from './Positions';
 
 describe('Positions', () => {
   const bufferLen = 1;
-  const getHeight = (i) => i * 2 + 2;
-  let ps;
+  const getHeight = (i: number) => i * 2 + 2;
+
+  let ps: Positions;
 
   beforeEach(() => {
     ps = new Positions(bufferLen);

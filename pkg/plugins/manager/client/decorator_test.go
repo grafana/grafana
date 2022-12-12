@@ -220,10 +220,4 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 	return err
 }
 
-type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
-
-func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
-	return fn(res)
-}
-
 var _ plugins.Client = &TestClient{}

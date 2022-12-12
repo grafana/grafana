@@ -245,6 +245,8 @@ func ApplyAdminIA(root *NavTreeRoot) {
 			adminNodeLinks = append(adminNodeLinks, accessNode)
 		}
 
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("storage"))
+
 		if len(adminNodeLinks) > 0 {
 			orgAdminNode.Children = adminNodeLinks
 		} else {

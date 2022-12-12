@@ -1,8 +1,9 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
+  AbstractQuery,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
@@ -19,21 +20,20 @@ import {
   dateMath,
   DateTime,
   FieldCache,
-  AbstractQuery,
   FieldType,
+  getDefaultTimeRange,
   Labels,
   LoadingState,
   LogLevel,
   LogRowModel,
+  QueryFixAction,
+  QueryHint,
+  rangeUtil,
   ScopedVars,
   TimeRange,
-  rangeUtil,
   toUtc,
-  QueryHint,
-  getDefaultTimeRange,
-  QueryFixAction,
 } from '@grafana/data';
-import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
+import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -62,6 +62,7 @@ import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
+import { trackQuery } from './tracking';
 import {
   LokiOptions,
   LokiQuery,
@@ -75,6 +76,10 @@ import { LokiVariableSupport } from './variables';
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
+export const REF_ID_DATA_SAMPLES = 'loki-data-samples';
+export const REF_ID_STARTER_ANNOTATION = 'annotation-';
+export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
+export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 const NS_IN_MS = 1000000;
 
 function makeRequest(
@@ -146,6 +151,7 @@ export class LokiDatasource
       const query = removeCommentsFromQuery(target.expr);
       return {
         ...target,
+        refId: `${REF_ID_STARTER_LOG_VOLUME}${target.refId}`,
         instant: false,
         volumeQuery: true,
         expr: `sum by (level) (count_over_time(${query}[$__interval]))`,
@@ -191,13 +197,13 @@ export class LokiDatasource
     if (fixedRequest.liveStreaming) {
       return this.runLiveQueryThroughBackend(fixedRequest);
     } else {
-      return super
-        .query(fixedRequest)
-        .pipe(
-          map((response) =>
-            transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
-          )
-        );
+      return super.query(fixedRequest).pipe(
+        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
+        map((response) =>
+          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+        ),
+        tap((response) => trackQuery(response, fixedRequest.targets, fixedRequest.app))
+      );
     }
   }
 
@@ -418,13 +424,13 @@ export class LokiDatasource
     const lokiLogsQuery: LokiQuery = {
       expr: query.expr,
       queryType: LokiQueryType.Range,
-      refId: 'log-samples',
+      refId: REF_ID_DATA_SAMPLES,
       maxLines: 10,
     };
 
     // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
     const timeRange = getDefaultTimeRange();
-    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Explore, 'log-samples', true);
+    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
@@ -555,7 +561,7 @@ export class LokiDatasource
     const app = CoreApp.Explore;
 
     return lastValueFrom(
-      this.query(makeRequest(query, range, app, `log-row-context-query-${direction}`)).pipe(
+      this.query(makeRequest(query, range, app, `${REF_ID_STARTER_LOG_ROW_CONTEXT}${direction}`)).pipe(
         catchError((err) => {
           const error: DataQueryError = {
             message: 'Error during context query. Please check JS console logs.',
@@ -596,7 +602,7 @@ export class LokiDatasource
     const query: LokiQuery = {
       expr: `{${expr}}`,
       queryType: LokiQueryType.Range,
-      refId: row.dataFrame.refId ?? '',
+      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
       maxLines: limit,
       direction: queryDirection,
     };
@@ -674,7 +680,7 @@ export class LokiDatasource
       return [];
     }
 
-    const id = `annotation-${options.annotation.name}`;
+    const id = `${REF_ID_STARTER_ANNOTATION}${options.annotation.name}`;
 
     const query: LokiQuery = {
       refId: id,
