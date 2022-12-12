@@ -51,7 +51,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
       layout: new SceneGridLayout({
         children: this.buildSceneObjectsFromDashboard(oldModel),
       }),
-      $timeRange: new SceneTimeRange(),
+      $timeRange: new SceneTimeRange(oldModel.time),
       actions: [new SceneTimePicker({})],
     });
 
