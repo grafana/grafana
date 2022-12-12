@@ -79,7 +79,7 @@ class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFi
     const { query, datasource, onChange } = this.props;
 
     if (onChange) {
-      onChange({ ...query, logGroupNames: query.logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups });
+      // onChange({ ...query, logGroupNames: query.logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups });
     }
   };
 

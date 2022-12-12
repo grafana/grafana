@@ -76,7 +76,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           })
         }
       >
-        <InlineField label="Namespaces of Custom Metrics" labelWidth={28} tooltip="Namespaces of Custom Metrics.">
+        <InlineField label="Namespaces of Custom Metrics" labelWidth={29} tooltip="Namespaces of Custom Metrics.">
           <Input
             width={60}
             placeholder="Namespace1,Namespace2"

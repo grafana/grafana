@@ -34,9 +34,8 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
     if (value !== queryMode) {
-      const commonProps = pick(query, 'id', 'region', 'namespace', 'refId', 'hide', 'key', 'queryType', 'datasource');
       onChange({
-        ...commonProps,
+        ...query,
         queryMode: value,
       } as CloudWatchQuery);
     }

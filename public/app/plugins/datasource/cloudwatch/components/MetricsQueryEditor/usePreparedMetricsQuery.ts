@@ -2,27 +2,10 @@ import deepEqual from 'fast-deep-equal';
 import { useEffect, useMemo } from 'react';
 
 import { migrateMetricQuery } from '../../migrations/metricQueryMigrations';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../types';
-
-export const DEFAULT_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
-  queryMode: 'Metrics',
-  namespace: '',
-  metricName: '',
-  expression: '',
-  dimensions: {},
-  region: 'default',
-  id: '',
-  statistic: 'Average',
-  period: '',
-  metricQueryType: MetricQueryType.Search,
-  metricEditorMode: MetricEditorMode.Builder,
-  sqlExpression: '',
-  matchExact: true,
-};
+import { CloudWatchMetricsQuery } from '../../types';
 
 const prepareQuery = (query: CloudWatchMetricsQuery) => {
-  const withDefaults = { ...DEFAULT_QUERY, ...query };
-  const migratedQuery = migrateMetricQuery(withDefaults);
+  const migratedQuery = migrateMetricQuery(query);
 
   // If we didn't make any changes to the object, then return the original object to keep the
   // identity the same, and not trigger any other useEffects or anything.
