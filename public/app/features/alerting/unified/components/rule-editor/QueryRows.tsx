@@ -178,13 +178,8 @@ export class QueryRows extends PureComponent<Props> {
       }
 
       query.model.conditions.forEach((condition, index) => {
-        // we only seem to support the first condition in the visualization
-        if (index > 0) {
-          return;
-        }
-
         const threshold = condition.evaluator.params[0];
-        // classic_conditions use `condition.query.params[]` and threshold uses `query.model.expression` *sigh*
+        // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression` *sigh*
         const refId = condition.query.params[0] ?? query.model.expression;
 
         // TODO support range thresholds
