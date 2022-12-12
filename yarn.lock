@@ -5158,7 +5158,7 @@ __metadata:
     react-i18next: ^12.0.0
     react-inlinesvg: 3.0.1
     react-popper: 2.3.0
-    react-popper-tooltip: ^4.3.1
+    react-popper-tooltip: 4.4.2
     react-router-dom: ^5.2.0
     react-select: 5.6.0
     react-select-event: ^5.1.0
@@ -7761,13 +7761,6 @@ __metadata:
   version: 2.11.6
   resolution: "@popperjs/core@npm:2.11.6"
   checksum: 47fb328cec1924559d759b48235c78574f2d71a8a6c4c03edb6de5d7074078371633b91e39bbf3f901b32aa8af9b9d8f82834856d2f5737a23475036b16817f0
-  languageName: node
-  linkType: hard
-
-"@popperjs/core@npm:^2.10.2":
-  version: 2.11.2
-  resolution: "@popperjs/core@npm:2.11.2"
-  checksum: 5695bf020eda54636e16a62dc9b5fdd92beaf7b2d19f62fcef049d57c5cff92773562d80cbf760b217c3ec928da310eb24994ab6a00fd39dffa0af9b5dfc01a6
   languageName: node
   linkType: hard
 
@@ -32824,20 +32817,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper-tooltip@npm:^4.3.1":
-  version: 4.3.1
-  resolution: "react-popper-tooltip@npm:4.3.1"
-  dependencies:
-    "@babel/runtime": ^7.15.4
-    "@popperjs/core": ^2.10.2
-    react-popper: ^2.2.5
-  peerDependencies:
-    react: ">=16.6.0"
-    react-dom: ">=16.6.0"
-  checksum: 82ae84c3b75324ddcafbc3ff4358d77780d20ff28dc5b01a3500b31b34e84caae5dbe3b569165b967b4cdbbacce7af6886e006e0921ee0da5b73638893014e0e
-  languageName: node
-  linkType: hard
-
 "react-popper@npm:2.3.0, react-popper@npm:^2.3.0":
   version: 2.3.0
   resolution: "react-popper@npm:2.3.0"
@@ -32849,19 +32828,6 @@ __metadata:
     react: ^16.8.0 || ^17 || ^18
     react-dom: ^16.8.0 || ^17 || ^18
   checksum: 837111c98738011c69b3069a464ea5bdcbf487105b6148e8faf90cb7337e134edb1b98b8824322941c378756cca30a15c18c25f558e53b85ed5762fa0dc8e6b2
-  languageName: node
-  linkType: hard
-
-"react-popper@npm:^2.2.5":
-  version: 2.2.5
-  resolution: "react-popper@npm:2.2.5"
-  dependencies:
-    react-fast-compare: ^3.0.1
-    warning: ^4.0.2
-  peerDependencies:
-    "@popperjs/core": ^2.0.0
-    react: ^16.8.0 || ^17
-  checksum: 915fcf08e1da4fd48a200074fcdd936f601ee2173f1e730cfed8a54fd47716aa8bf9cce2392463e3bcbe64a096d0baf463809ed2874b94d3a9d430ae6d817b5d
   languageName: node
   linkType: hard
 
