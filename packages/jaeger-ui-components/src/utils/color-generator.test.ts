@@ -18,16 +18,17 @@ import { colors } from '@grafana/ui';
 import { getColorByKey, getFilteredColors, clear } from './color-generator';
 
 const colorsToFilter = [...colors];
+let theme = createTheme();
 
 it('gives the same color for the same key', () => {
-  clear();
+  clear(theme);
   const colorOne = getColorByKey('serviceA', createTheme());
   const colorTwo = getColorByKey('serviceA', createTheme());
   expect(colorOne).toBe(colorTwo);
 });
 
 it('gives different colors for each key', () => {
-  clear();
+  clear(theme);
   const colorOne = getColorByKey('serviceA', createTheme());
   const colorTwo = getColorByKey('serviceB', createTheme());
   expect(colorOne).not.toBe(colorTwo);
@@ -58,8 +59,7 @@ it('should not allow colors with a contrast ratio < 3 in dark mode', () => {
 });
 
 it('should not allow a color that is the same as the previous color', () => {
-  clear();
-  const theme = createTheme();
+  clear(theme);
   const colorOne = getColorByKey('random4', theme); // #447EBC
   const colorTwo = getColorByKey('random17', theme); // #447EBC
   expect(colorOne).not.toBe(colorTwo);
@@ -68,8 +68,8 @@ it('should not allow a color that is the same as the previous color', () => {
 });
 
 it('should not allow a color that looks similar to the previous color', () => {
-  clear();
-  const theme = createTheme({ colors: { mode: 'light' } });
+  theme = createTheme({ colors: { mode: 'light' } });
+  clear(theme);
   const colorOne = getColorByKey('random9', theme); // #58140C
   const colorTwo = getColorByKey('random18', theme); // #511749
   expect(colorOne).toBe('#58140C');
