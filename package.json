@@ -93,7 +93,7 @@
     "@betterer/regexp": "5.4.0",
     "@emotion/eslint-plugin": "11.10.0",
     "@grafana/e2e": "workspace:*",
-    "@grafana/eslint-config": "5.0.0",
+    "@grafana/eslint-config": "5.1.0",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.8",
