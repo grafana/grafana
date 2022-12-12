@@ -265,7 +265,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.7.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.7.0
 	gocloud.dev v0.25.0
-	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/client-go v12.0.0+incompatible // gets replaced with v0.25.0
 )
 
 require (

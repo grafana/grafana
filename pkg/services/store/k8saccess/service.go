@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -12,6 +13,8 @@ import (
 )
 
 type K8SAccess interface {
+	registry.CanBeDisabled
+
 	// Get the system client
 	GetSystemClient() *kubernetes.Clientset
 }
@@ -19,15 +22,19 @@ type K8SAccess interface {
 var _ K8SAccess = &k8sAccess{}
 
 type k8sAccess struct {
+	enabled   bool
 	apihelper *httpHelper
 	sysclient *kubernetes.Clientset
 	syserr    error
 }
 
 func ProvideK8SAccess(toggles featuremgmt.FeatureToggles, router routing.RouteRegister) K8SAccess {
-	access := &k8sAccess{}
+	access := &k8sAccess{
+		enabled: toggles.IsEnabled(featuremgmt.FlagK8s),
+	}
 
-	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
+	// Skips setting up any HTTP routing
+	if !access.enabled {
 		return access // dummy
 	}
 
@@ -54,6 +61,10 @@ func ProvideK8SAccess(toggles featuremgmt.FeatureToggles, router routing.RouteRe
 	access.syserr = err
 	access.apihelper = newHTTPHelper(access, router)
 	return access
+}
+
+func (s *k8sAccess) IsDisabled() bool {
+	return !s.enabled
 }
 
 // Return access to the system k8s client
