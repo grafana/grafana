@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -62,6 +63,7 @@ func ProvideService(
 	bus bus.Bus,
 	accesscontrolService accesscontrol.Service,
 	annotationsRepo annotations.Repository,
+	pluginsStore plugins.Store,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -85,6 +87,7 @@ func ProvideService(
 		bus:                  bus,
 		accesscontrolService: accesscontrolService,
 		annotationsRepo:      annotationsRepo,
+		pluginsStore:         pluginsStore,
 	}
 
 	if ng.IsDisabled() {
@@ -129,7 +132,8 @@ type AlertNG struct {
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
 
-	bus bus.Bus
+	bus          bus.Bus
+	pluginsStore plugins.Store
 }
 
 func (ng *AlertNG) init() error {
@@ -182,7 +186,7 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
-	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
 		C:                    clk,

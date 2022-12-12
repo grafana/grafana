@@ -7,6 +7,10 @@
 package featuremgmt
 
 const (
+	// FlagReturnUnameHeader
+	// Return user login as header for authenticated requests
+	FlagReturnUnameHeader = "returnUnameHeader"
+
 	// FlagAlertingBigTransactions
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
@@ -266,6 +270,10 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagDatasourceOnboarding
+	// Enable data source onboarding page
+	FlagDatasourceOnboarding = "datasourceOnboarding"
 
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources

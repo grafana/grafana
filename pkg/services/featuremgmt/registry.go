@@ -10,6 +10,11 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "returnUnameHeader",
+			Description: "Return user login as header for authenticated requests",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
@@ -366,6 +371,11 @@ var (
 		{
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceOnboarding",
+			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
 		},
 		{

@@ -88,7 +88,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardPage')
       ),
     },
     {
@@ -551,6 +551,12 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       path: '/scenes/dashboard/:uid',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/dashboard/DashboardScenePage')
+      ),
+    },
+    {
+      path: '/scenes/embedded/:name',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneEmbeddedPage')
       ),
     },
     {

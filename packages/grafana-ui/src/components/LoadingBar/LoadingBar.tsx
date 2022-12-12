@@ -37,7 +37,7 @@ const getStyles = (width?: string, height?: string) => (_: GrafanaTheme2) => {
   return {
     container: css({
       width: '100%',
-      animation: `${loadingAnimation} 2s infinite linear`,
+      animation: `${loadingAnimation} 1s infinite linear`,
       willChange: 'transform',
     }),
     bar: css({

@@ -30,7 +30,7 @@
     "react-dom",
     "react-test-renderer"
   ],
-  "includePaths": ["package.json", "packages/*"],
+  "includePaths": ["package.json", "packages/**"],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
   "packageRules": [
@@ -80,6 +80,7 @@
     "enabled": false
   },
   "prConcurrentLimit": 10,
+  "rebaseWhen": "conflicted",
   "reviewers": ["team:grafana/frontend-ops"],
   "separateMajorMinor": false,
   "vulnerabilityAlerts": {
