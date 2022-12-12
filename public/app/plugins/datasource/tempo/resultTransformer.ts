@@ -16,6 +16,8 @@ import {
   FieldDTO,
 } from '@grafana/data';
 
+import { config } from '../../../core/config';
+
 import { createGraphFrames } from './graphTransform';
 import { Span, TraceSearchMetadata } from './types';
 
@@ -567,7 +569,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__value.raw}',
-                  queryType: 'traceId',
+                  queryType: config.featureToggles.traceqlEditor ? 'traceql' : 'traceId',
                 },
               },
             },
@@ -639,7 +641,7 @@ export function createTableFrameFromTraceQlQuery(
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__value.raw}',
-                  queryType: 'traceId',
+                  queryType: config.featureToggles.traceqlEditor ? 'traceql' : 'traceId',
                 },
               },
             },
@@ -719,7 +721,7 @@ const traceSubFrame = (
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__data.fields.traceIdHidden}',
-                  queryType: 'traceId',
+                  queryType: config.featureToggles.traceqlEditor ? 'traceql' : 'traceId',
                 },
                 panelsState: {
                   trace: {

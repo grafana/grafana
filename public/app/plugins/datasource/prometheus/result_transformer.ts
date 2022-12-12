@@ -24,6 +24,8 @@ import {
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
+import { config } from '../../../core/config';
+
 import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
@@ -354,7 +356,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
         title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
         url: '',
         internal: {
-          query: { query: '${__value.raw}', queryType: 'traceId' },
+          query: { query: '${__value.raw}', queryType: config.featureToggles.traceqlEditor ? 'traceql' : 'traceId' },
           datasourceUid: options.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },
