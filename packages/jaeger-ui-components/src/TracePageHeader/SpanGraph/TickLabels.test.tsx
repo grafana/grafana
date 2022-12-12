@@ -50,8 +50,4 @@ describe('<TickLabels>', () => {
       expect(tick).toHaveStyle(`left: ${pos};`);
     });
   });
-
-  it("doesn't explode if no trace is present", () => {
-    expect(() => render(<TickLabels {...defaultProps} />)).not.toThrow();
-  });
 });
