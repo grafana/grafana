@@ -55,6 +55,9 @@ export const LabelBrowserModal = (props: Props) => {
       onDismiss={onClose}
       className={css`
         width: 85vw;
+        @media (max-width: 768px) {
+          width: 100%;
+        }
       `}
     >
       {!labelsLoaded && <LoadingPlaceholder text="Loading labels..." />}

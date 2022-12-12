@@ -72,6 +72,9 @@ export const QueryPatternsModal = (props: Props) => {
       onDismiss={onClose}
       className={css`
         width: 85vw;
+        @media (max-width: 768px) {
+          width: 100%;
+        }
       `}
     >
       <div className={styles.spacing}>
