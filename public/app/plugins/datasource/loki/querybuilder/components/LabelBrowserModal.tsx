@@ -37,10 +37,9 @@ export const LabelBrowserModal = (props: Props) => {
     onClose();
   };
 
-  const reportInteractionAndClose = (method: string) => {
+  const reportInteractionAndClose = () => {
     reportInteraction('grafana_loki_label_browser_closed', {
       app: app,
-      method: method,
     });
     onClose();
   };
