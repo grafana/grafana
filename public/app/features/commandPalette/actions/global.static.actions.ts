@@ -3,6 +3,7 @@ import { flatMapDeep } from 'lodash';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { changeTheme } from 'app/core/services/theme';
 
 import { alertingCommandPaletteStaticActions } from './alerting.static.actions';
 
@@ -40,10 +41,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Dark',
       keywords: 'dark theme',
       section: '',
-      perform: () => {
-        locationService.push({ search: '?theme=dark' });
-        location.reload();
-      },
+      perform: () => changeTheme('dark'),
       parent: 'preferences/theme',
     },
     {
@@ -51,10 +49,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Light',
       keywords: 'light theme',
       section: '',
-      perform: () => {
-        locationService.push({ search: '?theme=light' });
-        location.reload();
-      },
+      perform: () => changeTheme('light'),
       parent: 'preferences/theme',
     },
   ];
