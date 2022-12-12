@@ -1,9 +1,25 @@
-import { Column, DataFrameView, Field, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
+import { DataFrame, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from './ElasticResponse';
 import { highlightTags } from './queryDef';
 import { ElasticsearchQuery } from './types';
+
+function getTimeField(frame: DataFrame): Field {
+  const field = frame.fields[0];
+  if (field.type !== FieldType.time) {
+    throw new Error('first field should be the time-field');
+  }
+  return field;
+}
+
+function getValueField(frame: DataFrame): Field {
+  const field = frame.fields[1];
+  if (field.type !== FieldType.number) {
+    throw new Error('second field should be the number-field');
+  }
+  return field;
+}
 
 describe('ElasticResponse', () => {
   let targets: ElasticsearchQuery[];
@@ -11,7 +27,7 @@ describe('ElasticResponse', () => {
     responses: unknown[];
   };
   let result: {
-    data: MockedResultData[];
+    data: DataFrame[];
   };
 
   describe('refId matching', () => {
@@ -296,16 +312,17 @@ describe('ElasticResponse', () => {
 
     it('should return 1 series', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].target).toBe('Count');
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0][0]).toBe(10);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
+      const frame = result.data[0];
+      expect(frame.name).toBe('Count');
+      expect(frame.length).toBe(2);
+      expect(getTimeField(frame).values.get(0)).toBe(1000);
+      expect(getValueField(frame).values.get(0)).toBe(10);
     });
   });
 
   describe('simple query count & avg aggregation', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -347,19 +364,20 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0][0]).toBe(10);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
+      const frame1 = result.data[0];
+      const frame2 = result.data[1];
+      expect(frame1.length).toBe(2);
+      expect(getValueField(frame1).values.get(0)).toBe(10);
+      expect(getTimeField(frame1).values.get(0)).toBe(1000);
 
-      expect(result.data[1].target).toBe('Average value');
-      expect(result.data[1].datapoints[0][0]).toBe(88);
-      expect(result.data[1].datapoints[1][0]).toBe(99);
+      expect(frame2.name).toBe('Average value');
+      expect(getValueField(frame2).values.toArray()).toStrictEqual([88, 99]);
     });
   });
 
   describe('single group by query one metric', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -411,15 +429,17 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1');
-      expect(result.data[1].target).toBe('server2');
+      const frame1 = result.data[0];
+      const frame2 = result.data[1];
+      expect(frame1.length).toBe(2);
+      expect(frame1.name).toBe('server1');
+      expect(frame2.name).toBe('server2');
     });
   });
 
   describe('single group by query two metrics', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -474,17 +494,17 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(4);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1 Count');
-      expect(result.data[1].target).toBe('server1 Average @value');
-      expect(result.data[2].target).toBe('server2 Count');
-      expect(result.data[3].target).toBe('server2 Average @value');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('server1 Count');
+      expect(result.data[1].name).toBe('server1 Average @value');
+      expect(result.data[2].name).toBe('server2 Count');
+      expect(result.data[3].name).toBe('server2 Average @value');
     });
   });
 
   describe('with percentiles ', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -523,18 +543,18 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('p75 @value');
-      expect(result.data[1].target).toBe('p90 @value');
-      expect(result.data[0].datapoints[0][0]).toBe(3.3);
-      expect(result.data[0].datapoints[0][1]).toBe(1000);
-      expect(result.data[1].datapoints[1][0]).toBe(4.5);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('p75 @value');
+      expect(result.data[1].name).toBe('p90 @value');
+      expect(getValueField(result.data[0]).values.get(0)).toBe(3.3);
+      expect(getTimeField(result.data[0]).values.get(0)).toBe(1000);
+      expect(getValueField(result.data[1]).values.get(1)).toBe(4.5);
     });
   });
 
   describe('with extended_stats', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -605,12 +625,12 @@ describe('ElasticResponse', () => {
 
     it('should return 4 series', () => {
       expect(result.data.length).toBe(4);
-      expect(result.data[0].datapoints.length).toBe(1);
-      expect(result.data[0].target).toBe('server1 Max @value');
-      expect(result.data[1].target).toBe('server1 Std Dev Upper @value');
+      expect(result.data[0].length).toBe(1);
+      expect(result.data[0].name).toBe('server1 Max @value');
+      expect(result.data[1].name).toBe('server1 Std Dev Upper @value');
 
-      expect(result.data[0].datapoints[0][0]).toBe(10.2);
-      expect(result.data[1].datapoints[0][0]).toBe(3);
+      expect(getValueField(result.data[0]).values.get(0)).toBe(10.2);
+      expect(getValueField(result.data[1]).values.get(0)).toBe(3);
     });
   });
 
@@ -666,26 +686,28 @@ describe('ElasticResponse', () => {
       expect(result.data.length).toBe(2);
 
       const firstSeries = result.data[0];
-      expect(firstSeries.target).toBe('Top Metrics @value');
-      expect(firstSeries.datapoints.length).toBe(2);
-      expect(firstSeries.datapoints).toEqual([
-        [1, new Date('2021-01-01T00:00:00.000Z').valueOf()],
-        [1, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      expect(firstSeries.name).toBe('Top Metrics @value');
+      expect(firstSeries.length).toBe(2);
+      expect(getTimeField(firstSeries).values.toArray()).toStrictEqual([
+        new Date('2021-01-01T00:00:00.000Z').valueOf(),
+        new Date('2021-01-01T00:00:10.000Z').valueOf(),
       ]);
+      expect(getValueField(firstSeries).values.toArray()).toStrictEqual([1, 1]);
 
       const secondSeries = result.data[1];
-      expect(secondSeries.target).toBe('Top Metrics @anotherValue');
-      expect(secondSeries.datapoints.length).toBe(2);
-      expect(secondSeries.datapoints).toEqual([
-        [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
-        [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      expect(secondSeries.name).toBe('Top Metrics @anotherValue');
+      expect(secondSeries.length).toBe(2);
+      expect(getTimeField(secondSeries).values.toArray()).toStrictEqual([
+        new Date('2021-01-01T00:00:00.000Z').valueOf(),
+        new Date('2021-01-01T00:00:10.000Z').valueOf(),
       ]);
+      expect(getValueField(secondSeries).values.toArray()).toStrictEqual([2, 2]);
     });
   });
 
   describe('single group by with alias pattern', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -748,16 +770,16 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(3);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('server1 Count and {{not_exist}} server1');
-      expect(result.data[1].target).toBe('server2 Count and {{not_exist}} server2');
-      expect(result.data[2].target).toBe('0 Count and {{not_exist}} 0');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('server1 Count and {{not_exist}} server1');
+      expect(result.data[1].name).toBe('server2 Count and {{not_exist}} server2');
+      expect(result.data[2].name).toBe('0 Count and {{not_exist}} 0');
     });
   });
 
   describe('histogram response', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -787,15 +809,20 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table with byte and count', () => {
-      expect(result.data[0].rows.length).toBe(3);
-      expect(result.data[0].columns).toEqual([{ text: 'bytes', filterable: true }, { text: 'Count' }]);
+    it('should return dataframe with byte and count', () => {
+      expect(result.data[0].length).toBe(3);
+      const { fields } = result.data[0];
+      expect(fields.length).toBe(2);
+      expect(fields[0].name).toBe('bytes');
+      expect(fields[0].config).toStrictEqual({ filterable: true });
+      expect(fields[1].name).toBe('Count');
+      expect(fields[1].config).toStrictEqual({});
     });
   });
 
   describe('with two filters agg', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -852,9 +879,9 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('@metric:cpu');
-      expect(result.data[1].target).toBe('@metric:logins.count');
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('@metric:cpu');
+      expect(result.data[1].name).toBe('@metric:logins.count');
     });
   });
 
@@ -911,7 +938,7 @@ describe('ElasticResponse', () => {
 
     it('should remove first and last value', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].datapoints.length).toBe(1);
+      expect(result.data[0].length).toBe(1);
     });
   });
 
@@ -954,22 +981,23 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table', () => {
+    it('should return dataframe', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][0]).toBe('server-1');
-      expect(result.data[0].rows[0][1]).toBe(1000);
-      expect(result.data[0].rows[0][2]).toBe(369);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].fields.length).toBe(3);
+      const field1 = result.data[0].fields[0];
+      const field2 = result.data[0].fields[1];
+      const field3 = result.data[0].fields[2];
 
-      expect(result.data[0].rows[1][0]).toBe('server-2');
-      expect(result.data[0].rows[1][1]).toBe(2000);
+      expect(field1.values.toArray()).toStrictEqual(['server-1', 'server-2']);
+      expect(field2.values.toArray()).toStrictEqual([1000, 2000]);
+      expect(field3.values.toArray()).toStrictEqual([369, 200]);
     });
   });
 
   describe('No group by time with percentiles ', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -1006,19 +1034,19 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table', () => {
+    it('should return dataframe', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].columns[0].text).toBe('id');
-      expect(result.data[0].columns[1].text).toBe('p75 value');
-      expect(result.data[0].columns[2].text).toBe('p90 value');
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][0]).toBe('id1');
-      expect(result.data[0].rows[0][1]).toBe(3.3);
-      expect(result.data[0].rows[0][2]).toBe(5.5);
-      expect(result.data[0].rows[1][0]).toBe('id2');
-      expect(result.data[0].rows[1][1]).toBe(2.3);
-      expect(result.data[0].rows[1][2]).toBe(4.5);
+      expect(result.data[0].length).toBe(2);
+      const field1 = result.data[0].fields[0];
+      const field2 = result.data[0].fields[1];
+      const field3 = result.data[0].fields[2];
+      expect(field1.name).toBe('id');
+      expect(field2.name).toBe('p75 value');
+      expect(field3.name).toBe('p90 value');
+
+      expect(field1.values.toArray()).toStrictEqual(['id1', 'id2']);
+      expect(field2.values.toArray()).toStrictEqual([3.3, 2.3]);
+      expect(field3.values.toArray()).toStrictEqual([5.5, 4.5]);
     });
   });
 
@@ -1058,15 +1086,17 @@ describe('ElasticResponse', () => {
     });
 
     it('should include field in metric name', () => {
-      expect(result.data[0].type).toBe('table');
-      expect(result.data[0].rows[0][1]).toBe(1000);
-      expect(result.data[0].rows[0][2]).toBe(3000);
+      expect(result.data[0].length).toBe(1);
+      expect(result.data[0].fields.length).toBe(3);
+      expect(result.data[0].fields[0].values.toArray()).toStrictEqual(['server-1']);
+      expect(result.data[0].fields[1].values.toArray()).toStrictEqual([1000]);
+      expect(result.data[0].fields[2].values.toArray()).toStrictEqual([3000]);
     });
   });
 
   describe('Raw documents query', () => {
     let result: {
-      data: Array<MockedResultData<{ [key: string]: string | undefined }>>;
+      data: DataFrame[];
     };
     beforeEach(() => {
       targets = [
@@ -1102,19 +1132,23 @@ describe('ElasticResponse', () => {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return docs', () => {
+    it('should return raw_document formatted data', () => {
       expect(result.data.length).toBe(1);
-      expect(result.data[0].type).toBe('docs');
-      expect(result.data[0].total).toBe(100);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].datapoints[0].sourceProp).toBe('asd');
-      expect(result.data[0].datapoints[0].fieldProp).toBe('field');
+      const frame = result.data[0];
+      const { fields } = frame;
+      expect(fields.length).toBe(1);
+      const field = fields[0];
+      expect(field.type === FieldType.other);
+      const values = field.values.toArray();
+      expect(values.length).toBe(2);
+      expect(values[0].sourceProp).toBe('asd');
+      expect(values[0].fieldProp).toBe('field');
     });
   });
 
   describe('with bucket_script ', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -1168,22 +1202,22 @@ describe('ElasticResponse', () => {
     });
     it('should return 3 series', () => {
       expect(result.data.length).toBe(3);
-      expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('Sum @value');
-      expect(result.data[1].target).toBe('Max @value');
-      expect(result.data[2].target).toBe('Sum @value * Max @value');
-      expect(result.data[0].datapoints[0][0]).toBe(2);
-      expect(result.data[1].datapoints[0][0]).toBe(3);
-      expect(result.data[2].datapoints[0][0]).toBe(6);
-      expect(result.data[0].datapoints[1][0]).toBe(3);
-      expect(result.data[1].datapoints[1][0]).toBe(4);
-      expect(result.data[2].datapoints[1][0]).toBe(12);
+      expect(result.data[0].length).toBe(2);
+      expect(result.data[0].name).toBe('Sum @value');
+      expect(result.data[1].name).toBe('Max @value');
+      expect(result.data[2].name).toBe('Sum @value * Max @value');
+      expect(getValueField(result.data[0]).values.get(0)).toBe(2);
+      expect(getValueField(result.data[1]).values.get(0)).toBe(3);
+      expect(getValueField(result.data[2]).values.get(0)).toBe(6);
+      expect(getValueField(result.data[0]).values.get(1)).toBe(3);
+      expect(getValueField(result.data[1]).values.get(1)).toBe(4);
+      expect(getValueField(result.data[2]).values.get(1)).toBe(12);
     });
   });
 
   describe('terms with bucket_script and two scripts', () => {
     let result: {
-      data: MockedResultData[];
+      data: DataFrame[];
     };
 
     beforeEach(() => {
@@ -1248,16 +1282,15 @@ describe('ElasticResponse', () => {
     });
 
     it('should return 2 rows with 5 columns', () => {
-      expect(result.data[0].columns.length).toBe(5);
-      expect(result.data[0].rows.length).toBe(2);
-      expect(result.data[0].rows[0][1]).toBe(2);
-      expect(result.data[0].rows[0][2]).toBe(3);
-      expect(result.data[0].rows[0][3]).toBe(6);
-      expect(result.data[0].rows[0][4]).toBe(24);
-      expect(result.data[0].rows[1][1]).toBe(3);
-      expect(result.data[0].rows[1][2]).toBe(4);
-      expect(result.data[0].rows[1][3]).toBe(12);
-      expect(result.data[0].rows[1][4]).toBe(48);
+      const frame = result.data[0];
+      expect(frame.length).toBe(2);
+      const { fields } = frame;
+      expect(fields.length).toBe(5);
+      expect(fields[0].values.toArray()).toStrictEqual([1000, 2000]);
+      expect(fields[1].values.toArray()).toStrictEqual([2, 3]);
+      expect(fields[2].values.toArray()).toStrictEqual([3, 4]);
+      expect(fields[3].values.toArray()).toStrictEqual([6, 12]);
+      expect(fields[4].values.toArray()).toStrictEqual([24, 48]);
     });
   });
 
@@ -1515,15 +1548,4 @@ interface MockedElasticResponse {
 interface MockedQueryData {
   target: ElasticsearchQuery;
   response: MockedElasticResponse;
-}
-
-interface MockedResultData<T = number[]> {
-  refId: string;
-  target: string;
-  datapoints: T[];
-  type: string;
-  rows: number[][];
-  total: number;
-  fields: Field[];
-  columns: Column[];
 }

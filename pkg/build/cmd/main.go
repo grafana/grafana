@@ -16,7 +16,7 @@ func main() {
 			Name:      "build-backend",
 			Usage:     "Build one or more variants of back-end binaries",
 			ArgsUsage: "[version]",
-			Action:    ArgCountWrapper(1, BuildBackend),
+			Action:    MaxArgCountWrapper(1, BuildBackend),
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&variantsFlag,
@@ -67,7 +67,7 @@ func main() {
 			Name:      "build-frontend",
 			Usage:     "Build front-end artifacts",
 			ArgsUsage: "[version]",
-			Action:    ArgCountWrapper(1, BuildFrontend),
+			Action:    MaxArgCountWrapper(1, BuildFrontend),
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&editionFlag,
@@ -77,7 +77,7 @@ func main() {
 		{
 			Name:   "build-docker",
 			Usage:  "Build Grafana Docker images",
-			Action: ArgCountWrapper(1, BuildDocker),
+			Action: MaxArgCountWrapper(1, BuildDocker),
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&editionFlag,
@@ -112,7 +112,7 @@ func main() {
 		{
 			Name:   "build-plugins",
 			Usage:  "Build internal plug-ins",
-			Action: ArgCountWrapper(1, BuildInternalPlugins),
+			Action: MaxArgCountWrapper(1, BuildInternalPlugins),
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&editionFlag,
@@ -125,7 +125,7 @@ func main() {
 			Name:      "publish-metrics",
 			Usage:     "Publish a set of metrics from stdin",
 			ArgsUsage: "<api-key>",
-			Action:    ArgCountWrapper(1, PublishMetrics),
+			Action:    MaxArgCountWrapper(1, PublishMetrics),
 		},
 		{
 			Name:   "verify-drone",
@@ -141,7 +141,7 @@ func main() {
 			Name:      "package",
 			Usage:     "Package one or more Grafana variants",
 			ArgsUsage: "[version]",
-			Action:    ArgCountWrapper(1, Package),
+			Action:    MaxArgCountWrapper(1, Package),
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&variantsFlag,
@@ -152,7 +152,7 @@ func main() {
 		},
 		{
 			Name:   "store-storybook",
-			Usage:  "Integrity check for storybook build",
+			Usage:  "Stores storybook to GCS buckets",
 			Action: StoreStorybook,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -162,12 +162,21 @@ func main() {
 			},
 		},
 		{
+			Name:   "verify-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: VerifyStorybook,
+		},
+		{
 			Name:   "upload-packages",
 			Usage:  "Upload Grafana packages",
 			Action: UploadPackages,
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&editionFlag,
+				&cli.BoolFlag{
+					Name:  "enterprise2",
+					Usage: "Declare if the edition is enterprise2",
+				},
 			},
 		},
 		{
@@ -182,7 +191,7 @@ func main() {
 							Name:      "fetch",
 							Usage:     "Fetch Grafana Docker images",
 							ArgsUsage: "[version]",
-							Action:    ArgCountWrapper(1, FetchImages),
+							Action:    MaxArgCountWrapper(1, FetchImages),
 							Flags: []cli.Flag{
 								&editionFlag,
 							},
@@ -273,6 +282,36 @@ func main() {
 							Required: true,
 							Usage:    "AWS Marketplace product identifier",
 						},
+					},
+				},
+			},
+		},
+		{
+			Name:  "enterprise-check",
+			Usage: "Commands for testing against Grafana Enterprise",
+			Subcommands: cli.Commands{
+				{
+					Name:   "begin",
+					Usage:  "Creates the GitHub check in a pull request and begins the tests",
+					Action: EnterpriseCheckBegin,
+					Flags: []cli.Flag{
+						&gitHubTokenFlag,
+					},
+				},
+				{
+					Name:   "success",
+					Usage:  "Updates the GitHub check in a pull request to show a successful build and updates the pull request labels",
+					Action: EnterpriseCheckSuccess,
+					Flags: []cli.Flag{
+						&gitHubTokenFlag,
+					},
+				},
+				{
+					Name:   "fail",
+					Usage:  "Updates the GitHub check in a pull request to show a failed build and updates the pull request labels",
+					Action: EnterpriseCheckFail,
+					Flags: []cli.Flag{
+						&gitHubTokenFlag,
 					},
 				},
 			},

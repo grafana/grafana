@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -35,7 +36,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 		unexpectedErrors: map[string]error{
-			"boom": fmt.Errorf("BOOM"),
+			"boom": errors.New("BOOM"),
 		},
 	}
 

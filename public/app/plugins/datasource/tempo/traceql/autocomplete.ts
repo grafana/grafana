@@ -56,13 +56,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
-      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
-        kind: getMonacoCompletionItemKind(item.type, this.monaco!),
-        label: item.label,
-        insertText: item.insertText,
-        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-        range,
-      }));
+      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => {
+        const suggestion = {
+          kind: getMonacoCompletionItemKind(item.type, this.monaco!),
+          label: item.label,
+          insertText: item.insertText,
+          sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+          range,
+        };
+        fixSuggestion(suggestion, item.type, model, offset, this.monaco!);
+        return suggestion;
+      });
       return { suggestions };
     });
   }
@@ -128,13 +132,22 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         }));
       case 'SPANSET_IN_VALUE':
         const tagName = this.overrideTagName(situation.tagName);
+        const tagsNoQuotesAroundValue: string[] = ['status'];
         const tagValues = await this.getTagValues(tagName);
         const items: Completion[] = [];
+
+        const getInsertionText = (val: SelectableValue<string>): string => {
+          if (situation.betweenQuotes) {
+            return val.label!;
+          }
+          return tagsNoQuotesAroundValue.includes(situation.tagName) ? val.label! : `"${val.label}"`;
+        };
+
         tagValues.forEach((val) => {
           if (val?.label) {
             items.push({
               label: val.label,
-              insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
+              insertText: getInsertionText(val),
               type: 'TAG_VALUE',
             });
           }
@@ -185,17 +198,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
     // prettier-ignore
     const fullRegex = new RegExp(
-        '([\\s{])' +      // Space(s) or initial opening bracket {
-        '(' +                   // Open full set group
-        nameRegex.source +
-        '(?<space1>\\s*)' +     // Optional space(s) between name and operator
-        '(' +                   // Open operator + value group
-        opRegex.source +
-        '(?<space2>\\s*)' +     // Optional space(s) between operator and value
-        valueRegex.source +
-        ')?' +                  // Close operator + value group
-        ')' +                   // Close full set group
-        '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
+      '([\\s{])' +      // Space(s) or initial opening bracket {
+      '(' +                   // Open full set group
+      nameRegex.source +
+      '(?<space1>\\s*)' +     // Optional space(s) between name and operator
+      '(' +                   // Open operator + value group
+      opRegex.source +
+      '(?<space2>\\s*)' +     // Optional space(s) between operator and value
+      valueRegex.source +
+      ')?' +                  // Close operator + value group
+      ')' +                   // Close full set group
+      '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
     );
 
     const matched = textUntilCaret.match(fullRegex);
@@ -369,4 +382,44 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
 
   const offset = model.getOffsetAt(positionClone);
   return { offset, range };
+}
+
+/**
+ * Fix the suggestions range and insert text. For the range we have to adjust because monaco by default replaces just
+ * the last word which stops at dot while traceQL tags contain dots themselves and we want to replace the whole tag
+ * name when suggesting. The insert text needs to be adjusted for scope (leading dot) if scope is currently missing.
+ * This may be doable also when creating the suggestions but for a particular situation this seems to be easier to do
+ * here.
+ */
+function fixSuggestion(
+  suggestion: monacoTypes.languages.CompletionItem & { range: monacoTypes.IRange },
+  itemType: CompletionType,
+  model: monacoTypes.editor.ITextModel,
+  offset: number,
+  monaco: Monaco
+) {
+  if (itemType === 'TAG_NAME') {
+    const match = model
+      .getValue()
+      .substring(0, offset)
+      .match(/(span\.|resource\.|\.)?([\w./-]*)$/);
+
+    if (match) {
+      const scope = match[1];
+      const tag = match[2];
+
+      if (tag) {
+        // Add the default scope if needed.
+        if (!scope && suggestion.insertText[0] !== '.') {
+          suggestion.insertText = '.' + suggestion.insertText;
+        }
+
+        // Adjust the range, so that we will replace the whole tag.
+        suggestion.range = monaco.Range.lift({
+          ...suggestion.range,
+          startColumn: offset - tag.length + 1,
+        });
+      }
+    }
+  }
 }

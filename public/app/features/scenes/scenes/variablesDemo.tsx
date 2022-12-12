@@ -1,5 +1,5 @@
 import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
+import { Scene, EmbeddedScene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
@@ -8,12 +8,13 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { CustomVariable } from '../variables/variants/CustomVariable';
+import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { TestVariable } from '../variables/variants/TestVariable';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(): Scene {
-  const scene = new Scene({
+export function getVariablesDemo(standalone: boolean): Scene {
+  const state = {
     title: 'Variables',
     $variables: new SceneVariableSet({
       variables: [
@@ -44,15 +45,12 @@ export function getVariablesDemo(): Scene {
           options: [],
         }),
         new CustomVariable({
-          name: 'Single Custom',
+          name: 'custom',
           query: 'A : 10,B : 20',
-          options: [],
         }),
-        new CustomVariable({
-          name: 'Multi Custom',
-          query: 'A : 10,B : 20',
-          isMulti: true,
-          options: [],
+        new DataSourceVariable({
+          name: 'ds',
+          query: 'testdata',
         }),
       ],
     }),
@@ -83,7 +81,7 @@ export function getVariablesDemo(): Scene {
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({})],
     }),
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

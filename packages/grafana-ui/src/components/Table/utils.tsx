@@ -68,7 +68,8 @@ export function getColumns(
   expandedIndexes: Set<number>,
   setExpandedIndexes: (indexes: Set<number>) => void,
   expander: boolean,
-  footerValues?: FooterItem[]
+  footerValues?: FooterItem[],
+  isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = expander
     ? [
@@ -134,7 +135,7 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      Footer: getFooterValue(fieldIndex, footerValues),
+      Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });
   }
 

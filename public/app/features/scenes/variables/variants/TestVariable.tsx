@@ -23,6 +23,7 @@ export interface TestVariableState extends MultiValueVariableState {
 export class TestVariable extends MultiValueVariable<TestVariableState> {
   private completeUpdate = new Subject<number>();
   public isGettingValues = true;
+  public getValueOptionsCount = 0;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['query'],
@@ -30,6 +31,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
 
   public constructor(initialState: Partial<TestVariableState>) {
     super({
+      type: 'custom',
       name: 'Test',
       value: 'Value',
       text: 'Text',
@@ -42,10 +44,12 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const { delayMs } = this.state;
 
+    this.getValueOptionsCount += 1;
+
     return new Observable<VariableValueOption[]>((observer) => {
       this.setState({ loading: true });
 
-      this.completeUpdate.subscribe({
+      const sub = this.completeUpdate.subscribe({
         next: () => {
           observer.next(this.issueQuery());
         },
@@ -60,6 +64,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
       this.isGettingValues = true;
 
       return () => {
+        sub.unsubscribe();
         clearTimeout(timeout);
         this.isGettingValues = false;
       };

@@ -10,10 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 type setUserResourcePermissionTest struct {
@@ -435,8 +438,10 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql := setupTestEnv(t)
+			orgService, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
 
-			err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 				role := &accesscontrol.Role{
 					OrgID:   tt.user.OrgID,
 					UID:     "seeded",
@@ -471,7 +476,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			seedResourcePermissions(t, store, sql, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers)
+			seedResourcePermissions(t, store, sql, orgService, tt.query.Actions, tt.query.Resource, tt.query.ResourceID, tt.query.ResourceAttribute, tt.numUsers)
 
 			tt.query.User = tt.user
 			permissions, err := store.GetResourcePermissions(context.Background(), tt.user.OrgID, tt.query)
@@ -481,21 +486,23 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	}
 }
 
-func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
+func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, orgService org.Service, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
-	var org *models.Org
+	var orgModel *org.Org
+	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, quotatest.New(false, nil))
+	require.NoError(t, err)
+
 	for i := 0; i < numUsers; i++ {
-		if org == nil {
-			cmd := &models.CreateOrgCommand{Name: "test", UserId: int64(i)}
-			err := sql.CreateOrg(context.Background(), cmd)
+		if orgModel == nil {
+			cmd := &org.CreateOrgCommand{Name: "test", UserID: int64(i)}
+			addedOrg, err := orgService.CreateWithMember(context.Background(), cmd)
 			require.NoError(t, err)
-			addedOrg := cmd.Result
-			org = &addedOrg
+			orgModel = addedOrg
 		}
 
-		u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
+		u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Login: fmt.Sprintf("user:%s%d", resourceID, i),
-			OrgID: org.Id,
+			OrgID: orgModel.ID,
 		})
 		require.NoError(t, err)
 

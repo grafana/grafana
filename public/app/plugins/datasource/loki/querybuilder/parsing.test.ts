@@ -571,6 +571,21 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses simple query with quotes in label value', () => {
+    expect(buildVisualQueryFromString('{app="\\"frontend\\""}')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: '\\"frontend\\"',
+            label: 'app',
+          },
+        ],
+        operations: [],
+      })
+    );
+  });
 });
 
 function noErrors(query: LokiVisualQuery) {

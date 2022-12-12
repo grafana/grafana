@@ -24,7 +24,9 @@ func TestUserService(t *testing.T) {
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
+		teamService:  &teamtest.FakeService{},
 	}
+	userService.cfg = setting.NewCfg()
 
 	t.Run("create user", func(t *testing.T) {
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
@@ -43,7 +45,6 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
-
 		require.Equal(t, "email", u.Email)
 	})
 
@@ -162,6 +163,33 @@ func TestUserService(t *testing.T) {
 			require.Equal(t, roletype.RoleType(userService.cfg.AnonymousOrgRole), u.OrgRole)
 		})
 	})
+
+	t.Run("Can set using org", func(t *testing.T) {
+		cmd := user.SetUsingOrgCommand{UserID: 2, OrgID: 1}
+		orgService.ExpectedUserOrgDTO = []*org.UserOrgDTO{{OrgID: 1}}
+		userStore.ExpectedError = nil
+		err := userService.SetUsingOrg(context.Background(), &cmd)
+		require.NoError(t, err)
+
+		t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
+			query := user.GetSignedInUserQuery{UserID: 2}
+			userStore.ExpectedSignedInUser = &user.SignedInUser{
+				OrgID:   1,
+				Email:   "ac2@test.com",
+				Name:    "ac2 name",
+				Login:   "ac2",
+				OrgName: "ac1@test.com",
+			}
+			queryResult, err := userService.GetSignedInUser(context.Background(), &query)
+
+			require.NoError(t, err)
+			require.EqualValues(t, queryResult.OrgID, 1)
+			require.Equal(t, queryResult.Email, "ac2@test.com")
+			require.Equal(t, queryResult.Name, "ac2 name")
+			require.Equal(t, queryResult.Login, "ac2")
+			require.Equal(t, queryResult.OrgName, "ac1@test.com")
+		})
+	})
 }
 
 type FakeUserStore struct {
@@ -198,6 +226,10 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 }
 
 func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) LoginConflict(context.Context, string, string, bool) error {
 	return f.ExpectedError
 }
 

@@ -1,5 +1,5 @@
 import { ScopedVars } from '@grafana/data';
-import { VariableModel } from '@grafana/schema';
+import { VariableModel, VariableType } from '@grafana/schema';
 import { variableRegex } from 'app/features/variables/utils';
 
 import { EmptyVariableSet, sceneGraph } from '../../core/sceneGraph';
@@ -9,10 +9,10 @@ import { VariableValue } from '../types';
 import { getSceneVariableForScopedVar } from './ScopedVarsVariable';
 import { formatRegistry, FormatRegistryID, FormatVariable } from './formatRegistry';
 
-type CustomFormatterFn = (
+export type CustomFormatterFn = (
   value: unknown,
   legacyVariableModel: VariableModel,
-  legacyDefaultFormatter: CustomFormatterFn
+  legacyDefaultFormatter?: CustomFormatterFn
 ) => string;
 
 /**
@@ -97,9 +97,10 @@ function formatValue(
   }
 
   if (typeof formatNameOrFn === 'function') {
-    // legacy custom formatter function, TODO
-    //return format(value, {}, this.formatValue);
-    throw new Error('Custom formatter function not supported');
+    return formatNameOrFn(value, {
+      name: variable.state.name,
+      type: variable.state.type as VariableType,
+    });
   }
 
   let args: string[] = [];

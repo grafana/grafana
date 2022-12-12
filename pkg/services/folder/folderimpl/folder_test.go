@@ -333,10 +333,11 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		log:              log.New("test-folder-service"),
 	}
 	t.Run("create folder", func(t *testing.T) {
-		folderStore.ExpectedFolder = &folder.Folder{}
+		folderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
 		res, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr})
 		require.NoError(t, err)
 		require.NotNil(t, res.UID)
+		require.NotEmpty(t, res.ParentUID)
 	})
 
 	t.Run("get parents folder", func(t *testing.T) {
@@ -346,7 +347,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	})
 
 	t.Run("get children folder", func(t *testing.T) {
-		folderStore.ExpectedFolders = []*folder.Folder{
+		folderStore.ExpectedChildFolders = []*folder.Folder{
 			{
 				UID: "test",
 			},
@@ -475,6 +476,10 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
 
 			// return an error from the folder store
 			store.ExpectedError = errors.New("FAILED")
@@ -490,6 +495,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			// CreateFolder should also call the folder store's create method.
 			require.True(t, store.CreateCalled)
+			require.NotNil(t, actualCmd)
 
 			t.Cleanup(func() {
 				guardian.New = g
@@ -497,11 +503,68 @@ func TestNestedFolderService(t *testing.T) {
 		})
 
 		t.Run("move, no error", func(t *testing.T) {
+			// This test creates and deletes the dashboard, so needs some extra setup.
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
 			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, f)
+		})
+
+		t.Run("move when parentUID in the current subtree returns error from nested folder service", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			store.ExpectedError = folder.ErrCircularReference
+			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
+			require.Error(t, err, folder.ErrCircularReference)
+			require.Nil(t, f)
+			store.ExpectedChildFolders = []*folder.Folder{}
+		})
+
+		t.Run("move when new parentUID depth + subTree height bypassed maximum depth returns error", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			store.ExpectedError = nil
+			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			store.ExpectedParentFolders = []*folder.Folder{
+				{UID: "newFolder", ParentUID: "newFolder"},
+				{UID: "newFolder2", ParentUID: "newFolder2"},
+			}
+			store.ExpectedFolderHeight = 5
+			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
+			require.Error(t, err, folder.ErrMaximumDepthReached)
+			require.Nil(t, f)
+		})
+
+		t.Run("move when parentUID in the current subtree returns error from nested folder service", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			store.ExpectedError = nil
+			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			store.ExpectedParentFolders = []*folder.Folder{{UID: "myFolder", ParentUID: "12345"}, {UID: "12345", ParentUID: ""}}
+			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
+			require.Error(t, err, folder.ErrCircularReference)
+			require.Nil(t, f)
+			store.ExpectedChildFolders = []*folder.Folder{}
 		})
 
 		t.Run("delete with success", func(t *testing.T) {
@@ -512,7 +575,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
 
 			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
 			err := foldersvc.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
@@ -548,7 +611,7 @@ func TestNestedFolderService(t *testing.T) {
 			for i := 0; i < folder.MaxNestedFolderDepth; i++ {
 				parents = append(parents, &folder.Folder{UID: fmt.Sprintf("folder%d", i)})
 			}
-			store.ExpectedFolders = parents
+			store.ExpectedParentFolders = parents
 			store.ExpectedError = nil
 
 			_, err := foldersvc.Create(context.Background(), &folder.CreateFolderCommand{
