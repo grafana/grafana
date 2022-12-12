@@ -131,7 +131,7 @@ datasources:
     # <map> Fields to convert to JSON and store in jsonData.
     jsonData:
       # <string> Defines the Graphite service's version.
-      graphiteVersion: "1.1"
+      graphiteVersion: '1.1'
       # <bool> Enables TLS authentication using a client
       # certificate configured in secureJsonData.
       tlsAuth: true
@@ -142,9 +142,9 @@ datasources:
     secureJsonData:
       # <string> Defines the CA cert, client cert, and
       # client key for encrypted authentication.
-      tlsCACert: "..."
-      tlsClientCert: "..."
-      tlsClientKey: "..."
+      tlsCACert: '...'
+      tlsClientCert: '...'
+      tlsClientKey: '...'
       # <string> Sets the database password, if necessary.
       password:
       # <string> Sets the basic authorization password.
@@ -248,11 +248,11 @@ apiVersion: 1
 datasources:
   - name: Graphite
     jsonData:
-      httpHeaderName1: "HeaderName"
-      httpHeaderName2: "Authorization"
+      httpHeaderName1: 'HeaderName'
+      httpHeaderName2: 'Authorization'
     secureJsonData:
-      httpHeaderValue1: "HeaderValue"
-      httpHeaderValue2: "Bearer XXXXXXXXX"
+      httpHeaderValue1: 'HeaderValue'
+      httpHeaderValue2: 'Bearer XXXXXXXXX'
 ```
 
 ## Plugins
@@ -299,13 +299,13 @@ apiVersion: 1
 
 providers:
   # <string> an unique provider name. Required
-  - name: "a unique provider name"
+  - name: 'a unique provider name'
     # <int> Org id. Default to 1
     orgId: 1
     # <string> name of the dashboard folder.
-    folder: ""
+    folder: ''
     # <string> folder UID. will be automatically generated if not specified
-    folderUid: ""
+    folderUid: ''
     # <string> provider type. Default to 'file'
     type: file
     # <bool> disable dashboard deletion
@@ -444,13 +444,13 @@ notifiers:
     # See `Supported Settings` section for settings supported for each
     # alert notification type.
     settings:
-      recipient: "XXX"
+      recipient: 'XXX'
       uploadImage: true
-      token: "xoxb" # legacy setting since Grafana v7.2 (stored non-encrypted)
+      token: 'xoxb' # legacy setting since Grafana v7.2 (stored non-encrypted)
       url: https://slack.com # legacy setting since Grafana v7.2 (stored non-encrypted)
     # Secure settings that will be encrypted in the database (supported since Grafana v7.2). See `Supported Settings` section for secure settings supported for each notifier.
     secure_settings:
-      token: "xoxb"
+      token: 'xoxb'
       url: https://slack.com
 
 delete_notifiers:
