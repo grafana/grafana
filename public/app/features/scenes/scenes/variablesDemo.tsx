@@ -1,5 +1,5 @@
 import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
@@ -13,8 +13,8 @@ import { TestVariable } from '../variables/variants/TestVariable';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(): Scene {
-  const scene = new Scene({
+export function getVariablesDemo(standalone: boolean): Scene {
+  const state = {
     title: 'Variables',
     $variables: new SceneVariableSet({
       variables: [
@@ -81,7 +81,7 @@ export function getVariablesDemo(): Scene {
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({})],
     }),
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

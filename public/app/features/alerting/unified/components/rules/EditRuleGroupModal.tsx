@@ -451,8 +451,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tableWrapper: css`
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
-    height: 225px;
-    overflow: auto;
+    height: 100%;
   `,
   evalRequiredLabel: css`
     font-size: ${theme.typography.bodySmall.fontSize};

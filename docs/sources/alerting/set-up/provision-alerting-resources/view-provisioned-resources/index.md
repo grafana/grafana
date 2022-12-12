@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/provision-alerting-resources/view-provisioned-resources
+  - ../../provision-alerting-resources/view-provisioned-resources/
 description: View provisioned resources in Grafana
 keywords:
   - grafana
