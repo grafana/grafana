@@ -54,7 +54,7 @@ describe('Cloud Monitoring Datasource', () => {
       expect(newQuery.timeSeriesList).toEqual({
         alignmentPeriod: 'cloud-monitoring-auto',
         crossSeriesReducer: 'REDUCE_NONE',
-        filters: ['AND', 'metric.type', '=', 'cloudsql_database'],
+        filters: ['metric.type', '=', 'cloudsql_database'],
         groupBys: [],
         perSeriesAligner: 'ALIGN_MEAN',
         projectName: 'project',

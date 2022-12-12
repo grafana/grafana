@@ -197,7 +197,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   migrateMetricTypeFilter(metricType: string, filters?: string[]) {
     const metricTypeFilterArray = ['metric.type', '=', metricType];
-    if (filters) {
+    if (filters?.length) {
       return filters.concat('AND', metricTypeFilterArray);
     }
     return metricTypeFilterArray;
