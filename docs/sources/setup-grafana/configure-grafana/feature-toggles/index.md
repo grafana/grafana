@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
 description: Learn about toggles for experimental and beta features, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
@@ -19,7 +21,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 
 | Feature toggle name          | Description                                                                                                     | Enabled by default |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `promQueryBuilder`           | Show Prometheus query builder                                                                                   | Yes                |
 | `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                                                    |                    |
 | `database_metrics`           | Add Prometheus metrics for database tables                                                                      |                    |
 | `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                                                          | Yes                |

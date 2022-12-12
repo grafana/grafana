@@ -18,7 +18,6 @@ export interface FeatureToggles {
 
   returnUnameHeader?: boolean;
   alertingBigTransactions?: boolean;
-  promQueryBuilder?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
