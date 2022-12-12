@@ -117,6 +117,7 @@ export interface BaseQuery {
   aliasBy?: string;
 }
 
+// deprecated: use TimeSeriesList instead
 export interface MetricQuery extends BaseQuery {
   editorMode: EditorMode;
   metricType: string;
@@ -132,6 +133,32 @@ export interface MetricQuery extends BaseQuery {
   graphPeriod?: 'disabled' | string;
 }
 
+export interface TimeSeriesList {
+  projectName: string;
+  crossSeriesReducer: string;
+  alignmentPeriod?: string;
+  perSeriesAligner?: string;
+  groupBys?: string[];
+  filters?: string[];
+  view?: string;
+  secondaryCrossSeriesReducer?: string;
+  secondaryAlignmentPeriod?: string;
+  secondaryPerSeriesAligner?: string;
+  secondaryGroupBys?: string[];
+}
+
+export interface TimeSeriesQuery {
+  projectName: string;
+  query: string;
+  graphPeriod?: 'disabled' | string;
+}
+
+export interface AnnotationQuery extends TimeSeriesList {
+  title?: string;
+  text?: string;
+}
+
+// deprecated: use AnnotationQuery instead
 export interface AnnotationMetricQuery extends MetricQuery {
   title?: string;
   text?: string;
@@ -148,11 +175,15 @@ export interface SLOQuery extends BaseQuery {
 }
 
 export interface CloudMonitoringQuery extends DataQuery {
+  aliasBy?: string;
   datasourceId?: number; // Should not be necessary anymore
   queryType: QueryType;
-  metricQuery: MetricQuery | AnnotationMetricQuery;
+  timeSeriesList?: TimeSeriesList | AnnotationQuery;
+  timeSeriesQuery?: TimeSeriesQuery;
   sloQuery?: SLOQuery;
   intervalMs: number;
+  // deprecated: use timeSeriesList instead
+  metricQuery: MetricQuery | AnnotationMetricQuery;
 }
 
 export interface CloudMonitoringOptions extends DataSourceJsonData {

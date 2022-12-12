@@ -1,4 +1,4 @@
-import { chunk, flatten, isString, isArray } from 'lodash';
+import { chunk, flatten, isString, isArray, isEmpty } from 'lodash';
 import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -24,6 +24,8 @@ import {
   QueryType,
   PostResponse,
   Aggregation,
+  TimeSeriesList,
+  PreprocessorType,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 
@@ -193,6 +195,40 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return this.getResource(`projects`);
   }
 
+  migrateMetricTypeFilter(metricType: string, filters?: string[]) {
+    const metricTypeFilterArray = ['metric.type', '=', metricType];
+    if (filters) {
+      return filters.concat('AND', metricTypeFilterArray);
+    }
+    return metricTypeFilterArray;
+  }
+
+  migratePreprocessor(q: TimeSeriesList, preprocessor: PreprocessorType) {
+    if (preprocessor !== PreprocessorType.None) {
+      // Move aggregation to secondaryAggregation
+      q.secondaryAlignmentPeriod = q.alignmentPeriod;
+      q.secondaryCrossSeriesReducer = q.crossSeriesReducer;
+      q.secondaryPerSeriesAligner = q.perSeriesAligner;
+      q.secondaryGroupBys = q.groupBys;
+
+      // Set a default cross series reducer if grouped
+      if (!q.groupBys || q.groupBys.length === 0) {
+        q.crossSeriesReducer = 'REDUCE_NONE';
+      }
+
+      // Set aligner based on preprocessor type
+      let aligner = 'ALIGN_RATE';
+      if (preprocessor === PreprocessorType.Delta) {
+        aligner = 'ALIGN_DELTA';
+      }
+      q.perSeriesAligner = aligner;
+    }
+
+    return q;
+  }
+
+  // This is a manual port of the migration code in cloudmonitoring.go
+  // DO NOT UPDATE THIS CODE WITHOUT UPDATING THE BACKEND CODE
   migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {
     if (!query.hasOwnProperty('metricQuery')) {
       const { hide, refId, datasource, key, queryType, maxLines, metric, intervalMs, type, ...rest } = query as any;
@@ -207,6 +243,38 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         },
       };
     }
+
+    if (!isEmpty(query.metricQuery)) {
+      if (query.metricQuery.editorMode === 'mql') {
+        query.timeSeriesQuery = {
+          projectName: query.metricQuery.projectName,
+          query: query.metricQuery.query,
+          graphPeriod: query.metricQuery.graphPeriod,
+        };
+      } else {
+        query.timeSeriesList = {
+          projectName: query.metricQuery.projectName,
+          crossSeriesReducer: query.metricQuery.crossSeriesReducer,
+          alignmentPeriod: query.metricQuery.alignmentPeriod,
+          perSeriesAligner: query.metricQuery.perSeriesAligner,
+          groupBys: query.metricQuery.groupBys,
+          filters: query.metricQuery.filters,
+          view: query.metricQuery.view,
+        };
+        query.timeSeriesList.filters = this.migrateMetricTypeFilter(
+          query.metricQuery.metricType,
+          query.timeSeriesList.filters
+        );
+        if (query.metricQuery.preprocessor) {
+          query.timeSeriesList = this.migratePreprocessor(query.timeSeriesList, query.metricQuery.preprocessor);
+        }
+      }
+      query.aliasBy = query.metricQuery.aliasBy;
+
+      // TODO: Remove metricQuery once all the code has been migrated
+      // query.metricQuery = {};
+    }
+
     return query;
   }
 
