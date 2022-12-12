@@ -1405,13 +1405,13 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
-			require.Equal(t, sr.CustomProps["highlight"], map[string]interface {}{
-				"fields":map[string]interface {}{
-					"*":map[string]interface {}{},
-				}, 
-				"fragment_size":2147483647, 
-				"post_tags":[]string{"@/HIGHLIGHT@"}, 
-				"pre_tags":[]string{"@HIGHLIGHT@"},
+			require.Equal(t, sr.CustomProps["highlight"], map[string]interface{}{
+				"fields": map[string]interface{}{
+					"*": map[string]interface{}{},
+				},
+				"fragment_size": 2147483647,
+				"post_tags":     []string{"@/HIGHLIGHT@"},
+				"pre_tags":      []string{"@HIGHLIGHT@"},
 			})
 		})
 	})

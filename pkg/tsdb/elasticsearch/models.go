@@ -56,7 +56,7 @@ var metricAggType = map[string]string{
 	"raw_document":   "Raw Document",
 	"raw_data":       "Raw Data",
 	"rate":           "Rate",
-	"logs": 				 	"Logs",
+	"logs":           "Logs",
 }
 
 var extendedStats = map[string]string{

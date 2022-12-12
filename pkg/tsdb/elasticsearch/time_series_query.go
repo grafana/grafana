@@ -81,7 +81,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	if len(q.BucketAggs) == 0 {
 		// If no metrics, then the query is invalid
 		if len(q.Metrics) == 0 {
-				result.Responses[q.RefID] = backend.DataResponse{
+			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
@@ -95,13 +95,13 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 		// Only raw data and logs queries can be without aggregations
 		if !(isRawData || isLogs) {
-				result.Responses[q.RefID] = backend.DataResponse{
+			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
- 
-		if (isRawData) {
+
+		if isRawData {
 			b.Size(metric.Settings.Get("size").MustInt(500))
 			b.SortDesc(e.client.GetTimeField(), "boolean")
 			b.SortDesc("_doc", "")
@@ -109,7 +109,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			return nil
 		}
 
-		if (isLogs) {
+		if isLogs {
 			b.Size(metric.Settings.Get("limit").MustInt(500))
 			b.SortDesc(e.client.GetTimeField(), "boolean")
 			b.SortDesc("_doc", "")
@@ -118,9 +118,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 			// Here we don't want to return and we add date histogram aggregation used to get logs
 			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
-				Type: dateHistType,
+				Type:  dateHistType,
 				Field: e.client.GetTimeField(),
-				ID: "1",
+				ID:    "1",
 				Settings: simplejson.NewFromAny(map[string]interface{}{
 					"interval": "auto",
 				}),
