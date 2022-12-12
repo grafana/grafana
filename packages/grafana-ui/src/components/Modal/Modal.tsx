@@ -26,7 +26,7 @@ export interface Props {
   trapFocus?: boolean;
 
   isOpen?: boolean;
-  onDismiss?: (method: string) => void;
+  onDismiss?: () => void;
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
@@ -53,11 +53,7 @@ export function Modal(props: PropsWithChildren<Props>) {
   // Handle interacting outside the dialog and pressing
   // the Escape key to close the modal.
   const { overlayProps, underlayProps } = useOverlay(
-    {
-      isKeyboardDismissDisabled: !closeOnEscape,
-      isOpen,
-      onClose: () => onDismiss?.('modalEscPressed'),
-    },
+    { isKeyboardDismissDisabled: !closeOnEscape, isOpen, onClose: onDismiss },
     ref
   );
 
@@ -74,7 +70,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     <OverlayContainer>
       <div
         className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? () => onDismiss?.('modalBackdropClicked') : undefined)}
+        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
         {...underlayProps}
       />
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
@@ -87,12 +83,7 @@ export function Modal(props: PropsWithChildren<Props>) {
               typeof title !== 'string' && title
             }
             <div className={styles.modalHeaderClose}>
-              <IconButton
-                aria-label="Close dialogue"
-                name="times"
-                size="xl"
-                onClick={() => onDismiss?.('modalCloseClicked')}
-              />
+              <IconButton aria-label="Close dialogue" name="times" size="xl" onClick={onDismiss} />
             </div>
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
