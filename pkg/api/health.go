@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"time"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func (hs *HTTPServer) databaseHealthy(ctx context.Context) bool {
@@ -14,7 +12,8 @@ func (hs *HTTPServer) databaseHealthy(ctx context.Context) bool {
 		return cached.(bool)
 	}
 
-	healthy := hs.SQLStore.GetDBHealthQuery(ctx, &models.GetDBHealthQuery{}) == nil
+	_, err := hs.SQLStore.GetSqlxSession().Exec(ctx, "SELECT 1")
+	healthy := err == nil
 
 	hs.CacheService.Set(cacheKey, healthy, time.Second*5)
 	return healthy
