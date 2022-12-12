@@ -183,6 +183,10 @@ const RESOLVERS: Resolver[] = [
     path: [ERROR_NODE_ID, UnwrapExpr],
     fun: resolveAfterUnwrap,
   },
+  {
+    path: [UnwrapExpr],
+    fun: resolveAfterUnwrap,
+  },
 ];
 
 const LABEL_OP_MAP = new Map<string, LabelOperator>([
@@ -261,16 +265,6 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 }
 
 function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
-  const selectorNode = walk(node, [
-    ['parent', UnwrapExpr],
-    ['parent', LogRangeExpr],
-    ['firstChild', Selector],
-  ]);
-
-  if (selectorNode === null) {
-    return null;
-  }
-
   return {
     type: 'AFTER_UNWRAP',
     logQuery: getLogQueryFromMetricsQuery(text).trim(),

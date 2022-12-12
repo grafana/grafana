@@ -169,6 +169,11 @@ describe('situation', () => {
         logQuery: '{cluster="ops-tools1",container="ingress-nginx"}| json | __error__ = ""',
       }
     );
+
+    assertSituation('sum(sum_over_time({place="luna"} | unwrap ^ [5m])) by (level)', {
+      type: 'AFTER_UNWRAP',
+      logQuery: '{place="luna"}',
+    });
   });
 
   it.each(['count_over_time({job="mysql"}[^])', 'rate({instance="server\\1"}[^])', 'rate({}[^'])(
