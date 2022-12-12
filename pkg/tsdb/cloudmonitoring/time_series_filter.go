@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -20,62 +19,12 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, 
 	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, tracer, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
 }
 
-func extractTimeSeriesLabels(series timeSeries, groupBys []string) (data.Labels, string) {
-	seriesLabels := data.Labels{}
-	defaultMetricName := series.Metric.Type
-	seriesLabels["resource.type"] = series.Resource.Type
-	groupBysMap := make(map[string]bool)
-	for _, groupBy := range groupBys {
-		groupBysMap[groupBy] = true
-	}
-
-	for key, value := range series.Metric.Labels {
-		seriesLabels["metric.label."+key] = value
-
-		if len(groupBys) == 0 || groupBysMap["metric.label."+key] {
-			defaultMetricName += " " + value
-		}
-	}
-
-	for key, value := range series.Resource.Labels {
-		seriesLabels["resource.label."+key] = value
-
-		if groupBysMap["resource.label."+key] {
-			defaultMetricName += " " + value
-		}
-	}
-
-	for labelType, labelTypeValues := range series.MetaData {
-		for labelKey, labelValue := range labelTypeValues {
-			key := xstrings.ToSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-
-			switch v := labelValue.(type) {
-			case string:
-				seriesLabels[key] = v
-			case bool:
-				strVal := strconv.FormatBool(v)
-				seriesLabels[key] = strVal
-			case []interface{}:
-				for _, v := range v {
-					strVal := v.(string)
-					if len(seriesLabels[key]) > 0 {
-						strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
-					}
-					seriesLabels[key] = strVal
-				}
-			}
-		}
-	}
-
-	return seriesLabels, defaultMetricName
-}
-
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string, query cloudMonitoringQueryExecutor, params url.Values, groupBys []string) error {
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeries {
-		seriesLabels, defaultMetricName := extractTimeSeriesLabels(series, groupBys)
+		seriesLabels, defaultMetricName := series.getLabels(groupBys)
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.getRefID()
 		frame.Meta = &data.FrameMeta{

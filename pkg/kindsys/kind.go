@@ -45,15 +45,25 @@ func (m Maturity) String() string {
 	return string(m)
 }
 
-// TODO docs
+// Interface describes a Grafana kind object: a Go representation of the definition of
+// one of Grafana's categories of kinds.
 type Interface interface {
-	// TODO docs
+	// Props returns a [kindsys.SomeKindProps], representing the properties
+	// of the kind as declared in the .cue source. The underlying type is
+	// determined by the category of kind.
+	//
+	// This method is largely for convenience, as all actual kind categories are
+	// expected to implement one of the other interfaces, each of which contain
+	// a Decl() method through which these same properties are accessible.
+	Props() SomeKindProperties
+
+	// TODO remove, unnecessary with Props()
 	Name() string
 
-	// TODO docs
+	// TODO remove, unnecessary with Props()
 	MachineName() string
 
-	// TODO docs
+	// TODO remove, unnecessary with Props()
 	Maturity() Maturity // TODO unclear if we want maturity for raw kinds
 }
 
@@ -62,7 +72,7 @@ type Raw interface {
 	Interface
 
 	// TODO docs
-	Decl() *Decl[RawMeta]
+	Decl() *Decl[RawProperties]
 }
 
 type Structured interface {
@@ -72,7 +82,7 @@ type Structured interface {
 	Lineage() thema.Lineage
 
 	// TODO docs
-	Decl() *Decl[CoreStructuredMeta] // TODO figure out how to reconcile this interface with CustomStructuredMeta
+	Decl() *Decl[CoreStructuredProperties] // TODO figure out how to reconcile this interface with CustomStructuredProperties
 }
 
 // type Composable interface {
@@ -82,5 +92,5 @@ type Structured interface {
 // 	Lineage() thema.Lineage
 //
 // 	// TODO docs
-// 	Meta() CoreStructuredMeta // TODO figure out how to reconcile this interface with CustomStructuredMeta
+// 	Properties() CoreStructuredProperties // TODO figure out how to reconcile this interface with CustomStructuredProperties
 // }

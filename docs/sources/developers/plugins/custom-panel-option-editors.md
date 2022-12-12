@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/custom-panel-option-editors/
 title: Custom panel option editors
 ---
 

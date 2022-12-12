@@ -575,7 +575,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -1430,7 +1430,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -2155,7 +2155,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -4699,7 +4699,7 @@ steps:
     - failure
 - commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/build verify-storybook
   depends_on:
   - build-frontend
   - build-frontend-packages
@@ -6318,6 +6318,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: efffc2eb55bbfa1cebe950585df1f3f81d2f2a38311e2854f3ce08d1eec16fe3
+hmac: dcf24226fae30872050cdc031430374d811e6bbe13158ce0fbf234c90c1d83f9
 
 ...

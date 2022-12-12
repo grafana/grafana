@@ -88,52 +88,52 @@ func CUEFramework(ctx *cue.Context) cue.Value {
 
 // ToKindMeta takes a cue.Value expected to represent a kind of the category
 // specified by the type parameter and populates the Go type from the cue.Value.
-func ToKindMeta[T KindMetas](v cue.Value) (T, error) {
-	meta := new(T)
+func ToKindMeta[T KindProperties](v cue.Value) (T, error) {
+	props := new(T)
 	if !v.Exists() {
-		return *meta, ErrValueNotExist
+		return *props, ErrValueNotExist
 	}
 
 	fw := CUEFramework(v.Context())
 	var kdef cue.Value
 
-	anymeta := any(*meta).(SomeKindMeta)
-	switch anymeta.(type) {
-	case RawMeta:
+	anyprops := any(*props).(SomeKindProperties)
+	switch anyprops.(type) {
+	case RawProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("Raw")))
-	case CoreStructuredMeta:
+	case CoreStructuredProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CoreStructured")))
-	case CustomStructuredMeta:
+	case CustomStructuredProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CustomStructured")))
-	case ComposableMeta:
+	case ComposableProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("Composable")))
 	default:
-		// unreachable so long as all the possibilities in KindMetas have switch branches
+		// unreachable so long as all the possibilities in KindProperties have switch branches
 		panic("unreachable")
 	}
 
 	item := v.Unify(kdef)
 	if err := item.Validate(cue.Concrete(false), cue.All()); err != nil {
-		return *meta, ewrap(item.Err(), ErrValueNotAKind)
+		return *props, ewrap(item.Err(), ErrValueNotAKind)
 	}
-	if err := item.Decode(meta); err != nil {
+	if err := item.Decode(props); err != nil {
 		// Should only be reachable if CUE and Go framework types have diverged
 		panic(errors.Details(err, nil))
 	}
 
-	return *meta, nil
+	return *props, nil
 }
 
 // SomeDecl represents a single kind declaration, having been loaded
 // and validated by a func such as [LoadCoreKind].
 //
-// The underlying type of the Meta field indicates the category of
+// The underlying type of the Properties field indicates the category of
 // kind.
 type SomeDecl struct {
 	// V is the cue.Value containing the entire Kind declaration.
 	V cue.Value
-	// Meta contains the kind's metadata settings.
-	Meta SomeKindMeta
+	// Properties contains the kind's declared properties.
+	Properties SomeKindProperties
 }
 
 // BindKindLineage binds the lineage for the kind declaration. nil, nil is returned
@@ -145,10 +145,10 @@ func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOptio
 	if rt == nil {
 		rt = cuectx.GrafanaThemaRuntime()
 	}
-	switch decl.Meta.(type) {
-	case RawMeta:
+	switch decl.Properties.(type) {
+	case RawProperties:
 		return nil, nil
-	case CoreStructuredMeta, CustomStructuredMeta, ComposableMeta:
+	case CoreStructuredProperties, CustomStructuredProperties, ComposableProperties:
 		return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
 	default:
 		panic("unreachable")
@@ -157,25 +157,25 @@ func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOptio
 
 // IsRaw indicates whether the represented kind is a raw kind.
 func (decl *SomeDecl) IsRaw() bool {
-	_, is := decl.Meta.(RawMeta)
+	_, is := decl.Properties.(RawProperties)
 	return is
 }
 
 // IsCoreStructured indicates whether the represented kind is a core structured kind.
 func (decl *SomeDecl) IsCoreStructured() bool {
-	_, is := decl.Meta.(CoreStructuredMeta)
+	_, is := decl.Properties.(CoreStructuredProperties)
 	return is
 }
 
 // IsCustomStructured indicates whether the represented kind is a custom structured kind.
 func (decl *SomeDecl) IsCustomStructured() bool {
-	_, is := decl.Meta.(CustomStructuredMeta)
+	_, is := decl.Properties.(CustomStructuredProperties)
 	return is
 }
 
 // IsComposable indicates whether the represented kind is a composable kind.
 func (decl *SomeDecl) IsComposable() bool {
-	_, is := decl.Meta.(ComposableMeta)
+	_, is := decl.Properties.(ComposableProperties)
 	return is
 }
 
@@ -183,18 +183,18 @@ func (decl *SomeDecl) IsComposable() bool {
 // and validated by a func such as [LoadCoreKind].
 //
 // Its type parameter indicates the category of kind.
-type Decl[T KindMetas] struct {
+type Decl[T KindProperties] struct {
 	// V is the cue.Value containing the entire Kind declaration.
 	V cue.Value
-	// Meta contains the kind's metadata settings.
-	Meta T
+	// Properties contains the kind's declared properties.
+	Properties T
 }
 
 // Some converts the typed Decl to the equivalent typeless SomeDecl.
 func (decl *Decl[T]) Some() *SomeDecl {
 	return &SomeDecl{
-		V:    decl.V,
-		Meta: any(decl.Meta).(SomeKindMeta),
+		V:          decl.V,
+		Properties: any(decl.Properties).(SomeKindProperties),
 	}
 }
 
@@ -215,7 +215,7 @@ func (decl *Decl[T]) Some() *SomeDecl {
 // This is a low-level function, primarily intended for use in code generation.
 // For representations of core kinds that are useful in Go programs at runtime,
 // see ["github.com/grafana/grafana/pkg/registry/corekind"].
-func LoadCoreKind[T RawMeta | CoreStructuredMeta](declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[T], error) {
+func LoadCoreKind[T RawProperties | CoreStructuredProperties](declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[T], error) {
 	vk, err := cuectx.BuildGrafanaInstance(ctx, declpath, "kind", overlay)
 	if err != nil {
 		return nil, err
@@ -223,7 +223,7 @@ func LoadCoreKind[T RawMeta | CoreStructuredMeta](declpath string, ctx *cue.Cont
 	decl := &Decl[T]{
 		V: vk,
 	}
-	decl.Meta, err = ToKindMeta[T](vk)
+	decl.Properties, err = ToKindMeta[T](vk)
 	if err != nil {
 		return nil, err
 	}

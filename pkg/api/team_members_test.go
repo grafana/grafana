@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -46,6 +48,12 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
 	team, err := teamSvc.CreateTeam("group1 name", "test1@test.com", testOrgID)
 	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+
 	for i := 0; i < 3; i++ {
 		userCmd = user.CreateUserCommand{
 			Email: fmt.Sprint("user", i, "@test.com"),
@@ -53,7 +61,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			Login: fmt.Sprint("loginuser", i),
 		}
 		// user
-		user, err := sqlStore.CreateUser(context.Background(), userCmd)
+		user, err := usrSvc.CreateUserForTests(context.Background(), &userCmd)
 		require.NoError(t, err)
 		err = teamSvc.AddTeamMember(user.ID, testOrgID, team.Id, false, 1)
 		require.NoError(t, err)
@@ -115,7 +123,13 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 }
 
 func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
-	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{
+	quotaService := quotaimpl.ProvideService(db, setting.NewCfg())
+	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(db, orgService, setting.NewCfg(), nil, nil, quotaService)
+	require.NoError(t, err)
+
+	user, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
 		Login:    fmt.Sprintf("TestUser%d", rand.Int()),
 		OrgID:    orgId,
 		Password: "password",
@@ -127,7 +141,11 @@ func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
 
 func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, orgService org.Service, t *testing.T) int64 {
 	teamService := teamimpl.ProvideService(db, setting.NewCfg()) // FIXME
-	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
+	quotaService := quotaimpl.ProvideService(db, db.Cfg)
+	usrSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, teamService, nil, quotaService)
+	require.NoError(t, err)
+
+	user, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
 	cmd := &org.CreateOrgCommand{Name: "TestOrg", UserID: user.ID}
 	testOrg, err := orgService.CreateWithMember(context.Background(), cmd)

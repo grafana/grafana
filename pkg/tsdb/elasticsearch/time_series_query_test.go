@@ -310,9 +310,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, firstLevel.Key, "2")
-			// FIXME: This is a bug in the current implementation. The min_doc_count is not set.
-			// termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
-			// require.Equal(t, termsAgg.MinDocCount, "1")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			expectedMinDocCount := 1
+			require.Equal(t, termsAgg.MinDocCount, &expectedMinDocCount)
 		})
 
 		t.Run("With metric percentiles", func(t *testing.T) {
