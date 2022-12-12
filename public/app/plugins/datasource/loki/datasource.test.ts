@@ -6,6 +6,7 @@ import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
   ArrayVector,
+  CoreApp,
   DataFrame,
   dataFrameToJSON,
   DataQueryResponse,
@@ -28,7 +29,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { CustomVariableModel } from '../../../features/variables/types';
 
-import { LokiDatasource } from './datasource';
+import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
@@ -134,7 +135,8 @@ describe('LokiDatasource', () => {
     const runTest = async (
       queryMaxLines: number | undefined,
       dsMaxLines: string | undefined,
-      expectedMaxLines: number
+      expectedMaxLines: number,
+      app: CoreApp | undefined
     ) => {
       const settings = {
         jsonData: {
@@ -150,6 +152,7 @@ describe('LokiDatasource', () => {
 
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{a="b"}', refId: 'B', maxLines: queryMaxLines }],
+        app: app ?? CoreApp.Dashboard,
       });
 
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
@@ -162,19 +165,36 @@ describe('LokiDatasource', () => {
     };
 
     it('should use datasource max lines when no query max lines', async () => {
-      await runTest(undefined, '40', 40);
+      await runTest(undefined, '40', 40, undefined);
     });
 
     it('should use query max lines, if exists', async () => {
-      await runTest(80, undefined, 80);
+      await runTest(80, undefined, 80, undefined);
     });
 
     it('should use query max lines, if both exist, even if it is higher than ds max lines', async () => {
-      await runTest(80, '40', 80);
+      await runTest(80, '40', 80, undefined);
     });
 
     it('should report query interaction', async () => {
-      await runTest(80, '40', 80);
+      await runTest(80, '40', 80, CoreApp.Explore);
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_loki_query_executed',
+        expect.objectContaining({
+          query_type: 'logs',
+          line_limit: 80,
+          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+        })
+      );
+    });
+
+    it('should not report query interaction for dashboard query', async () => {
+      await runTest(80, '40', 80, CoreApp.Dashboard);
+      expect(reportInteraction).not.toBeCalled();
+    });
+
+    it('should not report query interaction for panel edit query', async () => {
+      await runTest(80, '40', 80, CoreApp.PanelEditor);
       expect(reportInteraction).toHaveBeenCalledWith(
         'grafana_loki_query_executed',
         expect.objectContaining({
@@ -946,7 +966,7 @@ describe('LokiDatasource', () => {
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           hideFromInspector: true,
-          requestId: 'log-samples',
+          requestId: REF_ID_DATA_SAMPLES,
         })
       );
     });

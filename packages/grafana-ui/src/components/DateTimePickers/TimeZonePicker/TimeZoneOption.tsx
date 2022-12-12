@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, RefCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
 
@@ -16,6 +16,7 @@ interface Props {
   isFocused: boolean;
   isSelected: boolean;
   innerProps: JSX.IntrinsicElements['div'];
+  innerRef: RefCallback<HTMLDivElement>;
   data: SelectableZone;
 }
 
@@ -26,7 +27,7 @@ export interface SelectableZone extends SelectableValue<string> {
 }
 
 export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
-  const { children, innerProps, data, isSelected, isFocused } = props;
+  const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
   const timestamp = Date.now();
@@ -39,7 +40,7 @@ export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, re
   const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
 
   return (
-    <div className={containerStyles} {...innerProps} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} ref={innerRef} aria-label="Select option">
       <div className={cx(styles.leftColumn, styles.row)}>
         <div className={cx(styles.leftColumn, styles.wideRow)}>
           <TimeZoneTitle title={children} />
@@ -66,7 +67,7 @@ export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, re
 };
 
 export const CompactTimeZoneOption: React.FC<React.PropsWithChildren<Props>> = (props, ref) => {
-  const { children, innerProps, data, isSelected, isFocused } = props;
+  const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
   const timestamp = Date.now();
@@ -79,7 +80,7 @@ export const CompactTimeZoneOption: React.FC<React.PropsWithChildren<Props>> = (
   const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
 
   return (
-    <div className={containerStyles} {...innerProps} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} ref={innerRef} aria-label="Select option">
       <div className={styles.body}>
         <div className={styles.row}>
           <div className={styles.leftColumn}>

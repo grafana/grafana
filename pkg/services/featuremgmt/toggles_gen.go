@@ -155,10 +155,6 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagPrometheusBufferedClient
-	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
-	FlagPrometheusBufferedClient = "prometheusBufferedClient"
-
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
@@ -270,6 +266,10 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagDatasourceOnboarding
+	// Enable data source onboarding page
+	FlagDatasourceOnboarding = "datasourceOnboarding"
 
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources

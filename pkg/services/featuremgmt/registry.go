@@ -215,11 +215,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheusBufferedClient",
-			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
-			State:       FeatureStateStable,
-		},
-		{
 			Name:        "newDBLibrary",
 			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
 			State:       FeatureStateBeta,
@@ -371,6 +366,11 @@ var (
 		{
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceOnboarding",
+			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
 		},
 		{

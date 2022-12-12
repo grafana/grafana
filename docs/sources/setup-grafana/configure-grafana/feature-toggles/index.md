@@ -19,18 +19,17 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
 
-| Feature toggle name          | Description                                                                                                     | Enabled by default |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `promQueryBuilder`           | Show Prometheus query builder                                                                                   | Yes                |
-| `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                                                    |                    |
-| `database_metrics`           | Add Prometheus metrics for database tables                                                                      |                    |
-| `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                                                          | Yes                |
-| `featureHighlights`          | Highlight Grafana Enterprise features                                                                           |                    |
-| `commandPalette`             | Enable command palette                                                                                          | Yes                |
-| `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                                           | Yes                |
-| `prometheusBufferedClient`   | Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new) |                    |
-| `internationalization`       | Enables internationalization                                                                                    | Yes                |
-| `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token                            |                    |
+| Feature toggle name          | Description                                                                          | Enabled by default |
+| ---------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
+| `promQueryBuilder`           | Show Prometheus query builder                                                        | Yes                |
+| `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                         |                    |
+| `database_metrics`           | Add Prometheus metrics for database tables                                           |                    |
+| `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                               | Yes                |
+| `featureHighlights`          | Highlight Grafana Enterprise features                                                |                    |
+| `commandPalette`             | Enable command palette                                                               | Yes                |
+| `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
+| `internationalization`       | Enables internationalization                                                         | Yes                |
+| `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 
 ## Beta feature toggles
 
@@ -90,6 +89,7 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                     |
+| `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |

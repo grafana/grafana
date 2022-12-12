@@ -74,16 +74,16 @@
     ]
   },
   "devDependencies": {
-    "@babel/core": "7.19.6",
+    "@babel/core": "7.20.5",
     "@babel/plugin-proposal-class-properties": "7.18.6",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.18.6",
-    "@babel/plugin-proposal-object-rest-spread": "7.19.4",
+    "@babel/plugin-proposal-object-rest-spread": "7.20.2",
     "@babel/plugin-proposal-optional-chaining": "7.18.9",
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
-    "@babel/plugin-transform-react-constant-elements": "7.18.12",
+    "@babel/plugin-transform-react-constant-elements": "7.20.2",
     "@babel/plugin-transform-runtime": "7.19.6",
     "@babel/plugin-transform-typescript": "7.20.0",
-    "@babel/preset-env": "7.19.4",
+    "@babel/preset-env": "7.20.2",
     "@babel/preset-react": "7.18.6",
     "@babel/preset-typescript": "7.18.6",
     "@babel/runtime": "7.20.1",
@@ -93,7 +93,7 @@
     "@betterer/regexp": "5.4.0",
     "@emotion/eslint-plugin": "11.10.0",
     "@grafana/e2e": "workspace:*",
-    "@grafana/eslint-config": "5.0.0",
+    "@grafana/eslint-config": "5.1.0",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.8",
@@ -120,6 +120,7 @@
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/eslint": "8.4.9",
     "@types/file-saver": "2.0.5",
+    "@types/glob": "^8.0.0",
     "@types/google.analytics": "^0.0.42",
     "@types/gtag.js": "^0.0.12",
     "@types/history": "4.7.11",
@@ -260,7 +261,7 @@
     "@lezer/common": "1.0.1",
     "@lezer/highlight": "1.1.2",
     "@lezer/lr": "1.2.3",
-    "@opentelemetry/api": "1.2.0",
+    "@opentelemetry/api": "1.3.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.7.0",
     "@popperjs/core": "2.11.6",
@@ -275,7 +276,7 @@
     "@react-stately/collections": "3.4.1",
     "@react-stately/menu": "3.4.1",
     "@react-stately/tree": "3.3.1",
-    "@reduxjs/toolkit": "1.8.6",
+    "@reduxjs/toolkit": "1.9.1",
     "@sentry/browser": "6.19.7",
     "@sentry/types": "6.19.7",
     "@sentry/utils": "6.19.7",
@@ -428,5 +429,5 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.2.4"
+  "packageManager": "yarn@3.3.0"
 }
