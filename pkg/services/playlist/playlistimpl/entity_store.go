@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	objectstore "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -44,7 +44,7 @@ func (s *entityStoreImpl) sync() {
 		UserID:         0, // Admin user
 		IsGrafanaAdmin: true,
 	}
-	ctx := objectstore.ContextWithUser(context.Background(), rowUser)
+	ctx := appcontext.WithUser(context.Background(), rowUser)
 	for _, info := range results {
 		dto, err := s.sqlimpl.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			OrgId: info.OrgID,
@@ -152,13 +152,13 @@ func (s *entityStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQ
 	if err != nil {
 		return nil, err
 	}
-	if rsp.Entity == nil || rsp.Entity.Body == nil {
+	if rsp == nil || rsp.Body == nil {
 		return nil, fmt.Errorf("missing object")
 	}
 
 	// Get the object from payload
 	found := &playlist.PlaylistDTO{}
-	err = json.Unmarshal(rsp.Entity.Body, found)
+	err = json.Unmarshal(rsp.Body, found)
 	return found, err
 }
 

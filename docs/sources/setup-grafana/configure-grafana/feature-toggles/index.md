@@ -29,7 +29,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `commandPalette`             | Enable command palette                                                                                          | Yes                |
 | `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                                           | Yes                |
 | `prometheusBufferedClient`   | Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new) |                    |
-| `internationalization`       | Enables internationalization                                                                                    |                    |
+| `internationalization`       | Enables internationalization                                                                                    | Yes                |
 | `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token                            |                    |
 
 ## Beta feature toggles
@@ -44,7 +44,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                    |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
-| `interFont`                       | Switch to inter font                                                            |
 | `datasourceLogger`                | Logs all datasource requests                                                    |
 
 ## Alpha feature toggles
@@ -54,6 +53,7 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
 | `live-config`                      | Save Grafana Live configuration in SQL tables                                                                                                                                |
@@ -90,8 +90,10 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                     |
+| `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
+| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 
 ## Development feature toggles
 

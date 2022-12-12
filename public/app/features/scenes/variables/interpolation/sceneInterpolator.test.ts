@@ -72,6 +72,7 @@ describe('sceneInterpolator', () => {
         $variables: new SceneVariableSet({
           variables: [
             new ObjectVariable({
+              type: 'custom',
               name: 'test',
               value: { prop1: 'prop1Value' },
             }),

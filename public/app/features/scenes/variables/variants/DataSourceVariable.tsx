@@ -23,6 +23,7 @@ export class DataSourceVariable extends MultiValueVariable<DataSourceVariableSta
 
   public constructor(initialState: Partial<DataSourceVariableState>) {
     super({
+      type: 'datasource',
       value: '',
       text: '',
       options: [],

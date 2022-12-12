@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -16,7 +15,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
@@ -43,7 +41,6 @@ type Client interface {
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
-	EnableDebug()
 }
 
 // NewClient creates a new elasticsearch client
@@ -72,13 +69,12 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 }
 
 type baseClientImpl struct {
-	ctx          context.Context
-	ds           *DatasourceInfo
-	timeField    string
-	indices      []string
-	timeRange    backend.TimeRange
-	debugEnabled bool
-	logger       log.Logger
+	ctx       context.Context
+	ds        *DatasourceInfo
+	timeField string
+	indices   []string
+	timeRange backend.TimeRange
+	logger    log.Logger
 }
 
 func (c *baseClientImpl) GetTimeField() string {
@@ -96,7 +92,7 @@ type multiRequest struct {
 	interval intervalv2.Interval
 }
 
-func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
+func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*http.Response, error) {
 	bytes, err := c.encodeBatchRequests(requests)
 	if err != nil {
 		return nil, err
@@ -134,7 +130,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	return payload.Bytes(), nil
 }
 
-func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*response, error) {
+func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*http.Response, error) {
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
@@ -154,15 +150,6 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	c.logger.Debug("Executing request", "url", req.URL.String(), "method", method)
 
-	var reqInfo *SearchRequestInfo
-	if c.debugEnabled {
-		reqInfo = &SearchRequestInfo{
-			Method: req.Method,
-			Url:    req.URL.String(),
-			Data:   string(body),
-		}
-	}
-
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
 	start := time.Now()
@@ -175,10 +162,8 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	if err != nil {
 		return nil, err
 	}
-	return &response{
-		httpResponse: resp,
-		reqInfo:      reqInfo,
-	}, nil
+
+	return resp, nil
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
@@ -190,7 +175,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	if err != nil {
 		return nil, err
 	}
-	res := clientRes.httpResponse
+	res := clientRes
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			c.logger.Warn("Failed to close response body", "err", err)
@@ -201,18 +186,6 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 
 	start := time.Now()
 	c.logger.Debug("Decoding multisearch json response")
-
-	var bodyBytes []byte
-	if c.debugEnabled {
-		tmpBytes, err := io.ReadAll(res.Body)
-		if err != nil {
-			c.logger.Error("Failed to read http response bytes", "error", err)
-		} else {
-			bodyBytes = make([]byte, len(tmpBytes))
-			copy(bodyBytes, tmpBytes)
-			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
-		}
-	}
 
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
@@ -225,24 +198,6 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	c.logger.Debug("Decoded multisearch json response", "took", elapsed)
 
 	msr.Status = res.StatusCode
-
-	if c.debugEnabled {
-		bodyJSON, err := simplejson.NewFromReader(bytes.NewBuffer(bodyBytes))
-		var data *simplejson.Json
-		if err != nil {
-			c.logger.Error("Failed to decode http response into json", "error", err)
-		} else {
-			data = bodyJSON
-		}
-
-		msr.DebugInfo = &SearchDebugInfo{
-			Request: clientRes.reqInfo,
-			Response: &SearchResponseInfo{
-				Status: res.StatusCode,
-				Data:   data,
-			},
-		}
-	}
 
 	return &msr, nil
 }
@@ -285,8 +240,4 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
 	return NewMultiSearchRequestBuilder()
-}
-
-func (c *baseClientImpl) EnableDebug() {
-	c.debugEnabled = true
 }

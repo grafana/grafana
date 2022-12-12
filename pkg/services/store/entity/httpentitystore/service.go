@@ -90,17 +90,17 @@ func (s *httpEntityStore) doGetEntity(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "error fetching entity", err)
 	}
-	if rsp.Entity == nil {
+	if rsp == nil {
 		return response.Error(404, "not found", nil)
 	}
 
 	// Configure etag support
-	currentEtag := rsp.Entity.ETag
+	currentEtag := rsp.ETag
 	previousEtag := c.Req.Header.Get("If-None-Match")
 	if previousEtag == currentEtag {
 		return response.CreateNormalResponse(
 			http.Header{
-				"ETag": []string{rsp.Entity.ETag},
+				"ETag": []string{rsp.ETag},
 			},
 			[]byte{},               // nothing
 			http.StatusNotModified, // 304
@@ -130,14 +130,14 @@ func (s *httpEntityStore) doGetRawEntity(c *models.ReqContext) response.Response
 		return response.Error(400, "Unsupported kind", err)
 	}
 
-	if rsp.Entity != nil && rsp.Entity.Body != nil {
+	if rsp != nil && rsp.Body != nil {
 		// Configure etag support
-		currentEtag := rsp.Entity.ETag
+		currentEtag := rsp.ETag
 		previousEtag := c.Req.Header.Get("If-None-Match")
 		if previousEtag == currentEtag {
 			return response.CreateNormalResponse(
 				http.Header{
-					"ETag": []string{rsp.Entity.ETag},
+					"ETag": []string{rsp.ETag},
 				},
 				[]byte{},               // nothing
 				http.StatusNotModified, // 304
@@ -152,7 +152,7 @@ func (s *httpEntityStore) doGetRawEntity(c *models.ReqContext) response.Response
 				"Content-Type": []string{mime},
 				"ETag":         []string{currentEtag},
 			},
-			rsp.Entity.Body,
+			rsp.Body,
 			200,
 		)
 	}
@@ -279,7 +279,7 @@ func (s *httpEntityStore) doUpload(c *models.ReqContext) response.Response {
 				if err != nil {
 					return response.Error(500, "Internal Server Error", err)
 				}
-				if result.Entity != nil {
+				if result.GRN != nil {
 					return response.Error(400, "File name already in use", err)
 				}
 			}

@@ -782,22 +782,6 @@ func insertTestRule(t *testing.T, sqlStore sqlstore.Store, foderOrgID int64, fol
 	require.NoError(t, err)
 }
 
-func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) user.User {
-	t.Helper()
-	sqlStore.Cfg.AutoAssignOrg = true
-	sqlStore.Cfg.AutoAssignOrgId = 1
-	sqlStore.Cfg.AutoAssignOrgRole = role
-	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
-
-	require.NoError(t, err)
-	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
-	err = sqlStore.GetUserOrgList(context.Background(), &q1)
-	require.NoError(t, err)
-	require.Equal(t, org.RoleType(role), q1.Result[0].Role)
-	return *currentUser
-}
-
 func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
