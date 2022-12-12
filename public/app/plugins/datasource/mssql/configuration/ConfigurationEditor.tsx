@@ -17,6 +17,7 @@ import {
   InlineFieldRow,
   InlineSwitch,
   Input,
+  Link,
   SecretInput,
   Select,
   useStyles2,
@@ -270,7 +271,12 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         The database user should only be granted SELECT permissions on the specified database and tables you want to
         query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
         statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <em>highly</em> recommend you create a specific MS SQL user with restricted permissions.
+        against this we <em>highly</em> recommend you create a specific MS SQL user with restricted permissions. Check
+        out the{' '}
+        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mssql/">
+          Microsoft SQL Server Data Source Docs
+        </Link>{' '}
+        for more information.
       </Alert>
     </>
   );

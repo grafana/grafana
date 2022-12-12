@@ -4099,6 +4099,132 @@ clone:
   retries: 3
 depends_on: []
 environment:
+  EDITION: enterprise2
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: publish-github-public
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.3
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition enterprise2
+  depends_on:
+  - compile-build-cmd
+  environment:
+    DOCKER_ENTERPRISE2_REPO:
+      from_secret: docker_enterprise2_repo
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: fetch-images-enterprise2
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/build publish github --repo $${GH_REGISTRY} --create
+  depends_on:
+  - fetch-images-enterprise2
+  environment:
+    GH_REGISTRY:
+      from_secret: gh_registry
+    GH_TOKEN:
+      from_secret: github_token
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-github
+trigger:
+  event:
+  - promote
+  target:
+  - public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: enterprise2
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: publish-github-security
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.3
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition enterprise2
+  depends_on:
+  - compile-build-cmd
+  environment:
+    DOCKER_ENTERPRISE2_REPO:
+      from_secret: docker_enterprise2_repo
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: fetch-images-enterprise2
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/build publish github --repo $${GH_REGISTRY} --create
+  depends_on:
+  - fetch-images-enterprise2
+  environment:
+    GH_REGISTRY:
+      from_secret: gh_registry
+    GH_TOKEN:
+      from_secret: github_token
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-github
+trigger:
+  event:
+  - promote
+  target:
+  - security
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
   EDITION: all
 image_pull_secrets:
 - dockerconfigjson
@@ -6318,6 +6444,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: dcf24226fae30872050cdc031430374d811e6bbe13158ce0fbf234c90c1d83f9
+hmac: 7045c606549d05fbe66b2e683b318c7063a4e875e1a94168d5f5b03bb7e319c6
 
 ...
