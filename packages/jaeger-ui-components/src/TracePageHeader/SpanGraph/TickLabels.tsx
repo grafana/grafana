@@ -56,5 +56,9 @@ export default function TickLabels(props: TickLabelsProps) {
     );
   }
 
-  return <div className={styles.TickLabels}>{ticks}</div>;
+  return (
+    <div className={styles.TickLabels} data-testid="TickLabels">
+      {ticks}
+    </div>
+  );
 }

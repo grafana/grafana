@@ -12,23 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow, ShallowWrapper } from 'enzyme';
+import { getAllByTestId, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
-import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
-import ViewingLayer, { ViewingLayerProps, UnthemedViewingLayer } from './ViewingLayer';
 
-import SpanGraph, { SpanGraphProps } from './index';
+import SpanGraph, { SpanGraphProps, TIMELINE_TICK_INTERVAL } from './index';
 
 describe('<SpanGraph>', () => {
   polyfillAnimationFrame(window);
 
-  const trace = transformTraceData(traceGenerator.trace({}));
+  const trace = transformTraceData(traceGenerator.trace({}))!;
   const props = {
     trace,
     updateViewRangeTime: () => {},
@@ -39,52 +37,35 @@ describe('<SpanGraph>', () => {
     },
   };
 
-  let wrapper: ShallowWrapper<ViewingLayerProps, {}, UnthemedViewingLayer>;
-
   beforeEach(() => {
-    wrapper = shallow(<SpanGraph {...(props as unknown as SpanGraphProps)} />);
+    render(<SpanGraph {...(props as unknown as SpanGraphProps)} />);
   });
 
-  it('renders a <CanvasSpanGraph />', () => {
-    expect(wrapper.find(CanvasSpanGraph).length).toBe(1);
+  it('renders <CanvasSpanGraph />', () => {
+    const canvasSpanGraphComponent = screen.getByTestId('CanvasSpanGraph');
+    expect(canvasSpanGraphComponent).toBeTruthy();
   });
 
-  it('renders a <TickLabels />', () => {
-    expect(wrapper.find(TickLabels).length).toBe(1);
+  it('renders <TickLabels />', () => {
+    const tickLabelsComponent = screen.getByTestId('TickLabels');
+    expect(tickLabelsComponent).toBeTruthy();
   });
 
-  it('returns a <div> if a trace is not provided', () => {
-    wrapper = shallow(<SpanGraph {...({ ...props, trace: null } as unknown as SpanGraphProps)} />);
-    expect(wrapper.matchesElement(<div />)).toBeTruthy();
+  it('returns an empty div if a trace is not provided', () => {
+    const { container } = render(<SpanGraph {...({ ...props, trace: null } as unknown as SpanGraphProps)} />);
+    expect(container.firstChild).toBeEmptyDOMElement();
   });
 
-  it('passes the number of ticks to render to components', () => {
-    const tickHeader = wrapper.find(TickLabels);
-    const viewingLayer = wrapper.find(ViewingLayer);
-    expect(tickHeader.prop('numTicks')).toBeGreaterThan(1);
-    expect(viewingLayer.prop('numTicks')).toBeGreaterThan(1);
-    expect(tickHeader.prop('numTicks')).toBe(viewingLayer.prop('numTicks'));
+  it('renders <TickLabels /> with the correct numnber of ticks', async () => {
+    const tickLabelsDiv = screen.getByTestId('TickLabels');
+    expect(getAllByTestId(tickLabelsDiv, 'tick').length).toBe(TIMELINE_TICK_INTERVAL + 1);
   });
 
-  it('passes items to CanvasSpanGraph', () => {
-    const canvasGraph = wrapper.find(CanvasSpanGraph).first();
-    const items = trace?.spans.map((span) => ({
-      valueOffset: span.relativeStartTime,
-      valueWidth: span.duration,
-      serviceName: span.process.serviceName,
-    }));
-    expect(canvasGraph.prop('items')).toEqual(items);
-  });
-
-  it('does not regenerate CanvasSpanGraph without new trace', () => {
-    const canvasGraph = wrapper.find(CanvasSpanGraph).first();
-    const items = canvasGraph.prop('items');
-
-    wrapper.instance().forceUpdate();
-
-    const newCanvasGraph = wrapper.find(CanvasSpanGraph).first();
-    const newItems = newCanvasGraph.prop('items');
-
-    expect(newItems).toBe(items);
+  it('renders <TickLabels /> with the correct value next to each tick', async () => {
+    render(<TickLabels numTicks={5} duration={1} />);
+    expect(await screen.findByText(/0.2/)).toBeInTheDocument();
+    expect(await screen.findByText(/0.4/)).toBeInTheDocument();
+    expect(await screen.findByText(/0.6/)).toBeInTheDocument();
+    expect(await screen.findByText(/0.8/)).toBeInTheDocument();
   });
 });
