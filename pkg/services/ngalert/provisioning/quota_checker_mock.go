@@ -49,9 +49,9 @@ type MockQuotaChecker_CheckQuotaReached_Call struct {
 }
 
 // CheckQuotaReached is a helper method to define mock.On call
-//  - ctx context.Context
-//  - target quota.TargetSrv
-//  - scopeParams *quota.ScopeParameters
+//   - ctx context.Context
+//   - target quota.TargetSrv
+//   - scopeParams *quota.ScopeParameters
 func (_e *MockQuotaChecker_Expecter) CheckQuotaReached(ctx interface{}, target interface{}, scopeParams interface{}) *MockQuotaChecker_CheckQuotaReached_Call {
 	return &MockQuotaChecker_CheckQuotaReached_Call{Call: _e.mock.On("CheckQuotaReached", ctx, target, scopeParams)}
 }

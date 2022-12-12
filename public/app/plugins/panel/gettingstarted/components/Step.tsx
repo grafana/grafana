@@ -4,7 +4,7 @@ import React, { FC } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { Card, SetupStep, TutorialCardType } from '../types';
+import { SetupStep, TutorialCardType } from '../types';
 
 import { DocsCard } from './DocsCard';
 import { TutorialCard } from './TutorialCard';
@@ -23,7 +23,7 @@ export const Step: FC<Props> = ({ step }) => {
         <p>{step.info}</p>
       </div>
       <div className={styles.cards}>
-        {step.cards.map((card: Card | TutorialCardType, index: number) => {
+        {step.cards.map((card, index) => {
           const key = `${card.title}-${index}`;
           if (card.type === 'tutorial') {
             return <TutorialCard key={key} card={card as TutorialCardType} />;

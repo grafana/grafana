@@ -8,7 +8,8 @@ import { useDispatch, useSelector } from 'app/types';
 import { PanelModel } from '../../state';
 import { getPanelPluginWithFallback } from '../../state/selectors';
 
-import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
+import { updatePanelEditorUIState } from './state/actions';
+import { toggleVizPicker } from './state/reducers';
 
 type Props = {
   panel: PanelModel;
@@ -25,7 +26,7 @@ export const VisualizationButton = ({ panel }: Props) => {
   };
 
   const onToggleOptionsPane = () => {
-    dispatch(setPanelEditorUIState({ isPanelOptionsVisible: !isPanelOptionsVisible }));
+    dispatch(updatePanelEditorUIState({ isPanelOptionsVisible: !isPanelOptionsVisible }));
   };
 
   if (!plugin) {

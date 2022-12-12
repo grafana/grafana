@@ -263,6 +263,7 @@ export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkRe
   };
 }
 
+// TODO: memoize this or move to RTK Query so we can cache results!
 export function fetchAllPromBuildInfoAction(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     const allRequests = getAllRulesSourceNames().map((rulesSourceName) =>
@@ -443,10 +444,13 @@ export const saveRuleFormAction = createAsyncThunk(
       values,
       existing,
       redirectOnSave,
+      evaluateEvery,
     }: {
       values: RuleFormValues;
       existing?: RuleWithLocation;
       redirectOnSave?: string;
+      initialAlertRuleName?: string;
+      evaluateEvery: string;
     },
     thunkAPI
   ): Promise<void> =>
@@ -463,15 +467,18 @@ export const saveRuleFormAction = createAsyncThunk(
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
             }
+
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, values.dataSourceName);
             const rulerClient = getRulerClient(rulerConfig);
-            identifier = await rulerClient.saveLotexRule(values, existing);
+            identifier = await rulerClient.saveLotexRule(values, evaluateEvery, existing);
+            await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: values.dataSourceName }));
 
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
-            identifier = await rulerClient.saveGrafanaRule(values, existing);
+            identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
+            await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
           } else {
             throw new Error('Unexpected rule form type');
           }
@@ -765,7 +772,9 @@ export const rulesInSameGroupHaveInvalidFor = (
 
   return rulesSameGroup.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
-    return safeParseDurationstr(forDuration) < safeParseDurationstr(everyDuration);
+    const forNumber = safeParseDurationstr(forDuration);
+    const everyNumber = safeParseDurationstr(everyDuration);
+    return forNumber !== 0 && forNumber < everyNumber;
   });
 };
 

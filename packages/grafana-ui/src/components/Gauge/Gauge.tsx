@@ -98,6 +98,7 @@ export class Gauge extends PureComponent<Props> {
           gauge: {
             min,
             max,
+            neutralValue: field.custom?.neutral,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },

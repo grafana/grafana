@@ -47,7 +47,7 @@ func TestDiscordNotifier(t *testing.T) {
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
@@ -74,7 +74,7 @@ func TestDiscordNotifier(t *testing.T) {
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "Alerts firing: 1",
@@ -88,7 +88,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name: "Missing field in template",
 			settings: `{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"url": "http://localhost",
 				"message": "I'm a custom template {{ .NotAField }} bad template"
 			}`,
@@ -101,12 +101,12 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"content":    "I'm a custom template ",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
@@ -120,7 +120,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name: "Invalid message template",
 			settings: `{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"url": "http://localhost",
 				"message": "{{ template \"invalid.template\" }}"
 			}`,
@@ -133,12 +133,12 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"content":    "",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
@@ -170,7 +170,7 @@ func TestDiscordNotifier(t *testing.T) {
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
@@ -184,7 +184,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name: "Invalid URL template",
 			settings: `{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"url": "http://localhost?q={{invalid }}}",
 				"message": "valid message"
 			}`,
@@ -197,12 +197,12 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"content":    "valid message",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
@@ -216,7 +216,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name: "Custom config with multiple alerts",
 			settings: `{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"url": "http://localhost",
 				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
 			}`,
@@ -234,12 +234,12 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"avatar_url": "https://grafana.com/static/assets/img/fav32.png",
 				"content":    "2 alerts are firing, 0 are resolved",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:2]  ",
@@ -274,7 +274,7 @@ func TestDiscordNotifier(t *testing.T) {
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 						"text":     "Grafana v" + setting.BuildVersion,
 					},
 					"title": "[FIRING:1]  (val1)",

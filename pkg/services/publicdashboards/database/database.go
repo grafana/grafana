@@ -233,9 +233,10 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			return err
 		}
 
-		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
 			cmd.PublicDashboard.IsEnabled,
 			cmd.PublicDashboard.AnnotationsEnabled,
+			cmd.PublicDashboard.TimeSelectionEnabled,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),

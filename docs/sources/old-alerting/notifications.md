@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/notifications/
-  - /docs/grafana/latest/old-alerting/notifications/
+  - ../alerting/notifications/
 description: Alerting notifications guide
 draft: true
 keywords:
@@ -194,7 +193,7 @@ Example json body:
       "tags": {}
     }
   ],
-  "imageUrl": "https://grafana.com/assets/img/blog/mixed_styles.png",
+  "imageUrl": "https://grafana.com/static/assets/img/blog/mixed_styles.png",
   "message": "Notification Message",
   "orgId": 1,
   "panelId": 2,

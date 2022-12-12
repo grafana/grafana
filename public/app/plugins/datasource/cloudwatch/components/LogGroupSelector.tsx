@@ -109,6 +109,12 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
 
     // Config editor does not fetch new log group options unless changes have been saved
     saved && getAvailableLogGroupOptions();
+
+    // if component unmounts in the middle of setting state, we reset state and unsubscribe from fetchLogGroupOptions
+    return () => {
+      setAvailableLogGroups([]);
+      setLoadingLogGroups(false);
+    };
     // this hook shouldn't get called every time selectedLogGroups or onChange updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource, region, saved]);
