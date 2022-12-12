@@ -94,24 +94,37 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 	return json.Marshal(ts)
 }
 
-// build time settings object from json on public dashboard. If empty, use
-// defaults on the dashboard
-func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) TimeSettings {
+// BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
+func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
+	if pd.TimeSelectionEnabled && timeRangeIsValid(reqDTO.TimeRange) {
+		return TimeSettings{
+			From: reqDTO.TimeRange.From,
+			To:   reqDTO.TimeRange.To,
+		}
+	}
+
 	from := dashboard.Data.GetPath("time", "from").MustString()
 	to := dashboard.Data.GetPath("time", "to").MustString()
 	timeRange := legacydata.NewDataTimeRange(from, to)
 
 	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which expected the time range in epoch milliseconds.
-	ts := TimeSettings{
+	return TimeSettings{
 		From: strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10),
 		To:   strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10),
 	}
+}
 
-	if pd.TimeSettings == nil {
-		return ts
+func timeRangeIsValid(tr TimeSettings) bool {
+	_, err := strconv.ParseInt(tr.From, 10, 64)
+	if err != nil {
+		return false
+	}
+	_, err = strconv.ParseInt(tr.To, 10, 64)
+	if err != nil {
+		return false
 	}
 
-	return ts
+	return true
 }
 
 // DTO for transforming user input in the api
@@ -125,6 +138,7 @@ type SavePublicDashboardDTO struct {
 type PublicDashboardQueryDTO struct {
 	IntervalMs    int64
 	MaxDataPoints int64
+	TimeRange     TimeSettings
 }
 
 type AnnotationsQueryDTO struct {
