@@ -94,3 +94,9 @@ export type {
   Team,
   Permission
 } from './raw/team/x/team_types.gen';
+
+// Raw generated types from User kind.
+export type { User } from './raw/user/x/user_types.gen';
+
+// Raw generated default consts from user kind.
+export { defaultUser } from './raw/user/x/user_types.gen';
