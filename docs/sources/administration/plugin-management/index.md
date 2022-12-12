@@ -1,11 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/plugins/
-  - /docs/grafana/latest/plugins/catalog/
-  - /docs/grafana/latest/plugins/installation/
-  - /docs/grafana/latest/plugins/plugin-signature-verification/
-  - /docs/grafana/latest/plugins/plugin-signatures/
-  - /docs/grafana/latest/administration/plugin-management/
+  - ../plugins/
+  - ../plugins/catalog/
+  - ../plugins/installation/
+  - ../plugins/plugin-signature-verification/
+  - ../plugins/plugin-signatures/
 title: Plugin management
 weight: 600
 ---

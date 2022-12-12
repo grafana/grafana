@@ -1,13 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/add-a-data-source/
-  - /docs/grafana/latest/features/datasources/add-a-data-source/
-  - /docs/grafana/latest/enterprise/datasource_permissions/
-  - /docs/grafana/latest/permissions/datasource_permissions/
-  - /docs/grafana/latest/administration/data-source-management/
-  - /docs/grafana/latest/enterprise/query-caching/
-title: Data source management
+  - ../datasources/add-a-data-source/
+  - ../enterprise/datasource_permissions/
+  - ../enterprise/query-caching/
+  - ../features/datasources/add-a-data-source/
+  - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+title: Data source management
 weight: 100
 ---
 

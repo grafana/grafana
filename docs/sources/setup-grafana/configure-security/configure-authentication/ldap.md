@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/ldap/
-  - /docs/grafana/latest/installation/ldap/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/
+  - ../../../auth/ldap/
+  - ../../../installation/ldap/
 description: Grafana LDAP Authentication Guide
 title: Configure LDAP Authentication
 weight: 800

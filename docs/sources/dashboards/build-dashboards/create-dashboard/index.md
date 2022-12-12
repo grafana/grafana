@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/build-dashboards/create-dashboard/
-  - /docs/grafana/latest/dashboards/build-dashboards/add-organize-panels/
-title: Create a dashboard
-menuTitle: Create a dashboard
-weight: 1
+  - add-organize-panels/
 keywords:
   - panel
   - dashboard
   - create
+menuTitle: Create a dashboard
+title: Create a dashboard
+weight: 1
 ---
 
 ## Create a dashboard
