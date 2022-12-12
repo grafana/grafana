@@ -335,6 +335,14 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	return tmpDir, cfgPath
 }
 
+func SQLiteIntegrationTest(t *testing.T) {
+	t.Helper()
+
+	if testing.Short() || !db.IsTestDbSQLite() {
+		t.Skip("skipping integration test")
+	}
+}
+
 type GrafanaOpts struct {
 	EnableCSP                             bool
 	EnableFeatureToggles                  []string
