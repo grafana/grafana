@@ -29,7 +29,7 @@ export function getQueryVariableDemo(standalone: boolean): Scene {
           name: 'instance (using datasource variable)',
           refresh: VariableRefresh.onTimeRangeChanged,
           query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
-          datasource: '${datasource}',
+          datasource: { uid: '${datasource}' },
         }),
         new QueryVariable({
           name: 'label values (on time range refresh)',

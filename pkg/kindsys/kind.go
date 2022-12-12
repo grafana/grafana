@@ -41,6 +41,10 @@ func (m Maturity) Less(om Maturity) bool {
 	return maturityIdx(m) < maturityIdx(om)
 }
 
+func (m Maturity) String() string {
+	return string(m)
+}
+
 // Interface describes a Grafana kind object: a Go representation of the definition of
 // one of Grafana's categories of kinds.
 type Interface interface {

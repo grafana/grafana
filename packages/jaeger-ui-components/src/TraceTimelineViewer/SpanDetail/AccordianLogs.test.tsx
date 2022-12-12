@@ -15,7 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import AccordianLogs from './AccordianLogs';
+import AccordianLogs, { AccordianLogsProps } from './AccordianLogs';
 
 const logs = [
   {
@@ -34,7 +34,7 @@ const logs = [
   },
 ];
 
-const setup = (propOverrides) => {
+const setup = (propOverrides?: AccordianLogsProps) => {
   const props = {
     logs,
     isOpen: false,
@@ -60,13 +60,13 @@ describe('AccordianLogs tests', () => {
   });
 
   it('hides log entries when not expanded', () => {
-    setup({ isOpen: false });
+    setup({ isOpen: false } as AccordianLogsProps);
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
   it('shows log entries when expanded', () => {
-    setup({ isOpen: true });
+    setup({ isOpen: true } as AccordianLogsProps);
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.queryAllByRole('cell')).toHaveLength(6);
