@@ -1581,7 +1581,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SearchServiceAccountsResult"
+              "$ref": "#/components/schemas/SearchOrgServiceAccountsResult"
             }
           }
         },
@@ -6952,6 +6952,12 @@
         ],
         "type": "object"
       },
+      "ProvisionedAlertRules": {
+        "items": {
+          "$ref": "#/components/schemas/ProvisionedAlertRule"
+        },
+        "type": "array"
+      },
       "PushoverConfig": {
         "properties": {
           "expire": {
@@ -7834,7 +7840,7 @@
         },
         "type": "object"
       },
-      "SearchServiceAccountsResult": {
+      "SearchOrgServiceAccountsResult": {
         "description": "swagger: model",
         "properties": {
           "page": {
@@ -8911,7 +8917,6 @@
         "type": "string"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -8921,6 +8926,9 @@
           },
           "Host": {
             "type": "string"
+          },
+          "OmitHost": {
+            "type": "boolean"
           },
           "Opaque": {
             "type": "string"
@@ -8944,7 +8952,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "A URL represents a parsed URL (technically, a URI reference).",
+        "title": "URL is a custom URL type that allows validation at configuration load time.",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -9142,20 +9150,26 @@
         "type": "object"
       },
       "UpdateFolderCommand": {
+        "description": "UpdateFolderCommand captures the information required by the folder service\nto update a folder. Use Move to update a folder's parent folder.",
         "properties": {
           "description": {
+            "description": "NewDescription it's an optional parameter used for overriding the existing folder description",
             "type": "string"
           },
           "overwrite": {
+            "description": "Overwrite only used by the legacy folder implementation",
             "type": "boolean"
           },
           "title": {
+            "description": "NewTitle it's an optional parameter used for overriding the existing folder title",
             "type": "string"
           },
           "uid": {
+            "description": "NewUID it's an optional parameter used for overriding the existing folder UID",
             "type": "string"
           },
           "version": {
+            "description": "Version only used by the legacy folder implementation",
             "format": "int64",
             "type": "integer"
           }
@@ -9326,6 +9340,10 @@
               "Admin"
             ],
             "type": "string"
+          },
+          "serviceAccountId": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -9848,6 +9866,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -9966,7 +9985,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10110,7 +10128,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12885,6 +12902,25 @@
       }
     },
     "/api/v1/provisioning/alert-rules": {
+      "get": {
+        "operationId": "RouteGetAlertRules",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionedAlertRules"
+                }
+              }
+            },
+            "description": "ProvisionedAlertRules"
+          }
+        },
+        "summary": "Get all the alert rules.",
+        "tags": [
+          "provisioning"
+        ]
+      },
       "post": {
         "operationId": "RoutePostAlertRule",
         "parameters": [

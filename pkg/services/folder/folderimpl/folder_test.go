@@ -132,9 +132,11 @@ func TestIntegrationFolderService(t *testing.T) {
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
 				}).Return(&models.Dashboard{}, nil)
-				_, err := service.Update(context.Background(), usr, orgID, folderUID, &models.UpdateFolderCommand{
-					Uid:   folderUID,
-					Title: "Folder-TEST",
+				_, err := service.Update(context.Background(), &folder.UpdateFolderCommand{
+					UID:          folderUID,
+					OrgID:        orgID,
+					NewTitle:     pointer.String("Folder-TEST"),
+					SignedInUser: usr,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -207,12 +209,14 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
 				dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
 
-				req := &models.UpdateFolderCommand{
-					Uid:   dashboardFolder.Uid,
-					Title: "TEST-Folder",
+				req := &folder.UpdateFolderCommand{
+					UID:          dashboardFolder.Uid,
+					OrgID:        orgID,
+					NewTitle:     pointer.String("TEST-Folder"),
+					SignedInUser: usr,
 				}
 
-				reqResult, err := service.Update(context.Background(), usr, orgID, dashboardFolder.Uid, req)
+				reqResult, err := service.Update(context.Background(), req)
 				require.NoError(t, err)
 				require.Equal(t, f, reqResult)
 			})

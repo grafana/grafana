@@ -20,7 +20,7 @@ type Service interface {
 
 	// Update is used to update a folder's UID, Title and Description. To change
 	// a folder's parent folder, use Move.
-	Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*Folder, error)
+	Update(ctx context.Context, cmd *UpdateFolderCommand) (*Folder, error)
 	DeleteFolder(ctx context.Context, cmd *DeleteFolderCommand) error
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 	// Move changes a folder's parent folder to the requested new parent.
