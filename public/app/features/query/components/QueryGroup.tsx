@@ -473,16 +473,15 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
           const dataFrame = readCSV(result)[0];
 
           dataFrame.fields.forEach((f) => {
-            if (f.name.toLowerCase() === 'time') {
-              for (let i = 0; i < f.values.length; i++) {
+            // if first value is number or date then parse every value
+            // TODO: Performance consideration?
+            const firstValue = getDateTimeNumber(f.values.get(0));
+            if (firstValue !== null) {
+              f.values.set(0, firstValue);
+              for (let i = 1; i < f.values.length; i++) {
                 const val = f.values.get(i);
-                const dateAndTime = dateTimeParse(val);
-                if (dateAndTime.isValid()) {
-                  f.values.set(i, dateAndTime.valueOf());
-                } else {
-                  const timeAsNumber = Number.parseInt(val, 10);
-                  f.values.set(i, timeAsNumber);
-                }
+                const dateAndTime = getDateTimeNumber(val);
+                f.values.set(i, dateAndTime);
               }
             }
           });
@@ -577,3 +576,23 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
 }
 
 type QueriesTabStyles = ReturnType<typeof getStyles>;
+
+/**
+ * Converts a string value to number by trying to parse it to date and then to number.
+ * @param value the parsed value which is a string.
+ * @returns number or null if string is not a number or date.
+ */
+function getDateTimeNumber(value: string): number | null {
+  const dateAndTime = dateTimeParse(value);
+  if (dateAndTime.isValid()) {
+    return dateAndTime.valueOf();
+  }
+
+  const timeAsNumber = Number.parseInt(value, 10);
+
+  if (Number.isNaN(timeAsNumber)) {
+    return null;
+  } else {
+    return timeAsNumber;
+  }
+}
