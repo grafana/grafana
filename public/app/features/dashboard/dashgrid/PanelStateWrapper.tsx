@@ -40,7 +40,6 @@ import { RenderEvent } from 'app/types/events';
 import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { LoadingBar } from '../components/LoadingBar/LoadingBar';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
@@ -584,7 +583,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-    const loadingNode = <LoadingBar width={'128px'} height={'2px'} />;
     const dataState = (
       <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} dataState={data.state} key="state" />
     );
@@ -598,7 +596,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           title={title}
           onStreamingStop={() => panel.getQueryRunner().cancelQuery()}
           loadingState={data.state}
-          loadingNode={loadingNode}
           dataStateNode={dataState}
         >
           {(innerWidth, innerHeight) => (

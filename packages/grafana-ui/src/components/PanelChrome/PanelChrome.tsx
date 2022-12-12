@@ -8,6 +8,7 @@ import { IconName } from '../../types/icon';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
+import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
 /**
@@ -37,7 +38,6 @@ export interface PanelChromeProps {
   hoverHeader?: boolean;
   onStreamingStop?: () => void;
   loadingState?: LoadingState;
-  loadingNode?: ReactNode;
   dataStateNode?: ReactNode;
   /** @deprecated in favor of prop states
    * which will serve the same purpose
@@ -67,7 +67,6 @@ export function PanelChrome({
   // hoverHeader = false,
   onStreamingStop,
   loadingState,
-  loadingNode = null,
   dataStateNode = null,
   leftItems = [],
 }: PanelChromeProps) {
@@ -113,7 +112,9 @@ export function PanelChrome({
 
   return (
     <div className={styles.container} style={containerStyles}>
-      <div className={styles.loadingBarContainer}>{showLoading ? loadingNode : null}</div>
+      <div className={styles.loadingBarContainer}>
+        {showLoading ? <LoadingBar width={'128px'} height={'2px'} /> : null}
+      </div>
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
         {title && (
