@@ -14,6 +14,7 @@ var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-reques
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
+var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 
 const (
 	GeneralFolderUID     = "general"

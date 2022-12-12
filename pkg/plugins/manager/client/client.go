@@ -29,6 +29,10 @@ func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg) *Service {
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
@@ -65,6 +69,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if req == nil {
+		return fmt.Errorf("req cannot be nil")
+	}
+
+	if sender == nil {
+		return fmt.Errorf("sender cannot be nil")
+	}
+
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
@@ -84,6 +96,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
@@ -102,6 +118,10 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
@@ -129,6 +149,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
@@ -138,6 +162,10 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 }
 
 func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("req cannot be nil")
+	}
+
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
@@ -147,6 +175,14 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 }
 
 func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if req == nil {
+		return fmt.Errorf("req cannot be nil")
+	}
+
+	if sender == nil {
+		return fmt.Errorf("sender cannot be nil")
+	}
+
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered

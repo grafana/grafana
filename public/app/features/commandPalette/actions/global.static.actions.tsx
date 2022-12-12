@@ -1,9 +1,10 @@
 import { Action, Priority } from 'kbar';
 import React from 'react';
 
-import { isIconName, NavModelItem } from '@grafana/data';
+import { isIconName, locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
+import { changeTheme } from 'app/core/services/theme';
 
 const SECTION_PAGES = 'Pages';
 const SECTION_ACTIONS = 'Actions';
@@ -34,7 +35,7 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Actio
       id: idForNavItem(navItem),
       name: text, // TODO: translate
       section: isCreateAction ? SECTION_ACTIONS : SECTION_PAGES,
-      perform: url ? () => locationService.push(url) : undefined,
+      perform: url ? () => locationService.push(locationUtil.stripBaseFromUrl(url)) : undefined,
       parent: parent && idForNavItem(parent),
 
       // Only show icons for top level items
@@ -82,10 +83,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Dark',
       keywords: 'dark theme',
       section: '',
-      perform: () => {
-        locationService.push({ search: '?theme=dark' });
-        location.reload();
-      },
+      perform: () => changeTheme('dark'),
       parent: 'preferences/theme',
     },
     {
@@ -93,10 +91,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Light',
       keywords: 'light theme',
       section: '',
-      perform: () => {
-        locationService.push({ search: '?theme=light' });
-        location.reload();
-      },
+      perform: () => changeTheme('light'),
       parent: 'preferences/theme',
     },
   ];

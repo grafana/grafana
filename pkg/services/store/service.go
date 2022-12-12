@@ -592,8 +592,7 @@ func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *u
 		Workflows: make([]workflowInfo, 0),
 	}
 
-	scope, _ := splitFirstSegment(path)
-	root, _ := s.tree.getRoot(user.OrgID, scope)
+	root, _ := s.tree.getRoot(user.OrgID, path)
 	if root == nil {
 		return options, fmt.Errorf("can not read")
 	}
