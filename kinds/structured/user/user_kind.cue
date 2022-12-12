@@ -33,7 +33,7 @@ lineage: seqs: [
 				// AvatarUrl is the user's avatar URL.
 				avatarUrl: string
 				// AccessControl metadata associated with a given resource.
-				accessControl?: [string]: bool @grafanamaturity(ToMetadata="sys")
+				accessControl: [string]: bool @grafanamaturity(ToMetadata="sys")
 			},
 		]
 	},
