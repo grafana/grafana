@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom';
 import i18next from 'i18next';
-// import failOnConsole from 'jest-fail-on-console';
+import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
 import { matchers } from './matchers';
 
-// failOnConsole({
-// shouldFailOnLog: true,
-// });
+failOnConsole({
+  shouldFailOnLog: true,
+});
 
 expect.extend(matchers);
 
