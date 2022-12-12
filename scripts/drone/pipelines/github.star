@@ -18,7 +18,7 @@ def publish_github_step():
     return {
         'name': 'publish-github',
         'image': publish_image,
-        'commands': ['./bin/build publish github --repo grafana/grafana-ci-sandbox --path grafana-enterprise2-{}-amd64.img --create'.format('0.0.0-test')],
+        'commands': ['./bin/build publish github --repo grafana/grafana-ci-sandbox --create'],
         'depends_on': ['fetch-images-enterprise2'],
         'environment': {
             'GH_TOKEN': from_secret('github_token'),
