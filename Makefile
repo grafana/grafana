@@ -68,9 +68,9 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
-	go generate ./kinds/report.go
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins/gen.go
+	go generate ./kinds/report.go
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
