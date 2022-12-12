@@ -30,7 +30,7 @@ import { metricNamesToVariableValues } from './utils';
 
 export interface QueryVariableState extends MultiValueVariableState {
   type: 'query';
-  datasource: DataSourceRef | string | null;
+  datasource: DataSourceRef | null;
   query: any;
   regex: string;
   refresh: VariableRefresh;
@@ -126,7 +126,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
   }
 
   private async getDataSource(): Promise<DataSourceApi> {
-    return getDataSourceSrv().get(this.state.datasource ?? '', {
+    return getDataSourceSrv().get(this.state.datasource, {
       __sceneObject: { text: '__sceneObject', value: this },
     });
   }

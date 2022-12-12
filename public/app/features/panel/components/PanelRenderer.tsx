@@ -10,8 +10,9 @@ import {
   compareArrayValues,
   compareDataFrameStructures,
   PluginContextProvider,
+  ScopedVars,
 } from '@grafana/data';
-import { PanelRendererProps } from '@grafana/runtime';
+import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
@@ -151,7 +152,9 @@ export function useFieldOverrides(
         data: series,
         fieldConfig,
         fieldConfigRegistry,
-        replaceVariables: (str: string) => str,
+        replaceVariables: (str: string, scopedVars?: ScopedVars) => {
+          return getTemplateSrv().replace(str, scopedVars);
+        },
         theme,
         timeZone,
       }),
