@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode, useEffect, useState } from 'react';
+import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
 
@@ -73,16 +73,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const [isStreaming, setIsStreaming] = useState(false);
-
-  useEffect(() => {
-    if (loadingState === LoadingState.Streaming) {
-      setIsStreaming(true);
-    }
-  }, [loadingState]);
-
   const handleClickStreaming = () => {
-    setIsStreaming(false);
     if (onStreamingStop) {
       onStreamingStop();
     }
@@ -120,12 +111,12 @@ export function PanelChrome({
         {showStreaming && (
           <div className={styles.item} style={itemStyles}>
             <IconButton
-              tooltip={`${isStreaming ? `Streaming ${onStreamingStop && '(click to stop)'}` : 'Streaming stopped'}`}
+              tooltip="Streaming (click to stop)"
               name="circle"
               iconType="mono"
               size="sm"
               onClick={handleClickStreaming}
-              className={isStreaming ? styles.streaming : styles.streamingStopped}
+              className={styles.streaming}
             />
           </div>
         )}
@@ -255,14 +246,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         color: theme.colors.success.text,
-      },
-    }),
-    streamingStopped: css({
-      marginRight: 0,
-      color: theme.colors.error.text,
-
-      '&:hover': {
-        color: theme.colors.error.text,
       },
     }),
     title: css({
