@@ -71,6 +71,14 @@ describe('CloudMonitoringAnnotationSupport', () => {
         name: 'Anno',
         target: {
           intervalMs: 0,
+          timeSeriesList: {
+            crossSeriesReducer: 'REDUCE_NONE',
+            filters: ['filter1', 'filter2'],
+            perSeriesAligner: 'ALIGN_NONE',
+            projectName: 'project-name',
+            text: 'text',
+            title: 'title',
+          },
           metricQuery: {
             crossSeriesReducer: 'REDUCE_NONE',
             editorMode: 'visual',
