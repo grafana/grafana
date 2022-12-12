@@ -3,6 +3,7 @@ package folder
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -13,6 +14,7 @@ var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-reques
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
+var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 
 const (
 	GeneralFolderUID     = "general"
@@ -141,7 +143,7 @@ func (f *Folder) ToLegacyModel() *models.Folder {
 		Id:        f.ID,
 		Uid:       f.UID,
 		Title:     f.Title,
-		Url:       models.GetFolderUrl(f.UID, models.SlugifyTitle(f.Title)),
+		Url:       models.GetFolderUrl(f.UID, slugify.Slugify(f.Title)),
 		Version:   0,
 		Created:   f.Created,
 		Updated:   f.Updated,

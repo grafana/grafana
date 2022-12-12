@@ -342,7 +342,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   starredItem.Uid,
+				Id:   "starred/" + starredItem.Uid,
 				Text: starredItem.Title,
 				Url:  starredItem.GetUrl(),
 			})
@@ -554,8 +554,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 		// Datasources
 		Children: []*navtree.NavLink{{
 			Id:       "connections-your-connections-datasources",
-			Text:     "Datasources",
-			SubTitle: "Manage your existing datasource connections",
+			Text:     "Data sources",
+			SubTitle: "View and manage your connected data source connections",
 			Url:      baseUrl + "/your-connections/datasources",
 		}},
 	})

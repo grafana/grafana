@@ -299,8 +299,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// (legacy) folder.
 			logger.Error("error saving folder to nested folder store", "error", err)
 			// do not shallow create error if the legacy folder delete fails
-			deleteErr := s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.UID, OrgID: cmd.OrgID, ForceDeleteRules: true, SignedInUser: user})
-			if deleteErr != nil {
+			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{
+				Id:    createdFolder.ID,
+				OrgId: createdFolder.OrgID,
+			}); deleteErr != nil {
 				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
 			}
 			return folder.FromDashboard(dash), err
@@ -415,6 +417,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		err := s.Delete(ctx, cmd)
 		if err != nil {
 			logger.Error("the delete folder on folder table failed with err: ", "error", err)
+			return err
 		}
 	}
 
@@ -453,13 +456,41 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, err
 	}
 
+	// if the new parent is the same as the current parent, we don't need to do anything
+	if foldr.ParentUID == cmd.NewParentUID {
+		return foldr, nil
+	}
+
+	// here we get the folder, we need to get the height of current folder
+	// and the depth of the new parent folder, the sum can't bypass 8
+	folderHeight, err := s.store.GetHeight(ctx, foldr.UID, cmd.OrgID, &cmd.NewParentUID)
+	if err != nil {
+		return nil, err
+	}
+	parents, err := s.GetParents(ctx, &folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
+	if err != nil {
+		return nil, err
+	}
+
+	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
+	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
+		return nil, folder.ErrMaximumDepthReached
+	}
+
+	// if the current folder is already a parent of newparent, we should return error
+	for _, parent := range parents {
+		if parent.UID == foldr.UID {
+			return nil, folder.ErrCircularReference
+		}
+	}
+
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
 		Folder: foldr,
-		// NewParentUID: &cmd.NewParentUID,
 	})
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -478,13 +509,17 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 	for _, f := range folders {
-		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules})
+		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
+		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
+			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
 			return err
 		}
 	}
+	logger.Info("deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
+		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return err
 	}
 	return nil

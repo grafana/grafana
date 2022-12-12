@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -83,6 +84,15 @@ func removeForceLoginParams(str string) string {
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
 	if !c.SignedInUser.HasRole(org.RoleEditor) && !setting.ViewersCanEdit {
 		accessForbidden(c)
+	}
+}
+
+func CanAdminPlugins(cfg *setting.Cfg) func(c *models.ReqContext) {
+	return func(c *models.ReqContext) {
+		if !plugins.ReqCanAdminPlugins(cfg)(c) {
+			accessForbidden(c)
+			return
+		}
 	}
 }
 

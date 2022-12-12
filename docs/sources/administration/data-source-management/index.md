@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/add-a-data-source/
-  - /docs/grafana/latest/datasources/datasource_permissions/
-  - /docs/grafana/latest/features/datasources/add-a-data-source/
-  - /docs/grafana/latest/enterprise/datasource_permissions/
-  - /docs/grafana/latest/permissions/datasource_permissions/
-  - /docs/grafana/latest/administration/data-source-management/
-  - /docs/grafana/latest/enterprise/query-caching/
-title: Data source management
+  - ../datasources/add-a-data-source/
+  - ../datasources/datasource_permissions/
+  - ../enterprise/datasource_permissions/
+  - ../enterprise/query-caching/
+  - ../features/datasources/add-a-data-source/
+  - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+title: Data source management
 weight: 100
 ---
 
@@ -195,7 +194,7 @@ To view available data source plugins, go to the [plugin catalog](/grafana/plugi
 For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use Grafana Enterprise, you can also filter by Enterprise-supported plugins.
+If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
 
 For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
 

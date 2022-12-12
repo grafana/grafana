@@ -16,11 +16,13 @@ import {
   urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
+  CoreApp,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import { SavedQueryLink } from 'app/features/query-library/types';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -131,6 +133,7 @@ const defaults: any = {
     overrides: [],
   },
   title: '',
+  savedQueryLink: null,
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -155,6 +158,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
+  savedQueryLink: SavedQueryLink | null = null; // Used by the experimental feature queryLibrary
 
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
@@ -363,6 +367,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
       transformations: this.transformations,
+      app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
     });
   }
 
@@ -514,6 +519,18 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       uid: dataSource.uid,
       type: dataSource.type,
     };
+
+    if (options.savedQueryUid) {
+      this.savedQueryLink = {
+        ref: {
+          uid: options.savedQueryUid,
+        },
+        variables: [],
+      };
+    } else {
+      this.savedQueryLink = null;
+    }
+
     this.cacheTimeout = options.cacheTimeout;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;

@@ -27,7 +27,7 @@ const getStyles = () => {
   };
 };
 
-type GraphTicksProps = {
+export type GraphTicksProps = {
   numTicks: number;
 };
 

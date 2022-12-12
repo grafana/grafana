@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/loki/query-editor/
+  - ../../data-sources/loki/query-editor/
 description: Guide for using the Loki data source's query editor
 keywords:
   - grafana

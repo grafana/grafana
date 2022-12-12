@@ -394,6 +394,26 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
               <EvaluationIntervalLimitExceeded />
             )}
+            <div className={styles.modalButtons}>
+              <Modal.ButtonRow>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onClose(false)}
+                  fill="outline"
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!isDirty || loading}
+                  onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
+                >
+                  {loading ? 'Saving...' : 'Save changes'}
+                </Button>
+              </Modal.ButtonRow>
+            </div>
             {rulerRuleRequests && (
               <>
                 <div>List of rules that belong to this group</div>
@@ -407,25 +427,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 />
               </>
             )}
-
-            <Modal.ButtonRow>
-              <Button
-                variant="secondary"
-                type="button"
-                disabled={loading}
-                onClick={() => onClose(false)}
-                fill="outline"
-              >
-                Close
-              </Button>
-              <Button
-                type="button"
-                disabled={!isDirty || loading}
-                onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
-              >
-                {loading ? 'Saving...' : 'Save changes'}
-              </Button>
-            </Modal.ButtonRow>
           </>
         </form>
       </FormProvider>
@@ -437,6 +438,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`
     max-width: 560px;
   `,
+  modalButtons: css`
+    top: -24px;
+    position: relative;
+  `,
   formInput: css`
     width: 275px;
     & + & {
@@ -446,8 +451,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tableWrapper: css`
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
-    height: 225px;
-    overflow: auto;
+    height: 100%;
   `,
   evalRequiredLabel: css`
     font-size: ${theme.typography.bodySmall.fontSize};
