@@ -18,7 +18,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, reportInteraction } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -35,6 +35,7 @@ const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
+  reportInteraction: jest.fn(),
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: () => {
@@ -275,6 +276,23 @@ describe('ElasticDatasource', () => {
       const { body } = await runScenario();
       expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
     });
+
+    it('should report query interaction', async () => {
+      await runScenario();
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_elasticsearch_query_executed',
+        expect.objectContaining({
+          alias: '$varAlias',
+          app: 'test',
+          has_data: true,
+          has_error: false,
+          line_limit: undefined,
+          query_type: 'metric',
+          simultaneously_sent_query_count: 1,
+          with_lucene_query: true,
+        })
+      );
+    });
   });
 
   describe('When issuing logs query with interval pattern', () => {
@@ -344,6 +362,23 @@ describe('ElasticDatasource', () => {
       expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
       expect(links[0].title).toBe('Custom Label');
     });
+
+    it('should report query interaction', async () => {
+      await setupDataSource();
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_elasticsearch_query_executed',
+        expect.objectContaining({
+          alias: '$varAlias',
+          app: undefined,
+          has_data: true,
+          has_error: false,
+          line_limit: undefined,
+          query_type: 'logs',
+          simultaneously_sent_query_count: 1,
+          with_lucene_query: true,
+        })
+      );
+    });
   });
 
   describe('When issuing document query', () => {
@@ -379,6 +414,22 @@ describe('ElasticDatasource', () => {
     it('should set size', async () => {
       const { body } = await runScenario();
       expect(body.size).toBe(500);
+    });
+    it('should report query interaction', async () => {
+      await runScenario();
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_elasticsearch_query_executed',
+        expect.objectContaining({
+          alias: undefined,
+          app: 'test',
+          has_data: false,
+          has_error: false,
+          line_limit: undefined,
+          query_type: 'raw_document',
+          simultaneously_sent_query_count: 1,
+          with_lucene_query: true,
+        })
+      );
     });
   });
 

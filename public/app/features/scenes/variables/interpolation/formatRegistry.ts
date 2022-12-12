@@ -1,6 +1,7 @@
 import { isArray, map, replace } from 'lodash';
 
 import { dateTime, Registry, RegistryItem, textUtil } from '@grafana/data';
+import { VariableType } from '@grafana/schema';
 import kbn from 'app/core/utils/kbn';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -18,6 +19,7 @@ export interface FormatRegistryItem extends RegistryItem {
 export interface FormatVariable {
   state: {
     name: string;
+    type: VariableType | string;
   };
 
   getValue(fieldPath?: string): VariableValue | undefined | null;

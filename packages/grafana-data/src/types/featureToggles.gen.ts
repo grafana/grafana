@@ -16,6 +16,7 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
+  returnUnameHeader?: boolean;
   alertingBigTransactions?: boolean;
   promQueryBuilder?: boolean;
   trimDefaults?: boolean;
@@ -81,7 +82,9 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
+  datasourceOnboarding?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
+  sessionRemoteCache?: boolean;
   alertingBacktesting?: boolean;
 }

@@ -1,6 +1,6 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 
 import {
   DataFrame,
@@ -50,9 +50,11 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
+import { trackQuery } from './tracking';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 
+export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const ELASTIC_META_FIELDS = [
@@ -616,7 +618,7 @@ export class ElasticDatasource
       });
 
       const logsVolumeQuery: ElasticsearchQuery = {
-        refId: target.refId,
+        refId: `${REF_ID_STARTER_LOG_VOLUME}${target.refId}`,
         query: target.query,
         metrics: [{ type: 'count', id: '1' }],
         timeField,
@@ -636,7 +638,7 @@ export class ElasticDatasource
     const shouldRunTroughBackend =
       request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
     if (shouldRunTroughBackend) {
-      return super.query(request);
+      return super.query(request).pipe(tap((response) => trackQuery(response, request.targets, request.app)));
     }
     let payload = '';
     const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
@@ -718,7 +720,8 @@ export class ElasticDatasource
         }
 
         return er.getTimeSeries();
-      })
+      }),
+      tap((response) => trackQuery(response, request.targets, request.app))
     );
   }
 

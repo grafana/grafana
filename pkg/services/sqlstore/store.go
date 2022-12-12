@@ -8,13 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Store interface {
 	GetDialect() migrator.Dialect
 	GetDBType() core.DbType
-	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
 	WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
