@@ -63,14 +63,6 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
     const { metricQuery, timeSeriesList, timeSeriesQuery, sloQuery } = target;
-    const projectName = this.templateSrv.replace(
-      target.timeSeriesList?.projectName ||
-        target.timeSeriesQuery?.projectName ||
-        sloQuery?.projectName ||
-        target.metricQuery.projectName ||
-        this.getDefaultProject(),
-      scopedVars
-    );
 
     return {
       ...target,
@@ -78,7 +70,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       intervalMs: this.intervalMs,
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),
-        projectName,
+        projectName: this.templateSrv.replace(
+          metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject(),
+          scopedVars
+        ),
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
@@ -86,14 +81,20 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       },
       timeSeriesList: timeSeriesList && {
         ...this.interpolateProps(timeSeriesList, scopedVars),
-        projectName,
+        projectName: this.templateSrv.replace(
+          timeSeriesList.projectName ? timeSeriesList.projectName : this.getDefaultProject(),
+          scopedVars
+        ),
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
       },
       timeSeriesQuery: timeSeriesQuery && {
         ...this.interpolateProps(timeSeriesQuery, scopedVars),
-        projectName,
+        projectName: this.templateSrv.replace(
+          timeSeriesQuery.projectName ? timeSeriesQuery.projectName : this.getDefaultProject(),
+          scopedVars
+        ),
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
     };
@@ -333,7 +334,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     // Deprecated
-    if (!isEmpty(query.metricQuery)) {
+    if (query.metricQuery) {
       if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
         return !!query.metricQuery.projectName && !!query.metricQuery.query;
       }
