@@ -71,7 +71,7 @@ export const QueryPatternsModal = (props: Props) => {
       title="Kick start your query"
       onDismiss={onClose}
       className={css`
-        width: 1500px;
+        width: 85vw;
       `}
     >
       <div className={styles.spacing}>
