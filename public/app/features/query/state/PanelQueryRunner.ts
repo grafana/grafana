@@ -58,6 +58,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string | null;
   transformations?: DataTransformerConfig[];
+  app?: CoreApp;
 }
 
 let counter = 100;
@@ -213,6 +214,7 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
+      app,
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
@@ -221,7 +223,7 @@ export class PanelQueryRunner {
     }
 
     const request: DataQueryRequest = {
-      app: CoreApp.Dashboard,
+      app: app ?? CoreApp.Dashboard,
       requestId: getNextRequestId(),
       timezone,
       panelId,

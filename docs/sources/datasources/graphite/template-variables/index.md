@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/graphite/template-variables/
+  - ../../data-sources/graphite/template-variables/
 description: Guide for using template variables when querying the Graphite data source
 keywords:
   - grafana
