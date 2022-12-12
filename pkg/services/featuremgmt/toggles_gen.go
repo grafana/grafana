@@ -7,6 +7,10 @@
 package featuremgmt
 
 const (
+	// FlagReturnUnameHeader
+	// Return user login as header for authenticated requests
+	FlagReturnUnameHeader = "returnUnameHeader"
+
 	// FlagAlertingBigTransactions
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
@@ -151,10 +155,6 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagPrometheusBufferedClient
-	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
-	FlagPrometheusBufferedClient = "prometheusBufferedClient"
-
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
@@ -267,6 +267,10 @@ const (
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 
+	// FlagDatasourceOnboarding
+	// Enable data source onboarding page
+	FlagDatasourceOnboarding = "datasourceOnboarding"
+
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources
 	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
@@ -274,4 +278,8 @@ const (
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
+
+	// FlagSessionRemoteCache
+	// Enable using remote cache for user sessions
+	FlagSessionRemoteCache = "sessionRemoteCache"
 )

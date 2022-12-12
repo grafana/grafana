@@ -171,10 +171,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
         statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
         against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted permissions.
-        Checkout the{' '}
+        Check out the{' '}
         <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">
           MySQL Data Source Docs
-        </Link>
+        </Link>{' '}
         for more information.
       </Alert>
     </>

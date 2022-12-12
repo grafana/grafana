@@ -16,6 +16,7 @@ import {
   urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
+  CoreApp,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
@@ -366,6 +367,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
       transformations: this.transformations,
+      app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
     });
   }
 

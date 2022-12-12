@@ -46,9 +46,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -97,9 +95,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -165,9 +161,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 
 			queryRes := result.Responses["A"]
@@ -236,9 +230,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -311,9 +303,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -395,9 +385,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -501,9 +489,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -557,9 +543,7 @@ func TestResponseParser(t *testing.T) {
          }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -609,9 +593,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -680,9 +662,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -751,9 +731,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -816,10 +794,8 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			result, err := parseTestResponse(targets, response)
 
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -859,9 +835,7 @@ func TestResponseParser(t *testing.T) {
          }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -908,9 +882,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -975,9 +947,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -1065,9 +1035,7 @@ func TestResponseParser(t *testing.T) {
 					}
 				]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -1139,9 +1107,7 @@ func TestResponseParser(t *testing.T) {
 				}
 			}]
 		}`
-		rp, err := newResponseParserForTest(targets, response)
-		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := parseTestResponse(targets, response)
 		assert.Nil(t, err)
 		assert.Len(t, result.Responses, 1)
 
@@ -1185,7 +1151,7 @@ func TestResponseParser(t *testing.T) {
 	})
 }
 
-func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
+func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*backend.QueryDataResponse, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	timeRange := backend.TimeRange{
@@ -1216,5 +1182,5 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 		return nil, err
 	}
 
-	return newResponseParser(response.Responses, queries, nil), nil
+	return parseResponse(response.Responses, queries)
 }

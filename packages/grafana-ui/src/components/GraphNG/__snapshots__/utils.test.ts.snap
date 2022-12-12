@@ -12,6 +12,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
       "rotate": undefined,
       "scale": "x",
@@ -39,6 +40,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
       "rotate": undefined,
       "scale": "__fixed/na-na/na-na/auto/linear/na",
@@ -129,7 +131,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -153,7 +154,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -177,7 +177,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -201,7 +200,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",
@@ -225,7 +223,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       ],
       "facets": undefined,
       "fill": [Function],
-      "gaps": [Function],
       "paths": [Function],
       "points": {
         "fill": "#ff0000",

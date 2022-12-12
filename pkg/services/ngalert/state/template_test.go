@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
 func TestTemplateCaptureValueStringer(t *testing.T) {
@@ -57,10 +58,10 @@ func TestExpandTemplate(t *testing.T) {
 		labels:   data.Labels{"instance": "foo"},
 		expected: "foo is down",
 	}, {
-		name:     "missing label in $labels returns <no value>",
+		name:     "missing label in $labels returns [no value]",
 		text:     "{{ $labels.instance }} is down",
 		labels:   data.Labels{},
-		expected: "<no value> is down",
+		expected: "[no value] is down",
 	}, {
 		name: "values are expanded into $values",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
@@ -88,7 +89,7 @@ func TestExpandTemplate(t *testing.T) {
 		},
 		expected: "foo has value 1.1",
 	}, {
-		name: "missing label in $values returns <no value>",
+		name: "missing label in $values returns [no value]",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
@@ -99,7 +100,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expected: "<no value> has value 1",
+		expected: "[no value] has value 1",
 	}, {
 		name: "missing value in $values is returned as NaN",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",

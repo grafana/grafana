@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/histogram/
-  - /docs/grafana/latest/panels/visualizations/histogram/
-  - /docs/grafana/latest/visualizations/histogram/
-  - /docs/grafana/latest/panels-visualizations/visualizations/histogram/
+  - ../../features/panels/histogram/
+  - ../../panels/visualizations/histogram/
+  - ../../visualizations/histogram/
 description: Histogram visualization
 keywords:
   - grafana
