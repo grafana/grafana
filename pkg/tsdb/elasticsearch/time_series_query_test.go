@@ -441,8 +441,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
 
 			require.Equal(t, sr.Size, 500)
-			require.Equal(t, sr.Sort["@timestamp"], map[string]string(map[string]string{"order":"desc", "unmapped_type":"boolean"}))
-			require.Equal(t, sr.Sort["_doc"], map[string]string(map[string]string{"order":"desc"}))
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string(map[string]string{"order": "desc", "unmapped_type": "boolean"}))
+			require.Equal(t, sr.Sort["_doc"], map[string]string(map[string]string{"order": "desc"}))
 			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}(map[string]interface{}{}))
 		})
 
@@ -463,8 +463,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
 
 			require.Equal(t, sr.Size, 500)
-			require.Equal(t, sr.Sort["@timestamp"], map[string]string(map[string]string{"order":"desc", "unmapped_type":"boolean"}))
-			require.Equal(t, sr.Sort["_doc"], map[string]string(map[string]string{"order":"desc"}))
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string(map[string]string{"order": "desc", "unmapped_type": "boolean"}))
+			require.Equal(t, sr.Sort["_doc"], map[string]string(map[string]string{"order": "desc"}))
 			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}(map[string]interface{}{}))
 		})
 
