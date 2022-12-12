@@ -33,9 +33,9 @@ export interface PanelChromeProps {
   title?: string;
   titleItems?: PanelChromeInfoState[];
   menu?: ReactElement;
-  /** dragClass, hoverHeader, loadingState, and states not yet implemented */
+  /** dragClass, hoverHeader not yet implemented */
   // dragClass?: string;
-  hoverHeader?: boolean;
+  // hoverHeader?: boolean;
   onStreamingStop?: () => void;
   loadingState?: LoadingState;
   dataStateNode?: ReactNode;
@@ -100,12 +100,6 @@ export function PanelChrome({
   };
   const containerStyles: CSSProperties = { width, height };
 
-  // TODO Hover header
-  // For now: Default keep header always
-  // const hasHeader = title || titleItems.length > 0 || menu || isStreaming || titleItemsNodes.length > 0;
-
-  // TODO Should we leave them both for a while?
-  // const isUsingDeprecatedLeftItems = leftItems.length > 0;
   const isUsingDeprecatedLeftItems = !dataStateNode && leftItems.length > 0;
   const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
   const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
