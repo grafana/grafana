@@ -48,6 +48,7 @@ func ProvideK8SAccess(toggles featuremgmt.FeatureToggles, router routing.RouteRe
 		home, err = os.UserHomeDir()
 		if err == nil {
 			fpath := filepath.Join(home, ".kube", "config")
+			//nolint:gosec
 			configBytes, err = os.ReadFile(fpath)
 			if err == nil {
 				config, err = clientcmd.RESTConfigFromKubeConfig(configBytes)

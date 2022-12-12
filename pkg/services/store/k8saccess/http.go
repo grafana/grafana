@@ -44,5 +44,5 @@ func (s *httpHelper) showClientInfo(c *models.ReqContext) response.Response {
 }
 
 func (s *httpHelper) doProxy(c *models.ReqContext) {
-	c.Resp.Write([]byte("TODO!"))
+	_, _ = c.Resp.Write([]byte("TODO!"))
 }
