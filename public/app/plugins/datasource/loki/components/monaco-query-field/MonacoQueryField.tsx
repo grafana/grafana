@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -78,10 +79,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initialValue }: Props) => {
+  const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-
   const langProviderRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
@@ -115,8 +116,10 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
           ensureLogQL(monaco);
         }}
         onMount={(editor, monaco) => {
+          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
+            isEditorFocused.set(false);
             onBlurRef.current(editor.getValue());
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef.current);
@@ -162,14 +165,18 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
 
           editor.onDidContentSizeChange(updateElementHeight);
           updateElementHeight();
-
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
-          editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            onRunQueryRef.current(editor.getValue());
-          });
-
+          editor.addCommand(
+            monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+            () => {
+              onRunQueryRef.current(editor.getValue());
+            },
+            'runQueryCondition' + id
+          );
+          
           editor.onDidFocusEditorText(() => {
+            isEditorFocused.set(true);
             if (editor.getValue().trim() === '') {
               editor.trigger('', 'editor.action.triggerSuggest', {});
             }

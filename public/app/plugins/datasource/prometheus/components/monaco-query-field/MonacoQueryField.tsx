@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { promLanguageDefinition } from 'monaco-promql';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -87,10 +88,12 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
 };
 
 const MonacoQueryField = (props: Props) => {
-  // we need only one instance of `overrideServices` during the lifetime of the react component
+  // we need only one instance of `overrideSerices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange } = props;
+
+  const id = uuidv4();
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
@@ -126,9 +129,14 @@ const MonacoQueryField = (props: Props) => {
           ensurePromQL(monaco);
         }}
         onMount={(editor, monaco) => {
+          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
+            isEditorFocused.set(false);
             onBlurRef.current(editor.getValue());
+          });
+          editor.onDidFocusEditorText(() => {
+            isEditorFocused.set(true);
           });
 
           // we construct a DataProvider object
@@ -213,9 +221,13 @@ const MonacoQueryField = (props: Props) => {
 
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
-          editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            onRunQueryRef.current(editor.getValue());
-          });
+          editor.addCommand(
+            monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+            () => {
+              onRunQueryRef.current(editor.getValue());
+            },
+            'isEditorFocused' + id
+          );
 
           /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
           command palette uses. Pass the event out of monaco manually
