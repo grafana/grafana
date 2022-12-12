@@ -88,12 +88,12 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
 };
 
 const MonacoQueryField = (props: Props) => {
-  // we need only one instance of `overrideSerices` during the lifetime of the react component
+  const id = uuidv4();
+
+  // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
   const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange } = props;
-
-  const id = uuidv4();
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
