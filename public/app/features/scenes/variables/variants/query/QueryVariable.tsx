@@ -29,6 +29,7 @@ import { createQueryVariableRunner } from './createQueryVariableRunner';
 import { metricNamesToVariableValues } from './utils';
 
 export interface QueryVariableState extends MultiValueVariableState {
+  type: 'query';
   datasource: DataSourceRef | string | null;
   query: any;
   regex: string;

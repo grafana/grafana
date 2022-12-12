@@ -95,6 +95,9 @@ jest.mock('../../../core/sceneGraph', () => {
         scopedVars?: ScopedVars,
         format?: string | CustomFormatterFn
       ) => {
+        if (value === '${multiDatasourceVar}') {
+          return ['datasource1', 'datasource2'];
+        }
         return value?.replace('${datasourceVar}', 'datasourceVarValue');
       },
     },
@@ -341,12 +344,23 @@ describe('QueryVariable', () => {
         name: 'test',
         datasource: '${datasourceVar}',
         query: 'query',
-        regex: '/^A/',
       });
 
       await lastValueFrom(variable.validateAndUpdate());
 
       expect(dataSourceGetterMock).toHaveBeenCalledWith('datasourceVarValue');
+    });
+
+    it('should use only the first value if ds variable is multi', async () => {
+      const variable = new QueryVariable({
+        name: 'test',
+        datasource: '${multiDatasourceVar}',
+        query: 'query',
+      });
+
+      await lastValueFrom(variable.validateAndUpdate());
+
+      expect(dataSourceGetterMock).toHaveBeenCalledWith('datasource1');
     });
   });
 });
