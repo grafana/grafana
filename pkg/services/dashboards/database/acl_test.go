@@ -4,12 +4,19 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 func TestIntegrationDashboardACLDataAccess(t *testing.T) {
@@ -22,8 +29,11 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	var dashboardStore *DashboardStore
 
 	setup := func(t *testing.T) {
-		sqlStore = sqlstore.InitTestDB(t)
-		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+		sqlStore = db.InitTestDB(t)
+		quotaService := quotatest.New(false, nil)
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		require.NoError(t, err)
 		currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		childDash = insertTestDashboard(t, dashboardStore, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
@@ -189,7 +199,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 		t.Run("Should be able to add a user permission for a team", func(t *testing.T) {
 			setup(t)
-			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			teamSvc := teamimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 
 			err = updateDashboardACL(t, dashboardStore, savedFolder.Id, models.DashboardACL{
@@ -210,7 +221,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 		t.Run("Should be able to update an existing permission for a team", func(t *testing.T) {
 			setup(t)
-			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
+			teamSvc := teamimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 			err = updateDashboardACL(t, dashboardStore, savedFolder.Id, models.DashboardACL{
 				OrgID:       1,
@@ -233,7 +245,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	t.Run("Default permissions for root folder dashboards", func(t *testing.T) {
 		setup(t)
 		var rootFolderId int64 = 0
-		//sqlStore := sqlstore.InitTestDB(t)
+		//sqlStore := db.InitTestDB(t)
 
 		query := models.GetDashboardACLInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
 
@@ -262,12 +274,18 @@ func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role str
 	sqlStore.Cfg.AutoAssignOrg = true
 	sqlStore.Cfg.AutoAssignOrgId = 1
 	sqlStore.Cfg.AutoAssignOrgRole = role
+
+	qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, qs)
+	require.NoError(t, err)
+
 	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
+	currentUser, err := usrSvc.CreateUserForTests(context.Background(), &currentUserCmd)
 	require.NoError(t, err)
-	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
-	err = sqlStore.GetUserOrgList(context.Background(), &q1)
+	orgs, err := orgService.GetUserOrgList(context.Background(), &org.GetUserOrgListQuery{UserID: currentUser.ID})
 	require.NoError(t, err)
-	require.Equal(t, org.RoleType(role), q1.Result[0].Role)
+	require.Equal(t, org.RoleType(role), orgs[0].Role)
 	return *currentUser
 }

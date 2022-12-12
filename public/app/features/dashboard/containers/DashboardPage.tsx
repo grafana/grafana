@@ -2,13 +2,13 @@ import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { locationUtil, NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -28,6 +28,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -44,10 +45,11 @@ export interface DashboardPageRouteParams {
 
 export type DashboardPageRouteSearchParams = {
   tab?: string;
-  folderId?: string;
+  folderUid?: string;
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  shareView?: string;
   panelType?: string;
   inspect?: string;
   from?: string;
@@ -96,6 +98,7 @@ export interface State {
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
+  declare context: GrafanaContextType;
   static contextType = GrafanaContext;
 
   private forceRouteReloadCounter = 0;
@@ -136,7 +139,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,
-      urlFolderId: queryParams.folderId,
+      urlFolderUid: queryParams.folderUid,
       panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
       fixUrl: !isPublic,
@@ -296,9 +299,17 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return;
     }
 
+    // Move all panels down by the height of the "add panel" widget.
+    // This is to work around an issue with react-grid-layout that can mess up the layout
+    // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
+    const addPanelWidgetHeight = 8;
+    for (const panel of dashboard.panelIterator()) {
+      panel.gridPos.y += addPanelWidgetHeight;
+    }
+
     dashboard.addPanel({
       type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: 8 },
+      gridPos: { x: 0, y: 0, w: 12, h: addPanelWidgetHeight },
       title: 'Panel Title',
     });
 
@@ -351,6 +362,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           onAddPanel={this.onAddPanel}
           kioskMode={kioskMode}
           hideTimePicker={dashboard.timepicker.hidden}
+          shareModalActiveTab={this.props.queryParams.shareView}
         />
       </header>
     );
@@ -380,7 +392,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
 
-          <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
+          <DashboardGrid
+            dashboard={dashboard}
+            isEditable={!!dashboard.meta.canEdit}
+            viewPanel={viewPanel}
+            editPanel={editPanel}
+          />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
@@ -401,6 +418,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
+        {
+          // TODO: assess if there are other places where we may want a footer, which may reveal a better place to add this
+          isPublic && <PublicDashboardFooter />
+        }
       </>
     );
   }
@@ -428,8 +449,8 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   }
 
   // Check if folder changed
-  const { folderTitle } = dashboard.meta;
-  if (folderTitle && pageNav && pageNav.parentItem?.text !== folderTitle) {
+  const { folderTitle, folderUid } = dashboard.meta;
+  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
     pageNav = {
       ...pageNav,
       parentItem: {
@@ -454,6 +475,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       ...pageNav,
       text: `${state.editPanel ? 'Edit' : 'View'} panel`,
       parentItem: pageNav,
+      url: undefined,
     };
   }
 

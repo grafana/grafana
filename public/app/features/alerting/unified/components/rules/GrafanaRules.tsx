@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Pagination, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -26,12 +26,16 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
 
-  const { loading } = useUnifiedAlertingSelector(
-    (state) => state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
-  );
+  const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
+    prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
+    ruler: state.rulerRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
+  }));
 
-  const wantsGroupedView = queryParams['view'] === 'grouped';
-  const namespacesFormat = wantsGroupedView ? namespaces : flattenGrafanaManagedRules(namespaces);
+  const loading = prom.loading || ruler.loading;
+  const hasResult = !!prom.result || !!ruler.result;
+
+  const wantsListView = queryParams['view'] === 'list';
+  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
 
@@ -54,10 +58,11 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
           key={`${namespace.name}-${group.name}`}
           namespace={namespace}
           expandAll={expandAll}
-          viewMode={wantsGroupedView ? 'grouped' : 'list'}
+          viewMode={wantsListView ? 'list' : 'grouped'}
         />
       ))}
-      {namespacesFormat?.length === 0 && <p>No rules found.</p>}
+      {hasResult && namespacesFormat?.length === 0 && <p>No rules found.</p>}
+      {!hasResult && loading && <Spinner size={24} className={styles.spinner} />}
       <Pagination
         className={styles.pagination}
         currentPage={page}
@@ -79,6 +84,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     margin-bottom: ${theme.spacing(4)};
+  `,
+  spinner: css`
+    text-align: center;
+    padding: ${theme.spacing(2)};
   `,
   pagination: getPaginationStyles(theme),
 });

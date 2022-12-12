@@ -23,7 +23,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { TempoDatasource } from '../datasource';
+import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { tokenizer } from '../syntax';
 import { TempoQuery } from '../types';
@@ -125,17 +125,20 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     fetchTags();
   }, [languageProvider]);
 
-  const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    return await languageProvider.provideCompletionItems(typeahead);
-  };
+  const onTypeahead = useCallback(
+    async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
+      return await languageProvider.provideCompletionItems(typeahead);
+    },
+    [languageProvider]
+  );
 
-  const cleanText = (text: string) => {
+  const cleanText = useCallback((text: string) => {
     const splittedText = text.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
     if (splittedText.length > 1) {
       return splittedText[splittedText.length - 1];
     }
     return text;
-  };
+  }, []);
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
     if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
@@ -156,6 +159,16 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       });
     }
   };
+
+  const handleOnChange = useCallback(
+    (value) => {
+      onChange({
+        ...query,
+        search: value,
+      });
+    },
+    [onChange, query]
+  );
 
   const templateSrv: TemplateSrv = getTemplateSrv();
 
@@ -211,14 +224,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               query={query.search}
               onTypeahead={onTypeahead}
               onBlur={onBlur}
-              onChange={(value) => {
-                onChange({
-                  ...query,
-                  search: value,
-                });
-              }}
-              placeholder="http.status_code=200 error=true"
+              onChange={handleOnChange}
               cleanText={cleanText}
+              placeholder="http.status_code=200 error=true"
               onRunQuery={onRunQuery}
               syntaxLoaded={hasSyntaxLoaded}
               portalOrigin="tempo"
@@ -284,6 +292,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <Input
               id="limit"
               value={query.limit || ''}
+              placeholder={`Default: ${DEFAULT_LIMIT}`}
               type="number"
               onChange={(v) => {
                 let limit = v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined;

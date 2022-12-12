@@ -10,9 +10,11 @@ import (
 	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -80,7 +82,7 @@ func TestDashboardService(t *testing.T) {
 					dto.User = &user.SignedInUser{}
 
 					if tc.Error == nil {
-						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
+						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 					}
 					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, true, false)
 					require.Equal(t, err, tc.Error)
@@ -88,8 +90,8 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{}, nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -99,8 +101,8 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should not return validation error if dashboard is provisioned but UI updates allowed", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
-				fakeStore.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -124,9 +126,9 @@ func TestDashboardService(t *testing.T) {
 					}
 				})
 
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(nil, nil).Once()
-				fakeStore.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(nil, nil).Once()
+				fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
 				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("alert validation error")).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
@@ -141,8 +143,8 @@ func TestDashboardService(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
-				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand"), mock.AnythingOfType("*models.DashboardProvisioning")).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -152,8 +154,8 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
-				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand"), mock.AnythingOfType("*models.DashboardProvisioning")).Return(&models.Dashboard{Data: simplejson.New()}, nil).Once()
 
 				oldRefreshInterval := setting.MinRefreshInterval
 				setting.MinRefreshInterval = "5m"
@@ -173,8 +175,8 @@ func TestDashboardService(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{}, nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -193,7 +195,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{}, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
 			})
@@ -210,7 +212,7 @@ func TestDashboardService(t *testing.T) {
 			t.Run("DeleteDashboard should delete it", func(t *testing.T) {
 				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(nil, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(nil, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
@@ -223,10 +225,25 @@ func TestDashboardService(t *testing.T) {
 			// 	require.NoError(t, err)
 			// })
 		})
+
+		t.Run("Count dashboards in folder", func(t *testing.T) {
+			fakeStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
+			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
+
+			// set up a ctx with signed in user
+			ctx := context.Background()
+			usr := &user.SignedInUser{UserID: 1}
+			ctx = appcontext.WithUser(ctx, usr)
+
+			count, err := service.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{FolderUID: "i am a folder"})
+			require.NoError(t, err)
+			require.Equal(t, int64(3), count)
+		})
 	})
 
 	t.Run("Delete user by acl", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
+		fakeStore.On("DeleteACLByUser", mock.Anything, mock.AnythingOfType("int64")).Return(nil)
 		defer fakeStore.AssertExpectations(t)
 
 		service := &DashboardServiceImpl{
@@ -237,5 +254,27 @@ func TestDashboardService(t *testing.T) {
 		}
 		err := service.DeleteACLByUser(context.Background(), 1)
 		require.NoError(t, err)
+	})
+
+	t.Run("When org user is deleted", func(t *testing.T) {
+		fakeStore := dashboards.FakeDashboardStore{}
+		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
+			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1, Result: nil}
+
+			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			require.NoError(t, err)
+
+			require.Equal(t, len(permQuery.Result), 0)
+		})
+
+		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
+			fakeStore := dashboards.FakeDashboardStore{}
+			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
+
+			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			require.NoError(t, err)
+		})
 	})
 }

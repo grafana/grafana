@@ -99,9 +99,11 @@ $height-lg: 48;
 // Typography
 // -------------------------
 /* stylelint-disable-next-line string-quotes */
-$font-family-sans-serif: "Roboto", "Helvetica", "Arial", sans-serif;
+$font-family-sans-serif: "Inter", "Helvetica", "Arial", sans-serif;
 /* stylelint-disable-next-line string-quotes */
 $font-family-monospace: 'Roboto Mono', monospace;
+
+$font-file-path: '../fonts' !default;
 
 $font-size-base: 14px !default;
 
@@ -110,14 +112,14 @@ $font-size-md: 14px !default;
 $font-size-sm: 12px !default;
 $font-size-xs: 10px !default;
 
-$line-height-base: 1.5 !default;
+$line-height-base: 1.5714285714285714 !default;
 
 $font-weight-regular: 400 !default;
 $font-weight-semi-bold: 500 !default;
 
 $font-size-h1: 2rem !default;
 $font-size-h2: 1.7142857142857142rem !default;
-$font-size-h3: 1.5rem !default;
+$font-size-h3: 1.5714285714285714rem !default;
 $font-size-h4: 1.2857142857142858rem !default;
 $font-size-h5: 1.1428571428571428rem !default;
 $font-size-h6: 1rem !default;

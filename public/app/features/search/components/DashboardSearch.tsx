@@ -1,62 +1,46 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import { useLocalStorage } from 'react-use';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { IconButton, stylesFactory, useStyles2 } from '@grafana/ui';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
-import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
 export interface Props {}
 
 export function DashboardSearch({}: Props) {
   const styles = useStyles2(getStyles);
-  const { query, onQueryChange, onCloseSearch } = useSearchQuery({});
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
 
-  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
-  if (!config.featureToggles.panelTitleSearch) {
-    includePanels = false;
-  }
-
-  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onQueryChange(e.currentTarget.value);
-  };
+  useEffect(() => stateManager.initStateFromUrl(), [stateManager]);
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
-    <div tabIndex={0} className={styles.overlay}>
+    <div className={styles.overlay}>
       <div className={styles.container}>
         <div className={styles.searchField}>
           <div>
             <input
               type="text"
-              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
-              value={query.query ?? ''}
-              onChange={onSearchQueryChange}
+              placeholder={state.includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
+              value={state.query ?? ''}
+              onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}
               onKeyDown={onKeyDown}
-              tabIndex={0}
               spellCheck={false}
               className={styles.input}
-              autoFocus
             />
           </div>
 
           <div className={styles.closeBtn}>
-            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={stateManager.onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
-          <SearchView
-            showManage={false}
-            includePanels={includePanels!}
-            setIncludePanels={setIncludePanels}
-            keyboardEvents={keyboardEvents}
-          />
+          <SearchView showManage={false} keyboardEvents={keyboardEvents} />
         </div>
       </div>
     </div>

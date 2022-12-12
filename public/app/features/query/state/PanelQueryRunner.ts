@@ -58,6 +58,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string | null;
   transformations?: DataTransformerConfig[];
+  app?: CoreApp;
 }
 
 let counter = 100;
@@ -213,6 +214,7 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
+      app,
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
@@ -221,7 +223,7 @@ export class PanelQueryRunner {
     }
 
     const request: DataQueryRequest = {
-      app: CoreApp.Dashboard,
+      app: app ?? CoreApp.Dashboard,
       requestId: getNextRequestId(),
       timezone,
       panelId,
@@ -370,13 +372,14 @@ async function getDataSource(
   scopedVars: ScopedVars,
   publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
+  if (!publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+    return datasource;
+  }
+
+  const ds = await getDatasourceSrv().get(datasource, scopedVars);
   if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(datasource);
+    return new PublicDashboardDataSource(ds);
   }
 
-  if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
-  }
-
-  return await getDatasourceSrv().get(datasource as string, scopedVars);
+  return ds;
 }

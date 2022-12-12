@@ -10,8 +10,6 @@ import { GeomapPanel } from '../GeomapPanel';
 import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
 import { GeomapPanelOptions, MapLayerState } from '../types';
 
-import { initMapView } from './view';
-
 export function getStyleDimension(
   frame: DataFrame | undefined,
   style: StyleConfigState,
@@ -77,7 +75,7 @@ async function initGeojsonFiles() {
 }
 
 export const getNewOpenLayersMap = (panel: GeomapPanel, options: GeomapPanelOptions, div: HTMLDivElement) => {
-  const [view] = initMapView(options.view, undefined, undefined);
+  const [view] = panel.initMapView(options.view, undefined);
   return (panel.map = new OpenLayersMap({
     view: view,
     pixelRatio: 1, // or zoom?

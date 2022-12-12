@@ -18,6 +18,8 @@ export interface Props {
   contentClassName?: string;
   loading?: boolean;
   labelId?: string;
+  headerDataTestId?: string;
+  contentDataTestId?: string;
 }
 
 export const CollapsableSection: FC<Props> = ({
@@ -29,6 +31,8 @@ export const CollapsableSection: FC<Props> = ({
   children,
   labelId,
   loading = false,
+  headerDataTestId,
+  contentDataTestId,
 }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
@@ -65,12 +69,16 @@ export const CollapsableSection: FC<Props> = ({
             <Icon name={open ? 'angle-up' : 'angle-down'} className={styles.icon} />
           )}
         </button>
-        <div className={styles.label} id={`collapse-label-${id}`}>
+        <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
           {label}
         </div>
       </div>
       {open && (
-        <div id={`collapse-content-${id}`} className={cx(styles.content, contentClassName)}>
+        <div
+          id={`collapse-content-${id}`}
+          className={cx(styles.content, contentClassName)}
+          data-testid={contentDataTestId}
+        >
           {children}
         </div>
       )}

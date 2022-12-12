@@ -39,9 +39,11 @@ const (
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
+	flameGraphQuery                   queryType = "flame_graph"
 	rawFrameQuery                     queryType = "raw_frame"
 	csvFileQueryType                  queryType = "csv_file"
 	csvContentQueryType               queryType = "csv_content"
+	traceType                         queryType = "trace"
 )
 
 type queryType string
@@ -196,6 +198,11 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
+		ID:   string(flameGraphQuery),
+		Name: "Flame Graph",
+	})
+
+	s.registerScenario(&Scenario{
 		ID:   string(rawFrameQuery),
 		Name: "Raw Frames",
 	})
@@ -210,6 +217,11 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      string(csvContentQueryType),
 		Name:    "CSV Content",
 		handler: s.handleCsvContentScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:   string(traceType),
+		Name: "Trace",
 	})
 
 	s.queryMux.HandleFunc("", s.handleFallbackScenario)

@@ -1,10 +1,12 @@
 import React from 'react';
 
-export function useCombinedRefs<T>(...refs: any) {
-  const targetRef = React.useRef<T>(null);
+export function useCombinedRefs<T>(
+  ...refs: Array<React.MutableRefObject<T | null> | React.ForwardedRef<T | null> | ((instance: T | null) => void)>
+) {
+  const targetRef = React.useRef<T | null>(null);
 
   React.useEffect(() => {
-    refs.forEach((ref: any) => {
+    refs.forEach((ref) => {
       if (!ref) {
         return;
       }

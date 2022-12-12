@@ -67,3 +67,9 @@ func (params *urlBuilder) BuildMetricsURL() string {
 
 	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", resourceURI)
 }
+
+// BuildSubscriptionMetricsURL returns a URL for querying metrics for all resources in a subscription
+// It requires to set a $filter and a region parameter
+func BuildSubscriptionMetricsURL(subscription string) string {
+	return fmt.Sprintf("/subscriptions/%s/providers/microsoft.insights/metrics", subscription)
+}

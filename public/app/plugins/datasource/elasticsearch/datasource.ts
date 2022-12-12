@@ -1,13 +1,12 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 
 import {
   DataFrame,
   DataLink,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithQueryImportSupport,
@@ -17,7 +16,6 @@ import {
   Field,
   getDefaultTimeRange,
   AbstractQuery,
-  getLogLevelFromKey,
   LogLevel,
   LogRowModel,
   MetricFindValue,
@@ -25,14 +23,18 @@ import {
   TimeRange,
   toUtc,
   QueryFixAction,
+  CoreApp,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
+import { getLogLevelFromKey } from '../../../features/logs/utils';
 
+import { ElasticResponse } from './ElasticResponse';
+import { IndexPattern } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
@@ -47,12 +49,12 @@ import {
   Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { ElasticResponse } from './elastic_response';
-import { IndexPattern } from './index_pattern';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
+import { trackQuery } from './tracking';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 
+export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const ELASTIC_META_FIELDS = [
@@ -68,7 +70,7 @@ const ELASTIC_META_FIELDS = [
 ];
 
 export class ElasticDatasource
-  extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions>
+  extends DataSourceWithBackend<ElasticsearchQuery, ElasticsearchOptions>
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
@@ -616,7 +618,7 @@ export class ElasticDatasource
       });
 
       const logsVolumeQuery: ElasticsearchQuery = {
-        refId: target.refId,
+        refId: `${REF_ID_STARTER_LOG_VOLUME}${target.refId}`,
         query: target.query,
         metrics: [{ type: 'count', id: '1' }],
         timeField,
@@ -632,9 +634,14 @@ export class ElasticDatasource
     });
   }
 
-  query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+    const shouldRunTroughBackend =
+      request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
+    if (shouldRunTroughBackend) {
+      return super.query(request).pipe(tap((response) => trackQuery(response, request.targets, request.app)));
+    }
     let payload = '';
-    const targets = this.interpolateVariablesInQueries(cloneDeep(options.targets), options.scopedVars);
+    const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
@@ -667,7 +674,7 @@ export class ElasticDatasource
       } else {
         logLimits.push();
         if (target.alias) {
-          target.alias = this.interpolateLuceneQuery(target.alias, options.scopedVars);
+          target.alias = this.interpolateLuceneQuery(target.alias, request.scopedVars);
         }
 
         queryObj = this.queryBuilder.build(target, adhocFilters);
@@ -676,7 +683,7 @@ export class ElasticDatasource
       const esQuery = JSON.stringify(queryObj);
 
       const searchType = 'query_then_fetch';
-      const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+      const header = this.getQueryHeader(searchType, request.range.from, request.range.to);
       payload += header + '\n';
 
       payload += esQuery + '\n';
@@ -692,9 +699,9 @@ export class ElasticDatasource
     // it as an integer not as string with digits. This is because elastic will convert the string only if the time
     // field is specified as type date (which probably should) but can also be specified as integer (millisecond epoch)
     // and then sending string will error out.
-    payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf().toString());
-    payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
-    payload = this.templateSrv.replace(payload, options.scopedVars);
+    payload = payload.replace(/"\$timeFrom"/g, request.range.from.valueOf().toString());
+    payload = payload.replace(/"\$timeTo"/g, request.range.to.valueOf().toString());
+    payload = this.templateSrv.replace(payload, request.scopedVars);
 
     const url = this.getMultiSearchUrl();
 
@@ -713,7 +720,8 @@ export class ElasticDatasource
         }
 
         return er.getTimeSeries();
-      })
+      }),
+      tap((response) => trackQuery(response, request.targets, request.app))
     );
   }
 

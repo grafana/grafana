@@ -18,7 +18,7 @@ export function ExternalAlertmanagerDataSources({ alertmanagers, inactive }: Ext
 
   return (
     <>
-      <h5>Alertmanagers data sources</h5>
+      <h5>Alertmanagers Receiving Grafana-managed alerts</h5>
       <div className={styles.muted}>
         Alertmanager data sources support a configuration setting that allows you to choose to send Grafana-managed
         alerts to that Alertmanager. <br />
@@ -93,7 +93,7 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
       <Card.Meta>{url}</Card.Meta>
       <Card.Actions>
         <LinkButton href={makeDataSourceLink(dataSource)} size="sm" variant="secondary">
-          Go to datasouce
+          Go to datasource
         </LinkButton>
       </Card.Actions>
     </Card>
@@ -102,6 +102,8 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   muted: css`
+    font-size: ${theme.typography.bodySmall.fontSize};
+    line-height: ${theme.typography.bodySmall.lineHeight};
     color: ${theme.colors.text.secondary};
   `,
   externalHeading: css`

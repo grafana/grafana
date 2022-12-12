@@ -3,67 +3,68 @@ package teamimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	store *sqlstore.SQLStore
+	store store
 }
 
-func ProvideService(sqlStore *sqlstore.SQLStore) team.Service {
-	return &Service{store: sqlStore}
+func ProvideService(db db.DB, cfg *setting.Cfg) team.Service {
+	return &Service{store: &xormStore{db: db, cfg: cfg}}
 }
 
 func (s *Service) CreateTeam(name, email string, orgID int64) (models.Team, error) {
-	return s.store.CreateTeam(name, email, orgID)
+	return s.store.Create(name, email, orgID)
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
-	return s.store.UpdateTeam(ctx, cmd)
+	return s.store.Update(ctx, cmd)
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error {
-	return s.store.DeleteTeam(ctx, cmd)
+	return s.store.Delete(ctx, cmd)
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
-	return s.store.SearchTeams(ctx, query)
+	return s.store.Search(ctx, query)
 }
 
 func (s *Service) GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
-	return s.store.GetTeamById(ctx, query)
+	return s.store.GetById(ctx, query)
 }
 
 func (s *Service) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	return s.store.GetTeamsByUser(ctx, query)
+	return s.store.GetByUser(ctx, query)
 }
 
 func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
-	return s.store.AddTeamMember(userID, orgID, teamID, isExternal, permission)
+	return s.store.AddMember(userID, orgID, teamID, isExternal, permission)
 }
 
 func (s *Service) UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
-	return s.store.UpdateTeamMember(ctx, cmd)
+	return s.store.UpdateMember(ctx, cmd)
 }
 
 func (s *Service) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error) {
-	return s.store.IsTeamMember(orgId, teamId, userId)
+	return s.store.IsMember(orgId, teamId, userId)
 }
 
 func (s *Service) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
-	return s.store.RemoveTeamMember(ctx, cmd)
+	return s.store.RemoveMember(ctx, cmd)
 }
 
 func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
-	return s.store.GetUserTeamMemberships(ctx, orgID, userID, external)
+	return s.store.GetMemberships(ctx, orgID, userID, external)
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
-	return s.store.GetTeamMembers(ctx, query)
+	return s.store.GetMembers(ctx, query)
 }
 
 func (s *Service) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
-	return s.store.IsAdminOfTeams(ctx, query)
+	return s.store.IsAdmin(ctx, query)
 }

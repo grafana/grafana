@@ -14,20 +14,43 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
-type FakeLoader struct {
-	LoadFunc func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error)
-
-	LoadedPaths []string
+type FakePluginInstaller struct {
+	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
+	// Remove removes a plugin from the store.
+	RemoveFunc func(ctx context.Context, pluginID string) error
 }
 
-func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
-	if l.LoadFunc != nil {
-		return l.LoadFunc(ctx, class, paths, ignore)
+func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	if i.AddFunc != nil {
+		return i.AddFunc(ctx, pluginID, version, opts)
 	}
+	return nil
+}
 
-	l.LoadedPaths = append(l.LoadedPaths, paths...)
+func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
+	if i.RemoveFunc != nil {
+		return i.RemoveFunc(ctx, pluginID)
+	}
+	return nil
+}
 
+type FakeLoader struct {
+	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
+	UnloadFunc func(_ context.Context, _ string) error
+}
+
+func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
+	if l.LoadFunc != nil {
+		return l.LoadFunc(ctx, class, paths)
+	}
 	return nil, nil
+}
+
+func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
+	if l.UnloadFunc != nil {
+		return l.UnloadFunc(ctx, pluginID)
+	}
+	return nil
 }
 
 type FakePluginClient struct {
@@ -207,15 +230,20 @@ func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID,
 }
 
 type FakePluginStorage struct {
+	Store        map[string]struct{}
 	AddFunc      func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 	RegisterFunc func(_ context.Context, pluginID, pluginDir string) error
 	RemoveFunc   func(_ context.Context, pluginID string) error
-	Added        map[string]string
-	Removed      map[string]int
+}
+
+func NewFakePluginStorage() *FakePluginStorage {
+	return &FakePluginStorage{
+		Store: map[string]struct{}{},
+	}
 }
 
 func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir string) error {
-	s.Added[pluginID] = pluginDir
+	s.Store[pluginID] = struct{}{}
 	if s.RegisterFunc != nil {
 		return s.RegisterFunc(ctx, pluginID, pluginDir)
 	}
@@ -223,6 +251,7 @@ func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir st
 }
 
 func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	s.Store[pluginID] = struct{}{}
 	if s.AddFunc != nil {
 		return s.AddFunc(ctx, pluginID, z)
 	}
@@ -230,7 +259,7 @@ func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.Rea
 }
 
 func (s *FakePluginStorage) Remove(ctx context.Context, pluginID string) error {
-	s.Removed[pluginID]++
+	delete(s.Store, pluginID)
 	if s.RemoveFunc != nil {
 		return s.RemoveFunc(ctx, pluginID)
 	}
@@ -265,4 +294,76 @@ func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
 		return m.StopFunc(ctx, pluginID)
 	}
 	return nil
+}
+
+type FakeBackendProcessProvider struct {
+	Requested map[string]int
+	Invoked   map[string]int
+}
+
+func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
+	return &FakeBackendProcessProvider{
+		Requested: make(map[string]int),
+		Invoked:   make(map[string]int),
+	}
+}
+
+func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	pr.Requested[p.ID]++
+	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		pr.Invoked[pluginID]++
+		return &FakePluginClient{}, nil
+	}
+}
+
+type FakeLicensingService struct {
+	TokenRaw string
+}
+
+func NewFakeLicensingService() *FakeLicensingService {
+	return &FakeLicensingService{}
+}
+
+func (t *FakeLicensingService) Expiry() int64 {
+	return 0
+}
+
+func (t *FakeLicensingService) Edition() string {
+	return ""
+}
+
+func (t *FakeLicensingService) StateInfo() string {
+	return ""
+}
+
+func (t *FakeLicensingService) ContentDeliveryPrefix() string {
+	return ""
+}
+
+func (t *FakeLicensingService) LicenseURL(_ bool) string {
+	return ""
+}
+
+func (t *FakeLicensingService) Environment() map[string]string {
+	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.TokenRaw}
+}
+
+func (*FakeLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*FakeLicensingService) FeatureEnabled(_ string) bool {
+	return false
+}
+
+type FakeRoleRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeRoleRegistry() *FakeRoleRegistry {
+	return &FakeRoleRegistry{}
+}
+
+func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
+	return f.ExpectedErr
 }

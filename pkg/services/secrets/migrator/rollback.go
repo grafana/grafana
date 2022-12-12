@@ -6,17 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func (s simpleSecret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -24,7 +24,9 @@ func (s simpleSecret) rollback(
 		Secret []byte
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
+	}); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -34,7 +36,7 @@ func (s simpleSecret) rollback(
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
 			if err != nil {
 				logger.Warn("Could not decrypt secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
@@ -74,7 +76,7 @@ func (s b64Secret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -82,7 +84,9 @@ func (s b64Secret) rollback(
 		Secret string
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
+	}); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -92,7 +96,7 @@ func (s b64Secret) rollback(
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			decoded, err := s.encoding.DecodeString(row.Secret)
 			if err != nil {
 				logger.Warn("Could not decode base64-encoded secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
@@ -146,7 +150,7 @@ func (s jsonSecret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var rows []struct {
@@ -154,7 +158,9 @@ func (s jsonSecret) rollback(
 		SecureJsonData map[string][]byte
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows)
+	}); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -164,7 +170,7 @@ func (s jsonSecret) rollback(
 			continue
 		}
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			decrypted, err := secretsSrv.DecryptJsonData(ctx, row.SecureJsonData)
 			if err != nil {
 				logger.Warn("Could not decrypt secrets while rolling them back", "table", s.tableName, "id", row.Id, "error", err)
@@ -208,7 +214,7 @@ func (s alertingSecret) rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	secretKey string,
 ) (anyFailure bool) {
 	var results []struct {
@@ -217,7 +223,9 @@ func (s alertingSecret) rollback(
 	}
 
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
-	if err := sqlStore.NewSession(ctx).SQL(selectSQL).Find(&results); err != nil {
+	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(selectSQL).Find(&results)
+	}); err != nil {
 		logger.Warn("Could not find any alert_configuration secret to roll back")
 		return true
 	}
@@ -225,7 +233,7 @@ func (s alertingSecret) rollback(
 	for _, result := range results {
 		result := result
 
-		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {
 				logger.Warn("Could not load configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)

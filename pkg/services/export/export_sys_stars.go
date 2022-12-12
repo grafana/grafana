@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 func exportSystemStars(helper *commitHelper, job *gitExportJob) error {
 	byUser := make(map[int64][]string, 50)
 
-	err := job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+	err := job.sql.WithDbSession(helper.ctx, func(sess *db.Session) error {
 		type starResult struct {
 			User int64  `xorm:"user_id"`
 			UID  string `xorm:"uid"`

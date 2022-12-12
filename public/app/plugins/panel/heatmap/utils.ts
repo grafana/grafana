@@ -250,6 +250,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     placement: AxisPlacement.Bottom,
     isTime: true,
     theme: theme,
+    timeZone,
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;
@@ -263,10 +264,10 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
-  const isOrdianalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
+  const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
-  // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdianalY)
+  // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdinalY)
   const yScaleKey = 'y_' + (Math.random() + 1).toString(36).substring(7);
 
   builder.addScale({
@@ -288,7 +289,7 @@ export function prepConfig(opts: PrepConfigOpts) {
               ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
               : [dataMin, dataMax];
 
-            if (shouldUseLogScale && !isOrdianalY) {
+            if (shouldUseLogScale && !isOrdinalY) {
               let yExp = u.scales[yScaleKey].log!;
               let log = yExp === 2 ? Math.log2 : Math.log10;
 
@@ -353,7 +354,7 @@ export function prepConfig(opts: PrepConfigOpts) {
                 scaleMax *= yExp / 2;
               }
 
-              if (!isOrdianalY) {
+              if (!isOrdinalY) {
                 // guard against <= 0
                 if (explicitMin != null && explicitMin > 0) {
                   // snap down to magnitude
@@ -388,7 +389,7 @@ export function prepConfig(opts: PrepConfigOpts) {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
 
-              if (!isOrdianalY) {
+              if (!isOrdinalY) {
                 scaleMin = explicitMin ?? scaleMin;
                 scaleMax = explicitMax ?? scaleMax;
               }
@@ -407,8 +408,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,
     theme: theme,
-    formatValue: (v, decimals) => formattedValueToString(dispY(v, yField.config.decimals ?? decimals)),
-    splits: isOrdianalY
+    formatValue: (v, decimals) => formattedValueToString(dispY(v, decimals)),
+    splits: isOrdinalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
           if (!meta.yOrdinalDisplay) {
@@ -436,7 +437,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           return splits;
         }
       : undefined,
-    values: isOrdianalY
+    values: isOrdinalY
       ? (self: uPlot, splits) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
           if (meta.yOrdinalDisplay) {
@@ -747,8 +748,6 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
         arc
       ) => {
         //console.time('heatmapPathsSparse');
-
-        [dataX, dataY] = dataY as unknown as number[][];
 
         let points = new Path2D();
         let fillPaths = [points];

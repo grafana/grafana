@@ -17,9 +17,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -57,19 +57,19 @@ func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, r
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, logger log.Logger, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
+	ctxLogger := logger.FromContext(ctx)
 
-	queries, err := e.buildQueries(originalQueries, dsInfo)
+	queries, err := e.buildQueries(ctxLogger, originalQueries, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		result.Responses[query.RefID] = e.executeQuery(ctx, ctxLogger, query, dsInfo, client, url, tracer)
 	}
 
 	return result, nil
@@ -82,7 +82,7 @@ type argJSONQuery struct {
 	} `json:"azureResourceGraph"`
 }
 
-func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
+func (e *AzureResourceGraphDatasource) buildQueries(logger log.Logger, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
 	var azureResourceGraphQueries []*AzureResourceGraphQuery
 
 	for _, query := range queries {
@@ -93,14 +93,14 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 		}
 
 		azureResourceGraphTarget := queryJSONModel.AzureResourceGraph
-		azlog.Debug("AzureResourceGraph", "target", azureResourceGraphTarget)
+		logger.Debug("AzureResourceGraph", "target", azureResourceGraphTarget)
 
 		resultFormat := azureResourceGraphTarget.ResultFormat
 		if resultFormat == "" {
 			resultFormat = "table"
 		}
 
-		interpolatedQuery, err := macros.KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
+		interpolatedQuery, err := macros.KqlInterpolate(logger, query, dsInfo, azureResourceGraphTarget.Query)
 
 		if err != nil {
 			return nil, err
@@ -118,7 +118,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 	return azureResourceGraphQueries, nil
 }
 
-func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client,
+func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger log.Logger, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	dsURL string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
@@ -156,7 +156,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, dsInfo, reqBody, dsURL)
+	req, err := e.createRequest(ctx, logger, reqBody, dsURL)
 
 	if err != nil {
 		dataResponse.Error = err
@@ -177,20 +177,24 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	tracer.Inject(ctx, req.Header, span)
 
-	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
+	logger.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
 	res, err := client.Do(req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	argResponse, err := e.unmarshalResponse(res)
+	argResponse, err := e.unmarshalResponse(logger, res)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, loganalytics.AzureLogAnalyticsResponse{})
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
+	}
+	if frame == nil {
+		// empty response
+		return dataResponse
 	}
 
 	azurePortalUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
@@ -224,10 +228,10 @@ func AddConfigLinks(frame data.Frame, dl string) data.Frame {
 	return frame
 }
 
-func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, reqBody []byte, url string) (*http.Request, error) {
+func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, logger log.Logger, reqBody []byte, url string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		azlog.Debug("Failed to create request", "error", err)
+		logger.Debug("Failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
@@ -237,19 +241,19 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	return req, nil
 }
 
-func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (AzureResourceGraphResponse, error) {
+func (e *AzureResourceGraphDatasource) unmarshalResponse(logger log.Logger, res *http.Response) (AzureResourceGraphResponse, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return AzureResourceGraphResponse{}, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			azlog.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
+		logger.Debug("Request failed", "status", res.Status, "body", string(body))
 		return AzureResourceGraphResponse{}, fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body))
 	}
 
@@ -258,7 +262,7 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	d.UseNumber()
 	err = d.Decode(&data)
 	if err != nil {
-		azlog.Debug("Failed to unmarshal azure resource graph response", "error", err, "status", res.Status, "body", string(body))
+		logger.Debug("Failed to unmarshal azure resource graph response", "error", err, "status", res.Status, "body", string(body))
 		return AzureResourceGraphResponse{}, err
 	}
 

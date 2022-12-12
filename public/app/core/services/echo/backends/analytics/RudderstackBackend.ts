@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import type { identify, load, page, track } from 'rudder-sdk-js'; // SDK is loaded dynamically from config, so we only import types from the SDK package
 
 import { CurrentUserDTO } from '@grafana/data';
@@ -11,7 +10,7 @@ import {
   PageviewEchoEvent,
 } from '@grafana/runtime';
 
-import { getUserIdentifier } from '../../utils';
+import { getUserIdentifier, loadScript } from '../../utils';
 
 interface Rudderstack {
   identify: typeof identify;
@@ -41,12 +40,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
   constructor(public options: RudderstackBackendOptions) {
     const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
-
-    $.ajax({
-      url,
-      dataType: 'script',
-      cache: true,
-    });
+    loadScript(url);
 
     const tempRudderstack = ((window as any).rudderanalytics = []);
 
@@ -81,6 +75,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       window.rudderanalytics?.identify?.(identifier, {
         email: options.user.email,
         orgId: options.user.orgId,
+        language: options.user.language,
       });
     }
   }

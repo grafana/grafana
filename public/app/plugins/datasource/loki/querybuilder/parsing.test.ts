@@ -457,7 +457,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: LokiOperationId.QuantileOverTime, params: ['0.99', '1m'] }],
+        operations: [{ id: LokiOperationId.QuantileOverTime, params: ['1m', '0.99'] }],
       })
     );
   });
@@ -568,6 +568,21 @@ describe('buildVisualQueryFromString', () => {
             },
           },
         ],
+      })
+    );
+  });
+
+  it('parses simple query with quotes in label value', () => {
+    expect(buildVisualQueryFromString('{app="\\"frontend\\""}')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: '\\"frontend\\"',
+            label: 'app',
+          },
+        ],
+        operations: [],
       })
     );
   });

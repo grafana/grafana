@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/access-control/custom-role-actions-scopes/
-  - /docs/grafana/latest/enterprise/access-control/permissions/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+  - ../../../enterprise/access-control/custom-role-actions-scopes/
+  - ../../../enterprise/access-control/permissions/
 description: Learn about Grafana RBAC permissions, actions, and scopes.
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
@@ -116,7 +115,7 @@ The following list contains role-based access control actions.
 | `serviceaccounts.permissions:write`  | `serviceaccounts:*`                                                                     | Update Grafana service account permissions to control who can do what with the service account.                                                                                                  |
 | `serviceaccounts.permissions:read`   | `serviceaccounts:*`                                                                     | Read Grafana service account permissions to see who can do what with the service account.                                                                                                        |
 | `settings:read`                      | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Read the [Grafana configuration settings]({{< relref "../../../../setup-grafana/configure-grafana/" >}})                                                                                         |
-| `settings:write`                     | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update any Grafana configuration settings that can be [updated at runtime]({{< relref "../../../../enterprise/settings-updates/" >}}).                                                           |
+| `settings:write`                     | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update any Grafana configuration settings that can be [updated at runtime]({{< relref "../../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}}).                            |
 | `status:accesscontrol`               | `services:accesscontrol`                                                                | Get access-control enabled status.                                                                                                                                                               |
 | `teams.permissions:read`             | `teams:*`<br>`teams:id:*`                                                               | Read members and External Group Synchronization setup for teams.                                                                                                                                 |
 | `teams.permissions:write`            | `teams:*`<br>`teams:id:*`                                                               | Add, remove and update members and manage External Group Synchronization setup for teams.                                                                                                        |

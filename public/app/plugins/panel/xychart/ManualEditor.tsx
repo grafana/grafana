@@ -1,21 +1,21 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
-import { Button, Field, IconButton, useStyles } from '@grafana/ui';
+import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { Button, Field, IconButton, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
 import { XYChartOptions, ScatterSeriesConfig, defaultScatterConfig } from './models.gen';
 
-export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XYChartOptions>> = ({
+export const ManualEditor = ({
   value,
   onChange,
   context,
-}) => {
-  const [selected, setSelected] = useState<number>(-1);
-  const style = useStyles(getStyles);
+}: StandardEditorProps<ScatterSeriesConfig[], any, XYChartOptions>) => {
+  const [selected, setSelected] = useState(0);
+  const style = useStyles2(getStyles);
 
   const onFieldChange = (val: any | undefined, index: number, field: string) => {
     onChange(
@@ -36,21 +36,26 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
         pointSize: defaultScatterConfig.pointSize,
       },
     ]);
+    setSelected(value.length);
   };
+
+  // Component-did-mount callback to check if a new series should be created
+  useEffect(() => {
+    if (!value?.length) {
+      createNewSeries(); // adds a new series
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSeriesDelete = (index: number) => {
     onChange(value.filter((_, i) => i !== index));
   };
 
-  const { options } = context;
+  // const { options } = context;
 
   const getRowStyle = (index: number) => {
     return index === selected ? `${style.row} ${style.sel}` : style.row;
   };
-
-  if (options === undefined || !options.series) {
-    return null;
-  }
 
   return (
     <>
@@ -59,7 +64,7 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
       </Button>
 
       <div className={style.marginBot}>
-        {options.series.map((series, index) => {
+        {value.map((series, index) => {
           return (
             <div key={`series/${index}`} className={getRowStyle(index)} onMouseDown={() => setSelected(index)}>
               <LayerName
@@ -78,12 +83,12 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
         })}
       </div>
 
-      {selected >= 0 && options.series[selected] && (
+      {selected >= 0 && value[selected] && (
         <>
           <div key={`series/${selected}`}>
             <Field label={'X Field'}>
               <FieldNamePicker
-                value={options.series[selected].x ?? ''}
+                value={value[selected].x ?? ''}
                 context={context}
                 onChange={(field) => onFieldChange(field, selected, 'x')}
                 item={{} as any}
@@ -91,7 +96,7 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
             </Field>
             <Field label={'Y Field'}>
               <FieldNamePicker
-                value={options.series[selected].y ?? ''}
+                value={value[selected].y ?? ''}
                 context={context}
                 onChange={(field) => onFieldChange(field, selected, 'y')}
                 item={{} as any}
@@ -99,7 +104,7 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
             </Field>
             <Field label={'Point color'}>
               <ColorDimensionEditor
-                value={options.series[selected].pointColor!}
+                value={value[selected].pointColor!}
                 context={context}
                 onChange={(field) => onFieldChange(field, selected, 'pointColor')}
                 item={{} as any}
@@ -107,10 +112,10 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
             </Field>
             <Field label={'Point size'}>
               <ScaleDimensionEditor
-                value={options.series[selected].pointSize!}
+                value={value[selected].pointSize!}
                 context={context}
                 onChange={(field) => onFieldChange(field, selected, 'pointSize')}
-                item={{ settings: { min: 1, max: 50 } } as any}
+                item={{ settings: { min: 1, max: 100 } } as any}
               />
             </Field>
           </div>
@@ -120,34 +125,34 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   marginBot: css`
     margin-bottom: 20px;
   `,
   row: css`
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
-    border-radius: ${theme.border.radius.sm};
-    background: ${theme.colors.bg2};
-    min-height: ${theme.spacing.formInputHeight}px;
+    padding: ${theme.spacing(0.5, 1)};
+    border-radius: ${theme.shape.borderRadius(1)};
+    background: ${theme.colors.background.secondary};
+    min-height: ${theme.spacing(4)};
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 3px;
     cursor: pointer;
 
-    border: 1px solid ${theme.colors.formInputBorder};
+    border: 1px solid ${theme.components.input.borderColor};
     &:hover {
-      border: 1px solid ${theme.colors.formInputBorderHover};
+      border: 1px solid ${theme.components.input.borderHover};
     }
   `,
   sel: css`
-    border: 1px solid ${theme.colors.formInputBorderActive};
+    border: 1px solid ${theme.colors.primary.border};
     &:hover {
-      border: 1px solid ${theme.colors.formInputBorderActive};
+      border: 1px solid ${theme.colors.primary.border};
     }
   `,
   actionIcon: css`
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
     &:hover {
       color: ${theme.colors.text};
     }

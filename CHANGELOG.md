@@ -1,3 +1,751 @@
+<!-- 9.3.1 START -->
+
+# 9.3.1 (2022-11-30)
+
+### Features and enhancements
+
+- **Connections:** Update "Your connections/Data sources" page. [#58589](https://github.com/grafana/grafana/pull/58589), [@mikkancso](https://github.com/mikkancso)
+
+### Bug fixes
+
+- **Accessibility:** Increase badge constrast to be WCAG AA compliant. [#59531](https://github.com/grafana/grafana/pull/59531), [@eledobleefe](https://github.com/eledobleefe)
+
+<!-- 9.3.1 END -->
+<!-- 9.3.0 START -->
+
+# 9.3.0 (2022-11-30)
+
+### Features and enhancements
+
+- **Alerting:** Enable interpolation for notification policies in file provisioning. [#58956](https://github.com/grafana/grafana/pull/58956), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **Azure Monitor Logs:** Avoid warning when the response is empty. [#59211](https://github.com/grafana/grafana/pull/59211), [@andresmgot](https://github.com/andresmgot)
+- **Azure Monitor:** Add support to customized routes. [#54829](https://github.com/grafana/grafana/pull/54829), [@ms-hujia](https://github.com/ms-hujia)
+- **Canvas:** Add icon value mapping. [#59013](https://github.com/grafana/grafana/pull/59013), [@nmarrs](https://github.com/nmarrs)
+- **CloudWatch:** Cross-account querying support. [#59362](https://github.com/grafana/grafana/pull/59362), [@sunker](https://github.com/sunker)
+- **Docs:** Update `merge-pull-request.md` regarding backport policies. [#59239](https://github.com/grafana/grafana/pull/59239), [@dsotirakis](https://github.com/dsotirakis)
+- **GaugePanel:** Setting the neutral-point of a gauge. [#53989](https://github.com/grafana/grafana/pull/53989), [@sfranzis](https://github.com/sfranzis)
+- **Geomap:** Improve location editor. [#58017](https://github.com/grafana/grafana/pull/58017), [@drew08t](https://github.com/drew08t)
+- **Internationalization:** Enable internationalization by default. [#59204](https://github.com/grafana/grafana/pull/59204), [@joshhunt](https://github.com/joshhunt)
+- **Logs:** Add `Download logs` button to log log-browser. [#55163](https://github.com/grafana/grafana/pull/55163), [@svennergr](https://github.com/svennergr)
+- **Loki:** Add `gzip` compression to resource calls. [#59059](https://github.com/grafana/grafana/pull/59059), [@svennergr](https://github.com/svennergr)
+- **Loki:** Add improvements to loki label browser. [#59387](https://github.com/grafana/grafana/pull/59387), [@gwdawson](https://github.com/gwdawson)
+- **Loki:** Make label browser accessible in query builder. [#58525](https://github.com/grafana/grafana/pull/58525), [@gwdawson](https://github.com/gwdawson)
+- **Loki:** Remove raw query toggle. [#59125](https://github.com/grafana/grafana/pull/59125), [@gwdawson](https://github.com/gwdawson)
+- **Middleware:** Add CSP Report Only support. [#58074](https://github.com/grafana/grafana/pull/58074), [@jcalisto](https://github.com/jcalisto)
+- **Navigation:** Prevent viewer role accessing dashboard creation, import and folder creation. [#58842](https://github.com/grafana/grafana/pull/58842), [@lpskdl](https://github.com/lpskdl)
+- **OAuth:** Refactor OAuth parameters handling to support obtaining refresh tokens for Google OAuth. [#58782](https://github.com/grafana/grafana/pull/58782), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Oauth:** Display friendly error message when role_attribute_strict=true and no valid role found. [#57818](https://github.com/grafana/grafana/pull/57818), [@kalleep](https://github.com/kalleep)
+- **Preferences:** Add confirmation modal when saving org preferences. [#59119](https://github.com/grafana/grafana/pull/59119), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **PublicDashboards:** Orphaned public dashboard deletion script added. [#57917](https://github.com/grafana/grafana/pull/57917), [@juanicabanas](https://github.com/juanicabanas)
+- **Query Editor:** Hide overflow for long query names. [#58840](https://github.com/grafana/grafana/pull/58840), [@zuchka](https://github.com/zuchka)
+- **Reports:** Configurable timezone. (Enterprise)
+- **Solo Panel:** Configurable timezone. [#59153](https://github.com/grafana/grafana/pull/59153), [@spinillos](https://github.com/spinillos)
+- **TablePanel:** Add support for Count calculation per column or per entire dataset. [#58134](https://github.com/grafana/grafana/pull/58134), [@mdvictor](https://github.com/mdvictor)
+- **Tempo:** Send the correct start time when making a TraceQL query. [#59128](https://github.com/grafana/grafana/pull/59128), [@CrypticSignal](https://github.com/CrypticSignal)
+- **Various Panels:** Remove beta label from Bar Chart, Candlestick, Histogram, State Timeline, & Status History Panels. [#58557](https://github.com/grafana/grafana/pull/58557), [@codeincarnate](https://github.com/codeincarnate)
+
+### Bug fixes
+
+- **Access Control:** Clear user's permission cache after resource creation. [#59307](https://github.com/grafana/grafana/pull/59307), [@grafanabot](https://github.com/grafanabot)
+- **Access Control:** Clear user's permission cache after resource creation. [#59101](https://github.com/grafana/grafana/pull/59101), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Accessibility:** Improve keyboard accessibility in `AnnoListPanel`. [#58971](https://github.com/grafana/grafana/pull/58971), [@ashharrison90](https://github.com/ashharrison90)
+- **Accessibility:** Improve keyboard accessibility in `Collapse`. [#59022](https://github.com/grafana/grafana/pull/59022), [@ashharrison90](https://github.com/ashharrison90)
+- **Accessibility:** Improve keyboard accessibility in `GettingStarted` panel. [#58966](https://github.com/grafana/grafana/pull/58966), [@ashharrison90](https://github.com/ashharrison90)
+- **Accessibility:** Improve keyboard accessibility of `FilterPill`. [#58976](https://github.com/grafana/grafana/pull/58976), [@ashharrison90](https://github.com/ashharrison90)
+- **Admin:** Fix broken links to image assets in email templates. [#58729](https://github.com/grafana/grafana/pull/58729), [@zuchka](https://github.com/zuchka)
+- **Azure Monitor:** Fix namespace selection for storageaccounts. [#56449](https://github.com/grafana/grafana/pull/56449), [@andresmgot](https://github.com/andresmgot)
+- **Calcs:** Fix difference percent in legend. [#59243](https://github.com/grafana/grafana/pull/59243), [@zoltanbedi](https://github.com/zoltanbedi)
+- **DataLinks:** Improve Data-Links AutoComplete Logic. [#58934](https://github.com/grafana/grafana/pull/58934), [@zuchka](https://github.com/zuchka)
+- **Explore:** Fix a11y issue with logs navigation buttons. [#58944](https://github.com/grafana/grafana/pull/58944), [@Elfo404](https://github.com/Elfo404)
+- **Heatmap:** Fix blurry text & rendering. [#59260](https://github.com/grafana/grafana/pull/59260), [@leeoniya](https://github.com/leeoniya)
+- **Heatmap:** Fix tooltip y range of top and bottom buckets in calculated heatmaps. [#59172](https://github.com/grafana/grafana/pull/59172), [@leeoniya](https://github.com/leeoniya)
+- **Logs:** Fix misalignment of LogRows. [#59279](https://github.com/grafana/grafana/pull/59279), [@svennergr](https://github.com/svennergr)
+- **Navigation:** Stop clearing search state when opening a result in a new tab. [#58880](https://github.com/grafana/grafana/pull/58880), [@ashharrison90](https://github.com/ashharrison90)
+- **OptionsUI:** SliderValueEditor does not get auto focused on slider change. [#59209](https://github.com/grafana/grafana/pull/59209), [@eledobleefe](https://github.com/eledobleefe)
+- **PanelEdit:** Fixes bug with not remembering panel options pane collapse/expand state. [#59265](https://github.com/grafana/grafana/pull/59265), [@torkelo](https://github.com/torkelo)
+- **Query Caching:** Skip 207 status codes. (Enterprise)
+- **Quota:** Fix failure in store due to missing scope parameters. [#58874](https://github.com/grafana/grafana/pull/58874), [@papagian](https://github.com/papagian)
+- **Quota:** Fix failure when checking session limits. [#58865](https://github.com/grafana/grafana/pull/58865), [@papagian](https://github.com/papagian)
+- **Reports:** Fix time preview. (Enterprise)
+- **StateTimeline:** Prevent label text from overflowing state rects. [#59169](https://github.com/grafana/grafana/pull/59169), [@leeoniya](https://github.com/leeoniya)
+- **Tempo:** Fix search table duration unit. [#58642](https://github.com/grafana/grafana/pull/58642), [@joey-grafana](https://github.com/joey-grafana)
+- **TraceView:** Fix broken rendering when scrolling in Dashboard panel in Firefox. [#56642](https://github.com/grafana/grafana/pull/56642), [@zdg-github](https://github.com/zdg-github)
+
+### Plugin development fixes & changes
+
+- **GrafanaUI:** Add disabled option for menu items. [#58980](https://github.com/grafana/grafana/pull/58980), [@going-confetti](https://github.com/going-confetti)
+
+<!-- 9.3.0 END -->
+<!-- 9.3.0-beta1 START -->
+
+# 9.3.0-beta1 (2022-11-15)
+
+### Features and enhancements
+
+- **Alerting:** Add Alertmanager choice warning. [#55311](https://github.com/grafana/grafana/pull/55311), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Add support for linking external images securely - Azure Blob (#1). [#56598](https://github.com/grafana/grafana/pull/56598), [@petr-stupka](https://github.com/petr-stupka)
+- **Alerting:** Add threshold expression. [#55102](https://github.com/grafana/grafana/pull/55102), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Add traceability headers for alert queries. [#57127](https://github.com/grafana/grafana/pull/57127), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Allow none provenance alert rule creation from provisioning API. [#58410](https://github.com/grafana/grafana/pull/58410), [@alexmobo](https://github.com/alexmobo)
+- **Alerting:** Cache result of dashboard ID lookups. [#56587](https://github.com/grafana/grafana/pull/56587), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Expressions pipeline redesign. [#54601](https://github.com/grafana/grafana/pull/54601), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fall back to "range" query type for unified alerting when "both" is specified. [#57288](https://github.com/grafana/grafana/pull/57288), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Implement the Webex notifier. [#58480](https://github.com/grafana/grafana/pull/58480), [@gotjosh](https://github.com/gotjosh)
+- **Alerting:** Improve group modal with validation on evaluation interval. [#57830](https://github.com/grafana/grafana/pull/57830), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Persist annotations from multidimensional rules in batches. [#56575](https://github.com/grafana/grafana/pull/56575), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Query time logging. [#57585](https://github.com/grafana/grafana/pull/57585), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Remove the alert manager selection from the data source configuration. [#57369](https://github.com/grafana/grafana/pull/57369), [@VikaCep](https://github.com/VikaCep)
+- **Alerting:** Remove the alert manager selection from the data source configuration. [#56460](https://github.com/grafana/grafana/pull/56460), [@gitstart](https://github.com/gitstart)
+- **Alerting:** Support values in notification templates. [#56457](https://github.com/grafana/grafana/pull/56457), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Templated URLs for webhook type contact points. [#57296](https://github.com/grafana/grafana/pull/57296), [@santihernandezc](https://github.com/santihernandezc)
+- **Annotations:** Disable "Add annotation" button when annotations are disabled. [#57481](https://github.com/grafana/grafana/pull/57481), [@ryantxu](https://github.com/ryantxu)
+- **Auth:** Add validation and ingestion of conflict file. [#53014](https://github.com/grafana/grafana/pull/53014), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Auth:** Make built-in login configurable. [#46978](https://github.com/grafana/grafana/pull/46978), [@TsotosA](https://github.com/TsotosA)
+- **Auth:** Refresh OAuth access_token automatically using the refresh_token. [#56076](https://github.com/grafana/grafana/pull/56076), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Auth:** Validate Azure ID token version on login is not v1. [#58088](https://github.com/grafana/grafana/pull/58088), [@Jguer](https://github.com/Jguer)
+- **BackendSrv:** Make it possible to pass `options` to `.get|post|patch...` methods. [#51316](https://github.com/grafana/grafana/pull/51316), [@leventebalogh](https://github.com/leventebalogh)
+- **Canvas:** Add tabs to inline editor. [#57778](https://github.com/grafana/grafana/pull/57778), [@adela-almasan](https://github.com/adela-almasan)
+- **Canvas:** Extend root context menu. [#58097](https://github.com/grafana/grafana/pull/58097), [@adela-almasan](https://github.com/adela-almasan)
+- **Chore:** Switch Grafana to using faro libraries. [#58186](https://github.com/grafana/grafana/pull/58186), [@tolzhabayev](https://github.com/tolzhabayev)
+- **Chore:** Use strings.ReplaceAll and preallocate containers. [#58483](https://github.com/grafana/grafana/pull/58483), [@sashamelentyev](https://github.com/sashamelentyev)
+- **CloudWatch:** Cache resource request responses in the browser. [#57082](https://github.com/grafana/grafana/pull/57082), [@sunker](https://github.com/sunker)
+- **Config:** Change jwt config value to be "expect_claims". [#58284](https://github.com/grafana/grafana/pull/58284), [@conorevans](https://github.com/conorevans)
+- **Configuration:** Update ssl_mode documentation in sample.ini to match default.ini. [#55138](https://github.com/grafana/grafana/pull/55138), [@alecxvs](https://github.com/alecxvs)
+- **Correlations:** Add query editor and target field to settings page. [#55567](https://github.com/grafana/grafana/pull/55567), [@Elfo404](https://github.com/Elfo404)
+- **Dashboard:** Record the number of cached queries for usage insights. [#56050](https://github.com/grafana/grafana/pull/56050), [@juanicabanas](https://github.com/juanicabanas)
+- **Dashboard:** Record the number of cached queries for usage insights. (Enterprise)
+- **Datasources:** Support mixed datasources in a single query. [#56832](https://github.com/grafana/grafana/pull/56832), [@mmandrus](https://github.com/mmandrus)
+- **Docs:** Add documentation for Custom Branding on Public Dashboards. [#58090](https://github.com/grafana/grafana/pull/58090), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Docs:** Add missing documentation for enterprise features. [#56753](https://github.com/grafana/grafana/pull/56753), [@mmandrus](https://github.com/mmandrus)
+- **Docs:** Clarify that audit logs are generated only for API requests. [#57521](https://github.com/grafana/grafana/pull/57521), [@spinillos](https://github.com/spinillos)
+- **Echo:** Add config option to prevent duplicate page views for GA4. [#57619](https://github.com/grafana/grafana/pull/57619), [@tolzhabayev](https://github.com/tolzhabayev)
+- **Elasticsearch:** Add trace to logs functionality. [#58063](https://github.com/grafana/grafana/pull/58063), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Elasticsearch:** Reuse http client in the backend. [#55172](https://github.com/grafana/grafana/pull/55172), [@gabor](https://github.com/gabor)
+- **Explore:** Add tracesToMetrics span time shift options (#54710). [#55335](https://github.com/grafana/grafana/pull/55335), [@hanjm](https://github.com/hanjm)
+- **Explore:** Logs volume histogram: always start Y axis from zero. [#56200](https://github.com/grafana/grafana/pull/56200), [@gabor](https://github.com/gabor)
+- **Explore:** Remove explore2Dashboard feature toggle. [#58329](https://github.com/grafana/grafana/pull/58329), [@Elfo404](https://github.com/Elfo404)
+- **Explore:** Support fields interpolation in logs panel. [#58426](https://github.com/grafana/grafana/pull/58426), [@ifrost](https://github.com/ifrost)
+- **Frontend Routing:** Always render standalone plugin pages using the `<AppRootPage>`. [#57771](https://github.com/grafana/grafana/pull/57771), [@leventebalogh](https://github.com/leventebalogh)
+- **GRPC Server:** Add gRPC server service. [#47849](https://github.com/grafana/grafana/pull/47849), [@FZambia](https://github.com/FZambia)
+- **Geomap:** Add photo layer. [#57307](https://github.com/grafana/grafana/pull/57307), [@drew08t](https://github.com/drew08t)
+- **Geomap:** Upgrade to openlayers 7.x. [#57317](https://github.com/grafana/grafana/pull/57317), [@ryantxu](https://github.com/ryantxu)
+- **GrafanaData:** Deprecate logs functions. [#56077](https://github.com/grafana/grafana/pull/56077), [@gabor](https://github.com/gabor)
+- **GrafanaData:** Deprecate the LogsParser type. [#56242](https://github.com/grafana/grafana/pull/56242), [@gabor](https://github.com/gabor)
+- **Kindsys:** Introduce Kind framework. [#56492](https://github.com/grafana/grafana/pull/56492), [@sdboyer](https://github.com/sdboyer)
+- **LDAP:** Add `skip_org_role_sync` configuration option. [#56792](https://github.com/grafana/grafana/pull/56792), [@grafanabot](https://github.com/grafanabot)
+- **LDAP:** Add `skip_org_role_sync` configuration option. [#56679](https://github.com/grafana/grafana/pull/56679), [@gamab](https://github.com/gamab)
+- **LDAPSync:** Improve performance of sync and make it case insensitive. (Enterprise)
+- **LibraryPanels:** Load library panels in the frontend rather than the backend. [#50560](https://github.com/grafana/grafana/pull/50560), [@ryantxu](https://github.com/ryantxu)
+- **LogContext:** Add header and close button to modal. [#56283](https://github.com/grafana/grafana/pull/56283), [@svennergr](https://github.com/svennergr)
+- **LogContext:** Improve text describing the loglines. [#55475](https://github.com/grafana/grafana/pull/55475), [@svennergr](https://github.com/svennergr)
+- **Logs:** Allow collapsing the logs volume histogram. [#52808](https://github.com/grafana/grafana/pull/52808), [@gabor](https://github.com/gabor)
+- **Logs:** Center `show context` modal on click. [#55989](https://github.com/grafana/grafana/pull/55989), [@svennergr](https://github.com/svennergr)
+- **Logs:** Center `show context` modal on click. [#55405](https://github.com/grafana/grafana/pull/55405), [@svennergr](https://github.com/svennergr)
+- **Logs:** Show LogRowMenu also for long logs and wrap-lines turned off. [#56030](https://github.com/grafana/grafana/pull/56030), [@svennergr](https://github.com/svennergr)
+- **LogsContext:** Added button to load 10 more log lines. [#55923](https://github.com/grafana/grafana/pull/55923), [@svennergr](https://github.com/svennergr)
+- **Loki:** Add case insensitive line contains operation. [#58177](https://github.com/grafana/grafana/pull/58177), [@gwdawson](https://github.com/gwdawson)
+- **Loki:** Monaco Query Editor enabled by default. [#58080](https://github.com/grafana/grafana/pull/58080), [@matyax](https://github.com/matyax)
+- **Loki:** Redesign and improve query patterns. [#55097](https://github.com/grafana/grafana/pull/55097), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Rename log browser to label browser. [#58416](https://github.com/grafana/grafana/pull/58416), [@gwdawson](https://github.com/gwdawson)
+- **Loki:** Show invalid fields in label filter. [#55751](https://github.com/grafana/grafana/pull/55751), [@ivanahuckova](https://github.com/ivanahuckova)
+- **MSSQL:** Add connection timeout setting in configuration page. [#58631](https://github.com/grafana/grafana/pull/58631), [@mdvictor](https://github.com/mdvictor)
+- **Navigation:** Add `pluginId` to standalone plugin page NavLinks. [#57769](https://github.com/grafana/grafana/pull/57769), [@leventebalogh](https://github.com/leventebalogh)
+- **Navigation:** Expose new props to extend `Page`/`PluginPage`. [#58465](https://github.com/grafana/grafana/pull/58465), [@ashharrison90](https://github.com/ashharrison90)
+- **Navtree:** Make it possible to configure standalone plugin pages. [#56393](https://github.com/grafana/grafana/pull/56393), [@leventebalogh](https://github.com/leventebalogh)
+- **Node Graph:** Always show context menu. [#56876](https://github.com/grafana/grafana/pull/56876), [@joey-grafana](https://github.com/joey-grafana)
+- **Number formatting:** Strip trailing zeros after decimal point when decimals=auto. [#57373](https://github.com/grafana/grafana/pull/57373), [@leeoniya](https://github.com/leeoniya)
+- **OAuth:** Feature toggle for access token expiration check and docs. [#58179](https://github.com/grafana/grafana/pull/58179), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Opentsdb:** Allow template variables for filter keys. [#57226](https://github.com/grafana/grafana/pull/57226), [@bohandley](https://github.com/bohandley)
+- **PanelEdit:** Allow test id to be passed to panel editors. [#55417](https://github.com/grafana/grafana/pull/55417), [@mckn](https://github.com/mckn)
+- **Plugins:** Add hook to make it easier to track interactions in plugins. [#56126](https://github.com/grafana/grafana/pull/56126), [@mckn](https://github.com/mckn)
+- **Plugins:** Introduce new Flame graph panel. [#56376](https://github.com/grafana/grafana/pull/56376), [@joey-grafana](https://github.com/joey-grafana)
+- **Plugins:** Make "README" the default markdown request param. [#58264](https://github.com/grafana/grafana/pull/58264), [@wbrowne](https://github.com/wbrowne)
+- **PostgreSQL:** Migrate to React. [#52831](https://github.com/grafana/grafana/pull/52831), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Preferences:** Create indices. [#48356](https://github.com/grafana/grafana/pull/48356), [@sakjur](https://github.com/sakjur)
+- **Profiling:** Add Phlare and Parca datasources. [#57809](https://github.com/grafana/grafana/pull/57809), [@aocenas](https://github.com/aocenas)
+- **Prometheus:** Handle errors and warnings in buffered client. [#58504](https://github.com/grafana/grafana/pull/58504), [@itsmylife](https://github.com/itsmylife)
+- **Prometheus:** Make Prometheus streaming parser as default client. [#58365](https://github.com/grafana/grafana/pull/58365), [@itsmylife](https://github.com/itsmylife)
+- **Public Dashboards:** Add audit table. [#54508](https://github.com/grafana/grafana/pull/54508), [@jalevin](https://github.com/jalevin)
+- **PublicDashboards:** Add PubDash support to Angular panel plugins. [#57293](https://github.com/grafana/grafana/pull/57293), [@mmandrus](https://github.com/mmandrus)
+- **PublicDashboards:** Add annotations support. [#56413](https://github.com/grafana/grafana/pull/56413), [@owensmallwood](https://github.com/owensmallwood)
+- **PublicDashboards:** Add custom branding for Public Dashboard. (Enterprise)
+- **PublicDashboards:** Add delete public dashboard button in public dashboard modal. [#58095](https://github.com/grafana/grafana/pull/58095), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Cached queries column added in public dashboard insight query. (Enterprise)
+- **PublicDashboards:** Can toggle annotations in modal. [#57312](https://github.com/grafana/grafana/pull/57312), [@owensmallwood](https://github.com/owensmallwood)
+- **PublicDashboards:** Delete public dashboard in public dashboard table. [#57766](https://github.com/grafana/grafana/pull/57766), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Delete public dashboard when dashboard is deleted. [#57291](https://github.com/grafana/grafana/pull/57291), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Extract config of Public Dashboard. [#57788](https://github.com/grafana/grafana/pull/57788), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **PublicDashboards:** Hide top navigation bar. [#56873](https://github.com/grafana/grafana/pull/56873), [@evictorero](https://github.com/evictorero)
+- **PublicDashboards:** Make mixed datasource calls concurrently. [#56421](https://github.com/grafana/grafana/pull/56421), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Orphaned public dashboard item list modified. [#58014](https://github.com/grafana/grafana/pull/58014), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Rename PubdashFooter frontend component. [#58137](https://github.com/grafana/grafana/pull/58137), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **PublicDashboards:** Update docs with supported datasources. [#57629](https://github.com/grafana/grafana/pull/57629), [@owensmallwood](https://github.com/owensmallwood)
+- **PublicDashboards:** Validate access token. [#57298](https://github.com/grafana/grafana/pull/57298), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **PublicDashboards:** Validate access token not to be duplicated and add retries. [#56755](https://github.com/grafana/grafana/pull/56755), [@juanicabanas](https://github.com/juanicabanas)
+- **RBAC:** Improve performance of dashboard filter query. [#56813](https://github.com/grafana/grafana/pull/56813), [@kalleep](https://github.com/kalleep)
+- **Rendering:** Add configuration options for `renderKey` lifetime. [#57339](https://github.com/grafana/grafana/pull/57339), [@Willena](https://github.com/Willena)
+- **Reports:** Dynamic scale factor per report. (Enterprise)
+- **SAML:** Set cookie option SameSite=none and Secure=true. (Enterprise)
+- **SQLStore:** Optionally retry queries if sqlite returns database is locked. [#56096](https://github.com/grafana/grafana/pull/56096), [@papagian](https://github.com/papagian)
+- **Server:** Make unix socket permission configurable. [#52944](https://github.com/grafana/grafana/pull/52944), [@unknowndevQwQ](https://github.com/unknowndevQwQ)
+- **Tempo:** Add start time and end time parameters while querying traces. [#48068](https://github.com/grafana/grafana/pull/48068), [@bikashmishra100](https://github.com/bikashmishra100)
+- **TimeSeries:** Render null-bounded points at data edges. [#57798](https://github.com/grafana/grafana/pull/57798), [@leeoniya](https://github.com/leeoniya)
+- **Tracing:** Allow trace to logs for OpenSearch. [#58161](https://github.com/grafana/grafana/pull/58161), [@gabor](https://github.com/gabor)
+- **Transformers:** PartitionByValues. [#56767](https://github.com/grafana/grafana/pull/56767), [@leeoniya](https://github.com/leeoniya)
+- **UsageStats:** Add traces when sending usage stats. [#55474](https://github.com/grafana/grafana/pull/55474), [@sakjur](https://github.com/sakjur)
+
+### Bug fixes
+
+- **Alerting:** Fix mathexp.NoData in ConditionsCmd. [#56812](https://github.com/grafana/grafana/pull/56812), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **BarChart:** Fix coloring from thresholds and value mappings. [#58285](https://github.com/grafana/grafana/pull/58285), [@leeoniya](https://github.com/leeoniya)
+- **BarChart:** Fix stacked hover. [#57711](https://github.com/grafana/grafana/pull/57711), [@leeoniya](https://github.com/leeoniya)
+- **Explore:** Fix shared crosshair for logs, logsvolume and graph panels. [#57892](https://github.com/grafana/grafana/pull/57892), [@Elfo404](https://github.com/Elfo404)
+- **Flame Graph:** Exact search. [#56769](https://github.com/grafana/grafana/pull/56769), [@joey-grafana](https://github.com/joey-grafana)
+- **Flame Graph:** Fix for dashboard scrolling. [#56555](https://github.com/grafana/grafana/pull/56555), [@joey-grafana](https://github.com/joey-grafana)
+- **LogContext:** Fix scroll behavior in context modal. [#56070](https://github.com/grafana/grafana/pull/56070), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix showing of history of querying in query editor. [#57344](https://github.com/grafana/grafana/pull/57344), [@ivanahuckova](https://github.com/ivanahuckova)
+- **OAuth:** Fix misleading warn log related to oauth and increase logged content. [#57336](https://github.com/grafana/grafana/pull/57336), [@Jguer](https://github.com/Jguer)
+- **Plugins:** Plugin details page visual alignment issues. [#57729](https://github.com/grafana/grafana/issues/57729)
+- **PublicDashboards:** Fix GET public dashboard that doesn't match. [#57571](https://github.com/grafana/grafana/pull/57571), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Fix annotations error for public dashboards. [#57455](https://github.com/grafana/grafana/pull/57455), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **PublicDashboards:** Fix granularity discrepancy between public and original dashboard. [#57129](https://github.com/grafana/grafana/pull/57129), [@guicaulada](https://github.com/guicaulada)
+- **PublicDashboards:** Fix granularity issue caused by query caching. (Enterprise)
+- **PublicDashboards:** Fix hidden queries execution. (Enterprise)
+- **RBAC:** Add primary key to seed_assignment table. [#56540](https://github.com/grafana/grafana/pull/56540), [@kalleep](https://github.com/kalleep)
+- **Tempo:** Fix search removing service name from query. [#58630](https://github.com/grafana/grafana/pull/58630), [@joey-grafana](https://github.com/joey-grafana)
+- **TimeRangeInput:** Fix clear button type. [#56545](https://github.com/grafana/grafana/pull/56545), [@Clarity-89](https://github.com/Clarity-89)
+
+### Breaking changes
+
+Removes the unused close-milestone command from `@grafana/toolkit`. Issue [#57062](https://github.com/grafana/grafana/issues/57062)
+
+@grafana/toolkit `cherrypick` command was removed. Issue [#56114](https://github.com/grafana/grafana/issues/56114)
+
+`EmotionPerfTest` is no longer exported from the `@grafana/ui` bundle. Issue [#56100](https://github.com/grafana/grafana/issues/56100)
+
+Removing the unused `changelog` command in `@grafana/toolkit`. Issue [#56073](https://github.com/grafana/grafana/issues/56073)
+
+### Deprecations
+
+The interface type `LogsParser` in `grafana-data` is deprecated. Issue [#56242](https://github.com/grafana/grafana/issues/56242)
+
+The following functions and classes related to logs are deprecated in the `grafana-ui` package: `getLogLevel`, `getLogLevelFromKey`, `addLogLevelToSeries`, `LogsParsers`, `calculateFieldStats`, `calculateLogsLabelStats`, `calculateStats`, `getParser`, `sortInAscendingOrder`, `sortInDescendingOrder`, `sortLogsResult`, `sortLogRows`, `checkLogsError`, `escapeUnescapedString`. Issue [#56077](https://github.com/grafana/grafana/issues/56077)
+
+### Plugin development fixes & changes
+
+- **Toolkit:** Deprecate `plugin:update-circleci` command. [#57743](https://github.com/grafana/grafana/pull/57743), [@academo](https://github.com/academo)
+- **Toolkit:** Deprecate `plugin:github-publish` command. [#57726](https://github.com/grafana/grafana/pull/57726), [@academo](https://github.com/academo)
+- **Toolkit:** Deprecate `plugin:bundle-managed` command and move its functionality to a bash script. [#57719](https://github.com/grafana/grafana/pull/57719), [@academo](https://github.com/academo)
+- **Toolkit:** Deprecate and replace toolkit:build with plain yarn scripts. [#57620](https://github.com/grafana/grafana/pull/57620), [@academo](https://github.com/academo)
+- **Toolkit:** Deprecate node-version-check command. [#57591](https://github.com/grafana/grafana/pull/57591), [@academo](https://github.com/academo)
+- **Toolkit:** Deprecate searchTestData command. [#57589](https://github.com/grafana/grafana/pull/57589), [@academo](https://github.com/academo)
+- **Toolkit:** Remove unused close-milestone command. [#57062](https://github.com/grafana/grafana/pull/57062), [@academo](https://github.com/academo)
+- **Toolkit:** Remove unused legacy cherrypick command. [#56114](https://github.com/grafana/grafana/pull/56114), [@academo](https://github.com/academo)
+- **Grafana UI:** Clean up bundle. [#56100](https://github.com/grafana/grafana/pull/56100), [@jackw](https://github.com/jackw)
+- **Toolkit:** Deprecate `component:create` command. [#56086](https://github.com/grafana/grafana/pull/56086), [@academo](https://github.com/academo)
+- **Toolkit:** Remove changelog command. [#56073](https://github.com/grafana/grafana/pull/56073), [@gitstart](https://github.com/gitstart)
+
+<!-- 9.2.7 START -->
+
+# 9.2.7 (2022-11-29)
+
+### Bug fixes
+
+- **Access Control:** Clear user's permission cache after resource creation. [#59318](https://github.com/grafana/grafana/pull/59318), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Azure Monitor:** Fix empty/errored responses for Logs variables. [#59240](https://github.com/grafana/grafana/pull/59240), [@andresmgot](https://github.com/andresmgot)
+- **Azure Monitor:** Fix resource picker selection for subresources. [#56392](https://github.com/grafana/grafana/pull/56392), [@andresmgot](https://github.com/andresmgot)
+- **Navigation:** Fix crash when Help is disabled. [#58919](https://github.com/grafana/grafana/pull/58919), [@lpskdl](https://github.com/lpskdl)
+- **PostgreSQL:** Fix missing CA field from configuration. [#59280](https://github.com/grafana/grafana/pull/59280), [@oscarkilhed](https://github.com/oscarkilhed)
+- **SQL Datasources:** Fix annotation migration. [#59438](https://github.com/grafana/grafana/pull/59438), [@zoltanbedi](https://github.com/zoltanbedi)
+- **SQL:** Fix code editor for SQL datasources. [#58116](https://github.com/grafana/grafana/pull/58116), [@zoltanbedi](https://github.com/zoltanbedi)
+- **SSE:** Make sure to forward headers, user and cookies/OAuth token. [#58897](https://github.com/grafana/grafana/pull/58897), [@kylebrandt](https://github.com/kylebrandt)
+- **TimeseriesPanel:** Preserve string fields for data link interpolation. [#58424](https://github.com/grafana/grafana/pull/58424), [@mdvictor](https://github.com/mdvictor)
+
+<!-- 9.2.7 END -->
+
+<!-- 9.2.6 START -->
+
+# 9.2.6 (2022-11-22)
+
+### Features and enhancements
+
+- **Alerting:** Support Prometheus durations in Provisioning API. [#58293](https://github.com/grafana/grafana/pull/58293), [@bartpeeters](https://github.com/bartpeeters)
+- **SSE:** Keep value name from numeric table. [#58831](https://github.com/grafana/grafana/pull/58831), [@kylebrandt](https://github.com/kylebrandt)
+- **Transformations:** Make Card Descriptions Clickable. [#58717](https://github.com/grafana/grafana/pull/58717), [@zuchka](https://github.com/zuchka)
+
+### Bug fixes
+
+- **MS/My/PostgresSQL:** Migrate annotation query. [#58847](https://github.com/grafana/grafana/pull/58847), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Search:** Fixes issue with Recent/Starred section always displaying "General" folder. [#58746](https://github.com/grafana/grafana/pull/58746), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **Server:** Write internal server error on missing write. [#57813](https://github.com/grafana/grafana/pull/57813), [@sakjur](https://github.com/sakjur)
+
+<!-- 9.2.6 END -->
+
+<!-- 9.2.5 START -->
+
+# 9.2.5 (2022-11-16)
+
+### Features and enhancements
+
+- **Alerting:** Log when alert rule cannot be screenshot to help debugging. [#58537](https://github.com/grafana/grafana/pull/58537), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Suggest previously entered custom labels. [#57783](https://github.com/grafana/grafana/pull/57783), [@VikaCep](https://github.com/VikaCep)
+- **Canvas:** Improve disabled inline editing UX. [#58610](https://github.com/grafana/grafana/pull/58610), [@nmarrs](https://github.com/nmarrs)
+- **Canvas:** Improve disabled inline editing UX. [#58609](https://github.com/grafana/grafana/issues/58609)
+- **Chore:** Upgrade go-sqlite3 to v1.14.16. [#58581](https://github.com/grafana/grafana/pull/58581), [@sakjur](https://github.com/sakjur)
+- **Plugins:** Ensure CallResource responses contain valid Content-Type header. [#58506](https://github.com/grafana/grafana/pull/58506), [@xnyo](https://github.com/xnyo)
+- **Prometheus:** Handle errors and warnings in buffered client. [#58657](https://github.com/grafana/grafana/pull/58657), [@itsmylife](https://github.com/itsmylife)
+- **Prometheus:** Upgrade HTTP client library to v1.13.1. [#58363](https://github.com/grafana/grafana/pull/58363), [@marefr](https://github.com/marefr)
+
+### Bug fixes
+
+- **Alerting:** Fix screenshots were not cached. [#58493](https://github.com/grafana/grafana/pull/58493), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Canvas:** Fix setting icon from field data. [#58499](https://github.com/grafana/grafana/pull/58499), [@nmarrs](https://github.com/nmarrs)
+- **Plugins:** Fix don't set Content-Type header if status is 204 for call resource. [#50780](https://github.com/grafana/grafana/pull/50780), [@sd2k](https://github.com/sd2k)
+
+### Plugin development fixes & changes
+
+- **Toolkit:** Fix compilation loop when watching plugins for changes. [#58167](https://github.com/grafana/grafana/pull/58167), [@jackw](https://github.com/jackw)
+- **Tooltips:** Make tooltips in FormField and FormLabel interactive and keyboard friendly. [#57706](https://github.com/grafana/grafana/pull/57706), [@asimpson](https://github.com/asimpson)
+
+<!-- 9.2.5 END -->
+<!-- 9.3.0-beta1 END -->
+<!-- 9.2.4 START -->
+
+# 9.2.4 (2022-11-07)
+
+### Features and enhancements
+
+- **Access Control:** Add an endpoint for setting several managed resource permissions. [#57893](https://github.com/grafana/grafana/pull/57893), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Accessibility:** Increase `Select` placeholder contrast to be WCAG AA compliant. [#58034](https://github.com/grafana/grafana/pull/58034), [@ashharrison90](https://github.com/ashharrison90)
+- **Alerting:** Append org ID to alert notification URLs. [#57123](https://github.com/grafana/grafana/pull/57123), [@neel1996](https://github.com/neel1996)
+- **Alerting:** Make the Grouped view the default one for Rules. [#58271](https://github.com/grafana/grafana/pull/58271), [@VikaCep](https://github.com/VikaCep)
+- **Build:** Remove unnecessary alpine package updates. [#58005](https://github.com/grafana/grafana/pull/58005), [@DanCech](https://github.com/DanCech)
+- **Chore:** Upgrade Go to 1.19.3. [#58052](https://github.com/grafana/grafana/pull/58052), [@sakjur](https://github.com/sakjur)
+- **Google Cloud Monitoring:** Set frame interval to draw null values. [#57768](https://github.com/grafana/grafana/pull/57768), [@andresmgot](https://github.com/andresmgot)
+- **Instrumentation:** Expose when the binary was built as a gauge. [#57951](https://github.com/grafana/grafana/pull/57951), [@bergquist](https://github.com/bergquist)
+- **Loki:** Preserve `X-ID-Token` header. [#57878](https://github.com/grafana/grafana/pull/57878), [@siiimooon](https://github.com/siiimooon)
+- **Search:** Reduce requests in folder view. [#55876](https://github.com/grafana/grafana/pull/55876), [@mvsousa](https://github.com/mvsousa)
+- **TimeSeries:** More thorough detection of negative values for auto-stacking direction. [#57863](https://github.com/grafana/grafana/pull/57863), [@leeoniya](https://github.com/leeoniya)
+
+### Bug fixes
+
+- **Alerting:** Attempt to preserve UID from migrated legacy channel. [#57639](https://github.com/grafana/grafana/pull/57639), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Fix response is not returned for invalid Duration in Provisioning API. [#58046](https://github.com/grafana/grafana/pull/58046), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Fix screenshot is not taken for stale series. [#57982](https://github.com/grafana/grafana/pull/57982), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Auth:** Fix admins not seeing pending invites. [#58217](https://github.com/grafana/grafana/pull/58217), [@joshhunt](https://github.com/joshhunt)
+- **MSSQL/Postgres:** Fix visual query editor filter disappearing. [#58248](https://github.com/grafana/grafana/pull/58248), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Tempo:** Fix dropdown issue on tag field focus. [#57616](https://github.com/grafana/grafana/pull/57616), [@xiyu95](https://github.com/xiyu95)
+- **Timeseries:** Fix null pointer when matching fill below to field. [#58030](https://github.com/grafana/grafana/pull/58030), [@mdvictor](https://github.com/mdvictor)
+
+### Plugin development fixes & changes
+
+- **Toolkit:** Fix Webpack less-loader config. [#57950](https://github.com/grafana/grafana/pull/57950), [@dessen-xu](https://github.com/dessen-xu)
+
+<!-- 9.2.4 END -->
+<!-- 9.2.3 START -->
+
+# 9.2.3 (2022-10-31)
+
+### Features and enhancements
+
+- **Docs:** Add information about DB version support to upgrade guide. [#57643](https://github.com/grafana/grafana/pull/57643), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Footer:** Update footer release notes link to Github changelog. [#57871](https://github.com/grafana/grafana/pull/57871), [@joshhunt](https://github.com/joshhunt)
+- **Prometheus:** Do not drop errors in streaming parser. [#57698](https://github.com/grafana/grafana/pull/57698), [@kylebrandt](https://github.com/kylebrandt)
+- **Prometheus:** Flavor/version configuration. [#57554](https://github.com/grafana/grafana/pull/57554), [@gtk-grafana](https://github.com/gtk-grafana)
+- **Prometheus:** Provide label values match parameter API when supported prometheus instance is configured. [#57553](https://github.com/grafana/grafana/pull/57553), [@gtk-grafana](https://github.com/gtk-grafana)
+- **Security:** Upgrade x/text to version unaffected by CVE-2022-32149. [#57797](https://github.com/grafana/grafana/pull/57797), [@yong-jie-gong](https://github.com/yong-jie-gong)
+
+### Bug fixes
+
+- **Access control:** Fix a bug with argument order for data source managed permission updates. (Enterprise)
+- **Auth:** Fix GF_AUTH_JWT_URL_LOGIN env variable doesn't work. [#57689](https://github.com/grafana/grafana/pull/57689), [@Jguer](https://github.com/Jguer)
+- **Live:** Explicitly reply with http 200. [#57428](https://github.com/grafana/grafana/pull/57428), [@sh0rez](https://github.com/sh0rez)
+- **Prometheus:** Fix builder operation mode changing multiselect to single select behaviour. [#57780](https://github.com/grafana/grafana/pull/57780), [@itsmylife](https://github.com/itsmylife)
+- **Prometheus:** Fix builder operation mode changing multiselect to single select behaviour. [#57493](https://github.com/grafana/grafana/pull/57493), [@yinjialu](https://github.com/yinjialu)
+- **Security:** Fix vulnerabilities in webpack loader-utils. [#57533](https://github.com/grafana/grafana/pull/57533), [@jackw](https://github.com/jackw)
+
+<!-- 9.2.3 END -->
+<!-- 9.2.2 START -->
+
+# 9.2.2 (2022-10-25)
+
+### Features and enhancements
+
+- **Alerting:** Add support for wecom apiapp. [#55991](https://github.com/grafana/grafana/pull/55991), [@aimuz](https://github.com/aimuz)
+- **Canvas:** Improve resource picker initialization. [#57319](https://github.com/grafana/grafana/pull/57319), [@nmarrs](https://github.com/nmarrs)
+- **Canvas:** Improve text element readability. [#57371](https://github.com/grafana/grafana/pull/57371), [@adela-almasan](https://github.com/adela-almasan)
+- **CloudWatch:** Make sure adoption tracking is done on valid, migrated queries. [#56872](https://github.com/grafana/grafana/pull/56872), [@sunker](https://github.com/sunker)
+- **Dashboard:** Alerts user to incorrect tag format for JSON import. [#54657](https://github.com/grafana/grafana/pull/54657), [@iamelDuderino](https://github.com/iamelDuderino)
+- **MSSQL:** Support tables from all schemas. [#53099](https://github.com/grafana/grafana/pull/53099), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Opentsdb:** Allow template variables for filter keys. [#57226](https://github.com/grafana/grafana/pull/57226), [@bohandley](https://github.com/bohandley)
+- **Prometheus:** Provide label values match parameter API when supported prometheus instance is configured. [#56510](https://github.com/grafana/grafana/pull/56510), [@gtk-grafana](https://github.com/gtk-grafana)
+- **QueryEditor:** Revert components from grafana-ui. [#57436](https://github.com/grafana/grafana/pull/57436), [@zoltanbedi](https://github.com/zoltanbedi)
+- **TeamSync:** Allow team sync when external organization mapping returns no organization role. (Enterprise)
+
+### Bug fixes
+
+- **Browse:** Fix General folder not showing in FolderPicker. [#57156](https://github.com/grafana/grafana/pull/57156), [@eledobleefe](https://github.com/eledobleefe)
+- **Elasticsearch:** Fix calculation of trimEdges in alert mode. [#56148](https://github.com/grafana/grafana/pull/56148), [@jorgelbg](https://github.com/jorgelbg)
+- **Elasticsearch:** Fix trimEdges delete logic in alert mode. [#56985](https://github.com/grafana/grafana/pull/56985), [@gabor](https://github.com/gabor)
+- **GoogleOAuth:** Unlock User Admin UI. [#57350](https://github.com/grafana/grafana/pull/57350), [@gamab](https://github.com/gamab)
+- **LogContext:** Fix wrong color of `show context` icon in light theme. [#57427](https://github.com/grafana/grafana/pull/57427), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix adding of adhoc filters to stream selector when query with empty stream selector. [#57280](https://github.com/grafana/grafana/pull/57280), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Fix double stringified log-lines when copied via Copy button. [#57243](https://github.com/grafana/grafana/pull/57243), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix explain section about $\_\_interval variable. [#57188](https://github.com/grafana/grafana/pull/57188), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Remove already selected options from next label filter options in builder. [#57187](https://github.com/grafana/grafana/pull/57187), [@ivanahuckova](https://github.com/ivanahuckova)
+- **NodeGraph:** Fix rendering issues when values of arc are over 1. [#57460](https://github.com/grafana/grafana/pull/57460), [@aocenas](https://github.com/aocenas)
+- **PublicDashboards:** Fix hidden queries execution. [#57194](https://github.com/grafana/grafana/pull/57194), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Fix hidden queries execution. [#57004](https://github.com/grafana/grafana/pull/57004), [@juanicabanas](https://github.com/juanicabanas)
+- **Tempo:** Fix Node Graph visualization type in dashboard. [#56931](https://github.com/grafana/grafana/pull/56931), [@CrypticSignal](https://github.com/CrypticSignal)
+- **TimeSeries:** Fix stacking when first value is negative zero. [#57257](https://github.com/grafana/grafana/pull/57257), [@zoltanbedi](https://github.com/zoltanbedi)
+- **TimeseriesPanel:** Fix variables in data links. [#56729](https://github.com/grafana/grafana/pull/56729), [@mdvictor](https://github.com/mdvictor)
+- **User:** Fix externalUserId not being populated. [#57341](https://github.com/grafana/grafana/pull/57341), [@joshhunt](https://github.com/joshhunt)
+
+### Breaking changes
+
+We added some components a bit too early to @grafana/ui in 9.2 so we are moving them back to @grafana/experimental. If you used any of these components
+
+- AccessoryButton
+- EditorFieldGroup
+- EditorHeader
+- EditorField
+- EditorRow
+- EditorList
+- EditorRows
+- EditorSwitch
+- FlexItem
+- Stack
+- InlineSelect
+- InputGroup
+- Space
+
+Please use them from grafana/experimental from now on. Issue [#57436](https://github.com/grafana/grafana/issues/57436)
+
+<!-- 9.2.2 END -->
+<!-- 9.2.1 START -->
+
+# 9.2.1 (2022-10-18)
+
+### Features and enhancements
+
+- **Alerting:** Improve notification policies created during migration. [#52071](https://github.com/grafana/grafana/pull/52071), [@JacobsonMT](https://github.com/JacobsonMT)
+- **AzureAD:** Add option to force fetch the groups from the Graph API. [#56916](https://github.com/grafana/grafana/pull/56916), [@gamab](https://github.com/gamab)
+- **AzureAD:** Add option to force fetch the groups from the Graph API (#56916). [#56947](https://github.com/grafana/grafana/pull/56947), [@gamab](https://github.com/gamab)
+- **Docs:** Note end of release notes publication. [#57013](https://github.com/grafana/grafana/pull/57013), [@gguillotte-grafana](https://github.com/gguillotte-grafana)
+- **Inspect:** Handle JSON tab crash when the provided object is too big to stringify. [#55939](https://github.com/grafana/grafana/pull/55939), [@TsotosA](https://github.com/TsotosA)
+- **TablePanel:** Footer now updates values on column filtering. [#56354](https://github.com/grafana/grafana/pull/56354), [@mdvictor](https://github.com/mdvictor)
+
+### Bug fixes
+
+- **Alerting:** Fix email image embedding on Windows. [#56766](https://github.com/grafana/grafana/pull/56766), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Alerting:** Fix mathexp.NoData for ConditionsCmd. [#56816](https://github.com/grafana/grafana/pull/56816), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Legacy Alerting:** Fix duration calculation when testing a rule. [#56616](https://github.com/grafana/grafana/pull/56616), [@jorgelbg](https://github.com/jorgelbg)
+- **Loki:** Propagate additional headers from Grafana to Loki when querying data. [#56896](https://github.com/grafana/grafana/pull/56896), [@alexweav](https://github.com/alexweav)
+- **Search:** Sort alphabetically in the folder view, increase the limit of the folder search from 50 to 1000. [#57141](https://github.com/grafana/grafana/pull/57141), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
+- **TablePanel:** Fix last table column to be centered. [#56047](https://github.com/grafana/grafana/pull/56047), [@gitstart](https://github.com/gitstart)
+
+### Plugin development fixes & changes
+
+- **Grafana UI:** Export prop types for queryfield, modal and field components. [#57097](https://github.com/grafana/grafana/pull/57097), [@jackw](https://github.com/jackw)
+- **Toolkit:** Fix `Cannot use import statement outside...` error in tests. [#57071](https://github.com/grafana/grafana/pull/57071), [@jackw](https://github.com/jackw)
+
+<!-- 9.2.1 END -->
+<!-- 9.2.0 START -->
+
+# 9.2.0 (2022-10-11)
+
+### Features and enhancements
+
+- **Alerting:** Add Notification error feedback on contact points view. [#56225](https://github.com/grafana/grafana/pull/56225), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Allow created by to be manually set when there's no creator for silences. [#55952](https://github.com/grafana/grafana/pull/55952), [@gotjosh](https://github.com/gotjosh)
+- **Alerting:** Expose info about notification delivery errors in a new /receivers endpoint. [#55429](https://github.com/grafana/grafana/pull/55429), [@santihernandezc](https://github.com/santihernandezc)
+- **Alerting:** Update imported prometheus alertmanager version. [#56228](https://github.com/grafana/grafana/pull/56228), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Alerting:** Update imported prometheus alertmanager version. Backport (#56228). [#56430](https://github.com/grafana/grafana/pull/56430), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Alerting:** Write and Delete multiple alert instances. [#55350](https://github.com/grafana/grafana/pull/55350), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Core:** Implement aria attributes for query rows, improve a11y. [#55563](https://github.com/grafana/grafana/pull/55563), [@L-M-K-B](https://github.com/L-M-K-B)
+- **Custom Branding:** Remove custom branding service. (Enterprise)
+- **Custom branding:** Remove UI. (Enterprise)
+- **DevEnv:** Adds docker block for clickhouse. [#55702](https://github.com/grafana/grafana/pull/55702), [@owensmallwood](https://github.com/owensmallwood)
+- **Docker:** removes unneccesary use of edge repo. [#54567](https://github.com/grafana/grafana/pull/54567), [@xlson](https://github.com/xlson)
+- **Explore:** Revert split pane resize feature. [#56310](https://github.com/grafana/grafana/pull/56310), [@Elfo404](https://github.com/Elfo404)
+- **Frontend:** Make local storage items propagate to different tabs immediately. [#55810](https://github.com/grafana/grafana/pull/55810), [@oscarkilhed](https://github.com/oscarkilhed)
+- **PublicDashboards:** Allow disabling an existent public dashboard if it …. [#55778](https://github.com/grafana/grafana/pull/55778), [@evictorero](https://github.com/evictorero)
+- **QueryEditorRow:** Only pass error to query editor if panel is not in a loading state. [#56350](https://github.com/grafana/grafana/pull/56350), [@kevinwcyu](https://github.com/kevinwcyu)
+- **Reports:** Refresh query variables on time range change. (Enterprise)
+- **XYChart:** Beta release. [#55973](https://github.com/grafana/grafana/pull/55973), [@mdvictor](https://github.com/mdvictor)
+- **[9.2.x] Alerting:** Start ticker only when scheduler starts (#56339). [#56418](https://github.com/grafana/grafana/pull/56418), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+### Bug fixes
+
+- **Alerting:** Fix pq: missing FROM-clause for table "a". [#56453](https://github.com/grafana/grafana/pull/56453), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **AzureMonitor:** Correctly update subscriptions value in ARG editor. [#55860](https://github.com/grafana/grafana/pull/55860), [@aangelisc](https://github.com/aangelisc)
+- **Chore:** Fix swagger validation failures. (Enterprise)
+- **Chore:** Regenerate swagger specification and fix validation failures. [#55750](https://github.com/grafana/grafana/pull/55750), [@joshhunt](https://github.com/joshhunt)
+- **Correlations:** Only return correlation for which both source and target datasources exist. [#55454](https://github.com/grafana/grafana/pull/55454), [@Elfo404](https://github.com/Elfo404)
+- **Explore:** Prevent panes from disappearing when resizing window in split view. [#55696](https://github.com/grafana/grafana/pull/55696), [@gelicia](https://github.com/gelicia)
+- **Links:** Fix opening links from different orgs on the same tab. [#55837](https://github.com/grafana/grafana/pull/55837), [@guicaulada](https://github.com/guicaulada)
+- **LogContext:** Fix scroll position in upper context group. [#56370](https://github.com/grafana/grafana/pull/56370), [@svennergr](https://github.com/svennergr)
+- **Logs:** Show copy button independently from context. [#55934](https://github.com/grafana/grafana/pull/55934), [@svennergr](https://github.com/svennergr)
+- **Loki/Prometheus:** Fix adding of ad hoc filters when jumping from dashboard to explore. [#55915](https://github.com/grafana/grafana/pull/55915), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Add support for range aggregations with by grouping. [#56184](https://github.com/grafana/grafana/pull/56184), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Fix label-value escaping in context query. [#56614](https://github.com/grafana/grafana/pull/56614), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix redundant escaping in adhoc filter with regex match. [#56447](https://github.com/grafana/grafana/pull/56447), [@ivanahuckova](https://github.com/ivanahuckova)
+- **PanelEdit:** Fixes resize pane border and spacing issues. [#56190](https://github.com/grafana/grafana/pull/56190), [@torkelo](https://github.com/torkelo)
+- **PublicDashboards:** Fix dashboard insights query when Public Dashboard feature is enabled. (Enterprise)
+- **PublicDashboards:** Fix dashboard insights query when Public Dashboard feature is enabled. (Enterprise)
+- **RBAC:** Redirect to /login when forceLogin is set. [#56469](https://github.com/grafana/grafana/pull/56469), [@sakjur](https://github.com/sakjur)
+- **SAML:** Fix RelayState generation function. (Enterprise)
+- **Security:** Fix CVE-2022-27664. [#55361](https://github.com/grafana/grafana/pull/55361), [@yong-jie-gong](https://github.com/yong-jie-gong)
+- **StateTimeline:** Fix tooltip showing erroneously in shared crosshair dashboards. [#55809](https://github.com/grafana/grafana/pull/55809), [@mdvictor](https://github.com/mdvictor)
+- **Tempo:** Fix unexpected trimming of leading zeroes in traceID. [#55167](https://github.com/grafana/grafana/pull/55167), [@hanjm](https://github.com/hanjm)
+- **Tracing:** Fix bug where errors are not reported to OpenTelemetry. [#55925](https://github.com/grafana/grafana/pull/55925), [@sakjur](https://github.com/sakjur)
+
+<!-- 9.2.0 END -->
+<!-- 9.2.0-beta1 START -->
+
+# 9.2.0-beta1 (2022-09-26)
+
+### Features and enhancements
+
+- **AccessControl:** Move GetCacheKey to SignedInUser. [#53591](https://github.com/grafana/grafana/pull/53591), [@mgyongyosi](https://github.com/mgyongyosi)
+- **AccessControl:** Move GetCacheKey to SignedInUser. (Enterprise)
+- **Admin:** Add support to configure default admin email. [#54363](https://github.com/grafana/grafana/pull/54363), [@mhuangwm](https://github.com/mhuangwm)
+- **Admin:** Create/Edit Team/ServiceAccount UI changes. [#53889](https://github.com/grafana/grafana/pull/53889), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Alert list panel:** Add view mode "Stat". [#53281](https://github.com/grafana/grafana/pull/53281), [@peterholmberg](https://github.com/peterholmberg)
+- **Alerting:** Add alert preview to cloud rules editor. [#54950](https://github.com/grafana/grafana/pull/54950), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Add new API endpoint GET /api/v1/ngalert. [#55134](https://github.com/grafana/grafana/pull/55134), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Add templates autocomplete. [#53655](https://github.com/grafana/grafana/pull/53655), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Adds support for editing group details for Grafana managed rules. [#53120](https://github.com/grafana/grafana/pull/53120), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Change default alert state to Error on execution error or timeout. [#55345](https://github.com/grafana/grafana/pull/55345), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Display alert's 'Created' time in local time instead of UTC. [#54414](https://github.com/grafana/grafana/pull/54414), [@mmusenbr](https://github.com/mmusenbr)
+- **Alerting:** Improve Mimir AM interoperability with Grafana. [#53396](https://github.com/grafana/grafana/pull/53396), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Improve validation of query and expressions on rule submit. [#53258](https://github.com/grafana/grafana/pull/53258), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Read group details before saving. [#53586](https://github.com/grafana/grafana/pull/53586), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Resolve stale state. [#49352](https://github.com/grafana/grafana/pull/49352), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Support for re-ordering alert rules in a group. [#53318](https://github.com/grafana/grafana/pull/53318), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Update embedded Alertmanager v0.24. [#53555](https://github.com/grafana/grafana/pull/53555), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Update forking request handlers to use the same errors. [#52965](https://github.com/grafana/grafana/pull/52965), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Write and Delete multiple alert instances. [#52305](https://github.com/grafana/grafana/pull/52305), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Annotation:** Optionally allow storing longer annotation tags. [#54754](https://github.com/grafana/grafana/pull/54754), [@papagian](https://github.com/papagian)
+- **Auth:** Add SAML common resolutions to cookie issues. [#55395](https://github.com/grafana/grafana/pull/55395), [@Jguer](https://github.com/Jguer)
+- **Auth:** Add cli command users-manager for conflict resolution. [#52344](https://github.com/grafana/grafana/pull/52344), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Auth:** Add documentation on group overage claims in AzureAD. [#55389](https://github.com/grafana/grafana/pull/55389), [@Jguer](https://github.com/Jguer)
+- **Auth:** Extend auth token errors with user ID. [#54633](https://github.com/grafana/grafana/pull/54633), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Auth:** Reduce allocs in permission map. [#55410](https://github.com/grafana/grafana/pull/55410), [@Jguer](https://github.com/Jguer)
+- **Auth:** Restore legacy behavior and add deprecation notice for empty org role in oauth. [#55118](https://github.com/grafana/grafana/pull/55118), [@Jguer](https://github.com/Jguer)
+- **AzureMonitor:** Automate retrieval of supported Metrics namespaces. [#53203](https://github.com/grafana/grafana/pull/53203), [@aangelisc](https://github.com/aangelisc)
+- **Build:** Replace the file-loader loader with asset module in webpack config. [#53088](https://github.com/grafana/grafana/pull/53088), [@academo](https://github.com/academo)
+- **Chore:** Group auth docker blocks. [#54274](https://github.com/grafana/grafana/pull/54274), [@linoman](https://github.com/linoman)
+- **Chore:** Upgrade Go to 1.19.1. [#54902](https://github.com/grafana/grafana/pull/54902), [@sakjur](https://github.com/sakjur)
+- **Cleanup:** Add traces to cleanup jobs. [#55465](https://github.com/grafana/grafana/pull/55465), [@sakjur](https://github.com/sakjur)
+- **CloudMonitor:** Remove cloudMonitoringExperimentalUI feature flag. [#55054](https://github.com/grafana/grafana/pull/55054), [@asimpson](https://github.com/asimpson)
+- **CloudWatch:** Add AWS/States metrics. [#55427](https://github.com/grafana/grafana/pull/55427), [@jangaraj](https://github.com/jangaraj)
+- **CloudWatch:** Add missing AWS/ApiGateway metrics. [#53839](https://github.com/grafana/grafana/pull/53839), [@jangaraj](https://github.com/jangaraj)
+- **CloudWatch:** Add missing AWS/Events metrics. [#53831](https://github.com/grafana/grafana/pull/53831), [@jangaraj](https://github.com/jangaraj)
+- **CloudWatch:** Enable feature adoption tracking in the plugin. [#54299](https://github.com/grafana/grafana/pull/54299), [@sunker](https://github.com/sunker)
+- **CloudWatch:** Log group variable should get all log groups. [#54062](https://github.com/grafana/grafana/pull/54062), [@iwysiu](https://github.com/iwysiu)
+- **CloudWatch:** Refactoring - decouple logs and metrics in datasource file. [#55079](https://github.com/grafana/grafana/pull/55079), [@sunker](https://github.com/sunker)
+- **Correlations:** Add GetCorrelation(s) HTTP APIs. [#52517](https://github.com/grafana/grafana/pull/52517), [@Elfo404](https://github.com/Elfo404)
+- **Custom branding:** Add RBAC (early access). (Enterprise)
+- **Custom branding:** Add preview for the settings (early access). (Enterprise)
+- **Dashboard:** Support Variables in "Filter by Name" Transformation. [#51804](https://github.com/grafana/grafana/pull/51804), [@Kirchen99](https://github.com/Kirchen99)
+- **DashboardQuery:** Expand query options. [#53998](https://github.com/grafana/grafana/pull/53998), [@ryantxu](https://github.com/ryantxu)
+- **Docs:** Deprecating packages_api and removing it from our pipelines. [#54473](https://github.com/grafana/grafana/pull/54473), [@tolzhabayev](https://github.com/tolzhabayev)
+- **Docs:** Update annotations API docs to include required field. [#52644](https://github.com/grafana/grafana/pull/52644), [@HarryTennent](https://github.com/HarryTennent)
+- **Echo:** Add support for Google Analytics 4. [#55446](https://github.com/grafana/grafana/pull/55446), [@joshhunt](https://github.com/joshhunt)
+- **Elasticsearch:** Respect time range in ad hoc filters. [#53874](https://github.com/grafana/grafana/pull/53874), [@gabor](https://github.com/gabor)
+- **Explore:** Add Mixed Datasource. [#53429](https://github.com/grafana/grafana/pull/53429), [@gelicia](https://github.com/gelicia)
+- **Explore:** Add resize to split view, with Min/Max button. [#54420](https://github.com/grafana/grafana/pull/54420), [@gelicia](https://github.com/gelicia)
+- **Footer:** Add release notes url to version label. [#52909](https://github.com/grafana/grafana/pull/52909), [@kianelbo](https://github.com/kianelbo)
+- **Geomap:** Add Africa, Australia, Oceania, South Asia, and East Asia as initial view options. [#55142](https://github.com/grafana/grafana/pull/55142), [@zuchka](https://github.com/zuchka)
+- **Geomap:** Add dynamic initial view options. [#54419](https://github.com/grafana/grafana/pull/54419), [@drew08t](https://github.com/drew08t)
+- **Grafana Backend:** Establish a database version support policy. [#54374](https://github.com/grafana/grafana/pull/54374), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Grafana UI:** Add implicit submit to TimeRangeForm for A11y. [#52647](https://github.com/grafana/grafana/pull/52647), [@matejkubinec](https://github.com/matejkubinec)
+- **Grafana/ui:** Adds all unicons to IconName and script to generate types. [#53820](https://github.com/grafana/grafana/pull/53820), [@academo](https://github.com/academo)
+- **GrafanaUI:** Add icon to links on Plugin configuration page. [#55581](https://github.com/grafana/grafana/pull/55581), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **GrafanaUI:** Deprecate logs components. [#55364](https://github.com/grafana/grafana/pull/55364), [@gabor](https://github.com/gabor)
+- **GraphPanel:** Panel Description box does not expand to fit markdown table. [#54238](https://github.com/grafana/grafana/pull/54238), [@gitstart](https://github.com/gitstart)
+- **Icons:** Move unicons icons to the repository and generate the iconsBundle.js with nodejs. [#53766](https://github.com/grafana/grafana/pull/53766), [@academo](https://github.com/academo)
+- **InfluxDB:** Remove browser ('direct' access) mode. [#53529](https://github.com/grafana/grafana/pull/53529), [@obetomuniz](https://github.com/obetomuniz)
+- **JWT:** Add support for assigning org roles. [#54277](https://github.com/grafana/grafana/pull/54277), [@nrwiersma](https://github.com/nrwiersma)
+- **JWT:** Allow conventional bearer token in Authorization header. [#54821](https://github.com/grafana/grafana/pull/54821), [@nrwiersma](https://github.com/nrwiersma)
+- **Live:** Migrate to centrifuge-js v3 (new API and client protocol). [#51977](https://github.com/grafana/grafana/pull/51977), [@FZambia](https://github.com/FZambia)
+- Load icons using webpack context instead of react-inlinesvg library. [#53675](https://github.com/grafana/grafana/pull/53675), [@academo](https://github.com/academo)
+- **Login:** Allow basic users to reset password when LDAP or Auth Proxy is enabled. [#52331](https://github.com/grafana/grafana/pull/52331), [@krzysdabro](https://github.com/krzysdabro)
+- **Login:** Remove single admin team restriction. [#54534](https://github.com/grafana/grafana/pull/54534), [@linoman](https://github.com/linoman)
+- **Logs:** Relocate "show context" button, add copy line log button. [#50977](https://github.com/grafana/grafana/pull/50977), [@Seyaji](https://github.com/Seyaji)
+- **Loki Query Variables:** Add support to select from existing labels. [#54625](https://github.com/grafana/grafana/pull/54625), [@matyax](https://github.com/matyax)
+- **Loki/Prometheus:** Make sections in log/metrics browser resizable. [#54704](https://github.com/grafana/grafana/pull/54704), [@gwdawson](https://github.com/gwdawson)
+- **Loki/Prometheus:** Remove beta tag from query builder. [#55150](https://github.com/grafana/grafana/pull/55150), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Add validation to derived fields url field setting. [#53599](https://github.com/grafana/grafana/pull/53599), [@matyax](https://github.com/matyax)
+- **Loki:** Create Variable Query Editor for Loki. [#54102](https://github.com/grafana/grafana/pull/54102), [@matyax](https://github.com/matyax)
+- **MSSQL:** Migrate to React. [#51765](https://github.com/grafana/grafana/pull/51765), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Metrics:** Instrument requests not matching any handler as `notfound`. [#53949](https://github.com/grafana/grafana/pull/53949), [@bergquist](https://github.com/bergquist)
+- **Navigation Bar:** Remove plugins link under Server Admin. [#54386](https://github.com/grafana/grafana/pull/54386), [@academo](https://github.com/academo)
+- **Navigation:** Don't round app plugin icon images. [#54543](https://github.com/grafana/grafana/pull/54543), [@joshhunt](https://github.com/joshhunt)
+- **OAuth:** Allow assigning Server Admin. [#54780](https://github.com/grafana/grafana/pull/54780), [@Jguer](https://github.com/Jguer)
+- **Panel edit:** Run queries when time range changes in table view. [#53111](https://github.com/grafana/grafana/pull/53111), [@axelavargas](https://github.com/axelavargas)
+- **Panels:** Add panel debug support helper. [#54678](https://github.com/grafana/grafana/pull/54678), [@ryantxu](https://github.com/ryantxu)
+- **Playlists:** Migrate to UIDs and load dashboards in the frontend. [#54125](https://github.com/grafana/grafana/pull/54125), [@ryantxu](https://github.com/ryantxu)
+- **Plugins:** Add feature toggles for long running queries. [#54349](https://github.com/grafana/grafana/pull/54349), [@kevinwcyu](https://github.com/kevinwcyu)
+- **Plugins:** Add secure JSON fields to plugin setting DTO. [#55313](https://github.com/grafana/grafana/pull/55313), [@wbrowne](https://github.com/wbrowne)
+- **Plugins:** Handle app plugin proxy routes per request. [#51835](https://github.com/grafana/grafana/pull/51835), [@marefr](https://github.com/marefr)
+- **Plugins:** Use error plane for api/ds/query. [#54750](https://github.com/grafana/grafana/pull/54750), [@wbrowne](https://github.com/wbrowne)
+- **Preferences:** Support setting any dashboard as home, not just the starred ones. [#54258](https://github.com/grafana/grafana/pull/54258), [@ryantxu](https://github.com/ryantxu)
+- **Prometheus:** Add dashboard uid when tracing header in browsermode. [#53232](https://github.com/grafana/grafana/pull/53232), [@lpskdl](https://github.com/lpskdl)
+- **Prometheus:** Throw error on direct access. [#50162](https://github.com/grafana/grafana/pull/50162), [@aocenas](https://github.com/aocenas)
+- **Prometheus:** Upgrades http client to 1.30. [#53901](https://github.com/grafana/grafana/pull/53901), [@bergquist](https://github.com/bergquist)
+- **Prometheus:** Upgrades the prometheus http client to 1.13. [#47707](https://github.com/grafana/grafana/pull/47707), [@yesoreyeram](https://github.com/yesoreyeram)
+- **PublicDashboard:** Add RTK Query with loading and error state. Add MSW dependency for testing. [#55518](https://github.com/grafana/grafana/pull/55518), [@juanicabanas](https://github.com/juanicabanas)
+- **PublicDashboards:** Add RBAC to secured endpoints. [#54544](https://github.com/grafana/grafana/pull/54544), [@evictorero](https://github.com/evictorero)
+- **PublicDashboards:** Add link to public dashboards docs to sharing modal. [#55186](https://github.com/grafana/grafana/pull/55186), [@guicaulada](https://github.com/guicaulada)
+- **PublicDashboards:** Disable form when user does not has permissions. [#54853](https://github.com/grafana/grafana/pull/54853), [@evictorero](https://github.com/evictorero)
+- **PublicDashboards:** Dont support exemplars. [#54933](https://github.com/grafana/grafana/pull/54933), [@owensmallwood](https://github.com/owensmallwood)
+- **PublicDashboards:** Ignore time range input and changes on public dashboard. [#55412](https://github.com/grafana/grafana/pull/55412), [@guicaulada](https://github.com/guicaulada)
+- **PublicDashboards:** Log api layer errors and which datasources fail/succeed. [#55056](https://github.com/grafana/grafana/pull/55056), [@owensmallwood](https://github.com/owensmallwood)
+- **PublicDashboards:** Render tag when dashboard meta changes in state. [#55414](https://github.com/grafana/grafana/pull/55414), [@owensmallwood](https://github.com/owensmallwood)
+- **PublicDashboards:** Resolve interval for public dashboard data source. [#55489](https://github.com/grafana/grafana/pull/55489), [@guicaulada](https://github.com/guicaulada)
+- **PublicDashboards:** Sanitize metadata from public dashboard queries. [#55269](https://github.com/grafana/grafana/pull/55269), [@guicaulada](https://github.com/guicaulada)
+- **PublicDashboards:** UI improvements. [#55130](https://github.com/grafana/grafana/pull/55130), [@juanicabanas](https://github.com/juanicabanas)
+- **Query editor:** Allow query editors to create new query. [#55028](https://github.com/grafana/grafana/pull/55028), [@ivanahuckova](https://github.com/ivanahuckova)
+- **RBAC:** Add cache for oss rbac permissions. [#55098](https://github.com/grafana/grafana/pull/55098), [@kalleep](https://github.com/kalleep)
+- **RBAC:** Add endpoints for reading and updating role assignments. (Enterprise)
+- **RBAC:** Add permissions to install and configure plugins. [#51829](https://github.com/grafana/grafana/pull/51829), [@gamab](https://github.com/gamab)
+- **RBAC:** Display indicator if a permission is inherited. [#54080](https://github.com/grafana/grafana/pull/54080), [@kalleep](https://github.com/kalleep)
+- **RBAC:** Only display unique permissions in list. [#54074](https://github.com/grafana/grafana/pull/54074), [@kalleep](https://github.com/kalleep)
+- **RBAC:** Refactor delegation check to reduce db queries. (Enterprise)
+- **RBAC:** Validate scopes during role creation. (Enterprise)
+- **Report:** Keep report data on edit page refresh. (Enterprise)
+- **Reports:** Allow CSV only option. (Enterprise)
+- **Reports:** Render steps inside ReportPage. (Enterprise)
+- **SAML:** Account for all orgs in org_mapping. (Enterprise)
+- **SAML:** Add option to skip org role sync. [#55230](https://github.com/grafana/grafana/pull/55230), [@gamab](https://github.com/gamab)
+- **SAML:** Add option to skip org role sync. (Enterprise)
+- **SAML:** Allow wildcard mapping to add user to all existing orgs. [#55628](https://github.com/grafana/grafana/pull/55628), [@gamab](https://github.com/gamab)
+- **SAML:** Do not SAML SLO if user is not SAML authenticated. [#53418](https://github.com/grafana/grafana/pull/53418), [@Jguer](https://github.com/Jguer)
+- **SAML:** Improve SAML login flow. (Enterprise)
+- **SQL:** Migrate (MS/My/Postgres)SQL configuration pages from Angular to React. [#51891](https://github.com/grafana/grafana/pull/51891), [@oscarkilhed](https://github.com/oscarkilhed)
+- **Search:** Migrated impressions to use dashboardUID. [#53090](https://github.com/grafana/grafana/pull/53090), [@lpskdl](https://github.com/lpskdl)
+- **Secrets:** Add fallback to secrets kvstore plugin. [#54056](https://github.com/grafana/grafana/pull/54056), [@guicaulada](https://github.com/guicaulada)
+- **Secrets:** Convert secret migration to a background service. [#54676](https://github.com/grafana/grafana/pull/54676), [@guicaulada](https://github.com/guicaulada)
+- **Secrets:** Implement secrets manager plugin fallback store. [#54496](https://github.com/grafana/grafana/pull/54496), [@guicaulada](https://github.com/guicaulada)
+- **Secrets:** Improve error handling for secrets manager plugin. [#54811](https://github.com/grafana/grafana/pull/54811), [@guicaulada](https://github.com/guicaulada)
+- **SegmentInput:** Omit allowCustomValue and allowEmptyValue props. [#55352](https://github.com/grafana/grafana/pull/55352), [@timagixe](https://github.com/timagixe)
+- **Status History Panel:** Show X-Axis Value in Tooltip. [#54563](https://github.com/grafana/grafana/pull/54563), [@gitstart](https://github.com/gitstart)
+- **TeamSync:** Add description to group mapping. (Enterprise)
+- **TeamSync:** Prevent team syncing out of orgs mapped by auth method. (Enterprise)
+- **Teams:** Add TeamRolePicker to the Create and Edit Team pages. [#53775](https://github.com/grafana/grafana/pull/53775), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Tempo:** Set the default query type even if queryType was set to 'clear'. [#53887](https://github.com/grafana/grafana/pull/53887), [@CrypticSignal](https://github.com/CrypticSignal)
+- **Tempo:** Wrap the autocomplete value for a tag in double quotes. [#55610](https://github.com/grafana/grafana/pull/55610), [@CrypticSignal](https://github.com/CrypticSignal)
+- **TextPanel:** Support code formats. [#53850](https://github.com/grafana/grafana/pull/53850), [@ryantxu](https://github.com/ryantxu)
+- **TimeRangePicker:** Absolute timeranges with timezone. [#53763](https://github.com/grafana/grafana/pull/53763), [@mdvictor](https://github.com/mdvictor)
+- **TimeSeries:** Support for log scale and negative numbers. [#54812](https://github.com/grafana/grafana/pull/54812), [@leeoniya](https://github.com/leeoniya)
+- **TopNav:** Panel edit changes. [#54746](https://github.com/grafana/grafana/pull/54746), [@torkelo](https://github.com/torkelo)
+- **Tracing:** Add new [tracing.opentelemetry] custom_attributes config setting. [#54110](https://github.com/grafana/grafana/pull/54110), [@hairyhenderson](https://github.com/hairyhenderson)
+- **Transformations:** Add support for an inner join transformation. [#53865](https://github.com/grafana/grafana/pull/53865), [@AlexKaracaoglu](https://github.com/AlexKaracaoglu)
+- **Transformers:** Support inner vs outer join. [#53913](https://github.com/grafana/grafana/pull/53913), [@ryantxu](https://github.com/ryantxu)
+- **User management:** Use HMAC-SHA256 to generate time limit codes (password reset tokens). [#42334](https://github.com/grafana/grafana/pull/42334), [@andreasgerstmayr](https://github.com/andreasgerstmayr)
+- **UsersTable:** Display Disabled flag in Organizations' Users table. [#53656](https://github.com/grafana/grafana/pull/53656), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Various Panels:** Add ability to toggle legend with keyboard shortcut. (Enterprise)
+
+### Bug fixes
+
+- **Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53620](https://github.com/grafana/grafana/pull/53620), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Auth:** Allow admins to manually change external user's role if `oauth_skip_org_role_update_sync` or saml `skip_org_role_sync` is enabled. [#55182](https://github.com/grafana/grafana/pull/55182), [@Jguer](https://github.com/Jguer)
+- **AuthNZ:** Security fixes for CVE-2022-35957 and CVE-2022-36062. [#55503](https://github.com/grafana/grafana/pull/55503), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **ContextHandler:** Use standard library style middleware. [#54219](https://github.com/grafana/grafana/pull/54219), [@sakjur](https://github.com/sakjur)
+- **ElasticSearch:** Fix lucene formatted variables being wrongly escaped. [#54981](https://github.com/grafana/grafana/pull/54981), [@svennergr](https://github.com/svennergr)
+- **FIX:** RBAC prevents deleting empty snapshots. [#54385](https://github.com/grafana/grafana/pull/54385), [@gamab](https://github.com/gamab)
+- **Fix:** Adjusting plugin.json schema regex. [#54515](https://github.com/grafana/grafana/pull/54515), [@tolzhabayev](https://github.com/tolzhabayev)
+- **Fix:** Wrong swagger meta preventing spec generation. [#54181](https://github.com/grafana/grafana/pull/54181), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Histogram:** Fix panel hide when clicking on legend. [#53651](https://github.com/grafana/grafana/pull/53651), [@mdvictor](https://github.com/mdvictor)
+- **Loki:** Hide loki sample queries from query inspector. [#55158](https://github.com/grafana/grafana/pull/55158), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Query Builder:** Fix spelling of "lose" in user visible message. [#53435](https://github.com/grafana/grafana/pull/53435), [@spazm](https://github.com/spazm)
+- **RBAC:** Fix resolver issue on wildcard resulting in wrong status code for endpoints. [#54208](https://github.com/grafana/grafana/pull/54208), [@kalleep](https://github.com/kalleep)
+- **Reports:** Fix starting value. (Enterprise)
+- **StatPanel:** Add padding between horizontal name and value. [#55299](https://github.com/grafana/grafana/pull/55299), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **TablePanel:** Fix FooterRow styling for Safari and Firefox. [#55543](https://github.com/grafana/grafana/pull/55543), [@mdvictor](https://github.com/mdvictor)
+- **TablePanel:** Fix vertical scrollbar. [#53457](https://github.com/grafana/grafana/pull/53457), [@mdvictor](https://github.com/mdvictor)
+- **Tempo:** Fix typo in the tooltip for "Limit". [#53750](https://github.com/grafana/grafana/pull/53750), [@CrypticSignal](https://github.com/CrypticSignal)
+- **Transformations:** Fix clearing of transformation select fields. [#53916](https://github.com/grafana/grafana/pull/53916), [@AlexKaracaoglu](https://github.com/AlexKaracaoglu)
+- **Various Panels:** Fix Single right-aligned y-axis hiding gridlines. [#54206](https://github.com/grafana/grafana/pull/54206), [@gitstart](https://github.com/gitstart)
+
+### Breaking changes
+
+Dashboards: Remove the ability to open dashboard settings while panel edit is still open. Issue [#54746](https://github.com/grafana/grafana/issues/54746)
+
+In InfluxDB, browser access mode was deprecated in Grafana 8.0.0 and removed in 9.2.0. If you used this mode, please switch to server access mode on the datasource configuration page. Issue [#53529](https://github.com/grafana/grafana/issues/53529)
+
+In Prometheus, browser access mode was deprecated in Grafana 7.4.0 and removed in 9.2.0. If you used this mode, please switch to server access mode on the datasource configuration page. Issue [#50162](https://github.com/grafana/grafana/issues/50162)
+
+Password reset links sent before the upgrade will no longer work and have to be resent. Since the duration of those links are only two hours we decided to not support both token formats. Issue [#42334](https://github.com/grafana/grafana/issues/42334)
+
+### Deprecations
+
+Google Analytics 'Universal Analytics' is deprecated by Google in favor of Google Analytics 4. See [Google's deprecation notice](https://support.google.com/analytics/answer/10089681?hl=en) for more details. After July 2023, Grafana's Google Analytics 'Universal Analytics' integration will be removed, along with the `analytics.google_analytics_ua_id` server config property. Configure Google Analytics 4 using the `analytics.google_analytics_4_id` server config property.
+Issue [#55446](https://github.com/grafana/grafana/issues/55446)
+
+The following components and functions related to logs are deprecated in the `grafana-ui` package: `LogLabels`, `LogMessageAnsi`, `LogRows`, `getLogRowStyles`.
+Issue [#55364](https://github.com/grafana/grafana/issues/55364)
+
+### Plugin development fixes & changes
+
+- **GrafanaUI:** Add required behavior to Inline Field. [#54867](https://github.com/grafana/grafana/pull/54867), [@gefgu](https://github.com/gefgu)
+- **CustomScrollbar:** Add optional scroll indicators to `CustomScrollbar`. [#54705](https://github.com/grafana/grafana/pull/54705), [@ashharrison90](https://github.com/ashharrison90)
+- **Build:** Introduce ESM and Treeshaking to NPM package builds. [#51517](https://github.com/grafana/grafana/pull/51517), [@jackw](https://github.com/jackw)
+
+<!-- 9.1.8 START -->
+
+# 9.1.8 (2022-10-11)
+
+### Features and enhancements
+
+- **Alerting:** Update imported prometheus alertmanager version. Backport (#56228). [#56429](https://github.com/grafana/grafana/pull/56429), [@joeblubaugh](https://github.com/joeblubaugh)
+- **Chore:** Upgrade Go to 1.19.2. [#56355](https://github.com/grafana/grafana/pull/56355), [@sakjur](https://github.com/sakjur)
+
+### Bug fixes
+
+- **Alerting:** Fix evaluation interval validation. [#56115](https://github.com/grafana/grafana/pull/56115), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Fix migration to create rules with group index 1. [#56511](https://github.com/grafana/grafana/pull/56511), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Fix migration to not add label "alertname". [#56509](https://github.com/grafana/grafana/pull/56509), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Azure Monitor:** Fix empty Logs response for Alerting. [#56378](https://github.com/grafana/grafana/pull/56378), [@andresmgot](https://github.com/andresmgot)
+- **Azure Monitor:** Fix subscription selector when changing data sources. [#56284](https://github.com/grafana/grafana/pull/56284), [@andresmgot](https://github.com/andresmgot)
+- **Caching:** Fix wrong memcached setting name in defaults. (Enterprise)
+- **Google Cloud Monitoring:** Fix bucket bound for distributions. [#56565](https://github.com/grafana/grafana/pull/56565), [@andresmgot](https://github.com/andresmgot)
+
+<!-- 9.1.8 END -->
+
+<!-- 9.1.7 START -->
+
+# 9.1.7 (2022-10-04)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go version to 1.19.1 (backport). [#55733](https://github.com/grafana/grafana/pull/55733), [@sakjur](https://github.com/sakjur)
+- **CloudWatch:** Add missing AWS/Prometheus metrics. [#54990](https://github.com/grafana/grafana/pull/54990), [@jangaraj](https://github.com/jangaraj)
+- **Explore:** Add feature tracking events. [#54514](https://github.com/grafana/grafana/pull/54514), [@L-M-K-B](https://github.com/L-M-K-B)
+- **Graphite:** Add error information to graphite queries tracing. [#55249](https://github.com/grafana/grafana/pull/55249), [@jesusvazquez](https://github.com/jesusvazquez)
+- **Prometheus:** Restore FromAlert header. [#55255](https://github.com/grafana/grafana/pull/55255), [@kylebrandt](https://github.com/kylebrandt)
+- **SAML:** Account for all orgs in org_mapping (#3855). (Enterprise)
+- **Search:** Add search index configuration options. [#55525](https://github.com/grafana/grafana/pull/55525), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
+- **Thresholds:** Add option for dashed line style. [#55875](https://github.com/grafana/grafana/pull/55875), [@leeoniya](https://github.com/leeoniya)
+
+### Bug fixes
+
+- **Alerting:** Fix default query's data source when no default datasource specified. [#55435](https://github.com/grafana/grafana/pull/55435), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Fix mathexp.NoData cannot be reduced. [#55347](https://github.com/grafana/grafana/pull/55347), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Skip unsupported file types on provisioning. [#55573](https://github.com/grafana/grafana/pull/55573), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **AzureMonitor:** Ensure resourceURI template variable is migrated. [#56095](https://github.com/grafana/grafana/pull/56095), [@aangelisc](https://github.com/aangelisc)
+- **Dashboard:** Fix plugin dashboard save as button. [#55197](https://github.com/grafana/grafana/pull/55197), [@lpskdl](https://github.com/lpskdl)
+- **Docs:** Fix decimals: auto docs for panel edit. [#55477](https://github.com/grafana/grafana/pull/55477), [@joshhunt](https://github.com/joshhunt)
+- **Fix:** RBAC handle `error no resolver` found. [#55676](https://github.com/grafana/grafana/pull/55676), [@gamab](https://github.com/gamab)
+- **Fix:** RBAC handle `error no resolver` found. (Enterprise)
+- **LibraryPanelSearch:** Refactor and fix hyphen issue. [#55314](https://github.com/grafana/grafana/pull/55314), [@kaydelaney](https://github.com/kaydelaney)
+- **Live:** Fix live streaming with `live-service-web-worker` feature flag enabled. [#55528](https://github.com/grafana/grafana/pull/55528), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
+- **QueryField:** Fix wrong cursor position on autocomplete. [#55576](https://github.com/grafana/grafana/pull/55576), [@svennergr](https://github.com/svennergr)
+
+<!-- 9.1.7 END -->
+<!-- 9.2.0-beta1 END -->
 <!-- 9.1.6 START -->
 
 # 9.1.6 (2022-09-20)
@@ -1161,6 +1909,26 @@ Make sure to handle possible errors on the callsite where using `backendSrv.fetc
 In the Loki data source, for consistency and performance reasons, we changed how we represent `NaN` (not a number) values received from Loki. In the past versions, we converted these to `null` in the frontend (for dashboard and explore), and kept as `NaN` in the alerting path. Starting with this version, we will always keep it as `NaN`. This change should be mostly invisible for the users. Issue [#45389](https://github.com/grafana/grafana/issues/45389)
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
+
+<!-- 8.5.15 START -->
+
+# 8.5.15 (2022-11-08)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.19.2. [#56857](https://github.com/grafana/grafana/pull/56857), [@sakjur](https://github.com/sakjur)
+
+<!-- 8.5.15 END -->
+
+<!-- 8.5.14 START -->
+
+# 8.5.14 (2022-10-11)
+
+### Features and enhancements
+
+- **Access Control:** Allow org admins to invite new users. [#55585](https://github.com/grafana/grafana/pull/55585), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 8.5.14 END -->
 
 <!-- 8.5.13 START -->
 

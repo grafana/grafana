@@ -105,17 +105,21 @@ export class UserAdminPage extends PureComponent<Props> {
 
   render() {
     const { user, orgs, sessions, ldapSyncInfo, isLoading } = this.props;
-    const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
+    const isLDAPUser = user?.isExternal && user?.authLabels?.includes('LDAP');
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
     const isOAuthUserWithSkippableSync =
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
+    const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
+    const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
     const isUserSynced =
       !config.auth.DisableSyncLock &&
-      ((user?.isExternal && !(isOAuthUserWithSkippableSync || isSAMLUser)) ||
+      ((user?.isExternal &&
+        !(isAuthProxyUser || isGoogleUser || isOAuthUserWithSkippableSync || isSAMLUser || isLDAPUser)) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
-        (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser));
+        (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser) ||
+        (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser));
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
@@ -137,9 +141,13 @@ export class UserAdminPage extends PureComponent<Props> {
                 onUserEnable={this.onUserEnable}
                 onPasswordChange={this.onPasswordChange}
               />
-              {isLDAPUser && featureEnabled('ldapsync') && ldapSyncInfo && canReadLDAPStatus && (
-                <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
-              )}
+              {!config.auth.LDAPSkipOrgRoleSync &&
+                isLDAPUser &&
+                featureEnabled('ldapsync') &&
+                ldapSyncInfo &&
+                canReadLDAPStatus && (
+                  <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
+                )}
               <UserPermissions isGrafanaAdmin={user.isGrafanaAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
             </>
           )}

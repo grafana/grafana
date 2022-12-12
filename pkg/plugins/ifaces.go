@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store is the storage for plugins.
+// Store is the publicly accessible storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
@@ -16,10 +16,10 @@ type Store interface {
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 }
 
-type Manager interface {
-	// Add adds a plugin to the store.
+type Installer interface {
+	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
-	// Remove removes a plugin from the store.
+	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID string) error
 }
 
@@ -73,4 +73,26 @@ type ErrorResolver interface {
 type PluginLoaderAuthorizer interface {
 	// CanLoadPlugin confirms if a plugin is authorized to load
 	CanLoadPlugin(plugin *Plugin) bool
+}
+
+// RoleRegistry handles the plugin RBAC roles and their assignments
+type RoleRegistry interface {
+	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
+}
+
+// ClientMiddleware is an interface representing the ability to create a middleware
+// that implements the Client interface.
+type ClientMiddleware interface {
+	// CreateClientMiddleware creates a new client middleware.
+	CreateClientMiddleware(next Client) Client
+}
+
+// The ClientMiddlewareFunc type is an adapter to allow the use of ordinary
+// functions as ClientMiddleware's. If f is a function with the appropriate
+// signature, ClientMiddlewareFunc(f) is a ClientMiddleware that calls f.
+type ClientMiddlewareFunc func(next Client) Client
+
+// CreateClientMiddleware implements the ClientMiddleware interface.
+func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
+	return fn(next)
 }

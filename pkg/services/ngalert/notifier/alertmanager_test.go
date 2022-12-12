@@ -18,12 +18,12 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,11 +34,11 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	}
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval:                  10 * time.Second,
-			DefaultRuleEvaluationInterval: 60 * time.Second,
+			DefaultRuleEvaluationInterval: time.Minute,
 		},
 		SQLStore:         sqlStore,
 		Logger:           log.New("alertmanager-test"),
@@ -314,7 +314,7 @@ func TestPutAlert(t *testing.T) {
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)
-			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, am.logger)
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, nil, am.logger, r)
 			require.NoError(t, err)
 
 			alerts := []*types.Alert{}
@@ -391,9 +391,9 @@ func TestSilenceCleanup(t *testing.T) {
 		// Active now
 		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(6*time.Hour)), matchers),
 		// Expiring soon.
-		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(5*time.Second)), matchers),
-		// Expiring *very* soon
 		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(2*time.Second)), matchers),
+		// Expiring *very* soon
+		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(1*time.Second)), matchers),
 	}
 
 	for _, s := range silences {
@@ -407,12 +407,12 @@ func TestSilenceCleanup(t *testing.T) {
 		found, err := am.ListSilences(nil)
 		require.NoError(err)
 		return len(found) == 3
-	}, 3*time.Second, 150*time.Millisecond)
+	}, 3*time.Second, 100*time.Millisecond)
 
 	// Wait again for another silence to expire.
 	require.Eventually(func() bool {
 		found, err := am.ListSilences(nil)
 		require.NoError(err)
 		return len(found) == 2
-	}, 6*time.Second, 150*time.Millisecond)
+	}, 6*time.Second, 100*time.Millisecond)
 }

@@ -3,10 +3,14 @@ import LRU from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
+import semver from 'semver/preload';
 
 import {
+  AbstractQuery,
   AnnotationEvent,
+  AnnotationQueryRequest,
   CoreApp,
+  DataFrame,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -15,32 +19,29 @@ import {
   DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
-  AbstractQuery,
+  dateTime,
   LoadingState,
+  QueryFixAction,
   rangeUtil,
   ScopedVars,
   TimeRange,
-  DataFrame,
-  dateTime,
-  AnnotationQueryRequest,
-  QueryFixAction,
 } from '@grafana/data';
 import {
+  BackendDataSourceResponse,
   BackendSrvRequest,
+  DataSourceWithBackend,
   FetchError,
   FetchResponse,
   getBackendSrv,
-  DataSourceWithBackend,
-  BackendDataSourceResponse,
-  toDataQueryResponse,
   isFetchError,
+  toDataQueryResponse,
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { discoverDataSourceFeatures } from 'app/features/alerting/unified/api/buildInfo';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { PromApplication, PromApiFeatures } from 'app/types/unified-alerting-dto';
+import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -89,6 +90,8 @@ export class PrometheusDatasource
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
+  datasourceConfigurationPrometheusFlavor?: PromApplication;
+  datasourceConfigurationPrometheusVersion?: string;
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
@@ -121,6 +124,8 @@ export class PrometheusDatasource
     this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
+    this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
+    this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
 
@@ -142,10 +147,36 @@ export class PrometheusDatasource
     return query.expr;
   }
 
+  hasLabelsMatchAPISupport(): boolean {
+    return (
+      // https://github.com/prometheus/prometheus/releases/tag/v2.24.0
+      this._isDatasourceVersionGreaterOrEqualTo('2.24.0', PromApplication.Prometheus) ||
+      // All versions of Mimir support matchers for labels API
+      this._isDatasourceVersionGreaterOrEqualTo('2.0.0', PromApplication.Mimir) ||
+      // https://github.com/cortexproject/cortex/discussions/4542
+      this._isDatasourceVersionGreaterOrEqualTo('1.11.0', PromApplication.Cortex) ||
+      // https://github.com/thanos-io/thanos/pull/3566
+      //https://github.com/thanos-io/thanos/releases/tag/v0.18.0
+      this._isDatasourceVersionGreaterOrEqualTo('0.18.0', PromApplication.Thanos)
+    );
+  }
+
+  _isDatasourceVersionGreaterOrEqualTo(targetVersion: string, targetFlavor: PromApplication): boolean {
+    // User hasn't configured flavor/version yet, default behavior is to not support features that require version configuration when not provided
+    if (!this.datasourceConfigurationPrometheusVersion || !this.datasourceConfigurationPrometheusFlavor) {
+      return false;
+    }
+
+    if (targetFlavor !== this.datasourceConfigurationPrometheusFlavor) {
+      return false;
+    }
+
+    return semver.gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
+  }
+
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
-    const proxyMode = !this.url.match(/^http/);
-    if (proxyMode) {
+    if (this.access === 'proxy') {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
       httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
@@ -643,10 +674,14 @@ export class PrometheusDatasource
       data['timeout'] = this.queryTimeout;
     }
 
-    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(url, data, {
-      requestId: query.requestId,
-      headers: query.headers,
-    }).pipe(
+    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(
+      `/api/datasources/${this.id}/resources${url}`,
+      data,
+      {
+        requestId: query.requestId,
+        headers: query.headers,
+      }
+    ).pipe(
       catchError((err: FetchError<PromDataErrorResponse<PromVectorData | PromScalarData>>) => {
         if (err.cancelled) {
           return of(err);
@@ -738,6 +773,7 @@ export class PrometheusDatasource
         .fetch<BackendDataSourceResponse>({
           url: '/api/ds/query',
           method: 'POST',
+          headers: this.getRequestHeaders(),
           data: {
             from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
             to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),
@@ -797,7 +833,7 @@ export class PrometheusDatasource
         timeValueTuple.push([timeStampValue, valueValue]);
       });
 
-      const activeValues = timeValueTuple.filter((value) => value[1] >= 1);
+      const activeValues = timeValueTuple.filter((value) => value[1] > 0);
       const activeValuesTimestamps = activeValues.map((value) => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
@@ -846,11 +882,6 @@ export class PrometheusDatasource
     );
   }
 
-  async getSubtitle(): Promise<JSX.Element | null> {
-    const buildInfo = await this.getBuildInfo();
-    return buildInfo ? this.getBuildInfoMessage(buildInfo) : null;
-  }
-
   async getTagKeys(options?: any) {
     if (options?.series) {
       // Get tags for the provided series only
@@ -864,13 +895,15 @@ export class PrometheusDatasource
       return uniqueLabels.map((value: any) => ({ text: value }));
     } else {
       // Get all tags
-      const result = await this.metadataRequest('/api/v1/labels');
+      const params = this.getTimeRangeParams();
+      const result = await this.metadataRequest('/api/v1/labels', params);
       return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
     }
   }
 
   async getTagValues(options: { key?: string } = {}) {
-    const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`);
+    const params = this.getTimeRangeParams();
+    const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
@@ -899,22 +932,27 @@ export class PrometheusDatasource
     );
 
     const LOGOS = {
-      [PromApplication.Lotex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
+      [PromApplication.Cortex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
       [PromApplication.Mimir]: '/public/app/plugins/datasource/prometheus/img/mimir_logo.svg',
       [PromApplication.Prometheus]: '/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
+      [PromApplication.Thanos]: '/public/app/plugins/datasource/prometheus/img/thanos_logo.svg',
     };
 
     const COLORS: Record<PromApplication, BadgeColor> = {
-      [PromApplication.Lotex]: 'blue',
+      [PromApplication.Cortex]: 'blue',
       [PromApplication.Mimir]: 'orange',
       [PromApplication.Prometheus]: 'red',
+      [PromApplication.Thanos]: 'purple', // Purple hex taken from thanos.io
     };
 
     const AppDisplayNames: Record<PromApplication, string> = {
-      [PromApplication.Lotex]: 'Cortex',
+      [PromApplication.Cortex]: 'Cortex',
       [PromApplication.Mimir]: 'Mimir',
       [PromApplication.Prometheus]: 'Prometheus',
+      [PromApplication.Thanos]: 'Thanos',
     };
+
+    const application = this.datasourceConfigurationPrometheusFlavor ?? buildInfo.application;
 
     // this will inform the user about what "subtype" the datasource is; Mimir, Cortex or vanilla Prometheus
     const applicationSubType = (
@@ -923,12 +961,13 @@ export class PrometheusDatasource
           <span>
             <img
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
-              src={LOGOS[buildInfo.application ?? PromApplication.Prometheus]}
+              src={LOGOS[application ?? PromApplication.Prometheus]}
+              alt=""
             />{' '}
-            {buildInfo.application ? AppDisplayNames[buildInfo.application] : 'Unknown'}
+            {application ? AppDisplayNames[application] : 'Unknown'}
           </span>
         }
-        color={COLORS[buildInfo.application ?? PromApplication.Prometheus]}
+        color={COLORS[application ?? PromApplication.Prometheus]}
       />
     );
 
@@ -1002,7 +1041,9 @@ export class PrometheusDatasource
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+          expr: this.enhanceExprWithAdHocFilters(
+            this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)
+          ),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
         return expandedQuery;

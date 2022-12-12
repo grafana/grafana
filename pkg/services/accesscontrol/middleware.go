@@ -3,13 +3,19 @@ package accesscontrol
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,6 +29,24 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 		}
 
 		return func(c *models.ReqContext) {
+			if c.AllowAnonymous {
+				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
+				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
+				if err == nil && orgID > 0 && orgID != c.OrgID {
+					forceLogin = true
+				}
+
+				if !c.IsSignedIn && forceLogin {
+					unauthorized(c, nil)
+				}
+			}
+
+			var revokedErr *usertoken.TokenRevokedError
+			if errors.As(c.LookupTokenErr, &revokedErr) {
+				unauthorized(c, revokedErr)
+				return
+			}
+
 			authorize(c, ac, c.SignedInUser, evaluator)
 		}
 	}
@@ -60,6 +84,7 @@ func deny(c *models.ReqContext, evaluator Evaluator, err error) {
 
 	if !c.IsApiRequest() {
 		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
+		writeRedirectCookie(c)
 		c.Redirect(setting.AppSubUrl + "/")
 		return
 	}
@@ -80,6 +105,47 @@ func deny(c *models.ReqContext, evaluator Evaluator, err error) {
 	})
 }
 
+func unauthorized(c *models.ReqContext, err error) {
+	if c.IsApiRequest() {
+		response := map[string]interface{}{
+			"message": "Unauthorized",
+		}
+
+		var revokedErr *usertoken.TokenRevokedError
+		if errors.As(err, &revokedErr) {
+			response["message"] = "Token revoked"
+			response["error"] = map[string]interface{}{
+				"id":                    "ERR_TOKEN_REVOKED",
+				"maxConcurrentSessions": revokedErr.MaxConcurrentSessions,
+			}
+		}
+
+		c.JSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	writeRedirectCookie(c)
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func writeRedirectCookie(c *models.ReqContext) {
+	redirectTo := c.Req.RequestURI
+	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+		redirectTo = setting.AppSubUrl + c.Req.RequestURI
+	}
+
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+
+	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
+}
+
+var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
+
+func removeForceLoginParams(str string) string {
+	return forceLoginParamsRegexp.ReplaceAllString(str, "")
+}
+
 func newID() string {
 	// Less ambiguity than alphanumerical.
 	numerical := []byte("0123456789")
@@ -93,6 +159,7 @@ func newID() string {
 }
 
 type OrgIDGetter func(c *models.ReqContext) (int64, error)
+
 type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }

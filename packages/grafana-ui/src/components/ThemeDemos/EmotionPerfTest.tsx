@@ -1,6 +1,7 @@
-/** @jsxImportSource @emotion/react */
-
-import { css, cx } from '@emotion/css';
+/** @jsxRuntime classic */
+/** @jsx jsx */
+import { css, CSSInterpolation, cx } from '@emotion/css';
+import { jsx } from '@emotion/react';
 import classnames from 'classnames';
 import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 
@@ -173,7 +174,7 @@ const getStylesObjects = (theme: GrafanaTheme2) => {
   };
 };
 
-function getStylesObjectMain(theme: GrafanaTheme2): any {
+function getStylesObjectMain(theme: GrafanaTheme2): CSSInterpolation {
   return {
     background: 'blue',
     border: '1px solid red',
@@ -186,7 +187,7 @@ function getStylesObjectMain(theme: GrafanaTheme2): any {
   };
 }
 
-function getStylesObjectChild(theme: GrafanaTheme2): any {
+function getStylesObjectChild(theme: GrafanaTheme2): CSSInterpolation {
   return {
     padding: '2px',
     fontSize: '10px',

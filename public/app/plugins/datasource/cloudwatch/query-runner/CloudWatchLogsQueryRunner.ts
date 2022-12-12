@@ -1,20 +1,19 @@
-import { isEmpty, set } from 'lodash';
+import { set } from 'lodash';
 import {
-  Observable,
-  of,
-  mergeMap,
-  map,
-  from,
+  catchError,
   concatMap,
   finalize,
+  from,
+  lastValueFrom,
+  map,
+  mergeMap,
+  Observable,
   repeat,
   scan,
   share,
   takeWhile,
   tap,
   zip,
-  catchError,
-  lastValueFrom,
 } from 'rxjs';
 
 import {
@@ -30,10 +29,10 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { BackendDataSourceResponse, config, FetchError, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { RowContextOptions } from '../../../../features/logs/components/LogRowContextProvider';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,
@@ -85,10 +84,13 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
+    const validLogQueries = logQueries.filter(this.filterQuery);
+
+    const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression || '',
       refId: target.refId,
       logGroupNames: target.logGroupNames || this.defaultLogGroups,
+      logGroups: target.logGroups || [], //todo handle defaults
       region: super.replaceVariableAndDisplayWarningIfMulti(
         this.getActualRegion(target.region),
         options.scopedVars,
@@ -96,16 +98,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         'region'
       ),
     }));
-
-    const validLogQueries = queryParams.filter((item) => item.logGroupNames?.length);
-    if (logQueries.length > validLogQueries.length) {
-      return of({ data: [], error: { message: 'Log group is required' } });
-    }
-
-    // No valid targets, return the empty result to save a round trip.
-    if (isEmpty(validLogQueries)) {
-      return of({ data: [], state: LoadingState.Done });
-    }
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -120,7 +112,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
           skipCache: true,
         });
       },
-      queryParams,
+      startQueryRequests,
       timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
@@ -425,13 +417,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
   };
 
-  async describeAllLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeAllLogGroups', [params]));
-
-    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
-    return logGroupNames;
-  }
-
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
     const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
 
@@ -442,6 +427,18 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
 
     return getLogGroupFieldsResponse;
+  }
+
+  private filterQuery(query: CloudWatchLogsQuery) {
+    const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
+    const hasMissingLogGroups = !query.logGroups?.length;
+    const hasMissingQueryString = !query.expression?.length;
+
+    if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
+      return false;
+    }
+
+    return true;
   }
 }
 

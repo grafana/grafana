@@ -40,7 +40,7 @@ function Cell(props: CellProps) {
           {card.imgUrl.endsWith('.svg') ? (
             <SVG src={card.imgUrl} className={styles.img} />
           ) : (
-            <img src={card.imgUrl} className={styles.img} />
+            <img src={card.imgUrl} alt="" className={styles.img} />
           )}
           <h6 className={styles.text}>{card.label.slice(0, -4)}</h6>
         </div>

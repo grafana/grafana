@@ -40,5 +40,5 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.JSON(412, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 
-	return response.Error(500, "Folder API error", err)
+	return response.ErrOrFallback(500, "Folder API error", err)
 }

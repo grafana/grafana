@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Button, ConfirmModal, FlexItem, InlineSelect, RadioButtonGroup } from '@grafana/ui';
+import { FlexItem, InlineSelect } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Badge, Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from '../../types';
@@ -12,6 +14,7 @@ interface MetricsQueryHeaderProps {
   onChange: (query: CloudWatchQuery) => void;
   onRunQuery: () => void;
   sqlCodeEditorIsDirty: boolean;
+  isMonitoringAccount: boolean;
 }
 
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
@@ -29,6 +32,7 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
   sqlCodeEditorIsDirty,
   onChange,
   onRunQuery,
+  isMonitoringAccount,
 }) => {
   const { metricEditorMode, metricQueryType } = query;
   const [showConfirm, setShowConfirm] = useState(false);
@@ -48,6 +52,11 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
     [setShowConfirm, onChange, sqlCodeEditorIsDirty, query, metricEditorMode, metricQueryType]
   );
 
+  const shouldDisplayMonitoringBadge =
+    query.metricQueryType === MetricQueryType.Search &&
+    isMonitoringAccount &&
+    config.featureToggles.cloudWatchCrossAccountQuerying;
+
   return (
     <>
       <InlineSelect
@@ -59,6 +68,14 @@ const MetricsQueryHeader: React.FC<MetricsQueryHeaderProps> = ({
         }}
       />
       <FlexItem grow={1} />
+
+      {shouldDisplayMonitoringBadge && (
+        <Badge
+          text="Monitoring account"
+          color="blue"
+          tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
+        ></Badge>
+      )}
 
       <RadioButtonGroup options={editorModes} size="sm" value={metricEditorMode} onChange={onEditorModeChange} />
 

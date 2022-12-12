@@ -81,7 +81,7 @@ var variantArgs = map[config.Variant]BuildArgs{
 			CC:         compilers.Armv7,
 		},
 		DebArch: config.ArchARMHF,
-		RPMArch: config.ArchARMHF,
+		RPMArch: config.ArchARMHFP,
 	},
 	config.VariantArmV7Musl: {
 		BuildOpts: golangutils.BuildOpts{

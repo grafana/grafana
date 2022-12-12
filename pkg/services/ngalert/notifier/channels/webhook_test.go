@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestWebhookNotifier(t *testing.T) {
 		settings string
 		alerts   []*types.Alert
 
-		expMsg        *webhookMessage
+		expMsg        *WebhookMessage
 		expUrl        string
 		expUsername   string
 		expPassword   string
@@ -41,8 +42,8 @@ func TestWebhookNotifier(t *testing.T) {
 		expMsgError   error
 	}{
 		{
-			name:     "Default config with one alert",
-			settings: `{"url": "http://localhost/test"}`,
+			name:     "Default config with one alert with custom message",
+			settings: `{"url": "http://localhost/test", "message": "Custom message"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -53,7 +54,7 @@ func TestWebhookNotifier(t *testing.T) {
 			},
 			expUrl:        "http://localhost/test",
 			expHttpMethod: "POST",
-			expMsg: &webhookMessage{
+			expMsg: &WebhookMessage{
 				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",
@@ -89,20 +90,21 @@ func TestWebhookNotifier(t *testing.T) {
 				GroupKey: "alertname",
 				Title:    "[FIRING:1]  (val1)",
 				State:    "alerting",
-				Message:  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				Message:  "Custom message",
 				OrgID:    orgID,
 			},
 			expMsgError: nil,
 			expHeaders:  map[string]string{},
 		},
 		{
-			name: "Custom config with multiple alerts",
+			name: "Custom config with multiple alerts with custom title",
 			settings: `{
 				"url": "http://localhost/test1",
+				"title": "Alerts firing: {{ len .Alerts.Firing }}",
 				"username": "user1",
 				"password": "mysecret",
 				"httpMethod": "PUT",
-				"maxAlerts": 2
+				"maxAlerts": "2"
 			}`,
 			alerts: []*types.Alert{
 				{
@@ -126,7 +128,7 @@ func TestWebhookNotifier(t *testing.T) {
 			expHttpMethod: "PUT",
 			expUsername:   "user1",
 			expPassword:   "mysecret",
-			expMsg: &webhookMessage{
+			expMsg: &WebhookMessage{
 				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",
@@ -167,6 +169,73 @@ func TestWebhookNotifier(t *testing.T) {
 				Version:         "1",
 				GroupKey:        "alertname",
 				TruncatedAlerts: 1,
+				Title:           "Alerts firing: 2",
+				State:           "alerting",
+				Message:         "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
+				OrgID:           orgID,
+			},
+			expMsgError: nil,
+			expHeaders:  map[string]string{},
+		},
+		{
+			name:     "Default config, template variables in URL",
+			settings: `{"url": "http://localhost/test?numAlerts={{len .Alerts}}&status={{.Status}}"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expUrl:        "http://localhost/test?numAlerts=2&status=firing",
+			expHttpMethod: "POST",
+			expMsg: &WebhookMessage{
+				ExtendedData: &ExtendedData{
+					Receiver: "my_receiver",
+					Status:   "firing",
+					Alerts: ExtendedAlerts{
+						{
+							Status: "firing",
+							Labels: template.KV{
+								"alertname": "alert1",
+								"lbl1":      "val1",
+							},
+							Annotations: template.KV{
+								"ann1": "annv1",
+							},
+							Fingerprint: "fac0861a85de433a",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1",
+						}, {
+							Status: "firing",
+							Labels: template.KV{
+								"alertname": "alert1",
+								"lbl1":      "val2",
+							},
+							Annotations: template.KV{
+								"ann1": "annv2",
+							},
+							Fingerprint: "fab6861a85d5eeb5",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2",
+						},
+					},
+					GroupLabels: template.KV{
+						"alertname": "",
+					},
+					CommonLabels: template.KV{
+						"alertname": "alert1",
+					},
+					CommonAnnotations: template.KV{},
+					ExternalURL:       "http://localhost",
+				},
+				Version:         "1",
+				GroupKey:        "alertname",
+				TruncatedAlerts: 0,
 				Title:           "[FIRING:2]  ",
 				State:           "alerting",
 				Message:         "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
@@ -191,7 +260,7 @@ func TestWebhookNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: &webhookMessage{
+			expMsg: &WebhookMessage{
 				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",
@@ -235,6 +304,19 @@ func TestWebhookNotifier(t *testing.T) {
 			expHeaders:    map[string]string{"Authorization": "Bearer mysecret"},
 		},
 		{
+			name:     "bad template in url",
+			settings: `{"url": "http://localhost/test1?numAlerts={{len Alerts}}"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsgError: fmt.Errorf("template: :1: function \"Alerts\" not defined"),
+		},
+		{
 			name: "with both HTTP basic auth and Authorization Header set",
 			settings: `{
 				"url": "http://localhost/test1",
@@ -242,14 +324,14 @@ func TestWebhookNotifier(t *testing.T) {
 				"password": "mysecret",
 				"authorization_credentials": "mysecret",
 				"httpMethod": "POST",
-				"maxAlerts": 2
+				"maxAlerts": "2"
 			}`,
 			expInitError: "both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted",
 		},
 		{
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `could not find url property in settings`,
+			expInitError: `required field 'url' is not specified`,
 		},
 	}
 
@@ -269,8 +351,16 @@ func TestWebhookNotifier(t *testing.T) {
 
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewWebHookConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config:              m,
+				NotificationService: webhookSender,
+				DecryptFunc:         secretsService.GetDecryptedValue,
+				ImageStore:          &UnavailableImageStore{},
+				Template:            tmpl,
+			}
+
+			pn, err := buildWebhookNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -281,7 +371,6 @@ func TestWebhookNotifier(t *testing.T) {
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
 			ctx = notify.WithReceiverName(ctx, "my_receiver")
-			pn := NewWebHookNotifier(cfg, webhookSender, &UnavailableImageStore{}, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

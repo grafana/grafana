@@ -49,6 +49,7 @@ var unnamedHandlers = []struct {
 	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")},
 	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
 	{handler: "/healthz", pathPattern: regexp.MustCompile("^/healthz")},
+	{handler: "/api/health", pathPattern: regexp.MustCompile("^/api/health")},
 	{handler: "/robots.txt", pathPattern: regexp.MustCompile("^/robots.txt$")},
 	// bundle all pprof endpoints under the same handler name
 	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("^/debug/pprof")},

@@ -44,3 +44,11 @@ export type GrafanaTableColumn = Column & {
   justifyContent: Property.JustifyContent;
   minWidth: number;
 };
+
+export interface TableFooterCalc {
+  show: boolean;
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  enablePagination?: boolean;
+  countRows?: boolean;
+}

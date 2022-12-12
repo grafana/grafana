@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, Input } from '..';
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { Button } from '../Button';
+import { Button, ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
 
 export interface ConfirmModalProps {
@@ -25,10 +25,14 @@ export interface ConfirmModalProps {
   dismissText?: string;
   /** Icon for the modal header */
   icon?: IconName;
+  /** Additional styling for modal container */
+  modalClass?: string;
   /** Text user needs to fill in before confirming */
   confirmationText?: string;
   /** Text for alternative button */
   alternativeText?: string;
+  /** Confirm button variant */
+  confirmButtonVariant?: ButtonVariant;
   /** Confirm action callback */
   onConfirm(): void;
   /** Dismiss action callback */
@@ -46,10 +50,12 @@ export const ConfirmModal = ({
   confirmationText,
   dismissText = 'Cancel',
   alternativeText,
+  modalClass,
   icon = 'exclamation-triangle',
   onConfirm,
   onDismiss,
   onAlternative,
+  confirmButtonVariant = 'destructive',
 }: ConfirmModalProps): JSX.Element => {
   const [disabled, setDisabled] = useState(Boolean(confirmationText));
   const styles = useStyles2(getStyles);
@@ -66,7 +72,7 @@ export const ConfirmModal = ({
   }, [isOpen]);
 
   return (
-    <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>
         {body}
         {description ? <div className={styles.modalDescription}>{description}</div> : null}
@@ -83,7 +89,7 @@ export const ConfirmModal = ({
           {dismissText}
         </Button>
         <Button
-          variant="destructive"
+          variant={confirmButtonVariant}
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}

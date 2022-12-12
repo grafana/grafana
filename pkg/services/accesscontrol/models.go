@@ -118,8 +118,16 @@ func (r *RoleDTO) Global() bool {
 	return r.OrgID == GlobalOrgID
 }
 
+func (r *RoleDTO) IsManaged() bool {
+	return strings.HasPrefix(r.Name, ManagedRolePrefix)
+}
+
 func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
+}
+
+func (r *RoleDTO) IsPlugin() bool {
+	return strings.HasPrefix(r.Name, PluginRolePrefix)
 }
 
 func (r *RoleDTO) IsBasic() bool {
@@ -157,7 +165,7 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 func fallbackDisplayName(rName string) string {
 	// removing prefix for fixed roles
 	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
+	return strings.TrimSpace(strings.ReplaceAll(rNameWithoutPrefix, ":", " "))
 }
 
 type TeamRole struct {
@@ -207,11 +215,11 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID   int64 `json:"-"`
-	UserID  int64 `json:"userId"`
-	Roles   []string
-	Actions []string
-	TeamIDs []int64
+	OrgID      int64
+	UserID     int64
+	Roles      []string
+	TeamIDs    []int64
+	RolePrefix string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -258,10 +266,10 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 }
 
 type SetResourcePermissionCommand struct {
-	UserID      int64
-	TeamID      int64
-	BuiltinRole string
-	Permission  string
+	UserID      int64  `json:"userId,omitempty"`
+	TeamID      int64  `json:"teamId,omitempty"`
+	BuiltinRole string `json:"builtInRole,omitempty"`
+	Permission  string `json:"permission"`
 }
 
 const (
@@ -269,6 +277,7 @@ const (
 	FixedRolePrefix    = "fixed:"
 	ManagedRolePrefix  = "managed:"
 	BasicRolePrefix    = "basic:"
+	PluginRolePrefix   = "plugins:"
 	BasicRoleUIDPrefix = "basic_"
 	RoleGrafanaAdmin   = "Grafana Admin"
 
@@ -300,8 +309,18 @@ const (
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
+	ActionUsersPermissionsRead   = "users.permissions:read"
 
 	// Org actions
+	ActionOrgsRead             = "orgs:read"
+	ActionOrgsPreferencesRead  = "orgs.preferences:read"
+	ActionOrgsQuotasRead       = "orgs.quotas:read"
+	ActionOrgsWrite            = "orgs:write"
+	ActionOrgsPreferencesWrite = "orgs.preferences:write"
+	ActionOrgsQuotasWrite      = "orgs.quotas:write"
+	ActionOrgsDelete           = "orgs:delete"
+	ActionOrgsCreate           = "orgs:create"
+
 	ActionOrgUsersRead   = "org.users:read"
 	ActionOrgUsersAdd    = "org.users:add"
 	ActionOrgUsersRemove = "org.users:remove"
@@ -414,3 +433,53 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 
 	return res
 }
+
+// Evaluators
+
+// TeamsAccessEvaluator is used to protect the "Configuration > Teams" page access
+// grants access to a user when they can either create teams or can read and update a team
+var TeamsAccessEvaluator = EvalAny(
+	EvalPermission(ActionTeamsCreate),
+	EvalAll(
+		EvalPermission(ActionTeamsRead),
+		EvalAny(
+			EvalPermission(ActionTeamsWrite),
+			EvalPermission(ActionTeamsPermissionsWrite),
+		),
+	),
+)
+
+// TeamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
+var TeamsEditAccessEvaluator = EvalAll(
+	EvalPermission(ActionTeamsRead),
+	EvalAny(
+		EvalPermission(ActionTeamsCreate),
+		EvalPermission(ActionTeamsWrite),
+		EvalPermission(ActionTeamsPermissionsWrite),
+	),
+)
+
+// OrgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
+var OrgPreferencesAccessEvaluator = EvalAny(
+	EvalAll(
+		EvalPermission(ActionOrgsRead),
+		EvalPermission(ActionOrgsWrite),
+	),
+	EvalAll(
+		EvalPermission(ActionOrgsPreferencesRead),
+		EvalPermission(ActionOrgsPreferencesWrite),
+	),
+)
+
+// OrgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
+// (you need to have read access to update or delete orgs; read is the minimum)
+var OrgsAccessEvaluator = EvalPermission(ActionOrgsRead)
+
+// OrgsCreateAccessEvaluator is used to protect the "Server Admin > Orgs > New Org" page access
+var OrgsCreateAccessEvaluator = EvalAll(
+	EvalPermission(ActionOrgsRead),
+	EvalPermission(ActionOrgsCreate),
+)
+
+// ApiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
+var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)

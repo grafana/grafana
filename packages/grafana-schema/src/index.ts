@@ -4,3 +4,4 @@
  * @packageDocumentation
  */
 export * from './schema/mudball.gen';
+export * from './index.gen';

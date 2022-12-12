@@ -72,6 +72,25 @@ func TestThreemaNotifier(t *testing.T) {
 			expMsg:      "from=%2A1234567&secret=supersecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A2%5D++%0A%0A%2AMessage%3A%2A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+%5Bno+value%5D%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASilence%3A+http%3A%2F%2Flocalhost%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253Dalert1%26matcher%3Dlbl1%253Dval1%0A%0AValue%3A+%5Bno+value%5D%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val2%0AAnnotations%3A%0A+-+ann1+%3D+annv2%0ASilence%3A+http%3A%2F%2Flocalhost%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253Dalert1%26matcher%3Dlbl1%253Dval2%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%2Falerting%2Flist%0A%2AImage%3A%2A+https%3A%2F%2Fwww.example.com%2Ftest-image-1.jpg%0A%2AImage%3A%2A+https%3A%2F%2Fwww.example.com%2Ftest-image-2.jpg%0A&to=87654321",
 			expMsgError: nil,
 		}, {
+			name: "A single alert with an image and custom title and description",
+			settings: `{
+				"gateway_id": "*1234567",
+				"recipient_id": "87654321",
+				"api_secret": "supersecret",
+				"title": "customTitle {{ .Alerts.Firing | len }}",
+				"description": "customDescription"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-image-1"},
+					},
+				},
+			},
+			expMsg:      "from=%2A1234567&secret=supersecret&text=%E2%9A%A0%EF%B8%8F+customTitle+1%0A%0A%2AMessage%3A%2A%0AcustomDescription%0A%2AURL%3A%2A+http%3A%2Flocalhost%2Falerting%2Flist%0A%2AImage%3A%2A+https%3A%2F%2Fwww.example.com%2Ftest-image-1.jpg%0A&to=87654321",
+			expMsgError: nil,
+		}, {
 			name: "Invalid gateway id",
 			settings: `{
 				"gateway_id": "12345678",
@@ -102,18 +121,23 @@ func TestThreemaNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
-
-			m := &NotificationChannelConfig{
-				Name:           "threema_testing",
-				Type:           "threema",
-				Settings:       settingsJSON,
-				SecureSettings: secureSettings,
-			}
-
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewThreemaConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config: &NotificationChannelConfig{
+					Name:           "threema_testing",
+					Type:           "threema",
+					Settings:       settingsJSON,
+					SecureSettings: secureSettings,
+				},
+				NotificationService: webhookSender,
+				ImageStore:          images,
+				Template:            tmpl,
+				DecryptFunc:         secretsService.GetDecryptedValue,
+			}
+
+			pn, err := NewThreemaNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -123,7 +147,6 @@ func TestThreemaNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewThreemaNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

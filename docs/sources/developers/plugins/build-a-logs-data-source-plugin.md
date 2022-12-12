@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/build-a-logs-data-source-plugin/
 title: Build a logs data source plugin
 ---
 
@@ -49,7 +47,7 @@ frame.add({ time: 1589189388597, content: 'user registered' });
 frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
-That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/" >}}) or by adding a [Logs panel]({{< relref "../../visualizations/logs-panel/" >}}).
+That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/" >}}) or by adding a [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs/" >}}).
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
 

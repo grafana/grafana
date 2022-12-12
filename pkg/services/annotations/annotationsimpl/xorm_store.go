@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -40,14 +40,15 @@ func validateTimeRange(item *annotations.Item) error {
 	return nil
 }
 
-type SQLAnnotationRepo struct {
-	cfg        *setting.Cfg
-	db         db.DB
-	log        log.Logger
-	tagService tag.Service
+type xormRepositoryImpl struct {
+	cfg               *setting.Cfg
+	db                db.DB
+	log               log.Logger
+	maximumTagsLength int64
+	tagService        tag.Service
 }
 
-func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) error {
+func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) error {
 	tags := tag.ParseTagPairs(item.Tags)
 	item.Tags = tag.JoinTagPairs(tags)
 	item.Created = timeNow().UnixNano() / int64(time.Millisecond)
@@ -55,17 +56,72 @@ func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) err
 	if item.Epoch == 0 {
 		item.Epoch = item.Created
 	}
-	if err := validateTimeRange(item); err != nil {
+	if err := r.validateItem(item); err != nil {
 		return err
 	}
 
-	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return r.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
+		return r.synchronizeTags(ctx, item)
+	})
+}
 
+// AddMany inserts large batches of annotations at once.
+// It does not return IDs associated with created annotations, and it does not support annotations with tags. If you need this functionality, use the single-item Add instead.
+// This is due to a limitation with some supported databases:
+// We cannot correlate the IDs of batch-inserted records without acquiring a full table lock in MySQL.
+// Annotations have no other uniquifier field, so we also cannot re-query for them after the fact.
+// So, callers can only reliably use this endpoint if they don't care about returned IDs.
+func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
+	hasTags := make([]annotations.Item, 0)
+	hasNoTags := make([]annotations.Item, 0)
+
+	for i, item := range items {
+		tags := tag.ParseTagPairs(item.Tags)
+		item.Tags = tag.JoinTagPairs(tags)
+		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
+		item.Updated = item.Created
+		if item.Epoch == 0 {
+			item.Epoch = item.Created
+		}
+		if err := r.validateItem(&items[i]); err != nil {
+			return err
+		}
+
+		if len(item.Tags) > 0 {
+			hasTags = append(hasTags, item)
+		} else {
+			hasNoTags = append(hasNoTags, item)
+		}
+	}
+
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// We can batch-insert every annotation with no tags. If an annotation has tags, we need the ID.
+		opts := sqlstore.NativeSettingsForDialect(r.db.GetDialect())
+		if _, err := sess.BulkInsert("annotation", hasNoTags, opts); err != nil {
+			return err
+		}
+
+		for i, item := range hasTags {
+			if _, err := sess.Table("annotation").Insert(item); err != nil {
+				return err
+			}
+			if err := r.synchronizeTags(ctx, &hasTags[i]); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *xormRepositoryImpl) synchronizeTags(ctx context.Context, item *annotations.Item) error {
+	// Will re-use session if one has already been opened with the same ctx.
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if item.Tags != nil {
-			tags, err := r.tagService.EnsureTagsExist(ctx, tags)
+			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
 			if err != nil {
 				return err
 			}
@@ -79,8 +135,8 @@ func (r *SQLAnnotationRepo) Add(ctx context.Context, item *annotations.Item) err
 	})
 }
 
-func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var (
 			isExist bool
 			err     error
@@ -106,10 +162,6 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 			existing.EpochEnd = item.EpochEnd
 		}
 
-		if err := validateTimeRange(existing); err != nil {
-			return err
-		}
-
 		if item.Tags != nil {
 			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
 			if err != nil {
@@ -127,16 +179,20 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 
 		existing.Tags = item.Tags
 
+		if err := r.validateItem(existing); err != nil {
+			return err
+		}
+
 		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags").Update(existing)
 		return err
 	})
 }
 
-func (r *SQLAnnotationRepo) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
-	err := r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := r.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql.WriteString(`
 			SELECT
 				annotation.id,
@@ -291,8 +347,8 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 	return strings.Join(filters, " OR "), params, nil
 }
 
-func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
+	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var (
 			sql        string
 			annoTagSQL string
@@ -327,9 +383,9 @@ func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.Dele
 	})
 }
 
-func (r *SQLAnnotationRepo) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (r *xormRepositoryImpl) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	var items []*annotations.Tag
-	err := r.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := r.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.Limit == 0 {
 			query.Limit = 100
 		}
@@ -377,4 +433,92 @@ func (r *SQLAnnotationRepo) GetTags(ctx context.Context, query *annotations.Tags
 	}
 
 	return annotations.FindTagsResult{Tags: tags}, nil
+}
+
+func (r *xormRepositoryImpl) validateItem(item *annotations.Item) error {
+	if err := validateTimeRange(item); err != nil {
+		return err
+	}
+
+	if err := r.validateTagsLength(item); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
+	estimatedTagsLength := 1 // leading: [
+	for i, t := range item.Tags {
+		if i == 0 {
+			estimatedTagsLength += len(t) + 2 // quotes
+		} else {
+			estimatedTagsLength += len(t) + 3 // leading comma and quotes
+		}
+	}
+	estimatedTagsLength += 1 // trailing: ]
+	if estimatedTagsLength > int(r.maximumTagsLength) {
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.maximumTagsLength)
+	}
+	return nil
+}
+
+func (r *xormRepositoryImpl) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
+	var totalAffected int64
+	if cfg.MaxAge > 0 {
+		cutoffDate := time.Now().Add(-cfg.MaxAge).UnixNano() / int64(time.Millisecond)
+		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s AND created < %v ORDER BY id DESC %s) a)`
+		sql := fmt.Sprintf(deleteQuery, annotationType, cutoffDate, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+
+		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+		totalAffected += affected
+		if err != nil {
+			return totalAffected, err
+		}
+	}
+
+	if cfg.MaxCount > 0 {
+		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
+		sql := fmt.Sprintf(deleteQuery, annotationType, r.db.GetDialect().LimitOffset(r.cfg.AnnotationCleanupJobBatchSize, cfg.MaxCount))
+		affected, err := r.executeUntilDoneOrCancelled(ctx, sql)
+		totalAffected += affected
+		return totalAffected, err
+	}
+
+	return totalAffected, nil
+}
+
+func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
+	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
+	sql := fmt.Sprintf(deleteQuery, r.db.GetDialect().Limit(r.cfg.AnnotationCleanupJobBatchSize))
+	return r.executeUntilDoneOrCancelled(ctx, sql)
+}
+
+func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
+	var totalAffected int64
+	for {
+		select {
+		case <-ctx.Done():
+			return totalAffected, ctx.Err()
+		default:
+			var affected int64
+			err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+				res, err := session.Exec(sql)
+				if err != nil {
+					return err
+				}
+
+				affected, err = res.RowsAffected()
+				totalAffected += affected
+
+				return err
+			})
+			if err != nil {
+				return totalAffected, err
+			}
+
+			if affected == 0 {
+				return totalAffected, nil
+			}
+		}
+	}
 }

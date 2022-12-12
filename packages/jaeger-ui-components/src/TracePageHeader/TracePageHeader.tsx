@@ -83,6 +83,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover small {
         text-decoration: none;
       }
+      /* Adapt styles when changing from a element into button */
+      background: transparent;
+      text-align: left;
+      border: none;
     `,
     TracePageHeaderDetailToggle: css`
       label: TracePageHeaderDetailToggle;
@@ -136,14 +140,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type TracePageHeaderEmbedProps = {
+export type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
   hideMap: boolean;
   hideSummary: boolean;
   onSlimViewClicked: () => void;
   onTraceGraphViewClicked: () => void;
   slimView: boolean;
-  trace: Trace;
+  trace: Trace | null;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
@@ -236,7 +240,8 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
       <div className={styles.TracePageHeaderTitleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {canCollapse ? (
-          <a
+          <button
+            type="button"
             className={styles.TracePageHeaderTitleLink}
             onClick={onSlimViewClicked}
             role="switch"
@@ -249,7 +254,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
               )}
             />
             {title}
-          </a>
+          </button>
         ) : (
           title
         )}

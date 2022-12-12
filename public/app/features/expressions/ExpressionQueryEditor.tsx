@@ -7,6 +7,7 @@ import { ClassicConditions } from './components/ClassicConditions';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
+import { Threshold } from './components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
@@ -25,6 +26,7 @@ function useExpressionsCache() {
       case ExpressionQueryType.math:
       case ExpressionQueryType.reduce:
       case ExpressionQueryType.resample:
+      case ExpressionQueryType.threshold:
         return expressionCache.current[queryType];
       case ExpressionQueryType.classic:
         return undefined;
@@ -37,11 +39,13 @@ function useExpressionsCache() {
         expressionCache.current.math = value;
         break;
 
-      // We want to use the same value for Reduce and Resample
+      // We want to use the same value for Reduce, Resample and Threshold
       case ExpressionQueryType.reduce:
+      case ExpressionQueryType.resample:
       case ExpressionQueryType.resample:
         expressionCache.current.reduce = value;
         expressionCache.current.resample = value;
+        expressionCache.current.threshold = value;
         break;
     }
   }, []);
@@ -82,6 +86,9 @@ export function ExpressionQueryEditor(props: Props) {
 
       case ExpressionQueryType.classic:
         return <ClassicConditions onChange={onChange} query={query} refIds={refIds} />;
+
+      case ExpressionQueryType.threshold:
+        return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
     }
   };
 

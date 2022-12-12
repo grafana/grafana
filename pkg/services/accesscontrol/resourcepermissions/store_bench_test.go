@@ -14,8 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 const (
@@ -133,16 +137,21 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 }
 
 func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]int64, []int64) {
+	teamSvc := teamimpl.ProvideService(db, db.Cfg)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
-
+	qs := quotatest.New(false, nil)
+	orgSvc, err := orgimpl.ProvideService(db, db.Cfg, qs)
+	require.NoError(b, err)
+	usrSvc, err := userimpl.ProvideService(db, orgSvc, db.Cfg, nil, nil, qs)
+	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)
 	for i := 0; i < numberOfTeams; i++ {
 		// Create team
 		teamName := fmt.Sprintf("%s%v", "team", i)
 		teamEmail := fmt.Sprintf("%s@example.org", teamName)
-		team, err := db.CreateTeam(teamName, teamEmail, 1)
+		team, err := teamSvc.CreateTeam(teamName, teamEmail, 1)
 		require.NoError(b, err)
 		teamId := team.Id
 		teamIds = append(teamIds, teamId)
@@ -153,13 +162,13 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 			userEmail := fmt.Sprintf("%s@example.org", userName)
 			createUserCmd := user.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgID: 1}
 
-			user, err := db.CreateUser(context.Background(), createUserCmd)
+			user, err := usrSvc.Create(context.Background(), &createUserCmd)
 			require.NoError(b, err)
 			userId := user.ID
 			globalUserId++
 			userIds = append(userIds, userId)
 
-			err = db.AddTeamMember(userId, 1, teamId, false, 1)
+			err = teamSvc.AddTeamMember(userId, 1, teamId, false, 1)
 			require.NoError(b, err)
 		}
 	}

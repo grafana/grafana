@@ -5,23 +5,25 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -584,13 +586,15 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 
 func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []accesscontrol.Permission, dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *models.Dashboard) {
 	t.Helper()
-	store := sqlstore.InitTestDB(t)
+	store := db.InitTestDB(t)
 
 	toSave := models.NewDashboard(uid)
 	toSave.SetUid(uid)
 
 	// seed dashboard
-	dashStore := dashdb.ProvideDashboardStore(store, featuremgmt.WithFeatures(), tagimpl.ProvideService(store))
+	quotaService := quotatest.New(false, nil)
+	dashStore, err := dashdb.ProvideDashboardStore(store, store.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(store, store.Cfg), quotaService)
+	require.NoError(t, err)
 	dash, err := dashStore.SaveDashboard(context.Background(), models.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,
@@ -601,12 +605,15 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	teamSvc := teamimpl.ProvideService(store, store.Cfg)
+	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil))
+	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac)
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac)
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
 	require.NoError(t, err)
 	if dashboardSvc == nil {
 		dashboardSvc = &dashboards.FakeDashboardService{}

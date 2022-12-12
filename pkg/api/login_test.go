@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -24,9 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -43,7 +44,7 @@ func fakeSetIndexViewData(t *testing.T) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
 			Settings: map[string]interface{}{},
-			NavTree:  []*dtos.NavLink{},
+			NavTree:  &navtree.NavTreeRoot{},
 		}
 		return data, nil
 	}
@@ -322,7 +323,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		Cfg:              setting.NewCfg(),
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -563,7 +564,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 		SocialService:    &mockSocialService{},
 	}
@@ -601,7 +602,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		log:              log.New("test"),
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		HooksService:     hookService,
 	}
 

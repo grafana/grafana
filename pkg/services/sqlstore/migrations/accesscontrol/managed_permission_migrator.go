@@ -106,7 +106,7 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 			}
 
 			if !ok {
-				uid, err := generateNewRoleUID(sess, orgID)
+				uid, err := GenerateManagedRoleUID(orgID, managedRole)
 				if err != nil {
 					return err
 				}

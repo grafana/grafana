@@ -127,6 +127,7 @@ export interface CurrentUserDTO {
   timezone: string;
   weekStart: string;
   locale: string;
+  language: string;
   permissions?: Record<string, boolean>;
 }
 
@@ -211,6 +212,7 @@ export interface GrafanaConfig {
   secretsManagerPluginEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
+  googleAnalytics4SendManualPageViews: boolean;
   rudderstackWriteKey: string | undefined;
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
@@ -220,5 +222,6 @@ export interface GrafanaConfig {
 export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
+  LDAPSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

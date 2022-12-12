@@ -62,7 +62,7 @@ You can now make SQL queries in any of your [command handlers](communication.md#
 
 ```go
 func (s *MyService) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-    if err := s.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+    if err := s.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
         _, err := sess.Exec("DELETE FROM dashboards WHERE dashboard_id=?", cmd.DashboardID)
         return err
     })

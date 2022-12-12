@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { EditorRows } from '@grafana/ui';
+import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
 import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -49,7 +48,8 @@ type Alertmanager interface {
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
-	// Testing
+	// Receivers
+	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
@@ -63,13 +63,11 @@ type API struct {
 	DatasourceCache      datasources.CacheService
 	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
-	ExpressionService    *expr.Service
 	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            store.RuleStore
-	InstanceStore        store.InstanceStore
+	RuleStore            RuleStore
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
@@ -82,6 +80,7 @@ type API struct {
 	MuteTimings          *provisioning.MuteTimingService
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
+	EvaluatorFactory     eval.EvaluatorFactory
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -109,15 +108,15 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			DatasourceCache: api.DatasourceCache,
-			QuotaService:    api.QuotaService,
-			scheduleService: api.Schedule,
-			store:           api.RuleStore,
-			provenanceStore: api.ProvenanceStore,
-			xactManager:     api.TransactionManager,
-			log:             logger,
-			cfg:             &api.Cfg.UnifiedAlerting,
-			ac:              api.AccessControl,
+			conditionValidator: api.EvaluatorFactory,
+			QuotaService:       api.QuotaService,
+			scheduleService:    api.Schedule,
+			store:              api.RuleStore,
+			provenanceStore:    api.ProvenanceStore,
+			xactManager:        api.TransactionManager,
+			log:                logger,
+			cfg:                &api.Cfg.UnifiedAlerting,
+			ac:                 api.AccessControl,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -126,7 +125,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
 			accessControl:   api.AccessControl,
-			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService),
+			evaluator:       api.EvaluatorFactory,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
@@ -145,4 +144,29 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		muteTimings:         api.MuteTimings,
 		alertRules:          api.AlertRules,
 	}), m)
+}
+
+func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	if orgUsage, err := api.RuleStore.Count(ctx, scopeParams.OrgID); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, orgUsage)
+	}
+
+	if globalUsage, err := api.RuleStore.Count(ctx, 0); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, globalUsage)
+	}
+
+	return u, nil
 }

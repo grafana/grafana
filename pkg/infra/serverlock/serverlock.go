@@ -2,16 +2,19 @@ package serverlock
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore) *ServerLockService {
+func ProvideService(sqlStore db.DB, tracer tracing.Tracer) *ServerLockService {
 	return &ServerLockService{
 		SQLStore: sqlStore,
+		tracer:   tracer,
 		log:      log.New("infra.lockservice"),
 	}
 }
@@ -20,7 +23,8 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *ServerLockService {
 // It exposes 2 services LockAndExecute and LockExecuteAndRelease, which are intended to be used independently, don't mix
 // them up (ie, use the same actionName for both of them).
 type ServerLockService struct {
-	SQLStore *sqlstore.SQLStore
+	SQLStore db.DB
+	tracer   tracing.Tracer
 	log      log.Logger
 }
 
@@ -28,9 +32,18 @@ type ServerLockService struct {
 // `fn` function when successful. This should not be used at low internal. But services
 // that needs to be run once every ex 10m.
 func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
+	start := time.Now()
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.LockAndExecute")
+	span.SetAttributes("serverlock.actionName", actionName, attribute.Key("serverlock.actionName").String(actionName))
+	defer span.End()
+
+	ctxLogger := sl.log.FromContext(ctx)
+	ctxLogger.Debug("Start LockAndExecute", "actionName", actionName)
+
 	// gets or creates a lockable row
 	rowLock, err := sl.getOrCreate(ctx, actionName)
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 
@@ -39,23 +52,28 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 		return nil
 	}
 
-	// try to get lock based on rowLow version
+	// try to get lock based on rowLock version
 	acquiredLock, err := sl.acquireLock(ctx, rowLock)
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 
 	if acquiredLock {
-		fn(ctx)
+		sl.executeFunc(ctx, actionName, fn)
 	}
+
+	ctxLogger.Debug("LockAndExecute finished", "actionName", actionName, "acquiredLock", acquiredLock, "duration", time.Since(start))
 
 	return nil
 }
 
 func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *serverLock) (bool, error) {
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.acquireLock")
+	defer span.End()
 	var result bool
 
-	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		newVersion := serverLock.Version + 1
 		sql := `UPDATE server_lock SET
 			version = ?,
@@ -78,9 +96,12 @@ func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *server
 }
 
 func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string) (*serverLock, error) {
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.getOrCreate")
+	defer span.End()
+
 	var result *serverLock
 
-	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 		lockRows := []*serverLock{}
 		err := dbSession.Where("operation_uid = ?", actionName).Find(&lockRows)
 		if err != nil {
@@ -115,19 +136,30 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 // database is older than maxInterval, we will assume the lock as timeouted. The 'maxInterval' parameter should be so long
 // that is impossible for 2 processes to run at the same time.
 func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
+	start := time.Now()
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.LockExecuteAndRelease")
+	span.SetAttributes("serverlock.actionName", actionName, attribute.Key("serverlock.actionName").String(actionName))
+	defer span.End()
+
+	ctxLogger := sl.log.FromContext(ctx)
+	ctxLogger.Debug("Start LockExecuteAndRelease", "actionName", actionName)
+
 	err := sl.acquireForRelease(ctx, actionName, maxInterval)
 	// could not get the lock, returning
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 
-	// execute!
-	fn(ctx)
+	sl.executeFunc(ctx, actionName, fn)
 
 	err = sl.releaseLock(ctx, actionName)
 	if err != nil {
-		sl.log.Error("Error releasing the lock.", err)
+		span.RecordError(err)
+		ctxLogger.Error("Failed to release the lock", "error", err)
 	}
+
+	ctxLogger.Debug("LockExecuteAndRelease finished", "actionName", actionName, "duration", time.Since(start))
 
 	return nil
 }
@@ -135,8 +167,11 @@ func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionNa
 // acquireForRelease will check if the lock is already on the database, if it is, will check with maxInterval if it is
 // timeouted. Returns nil error if the lock was acquired correctly
 func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName string, maxInterval time.Duration) error {
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.acquireForRelease")
+	defer span.End()
+
 	// getting the lock - as the action name has a Unique constraint, this will fail if the lock is already on the database
-	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 		// we need to find if the lock is in the database
 		lockRows := []*serverLock{}
 		err := dbSession.Where("operation_uid = ?", actionName).Find(&lockRows)
@@ -144,10 +179,12 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 			return err
 		}
 
+		ctxLogger := sl.log.FromContext(ctx)
+
 		if len(lockRows) > 0 {
 			result := lockRows[0]
 			if sl.isLockWithinInterval(result, maxInterval) {
-				return errors.New("there is already a lock for this actionName: " + actionName)
+				return &ServerLockExistsError{actionName: actionName}
 			} else {
 				// lock has timeouted, so we update the timestamp
 				result.LastExecution = time.Now().Unix()
@@ -157,7 +194,7 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 					return err
 				}
 				if affected != 1 {
-					sl.log.Error("Expected rows affected to be 1 if there was no error.", "actionName", actionName, "rowAffected", affected)
+					ctxLogger.Error("Expected rows affected to be 1 if there was no error", "actionName", actionName, "rowsAffected", affected)
 				}
 				return nil
 			}
@@ -175,7 +212,7 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 
 			if affected != 1 {
 				// this means that there was no error but there is something not working correctly
-				sl.log.Error("Expected rows affected to be 1 if there was no error.", "actionName", actionName, "rowAffected", affected)
+				ctxLogger.Error("Expected rows affected to be 1 if there was no error", "actionName", actionName, "rowsAffected", affected)
 			}
 		}
 		return nil
@@ -186,7 +223,10 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 // releaseLock will delete the row at the database. This is only intended to be used within the scope of LockExecuteAndRelease
 // method, but not as to manually release a Lock
 func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string) error {
-	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.releaseLock")
+	defer span.End()
+
+	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sql := `DELETE FROM server_lock WHERE operation_uid=? `
 
 		res, err := dbSession.Exec(sql, actionName)
@@ -195,7 +235,7 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 		}
 		affected, err := res.RowsAffected()
 		if affected != 1 {
-			sl.log.Debug("Error releasing lock ", "actionName", actionName, "affected", affected)
+			sl.log.FromContext(ctx).Debug("Error releasing lock", "actionName", actionName, "rowsAffected", affected)
 		}
 		return err
 	})
@@ -211,4 +251,17 @@ func (sl *ServerLockService) isLockWithinInterval(lock *serverLock, maxInterval 
 		}
 	}
 	return false
+}
+
+func (sl ServerLockService) executeFunc(ctx context.Context, actionName string, fn func(ctx context.Context)) {
+	start := time.Now()
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.executeFunc")
+	defer span.End()
+
+	ctxLogger := sl.log.FromContext(ctx)
+	ctxLogger.Debug("Start execution", "actionName", actionName)
+
+	fn(ctx)
+
+	ctxLogger.Debug("Execution finished", "actionName", actionName, "duration", time.Since(start))
 }

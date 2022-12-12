@@ -20,6 +20,7 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
     width: 100%;
     padding: 20px;
     display: flex;
+    height: 100%;
     min-height: 100%;
     background: ${theme.colors.background.primary};
   }`;

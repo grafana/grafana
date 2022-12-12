@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { promLanguageDefinition } from 'monaco-promql';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -87,15 +88,18 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
 };
 
 const MonacoQueryField = (props: Props) => {
+  const id = uuidv4();
+
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
+  const onChangeRef = useLatest(onChange);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
@@ -125,9 +129,14 @@ const MonacoQueryField = (props: Props) => {
           ensurePromQL(monaco);
         }}
         onMount={(editor, monaco) => {
+          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
+            isEditorFocused.set(false);
             onBlurRef.current(editor.getValue());
+          });
+          editor.onDidFocusEditorText(() => {
+            isEditorFocused.set(true);
           });
 
           // we construct a DataProvider object
@@ -201,11 +210,24 @@ const MonacoQueryField = (props: Props) => {
           editor.onDidContentSizeChange(updateElementHeight);
           updateElementHeight();
 
+          // Whenever the editor changes, lets save the last value so the next query for this editor will be up-to-date.
+          // This change is being introduced to fix a bug where you can submit a query via shift+enter:
+          // If you clicked into another field and haven't un-blurred the active field,
+          // then the query that is run will be stale, as the reference is only updated
+          // with the value of the last blurred input.
+          editor.getModel()?.onDidChangeContent(() => {
+            onChangeRef.current(editor.getValue());
+          });
+
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
-          editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            onRunQueryRef.current(editor.getValue());
-          });
+          editor.addCommand(
+            monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+            () => {
+              onRunQueryRef.current(editor.getValue());
+            },
+            'isEditorFocused' + id
+          );
 
           /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
           command palette uses. Pass the event out of monaco manually

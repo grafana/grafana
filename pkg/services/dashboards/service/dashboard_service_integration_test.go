@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -16,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -42,7 +43,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					}),
 				}
 
-				err := callSaveWithError(cmd, sc.sqlStore)
+				err := callSaveWithError(t, cmd, sc.sqlStore)
 				assert.Equal(t, dashboards.ErrDashboardNotFound, err)
 			})
 
@@ -62,7 +63,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: false,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					assert.Equal(t, dashboards.ErrDashboardNotFound, err)
 				})
 
@@ -94,7 +95,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 			permissionScenario(t, "When creating a new dashboard in the General folder", canSave,
 				func(t *testing.T, sc *permissionScenarioContext) {
-					sqlStore := sqlstore.InitTestDB(t)
+					sqlStore := db.InitTestDB(t)
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -104,7 +105,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(t, cmd, sqlStore)
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
@@ -124,7 +125,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -144,7 +145,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -165,7 +166,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -186,7 +187,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -207,7 +208,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -228,7 +229,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -249,7 +250,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -270,7 +271,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -291,7 +292,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sc.sqlStore)
+					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
@@ -432,7 +433,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardFolderNotFound, err)
 					})
 
@@ -448,7 +449,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardVersionMismatch, err)
 					})
 
@@ -488,7 +489,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardVersionMismatch, err)
 					})
 
@@ -527,7 +528,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
 					})
 
@@ -543,7 +544,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
 					})
 
@@ -559,7 +560,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
 					})
 			})
@@ -647,7 +648,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardWithSameUIDExists, err)
 					})
 
@@ -711,7 +712,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
@@ -727,7 +728,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
@@ -743,7 +744,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
@@ -759,7 +760,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardTypeMismatch, err)
 					})
 
@@ -774,7 +775,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardWithSameNameAsFolder, err)
 					})
 
@@ -789,7 +790,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sc.sqlStore)
+						err := callSaveWithError(t, cmd, sc.sqlStore)
 						assert.Equal(t, dashboards.ErrDashboardFolderWithSameNameAsDashboard, err)
 					})
 			})
@@ -799,7 +800,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
-	sqlStore                 *sqlstore.SQLStore
+	sqlStore                 db.DB
 	dashboardStore           dashboards.Store
 	savedFolder              *models.Dashboard
 	savedDashInFolder        *models.Dashboard
@@ -819,8 +820,11 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
-		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+		sqlStore := db.InitTestDB(t)
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		require.NoError(t, err)
 		service := ProvideDashboardService(
 			cfg, dashboardStore, &dummyDashAlertExtractor{},
 			featuremgmt.WithFeatures(),
@@ -870,14 +874,16 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	})
 }
 
-func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore db.DB) *models.Dashboard {
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
@@ -891,12 +897,14 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	return res
 }
 
-func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
+func callSaveWithError(t *testing.T, cmd models.SaveDashboardCommand, sqlStore db.DB) error {
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
@@ -904,11 +912,11 @@ func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLSt
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.New(),
 	)
-	_, err := service.SaveDashboard(context.Background(), &dto, false)
+	_, err = service.SaveDashboard(context.Background(), &dto, false)
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlStore db.DB) *models.Dashboard {
 	t.Helper()
 
 	cmd := models.SaveDashboardCommand{
@@ -930,10 +938,12 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
@@ -947,7 +957,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	return res
 }
 
-func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgID,
@@ -968,10 +978,12 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),

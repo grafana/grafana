@@ -47,6 +47,7 @@ import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/PageNew/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
+import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -104,6 +105,8 @@ export class GrafanaApp {
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');
 
+      const initI18nPromise = initializeI18n(config.bootData.user.language);
+
       setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
@@ -156,8 +159,12 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      // Preload selected app plugins
-      await preloadPlugins(config.pluginsToPreload);
+      await Promise.all([
+        initI18nPromise,
+
+        // Preload selected app plugins
+        await preloadPlugins(config.pluginsToPreload),
+      ]);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -261,6 +268,7 @@ function initEchoSrv() {
     registerEchoBackend(
       new GA4EchoBackend({
         googleAnalyticsId: config.googleAnalytics4Id,
+        googleAnalytics4SendManualPageViews: config.googleAnalytics4SendManualPageViews,
       })
     );
   }

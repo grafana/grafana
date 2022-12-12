@@ -3,36 +3,11 @@ import { Location } from 'history';
 import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { updateConfig } from '../../config';
-
-import { enrichConfigItems, getActiveItem, getForcedLoginUrl, isMatchOrChildMatch, isSearchActive } from './utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive } from './utils';
 
 jest.mock('../../app_events', () => ({
   publish: jest.fn(),
 }));
-
-describe('getForcedLoginUrl', () => {
-  it.each`
-    appSubUrl          | url                    | expected
-    ${''}              | ${'/whatever?a=1&b=2'} | ${'/whatever?a=1&b=2&forceLogin=true'}
-    ${'/grafana'}      | ${'/whatever?a=1&b=2'} | ${'/grafana/whatever?a=1&b=2&forceLogin=true'}
-    ${'/grafana/test'} | ${'/whatever?a=1&b=2'} | ${'/grafana/test/whatever?a=1&b=2&forceLogin=true'}
-    ${'/grafana'}      | ${''}                  | ${'/grafana?forceLogin=true'}
-    ${'/grafana'}      | ${'/whatever'}         | ${'/grafana/whatever?forceLogin=true'}
-    ${'/grafana'}      | ${'/whatever/'}        | ${'/grafana/whatever/?forceLogin=true'}
-  `(
-    "when appUrl set to '$appUrl' and appSubUrl set to '$appSubUrl' then result should be '$expected'",
-    ({ appSubUrl, url, expected }) => {
-      updateConfig({
-        appSubUrl,
-      });
-
-      const result = getForcedLoginUrl(url);
-
-      expect(result).toBe(expected);
-    }
-  );
-});
 
 describe('enrichConfigItems', () => {
   let mockItems: NavModelItem[];
@@ -63,7 +38,7 @@ describe('enrichConfigItems', () => {
     contextSrv.user.isSignedIn = false;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
+    const signInNode = enrichedConfigItems.find((item) => item.id === 'sign-in');
     expect(signInNode).toBeDefined();
   });
 
@@ -72,7 +47,7 @@ describe('enrichConfigItems', () => {
     contextSrv.user.isSignedIn = true;
     setContextSrv(contextSrv);
     const enrichedConfigItems = enrichConfigItems(mockItems, mockLocation);
-    const signInNode = enrichedConfigItems.find((item) => item.id === 'signin');
+    const signInNode = enrichedConfigItems.find((item) => item.id === 'sign-in');
     expect(signInNode).toBeDefined();
   });
 

@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -13,6 +14,8 @@ type Cfg struct {
 	log log.Logger
 
 	DevMode bool
+
+	PluginsPath string
 
 	PluginSettings       setting.PluginSettings
 	PluginsAllowUnsigned []string
@@ -27,6 +30,8 @@ type Cfg struct {
 	Azure *azsettings.AzureSettings
 
 	BuildVersion string // TODO Remove
+
+	LogDatasourceRequests bool
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
@@ -52,6 +57,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 
 	return &Cfg{
 		log:                     logger,
+		PluginsPath:             grafanaCfg.PluginsPath,
 		BuildVersion:            grafanaCfg.BuildVersion,
 		DevMode:                 settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
 		EnterpriseLicensePath:   settingProvider.KeyValue("enterprise", "license_path").MustString(grafanaCfg.EnterpriseLicensePath),
@@ -64,6 +70,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 			ManagedIdentityEnabled:  azure.KeyValue("managed_identity_enabled").MustBool(grafanaCfg.Azure.ManagedIdentityEnabled),
 			ManagedIdentityClientId: azure.KeyValue("managed_identity_client_id").MustString(grafanaCfg.Azure.ManagedIdentityClientId),
 		},
+		LogDatasourceRequests: grafanaCfg.IsFeatureToggleEnabled(featuremgmt.FlagDatasourceLogger),
 	}
 }
 

@@ -14,6 +14,8 @@ const addDataSource = () => {
   });
 };
 
+const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
+
 describe('Loki query builder', () => {
   beforeEach(() => {
     e2e.flows.login('admin', 'admin');
@@ -37,15 +39,15 @@ describe('Loki query builder', () => {
       req.reply({ status: 'success', data: [{ instance: 'instance1' }] });
     });
 
-    const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
-
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
     // Start in builder mode, click and choose query pattern
-    e2e.components.QueryBuilder.queryPatterns().click().type('Log query with parsing{enter}');
+    e2e.components.QueryBuilder.queryPatterns().click();
+    e2e().contains('Log query starters').click();
+    e2e().contains('Use this query').click();
     e2e().contains('No pipeline errors').should('be.visible');
     e2e().contains('Logfmt').should('be.visible');
     e2e().contains('{} | logfmt | __error__=``').should('be.visible');
@@ -70,13 +72,17 @@ describe('Loki query builder', () => {
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 
-    // Switch to code editor and check if query was parsed
-    for (const word of finalQuery.split(' ')) {
-      e2e().contains(word).should('be.visible');
-    }
+    // Change to code editor
+    e2e().contains('label', 'Code').click();
+    // We need to test this manually because the final query is split into separate DOM elements using e2e().contains(finalQuery).should('be.visible'); does not detect the query.
+    e2e().contains('rate').should('be.visible');
+    e2e().contains('instance1|instance2').should('be.visible');
+    e2e().contains('logfmt').should('be.visible');
+    e2e().contains('__error__').should('be.visible');
+    e2e().contains('$__interval').should('be.visible');
 
-    // Switch to explain mode and check if query is visible
+    // Checks the explain mode toggle
     e2e().contains('label', 'Explain').click();
-    e2e().contains(finalQuery).should('be.visible');
+    e2e().contains('Fetch all log lines matching label filters.').should('be.visible');
   });
 });

@@ -26,7 +26,7 @@ import {
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { isGraphable } from './dims';
-import { defaultScatterConfig, ScatterFieldConfig, ScatterLineMode, XYChartOptions } from './models.gen';
+import { defaultScatterConfig, ScatterFieldConfig, ScatterShow, XYChartOptions } from './models.gen';
 import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
@@ -161,7 +161,7 @@ function getScatterSeries(
 
     x: (frame) => frame.fields[xIndex],
     y: (frame) => frame.fields[yIndex],
-    legend: (frame) => {
+    legend: () => {
       return [
         {
           label: name,
@@ -172,12 +172,12 @@ function getScatterSeries(
       ];
     },
 
-    line: fieldConfig.line ?? ScatterLineMode.None,
+    showLine: fieldConfig.show !== ScatterShow.Points,
     lineWidth: fieldConfig.lineWidth ?? 2,
     lineStyle: fieldConfig.lineStyle!,
     lineColor: () => seriesColor,
 
-    point: fieldConfig.point!,
+    showPoints: fieldConfig.show !== ScatterShow.Lines ? VisibilityMode.Always : VisibilityMode.Never,
     pointSize,
     pointColor,
     pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
@@ -201,44 +201,46 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
     throw 'Missing data';
   }
 
-  if (options.mode === 'manual') {
-    if (options.series?.length) {
-      const scatterSeries: ScatterSeries[] = [];
+  if (options.seriesMapping === 'manual') {
+    if (!options.series?.length) {
+      throw 'Missing series config';
+    }
 
-      for (const series of options.series) {
-        if (!series?.x) {
-          throw 'Select X dimension';
-        }
+    const scatterSeries: ScatterSeries[] = [];
 
-        if (!series?.y) {
-          throw 'Select Y dimension';
-        }
-
-        for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-          const frame = frames[frameIndex];
-          const xIndex = findFieldIndex(frame, series.x);
-
-          if (xIndex != null) {
-            // TODO: this should find multiple y fields
-            const yIndex = findFieldIndex(frame, series.y);
-
-            if (yIndex == null) {
-              throw 'Y must be in the same frame as X';
-            }
-
-            const dims: Dims = {
-              pointColorFixed: series.pointColor?.fixed,
-              pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
-              pointSizeConfig: series.pointSize,
-              pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
-            };
-            scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
-          }
-        }
+    for (const series of options.series) {
+      if (!series?.x) {
+        throw 'Select X dimension';
       }
 
-      return scatterSeries;
+      if (!series?.y) {
+        throw 'Select Y dimension';
+      }
+
+      for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+        const frame = frames[frameIndex];
+        const xIndex = findFieldIndex(frame, series.x);
+
+        if (xIndex != null) {
+          // TODO: this should find multiple y fields
+          const yIndex = findFieldIndex(frame, series.y);
+
+          if (yIndex == null) {
+            throw 'Y must be in the same frame as X';
+          }
+
+          const dims: Dims = {
+            pointColorFixed: series.pointColor?.fixed,
+            pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
+            pointSizeConfig: series.pointSize,
+            pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
+          };
+          scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
+        }
+      }
     }
+
+    return scatterSeries;
   }
 
   // Default behavior
@@ -323,9 +325,9 @@ const prepConfig = (
           const scatterInfo = scatterSeries[seriesIdx - 1];
           let d = u.data[seriesIdx] as unknown as FacetSeries;
 
-          let showLine = scatterInfo.line !== ScatterLineMode.None;
-          let showPoints = scatterInfo.point === VisibilityMode.Always;
-          if (!showPoints && scatterInfo.point === VisibilityMode.Auto) {
+          let showLine = scatterInfo.showLine;
+          let showPoints = scatterInfo.showPoints === VisibilityMode.Always;
+          if (!showPoints && scatterInfo.showPoints === VisibilityMode.Auto) {
             showPoints = d[0].length < 1000;
           }
 
@@ -586,8 +588,12 @@ const prepConfig = (
     isTime: false,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u, min, max) => [min, max],
+    min: xField.config.min,
+    max: xField.config.max,
   });
+
+  // why does this fall back to '' instead of null or undef?
+  let xAxisLabel = xField.config.custom.axisLabel;
 
   builder.addAxis({
     scaleKey: 'x',
@@ -595,10 +601,13 @@ const prepConfig = (
       xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: xField.config.custom?.axisPlacement !== AxisPlacement.Hidden,
     theme,
-    label: xField.config.custom.axisLabel,
+    label:
+      xAxisLabel == null || xAxisLabel === ''
+        ? getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames)
+        : xAxisLabel,
   });
 
-  scatterSeries.forEach((s) => {
+  scatterSeries.forEach((s, si) => {
     let frame = s.frame(frames);
     let field = s.y(frame);
 
@@ -613,15 +622,22 @@ const prepConfig = (
       scaleKey,
       orientation: ScaleOrientation.Vertical,
       direction: ScaleDirection.Up,
-      range: (u, min, max) => [min, max],
+      max: field.config.max,
+      min: field.config.min,
     });
 
     if (field.config.custom?.axisPlacement !== AxisPlacement.Hidden) {
+      // why does this fall back to '' instead of null or undef?
+      let yAxisLabel = field.config.custom?.axisLabel;
+
       builder.addAxis({
         scaleKey,
         theme,
         placement: field.config.custom?.axisPlacement,
-        label: field.config.custom.axisLabel,
+        label:
+          yAxisLabel == null || yAxisLabel === ''
+            ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
+            : yAxisLabel,
         values: (u, splits) => splits.map((s) => field.display!(s).text),
       });
     }

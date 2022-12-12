@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/access_control/
-  - /docs/grafana/latest/http_api/access_control/
-  - /docs/grafana/latest/http_api/accesscontrol/
+  - ../../http_api/access_control/
+  - ../../http_api/accesscontrol/
 description: ''
 keywords:
   - grafana
@@ -17,11 +16,11 @@ title: RBAC HTTP API
 
 # RBAC API
 
-> Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
 
 The API can be used to create, update, delete, get, and list roles.
 
-To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions.md" >}}).
+To check which basic or fixed roles have the required permissions, refer to [RBAC role definitions]({{< ref "../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/" >}}).
 
 ## Get status
 
@@ -527,11 +526,60 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied.                                                       |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
+### List your permissions
+
+`GET /api/access-control/users/permissions`
+
+Lists the permissions granted to the signed in user.
+
+#### Required permissions
+
+No permission is required.
+
+#### Query parameters
+
+| Param       | Type    | Required | Description                            |
+| ----------- | ------- | -------- | -------------------------------------- |
+| reloadcache | boolean | No       | A flag to reload the permission cache. |
+
+#### Example request
+
+```http
+GET /api/access-control/user/permissions
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+  "dashboards:read": ["dashboards:uid:70KrY6IVz"],
+  "dashboards:write": ["dashboards:uid:70KrY6IVz"],
+  "datasources.id:read": ["datasources:*"],
+  "datasources:read": ["datasources:*"],
+  "datasources:explore": [""],
+  "datasources:query": ["datasources:uid:grafana"],
+  "datasources:read": ["datasources:uid:grafana"],
+  "orgs:read": [""]
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Set of assigned permissions is returned.                             |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
 ### List permissions assigned to a user
 
 `GET /api/access-control/users/:userId/permissions`
 
-Lists the permissions that a given user has.
+Lists the permissions granted to a given user.
 
 #### Required permissions
 

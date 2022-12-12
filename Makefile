@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -46,7 +46,8 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
-	-i pkg/api/swagger_tags.json
+	-i pkg/api/swagger_tags.json \
+	--exclude-tag=alpha
 
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
@@ -65,16 +66,26 @@ openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 a
 ##@ Building
 gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
+	go generate ./pkg/plugins/plugindef
+	go generate ./kinds/gen.go
 	go generate ./pkg/framework/coremodel
-	go generate ./public/app/plugins
+	go generate ./public/app/plugins/gen.go
+	go generate ./kinds/report.go
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
+gen-jsonnet:
+	go generate ./devenv/jsonnet
+
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-backend: ## Build Grafana backend.
+	@echo "build backend"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
 
 build-server: ## Build Grafana server.
 	@echo "build server"
@@ -116,13 +127,13 @@ test-go-integration: ## Run integration tests for backend with flags.
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"
 	$(GO) clean -testcache
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=30m {}'
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=2m {}'
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
 	$(GO) clean -testcache
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=30m {}'
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=2m {}'
 
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
@@ -148,12 +159,17 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev .
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--tag grafana/grafana:dev .
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
-	docker build --tag grafana/grafana:dev-ubuntu -f ./Dockerfile.ubuntu .
-
+	DOCKER_BUILDKIT=1 \
+	docker build \
+	--build-arg BASE_IMAGE=ubuntu:20.04 \
+	--build-arg GO_IMAGE=golang:1.19.3 \
+	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services
 
@@ -217,6 +233,9 @@ drone: $(DRONE)
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
+
+format-drone:
+	black --include '\.star$$' -S scripts/drone/ .drone.star
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

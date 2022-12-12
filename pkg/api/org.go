@@ -62,7 +62,7 @@ func (hs *HTTPServer) GetOrgByID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
-	org, err := hs.SQLStore.GetOrgByName(web.Params(c.Req)[":name"])
+	orga, err := hs.orgService.GetByName(c.Req.Context(), &org.GetOrgByNameQuery{Name: web.Params(c.Req)[":name"]})
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Organization not found", err)
@@ -71,15 +71,15 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "Failed to get organization", err)
 	}
 	result := models.OrgDetailsDTO{
-		Id:   org.Id,
-		Name: org.Name,
+		Id:   orga.ID,
+		Name: orga.Name,
 		Address: models.Address{
-			Address1: org.Address1,
-			Address2: org.Address2,
-			City:     org.City,
-			ZipCode:  org.ZipCode,
-			State:    org.State,
-			Country:  org.Country,
+			Address1: orga.Address1,
+			Address2: orga.Address2,
+			City:     orga.City,
+			ZipCode:  orga.ZipCode,
+			State:    orga.State,
+			Country:  orga.Country,
 		},
 	}
 
@@ -87,26 +87,27 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Response {
-	query := models.GetOrgByIdQuery{Id: orgID}
+	query := org.GetOrgByIdQuery{ID: orgID}
 
-	if err := hs.SQLStore.GetOrgById(ctx, &query); err != nil {
+	res, err := hs.orgService.GetByID(ctx, &query)
+	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Organization not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get organization", err)
 	}
 
-	org := query.Result
+	orga := res
 	result := models.OrgDetailsDTO{
-		Id:   org.Id,
-		Name: org.Name,
+		Id:   orga.ID,
+		Name: orga.Name,
 		Address: models.Address{
-			Address1: org.Address1,
-			Address2: org.Address2,
-			City:     org.City,
-			ZipCode:  org.ZipCode,
-			State:    org.State,
-			Country:  org.Country,
+			Address1: orga.Address1,
+			Address2: orga.Address2,
+			City:     orga.City,
+			ZipCode:  orga.ZipCode,
+			State:    orga.State,
+			Country:  orga.Country,
 		},
 	}
 
@@ -126,7 +127,7 @@ func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Re
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
-	cmd := models.CreateOrgCommand{}
+	cmd := org.CreateOrgCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -135,8 +136,9 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusForbidden, "Access denied", nil)
 	}
 
-	cmd.UserId = c.UserID
-	if err := hs.SQLStore.CreateOrg(c.Req.Context(), &cmd); err != nil {
+	cmd.UserID = c.UserID
+	result, err := hs.orgService.CreateWithMember(c.Req.Context(), &cmd)
+	if err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(http.StatusConflict, "Organization name taken", err)
 		}
@@ -146,7 +148,7 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 	metrics.MApiOrgCreate.Inc()
 
 	return response.JSON(http.StatusOK, &util.DynMap{
-		"orgId":   cmd.Result.Id,
+		"orgId":   result.ID,
 		"message": "Organization created",
 	})
 }
@@ -247,9 +249,9 @@ func (hs *HTTPServer) UpdateOrgAddress(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
-	cmd := models.UpdateOrgAddressCommand{
-		OrgId: orgID,
-		Address: models.Address{
+	cmd := org.UpdateOrgAddressCommand{
+		OrgID: orgID,
+		Address: org.Address{
 			Address1: form.Address1,
 			Address2: form.Address2,
 			City:     form.City,
@@ -259,7 +261,7 @@ func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.Upda
 		},
 	}
 
-	if err := hs.SQLStore.UpdateOrgAddress(ctx, &cmd); err != nil {
+	if err := hs.orgService.UpdateAddress(ctx, &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update org address", err)
 	}
 
@@ -290,7 +292,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Can not delete org for current user", nil)
 	}
 
-	if err := hs.SQLStore.DeleteOrg(c.Req.Context(), &models.DeleteOrgCommand{Id: orgID}); err != nil {
+	if err := hs.orgService.Delete(c.Req.Context(), &org.DeleteOrgCommand{ID: orgID}); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
 		}

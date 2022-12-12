@@ -9,11 +9,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/blugelabs/bluge"
@@ -113,15 +113,15 @@ var testDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "test",
+		summary: &models.EntitySummary{
+			Name: "test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "boom",
+		summary: &models.EntitySummary{
+			Name: "boom",
 		},
 	},
 }
@@ -162,8 +162,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  3,
 			uid: "3",
-			info: &extract.DashboardInfo{
-				Title: "created",
+			summary: &models.EntitySummary{
+				Name: "created",
 			},
 		})
 		require.NoError(t, err)
@@ -181,8 +181,8 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  2,
 			uid: "2",
-			info: &extract.DashboardInfo{
-				Title: "nginx",
+			summary: &models.EntitySummary{
+				Name: "nginx",
 			},
 		})
 		require.NoError(t, err)
@@ -197,15 +197,15 @@ var testSortDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "a-test",
+		summary: &models.EntitySummary{
+			Name: "a-test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "z-test",
+		summary: &models.EntitySummary{
+			Name: "z-test",
 		},
 	},
 }
@@ -288,15 +288,15 @@ var testPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Archer Data System",
+		summary: &models.EntitySummary{
+			Name: "Archer Data System",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "Document Sync repo",
+		summary: &models.EntitySummary{
+			Name: "Document Sync repo",
 		},
 	},
 }
@@ -366,8 +366,8 @@ var longPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Eyjafjallajökull Eruption data",
+		summary: &models.EntitySummary{
+			Name: "Eyjafjallajökull Eruption data",
 		},
 	},
 }
@@ -385,15 +385,15 @@ var scatteredTokensDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
+		summary: &models.EntitySummary{
+			Name: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
 		},
 	},
 	{
 		id:  3,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "A secret is powerful when it is empty (Umberto Eco)",
+		summary: &models.EntitySummary{
+			Name: "A secret is powerful when it is empty (Umberto Eco)",
 		},
 	},
 }
@@ -418,25 +418,19 @@ var dashboardsWithFolders = []dashboard{
 		id:       1,
 		uid:      "1",
 		isFolder: true,
-		info: &extract.DashboardInfo{
-			Title: "My folder",
+		summary: &models.EntitySummary{
+			Name: "My folder",
 		},
 	},
 	{
 		id:       2,
 		uid:      "2",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 1",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &models.EntitySummary{
+			Name: "Dashboard in folder 1",
+			Nested: []*models.EntitySummary{
+				newNestedPanel(1, "Panel 1"),
+				newNestedPanel(2, "Panel 2"),
 			},
 		},
 	},
@@ -444,26 +438,20 @@ var dashboardsWithFolders = []dashboard{
 		id:       3,
 		uid:      "3",
 		folderID: 1,
-		info: &extract.DashboardInfo{
-			Title: "Dashboard in folder 2",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 3",
-				},
+		summary: &models.EntitySummary{
+			Name: "Dashboard in folder 2",
+			Nested: []*models.EntitySummary{
+				newNestedPanel(3, "Panel 3"),
 			},
 		},
 	},
 	{
 		id:  4,
 		uid: "4",
-		info: &extract.DashboardInfo{
-			Title: "One more dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    3,
-					Title: "Panel 4",
-				},
+		summary: &models.EntitySummary{
+			Name: "One more dash",
+			Nested: []*models.EntitySummary{
+				newNestedPanel(4, "Panel 4"),
 			},
 		},
 	},
@@ -517,20 +505,23 @@ var dashboardsWithPanels = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "My Dash",
-			Panels: []extract.PanelInfo{
-				{
-					ID:    1,
-					Title: "Panel 1",
-				},
-				{
-					ID:    2,
-					Title: "Panel 2",
-				},
+		summary: &models.EntitySummary{
+			Name: "My Dash",
+			Nested: []*models.EntitySummary{
+				newNestedPanel(1, "Panel 1"),
+				newNestedPanel(2, "Panel 2"),
 			},
 		},
 	},
+}
+
+func newNestedPanel(id int64, name string) *models.EntitySummary {
+	summary := &models.EntitySummary{
+		Kind: "panel",
+		UID:  fmt.Sprintf("???#%d", id),
+	}
+	summary.Name = name
+	return summary
 }
 
 func TestDashboardIndex_Panels(t *testing.T) {
@@ -562,15 +553,15 @@ var punctuationSplitNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heat-torkel",
+		summary: &models.EntitySummary{
+			Name: "heat-torkel",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		info: &extract.DashboardInfo{
-			Title: "topology heatmap",
+		summary: &models.EntitySummary{
+			Name: "topology heatmap",
 		},
 	},
 }
@@ -595,8 +586,8 @@ var camelCaseNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		info: &extract.DashboardInfo{
-			Title: "heatTorkel",
+		summary: &models.EntitySummary{
+			Name: "heatTorkel",
 		},
 	},
 }
@@ -617,8 +608,8 @@ func dashboardsWithTitles(names ...string) []dashboard {
 		out = append(out, dashboard{
 			id:  no,
 			uid: fmt.Sprintf("%d", no),
-			info: &extract.DashboardInfo{
-				Title: name,
+			summary: &models.EntitySummary{
+				Name: name,
 			},
 		})
 	}

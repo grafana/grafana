@@ -39,8 +39,11 @@ const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
+const phlarePlugin = async () =>
+  await import(/* webpackChunkName: "phlarePlugin" */ 'app/plugins/datasource/phlare/module');
+const parcaPlugin = async () =>
+  await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
 
-import { config } from '@grafana/runtime';
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
@@ -49,6 +52,7 @@ import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
+import * as flamegraphPanel from 'app/plugins/panel/flamegraph/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
@@ -74,22 +78,9 @@ const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ '
 const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
 const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
-const heatmapPanelOLD = async () =>
-  await import(/* webpackChunkName: "heatmapPanelOLD" */ 'app/plugins/panel/heatmap-old/module');
 
 const tableOldPanel = async () =>
   await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
-
-// Automatically migrate heatmap panel.
-if (config.featureToggles.useLegacyHeatmapPanel) {
-  const heatmap = config.panels['heatmap'];
-  const legacy = config.panels['heatmap-old'];
-  legacy.id = heatmap.id;
-  legacy.module = heatmap.module;
-  legacy.state = heatmap.state;
-  config.panels['heatmap'] = legacy;
-}
-delete config.panels['heatmap-old'];
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -112,6 +103,8 @@ const builtInPlugins: any = {
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
   'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
+  'app/plugins/datasource/phlare/module': phlarePlugin,
+  'app/plugins/datasource/parca/module': parcaPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,
@@ -126,13 +119,14 @@ const builtInPlugins: any = {
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
-  'app/plugins/panel/heatmap/module': config.featureToggles.useLegacyHeatmapPanel ? heatmapPanelOLD : heatmapPanel,
+  'app/plugins/panel/heatmap/module': heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': tableOldPanel,
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/live/module': livePanel,
   'app/plugins/panel/stat/module': statPanel,
   'app/plugins/panel/debug/module': debugPanel,
+  'app/plugins/panel/flamegraph/module': flamegraphPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,

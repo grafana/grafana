@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { useStyles2, Icon } from '@grafana/ui';
 
 import { Version, CatalogPlugin, PluginIconName } from '../types';
@@ -29,12 +30,10 @@ export function PluginDetailsHeaderDependencies({
   }
 
   return (
-    <div className={className}>
-      <div className={styles.dependencyTitle}>Dependencies:</div>
-
+    <Stack gap={1}>
       {/* Grafana dependency */}
       {Boolean(grafanaDependency) && (
-        <div>
+        <div className={styles.depBadge}>
           <Icon name="grafana" className={styles.icon} />
           Grafana {grafanaDependency}
         </div>
@@ -45,7 +44,7 @@ export function PluginDetailsHeaderDependencies({
         <div>
           {pluginDependencies.map((p) => {
             return (
-              <span key={p.name}>
+              <span className={styles.depBadge} key={p.name}>
                 <Icon name={PluginIconName[p.type]} className={styles.icon} />
                 {p.name} {p.version}
               </span>
@@ -53,14 +52,13 @@ export function PluginDetailsHeaderDependencies({
           })}
         </div>
       )}
-    </div>
+    </Stack>
   );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     dependencyTitle: css`
-      font-weight: ${theme.typography.fontWeightBold};
       margin-right: ${theme.spacing(0.5)};
 
       &::after {
@@ -68,6 +66,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding: 0;
       }
     `,
+    depBadge: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+    }),
     icon: css`
       color: ${theme.colors.text.secondary};
       margin-right: ${theme.spacing(0.5)};

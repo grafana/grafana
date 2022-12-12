@@ -72,7 +72,11 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
   };
 });
 
-export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({ children, horizontal, className }) => {
+export const FieldValidationMessage = ({
+  children,
+  horizontal,
+  className,
+}: React.PropsWithChildren<FieldValidationMessageProps>) => {
   const theme = useTheme2();
   const styles = getFieldValidationMessageStyles(theme);
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);

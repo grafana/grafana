@@ -66,8 +66,9 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
             {typeof content === 'string' && content}
             {React.isValidElement(content) && React.cloneElement(content)}
             {typeof content === 'function' &&
+              update &&
               content({
-                updatePopperPosition: update as any,
+                updatePopperPosition: update,
               })}
           </div>
         </Portal>

@@ -52,6 +52,7 @@ export const MenuList = (props: MenuListProps) => {
   );
 };
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
+  declare context: React.ContextType<typeof ThemeContext>;
   static contextType = ThemeContext;
 
   static defaultProps: Partial<LegacySelectProps<unknown>> = {
@@ -248,7 +249,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               placeholder={placeholder || 'Choose'}
               //@ts-expect-error
               styles={resetSelectStyles(this.context)}
-              loadingMessage={() => loadingMessage}
+              loadingMessage={loadingMessage}
               noOptionsMessage={noOptionsMessage}
               isDisabled={isDisabled}
               isSearchable={isSearchable}

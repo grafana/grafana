@@ -11,6 +11,7 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
+import { config } from '@grafana/runtime/src/config';
 import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types';
@@ -67,7 +68,19 @@ const getTestContext = () => {
     meta: { preferredVisualisationType: 'logs' },
   });
 
-  return { emptyTable, timeSeries, logs, table };
+  const flameGraph = toDataFrame({
+    name: 'flameGraph-res',
+    refId: 'A',
+    fields: [
+      { name: 'level', type: FieldType.number, values: [4, 5, 6] },
+      { name: 'value', type: FieldType.number, values: [100, 100, 100] },
+      { name: 'self', type: FieldType.number, values: [10, 10, 10] },
+      { name: 'label', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
+    ],
+    meta: { preferredVisualisationType: 'flamegraph' },
+  });
+
+  return { emptyTable, timeSeries, logs, table, flameGraph };
 };
 
 const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelData => {
@@ -83,20 +96,23 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableResult: undefined as unknown as null,
     traceFrames: [],
     nodeGraphFrames: [],
+    flameGraphFrames: [],
   };
 
   return { ...defaults, ...args };
 };
 
-describe('decorateWithGraphLogsTraceAndTable', () => {
+describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
   it('should correctly classify the dataFrames', () => {
-    const { table, logs, timeSeries, emptyTable } = getTestContext();
-    const series = [table, logs, timeSeries, emptyTable];
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
       timeRange: {} as unknown as TimeRange,
     };
+    // Needed so flamegraph does not fallback to table, will be removed when feature flag no longer necessary
+    config.featureToggles.flameGraph = true;
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
@@ -107,6 +123,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [flameGraph],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -130,6 +147,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -156,6 +174,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -189,17 +208,18 @@ describe('decorateWithTableResult', () => {
     const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
 
     let theResult = panelResult.tableResult;
+    let theResultTable = theResult?.[0];
 
-    expect(theResult?.fields[0].name).toEqual('value');
-    expect(theResult?.fields[1].name).toEqual('time');
-    expect(theResult?.fields[2].name).toEqual('tsNs');
-    expect(theResult?.fields[3].name).toEqual('message');
-    expect(theResult?.fields[1].display).not.toBeNull();
-    expect(theResult?.length).toBe(3);
+    expect(theResultTable?.fields[0].name).toEqual('value');
+    expect(theResultTable?.fields[1].name).toEqual('time');
+    expect(theResultTable?.fields[2].name).toEqual('tsNs');
+    expect(theResultTable?.fields[3].name).toEqual('message');
+    expect(theResultTable?.fields[1].display).not.toBeNull();
+    expect(theResultTable?.length).toBe(3);
 
     // I don't understand the purpose of the code below, feels like this belongs in toDataFrame tests?
     // Same data though a DataFrame
-    theResult = toDataFrame(
+    theResultTable = toDataFrame(
       new TableModel({
         columns: [
           { text: 'value', type: 'number' },
@@ -215,12 +235,12 @@ describe('decorateWithTableResult', () => {
         type: 'table',
       })
     );
-    expect(theResult.fields[0].name).toEqual('value');
-    expect(theResult.fields[1].name).toEqual('time');
-    expect(theResult.fields[2].name).toEqual('tsNs');
-    expect(theResult.fields[3].name).toEqual('message');
-    expect(theResult.fields[1].display).not.toBeNull();
-    expect(theResult.length).toBe(3);
+    expect(theResultTable.fields[0].name).toEqual('value');
+    expect(theResultTable.fields[1].name).toEqual('time');
+    expect(theResultTable.fields[2].name).toEqual('tsNs');
+    expect(theResultTable.fields[3].name).toEqual('message');
+    expect(theResultTable.fields[1].display).not.toBeNull();
+    expect(theResultTable.length).toBe(3);
   });
 
   it('should do join transform if all series are timeseries', async () => {
@@ -245,13 +265,14 @@ describe('decorateWithTableResult', () => {
     const panelData = createExplorePanelData({ tableFrames });
     const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     const result = panelResult.tableResult;
+    const tableResult = result?.[0];
 
-    expect(result?.fields[0].name).toBe('Time');
-    expect(result?.fields[1].name).toBe('A-series');
-    expect(result?.fields[2].name).toBe('B-series');
-    expect(result?.fields[0].values.toArray()).toEqual([100, 200, 300]);
-    expect(result?.fields[1].values.toArray()).toEqual([4, 5, 6]);
-    expect(result?.fields[2].values.toArray()).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[0].name).toBe('Time');
+    expect(tableResult?.fields[1].name).toBe('A-series');
+    expect(tableResult?.fields[2].name).toBe('B-series');
+    expect(tableResult?.fields[0].values.toArray()).toEqual([100, 200, 300]);
+    expect(tableResult?.fields[1].values.toArray()).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[2].values.toArray()).toEqual([4, 5, 6]);
   });
 
   it('should not override fields display property when filled', async () => {
@@ -267,7 +288,7 @@ describe('decorateWithTableResult', () => {
 
     const panelData = createExplorePanelData({ tableFrames });
     const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
-    expect(panelResult.tableResult?.fields[0].display).toBe(displayFunctionMock);
+    expect(panelResult.tableResult?.[0]?.fields[0].display).toBe(displayFunctionMock);
   });
 
   it('should return null when passed empty array', async () => {

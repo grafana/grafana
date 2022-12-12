@@ -1,3 +1,5 @@
+import { PlaylistItem as PlaylistItemFromSchema } from '@grafana/schema';
+
 import { DashboardQueryResult } from '../search/service';
 
 export type PlaylistMode = boolean | 'tv';
@@ -16,10 +18,7 @@ export interface Playlist {
   items?: PlaylistItem[];
 }
 
-export interface PlaylistItem {
-  type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id'; // _by_id is deprecated
-  value: string; // tag or uid
-
+export interface PlaylistItem extends PlaylistItemFromSchema {
   // Loaded in the frontend
   dashboards?: DashboardQueryResult[];
 }

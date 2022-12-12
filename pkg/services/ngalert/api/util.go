@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,13 +22,10 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
-
-var NotImplementedResp = ErrResp(http.StatusNotImplemented, errors.New("endpoint not implemented"), "")
 
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
@@ -205,63 +201,6 @@ func jsonExtractor(v interface{}) func(*response.NormalResponse) (interface{}, e
 
 func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
-}
-
-func validateCondition(ctx context.Context, c ngmodels.Condition, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
-	if len(c.Data) == 0 {
-		return nil
-	}
-
-	refIDs, err := validateQueriesAndExpressions(ctx, c.Data, user, skipCache, datasourceCache)
-	if err != nil {
-		return err
-	}
-
-	t := make([]string, 0, len(refIDs))
-	for refID := range refIDs {
-		t = append(t, refID)
-	}
-	if _, ok := refIDs[c.Condition]; !ok {
-		return fmt.Errorf("condition %s not found in any query or expression: it should be one of: [%s]", c.Condition, strings.Join(t, ","))
-	}
-	return nil
-}
-
-// conditionValidator returns a curried validateCondition that accepts only condition
-func conditionValidator(c *models.ReqContext, cache datasources.CacheService) func(ngmodels.Condition) error {
-	return func(condition ngmodels.Condition) error {
-		return validateCondition(c.Req.Context(), condition, c.SignedInUser, c.SkipCache, cache)
-	}
-}
-
-func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
-	refIDs := make(map[string]struct{})
-	if len(data) == 0 {
-		return nil, nil
-	}
-
-	for _, query := range data {
-		datasourceUID, err := query.GetDatasource()
-		if err != nil {
-			return nil, err
-		}
-
-		isExpression, err := query.IsExpression()
-		if err != nil {
-			return nil, err
-		}
-		if isExpression {
-			refIDs[query.RefID] = struct{}{}
-			continue
-		}
-
-		_, err = datasourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
-		if err != nil {
-			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
-		}
-		refIDs[query.RefID] = struct{}{}
-	}
-	return refIDs, nil
 }
 
 // ErrorResp creates a response with a visible error

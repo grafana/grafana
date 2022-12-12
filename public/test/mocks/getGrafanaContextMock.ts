@@ -13,13 +13,13 @@ export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {
     // eslint-disable-next-line
     location: {} as LocationService,
     // eslint-disable-next-line
-    config: {} as GrafanaConfig,
+    config: { featureToggles: {} } as GrafanaConfig,
     // eslint-disable-next-line
     keybindings: {
       clearAndInitGlobalBindings: jest.fn(),
       setupDashboardBindings: jest.fn(),
       setupTimeRangeBindings: jest.fn(),
-    } as any as KeybindingSrv,
+    } as unknown as KeybindingSrv,
     ...overrides,
   };
 }

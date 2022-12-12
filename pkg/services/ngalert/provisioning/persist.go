@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
@@ -40,7 +39,7 @@ type RuleStore interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) error
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	InsertAlertRules(ctx context.Context, rule []models.AlertRule) (map[string]int64, error)
-	UpdateAlertRules(ctx context.Context, rule []store.UpdateRule) error
+	UpdateAlertRules(ctx context.Context, rule []models.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) error
 }
@@ -49,7 +48,7 @@ type RuleStore interface {
 //
 //go:generate mockery --name QuotaChecker --structname MockQuotaChecker --inpackage --filename quota_checker_mock.go --with-expecter
 type QuotaChecker interface {
-	CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error)
+	CheckQuotaReached(ctx context.Context, target quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error)
 }
 
 // PersistConfig validates to config before eventually persisting it if no error occurs

@@ -2,18 +2,15 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
-import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
-import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
 const ANIMATION_DURATION = 200;
 
@@ -24,30 +21,21 @@ export interface Props {
 export function DashboardSearchModal({ isOpen }: Props) {
   const styles = useStyles2(getStyles);
   const animStyles = useStyles2((theme) => getAnimStyles(theme, ANIMATION_DURATION));
-  const { query, onQueryChange, onCloseSearch } = useSearchQuery({});
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
   const ref = useRef<HTMLDivElement>(null);
   const backdropRef = useRef(null);
   const [animationComplete, setAnimationComplete] = useState(false);
-
-  const { overlayProps, underlayProps } = useOverlay({ isOpen, onClose: onCloseSearch }, ref);
-
+  const { overlayProps, underlayProps } = useOverlay({ isOpen, onClose: stateManager.onCloseSearch }, ref);
   const { dialogProps } = useDialog({}, ref);
-
-  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
-  if (!config.featureToggles.panelTitleSearch) {
-    includePanels = false;
-  }
-
-  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onQueryChange(e.currentTarget.value);
-  };
-
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
+
+  useEffect(() => stateManager.initStateFromUrl(), [stateManager]);
 
   return (
     <OverlayContainer>
       <CSSTransition nodeRef={backdropRef} appear in timeout={ANIMATION_DURATION} classNames={animStyles.underlay}>
-        <div ref={backdropRef} onClick={onCloseSearch} className={styles.underlay} {...underlayProps} />
+        <div ref={backdropRef} onClick={stateManager.onCloseSearch} className={styles.underlay} {...underlayProps} />
       </CSSTransition>
       <CSSTransition
         nodeRef={ref}
@@ -63,29 +51,25 @@ export function DashboardSearchModal({ isOpen }: Props) {
               <div>
                 <input
                   type="text"
-                  placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
-                  value={query.query ?? ''}
-                  onChange={onSearchQueryChange}
+                  placeholder={
+                    state.includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'
+                  }
+                  value={state.query ?? ''}
+                  onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}
                   onKeyDown={onKeyDown}
                   tabIndex={0}
                   spellCheck={false}
                   className={styles.input}
-                  autoFocus
                 />
               </div>
 
               <div className={styles.closeBtn}>
-                <IconButton name="times" onClick={onCloseSearch} size="xl" tooltip="Close search" />
+                <IconButton name="times" onClick={stateManager.onCloseSearch} size="xl" tooltip="Close search" />
               </div>
             </div>
             {animationComplete && (
               <div className={styles.search}>
-                <SearchView
-                  showManage={false}
-                  includePanels={includePanels!}
-                  setIncludePanels={setIncludePanels}
-                  keyboardEvents={keyboardEvents}
-                />
+                <SearchView showManage={false} keyboardEvents={keyboardEvents} />
               </div>
             )}
           </FocusScope>

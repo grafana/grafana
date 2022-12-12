@@ -53,7 +53,7 @@ export class CloudWatchDatasource
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    readonly templateSrv: TemplateSrv = getTemplateSrv(),
     timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
@@ -65,7 +65,7 @@ export class CloudWatchDatasource
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
     this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
-    this.variables = new CloudWatchVariableSupport(this.api, this.logsQueryRunner);
+    this.variables = new CloudWatchVariableSupport(this.api);
     this.annotations = CloudWatchAnnotationSupport;
   }
 
@@ -164,7 +164,7 @@ export class CloudWatchDatasource
 
   // public
   getVariables() {
-    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+    return this.api.getVariables();
   }
 
   getActualRegion(region?: string) {

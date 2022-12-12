@@ -33,6 +33,11 @@ type AzureMonitorSettings struct {
 	AppInsightsAppId             string `json:"appInsightsAppId"`
 }
 
+// AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
+type AzureMonitorCustomizedCloudSettings struct {
+	CustomizedRoutes map[string]AzRoute `json:"customizedRoutes"`
+}
+
 type DatasourceService struct {
 	URL        string
 	HTTPClient *http.Client
@@ -54,14 +59,13 @@ type DatasourceInfo struct {
 // AzureMonitorQuery is the query for all the services as they have similar queries
 // with a url, a querystring and an alias field
 type AzureMonitorQuery struct {
-	ResourceName string
-	ResourceURI  string
-	URL          string
-	Target       string
-	Params       url.Values
-	RefID        string
-	Alias        string
-	TimeRange    backend.TimeRange
+	URL        string
+	Target     string
+	Params     url.Values
+	RefID      string
+	Alias      string
+	TimeRange  backend.TimeRange
+	BodyFilter string
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -109,16 +113,21 @@ type AzureResponseTable struct {
 	Rows [][]interface{} `json:"rows"`
 }
 
+type AzureMonitorResource struct {
+	ResourceGroup string `json:"resourceGroup"`
+	ResourceName  string `json:"resourceName"`
+}
+
 // AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
 		ResourceURI string `json:"resourceUri"`
 		// These are used to reconstruct a resource URI
-		MetricNamespace string `json:"metricNamespace"`
-		CustomNamespace string `json:"customNamespace"`
-		MetricName      string `json:"metricName"`
-		ResourceGroup   string `json:"resourceGroup"`
-		ResourceName    string `json:"resourceName"`
+		MetricNamespace string                 `json:"metricNamespace"`
+		CustomNamespace string                 `json:"customNamespace"`
+		MetricName      string                 `json:"metricName"`
+		Region          string                 `json:"region"`
+		Resources       []AzureMonitorResource `json:"resources"`
 
 		Aggregation      string                        `json:"aggregation"`
 		Alias            string                        `json:"alias"`
@@ -133,6 +142,8 @@ type AzureMonitorJSONQuery struct {
 
 		// Deprecated, MetricNamespace should be used instead
 		MetricDefinition string `json:"metricDefinition"`
+		// Deprecated: Use Resources with a single element instead
+		AzureMonitorResource
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }

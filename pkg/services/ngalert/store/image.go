@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const (
@@ -39,7 +39,7 @@ type ImageAdminStore interface {
 
 func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, error) {
 	var image models.Image
-	if err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		exists, err := sess.Where("token = ? AND expires_at > ?", token, TimeNow().UTC()).Get(&image)
 		if err != nil {
 			return fmt.Errorf("failed to get image: %w", err)
@@ -56,7 +56,7 @@ func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, er
 
 func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
 	var images []models.Image
-	if err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.In("token", tokens).Where("expires_at > ?", TimeNow().UTC()).Find(&images)
 	}); err != nil {
 		return nil, nil, err
@@ -68,7 +68,7 @@ func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Imag
 }
 
 func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if img.ID == 0 {
 			// If the ID is zero then this is a new image. It needs a token, a created timestamp
 			// and an expiration time. The expiration time of the image is derived from the created
@@ -104,7 +104,7 @@ func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 
 func (st DBstore) DeleteExpiredImages(ctx context.Context) (int64, error) {
 	var n int64
-	if err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		rows, err := sess.Where("expires_at < ?", TimeNow().UTC()).Delete(&models.Image{})
 		if err != nil {
 			return fmt.Errorf("failed to delete expired images: %w", err)

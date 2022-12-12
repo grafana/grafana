@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { FormField, Props } from './FormField';
@@ -24,9 +25,25 @@ describe('FormField', () => {
 
   it('should render a custom inputEl instead if specified', () => {
     setup({
-      inputEl: <input role="checkbox" />,
+      inputEl: <input type="checkbox" />,
     });
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
+  });
+
+  it('tooltips should be focusable via Tab key', async () => {
+    const tooltip = 'Test tooltip';
+    setup();
+    setup({
+      tooltip,
+    });
+
+    //focus the first input
+    screen.getAllByRole('textbox')[0].focus();
+    await userEvent.tab();
+
+    await waitFor(() => {
+      screen.getByText(tooltip);
+    });
   });
 });

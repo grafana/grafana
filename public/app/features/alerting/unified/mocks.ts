@@ -58,7 +58,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
         },
       },
       ...meta,
-    } as any as DataSourcePluginMeta,
+    } as unknown as DataSourcePluginMeta,
     readOnly: false,
     ...partial,
   };
@@ -121,6 +121,7 @@ export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {
   annotations: {
     summary: 'test alert',
   },
+  ...partial,
 });
 
 export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): RulerRuleGroupDTO => ({

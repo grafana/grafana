@@ -43,7 +43,7 @@ type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: st
 
 const errorMessage = 'Could not find data source for rule';
 const errorTitle = 'Could not view rule';
-const pageTitle = 'Alerting / View rule';
+const pageTitle = 'View rule';
 
 export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);

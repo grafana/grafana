@@ -14,6 +14,7 @@ import { changeVariableOrder, duplicateVariable, removeVariable } from '../state
 import { KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { VariableEditorList } from './VariableEditorList';
 import { createNewVariable, initListMode } from './actions';
@@ -60,7 +61,15 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-class VariableEditorContainerUnconnected extends PureComponent<Props> {
+interface State {
+  variableId?: KeyedVariableIdentifier;
+}
+
+class VariableEditorContainerUnconnected extends PureComponent<Props, State> {
+  state: State = {
+    variableId: undefined,
+  };
+
   componentDidMount() {
     this.props.initListMode(this.props.dashboard.uid);
   }
@@ -82,8 +91,17 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
     this.props.duplicateVariable(identifier);
   };
 
-  onRemoveVariable = (identifier: KeyedVariableIdentifier) => {
-    this.props.removeVariable(identifier);
+  onModalOpen = (identifier: KeyedVariableIdentifier) => {
+    this.setState({ variableId: identifier });
+  };
+
+  onModalClose = () => {
+    this.setState({ variableId: undefined });
+  };
+
+  onRemoveVariable = () => {
+    this.props.removeVariable(this.state.variableId!);
+    this.onModalClose();
   };
 
   render() {
@@ -100,7 +118,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
             onEdit={this.onEditVariable}
             onChangeOrder={this.onChangeVariableOrder}
             onDuplicate={this.onDuplicateVariable}
-            onDelete={this.onRemoveVariable}
+            onDelete={this.onModalOpen}
             usages={this.props.usages}
             usagesNetwork={this.props.usagesNetwork}
           />
@@ -109,6 +127,12 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
         )}
         {variableToEdit && <VariableEditorEditor identifier={toKeyedVariableIdentifier(variableToEdit)} />}
+        <ConfirmDeleteModal
+          isOpen={this.state.variableId !== undefined}
+          varName={this.state.variableId?.id ?? ''}
+          onConfirm={this.onRemoveVariable}
+          onDismiss={this.onModalClose}
+        />
       </Page>
     );
   }

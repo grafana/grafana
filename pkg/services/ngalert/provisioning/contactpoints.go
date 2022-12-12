@@ -68,7 +68,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		for k, v := range contactPoint.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "err", err.Error())
+				ecp.log.Warn("decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -106,7 +106,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		for k, v := range receiver.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "err", err.Error())
+				ecp.log.Warn("decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {

@@ -4,15 +4,13 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder, CoreApp } from '@grafana/data';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
-
-//Components
 
 export const MAX_CHARACTERS = 100000;
 
@@ -24,13 +22,17 @@ interface Props extends Themeable2 {
   prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
+  showRowMenu?: boolean;
+  app?: CoreApp;
+  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   getRows: () => LogRowModel[];
-  onToggleContext: () => void;
+  onToggleContext: (method: string) => void;
   updateLimit?: () => void;
+  logsSortOrder?: LogsSortOrder | null;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboard: boolean | undefined) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
   return {
@@ -42,16 +44,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: rowWithContext;
       z-index: 1;
       outline: 9999px solid ${outlineColor};
+      display: inherit;
     `,
     horizontalScroll: css`
-      label: verticalScroll;
+      label: horizontalScroll;
       white-space: pre;
     `,
     contextNewline: css`
       display: block;
       margin-left: 0px;
     `,
-    contextButton: css`
+    rowMenu: css`
       display: flex;
       flex-wrap: nowrap;
       flex-direction: row;
@@ -59,15 +62,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: space-evenly;
       align-items: center;
       position: absolute;
-      right: -8px;
       top: 0;
       bottom: auto;
-      width: 80px;
-      height: 36px;
+      height: ${theme.spacing(4.5)};
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       padding: ${theme.spacing(0, 0, 0, 0.5)};
       z-index: 100;
+      visibility: hidden;
+      width: ${showContextButton ? theme.spacing(10) : theme.spacing(5)};
+    `,
+    logRowMenuCell: css`
+      position: absolute;
+      right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
+      margin-top: -${theme.spacing(0.125)};
     `,
   };
 };
@@ -110,9 +118,22 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
 });
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
+  logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
+
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
-    this.props.onToggleContext();
+    this.props.onToggleContext('open');
+  };
+
+  onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
+    const { scrollElement } = this.props;
+    this.onContextToggle(e);
+    if (scrollElement && this.logRowRef.current) {
+      scrollElement.scroll({
+        behavior: 'smooth',
+        top: scrollElement.scrollTop + this.logRowRef.current.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+    }
   };
 
   render() {
@@ -124,61 +145,74 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       updateLimit,
       context,
       contextIsOpen,
-      showContextToggle,
+      showRowMenu,
       wrapLogMessage,
       prettifyLogMessage,
       onToggleContext,
+      app,
+      logsSortOrder,
+      showContextToggle,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    const styles = getStyles(theme);
+    const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
+    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Dashboard);
 
     return (
-      // When context is open, the position has to be NOT relative.
-      // Setting the postion as inline-style to overwrite the more sepecific style definition from `style.logsRowMessage`.
-      <td style={contextIsOpen ? { position: 'unset' } : undefined} className={style.logsRowMessage}>
-        <div
-          className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
+      <>
+        {
+          // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
+          // overwrite the more sepecific style definition from `style.logsRowMessage`.
+        }
+        <td
+          ref={this.logRowRef}
+          style={contextIsOpen ? { position: 'unset' } : undefined}
+          className={style.logsRowMessage}
         >
-          {contextIsOpen && context && (
-            <LogRowContext
-              row={row}
-              context={context}
-              errors={errors}
-              wrapLogMessage={wrapLogMessage}
-              hasMoreContextRows={hasMoreContextRows}
-              onOutsideClick={onToggleContext}
-              onLoadMoreContext={() => {
-                if (updateLimit) {
-                  updateLimit();
-                }
-              }}
-            />
-          )}
-          <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
-          </span>
-          {!contextIsOpen && showContextToggle?.(row) && (
-            <span
-              className={cx('log-row-context', style.context, styles.contextButton)}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onContextToggle} />
-              </Tooltip>
+          <div
+            className={cx(
+              { [styles.positionRelative]: wrapLogMessage },
+              { [styles.horizontalScroll]: !wrapLogMessage }
+            )}
+          >
+            {contextIsOpen && context && (
+              <LogRowContext
+                row={row}
+                context={context}
+                errors={errors}
+                wrapLogMessage={wrapLogMessage}
+                hasMoreContextRows={hasMoreContextRows}
+                onOutsideClick={onToggleContext}
+                logsSortOrder={logsSortOrder}
+                onLoadMoreContext={() => {
+                  if (updateLimit) {
+                    updateLimit();
+                  }
+                }}
+              />
+            )}
+            <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
+              {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
+            </span>
+          </div>
+        </td>
+        {showRowMenu && (
+          <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
+            <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
+              {shouldShowContextToggle && (
+                <Tooltip placement="top" content={'Show context'}>
+                  <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
+                </Tooltip>
+              )}
               <Tooltip placement="top" content={'Copy'}>
-                <IconButton
-                  size="md"
-                  name="copy"
-                  onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
-                />
+                <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
               </Tooltip>
             </span>
-          )}
-        </div>
-      </td>
+          </td>
+        )}
+      </>
     );
   }
 }

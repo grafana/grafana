@@ -4,15 +4,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 type TestUser struct {
@@ -20,14 +26,16 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
+	OrgID            int64
 }
 
 type TestApiKey struct {
-	Name      string
-	Role      org.RoleType
-	OrgId     int64
-	Key       string
-	IsExpired bool
+	Name             string
+	Role             org.RoleType
+	OrgId            int64
+	Key              string
+	IsExpired        bool
+	ServiceAccountID *int64
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *user.User {
@@ -36,11 +44,18 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 		role = testUser.Role
 	}
 
-	u1, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{
+	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+
+	u1, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,
 		Name:             testUser.Name,
+		OrgID:            testUser.OrgID,
 	})
 	require.NoError(t, err)
 	return u1
@@ -53,9 +68,10 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	}
 
 	addKeyCmd := &apikey.AddCommand{
-		Name:  testKey.Name,
-		Role:  role,
-		OrgId: testKey.OrgId,
+		Name:             testKey.Name,
+		Role:             role,
+		OrgId:            testKey.OrgId,
+		ServiceAccountID: testKey.ServiceAccountID,
 	}
 
 	if testKey.Key != "" {
@@ -64,12 +80,14 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 		addKeyCmd.Key = "secret"
 	}
 
-	apiKeyService := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg)
-	err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	require.NoError(t, err)
+	err = apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
 
 	if testKey.IsExpired {
-		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
 			key := apikey.APIKey{Expires: &expires}

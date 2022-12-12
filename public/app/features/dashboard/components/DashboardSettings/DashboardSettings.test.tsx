@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModel, NavModelItem } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { configureStore } from 'app/store/configureStore';
 
@@ -23,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
 
 setBackendSrv({
   get: jest.fn().mockResolvedValue([]),
-} as any);
+} as unknown as BackendSrv);
 
 describe('DashboardSettings', () => {
   it('pressing escape navigates away correctly', async () => {

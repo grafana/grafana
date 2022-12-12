@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -687,7 +687,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 
 func TestGuardianGetHiddenACL(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -735,7 +735,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 
 func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)

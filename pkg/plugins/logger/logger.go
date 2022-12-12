@@ -10,7 +10,7 @@ type InfraLogWrapper struct {
 	log log.Logger
 }
 
-func NewLogger(name string) (l *InfraLogWrapper) {
+func NewLogger(name string) *InfraLogWrapper {
 	return &InfraLogWrapper{
 		log: log.New(name),
 	}

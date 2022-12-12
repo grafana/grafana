@@ -1,21 +1,29 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback } from 'react';
+import produce from 'immer';
+import React, { useCallback } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useToggle } from 'react-use';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, Field, Input, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { Button, Field, Input, InputControl, Label, TextArea, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
+import { Annotation } from '../../utils/constants';
 
 import { AnnotationKeyInput } from './AnnotationKeyInput';
+import { DashboardPicker } from './DashboardPicker';
 
-const AnnotationsField: FC = () => {
-  const styles = useStyles(getStyles);
+const AnnotationsField = () => {
+  const styles = useStyles2(getStyles);
+  const [showPanelSelector, setShowPanelSelector] = useToggle(false);
+
   const {
     control,
     register,
     watch,
     formState: { errors },
+    setValue,
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
 
@@ -25,6 +33,31 @@ const AnnotationsField: FC = () => {
   );
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
+
+  const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
+  const selectedPanelId = annotations.find((annotation) => annotation.key === Annotation.panelID)?.value;
+
+  const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: string) => {
+    const updatedAnnotations = produce(annotations, (draft) => {
+      const dashboardAnnotation = draft.find((a) => a.key === Annotation.dashboardUID);
+      const panelAnnotation = draft.find((a) => a.key === Annotation.panelID);
+
+      if (dashboardAnnotation) {
+        dashboardAnnotation.value = dashboardUid;
+      } else {
+        draft.push({ key: Annotation.dashboardUID, value: dashboardUid });
+      }
+
+      if (panelAnnotation) {
+        panelAnnotation.value = panelId;
+      } else {
+        draft.push({ key: Annotation.panelID, value: panelId });
+      }
+    });
+
+    setValue('annotations', updatedAnnotations);
+    setShowPanelSelector(false);
+  };
 
   return (
     <>
@@ -81,25 +114,39 @@ const AnnotationsField: FC = () => {
             </div>
           );
         })}
-        <Button
-          className={styles.addAnnotationsButton}
-          icon="plus-circle"
-          type="button"
-          variant="secondary"
-          onClick={() => {
-            append({ key: '', value: '' });
-          }}
-        >
-          Add info
-        </Button>
+        <Stack direction="row" gap={1}>
+          <Button
+            className={styles.addAnnotationsButton}
+            icon="plus-circle"
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              append({ key: '', value: '' });
+            }}
+          >
+            Add annotation
+          </Button>
+          <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
+            Set dashboard and panel
+          </Button>
+        </Stack>
+        {showPanelSelector && (
+          <DashboardPicker
+            isOpen={true}
+            dashboardUid={selectedDashboardUid}
+            panelId={selectedPanelId}
+            onChange={setSelectedDashboardAndPanelId}
+            onDismiss={() => setShowPanelSelector(false)}
+          />
+        )}
       </div>
     </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   annotationValueInput: css`
-    width: 426px;
+    width: 394px;
   `,
   textarea: css`
     height: 76px;
@@ -114,7 +161,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-direction: column;
   `,
   field: css`
-    margin-bottom: ${theme.spacing.xs};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
   flexRow: css`
     display: flex;
@@ -122,7 +169,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     justify-content: flex-start;
   `,
   flexRowItemMargin: css`
-    margin-left: ${theme.spacing.xs};
+    margin-left: ${theme.spacing(0.5)};
   `,
 });
 

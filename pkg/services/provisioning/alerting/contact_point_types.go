@@ -83,7 +83,7 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	if len(config.Settings.Value()) == 0 {
 		return definitions.EmbeddedContactPoint{}, fmt.Errorf("no settings are set")
 	}
-	settings := simplejson.NewFromAny(config.Settings.Raw)
+	settings := simplejson.NewFromAny(config.Settings.Value())
 	cp := definitions.EmbeddedContactPoint{
 		UID:                   uid,
 		Name:                  name,

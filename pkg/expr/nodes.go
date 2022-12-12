@@ -92,14 +92,14 @@ func (gn *CMDNode) NodeType() NodeType {
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
-	return gn.Command.Execute(ctx, vars)
+func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, _ *Service) (mathexp.Results, error) {
+	return gn.Command.Execute(ctx, now, vars)
 }
 
 func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 	commandType, err := rn.GetCommandType()
 	if err != nil {
-		return nil, fmt.Errorf("invalid expression command type in '%v'", rn.RefID)
+		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
 	}
 
 	node := &CMDNode{
@@ -119,11 +119,13 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = UnmarshalResampleCommand(rn)
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
+	case TypeThreshold:
+		node.Command, err = UnmarshalThresholdCommand(rn)
 	default:
-		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
+		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse expression '%v': %w", rn.RefID, err)
 	}
 
 	return node, nil
@@ -154,6 +156,9 @@ func (dn *DSNode) NodeType() NodeType {
 }
 
 func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
+	if rn.TimeRange == nil {
+		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
+	}
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -196,7 +201,8 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (mathexp.Results, error) {
+	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type)
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
@@ -205,27 +211,25 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		OrgID:                      dn.orgID,
 		DataSourceInstanceSettings: dsInstanceSettings,
 		PluginID:                   dn.datasource.Type,
+		User:                       dn.request.User,
 	}
 
-	q := []backend.DataQuery{
-		{
-			RefID:         dn.refID,
-			MaxDataPoints: dn.maxDP,
-			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-			JSON:          dn.query,
-			TimeRange: backend.TimeRange{
-				From: dn.timeRange.From,
-				To:   dn.timeRange.To,
-			},
-			QueryType: dn.queryType,
-		},
-	}
-
-	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
+	req := &backend.QueryDataRequest{
 		PluginContext: pc,
-		Queries:       q,
-		Headers:       dn.request.Headers,
-	})
+		Queries: []backend.DataQuery{
+			{
+				RefID:         dn.refID,
+				MaxDataPoints: dn.maxDP,
+				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+				JSON:          dn.query,
+				TimeRange:     dn.timeRange.AbsoluteTime(now),
+				QueryType:     dn.queryType,
+			},
+		},
+		Headers: dn.request.Headers,
+	}
+
+	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
@@ -386,7 +390,7 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 			labels[key] = val.(string) // TODO check assertion / return error
 		}
 
-		n := mathexp.NewNumber("", labels)
+		n := mathexp.NewNumber(frame.Fields[numericField].Name, labels)
 
 		// The new value fields' configs gets pointed to the one in the original frame
 		n.Frame.Fields[0].Config = frame.Fields[numericField].Config

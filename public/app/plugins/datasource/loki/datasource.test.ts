@@ -6,6 +6,7 @@ import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
   ArrayVector,
+  CoreApp,
   DataFrame,
   dataFrameToJSON,
   DataQueryResponse,
@@ -15,16 +16,31 @@ import {
   LogRowModel,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, setBackendSrv, getBackendSrv, BackendSrv } from '@grafana/runtime';
+import {
+  BackendSrv,
+  BackendSrvRequest,
+  FetchResponse,
+  getBackendSrv,
+  reportInteraction,
+  setBackendSrv,
+} from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { CustomVariableModel } from '../../../features/variables/types';
 
-import { LokiDatasource } from './datasource';
-import { createMetadataRequest, createLokiDatasource } from './mocks';
+import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
+import { createLokiDatasource, createMetadataRequest } from './mocks';
+import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
 import { LokiVariableSupport } from './variables';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
@@ -112,13 +128,15 @@ describe('LokiDatasource', () => {
 
   afterEach(() => {
     setBackendSrv(origBackendSrv);
+    (reportInteraction as jest.Mock).mockClear();
   });
 
   describe('when doing logs queries with limits', () => {
     const runTest = async (
       queryMaxLines: number | undefined,
       dsMaxLines: string | undefined,
-      expectedMaxLines: number
+      expectedMaxLines: number,
+      app: CoreApp | undefined
     ) => {
       const settings = {
         jsonData: {
@@ -134,6 +152,7 @@ describe('LokiDatasource', () => {
 
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{a="b"}', refId: 'B', maxLines: queryMaxLines }],
+        app: app ?? CoreApp.Dashboard,
       });
 
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
@@ -146,15 +165,44 @@ describe('LokiDatasource', () => {
     };
 
     it('should use datasource max lines when no query max lines', async () => {
-      await runTest(undefined, '40', 40);
+      await runTest(undefined, '40', 40, undefined);
     });
 
     it('should use query max lines, if exists', async () => {
-      await runTest(80, undefined, 80);
+      await runTest(80, undefined, 80, undefined);
     });
 
     it('should use query max lines, if both exist, even if it is higher than ds max lines', async () => {
-      await runTest(80, '40', 80);
+      await runTest(80, '40', 80, undefined);
+    });
+
+    it('should report query interaction', async () => {
+      await runTest(80, '40', 80, CoreApp.Explore);
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_loki_query_executed',
+        expect.objectContaining({
+          query_type: 'logs',
+          line_limit: 80,
+          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+        })
+      );
+    });
+
+    it('should not report query interaction for dashboard query', async () => {
+      await runTest(80, '40', 80, CoreApp.Dashboard);
+      expect(reportInteraction).not.toBeCalled();
+    });
+
+    it('should not report query interaction for panel edit query', async () => {
+      await runTest(80, '40', 80, CoreApp.PanelEditor);
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_loki_query_executed',
+        expect.objectContaining({
+          query_type: 'logs',
+          line_limit: 80,
+          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+        })
+      );
     });
   });
 
@@ -201,7 +249,7 @@ describe('LokiDatasource', () => {
         },
       ]);
       expect(ds.applyTemplateVariables(query, {}).expr).toBe(
-        'rate({bar="baz", job="foo", k1=~"v\\\\.\\\\*", k2=~"v\'\\\\.\\\\*"} |= "bar" [5m])'
+        'rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\\'.*"} |= "bar" [5m])'
       );
     });
   });
@@ -249,6 +297,22 @@ describe('LokiDatasource', () => {
       it('should return pipe separated values if the value is an array of strings', () => {
         expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], variable)).toEqual('a\\\\|bc|de\\\\|f');
       });
+    });
+  });
+
+  describe('when running interpolateVariablesInQueries', () => {
+    it('should call addAdHocFilters', () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      ds.addAdHocFilters = jest.fn();
+      const expr = 'rate({bar="baz", job="foo"} [5m]';
+      const queries = [
+        {
+          refId: 'A',
+          expr,
+        },
+      ];
+      ds.interpolateVariablesInQueries(queries, {});
+      expect(ds.addAdHocFilters).toHaveBeenCalledWith(expr);
     });
   });
 
@@ -649,10 +713,15 @@ describe('LokiDatasource', () => {
 
   describe('addAdHocFilters', () => {
     let ds: LokiDatasource;
-    let adHocFilters: AdHocFilter[];
+    const createTemplateSrvMock = (options: { adHocFilters: AdHocFilter[] }) => {
+      return {
+        getAdhocFilters: (): AdHocFilter[] => options.adHocFilters,
+        replace: (a: string) => a,
+      } as unknown as TemplateSrv;
+    };
     describe('when called with "=" operator', () => {
       beforeEach(() => {
-        adHocFilters = [
+        const defaultAdHocFilters: AdHocFilter[] = [
           {
             condition: '',
             key: 'job',
@@ -660,11 +729,7 @@ describe('LokiDatasource', () => {
             value: 'grafana',
           },
         ];
-        const templateSrvMock = {
-          getAdhocFilters: (): AdHocFilter[] => adHocFilters,
-          replace: (a: string) => a,
-        } as unknown as TemplateSrv;
-        ds = createLokiDatasource(templateSrvMock);
+        ds = createLokiDatasource(createTemplateSrvMock({ adHocFilters: defaultAdHocFilters }));
       });
       describe('and query has no parser', () => {
         it('then the correct label should be added for logs query', () => {
@@ -690,6 +755,21 @@ describe('LokiDatasource', () => {
         it('then the correct label should be added for metrics query with empty selector and variable', () => {
           assertAdHocFilters('rate({}[$__interval])', 'rate({job="grafana"}[$__interval])', ds);
         });
+        it('should correctly escape special characters in ad hoc filter', () => {
+          const ds = createLokiDatasource(
+            createTemplateSrvMock({
+              adHocFilters: [
+                {
+                  condition: '',
+                  key: 'instance',
+                  operator: '=',
+                  value: '"test"',
+                },
+              ],
+            })
+          );
+          assertAdHocFilters('{job="grafana"}', '{job="grafana", instance="\\"test\\""}', ds);
+        });
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
@@ -703,7 +783,7 @@ describe('LokiDatasource', () => {
 
     describe('when called with "!=" operator', () => {
       beforeEach(() => {
-        adHocFilters = [
+        const defaultAdHocFilters: AdHocFilter[] = [
           {
             condition: '',
             key: 'job',
@@ -711,11 +791,7 @@ describe('LokiDatasource', () => {
             value: 'grafana',
           },
         ];
-        const templateSrvMock = {
-          getAdhocFilters: (): AdHocFilter[] => adHocFilters,
-          replace: (a: string) => a,
-        } as unknown as TemplateSrv;
-        ds = createLokiDatasource(templateSrvMock);
+        ds = createLokiDatasource(createTemplateSrvMock({ adHocFilters: defaultAdHocFilters }));
       });
       describe('and query has no parser', () => {
         it('then the correct label should be added for logs query', () => {
@@ -733,6 +809,23 @@ describe('LokiDatasource', () => {
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz"} | logfmt | job!=`grafana` [5m])', ds);
         });
+      });
+    });
+
+    describe('when called with regex operator', () => {
+      beforeEach(() => {
+        const defaultAdHocFilters: AdHocFilter[] = [
+          {
+            condition: '',
+            key: 'instance',
+            operator: '=~',
+            value: '.*',
+          },
+        ];
+        ds = createLokiDatasource(createTemplateSrvMock({ adHocFilters: defaultAdHocFilters }));
+      });
+      it('should not escape special characters in ad hoc filter', () => {
+        assertAdHocFilters('{job="grafana"}', '{job="grafana", instance=~".*"}', ds);
       });
     });
   });
@@ -837,7 +930,7 @@ describe('LokiDatasource', () => {
     });
 
     it('keeps all labels when no labels are loaded', async () => {
-      ds.getResource = () => Promise.resolve({ data: [] });
+      ds.getResource = () => Promise.resolve({ data: [] } as any);
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -851,7 +944,7 @@ describe('LokiDatasource', () => {
     });
 
     it('filters out non existing labels', async () => {
-      ds.getResource = () => Promise.resolve({ data: ['foo'] });
+      ds.getResource = () => Promise.resolve({ data: ['foo'] } as any);
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -873,7 +966,7 @@ describe('LokiDatasource', () => {
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           hideFromInspector: true,
-          requestId: 'log-samples',
+          requestId: REF_ID_DATA_SAMPLES,
         })
       );
     });
@@ -886,6 +979,24 @@ describe('applyTemplateVariables', () => {
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
+  });
+});
+
+describe('getTimeRange*()', () => {
+  it('exposes the current time range', () => {
+    const ds = createLokiDatasource();
+    const timeRange = ds.getTimeRange();
+
+    expect(timeRange.from).toBeDefined();
+    expect(timeRange.to).toBeDefined();
+  });
+
+  it('exposes time range as params', () => {
+    const ds = createLokiDatasource();
+    const params = ds.getTimeRangeParams();
+
+    // Returns a very big integer, so we stringify it for the assertion
+    expect(JSON.stringify(params)).toEqual('{"start":1524650400000000000,"end":1524654000000000000}');
   });
 });
 

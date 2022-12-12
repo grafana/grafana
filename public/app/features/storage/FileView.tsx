@@ -62,7 +62,7 @@ export function FileView({ listing, path, onPathChange, view }: Props) {
       return (
         <div>
           <a target={'_self'} href={src}>
-            <img src={src} className={styles.img} />
+            <img src={src} alt="File preview" className={styles.img} />
           </a>
         </div>
       );

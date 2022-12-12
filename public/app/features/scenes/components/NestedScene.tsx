@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObject, SceneLayoutChildState, SceneComponentProps, SceneLayout } from '../core/types';
@@ -17,9 +18,9 @@ interface NestedSceneState extends SceneLayoutChildState {
 }
 
 export class NestedScene extends SceneObjectBase<NestedSceneState> {
-  static Component = NestedSceneRenderer;
+  public static Component = NestedSceneRenderer;
 
-  onToggle = () => {
+  public onToggle = () => {
     this.setState({
       isCollapsed: !this.state.isCollapsed,
       size: {
@@ -30,7 +31,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
   };
 
   /** Removes itself from its parent's children array */
-  onRemove = () => {
+  public onRemove = () => {
     const parent = this.parent!;
     if ('children' in parent.state) {
       parent.setState({
@@ -62,7 +63,7 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
     <div className={styles.row}>
       <div className={styles.rowHeader}>
         <Stack gap={0}>
-          <div className={styles.title} role="heading">
+          <div className={styles.title} role="heading" aria-level={1}>
             {title}
           </div>
           {canCollapse && (

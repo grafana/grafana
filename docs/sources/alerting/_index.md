@@ -1,13 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting/
-  - /docs/grafana/latest/about-alerting
+  - about-alerting/
+  - unified-alerting/alerting/
 title: Alerting
 weight: 114
 ---
 
-# Grafana Alerting
+# Alerting
 
 Grafana Alerting allows you to learn about problems in your systems moments after they occur. Create, manage, and take action on your alerts in a single, consolidated view, and improve your team’s ability to identify and resolve issues quickly.
 
@@ -69,4 +68,4 @@ With mute timings, you can specify a time interval when you don’t want new not
 
 - [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise.
 
-- [Alertmanager]({{< relref "fundamentals/alertmanager/" >}}) and [High availability]({{< relref "./high-availability/" >}})
+- [High availability](https://grafana.com/docs/grafana/next/alerting/fundamentals/high-availability/)

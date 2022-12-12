@@ -6,7 +6,7 @@ import { Router } from 'react-router-dom';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
@@ -70,6 +70,7 @@ const ui = {
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
     submit: byText('Submit'),
+    createdBy: byText(/created by \*/i),
   },
 };
 
@@ -110,6 +111,11 @@ const resetMocks = () => {
   });
 
   mocks.contextSrv.hasAccess.mockImplementation(() => true);
+};
+
+const setUserLogged = (isLogged: boolean) => {
+  config.bootData.user.isSignedIn = isLogged;
+  config.bootData.user.name = isLogged ? 'admin' : '';
 };
 
 describe('Silences', () => {
@@ -210,9 +216,19 @@ describe('Silence edit', () => {
   afterEach(resetMocks);
 
   beforeEach(() => {
+    setUserLogged(true);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
+  it('Should not render createdBy if user is logged in and has a name', async () => {
+    renderSilences(baseUrlPath);
+    await waitFor(() => expect(ui.editor.createdBy.query()).not.toBeInTheDocument());
+  });
+  it('Should render createdBy if user is not logged or has no name', async () => {
+    setUserLogged(false);
+    renderSilences(baseUrlPath);
+    await waitFor(() => expect(ui.editor.createdBy.get()).toBeInTheDocument());
+  });
   it(
     'prefills the matchers field with matchers params',
     async () => {

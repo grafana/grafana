@@ -19,7 +19,7 @@ function getInitialPluginPageContext(): PluginPageContextType {
   };
 }
 
-export function buildPluginPageContext(sectionNav: NavModel | null): PluginPageContextType {
+export function buildPluginPageContext(sectionNav: NavModel | undefined): PluginPageContextType {
   return {
     sectionNav: sectionNav ?? getInitialPluginPageContext().sectionNav,
   };
