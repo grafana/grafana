@@ -11,25 +11,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 )
 
+const reportFileName = "report.json"
+
 func main() {
-	kinds := loadKindMetas()
+	report := buildKindStateReport()
+	reportJSON := elsedie(json.MarshalIndent(report, "", "  "))("error generating json output")
 
-	sort.Slice(kinds, func(i, j int) bool {
-		return kinds[i].Common().MachineName < kinds[j].Common().MachineName
-	})
-
-	out := elsedie(json.MarshalIndent(kinds, "", "  "))("error generating json output")
-
-	path := filepath.Join(kindsys.DeclParentPath, "report.json")
-	file := codejen.NewFile(path, out, reportJenny{})
-	file.Data = []byte(fmt.Sprintln(string(file.Data))) // new line at the end of the file
+	path := filepath.Join(kindsys.DeclParentPath, reportFileName)
+	file := codejen.NewFile(path, reportJSON, reportJenny{})
+	file.Data = append(file.Data, byte('\n')) // new line at the end of the file
 	filesystem := elsedie(file.ToFS())("error building in-memory file system")
 
 	cwd := elsedie(os.Getwd())("error getting working directory")
@@ -44,32 +40,36 @@ func main() {
 	}
 }
 
-func loadKindMetas() []kindsys.SomeKindMeta {
-	return append(loadStructuredKinds(), loadRawKinds()...)
+type KindStateReport struct {
+	Core       []kindsys.CoreStructuredProperties `json:"core"`
+	Raw        []kindsys.RawProperties            `json:"raw"`
+	Composable []kindsys.ComposableProperties     `json:"composable"`
 }
 
-func loadStructuredKinds() []kindsys.SomeKindMeta {
-	b := corekind.NewBase(nil)
-	allStructured := b.AllStructured()
-	kinds := make([]kindsys.SomeKindMeta, 0, len(allStructured))
-
-	for _, k := range allStructured {
-		kinds = append(kinds, k.Decl().Meta)
+func emptyKindStateReport() KindStateReport {
+	return KindStateReport{
+		Core:       make([]kindsys.CoreStructuredProperties, 0),
+		Raw:        make([]kindsys.RawProperties, 0),
+		Composable: make([]kindsys.ComposableProperties, 0),
 	}
-
-	return kinds
 }
 
-func loadRawKinds() []kindsys.SomeKindMeta {
+func buildKindStateReport() KindStateReport {
+	r := emptyKindStateReport()
 	b := corekind.NewBase(nil)
-	allRaw := b.AllRaw()
-	kinds := make([]kindsys.SomeKindMeta, 0, len(allRaw))
 
-	for _, k := range allRaw {
-		kinds = append(kinds, k.Decl().Meta)
+	for _, k := range b.All() {
+		switch props := k.Props().(type) {
+		case kindsys.CoreStructuredProperties:
+			r.Core = append(r.Core, props)
+		case kindsys.RawProperties:
+			r.Raw = append(r.Raw, props)
+		case kindsys.ComposableProperties:
+			r.Composable = append(r.Composable, props)
+		}
 	}
 
-	return kinds
+	return r
 }
 
 type reportJenny struct{}
