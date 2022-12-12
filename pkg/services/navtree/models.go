@@ -185,6 +185,7 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		accessNodeLinks := []*NavLink{}
 
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("upgrading"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("licensing"))
 		if orgSettings := root.FindById("org-settings"); orgSettings != nil {
 			orgSettings.Text = "Default preferences"
 			generalNodeLinks = append(generalNodeLinks, orgSettings)
