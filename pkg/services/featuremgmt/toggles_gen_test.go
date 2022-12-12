@@ -20,6 +20,7 @@ import (
 func TestFeatureToggleFiles(t *testing.T) {
 	legacyNames := map[string]bool{
 		"httpclientprovider_azure_auth": true,
+		"service-accounts":              true,
 		"database_metrics":              true,
 		"live-config":                   true,
 		"live-pipeline":                 true,
