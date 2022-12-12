@@ -196,18 +196,20 @@ func TestEvaluatorTest(t *testing.T) {
 		to := from.Add(5 * ruleInterval)
 		allStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
 
-		var states []*state.State
+		var states []state.StateTransition
 
 		for _, s := range allStates {
-			states = append(states, &state.State{
-				CacheID:     "state-" + s.String(),
-				Labels:      models.GenerateAlertLabels(rand.Intn(5)+1, s.String()+"-"),
-				State:       s,
-				StateReason: util.GenerateShortUID(),
+			states = append(states, state.StateTransition{
+				State: &state.State{
+					CacheID:     "state-" + s.String(),
+					Labels:      models.GenerateAlertLabels(rand.Intn(5)+1, s.String()+"-"),
+					State:       s,
+					StateReason: util.GenerateShortUID(),
+				},
 			})
 		}
 
-		manager.stateCallback = func(now time.Time) []*state.State {
+		manager.stateCallback = func(now time.Time) []state.StateTransition {
 			return states
 		}
 
@@ -249,12 +251,12 @@ func TestEvaluatorTest(t *testing.T) {
 				require.Equal(t, expectedTime, timestampField.At(i).(time.Time))
 				for _, s := range states {
 					f := fieldByState[s.CacheID]
-					if s.State == eval.NoData {
+					if s.State.State == eval.NoData {
 						require.Nil(t, f.At(i))
 					} else {
 						v := f.At(i).(*string)
 						require.NotNilf(t, v, "Field [%s] value at index %d should not be nil", s.CacheID, i)
-						require.Equal(t, fmt.Sprintf("%s (%s)", s.State, s.StateReason), *v)
+						require.Equal(t, fmt.Sprintf("%s (%s)", s.State.State, s.StateReason), *v)
 					}
 				}
 			}
@@ -264,10 +266,16 @@ func TestEvaluatorTest(t *testing.T) {
 	t.Run("should backfill field with nulls if a new dimension created in the middle", func(t *testing.T) {
 		from := time.Unix(0, 0)
 
-		state1 := generateState("1")
-		state2 := generateState("2")
-		state3 := generateState("3")
-		stateByTime := map[time.Time][]*state.State{
+		state1 := state.StateTransition{
+			State: generateState("1"),
+		}
+		state2 := state.StateTransition{
+			State: generateState("2"),
+		}
+		state3 := state.StateTransition{
+			State: generateState("3"),
+		}
+		stateByTime := map[time.Time][]state.StateTransition{
 			from:                       {state1, state2},
 			from.Add(1 * ruleInterval): {state1, state2},
 			from.Add(2 * ruleInterval): {state1, state2},
@@ -276,7 +284,7 @@ func TestEvaluatorTest(t *testing.T) {
 		}
 		to := from.Add(time.Duration(len(stateByTime)) * ruleInterval)
 
-		manager.stateCallback = func(now time.Time) []*state.State {
+		manager.stateCallback = func(now time.Time) []state.StateTransition {
 			return stateByTime[now]
 		}
 
@@ -303,7 +311,7 @@ func TestEvaluatorTest(t *testing.T) {
 	})
 
 	t.Run("should fail", func(t *testing.T) {
-		manager.stateCallback = func(now time.Time) []*state.State {
+		manager.stateCallback = func(now time.Time) []state.StateTransition {
 			return nil
 		}
 
@@ -340,10 +348,10 @@ func TestEvaluatorTest(t *testing.T) {
 }
 
 type fakeStateManager struct {
-	stateCallback func(now time.Time) []*state.State
+	stateCallback func(now time.Time) []state.StateTransition
 }
 
-func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt time.Time, _ *models.AlertRule, _ eval.Results, _ data.Labels) []*state.State {
+func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt time.Time, _ *models.AlertRule, _ eval.Results, _ data.Labels) []state.StateTransition {
 	return f.stateCallback(evaluatedAt)
 }
 

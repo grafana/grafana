@@ -33,7 +33,7 @@ type backtestingEvaluator interface {
 }
 
 type stateManager interface {
-	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []*state.State
+	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []state.StateTransition
 }
 
 type Engine struct {
@@ -86,8 +86,8 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 				field = data.NewField("", s.Labels, make([]*string, length))
 				valueFields[s.CacheID] = field
 			}
-			if s.State != eval.NoData { // set nil if NoData
-				value := s.State.String()
+			if s.State.State != eval.NoData { // set nil if NoData
+				value := s.State.State.String()
 				if s.StateReason != "" {
 					value += " (" + s.StateReason + ")"
 				}
