@@ -172,7 +172,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
             () => {
               onRunQueryRef.current(editor.getValue());
             },
-            'runQueryCondition' + id
+            'isEditorFocused' + id
           );
           
           editor.onDidFocusEditorText(() => {
