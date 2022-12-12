@@ -383,6 +383,27 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
   );
 }
 
+const getExpressionViewerStyles = (theme: GrafanaTheme2) => {
+  const { blue, bold, ...common } = getCommonQueryStyles(theme);
+
+  return {
+    ...common,
+    container: css`
+      padding: ${theme.spacing(1)};
+      display: flex;
+      gap: ${theme.spacing(1)};
+    `,
+    blue: css`
+      ${blue};
+      margin: auto 0;
+    `,
+    bold: css`
+      ${bold};
+      margin: auto 0;
+    `,
+  };
+};
+
 function MathExpressionViewer({ model }: { model: ExpressionQuery }) {
   const styles = useStyles2(getExpressionViewerStyles);
 
@@ -395,15 +416,6 @@ function MathExpressionViewer({ model }: { model: ExpressionQuery }) {
     </div>
   );
 }
-
-const getExpressionViewerStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(1)};
-    display: flex;
-    gap: ${theme.spacing(1)};
-  `,
-  ...getCommonQueryStyles(theme),
-});
 
 const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
   blue: css`
