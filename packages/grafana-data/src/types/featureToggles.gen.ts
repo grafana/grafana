@@ -43,6 +43,7 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
+  k8s?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;

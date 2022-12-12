@@ -27,6 +27,10 @@ type k8sAccess struct {
 func ProvideK8SAccess(toggles featuremgmt.FeatureToggles, router routing.RouteRegister) K8SAccess {
 	access := &k8sAccess{}
 
+	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
+		return access // dummy
+	}
+
 	// If we are in a cluster, this is the
 	config, err := rest.InClusterConfig()
 
