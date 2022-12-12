@@ -114,6 +114,10 @@ func getFlags(ctx *cli.Context) (*publishGithubFlags, error) {
 	name := strings.Split(fullRepo, "/")[1]
 	create := ctx.Value("create").(bool)
 	artifactPath := ctx.Value("path").(string)
+	if artifactPath == "" {
+		artifactPath = fmt.Sprintf("grafana-enterprise2-%s-amd64.img", metadata.GrafanaVersion)
+		fmt.Printf("path argument is not provided, resolving to default %s...\n", artifactPath)
+	}
 	return &publishGithubFlags{
 		artifactPath: artifactPath,
 		create:       create,
