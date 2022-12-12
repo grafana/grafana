@@ -39,10 +39,10 @@ export interface PanelChromeProps {
   onStreamingStop?: () => void;
   loadingState?: LoadingState;
   dataStateNode?: ReactNode;
-  /** @deprecated in favor of prop states
+  /** @deprecated in favor of props
+   * dataStateNode, onStreamingStop, loadingState
    * which will serve the same purpose
-   * of showing the panel dataState in the top right corner
-   * of itself or its header
+   * of showing/interacting with the panel's data state
    * */
   leftItems?: ReactNode[];
 }
