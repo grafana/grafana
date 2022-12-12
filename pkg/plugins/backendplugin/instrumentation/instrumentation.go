@@ -51,6 +51,13 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 			"duration", elapsed,
 			"pluginId", pluginCtx.PluginID,
 			"endpoint", endpoint,
+			"eventName", "grafana-data-egress",
+			"insight_logs", true,
+			"since_grafana_request_started", log.TimeSinceStart(ctx, time.Now()),
+		}
+
+		if pluginCtx.User != nil {
+			logParams = append(logParams, "uname", pluginCtx.User.Login)
 		}
 
 		traceID := tracing.TraceIDFromContext(ctx, false)

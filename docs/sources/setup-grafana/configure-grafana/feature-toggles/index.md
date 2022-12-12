@@ -53,6 +53,7 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
 | `live-config`                      | Save Grafana Live configuration in SQL tables                                                                                                                                |
@@ -89,6 +90,7 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                     |
+| `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
