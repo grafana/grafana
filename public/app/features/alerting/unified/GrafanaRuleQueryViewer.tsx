@@ -219,6 +219,7 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
   container: css`
     flex: 1 0 25%;
     border: 1px solid ${theme.colors.border.strong};
+    max-width: 100%;
   `,
   header: css`
     display: flex;
