@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/google-cloud-monitoring/query-editor/
+  - ../../data-sources/google-cloud-monitoring/query-editor/
 description: Guide for using the Google Cloud Monitoring data source's query editor
 keywords:
   - grafana

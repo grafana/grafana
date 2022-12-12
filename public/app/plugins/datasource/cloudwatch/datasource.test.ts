@@ -19,23 +19,83 @@ describe('datasource', () => {
     jest.clearAllMocks();
   });
   describe('query', () => {
-    it('should return error if log query and log groups is not specified', async () => {
-      const { datasource } = setupMockedDataSource();
-      const observable = datasource.query({
-        targets: [{ queryMode: 'Logs', id: '', refId: '', region: '' }],
-        requestId: '',
-        interval: '',
-        intervalMs: 0,
-        range: timeRange,
-        scopedVars: {},
-        timezone: '',
-        app: '',
-        startTime: 0,
-      });
+    it('should not run a query if log groups is not specified', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      await lastValueFrom(
+        datasource.query({
+          targets: [
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              expression: 'some query string', // missing logGroups and logGroupNames, this query will be not be run
+            },
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'],
+              expression: 'some query string',
+            },
+          ],
+          requestId: '',
+          interval: '',
+          intervalMs: 0,
+          range: timeRange,
+          scopedVars: {},
+          timezone: '',
+          app: '',
+          startTime: 0,
+        })
+      );
 
-      await expect(observable).toEmitValuesWith((received) => {
-        const response = received[0];
-        expect(response.error?.message).toBe('Log group is required');
+      expect(fetchMock.mock.calls[0][0].data.queries).toHaveLength(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'some query string',
+        logGroupNames: ['/some/group'],
+        region: 'us-west-1',
+      });
+    });
+
+    it('should not run a query if query expression is not specified', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      await lastValueFrom(
+        datasource.query({
+          targets: [
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'], // missing query expression, this query will be not be run
+            },
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'],
+              expression: 'some query string',
+            },
+          ],
+          requestId: '',
+          interval: '',
+          intervalMs: 0,
+          range: timeRange,
+          scopedVars: {},
+          timezone: '',
+          app: '',
+          startTime: 0,
+        })
+      );
+
+      expect(fetchMock.mock.calls[0][0].data.queries).toHaveLength(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'some query string',
+        logGroupNames: ['/some/group'],
+        region: 'us-west-1',
       });
     });
 

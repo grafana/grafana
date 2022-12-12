@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 //nolint:goconst
@@ -29,13 +32,19 @@ func TestUserAuth(t *testing.T) {
 	)
 
 	t.Run("Given 5 users", func(t *testing.T) {
+		qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
+		require.NoError(t, err)
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs)
+		require.NoError(t, err)
+
 		for i := 0; i < 5; i++ {
 			cmd := user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
-			_, err := sqlStore.CreateUser(context.Background(), cmd)
+			_, err := usrSvc.Create(context.Background(), &cmd)
 			require.Nil(t, err)
 		}
 
@@ -204,6 +213,11 @@ func TestUserAuth(t *testing.T) {
 		t.Run("Always return the most recently used auth_module", func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore = db.InitTestDB(t)
+			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs)
+			require.NoError(t, err)
 
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
@@ -211,8 +225,8 @@ func TestUserAuth(t *testing.T) {
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
 				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
-				require.Nil(t, err)
+				_, err = usrSvc.Create(context.Background(), &cmd)
+				require.NoError(t, err)
 			}
 
 			// Find a user to set tokens on
@@ -272,6 +286,11 @@ func TestUserAuth(t *testing.T) {
 		t.Run("Keeps track of last used auth_module when not using oauth", func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore = db.InitTestDB(t)
+			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs)
+			require.NoError(t, err)
 
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
@@ -279,7 +298,7 @@ func TestUserAuth(t *testing.T) {
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
 				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				_, err := usrSvc.Create(context.Background(), &cmd)
 				require.Nil(t, err)
 			}
 
@@ -406,6 +425,11 @@ func TestUserAuth(t *testing.T) {
 
 			// Restore after destructive operation
 			sqlStore = db.InitTestDB(t)
+			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs)
+			require.NoError(t, err)
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
 					Email: fmt.Sprint("user", i, "@test.com"),
@@ -413,17 +437,22 @@ func TestUserAuth(t *testing.T) {
 					Login: fmt.Sprint("loginuser", i),
 					OrgID: 1,
 				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				_, err := usrSvc.Create(context.Background(), &cmd)
 				require.Nil(t, err)
 			}
 
-			_, err := srv.authInfoStore.GetLoginStats(context.Background())
+			_, err = srv.authInfoStore.GetLoginStats(context.Background())
 			require.Nil(t, err)
 		})
 
 		t.Run("calculate metrics on duplicate userstats", func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore = db.InitTestDB(t)
+			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs)
+			require.NoError(t, err)
 
 			for i := 0; i < 5; i++ {
 				cmd := user.CreateUserCommand{
@@ -432,7 +461,7 @@ func TestUserAuth(t *testing.T) {
 					Login: fmt.Sprint("loginuser", i),
 					OrgID: 1,
 				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				_, err := usrSvc.Create(context.Background(), &cmd)
 				require.Nil(t, err)
 			}
 
@@ -443,7 +472,7 @@ func TestUserAuth(t *testing.T) {
 					Name:  "user name 1",
 					Login: "USER_DUPLICATE_TEST_1_LOGIN",
 				}
-				_, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+				_, err := usrSvc.Create(context.Background(), &dupUserEmailcmd)
 				require.NoError(t, err)
 
 				// add additional user with duplicate login where DOMAIN is upper case
@@ -452,7 +481,7 @@ func TestUserAuth(t *testing.T) {
 					Name:  "user name 1",
 					Login: "user_duplicate_test_1_login",
 				}
-				_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+				_, err = usrSvc.Create(context.Background(), &dupUserLogincmd)
 				require.NoError(t, err)
 				authInfoStore.ExpectedUser = &user.User{
 					Email: "userduplicatetest1@test.com",

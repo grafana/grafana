@@ -1,5 +1,4 @@
 ---
-aliases:
 keywords:
   - grafana
   - alerting
