@@ -126,16 +126,9 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
   }
 
   private async getDataSource(): Promise<DataSourceApi> {
-    if (typeof this.state.datasource === 'string') {
-      const ds = sceneGraph.interpolate(this, this.state.datasource);
-      if (Array.isArray(ds) && ds.length > 0) {
-        return getDataSourceSrv().get(String(ds[0]));
-      }
-
-      return getDataSourceSrv().get(String(ds));
-    }
-
-    return getDataSourceSrv().get(this.state.datasource ?? '');
+    return getDataSourceSrv().get(this.state.datasource ?? '', {
+      __sceneObject: { text: '__sceneObject', value: this },
+    });
   }
 
   private getRequest(target: DataQuery) {

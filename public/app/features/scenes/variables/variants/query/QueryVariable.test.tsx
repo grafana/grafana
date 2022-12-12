@@ -9,7 +9,6 @@ import {
   LoadingState,
   PanelData,
   PluginType,
-  ScopedVars,
   StandardVariableSupport,
   toDataFrame,
   toUtc,
@@ -18,9 +17,7 @@ import {
 } from '@grafana/data';
 import { SceneFlexLayout } from 'app/features/scenes/components';
 import { SceneTimeRange } from 'app/features/scenes/core/SceneTimeRange';
-import { SceneObject } from 'app/features/scenes/core/types';
 
-import { CustomFormatterFn } from '../../interpolation/sceneInterpolator';
 import { SceneVariableSet } from '../../sets/SceneVariableSet';
 
 import { QueryVariable } from './QueryVariable';
@@ -72,37 +69,14 @@ const fakeDsMock: DataSourceApi = {
   uid: 'fake-std',
 };
 
-const dataSourceGetterMock = jest.fn().mockImplementation((ds: DataSourceRef): Promise<DataSourceApi> => {
-  return Promise.resolve(fakeDsMock);
-});
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    get: dataSourceGetterMock,
+    get: (ds: DataSourceRef): Promise<DataSourceApi> => {
+      return Promise.resolve(fakeDsMock);
+    },
   }),
 }));
-
-// Mock sceneGraph to simulate returning a value from a variable
-jest.mock('../../../core/sceneGraph', () => {
-  return {
-    ...jest.requireActual('../../../core/sceneGraph'),
-    sceneGraph: {
-      ...jest.requireActual('../../../core/sceneGraph').sceneGraph,
-      interpolate: (
-        sceneObject: SceneObject,
-        value: string | undefined | null,
-        scopedVars?: ScopedVars,
-        format?: string | CustomFormatterFn
-      ) => {
-        if (value === '${multiDatasourceVar}') {
-          return ['datasource1', 'datasource2'];
-        }
-        return value?.replace('${datasourceVar}', 'datasourceVarValue');
-      },
-    },
-  };
-});
 
 class FakeQueryRunner implements QueryRunner {
   public constructor(private datasource: DataSourceApi, private _runRequest: jest.Mock) {}
@@ -331,36 +305,6 @@ describe('QueryVariable', () => {
         { label: 'A', value: 'A' },
         { label: 'AB', value: 'AB' },
       ]);
-    });
-  });
-
-  describe('When datasource variable provided', () => {
-    beforeEach(() => {
-      dataSourceGetterMock.mockClear();
-    });
-
-    it('should interpolate the variable ref and resolve value', async () => {
-      const variable = new QueryVariable({
-        name: 'test',
-        datasource: '${datasourceVar}',
-        query: 'query',
-      });
-
-      await lastValueFrom(variable.validateAndUpdate());
-
-      expect(dataSourceGetterMock).toHaveBeenCalledWith('datasourceVarValue');
-    });
-
-    it('should use only the first value if ds variable is multi', async () => {
-      const variable = new QueryVariable({
-        name: 'test',
-        datasource: '${multiDatasourceVar}',
-        query: 'query',
-      });
-
-      await lastValueFrom(variable.validateAndUpdate());
-
-      expect(dataSourceGetterMock).toHaveBeenCalledWith('datasource1');
     });
   });
 });
