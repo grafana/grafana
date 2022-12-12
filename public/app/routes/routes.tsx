@@ -554,6 +554,12 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/scenes/embedded/:name',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneEmbeddedPage')
+      ),
+    },
+    {
       path: '/scenes/:name',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },
