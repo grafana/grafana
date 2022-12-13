@@ -10,6 +10,7 @@
 package corecrd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	dashboard "github.com/grafana/grafana/pkg/kinds/dashboard/crd"
@@ -51,6 +52,7 @@ func (r *Registry) Team() k8ssys.Kind {
 
 func doNewRegistry(breg *corekind.Base) *Registry {
 	var err error
+	var b []byte
 	var kk k8ssys.Kind
 	reg := &Registry{}
 
@@ -59,9 +61,19 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 		Object:      &dashboard.Dashboard{},
 		ObjectList:  &dashboard.DashboardList{},
 	}
-	err = yaml.Unmarshal(dashboard.CRDYaml, &kk.Schema)
+	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+	map0 := make(map[string]any)
+	err = yaml.Unmarshal(dashboard.CRDYaml, map0)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for Dashboard failed to unmarshal: %s", err))
+	}
+	b, err = json.Marshal(map0)
+	if err != nil {
+		panic(fmt.Sprintf("could not re-marshal CRD JSON for Dashboard: %s", err))
+	}
+	err = json.Unmarshal(b, &kk.Schema)
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal CRD JSON for Dashboard: %s", err))
 	}
 	reg.all[0] = kk
 
@@ -70,9 +82,19 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 		Object:      &playlist.Playlist{},
 		ObjectList:  &playlist.PlaylistList{},
 	}
-	err = yaml.Unmarshal(playlist.CRDYaml, &kk.Schema)
+	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+	map1 := make(map[string]any)
+	err = yaml.Unmarshal(playlist.CRDYaml, map1)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for Playlist failed to unmarshal: %s", err))
+	}
+	b, err = json.Marshal(map1)
+	if err != nil {
+		panic(fmt.Sprintf("could not re-marshal CRD JSON for Playlist: %s", err))
+	}
+	err = json.Unmarshal(b, &kk.Schema)
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal CRD JSON for Playlist: %s", err))
 	}
 	reg.all[1] = kk
 
@@ -81,9 +103,19 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 		Object:      &team.Team{},
 		ObjectList:  &team.TeamList{},
 	}
-	err = yaml.Unmarshal(team.CRDYaml, &kk.Schema)
+	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+	map2 := make(map[string]any)
+	err = yaml.Unmarshal(team.CRDYaml, map2)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD YAML for Team failed to unmarshal: %s", err))
+	}
+	b, err = json.Marshal(map2)
+	if err != nil {
+		panic(fmt.Sprintf("could not re-marshal CRD JSON for Team: %s", err))
+	}
+	err = json.Unmarshal(b, &kk.Schema)
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal CRD JSON for Team: %s", err))
 	}
 	reg.all[2] = kk
 

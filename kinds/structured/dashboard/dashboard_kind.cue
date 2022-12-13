@@ -6,6 +6,8 @@ name:     "Dashboard"
 maturity: "merged"
 description: "A Grafana dashboard."
 
+crd: dummySchema: true
+
 lineage: seqs: [
 	{
 		schemas: [

@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/grafana/thema"
 	goyaml "gopkg.in/yaml.v3"
 )
+
+// TODO this jenny is quite sloppy, having been quickly adapted from oasdk. It needs love
 
 // YamlCRDJenny generates a representation of a core structured kind in YAML CRD form.
 func YamlCRDJenny(path string) OneToOne {
@@ -44,18 +47,16 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-	// FIXME no hardcode yo
-	scope := "cluster"
 
 	resource := customResourceDefinition{
 		APIVersion: "apiextensions.k8s.io/v1",
 		Kind:       "CustomResourceDefinition",
 		Metadata: customResourceDefinitionMetadata{
-			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, props.Group),
+			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, props.CRD.Group),
 		},
 		Spec: k8ssys.CustomResourceDefinitionSpec{
-			Group: props.Group,
-			Scope: scope,
+			Group: props.CRD.Group,
+			Scope: props.CRD.Scope,
 			Names: k8ssys.CustomResourceDefinitionSpecNames{
 				Kind:   props.Name,
 				Plural: props.PluralMachineName,
@@ -63,7 +64,7 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 			Versions: make([]k8ssys.CustomResourceDefinitionSpecVersion, 0),
 		},
 	}
-	latest := thema.LatestVersion(lin)
+	latest := lin.Latest().Version()
 
 	for sch != nil {
 		oapi, err := generateOpenAPI(sch, props)
@@ -80,12 +81,34 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		if err != nil {
 			return nil, err
 		}
+		if props.CRD.DummySchema {
+			ver.Schema = map[string]any{
+				"openAPIV3Schema": map[string]any{
+					"properties": map[string]any{
+						"spec": map[string]any{
+							"type": "object",
+						},
+					},
+					"required": []any{
+						"spec",
+					},
+					"type": "object",
+				},
+			}
+		}
+
 		resource.Spec.Versions = append(resource.Spec.Versions, ver)
 		sch = sch.Successor()
 	}
 	contents, err := goyaml.Marshal(resource)
 	if err != nil {
 		return nil, err
+	}
+	if props.CRD.DummySchema {
+		// Add a comment header for those with dummy schema
+		b := new(bytes.Buffer)
+		fmt.Fprintf(b, "# This CRD is generated with an empty schema body because Grafana's\n# code generators currently produce OpenAPI that Kubernetes will not\n# accept, despite being valid.\n\n%s", string(contents))
+		contents = b.Bytes()
 	}
 
 	return codejen.NewFile(filepath.Join(j.parentpath, props.MachineName, "crd", props.MachineName+".crd.yml"), contents, j), nil

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/bridge"
 	apiserver "github.com/grafana/grafana/pkg/apimachinery/srv"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -357,6 +358,8 @@ var wireBasicSet = wire.NewSet(
 	corecrd.New,
 	apiserver.ProvideApiserverProxy,
 	apiserver.ProvideHTTPServer,
+	bridge.ProvideService,
+	wire.Bind(new(apiserver.Handler), new(*apiserver.ApiserverProxy)), // TODO decide this somewhere other than wire
 )
 
 var wireSet = wire.NewSet(

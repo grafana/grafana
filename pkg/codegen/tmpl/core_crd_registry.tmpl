@@ -1,6 +1,7 @@
 package {{ .PackageName }}
 
 import (
+	"encoding/json"
 	"fmt"
 
 	{{range .Kinds }}
@@ -34,6 +35,7 @@ func (r *Registry) {{ .Properties.Name }}() k8ssys.Kind {
 
 func doNewRegistry(breg *corekind.Base) *Registry {
 	var err error
+	var b []byte
 	var kk k8ssys.Kind
 	reg := &Registry{}
 
@@ -43,9 +45,19 @@ func doNewRegistry(breg *corekind.Base) *Registry {
     Object: &{{ $k.Properties.MachineName }}.{{ $k.Properties.Name }}{},
     ObjectList: &{{ $k.Properties.MachineName }}.{{ $k.Properties.Name }}List{},
   }
-  err = yaml.Unmarshal({{ $k.Properties.MachineName }}.CRDYaml, &kk.Schema)
+  // TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+  map{{ $i }} := make(map[string]any)
+  err = yaml.Unmarshal({{ $k.Properties.MachineName }}.CRDYaml, map{{ $i }})
   if err != nil {
     panic(fmt.Sprintf("generated CRD YAML for {{ $k.Properties.Name }} failed to unmarshal: %s", err))
+  }
+  b, err = json.Marshal(map{{ $i }})
+  if err != nil {
+    panic(fmt.Sprintf("could not re-marshal CRD JSON for {{ $k.Properties.Name }}: %s", err))
+  }
+  err = json.Unmarshal(b, &kk.Schema)
+  if err != nil {
+    panic(fmt.Sprintf("could not unmarshal CRD JSON for {{ $k.Properties.Name }}: %s", err))
   }
   reg.all[{{ $i }}] = kk
 {{end}}

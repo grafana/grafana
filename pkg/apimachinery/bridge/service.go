@@ -122,7 +122,7 @@ func LoadRestConfig(cfg *setting.Cfg) (*rest.Config, error) {
 	configPath := sec.Key("kubeconfig_path").MustString("")
 
 	if configPath == "" {
-		return nil, errors.New("kubeconfig path cannot be empty when using Intent API")
+		return nil, errors.New("kubeconfig path cannot be empty when using a proxy apiserver")
 	}
 
 	configPath = filepath.Clean(configPath)
