@@ -367,7 +367,7 @@ func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types
 		if err != nil {
 			return nil, err
 		}
-		sn.log.Warn("Truncated title", "key", key, "runes", slackMaxTitleLenRunes)
+		sn.log.Warn("Truncated title", "key", key, "max_runes", slackMaxTitleLenRunes)
 	}
 
 	req := &slackMessage{

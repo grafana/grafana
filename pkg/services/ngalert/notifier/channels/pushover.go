@@ -221,12 +221,12 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	title, truncated := TruncateInRunes(tmpl(pn.settings.title), pushoverMaxTitleLenRunes)
 	if truncated {
-		pn.log.Warn("Truncated title", "incident", key, "runes", pushoverMaxTitleLenRunes)
+		pn.log.Warn("Truncated title", "incident", key, "max_runes", pushoverMaxTitleLenRunes)
 	}
 	message := tmpl(pn.settings.message)
 	message, truncated = TruncateInRunes(message, pushoverMaxMessageLenRunes)
 	if truncated {
-		pn.log.Warn("Truncated message", "incident", key, "runes", pushoverMaxMessageLenRunes)
+		pn.log.Warn("Truncated message", "incident", key, "max_runes", pushoverMaxMessageLenRunes)
 	}
 	message = strings.TrimSpace(message)
 	if message == "" {
@@ -237,7 +237,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	supplementaryURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
 	supplementaryURL, truncated = TruncateInRunes(supplementaryURL, pushoverMaxURLLenRunes)
 	if truncated {
-		pn.log.Warn("Truncated URL", "incident", key, "runes", pushoverMaxURLLenRunes)
+		pn.log.Warn("Truncated URL", "incident", key, "max_runes", pushoverMaxURLLenRunes)
 	}
 
 	status := types.Alerts(as...).Status()

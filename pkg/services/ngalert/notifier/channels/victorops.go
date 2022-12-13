@@ -121,7 +121,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	stateMessage, truncated := TruncateInRunes(tmpl(vn.settings.Description), victorOpsMaxMessageLenRunes)
 	if truncated {
-		vn.log.Warn("Truncated stateMessage", "incident", groupKey, "runes", victorOpsMaxMessageLenRunes)
+		vn.log.Warn("Truncated stateMessage", "incident", groupKey, "max_runes", victorOpsMaxMessageLenRunes)
 	}
 
 	bodyJSON := map[string]interface{}{

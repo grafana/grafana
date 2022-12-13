@@ -170,7 +170,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 		if err != nil {
 			return nil, err
 		}
-		tn.log.Warn("Truncated message", "alert", key, "runes", telegramMaxMessageLenRunes)
+		tn.log.Warn("Truncated message", "alert", key, "max_runes", telegramMaxMessageLenRunes)
 	}
 
 	m := make(map[string]string)

@@ -207,7 +207,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 	message, truncated := TruncateInRunes(tmpl(on.settings.Message), opsGenieMaxMessageLenRunes)
 	if truncated {
-		on.log.Warn("Truncated message", "alert", key, "runes", opsGenieMaxMessageLenRunes)
+		on.log.Warn("Truncated message", "alert", key, "max_runes", opsGenieMaxMessageLenRunes)
 	}
 
 	description := tmpl(on.settings.Description)
