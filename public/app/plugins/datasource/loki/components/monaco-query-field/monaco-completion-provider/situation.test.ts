@@ -43,7 +43,6 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       logQuery: '{level="info"}',
-      parser: undefined,
     });
 
     // should not trigger AFTER_SELECTOR before the selector
@@ -56,21 +55,18 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       logQuery: '{level="info"} | json',
-      parser: 'json',
     });
 
     assertSituation('{level="info"} | json | ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
       logQuery: '{level="info"} | json |',
-      parser: 'json',
     });
 
     assertSituation('count_over_time({level="info"}^[10s])', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       logQuery: '{level="info"}',
-      parser: undefined,
     });
 
     // should not trigger AFTER_SELECTOR before the selector
@@ -81,21 +77,18 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       logQuery: '{level="info"}',
-      parser: undefined,
     });
 
     assertSituation('{level="info"} |= "a" | logfmt ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
       logQuery: '{level="info"} |= "a" | logfmt',
-      parser: 'logfmt',
     });
 
     assertSituation('sum(count_over_time({place="luna"} | logfmt |^)) by (place)', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
       logQuery: '{place="luna"}| logfmt |',
-      parser: 'logfmt',
     });
   });
 

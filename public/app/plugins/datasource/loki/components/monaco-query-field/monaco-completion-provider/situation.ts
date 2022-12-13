@@ -22,7 +22,7 @@ import {
   UnwrapExpr,
 } from '@grafana/lezer-logql';
 
-import { getLogQueryFromMetricsQuery, getParserFromQuery } from '../../../queryUtils';
+import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -119,7 +119,6 @@ export type Situation =
   | {
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
-      parser?: string;
       logQuery: string;
     }
   | {
@@ -448,12 +447,9 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
     return null;
   }
 
-  const parser = getParserFromQuery(text);
-
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
-    parser,
     logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
