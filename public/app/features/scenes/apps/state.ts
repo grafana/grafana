@@ -7,6 +7,9 @@ import { VariableValueSelectors } from '../variables/components/VariableValueSel
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
+import { SceneConditional } from './SceneConditional';
+import { SceneRadioToggle } from './SceneRadioToggle';
+
 let sceneCache: Map<string, EmbeddedScene> = new Map();
 
 export function getHttpHandlerListScene(): EmbeddedScene {
@@ -28,75 +31,114 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     ],
   });
 
+  const sceneToggle = new SceneRadioToggle({
+    options: [
+      { value: 'table', label: 'Table' },
+      { value: 'graphs', label: 'Graphs' },
+    ],
+    value: 'table',
+  });
+
+  const httpHandlersTable = new VizPanel({
+    $data: httpHandlerQueries,
+    pluginId: 'table',
+    title: '',
+    displayMode: 'transparent',
+    options: {
+      footer: {
+        enablePagination: true,
+      },
+    },
+    fieldConfig: {
+      defaults: {},
+      overrides: [
+        {
+          matcher: {
+            id: 'byRegexp',
+            options: '.*',
+          },
+          properties: [{ id: 'filterable', value: false }],
+        },
+        {
+          matcher: {
+            id: 'byName',
+            options: 'Time',
+          },
+          properties: [{ id: 'custom.hidden', value: true }],
+        },
+        {
+          matcher: {
+            id: 'byName',
+            options: 'Value',
+          },
+          properties: [{ id: 'displayName', value: 'Duration (Avg)' }],
+        },
+        {
+          matcher: {
+            id: 'byName',
+            options: 'handler',
+          },
+          properties: [
+            {
+              id: 'links',
+              value: [
+                {
+                  title: 'Go to handler drilldown view',
+                  url: '/scenes/grafana-monitoring/handlers/${__value.text:percentencode}',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  });
+
   const scene = new EmbeddedScene({
     title: 'Grafana Monitoring',
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
+      children: [
+        new VariableValueSelectors({}),
+        new SceneSubMenuSpacer(),
+        sceneToggle,
+        new SceneTimePicker({ isOnCanvas: true }),
+      ],
     }),
     layout: new SceneFlexLayout({
-      children: [
-        new VizPanel({
-          $data: httpHandlerQueries,
-          pluginId: 'table',
-          title: '',
-          displayMode: 'transparent',
-          options: {
-            footer: {
-              enablePagination: true,
-            },
-          },
-          fieldConfig: {
-            defaults: {},
-            overrides: [
-              {
-                matcher: {
-                  id: 'byRegexp',
-                  options: '.*',
-                },
-                properties: [{ id: 'filterable', value: false }],
-              },
-              {
-                matcher: {
-                  id: 'byName',
-                  options: 'Time',
-                },
-                properties: [{ id: 'custom.hidden', value: true }],
-              },
-              {
-                matcher: {
-                  id: 'byName',
-                  options: 'Value',
-                },
-                properties: [{ id: 'displayName', value: 'Duration (Avg)' }],
-              },
-              {
-                matcher: {
-                  id: 'byName',
-                  options: 'handler',
-                },
-                properties: [
-                  {
-                    id: 'links',
-                    value: [
-                      {
-                        title: 'Go to handler drilldown view',
-                        url: '/scenes/grafana-monitoring/handlers/${__value.text:percentencode}',
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        }),
-      ],
+      children: [httpHandlersTable, getHttpHandlersGraphsScene()],
     }),
   });
 
   sceneCache.set(sceneKey, scene);
   return scene;
+}
+
+export function getHttpHandlersGraphsScene() {
+  const reqDurationTimeSeries = new SceneQueryRunner({
+    datasource: { uid: 'gdev-prometheus' },
+    queries: [
+      {
+        refId: 'A',
+        expr: `avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval])) * 1e3`,
+        range: true,
+        format: 'time_series',
+        legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
+        maxDataPoints: 500,
+      },
+    ],
+  });
+
+  const graph = new VizPanel({
+    $data: reqDurationTimeSeries,
+    pluginId: 'timeseries',
+    title: 'Request duration avg (ms)',
+    size: {},
+    options: {},
+  });
+
+  return graph;
 }
 
 export function getHandlerScene(handler: string): EmbeddedScene {

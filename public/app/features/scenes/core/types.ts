@@ -37,6 +37,7 @@ export interface SceneObjectSize {
   y?: number;
   minWidth?: number | string;
   minHeight?: number | string;
+  hidden?: boolean;
 }
 
 export interface SceneComponentProps<T> {
