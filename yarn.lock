@@ -8256,14 +8256,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/button@npm:3.6.2":
-  version: 3.6.2
-  resolution: "@react-types/button@npm:3.6.2"
+"@react-types/button@npm:3.7.0":
+  version: 3.7.0
+  resolution: "@react-types/button@npm:3.7.0"
   dependencies:
-    "@react-types/shared": ^3.15.0
+    "@react-types/shared": ^3.16.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 843058e8f070b072533d704b95fb55684e8cc6434257bd54cf400e8bc2d3a1b98d96a60a67496451b42a03b0c23c823998deff1869ad3c4873db9fb78328984e
+  checksum: e5c1bc38b20d2e123492ea59b9c1637671b83d1b5081b3ac414bc20858ff3300465c7b4bc9b714f3e062bf471eebfe7a68210e23a8731bba1ae1b0ae7a2cd16d
   languageName: node
   linkType: hard
 
@@ -8353,6 +8353,15 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: 4bae4444b1002ca4a51ca45313d9ed4469a09b114366a8a8c3a2277f22d36c721fa0132225b4fb461ee2e26ee1fca3b9b2562949faa854d255f2618265911a49
+  languageName: node
+  linkType: hard
+
+"@react-types/shared@npm:^3.16.0":
+  version: 3.16.0
+  resolution: "@react-types/shared@npm:3.16.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+  checksum: 3bb3aa77f4938fcd7788c5c5abf24f8f3d3c034d555962e44202d09673844cbb31d7b280edc9ac432bdd06847bc253527f8946f2604b9c88d5fcb96fdc56fbd1
   languageName: node
   linkType: hard
 
@@ -21883,7 +21892,7 @@ __metadata:
     "@react-stately/collections": 3.4.1
     "@react-stately/menu": 3.4.1
     "@react-stately/tree": 3.3.1
-    "@react-types/button": 3.6.2
+    "@react-types/button": 3.7.0
     "@react-types/menu": 3.7.2
     "@react-types/overlays": 3.6.4
     "@react-types/shared": 3.15.0
