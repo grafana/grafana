@@ -1,11 +1,8 @@
 package k8saccess
 
 import (
-	"io"
-	"log"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/web"
@@ -68,36 +65,6 @@ func (s *clientWrapper) getInfo() map[string]interface{} {
 	return info
 }
 
-func (s *clientWrapper) doProxy(c *models.ReqContext) {
-	params := web.Params(c.Req)
-	path := params["*"]
-
-	req := c.Req
-	req.RequestURI = "" // clear the request URL
-
-	// add the request path to the base path
-	req.URL = s.baseURL.JoinPath(path)
-	req.Host = req.URL.Host
-	log.Println(req.RemoteAddr, " ", req.URL)
-
-	wr := c.Resp
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		http.Error(wr, "Server Error", http.StatusInternalServerError)
-		log.Println("ServeHTTP:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	log.Println(req.RemoteAddr, " ", resp.Status)
-
-	delHopHeaders(resp.Header)
-
-	copyHeader(wr.Header(), resp.Header)
-	wr.WriteHeader(resp.StatusCode)
-	io.Copy(wr, resp.Body)
-}
-
 // defaultServerUrlFor is shared between IsConfigTransportTLS and RESTClientFor. It
 // requires Host and Version to be set prior to being called.
 func defaultServerUrlFor(config *rest.Config) (*url.URL, string, error) {
@@ -117,39 +84,16 @@ func defaultServerUrlFor(config *rest.Config) (*url.URL, string, error) {
 	return rest.DefaultServerURL(host, config.APIPath, schema.GroupVersion{}, defaultTLS)
 }
 
-// Hop-by-hop headers. These are removed when sent to the backend.
-// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
-var hopHeaders = []string{
-	"Connection",
-	"Keep-Alive",
-	"Proxy-Authenticate",
-	"Proxy-Authorization",
-	"Te", // canonicalized version of "TE"
-	"Trailers",
-	"Transfer-Encoding",
-	"Upgrade",
-}
-
-func copyHeader(dst, src http.Header) {
-	for k, vv := range src {
-		for _, v := range vv {
-			dst.Add(k, v)
-		}
+func (s *clientWrapper) doProxy(c *models.ReqContext) {
+	if s.baseURL == nil {
+		c.Resp.WriteHeader(500)
+		return
 	}
-}
 
-func delHopHeaders(header http.Header) {
-	for _, h := range hopHeaders {
-		header.Del(h)
-	}
-}
+	params := web.Params(c.Req)
+	path := params["*"]
 
-func appendHostToXForwardHeader(header http.Header, host string) {
-	// If we aren't the first proxy retain prior
-	// X-Forwarded-For information as a comma+space
-	// separated list and fold multiple headers into one.
-	if prior, ok := header["X-Forwarded-For"]; ok {
-		host = strings.Join(prior, ", ") + ", " + host
-	}
-	header.Set("X-Forwarded-For", host)
+	url := s.baseURL.JoinPath(path)
+
+	_, _ = c.Resp.Write([]byte("TODO, proxy: " + url.String()))
 }
