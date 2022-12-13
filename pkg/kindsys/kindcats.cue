@@ -6,11 +6,11 @@ import (
 	"github.com/grafana/thema"
 )
 
-// A Kind specifies a type of Grafana resource.
+// A Kind specifies a type of Grafana object.
 //
-// An instance of a Kind is called an entity. An entity is a sequence of bytes -
+// An instance of a Kind is called a resource. An resource is a sequence of bytes -
 // for example, a JSON file or HTTP request body - that conforms to the
-// constraints defined in a Kind, and enforced by Grafana's entity system.
+// constraints defined in a Kind, and enforced by Grafana's kind system.
 //
 // Once Grafana has determined a given byte sequence to be an
 // instance of a known Kind, kind-specific behaviors can be applied,
@@ -47,8 +47,8 @@ _sharedKind: {
 	// In addition to lowercase normalization, dashes are transformed to underscores.
 	machineName: strings.ToLower(strings.Replace(name, "-", "_", -1))
 
-	// pluralName is the pluralized form of name.	Defaults to name + "s".
-	pluralName: =~"^([A-Z][a-zA-Z0-9-]{0,61}[a-zA-Z])$" | *(name + "s")
+	// pluralName is the pluralized form of name. Defaults to name + "s".
+	pluralName:                                   =~"^([A-Z][a-zA-Z0-9-]{0,61}[a-zA-Z])$" | *(name + "s")
 
 	// pluralMachineName is the pluralized form of [machineName]. The same case
 	// normalization and dash transformation is applied to [pluralName] as [machineName]
@@ -79,7 +79,7 @@ _sharedKind: {
 
 // properties shared by all kinds that represent a complete object from root (i.e., not composable)
 _rootKind: {
-	// mimeType is the MIME type that will be indicated for entities of this kind by default.
+	// mimeType is the MIME type that will be indicated for resources of this kind by default.
 	// This is used only in contexts where indicating a MIME type is expected, such as
 	// in HTTP requests and responses.
 	mimeType: nonEmptyString | *"application/json"
@@ -111,7 +111,7 @@ _rootKind: {
 
 	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
 	// It is required that lineage.name is the same as the [machineName].
-	lineage: thema.#Lineage & { name: S.machineName }
+	lineage: thema.#Lineage & {name: S.machineName}
 
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 }
@@ -153,12 +153,24 @@ _rootKind: {
 
 	// crd contains properties specific to converting this kind to a Kubernetes CRD.
 	crd: {
-			// group is used as the CRD group name in the GVK.
-			group: "\(S.machineName).core.grafana"
+		// group is used as the CRD group name in the GVK.
+		group: "\(S.machineName).core.grafana.com"
 
-			// deepCopy determines whether a generic implementation of copying should be
-			// generated, or a passthrough call to a Go function.
-//			deepCopy: *"generic" | "passthrough"
+		// scope determines whether resources of this kind exist globally ("Cluster") or
+		// within Kubernetes namespaces.
+		scope: "Cluster" | *"Namespaced"
+
+		// dummySchema determines whether a dummy OpenAPI schema - where the schema is
+		// simply an empty, open object - should be generated for the kind.
+		//
+		// It is a goal that this option eventually be force dto false. Only set to
+		// true when Grafana's code generators produce OpenAPI that is rejected by
+		// Kubernetes' CRD validation.
+		dummySchema: bool | *false
+
+		// deepCopy determines whether a generic implementation of copying should be
+		// generated, or a passthrough call to a Go function.
+		//   deepCopy: *"generic" | "passthrough"
 	}
 
 	lineageIsGroup: false
@@ -183,14 +195,14 @@ _rootKind: {
 
 	// TODO unify this with the existing slots decls in pkg/framework/coremodel
 	lineageIsGroup: bool & [
-		if slot == "Panel" { true },
-		if slot == "DSConfig" { true },
-		if slot == "Query" { false },
+			if slot == "Panel" {true},
+			if slot == "DSConfig" {true},
+			if slot == "Query" {false},
 	][0]
 
 	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
 	// It is required that lineage.name is the same as the [machineName].
-	lineage: thema.#Lineage & { name: S.machineName }
+	lineage: thema.#Lineage & {name: S.machineName}
 }
 
 nonEmptyString: string & strings.MinRunes(1)

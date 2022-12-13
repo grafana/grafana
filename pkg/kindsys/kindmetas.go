@@ -42,7 +42,11 @@ type CoreStructuredProperties struct {
 	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
 	SummaryHandler string                 `json:"summaryHandler"`
-	Group          string                 `json:"group"`
+	CRD            struct {
+		Group string `json:"group"`
+		Scope string `json:"scope"`
+		DummySchema bool `json:"dummySchema"`
+	} `json:"crd"`
 }
 
 func (m CoreStructuredProperties) _private() {}
