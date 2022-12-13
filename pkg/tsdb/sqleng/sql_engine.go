@@ -172,6 +172,35 @@ func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("Engine disposed")
 }
 
+func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	e.log.Debug("sql engine check health")
+
+	// Try to query SELECT 1
+	const refID = "A"
+	jsonQuery, err := json.Marshal(QueryJson{Format: "table", RawSql: "SELECT 1"})
+	if err != nil {
+		return nil, err
+	}
+	res, err := e.QueryData(ctx, &backend.QueryDataRequest{
+		PluginContext: req.PluginContext,
+		Headers:       req.Headers,
+		Queries:       []backend.DataQuery{{RefID: refID, JSON: jsonQuery}},
+	})
+	if err != nil {
+		// Internal error
+		return nil, err
+	}
+
+	// Datasource error
+	if err := res.Responses[refID].Error; err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: "SELECT 1 error: " + err.Error(),
+		}, nil
+	}
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
+}
+
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	ch := make(chan DBDataResponse, len(req.Queries))
