@@ -43,7 +43,7 @@ type QueryJson struct {
 }
 
 // parseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*cloudWatchQuery, error) {
+func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegionValue string) (map[string][]*cloudWatchQuery, error) {
 	requestQueries := make(map[string][]*cloudWatchQuery)
 	migratedQueries, err := migrateLegacyQuery(queries, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 	if err != nil {
@@ -68,7 +68,7 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 		}
 
 		refID := query.RefID
-		query, err := parseRequestQuery(model, refID, startTime, endTime)
+		query, err := parseRequestQuery(model, refID, startTime, endTime, defaultRegionValue)
 		if err != nil {
 			return nil, &queryError{err: err, RefID: refID}
 		}
@@ -159,7 +159,7 @@ func migrateAliasToDynamicLabel(queryJson *QueryJson) {
 	queryJson.Label = &fullAliasField
 }
 
-func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
+func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTime time.Time, defaultRegionValue string) (*cloudWatchQuery, error) {
 	plog.Debug("Parsing request query", "query", model)
 	cloudWatchQuery := cloudWatchQuery{
 		Alias:             "",
@@ -262,6 +262,10 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 
 	if model.Label != nil {
 		cloudWatchQuery.Label = *model.Label
+	}
+
+	if model.Region == defaultRegion {
+		cloudWatchQuery.Region = defaultRegionValue
 	}
 
 	return &cloudWatchQuery, nil
