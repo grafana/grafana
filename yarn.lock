@@ -5999,29 +5999,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.57":
-  version: 0.0.57
-  resolution: "@kusto/language-service-next@npm:0.0.57"
-  checksum: 024a4002504e55dc6d3435f3180b54f1da1ea3a7d3b4c4a2ece3038db31ec531306ea8d1f4715ee293ad21d1714955f090f35e65ebe4184d8909924f1865bc99
+"@kusto/language-service-next@npm:0.0.59":
+  version: 0.0.59
+  resolution: "@kusto/language-service-next@npm:0.0.59"
+  checksum: 90f377a4c59e632a2fd904c202be3c823f41359b62b05a7bc66fd4a9e86d7bed34970822b720232dacd45f6ce3373abff53fb843b5228878c5f84f5b5ba68fba
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.36":
-  version: 0.0.36
-  resolution: "@kusto/language-service@npm:0.0.36"
-  checksum: 09714241053f660063d05ee5165a0c930681c7f1517717c270273f17a8fbc71a94cca873c7b3be960edc01054690deed319eb8eb3c028d0fc047de599ad6f276
+"@kusto/language-service@npm:0.0.38":
+  version: 0.0.38
+  resolution: "@kusto/language-service@npm:0.0.38"
+  checksum: 9ad45b144409162298f1e61b87209e40315f3fe30b5766175b831ce9ab6b5cd4f046323956fa35ce971993aa67f84b175c5af1de9614dd57a12f4fd61bfa401c
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:5.2.0":
-  version: 5.2.0
-  resolution: "@kusto/monaco-kusto@npm:5.2.0"
+"@kusto/monaco-kusto@npm:5.3.6":
+  version: 5.3.6
+  resolution: "@kusto/monaco-kusto@npm:5.3.6"
   dependencies:
-    "@kusto/language-service": 0.0.36
-    "@kusto/language-service-next": 0.0.57
+    "@kusto/language-service": 0.0.38
+    "@kusto/language-service-next": 0.0.59
   peerDependencies:
-    monaco-editor: 0.33.0
-  checksum: 173b04ec40bf6a85762fe75e10b0be3b19c22aa7151c244f10562dd91792b2f32966187630e825ed9aa661aea142a114083907183b2b1d5618ad6a7d4a77282b
+    monaco-editor: 0.34.1
+  checksum: 55cef304cca6383ed4bccd60639d7429e2bee224e719eb33b294067ba47086df51752d5a51d9bb8cd73b7fe5a2fa3d6e5f625d392d013e281c451d967a529672
   languageName: node
   linkType: hard
 
@@ -7492,10 +7492,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.2.0":
-  version: 1.2.0
-  resolution: "@opentelemetry/api@npm:1.2.0"
-  checksum: 764efa81bf939200a8e80520a4735b23038abafc60c80420b007ae2bbb7ad843d806894414e95d974c2ef1b81d4ae8a3106804e1af7b5090240cfeb2467db099
+"@opentelemetry/api@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@opentelemetry/api@npm:1.3.0"
+  checksum: 33d284b67b6fab20ff72961d289c6487d3cb27caf7489f0231d7030551f82871e081e744b0390751d8aef3bf1614bd79f854788901a354e15274f552581fb374
   languageName: node
   linkType: hard
 
@@ -8490,13 +8490,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/dragscroll@npm:^1.2.0, @scena/dragscroll@npm:^1.2.1":
+"@scena/dragscroll@npm:^1.2.1":
   version: 1.2.1
   resolution: "@scena/dragscroll@npm:1.2.1"
   dependencies:
     "@daybrush/utils": 1.6.0
     "@scena/event-emitter": ^1.0.2
   checksum: 217b0612b0b5d2e721cd41b7534cc1b831aca236a4256b30bdeb965b3b0b7cf9f3934801a7158cb38483242e2568f8b734eeccfaee43b5df4e5df9ead7653dd5
+  languageName: node
+  linkType: hard
+
+"@scena/dragscroll@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@scena/dragscroll@npm:1.3.0"
+  dependencies:
+    "@daybrush/utils": 1.6.0
+    "@scena/event-emitter": ^1.0.2
+  checksum: 3191a253eb1a74540e7a88c4219089cc76c95ea66e3e28f9b99470948aacc8716aec6e0c987910b097d0915b56f7844f5913353b6f305a393fb8d4dabedc44f8
   languageName: node
   linkType: hard
 
@@ -21319,13 +21329,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.13.1, gesto@npm:^1.13.3":
+"gesto@npm:^1.13.1":
   version: 1.13.3
   resolution: "gesto@npm:1.13.3"
   dependencies:
     "@daybrush/utils": ^1.7.1
     "@scena/event-emitter": ^1.0.2
   checksum: 02a27cd829f9b231810e01e9df76805c8721642a95a22bb71a0013f2a8b9ee6a50d08f0cb21b7052e1afaf8206b45083bae4141123a8130a84de561591434547
+  languageName: node
+  linkType: hard
+
+"gesto@npm:^1.14.0":
+  version: 1.14.0
+  resolution: "gesto@npm:1.14.0"
+  dependencies:
+    "@daybrush/utils": ^1.7.1
+    "@scena/event-emitter": ^1.0.2
+  checksum: ce9e2b0f3308e1747b3350b99f1a22e77b886b5de1a431f63b4f85e26f0c2853ddffc81055949844ac3dc19becc26eecad97d9e6147ea6a17e8a694ccf86d63e
   languageName: node
   linkType: hard
 
@@ -21849,12 +21869,12 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 5.2.0
+    "@kusto/monaco-kusto": 5.3.6
     "@leeoniya/ufuzzy": 0.8.0
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
     "@lezer/lr": 1.2.3
-    "@opentelemetry/api": 1.2.0
+    "@opentelemetry/api": 1.3.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.7.0
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.8
@@ -22034,7 +22054,7 @@ __metadata:
     monaco-promql: 1.7.4
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
-    moveable: 0.37.1
+    moveable: 0.42.1
     msw: 0.48.1
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
@@ -22068,7 +22088,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-i18next: ^12.0.0
     react-inlinesvg: 3.0.1
-    react-moveable: 0.40.0
+    react-moveable: 0.45.0
     react-popper: 2.3.0
     react-popper-tooltip: 4.4.2
     react-redux: 7.2.6
@@ -28241,15 +28261,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.37.1":
-  version: 0.37.1
-  resolution: "moveable@npm:0.37.1"
+"moveable@npm:0.42.1":
+  version: 0.42.1
+  resolution: "moveable@npm:0.42.1"
   dependencies:
     "@scena/event-emitter": ^1.0.5
-    react-compat-moveable: ~0.25.1
-    react-moveable: ~0.40.0
+    react-compat-moveable: ~0.30.1
+    react-moveable: ~0.45.0
     react-simple-compat: ^1.2.3
-  checksum: d331fcc2f5b233e341c99ba65b32b7845c3bf7784bbc69a50ca66af2e4f6c4f23a85b05639bcd33eb828fe590436a4972cdb6bdef7a375d2b6679cc7c1e8369e
+  checksum: 6694f1f837915a39e02263488d6f2cba1d88319db275c6a4ca4dcc0328c591ff70e37ea430f0134e7ee6f86b86d5ad8ec8904950a45c6c7b4ef822678d70bfb9
   languageName: node
   linkType: hard
 
@@ -32399,25 +32419,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compat-moveable@npm:~0.25.1":
-  version: 0.25.1
-  resolution: "react-compat-moveable@npm:0.25.1"
+"react-compat-moveable@npm:~0.30.1":
+  version: 0.30.1
+  resolution: "react-compat-moveable@npm:0.30.1"
   dependencies:
     "@daybrush/utils": ^1.10.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@egjs/list-differ": ^1.0.0
-    "@scena/dragscroll": ^1.2.0
+    "@scena/dragscroll": ^1.3.0
     "@scena/event-emitter": ^1.0.5
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.13.3
+    gesto: ^1.14.0
     overlap-area: ^1.1.0
     react-compat-css-styled: ^1.0.9
     react-css-styled: ^1.0.4
-    react-moveable: ~0.40.0
-  checksum: 1ce56ab246e5009d92c2d22cff12489ff07331dc8625705063671a341dd34d292635adb105fc2f377932de3f2159f22ff55f1a94a9248aa51d71308179014619
+    react-moveable: ~0.45.0
+  checksum: edf73443cd0eda5cf299b4a17207940c8f6e42a6fe9e050befef579efd977a3bc434ee7ddf882e66e25d6c3fb63e611cf8da9fd6647e43ebaafc621c4c555814
   languageName: node
   linkType: hard
 
@@ -32790,23 +32810,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.40.0, react-moveable@npm:~0.40.0":
-  version: 0.40.0
-  resolution: "react-moveable@npm:0.40.0"
+"react-moveable@npm:0.45.0, react-moveable@npm:~0.45.0":
+  version: 0.45.0
+  resolution: "react-moveable@npm:0.45.0"
   dependencies:
     "@daybrush/utils": ^1.10.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@egjs/list-differ": ^1.0.0
-    "@scena/dragscroll": ^1.2.0
+    "@scena/dragscroll": ^1.3.0
     "@scena/event-emitter": ^1.0.5
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.13.3
+    gesto: ^1.14.0
     overlap-area: ^1.1.0
     react-css-styled: ^1.0.4
-  checksum: ac89a1325dce4e2c2c4ebd0460ac75b3c4d89e02bf49cf296db027268357b2b2e81ba867d8a2e0f6ed6d66991260ba3d5532dcff0a6c37ff138d173e48a460e0
+  checksum: bcd05d08e4858ef9d50064b1989cfa1777fa0c85c082c342cf856823209548795468f141528f7ca6178219f560d92f3055c0aaaec04ccd8c86ba9c5d9ce2e4dd
   languageName: node
   linkType: hard
 
