@@ -82,6 +82,17 @@ describe('CompletionProvider', () => {
     ]);
   });
 
+  it('only suggests tags after typing the global attribute scope', async () => {
+    const { provider, model } = setup('{.}', 2, defaultTags);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
+
   it('suggests operators after a space after the tag name', async () => {
     const { provider, model } = setup('{ foo }', 6, defaultTags);
     const result = await provider.provideCompletionItems(model as any, {} as any);
@@ -92,11 +103,13 @@ describe('CompletionProvider', () => {
 
   it('suggests tags after a scope', async () => {
     const { provider, model } = setup('{ resource. }', 11, defaultTags);
-    const result = await provider.provideCompletionItems(model as any, {} as any);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
-      ...defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s })),
-    ]);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
   });
 
   it('suggests logical operators and close bracket after the value', async () => {
