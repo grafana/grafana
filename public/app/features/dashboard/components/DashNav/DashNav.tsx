@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { t, Trans } from '@lingui/macro';
 import React, { FC, ReactNode, useContext, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
