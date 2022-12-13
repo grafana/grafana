@@ -2,6 +2,7 @@ package ualert
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -135,6 +136,7 @@ func TestCreateRoute(t *testing.T) {
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
 			},
 		},
 		{
@@ -148,6 +150,39 @@ func TestCreateRoute(t *testing.T) {
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
+			},
+		},
+		{
+			name: "when a receiver has sendReminder=true, the route should use the frequency in repeat interval",
+			recv: &PostableApiReceiver{
+				Name:         "recv1",
+				sendReminder: true,
+				frequency:    model.Duration(time.Duration(42) * time.Hour),
+			},
+			expected: &Route{
+				Receiver:       "recv1",
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
+				RepeatInterval: durationPointer(model.Duration(time.Duration(42) * time.Hour)),
+			},
+		},
+		{
+			name: "when a receiver has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
+			recv: &PostableApiReceiver{
+				Name:         "recv1",
+				sendReminder: false,
+				frequency:    model.Duration(time.Duration(42) * time.Hour),
+			},
+			expected: &Route{
+				Receiver:       "recv1",
+				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				Routes:         nil,
+				Continue:       true,
+				GroupByStr:     nil,
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
 			},
 		},
 	}
@@ -178,6 +213,11 @@ func TestCreateRoute(t *testing.T) {
 func createNotChannel(t *testing.T, uid string, id int64, name string) *notificationChannel {
 	t.Helper()
 	return &notificationChannel{Uid: uid, ID: id, Name: name, Settings: simplejson.New()}
+}
+
+func createNotChannelWithReminder(t *testing.T, uid string, id int64, name string, frequency model.Duration) *notificationChannel {
+	t.Helper()
+	return &notificationChannel{Uid: uid, ID: id, Name: name, SendReminder: true, Frequency: frequency, Settings: simplejson.New()}
 }
 
 func TestCreateReceivers(t *testing.T) {
@@ -319,9 +359,27 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
 			},
 			expRoute: &Route{
-				Receiver:   "autogen-contact-point-default",
-				Routes:     make([]*Route, 0),
-				GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				Receiver:       "autogen-contact-point-default",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
+			},
+		},
+		{
+			name: "when given multiple default notification channels migrate them to a single receiver with RepeatInterval set to be the minimum of all channel frequencies",
+			defaultChannels: []*notificationChannel{
+				createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42)),
+				createNotChannelWithReminder(t, "uid2", int64(2), "name2", model.Duration(100000)),
+			},
+			expRecv: &PostableApiReceiver{
+				Name:                    "autogen-contact-point-default",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
+			},
+			expRoute: &Route{
+				Receiver:       "autogen-contact-point-default",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(model.Duration(42)),
 			},
 		},
 		{
@@ -332,9 +390,10 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
 			},
 			expRoute: &Route{
-				Receiver:   "autogen-contact-point-default",
-				Routes:     make([]*Route, 0),
-				GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				Receiver:       "autogen-contact-point-default",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: nil,
 			},
 		},
 		{
@@ -342,9 +401,21 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
 			expRecv:         nil,
 			expRoute: &Route{
-				Receiver:   "name1",
-				Routes:     make([]*Route, 0),
-				GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				Receiver:       "name1",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(DisabledRepeatInterval),
+			},
+		},
+		{
+			name:            "when given a single default notification channel with SendReminder=true, use the channels Frequency as the RepeatInterval",
+			defaultChannels: []*notificationChannel{createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42))},
+			expRecv:         nil,
+			expRoute: &Route{
+				Receiver:       "name1",
+				Routes:         make([]*Route, 0),
+				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+				RepeatInterval: durationPointer(model.Duration(42)),
 			},
 		},
 	}
@@ -374,4 +445,8 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			require.Equal(t, tt.expRoute, route)
 		})
 	}
+}
+
+func durationPointer(d model.Duration) *model.Duration {
+	return &d
 }

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -16,6 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	// DisabledRepeatInterval is a large duration that will be used as a pseudo-disable in case a legacy channel doesn't have SendReminders enabled.
+	DisabledRepeatInterval = model.Duration(time.Duration(8736) * time.Hour) // 1y
 )
 
 type notificationChannel struct {
@@ -28,6 +34,8 @@ type notificationChannel struct {
 	IsDefault             bool             `xorm:"is_default"`
 	Settings              *simplejson.Json `xorm:"settings"`
 	SecureSettings        SecureJsonData   `xorm:"secure_settings"`
+	SendReminder          bool             `xorm:"send_reminder"`
+	Frequency             model.Duration   `xorm:"frequency"`
 }
 
 // channelsPerOrg maps notification channels per organisation
@@ -143,7 +151,9 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 		disable_resolve_message,
 		is_default,
 		settings,
-		secure_settings
+		secure_settings,
+        send_reminder,
+		frequency
 	FROM
 		alert_notification
 	`
@@ -236,6 +246,8 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 		recv := &PostableApiReceiver{
 			Name:                    sanitizedName, // Channel name is unique within an Org.
 			GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
+			sendReminder:            c.SendReminder,
+			frequency:               c.Frequency,
 		}
 
 		receivers = append(receivers, recv)
@@ -255,17 +267,27 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 
 // Create the root-level route with the default receiver. If no new receiver is created specifically for the root-level route, the returned receiver will be nil.
 func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificationChannel) (*PostableApiReceiver, *Route, error) {
-	var defaultReceiver *PostableApiReceiver
-
 	defaultReceiverName := "autogen-contact-point-default"
-	if len(defaultChannels) != 1 {
-		// If there are zero or more than one default channels we create a separate contact group that is used only in the root policy. This is to simplify the migrated notification policy structure.
-		// If we ever allow more than one receiver per route this won't be necessary.
-		defaultReceiver = &PostableApiReceiver{
-			Name:                    defaultReceiverName,
-			GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-		}
+	defaultRoute := &Route{
+		Receiver:       defaultReceiverName,
+		Routes:         make([]*Route, 0),
+		GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
+		RepeatInterval: nil,
+	}
+	newDefaultReceiver := &PostableApiReceiver{
+		Name:                    defaultReceiverName,
+		GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
+	}
 
+	// Return early if there are no default channels
+	if len(defaultChannels) == 0 {
+		return newDefaultReceiver, defaultRoute, nil
+	}
+
+	repeatInterval := DisabledRepeatInterval // If no channels have SendReminders enabled, we will use this large value as a pseudo-disable.
+	if len(defaultChannels) > 1 {
+		// If there are more than one default channels we create a separate contact group that is used only in the root policy. This is to simplify the migrated notification policy structure.
+		// If we ever allow more than one receiver per route this won't be necessary.
 		for _, c := range defaultChannels {
 			// Need to create a new notifier to prevent uid conflict.
 			defaultNotifier, err := m.createNotifier(c)
@@ -273,20 +295,27 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 				return nil, nil, err
 			}
 
-			defaultReceiver.GrafanaManagedReceivers = append(defaultReceiver.GrafanaManagedReceivers, defaultNotifier)
+			newDefaultReceiver.GrafanaManagedReceivers = append(newDefaultReceiver.GrafanaManagedReceivers, defaultNotifier)
+
+			// Choose the lowest send reminder duration from all the notifiers to use for default route.
+			if c.SendReminder && c.Frequency < repeatInterval {
+				repeatInterval = c.Frequency
+			}
 		}
+		defaultRoute.RepeatInterval = &repeatInterval
 	} else {
 		// If there is only a single default channel, we don't need a separate receiver to hold it. We can reuse the existing receiver for that single notifier.
-		defaultReceiverName = defaultChannels[0].Name
-	}
+		defaultRoute.Receiver = defaultChannels[0].Name
+		if defaultChannels[0].SendReminder {
+			repeatInterval = defaultChannels[0].Frequency
+		}
 
-	defaultRoute := &Route{
-		Receiver:   defaultReceiverName,
-		Routes:     make([]*Route, 0),
-		GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
+		// No need to create a new receiver.
+		newDefaultReceiver = nil
 	}
+	defaultRoute.RepeatInterval = &repeatInterval
 
-	return defaultReceiver, defaultRoute, nil
+	return newDefaultReceiver, defaultRoute, nil
 }
 
 // Create one route per contact point, matching based on ContactLabel.
@@ -302,10 +331,16 @@ func createRoute(recv *PostableApiReceiver) (*Route, error) {
 		return nil, err
 	}
 
+	repeatInterval := DisabledRepeatInterval
+	if recv.sendReminder {
+		repeatInterval = recv.frequency
+	}
+
 	return &Route{
 		Receiver:       recv.Name,
 		ObjectMatchers: ObjectMatchers{mat},
 		Continue:       true, // We continue so that each sibling contact point route can separately match.
+		RepeatInterval: &repeatInterval,
 	}, nil
 }
 
@@ -434,11 +469,12 @@ type PostableApiAlertingConfig struct {
 }
 
 type Route struct {
-	Receiver       string         `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	ObjectMatchers ObjectMatchers `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
-	Routes         []*Route       `yaml:"routes,omitempty" json:"routes,omitempty"`
-	Continue       bool           `yaml:"continue,omitempty" json:"continue,omitempty"`
-	GroupByStr     []string       `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	Receiver       string          `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	ObjectMatchers ObjectMatchers  `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
+	Routes         []*Route        `yaml:"routes,omitempty" json:"routes,omitempty"`
+	Continue       bool            `yaml:"continue,omitempty" json:"continue,omitempty"`
+	GroupByStr     []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
 }
 
 type ObjectMatchers labels.Matchers
@@ -458,6 +494,8 @@ func (m ObjectMatchers) MarshalJSON() ([]byte, error) {
 type PostableApiReceiver struct {
 	Name                    string                     `yaml:"name" json:"name"`
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+	sendReminder            bool
+	frequency               model.Duration
 }
 
 type PostableGrafanaReceiver CreateAlertNotificationCommand
