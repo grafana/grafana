@@ -9,9 +9,9 @@ import { getPanelOptionsWithDefaults } from '../../../dashboard/state/getPanelOp
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';
+import { VariableDependencyConfig } from '../../variables/VariableDependencyConfig';
 
 import { VizPanelRenderer } from './VizPanelRenderer';
-import { VariableDependencyConfig } from '../../variables/VariableDependencyConfig';
 
 export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLayoutChildState {
   title: string;

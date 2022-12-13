@@ -4528,7 +4528,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/scenes/components/VizPanel/VizPanelRenderer.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/scenes/components/layout/SceneFlexLayout.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
