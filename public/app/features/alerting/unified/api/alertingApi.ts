@@ -5,7 +5,7 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
 import { logInfo } from '../Analytics';
 
-const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
+export const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
   try {
     const requestStartTs = performance.now();
 
@@ -27,6 +27,6 @@ const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (request
 export const alertingApi = createApi({
   reducerPath: 'alertingApi',
   baseQuery: backendSrvBaseQuery(),
-  tagTypes: ['AlertmanagerChoice'],
+  tagTypes: ['AlertmanagerChoice', 'OnCallIntegrations'],
   endpoints: () => ({}),
 });

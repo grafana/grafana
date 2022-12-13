@@ -12,6 +12,7 @@ import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClic
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
+import * as onCall from 'app/features/alerting/unified/components/receivers/onCall/onCall';
 import {
   AlertmanagerChoice,
   AlertManagerDataSourceJsonData,
@@ -26,6 +27,7 @@ import Receivers from './Receivers';
 import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import { fetchNotifiers } from './api/grafana';
+import * as onCallApi from './api/onCallApi';
 import * as receiversApi from './api/receiversApi';
 import {
   mockDataSource,
@@ -44,6 +46,7 @@ jest.mock('./api/grafana');
 jest.mock('./utils/config');
 jest.mock('app/core/services/context_srv');
 jest.mock('./api/buildInfo');
+jest.spyOn(onCallApi, 'useGetOnCallIntegrations');
 
 const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),
@@ -143,12 +146,17 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 document.addEventListener('click', interceptLinkClicks);
 const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
+const useGetOnCallIsInstalledAndEnabledeMock = jest.spyOn(onCall, 'useGetOnCallIsInstalledAndEnabled');
+const useGetOnCallIntegrationsMock = jest.mocked(onCallApi.useGetOnCallIntegrations);
+
 describe('Receivers', () => {
   const server = setupServer();
 
   beforeAll(() => {
     setBackendSrv(backendSrv);
     server.listen({ onUnhandledRequest: 'error' });
+    useGetOnCallIsInstalledAndEnabledeMock.mockReturnValue(false);
+    useGetOnCallIntegrationsMock.mockReturnValue([]);
   });
 
   afterAll(() => {

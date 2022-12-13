@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
+import * as onCall from 'app/features/alerting/unified/components/receivers/onCall/onCall';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -12,6 +13,7 @@ import {
 import { configureStore } from 'app/store/configureStore';
 import { ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
 
+import * as onCallApi from '../../api/onCallApi';
 import * as receiversApi from '../../api/receiversApi';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 
@@ -53,13 +55,19 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
+jest.spyOn(onCallApi, 'useGetOnCallIntegrations');
+
 const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
+const useGetOnCallIsInstalledAndEnabledeMock = jest.spyOn(onCall, 'useGetOnCallIsInstalledAndEnabled');
+const useGetOnCallIntegrationsMock = jest.mocked(onCallApi.useGetOnCallIntegrations);
 
 describe('ReceiversTable', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
     useGetContactPointsStateMock.mockReturnValue(emptyContactPointsState);
+    useGetOnCallIsInstalledAndEnabledeMock.mockReturnValue(false);
+    useGetOnCallIntegrationsMock.mockReturnValue([]);
   });
 
   it('render receivers with grafana notifiers', async () => {

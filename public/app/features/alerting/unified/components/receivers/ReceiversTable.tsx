@@ -6,6 +6,7 @@ import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useGetOnCallIntegrations } from 'app/features/alerting/unified/api/onCallApi';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
 
@@ -24,10 +25,14 @@ import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
+import { isOnCallReceiver, useGetOnCallIsInstalledAndEnabled } from './onCall/onCall';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
 }
+export const OnCallBadge = () => {
+  return <Badge text={'OnCall'} color={'blue'} />;
+};
 
 function UpdateActions({ permissions, alertManagerName, receiverName, onClickDeleteReceiver }: UpdateActionProps) {
   return (
@@ -128,6 +133,7 @@ interface ReceiverItem {
   name: string;
   types: string[];
   provisioned?: boolean;
+  isOnCall: boolean;
 }
 
 interface NotifierStatus {
@@ -247,6 +253,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
 
+  const isOnCallEnabled = useGetOnCallIsInstalledAndEnabled();
+
+  const data = useGetOnCallIntegrations(!isOnCallEnabled);
+
   const onClickDeleteReceiver = (receiverName: string): void => {
     if (isReceiverUsed(receiverName, config)) {
       setShowCannotDeleteReceiverModal(true);
@@ -262,8 +272,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     setReceiverToDelete(undefined);
   };
 
-  const rows: RowItemTableProps[] = useMemo(
-    () =>
+  const rows: RowItemTableProps[] = useMemo(() => {
+    const onCallIntegrations = data ?? [];
+
+    return (
       config.alertmanager_config.receivers?.map((receiver: Receiver) => ({
         id: receiver.name,
         data: {
@@ -276,11 +288,13 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
               return type;
             }
           ),
+          isOnCall: isOnCallReceiver(receiver, onCallIntegrations),
           provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
         },
-      })) ?? [],
-    [config, grafanaNotifiers.result]
-  );
+      })) ?? []
+    );
+  }, [config.alertmanager_config.receivers, data, grafanaNotifiers.result]);
+
   const columns = useGetColumns(
     alertManagerName,
     errorStateAvailable,
@@ -293,10 +307,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   return (
     <ReceiversSection
       className={styles.section}
-      title="Contact points"
-      description="Define where the notifications will be sent to, for example email or Slack."
+      title={'Contact points'}
+      description={'Define where the notifications will be sent to, for example email or Slack.'}
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
-      addButtonLabel="New contact point"
+      addButtonLabel={'New contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
       <DynamicTable
@@ -369,9 +383,9 @@ function useGetColumns(
     {
       id: 'name',
       label: 'Contact point name',
-      renderCell: ({ data: { name, provisioned } }) => (
+      renderCell: ({ data: { name, provisioned, isOnCall } }) => (
         <>
-          {name} {provisioned && <ProvisioningBadge />}
+          {name} {isOnCall && <OnCallBadge />} {provisioned && <ProvisioningBadge />}
         </>
       ),
       size: 1,
