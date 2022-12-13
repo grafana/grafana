@@ -15,8 +15,7 @@ import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
 import { Subscription, throttleTime } from 'rxjs';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
-import { getColorDimension } from 'app/features/dimensions';
-import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
@@ -31,6 +30,7 @@ import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { LineString, SimpleGeometry } from 'ol/geom';
 import FlowLine from 'ol-ext/style/FlowLine';
 import tinycolor from 'tinycolor2';
+import { getStyleDimension } from '../../utils/utils';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -118,7 +118,8 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 lineCap: 'round',
                 color: color1,
                 color2: color2,
-                width: style.config.lineWidth,
+                width: (dims.size && dims.size.get(i)) ?? style.base.size,
+                width2: (dims.size && dims.size.get(i + 1)) ?? style.base.size,
               });
               if (config.arrow) {
                 flowStyle.setArrow(config.arrow);
@@ -216,11 +217,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
         for (const frame of data.series) {
           if (style.fields) {
-            const dims: StyleDimensions = {};
-            if (style.fields.color) {
-              dims.color = getColorDimension(frame, style.config.color ?? defaultStyleConfig.color, theme);
-            }
-            style.dims = dims;
+            style.dims = getStyleDimension(frame, style, theme);
           }
 
           source.updateLineString(frame);
@@ -252,16 +249,6 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
               ],
             },
             defaultValue: defaultOptions.arrow,
-          })
-          .addSliderInput({
-            path: 'config.style.lineWidth',
-            name: 'Line width',
-            defaultValue: defaultOptions.style.lineWidth,
-            settings: {
-              min: 1,
-              max: 10,
-              step: 1,
-            },
           });
       },
     };
