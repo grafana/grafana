@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, Modal } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
@@ -47,8 +48,16 @@ export const LabelBrowserModal = (props: Props) => {
     onClose();
   };
 
+  const reportInteractionAndClose = () => {
+    reportInteraction('grafana_loki_label_browser_closed', {
+      app,
+      closeType: 'modalClose',
+    });
+    onClose();
+  };
+
   return (
-    <Modal isOpen={isOpen} title="Label browser" onDismiss={onClose}>
+    <Modal isOpen={isOpen} title="Label browser" onDismiss={reportInteractionAndClose}>
       {!labelsLoaded && <LoadingPlaceholder text="Loading labels..." />}
       {labelsLoaded && !hasLogLabels && <p>No labels found.</p>}
       {labelsLoaded && hasLogLabels && (

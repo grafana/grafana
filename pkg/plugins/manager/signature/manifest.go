@@ -111,12 +111,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, err
 	}
 
-	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
-	// on plugin the folder structure on disk and not user input.
-	byteValue, err := os.ReadFile(manifestPath)
+	byteValue := plugin.Manifest()
 	if err != nil || len(byteValue) < 10 {
 		mlog.Debug("Plugin is unsigned", "id", plugin.ID)
 		return plugins.Signature{

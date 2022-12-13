@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type configReader struct {
