@@ -40,24 +40,28 @@ export const Configuration = ({
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Show annotations on public dashboard">Show annotations</Label>
             <Switch
-              {...register('isAnnotationsEnabled', {
-                onChange: (e) =>
-                  reportInteraction('grafana_dashboards_annotations_clicked', {
-                    action: e.target.checked ? 'enable' : 'disable',
-                  }),
-              })}
+              {...register('isAnnotationsEnabled')}
+              onChange={(e) => {
+                const { onChange } = register('isAnnotationsEnabled');
+                reportInteraction('grafana_dashboards_annotations_clicked', {
+                  action: e.currentTarget.checked ? 'enable' : 'disable',
+                });
+                onChange(e);
+              }}
               data-testid={selectors.EnableAnnotationsSwitch}
             />
           </Layout>
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
             <Switch
-              {...register('enabledSwitch', {
-                onChange: (e) =>
-                  reportInteraction('grafana_dashboards_public_enable_clicked', {
-                    action: e.target.checked ? 'enable' : 'disable',
-                  }),
-              })}
+              {...register('enabledSwitch')}
+              onChange={(e) => {
+                const { onChange } = register('enabledSwitch');
+                reportInteraction('grafana_dashboards_public_enable_clicked', {
+                  action: e.currentTarget.checked ? 'enable' : 'disable',
+                });
+                onChange(e);
+              }}
               data-testid={selectors.EnableSwitch}
             />
           </Layout>
