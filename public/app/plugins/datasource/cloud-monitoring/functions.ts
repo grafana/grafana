@@ -136,6 +136,7 @@ export const alignmentPeriodLabel = (customMetaData: CustomMetaData, datasource:
 
 export const getMetricType = (query?: TimeSeriesList) => {
   const metricTypeKey = query?.filters?.findIndex((f) => f === 'metric.type')!;
+  // filters are in the format [key, operator, value] so we need to add 2 to get the value
   const metricType = query?.filters?.[metricTypeKey + 2];
   return metricType || '';
 };
