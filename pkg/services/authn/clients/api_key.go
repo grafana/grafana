@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	apiKeyPrefix = ""
+	basicPrefix  = "Basic "
+	bearerPrefix = "Bearer "
 )
 
 var _ authn.Client = new(ApiKey)
@@ -27,27 +28,29 @@ func (a *ApiKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 }
 
 func (a *ApiKey) Test(ctx context.Context, r *authn.Request) bool {
-	// api keys are only supported through http requests
-	if r.HTTPRequest == nil {
-		return false
-	}
-
-	return looksLikeApiKey(r.HTTPRequest.Header.Get("Authorization"))
+	return looksLikeApiKey(getApiKey(r))
 }
 
-func looksLikeApiKey(header string) bool {
-	parts := strings.Split(header, "")
+func looksLikeApiKey(token string) bool {
+	return token != ""
+}
 
-	var keyString string
-
-	if len(parts) == 2 && parts[0] == "Bearer" {
-		keyString = parts[1]
-	} else {
-		username, password, err := util.DecodeBasicAuthHeader(header)
-		if err == nil && username == "api_key" {
-			keyString = password
-		}
+func getApiKey(r *authn.Request) string {
+	// api keys are only supported through http requests
+	if r.HTTPRequest == nil {
+		return ""
 	}
 
-	return keyString != ""
+	header := r.HTTPRequest.Header.Get("Authorization")
+
+	if strings.HasPrefix(header, bearerPrefix) {
+		return strings.TrimPrefix(header, bearerPrefix)
+	}
+	if strings.HasPrefix(header, basicPrefix) {
+		username, password, err := util.DecodeBasicAuthHeader(header)
+		if err == nil && username == "api_key" {
+			return password
+		}
+	}
+	return ""
 }
