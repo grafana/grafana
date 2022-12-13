@@ -159,15 +159,16 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       }
 
       const scaleKey = config.unit || '__fixed';
-      const res = this.getYRange(field)
-      const [min, max] = res;
 
       builder.addScale({
         scaleKey,
         orientation: ScaleOrientation.Vertical,
         direction: ScaleDirection.Up,
-        min,
-        max,
+        // This seems to calculate the min/max for the scale better than if using range
+        // TODO investigate the conditions in getYRange to make sure they're still handled
+        // range: () => this.getYRange(field),
+        min: field.config.min,
+        max: field.config.max,
       });
 
       builder.addAxis({

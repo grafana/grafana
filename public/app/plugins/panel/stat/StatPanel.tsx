@@ -15,10 +15,10 @@ import { findNumericFieldMinMax } from '@grafana/data/src/field/fieldOverrides';
 import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
 import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { config } from 'app/core/config';
 
 import { PanelOptions } from './models.gen';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 
 export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
@@ -88,6 +88,8 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     let globalRange: NumericRange | undefined = undefined;
 
     const transformedSeries = data.series.map((frame) => {
+      // this converts any nulls into the "no value" value
+      // NOTE: THIS IS NOT MUTATING THE DATA which seems to cause issues(?)
       const transformedFrame = nullToValue(frame);
 
       for (let field of transformedFrame.fields) {
