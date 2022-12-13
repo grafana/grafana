@@ -144,14 +144,14 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		}
 	}
 
-	// Return ErrInvalidCredentials in case any of the errors was ErrInvalidCredentials (means that it failed the authentication)
+	// Return ErrInvalidCredentials in case any of the errors was ErrInvalidCredentials (means that the authentication has failed at least once)
 	for _, ldapErr := range ldapSilentErrors {
 		if errors.Is(ldapErr, ErrInvalidCredentials) {
 			return nil, ErrInvalidCredentials
 		}
 	}
 
-	// Return ErrCouldNotFindUser if we all of the configured LDAP servers returned with ErrCouldNotFindUser
+	// Return ErrCouldNotFindUser if all of the configured LDAP servers returned with ErrCouldNotFindUser
 	return nil, ErrCouldNotFindUser
 }
 

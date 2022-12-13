@@ -151,7 +151,7 @@ func TestMultiLDAP(t *testing.T) {
 			require.Equal(t, 2, mock.loginCalledTimes)
 			require.Equal(t, 2, mock.closeCalledTimes)
 
-			require.Equal(t, ErrInvalidCredentials, err)
+			require.Equal(t, ErrCouldNotFindUser, err)
 
 			teardown()
 		})
