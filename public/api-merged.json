@@ -18075,9 +18075,6 @@
         "Host": {
           "type": "string"
         },
-        "OmitHost": {
-          "type": "boolean"
-        },
         "Opaque": {
           "type": "string"
         },
@@ -19034,7 +19031,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
