@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, Input } from '..';
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { Button } from '../Button';
+import { Button, ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
 
 export interface ConfirmModalProps {
@@ -89,7 +89,7 @@ export const ConfirmModal = ({
           {dismissText}
         </Button>
         <Button
-          variant="destructive"
+          variant={confirmVariant}
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}

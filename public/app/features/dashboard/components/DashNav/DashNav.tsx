@@ -9,6 +9,7 @@ import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpda
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
+import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
@@ -281,7 +282,7 @@ export const DashNav = React.memo<Props>((props) => {
     if (snapshotUrl) {
       buttons.push(
         <ToolbarButton
-          tooltip={'Open original dashboard'}
+          tooltip="Open original dashboard"
           onClick={onOpenSnapshotOriginal}
           icon="link"
           key="button-snapshot"
