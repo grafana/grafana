@@ -56,6 +56,8 @@ import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
 import * as livePanel from 'app/plugins/panel/live/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
+//@ts-ignore
+import * as sankeyPanel from 'app/plugins/panel/netsage-sankey-panel/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
@@ -147,6 +149,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/nodeGraph/module': nodeGraph,
   'app/plugins/panel/histogram/module': histogramPanel,
   'app/plugins/panel/alertGroups/module': alertGroupsPanel,
+  'app/plugins/panel/netsage-sankey-panel/module': sankeyPanel,
 };
 
 export default builtInPlugins;
