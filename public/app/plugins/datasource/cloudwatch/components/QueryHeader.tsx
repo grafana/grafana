@@ -94,8 +94,6 @@ const QueryHeader: React.FC<Props> = ({
           </>
         )}
 
-        {extraHeaderElementRight}
-
         <Button
           variant={dataIsStale ? 'primary' : 'secondary'}
           size="sm"
@@ -105,6 +103,8 @@ const QueryHeader: React.FC<Props> = ({
         >
           Run queries
         </Button>
+
+        {extraHeaderElementRight}
       </EditorHeader>
     </>
   );
