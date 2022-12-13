@@ -18,20 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ServiceAccountsStoreImpl struct {
-	sqlStore      *sqlstore.SQLStore
+	cfg           *setting.Cfg
+	sqlStore      db.DB
 	apiKeyService apikey.Service
 	kvStore       kvstore.KVStore
 	log           log.Logger
-	userService   user.Service
 	orgService    org.Service
+	userService   user.Service
 }
 
-func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service,
+func ProvideServiceAccountsStore(cfg *setting.Cfg, store db.DB, apiKeyService apikey.Service,
 	kvStore kvstore.KVStore, userService user.Service, orgService org.Service) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
+		cfg:           cfg,
 		sqlStore:      store,
 		apiKeyService: apiKeyService,
 		kvStore:       kvStore,
@@ -101,9 +104,11 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 }
 
 // UpdateServiceAccount updates service account
-func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
+func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
+	ctx context.Context,
 	orgId, serviceAccountId int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	saForm *serviceaccounts.UpdateServiceAccountForm,
+) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	updatedUser := &serviceaccounts.ServiceAccountProfileDTO{}
 
 	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -175,7 +180,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, org
 func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId, serviceAccountId int64) error {
 	user := user.User{}
 	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
-		orgId, serviceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
+		orgId, serviceAccountId, s.sqlStore.GetDialect().BooleanStr(true)).Get(&user)
 	if err != nil {
 		return err
 	}
@@ -197,8 +202,8 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sess := dbSession.Table("org_user")
-		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"),
-			fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
+		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"),
+			fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		whereConditions := make([]string, 0, 3)
 		whereParams := make([]interface{}, 0)
@@ -211,8 +216,8 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
-				s.sqlStore.Dialect.Quote("user"),
-				s.sqlStore.Dialect.BooleanStr(true)))
+				s.sqlStore.GetDialect().Quote("user"),
+				s.sqlStore.GetDialect().BooleanStr(true)))
 
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 
@@ -250,12 +255,12 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 
 		whereConditions := []string{
 			fmt.Sprintf("%s.name = ?",
-				s.sqlStore.Dialect.Quote("user")),
+				s.sqlStore.GetDialect().Quote("user")),
 			fmt.Sprintf("%s.org_id = ?",
-				s.sqlStore.Dialect.Quote("user")),
+				s.sqlStore.GetDialect().Quote("user")),
 			fmt.Sprintf("%s.is_service_account = %s",
-				s.sqlStore.Dialect.Quote("user"),
-				s.sqlStore.Dialect.BooleanStr(true)),
+				s.sqlStore.GetDialect().Quote("user"),
+				s.sqlStore.GetDialect().BooleanStr(true)),
 		}
 		whereParams := []interface{}{name, orgId}
 
@@ -281,34 +286,31 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 	return serviceAccount.Id, nil
 }
 
-func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
-	ctx context.Context, orgId int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
-	signedInUser *user.SignedInUser,
-) (*serviceaccounts.SearchServiceAccountsResult, error) {
-	searchResult := &serviceaccounts.SearchServiceAccountsResult{
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	searchResult := &serviceaccounts.SearchOrgServiceAccountsResult{
 		TotalCount:      0,
 		ServiceAccounts: make([]*serviceaccounts.ServiceAccountDTO, 0),
-		Page:            page,
-		PerPage:         limit,
+		Page:            query.Page,
+		PerPage:         query.Limit,
 	}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sess := dbSession.Table("org_user")
-		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
+		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		whereConditions := make([]string, 0)
 		whereParams := make([]interface{}, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, orgId)
+		whereParams = append(whereParams, query.OrgID)
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
-				s.sqlStore.Dialect.Quote("user"),
-				s.sqlStore.Dialect.BooleanStr(true)))
+				s.sqlStore.GetDialect().Quote("user"),
+				s.sqlStore.GetDialect().BooleanStr(true)))
 
-		if !accesscontrol.IsDisabled(s.sqlStore.Cfg) {
-			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
+		if !accesscontrol.IsDisabled(s.cfg) {
+			acFilter, err := accesscontrol.Filter(query.SignedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 			if err != nil {
 				return err
 			}
@@ -316,13 +318,13 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 			whereParams = append(whereParams, acFilter.Args...)
 		}
 
-		if query != "" {
-			queryWithWildcards := "%" + query + "%"
-			whereConditions = append(whereConditions, "(email "+s.sqlStore.Dialect.LikeStr()+" ? OR name "+s.sqlStore.Dialect.LikeStr()+" ? OR login "+s.sqlStore.Dialect.LikeStr()+" ?)")
+		if query.Query != "" {
+			queryWithWildcards := "%" + query.Query + "%"
+			whereConditions = append(whereConditions, "(email "+s.sqlStore.GetDialect().LikeStr()+" ? OR name "+s.sqlStore.GetDialect().LikeStr()+" ? OR login "+s.sqlStore.GetDialect().LikeStr()+" ?)")
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 		}
 
-		switch filter {
+		switch query.Filter {
 		case serviceaccounts.FilterIncludeAll:
 			// pass
 		case serviceaccounts.FilterOnlyExpiredTokens:
@@ -336,17 +338,17 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 			whereConditions = append(
 				whereConditions,
 				"is_disabled = ?")
-			whereParams = append(whereParams, s.sqlStore.Dialect.BooleanStr(true))
+			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanStr(true))
 		default:
-			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", filter)
+			s.log.Warn("invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}
 
 		if len(whereConditions) > 0 {
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 		}
-		if limit > 0 {
-			offset := limit * (page - 1)
-			sess.Limit(limit, offset)
+		if query.Limit > 0 {
+			offset := query.Limit * (query.Page - 1)
+			sess.Limit(query.Limit, offset)
 		}
 
 		sess.Cols(
@@ -367,7 +369,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 		// get total
 		serviceaccount := serviceaccounts.ServiceAccountDTO{}
 		countSess := dbSession.Table("org_user")
-		sess.Join("INNER", s.sqlStore.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.Dialect.Quote("user")))
+		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		if len(whereConditions) > 0 {
 			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
@@ -468,9 +470,6 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		}
 
 		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.ID); err != nil {
-			if err := s.userService.Delete(ctx, &user.DeleteUserCommand{UserID: newSA.ID}); err != nil {
-				s.log.Error("Error deleting service account", "error", err)
-			}
 			return fmt.Errorf("failed to migrate API key to service account token: %w", err)
 		}
 
@@ -508,7 +507,7 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{}
 		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
-			key.OrgId, *key.ServiceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
+			key.OrgId, *key.ServiceAccountId, s.sqlStore.GetDialect().BooleanStr(true)).Get(&user)
 		if err != nil {
 			return err
 		}
