@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	ClientApiKey    = "auth.api_key"
-	ClientAnonymous = "auth.anonymous"
+	ClientApiKey    = "auth.client.apikey"
+	ClientAnonymous = "auth.client.anonymous"
 )
 
 type Service interface {
