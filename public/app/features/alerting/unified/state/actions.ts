@@ -557,10 +557,11 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
               .dispatch(fetchAlertManagerConfigAction(alertManagerSourceName))
               .unwrap();
 
-            if (
-              !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
-              JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
-            ) {
+            const isLatestConfigEmpty =
+              isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
+            const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
+
+            if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
               throw new Error(
                 'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
               );
