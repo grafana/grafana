@@ -19,14 +19,14 @@ $ make devenv sources=apiserver
 $ kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig api-resources
 ```
 
-## Using the Intent API in Grafana
+## Using the internal apiserver in Grafana
 
-Make sure you have the environment up & running, then run Grafana with Intent API specific settings:
+Make sure you have the environment up & running, then run Grafana with specific env vars for the apiserver:
 
 ```sh
 # Build Grafana server:
 $ make build-go
-# Run with Intent API specific config:
+# Run with devenv apiserver specific config:
 $ GF_FEATURE_TOGGLES_ENABLE=apiserver \
 GF_APISERVER_SERVER_CERT_FILE_PATH=devenv/docker/blocks/apiserver/certs/apiserver.pem \
 GF_APISERVER_SERVER_KEY_FILE_PATH=devenv/docker/blocks/apiserver/certs/apiserver-key.pem \
