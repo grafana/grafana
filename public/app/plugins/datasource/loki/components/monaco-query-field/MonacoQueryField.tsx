@@ -12,7 +12,7 @@ import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
-import { validateQuery } from './monaco-completion-provider/validation';
+import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -77,11 +77,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.components.input.borderColor};
     `,
   };
-};
-
-const placeHolderScopedVars = {
-  __interval: { text: '1s', value: '1s' },
-  __interval_ms: { text: '1000', value: 1000 },
 };
 
 const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource }: Props) => {
