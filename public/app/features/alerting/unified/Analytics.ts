@@ -48,6 +48,10 @@ export const trackNewAlerRuleFormCancelled = (props: AlertRuleTrackingProps) => 
   reportInteraction('grafana_alerting_rule_aborted', props);
 };
 
+export const trackNewAlerRuleFormError = (props: AlertRuleTrackingProps & { error: string }) => {
+  reportInteraction('grafana_alerting_rule_form_error', props);
+};
+
 export type AlertRuleTrackingProps = {
   grafana_version?: string;
   org_id?: number;

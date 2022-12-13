@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
+import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +13,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages, trackNewAlerRuleFormCancelled } from '../../Analytics';
+import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -158,7 +158,13 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     }
   };
 
-  const onInvalid = () => {
+  const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
+    trackNewAlerRuleFormError({
+      grafana_version: config.buildInfo.version,
+      org_id: contextSrv.user.orgId,
+      user_id: contextSrv.user.id,
+      error: Object.keys(errors).toString(),
+    });
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
