@@ -44,6 +44,44 @@ func TestService_Authenticate(t *testing.T) {
 	}
 }
 
+func TestService_Test(t *testing.T) {
+	type TestCase struct {
+		desc     string
+		client   string
+		expected bool
+	}
+
+	tests := []TestCase{
+		{
+			desc:     "should return true for registered client",
+			client:   "fake",
+			expected: true,
+		},
+		{
+			desc:     "should return false for registered client that cannot process request",
+			client:   "fake",
+			expected: false,
+		},
+		{
+			desc:     "should return false for non existing client",
+			client:   "gitlab",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			svc := setupTests(t, func(svc *Service) {
+				svc.clients["fake"] = &authntest.FakeClient{ExpectedTest: tt.expected}
+			})
+
+			ok := svc.Test(context.Background(), tt.client, &authn.Request{})
+			assert.Equal(t, tt.expected, ok)
+		})
+	}
+
+}
+
 func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 	t.Helper()
 

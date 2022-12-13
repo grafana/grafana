@@ -60,3 +60,16 @@ func (s *Service) Authenticate(ctx context.Context, clientName string, r *authn.
 
 	return client.Authenticate(ctx, r)
 }
+
+func (s *Service) Test(ctx context.Context, client string, r *authn.Request) bool {
+	ctx, span := s.tracer.Start(ctx, "authn.Test")
+	defer span.End()
+
+	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
+	c, ok := s.clients[client]
+	if !ok {
+		return false
+	}
+
+	return c.Test(ctx, r)
+}

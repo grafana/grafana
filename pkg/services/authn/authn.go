@@ -13,11 +13,15 @@ const (
 )
 
 type Service interface {
+	// Authenticate is used to authenticate using a specific client
 	Authenticate(ctx context.Context, client string, r *Request) (*Identity, error)
+	// Test will return true if client can be used for the auth request and false if not
+	Test(ctx context.Context, client string, r *Request) bool
 }
 
 type Client interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+	Test(ctx context.Context, r *Request) bool
 }
 
 type Request struct {
