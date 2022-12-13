@@ -15,8 +15,7 @@ import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
-const headerCategory = 'Table header';
-const footerCategory = 'Table footer';
+const footerHeaderCategory = 'Table header & footer';
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -113,19 +112,19 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
     builder
       .addBooleanSwitch({
         path: 'showHeader',
-        category: [headerCategory],
+        category: [footerHeaderCategory],
         name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
         path: 'footer.show',
-        category: [footerCategory],
+        category: [footerHeaderCategory],
         name: 'Show table footer',
         defaultValue: defaultPanelOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
-        category: [footerCategory],
+        category: [footerHeaderCategory],
         path: 'footer.reducer',
         name: 'Calculation',
         description: 'Choose a reducer function / calculation',
@@ -135,7 +134,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       })
       .addBooleanSwitch({
         path: 'footer.countRows',
-        category: [footerCategory],
+        category: [footerHeaderCategory],
         name: 'Count rows',
         description: 'Display a single count for all data rows',
         defaultValue: defaultPanelOptions.footer?.countRows,
@@ -143,7 +142,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       })
       .addMultiSelect({
         path: 'footer.fields',
-        category: [footerCategory],
+        category: [footerHeaderCategory],
         name: 'Fields',
         description: 'Select the fields that should be calculated',
         settings: {
