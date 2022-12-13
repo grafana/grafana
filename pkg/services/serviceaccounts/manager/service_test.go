@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +16,7 @@ type FakeServiceAccountStore struct {
 	ExpectedServiceAccountID                *serviceaccounts.ServiceAccount
 	ExpectedServiceAccountDTO               *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountProfileDTO        *serviceaccounts.ServiceAccountProfileDTO
-	ExpectedSearchServiceAccountQueryResult *serviceaccounts.SearchServiceAccountsResult
+	ExpectedSearchServiceAccountQueryResult *serviceaccounts.SearchOrgServiceAccountsResult
 	ExpectedServiceAccountMigrationStatus   *serviceaccounts.APIKeysMigrationStatus
 	ExpectedStats                           *serviceaccounts.Stats
 	ExpectedApiKeys                         []apikey.APIKey
@@ -44,8 +43,7 @@ func (f *FakeServiceAccountStore) CreateServiceAccount(ctx context.Context, orgI
 }
 
 // SearchOrgServiceAccounts is a fake searching for service accounts.
-func (f *FakeServiceAccountStore) SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
-	signedInUser *user.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
+func (f *FakeServiceAccountStore) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
 	return f.ExpectedSearchServiceAccountQueryResult, f.ExpectedError
 }
 

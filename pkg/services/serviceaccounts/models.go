@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -77,8 +78,17 @@ type AddServiceAccountTokenCommand struct {
 	Result        *apikey.APIKey `json:"-"`
 }
 
+type SearchOrgServiceAccountsQuery struct {
+	OrgID        int64
+	Query        string
+	Filter       ServiceAccountFilter
+	Page         int
+	Limit        int
+	SignedInUser *user.SignedInUser
+}
+
 // swagger: model
-type SearchServiceAccountsResult struct {
+type SearchOrgServiceAccountsResult struct {
 	// It can be used for pagination of the user list
 	// E.g. if totalCount is equal to 100 users and
 	// the perpage parameter is set to 10 then there are 10 pages of users.

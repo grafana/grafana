@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,8 +38,7 @@ type service interface {
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error)
-	SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
-		signedInUser *user.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error)
+	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error)
@@ -332,7 +330,15 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if onlyDisabled {
 		filter = serviceaccounts.FilterOnlyDisabled
 	}
-	serviceAccountSearch, err := api.service.SearchOrgServiceAccounts(ctx, c.OrgID, c.Query("query"), filter, page, perPage, c.SignedInUser)
+	q := serviceaccounts.SearchOrgServiceAccountsQuery{
+		OrgID:        c.OrgID,
+		Query:        c.Query("query"),
+		Page:         page,
+		Limit:        perPage,
+		Filter:       filter,
+		SignedInUser: c.SignedInUser,
+	}
+	serviceAccountSearch, err := api.service.SearchOrgServiceAccounts(ctx, &q)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
 	}
@@ -484,7 +490,7 @@ type DeleteServiceAccountParams struct {
 // swagger:response searchOrgServiceAccountsWithPagingResponse
 type SearchOrgServiceAccountsWithPagingResponse struct {
 	// in:body
-	Body *serviceaccounts.SearchServiceAccountsResult
+	Body *serviceaccounts.SearchOrgServiceAccountsResult
 }
 
 // swagger:response createServiceAccountResponse

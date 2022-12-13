@@ -107,8 +107,7 @@ type serviceAccountStore interface {
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error)
-	SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
-		signedInUser *user.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error)
+	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error)
@@ -220,15 +219,8 @@ func (s *ServiceAccountMock) ListTokens(ctx context.Context, query *serviceaccou
 	return s.ExpectedTokens, s.ExpectedError
 }
 
-func (s *ServiceAccountMock) SearchOrgServiceAccounts(
-	ctx context.Context,
-	orgID int64,
-	query string,
-	filter serviceaccounts.ServiceAccountFilter,
-	page int,
-	limit int,
-	user *user.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
-	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, orgID, query, page, limit, user})
+func (s *ServiceAccountMock) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, query})
 	return nil, nil
 }
 

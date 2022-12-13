@@ -160,16 +160,8 @@ func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgI
 	return sa.store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
-func (sa *ServiceAccountsService) SearchOrgServiceAccounts(
-	ctx context.Context,
-	orgID int64,
-	query string,
-	filter serviceaccounts.ServiceAccountFilter,
-	page,
-	limit int,
-	signedInUser *user.SignedInUser,
-) (*serviceaccounts.SearchServiceAccountsResult, error) {
-	return sa.store.SearchOrgServiceAccounts(ctx, orgID, query, filter, page, limit, signedInUser)
+func (sa *ServiceAccountsService) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	return sa.store.SearchOrgServiceAccounts(ctx, query)
 }
 
 func (sa *ServiceAccountsService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
