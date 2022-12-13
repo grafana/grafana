@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -141,26 +142,63 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	if err := validOrgID(orgID); err != nil {
+		return nil, err
+	}
+	if err := saForm.Validate(); err != nil {
+		return nil, err
+	}
 	return sa.store.CreateServiceAccount(ctx, orgID, saForm)
 }
 
 func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if err := validOrgID(orgID); err != nil {
+		return nil, err
+	}
+	if err := validServiceAccountID(serviceAccountID); err != nil {
+		return nil, err
+	}
 	return sa.store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
 }
 
 func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+	if err := validOrgID(orgID); err != nil {
+		return 0, err
+	}
+	if name == "" {
+		return 0, errors.New("name is required")
+	}
 	return sa.store.RetrieveServiceAccountIdByName(ctx, orgID, name)
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
+	if err := validServiceAccountID(serviceAccountID); err != nil {
+		return err
+	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
 }
 
 func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if err := validOrgID(orgID); err != nil {
+		return nil, err
+	}
+	if err := validServiceAccountID(serviceAccountID); err != nil {
+		return nil, err
+	}
+	if err := saForm.Validate(); err != nil {
+		return nil, err
+	}
 	return sa.store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
 func (sa *ServiceAccountsService) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
+	if query.Page <= 0 || query.Limit <= 0 {
+		query.SetDefaults()
+		// optional: logging
+	}
 	return sa.store.SearchOrgServiceAccounts(ctx, query)
 }
 
@@ -169,29 +207,87 @@ func (sa *ServiceAccountsService) ListTokens(ctx context.Context, query *service
 }
 
 func (sa *ServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, query *serviceaccounts.AddServiceAccountTokenCommand) error {
+	if err := validServiceAccountID(serviceAccountID); err != nil {
+		return err
+	}
 	return sa.store.AddServiceAccountToken(ctx, serviceAccountID, query)
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID int64, tokenID int64) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
+	if err := validServiceAccountID(serviceAccountID); err != nil {
+		return err
+	}
+	if err := validServiceAccountTokenID(tokenID); err != nil {
+		return err
+	}
 	return sa.store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
 // migration calls
 func (sa *ServiceAccountsService) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
+	if err := validOrgID(orgID); err != nil {
+		return nil, err
+	}
 	return sa.store.GetAPIKeysMigrationStatus(ctx, orgID)
 }
 
 func (sa *ServiceAccountsService) HideApiKeysTab(ctx context.Context, orgID int64) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
 	return sa.store.HideApiKeysTab(ctx, orgID)
 }
 
 // MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
+	if err := validAPIKeyID(keyID); err != nil {
+		return err
+	}
 	return sa.store.MigrateApiKey(ctx, orgID, keyID)
 }
 func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
 	return sa.store.MigrateApiKeysToServiceAccounts(ctx, orgID)
 }
 func (sa *ServiceAccountsService) RevertApiKey(ctx context.Context, orgID, keyID int64) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
+	if err := validAPIKeyID(keyID); err != nil {
+		return err
+	}
 	return sa.store.RevertApiKey(ctx, orgID, keyID)
+}
+
+func validOrgID(orgID int64) error {
+	if orgID == 0 {
+		return serviceaccounts.ErrServiceAccountInvalidOrgID
+	}
+	return nil
+}
+func validServiceAccountID(serviceaccountID int64) error {
+	if serviceaccountID == 0 {
+		return serviceaccounts.ErrServiceAccountInvalidID
+	}
+	return nil
+}
+func validServiceAccountTokenID(tokenID int64) error {
+	if tokenID == 0 {
+		return serviceaccounts.ErrServiceAccountInvalidTokenID
+	}
+	return nil
+}
+func validAPIKeyID(apiKeyID int64) error {
+	if apiKeyID == 0 {
+		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID
+	}
+	return nil
 }

@@ -104,9 +104,14 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 }
 
 // UpdateServiceAccount updates service account
-func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
+func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
+	ctx context.Context,
 	orgId, serviceAccountId int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	saForm *serviceaccounts.UpdateServiceAccountForm,
+) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if err := saForm.Validate(); err != nil {
+		return nil, err
+	}
 	updatedUser := &serviceaccounts.ServiceAccountProfileDTO{}
 
 	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -114,10 +119,6 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 		updatedUser, err = s.RetrieveServiceAccount(ctx, orgId, serviceAccountId)
 		if err != nil {
 			return err
-		}
-
-		if saForm.Name == nil && saForm.Role == nil && saForm.IsDisabled == nil {
-			return nil
 		}
 
 		updateTime := time.Now()
