@@ -26,23 +26,22 @@ func newHTTPHelper(access *k8sAccess, router routing.RouteRegister) *httpHelper 
 }
 
 func (s *httpHelper) showClientInfo(c *models.ReqContext) response.Response {
-	client := s.access.GetSystemClient()
-	if client == nil {
-		return response.JSON(500, map[string]interface{}{
-			"client": "none",
-		})
+	if s.access.sys != nil {
+		info := s.access.sys.getInfo()
+		if s.access.sys.err != nil {
+			return response.JSON(500, info)
+		}
+		return response.JSON(200, info)
 	}
-
-	v, err := client.ServerVersion()
-	if err != nil {
-		return response.Error(500, "unable to get server", err)
-	}
-
-	return response.JSON(200, map[string]interface{}{
-		"version": v,
+	return response.JSON(500, map[string]interface{}{
+		"error": "no client initalized",
 	})
 }
 
 func (s *httpHelper) doProxy(c *models.ReqContext) {
-	_, _ = c.Resp.Write([]byte("TODO!"))
+	if s.access.sys != nil {
+		s.access.sys.doProxy(c)
+		return
+	}
+	_, _ = c.Resp.Write([]byte("??"))
 }

@@ -24,8 +24,7 @@ var _ K8SAccess = &k8sAccess{}
 type k8sAccess struct {
 	enabled   bool
 	apihelper *httpHelper
-	sysclient *kubernetes.Clientset
-	syserr    error
+	sys       *clientWrapper
 }
 
 func ProvideK8SAccess(toggles featuremgmt.FeatureToggles, router routing.RouteRegister) K8SAccess {
@@ -57,9 +56,13 @@ func ProvideK8SAccess(toggles featuremgmt.FeatureToggles, router routing.RouteRe
 	}
 
 	if err == nil && config != nil {
-		access.sysclient, err = kubernetes.NewForConfig(config)
+		access.sys = newClientWrapper(config)
+	} else {
+		access.sys = &clientWrapper{
+			err: err,
+		}
 	}
-	access.syserr = err
+
 	access.apihelper = newHTTPHelper(access, router)
 	return access
 }
@@ -70,5 +73,8 @@ func (s *k8sAccess) IsDisabled() bool {
 
 // Return access to the system k8s client
 func (s *k8sAccess) GetSystemClient() *kubernetes.Clientset {
-	return s.sysclient
+	if s.sys != nil {
+		return s.sys.client
+	}
+	return nil
 }
