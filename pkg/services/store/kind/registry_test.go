@@ -14,21 +14,21 @@ func TestKindRegistry(t *testing.T) {
 	err := registry.Register(dummy.GetEntityKindInfo("test"), dummy.GetEntitySummaryBuilder("test"))
 	require.NoError(t, err)
 
-	// ids := []string{}
-	// for _, k := range registry.GetKinds() {
-	// 	ids = append(ids, k.ID)
-	// }
-	// require.Equal(t, []string{
-	// 	"dashboard",
-	// 	"folder",
-	// 	"frame",
-	// 	"geojson",
-	// 	"jsonobj",
-	// 	"playlist",
-	// 	"png",
-	// 	"snapshot",
-	// 	"test",
-	// }, ids)
+	ids := []string{}
+	for _, k := range registry.GetKinds() {
+		ids = append(ids, k.ID)
+	}
+	require.Equal(t, []string{
+		"dashboard",
+		"folder",
+		"frame",
+		"geojson",
+		"jsonobj",
+		"playlist",
+		"png",
+		"snapshot",
+		"test",
+	}, ids)
 
 	// Check playlist exists
 	info, err := registry.GetInfo(models.StandardKindPlaylist)

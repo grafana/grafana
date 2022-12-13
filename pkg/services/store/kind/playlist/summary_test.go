@@ -10,7 +10,7 @@ import (
 )
 
 func TestPlaylistSummary(t *testing.T) {
-	builder := Summarizer()
+	builder := GetEntitySummaryBuilder()
 
 	// Do not parse invalid input
 	_, _, err := builder(context.Background(), "abc", []byte("{invalid json"))

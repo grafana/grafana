@@ -236,16 +236,11 @@ lerna.json @grafana/frontend-ops
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
 /kinds/ @grafana/grafana-as-code
+/pkg/codegen @grafana/grafana-as-code
+/pkg/kindsys @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
-/pkg/kindsys/summary.cue @grafana/grafana-edge-squad
-/pkg/codegen/tmpl/kind_registry_backend.tmpl @grafana/grafana-edge-squad
-/pkg/codegen/tmpl/kindgate_summary.tmpl @grafana/grafana-edge-squad
-/pkg/codegen/jenny_summarizer.go @grafana/grafana-edge-squad
-/pkg/codegen/jenny_backend_kindreg.go @grafana/grafana-edge-squad
-/pkg/codegen @grafana/grafana-as-code
-/pkg/kindsys @grafana/grafana-as-code
 
 # Specific core kinds
 /kinds/raw/ @grafana/grafana-edge-squad

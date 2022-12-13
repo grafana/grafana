@@ -7,10 +7,17 @@
       "pluralMachineName": "dashboards",
       "lineageIsGroup": false,
       "maturity": "merged",
+      "description": "A Grafana dashboard.",
+      "mimeType": "application/json",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "crd": {
+        "group": "dashboard.core.grafana.com",
+        "scope": "Namespaced",
+        "dummySchema": true
+      }
     },
     {
       "name": "Playlist",
@@ -19,10 +26,17 @@
       "pluralMachineName": "playlists",
       "lineageIsGroup": false,
       "maturity": "merged",
+      "description": "A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval.",
+      "mimeType": "application/json",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "crd": {
+        "group": "playlist.core.grafana.com",
+        "scope": "Namespaced",
+        "dummySchema": false
+      }
     },
     {
       "name": "Team",
@@ -31,10 +45,17 @@
       "pluralMachineName": "teams",
       "lineageIsGroup": false,
       "maturity": "merged",
+      "description": "A team is a named grouping of Grafana users to which access control rules may be assigned.",
+      "mimeType": "application/json",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "crd": {
+        "group": "team.core.grafana.com",
+        "scope": "Namespaced",
+        "dummySchema": false
+      }
     }
   ],
   "raw": [
@@ -45,9 +66,12 @@
       "pluralMachineName": "svgs",
       "lineageIsGroup": false,
       "maturity": "merged",
+      "description": "A single SVG (Scalable Vector Graphics) file.",
+      "mimeType": "image/svg+xml",
       "extensions": [
         "svg"
-      ]
+      ],
+      "summaryHandler": "generic"
     }
   ],
   "composable": []

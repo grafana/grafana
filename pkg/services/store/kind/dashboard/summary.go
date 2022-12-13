@@ -8,13 +8,20 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+func GetEntityKindInfo() models.EntityKindInfo {
+	return models.EntityKindInfo{
+		ID:          models.StandardKindDashboard,
+		Name:        "Dashboard",
+		Description: "Define a grafana dashboard layout",
+	}
+}
+
 // This summary does not resolve old name as UID
-func getSummarizer() kindsys.Summarizer {
+func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 	builder := NewStaticDashboardSummaryBuilder(&directLookup{}, true)
 	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
 		return builder(ctx, uid, body)

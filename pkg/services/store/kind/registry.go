@@ -5,13 +5,14 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dataframe"
 	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/geojson"
 	"github.com/grafana/grafana/pkg/services/store/kind/jsonobj"
+	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
@@ -28,7 +29,14 @@ type KindRegistry interface {
 
 func NewKindRegistry() KindRegistry {
 	kinds := make(map[string]*kindValues)
-
+	kinds[models.StandardKindPlaylist] = &kindValues{
+		info:    playlist.GetEntityKindInfo(),
+		builder: playlist.GetEntitySummaryBuilder(),
+	}
+	kinds[models.StandardKindDashboard] = &kindValues{
+		info:    dashboard.GetEntityKindInfo(),
+		builder: dashboard.GetEntitySummaryBuilder(),
+	}
 	kinds[models.StandardKindSnapshot] = &kindValues{
 		info:    snapshot.GetEntityKindInfo(),
 		builder: snapshot.GetEntitySummaryBuilder(),
@@ -54,16 +62,6 @@ func NewKindRegistry() KindRegistry {
 		builder: jsonobj.GetEntitySummaryBuilder(),
 	}
 
-	for k, val := range doNewRegistry() {
-		if _, has := kinds[k]; has {
-			// Force removal of handwritten impl above. If you hit this panic - remember to
-			// remove not just the above entry, but also the GetEntityKindInfo() func being
-			// referenced, too!
-			panic(fmt.Sprintf("duplicate entry for %s backend kind - remove the manual registration", k))
-		}
-		kinds[k] = val
-	}
-
 	// create a registry
 	reg := &registry{
 		mutex: sync.RWMutex{},
@@ -73,23 +71,12 @@ func NewKindRegistry() KindRegistry {
 	return reg
 }
 
-func makeEKI(props kindsys.SomeKindProperties) models.EntityKindInfo {
-	eki := models.EntityKindInfo{
-		ID:          props.Common().MachineName,
-		Name:        props.Common().Name,
-		Description: props.Common().Description,
-		MimeType:    props.Common().MimeType,
-	}
-	_, eki.IsRaw = props.(kindsys.RawProperties)
-	return eki
-}
-
 // TODO? This could be a zero dependency service that others are responsible for configuring
 func ProvideService(cfg *setting.Cfg, renderer rendering.Service) KindRegistry {
 	reg := NewKindRegistry()
 
 	// Register SVG support
-	// -----------------------
+	//-----------------------
 	info := svg.GetEntityKindInfo()
 	allowUnsanitizedSvgUpload := cfg != nil && cfg.Storage.AllowUnsanitizedSvgUpload
 	support := svg.GetEntitySummaryBuilder(allowUnsanitizedSvgUpload, renderer)

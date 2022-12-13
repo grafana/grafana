@@ -33,8 +33,6 @@ func main() {
 		return decl.Properties.Common().MachineName
 	})
 
-	bkkind := filepath.Join("pkg", "services", "store", "kind")
-
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
@@ -43,8 +41,6 @@ func main() {
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
-		codegen.SummarizerJenny(bkkind),
-		codegen.BackendKindRegistryJenny(bkkind, bkkind),
 		codegen.CRDTypesJenny(kindsys.GoCoreKindParentPath),
 		codegen.YamlCRDJenny(kindsys.GoCoreKindParentPath),
 		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),

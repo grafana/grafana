@@ -6,11 +6,18 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/playlist"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func getSummarizer() kindsys.Summarizer {
+func GetEntityKindInfo() models.EntityKindInfo {
+	return models.EntityKindInfo{
+		ID:          models.StandardKindPlaylist,
+		Name:        "Playlist",
+		Description: "Cycle though a collection of dashboards automatically",
+	}
+}
+
+func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 	return summaryBuilder
 }
 

@@ -16,7 +16,7 @@ func TestReadSummaries(t *testing.T) {
 	devdash := "../../../../../devenv/dev-dashboards/panel-graph/"
 
 	ctx := context.Background()
-	reader := Summarizer()
+	reader := GetEntitySummaryBuilder()
 	failed := make([]string, 0, 10)
 
 	err := filepath.Walk(devdash,

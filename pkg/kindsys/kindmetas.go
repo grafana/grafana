@@ -23,7 +23,6 @@ type CommonProperties struct {
 type RawProperties struct {
 	CommonProperties
 	Extensions     []string `json:"extensions"`
-	SummaryHandler string   `json:"summaryHandler"`
 }
 
 func (m RawProperties) _private() {}
@@ -41,7 +40,6 @@ func (m RawProperties) Common() CommonProperties {
 type CoreStructuredProperties struct {
 	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
-	SummaryHandler string                 `json:"summaryHandler"`
 	CRD            struct {
 		Group string `json:"group"`
 		Scope string `json:"scope"`
