@@ -63,9 +63,9 @@ describe('<SpanGraph>', () => {
 
   it('renders <TickLabels /> with the correct value next to each tick', async () => {
     render(<TickLabels numTicks={5} duration={1} />);
-    expect(await screen.findByText(/0.2/)).toBeInTheDocument();
-    expect(await screen.findByText(/0.4/)).toBeInTheDocument();
-    expect(await screen.findByText(/0.6/)).toBeInTheDocument();
-    expect(await screen.findByText(/0.8/)).toBeInTheDocument();
+    expect(await screen.findAllByText(/0.2/)).toBeTruthy();
+    expect(await screen.findAllByText(/0.4/)).toBeTruthy();
+    expect(await screen.findAllByText(/0.6/)).toBeTruthy();
+    expect(await screen.findAllByText(/0.8/)).toBeTruthy();
   });
 });
