@@ -34,13 +34,18 @@ func (s *httpHelper) showClientInfo(c *models.ReqContext) response.Response {
 		return response.JSON(200, info)
 	}
 	return response.JSON(500, map[string]interface{}{
-		"error": "no client initalized",
+		"error": "no client initialized",
 	})
 }
 
 func (s *httpHelper) doProxy(c *models.ReqContext) {
+	// TODO... this does not yet do a real proxy
 	if s.access.sys != nil {
-		s.access.sys.doProxy(c)
+		if s.access.sys.err == nil {
+			s.access.sys.doProxy(c)
+		} else {
+			c.Resp.WriteHeader(500)
+		}
 		return
 	}
 	_, _ = c.Resp.Write([]byte("??"))
