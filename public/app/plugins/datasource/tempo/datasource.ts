@@ -176,7 +176,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (targets.traceql?.length) {
       try {
         const queryValue = targets.traceql[0].query;
-        const hexOnlyRegex = /^[0-9A-Fa-f]+$/;
+        const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
         // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
         if (queryValue.trim().match(hexOnlyRegex)) {
           // There's only hex characters so let's assume that this is a trace ID
@@ -262,16 +262,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       } else {
         subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
       }
-    }
-
-    if (targets.traceId?.length > 0) {
-      reportInteraction('grafana_traces_traceID_queried', {
-        datasourceType: 'tempo',
-        app: options.app ?? '',
-        query: targets.traceId[0].query ?? '',
-      });
-
-      subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
     }
 
     return merge(...subQueries);
