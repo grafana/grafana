@@ -144,7 +144,6 @@ export const QueryWrapper: FC<Props> = ({
               currentPanel={pluginId}
               thresholds={thresholds}
               thresholdsType={thresholdsType}
-              onThresholdsChange={(thresholds) => onChangeThreshold(thresholds, index)}
             />
           ) : null
         }

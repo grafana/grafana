@@ -18,7 +18,6 @@ interface Props {
   changePanel: (panel: SupportedPanelPlugins) => void;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphTresholdsStyleMode;
-  onThresholdsChange: (thresholds: ThresholdsConfig) => void;
 }
 
 type PanelFieldConfig = FieldConfigSource<GraphFieldConfig>;
@@ -27,7 +26,6 @@ export const VizWrapper: FC<Props> = ({
   data,
   currentPanel,
   changePanel,
-  onThresholdsChange,
   thresholds,
   thresholdsType = GraphTresholdsStyleMode.Line,
 }) => {
@@ -60,10 +58,9 @@ export const VizWrapper: FC<Props> = ({
   const context: PanelContext = useMemo(
     () => ({
       eventBus: appEvents,
-      canEditThresholds: true,
-      onThresholdsChange: onThresholdsChange,
+      canEditThresholds: false,
     }),
-    [onThresholdsChange]
+    []
   );
 
   if (!options || !data) {
