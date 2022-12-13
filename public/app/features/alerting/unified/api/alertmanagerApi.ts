@@ -9,7 +9,7 @@ import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasou
 
 import { alertingApi } from './alertingApi';
 
-const limitToSuccessfullyAppliedAMs = 10;
+const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 10;
 
 export interface AlertmanagersChoiceResponse {
   alertmanagersChoice: AlertmanagerChoice;
@@ -43,7 +43,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: () => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(
           GRAFANA_RULES_SOURCE_NAME
-        )}/config/api/v1/alerts/successfully-applied?limit=${limitToSuccessfullyAppliedAMs}`,
+        )}/config/api/v1/alerts/successfully-applied?limit=${LIMIT_TO_SUCCESSFULLY_APPLIED_AMS}`,
       }),
     }),
   }),
