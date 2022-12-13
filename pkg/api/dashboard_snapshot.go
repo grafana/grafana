@@ -75,7 +75,7 @@ func createExternalDashboardSnapshot(cmd models.CreateDashboardSnapshotCommand) 
 	return &createSnapshotResponse, nil
 }
 
-func createOriginalDashboardURL(appURL string, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (string, error) {
+func createOriginalDashboardURL(appURL string, cmd *models.CreateDashboardSnapshotCommand) (string, error) {
 	dashUID := cmd.Dashboard.Get("uid").MustString("")
 	if ok := util.IsValidShortUID(dashUID); !ok {
 		return "", fmt.Errorf("invalid dashboard UID")
