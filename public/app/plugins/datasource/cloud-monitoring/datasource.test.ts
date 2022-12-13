@@ -3,7 +3,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
 import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
 import Datasource from './datasource';
-import { CloudMonitoringQuery, EditorMode, MetricKind, QueryType } from './types';
+import { CloudMonitoringQuery, EditorMode, MetricKind, PreprocessorType, QueryType } from './types';
 
 describe('Cloud Monitoring Datasource', () => {
   describe('interpolateVariablesInQueries', () => {
@@ -28,37 +28,142 @@ describe('Cloud Monitoring Datasource', () => {
   });
 
   describe('migrateQuery', () => {
-    it('should migrate the query to the new format', () => {
-      const mockInstanceSettings = createMockInstanceSetttings();
-      const ds = new Datasource(mockInstanceSettings);
-      const oldQuery: CloudMonitoringQuery = {
-        refId: 'A',
-        queryType: QueryType.METRICS,
-        intervalMs: 1000,
-        metricQuery: {
-          metricType: 'cloudsql_database',
-          projectName: 'project',
-          filters: [],
-          groupBys: [],
-          aliasBy: '',
-          alignmentPeriod: 'cloud-monitoring-auto',
-          crossSeriesReducer: 'REDUCE_NONE',
-          perSeriesAligner: 'ALIGN_MEAN',
-          metricKind: MetricKind.DELTA,
-          valueType: 'DOUBLE',
-          query: '',
-          editorMode: EditorMode.Visual,
+    describe('should migrate the query to the new format', () => {
+      [
+        {
+          description: 'a list query with a metric type and no filters',
+          input: {
+            refId: 'A',
+            queryType: QueryType.METRICS,
+            intervalMs: 1000,
+            metricQuery: {
+              metricType: 'cloudsql_database',
+              projectName: 'project',
+              filters: [],
+              groupBys: [],
+              aliasBy: '',
+              alignmentPeriod: 'cloud-monitoring-auto',
+              crossSeriesReducer: 'REDUCE_NONE',
+              perSeriesAligner: 'ALIGN_MEAN',
+              metricKind: MetricKind.DELTA,
+              valueType: 'DOUBLE',
+              query: '',
+              editorMode: EditorMode.Visual,
+            },
+          },
+          expected: {
+            alignmentPeriod: 'cloud-monitoring-auto',
+            crossSeriesReducer: 'REDUCE_NONE',
+            filters: ['metric.type', '=', 'cloudsql_database'],
+            groupBys: [],
+            perSeriesAligner: 'ALIGN_MEAN',
+            projectName: 'project',
+          },
         },
-      };
-      const newQuery = ds.migrateQuery(oldQuery);
-      expect(newQuery.timeSeriesList).toEqual({
-        alignmentPeriod: 'cloud-monitoring-auto',
-        crossSeriesReducer: 'REDUCE_NONE',
-        filters: ['metric.type', '=', 'cloudsql_database'],
-        groupBys: [],
-        perSeriesAligner: 'ALIGN_MEAN',
-        projectName: 'project',
-      });
+        {
+          description: 'a list query with filters',
+          input: {
+            refId: 'A',
+            queryType: QueryType.METRICS,
+            intervalMs: 1000,
+            metricQuery: {
+              metricType: 'cloudsql_database',
+              projectName: 'project',
+              filters: ['foo', '=', 'bar'],
+              groupBys: [],
+              aliasBy: '',
+              alignmentPeriod: 'cloud-monitoring-auto',
+              crossSeriesReducer: 'REDUCE_NONE',
+              perSeriesAligner: 'ALIGN_MEAN',
+              metricKind: MetricKind.DELTA,
+              valueType: 'DOUBLE',
+              query: '',
+              editorMode: EditorMode.Visual,
+            },
+          },
+          expected: {
+            alignmentPeriod: 'cloud-monitoring-auto',
+            crossSeriesReducer: 'REDUCE_NONE',
+            filters: ['foo', '=', 'bar', 'AND', 'metric.type', '=', 'cloudsql_database'],
+            groupBys: [],
+            perSeriesAligner: 'ALIGN_MEAN',
+            projectName: 'project',
+          },
+        },
+        {
+          description: 'a list query with preprocessor',
+          input: {
+            refId: 'A',
+            queryType: QueryType.METRICS,
+            intervalMs: 1000,
+            metricQuery: {
+              metricType: 'cloudsql_database',
+              projectName: 'project',
+              filters: ['foo', '=', 'bar'],
+              groupBys: [],
+              aliasBy: '',
+              alignmentPeriod: 'cloud-monitoring-auto',
+              crossSeriesReducer: 'REDUCE_NONE',
+              perSeriesAligner: 'ALIGN_MEAN',
+              metricKind: MetricKind.DELTA,
+              valueType: 'DOUBLE',
+              query: '',
+              editorMode: EditorMode.Visual,
+              preprocessor: PreprocessorType.Delta,
+            },
+          },
+          expected: {
+            alignmentPeriod: 'cloud-monitoring-auto',
+            crossSeriesReducer: 'REDUCE_NONE',
+            filters: ['foo', '=', 'bar', 'AND', 'metric.type', '=', 'cloudsql_database'],
+            groupBys: [],
+            projectName: 'project',
+            perSeriesAligner: 'ALIGN_DELTA',
+            secondaryAlignmentPeriod: 'cloud-monitoring-auto',
+            secondaryCrossSeriesReducer: 'REDUCE_NONE',
+            secondaryGroupBys: [],
+            secondaryPerSeriesAligner: 'ALIGN_MEAN',
+          },
+        },
+        {
+          description: 'a mql query',
+          input: {
+            refId: 'A',
+            queryType: QueryType.METRICS,
+            intervalMs: 1000,
+            metricQuery: {
+              metricType: 'cloudsql_database',
+              projectName: 'project',
+              filters: ['foo', '=', 'bar'],
+              groupBys: [],
+              aliasBy: '',
+              alignmentPeriod: 'cloud-monitoring-auto',
+              crossSeriesReducer: 'REDUCE_NONE',
+              perSeriesAligner: 'ALIGN_MEAN',
+              metricKind: MetricKind.DELTA,
+              valueType: 'DOUBLE',
+              query: 'test query',
+              editorMode: EditorMode.MQL,
+            },
+          },
+          expected: {
+            projectName: 'project',
+            query: 'test query',
+          },
+        },
+      ].forEach((t) =>
+        it(t.description, () => {
+          const mockInstanceSettings = createMockInstanceSetttings();
+          const ds = new Datasource(mockInstanceSettings);
+          const oldQuery: CloudMonitoringQuery = t.input;
+          const newQuery = ds.migrateQuery(oldQuery);
+          if (t.input.metricQuery.editorMode === 'mql') {
+            expect(newQuery.timeSeriesQuery).toEqual(t.expected);
+          } else {
+            expect(newQuery.timeSeriesList).toEqual(t.expected);
+          }
+        })
+      );
     });
   });
 });
