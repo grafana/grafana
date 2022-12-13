@@ -88,7 +88,7 @@ export interface MatcherConfig<TOptions = any> {
 /**
  * @public
  */
- export enum SpecialValue {
+export enum SpecialValue {
   True = 'true',
   False = 'false',
   Null = 'null',

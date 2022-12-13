@@ -116,8 +116,8 @@ describe('Grouping to Matrix', () => {
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
-        { name: 'Time', type: FieldType.time, values: [1000] },
-        { name: 'Value', type: FieldType.number, values: [1] },
+        { name: 'Time', type: FieldType.time, values: [1000, 1001] },
+        { name: 'Value', type: FieldType.number, values: [1, 2] },
       ],
     });
 
@@ -127,13 +127,19 @@ describe('Grouping to Matrix', () => {
         {
           name: 'Time\\Time',
           type: FieldType.string,
-          values: new ArrayVector([1000]),
+          values: new ArrayVector([1000, 1001]),
           config: {},
         },
         {
           name: '1000',
           type: FieldType.number,
           values: new ArrayVector([1, null]),
+          config: {},
+        },
+        {
+          name: '1001',
+          type: FieldType.number,
+          values: new ArrayVector([null, 2]),
           config: {},
         },
       ];
