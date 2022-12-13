@@ -9,7 +9,6 @@ import (
 	"mime/multipart"
 	"os"
 
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -22,6 +21,9 @@ import (
 var (
 	TelegramAPIURL = "https://api.telegram.org/bot%s/%s"
 )
+
+// Telegram supports 4096 chars max - from https://limits.tginfo.me/en.
+const telegramMaxMessageLenRunes = 4096
 
 // TelegramNotifier is responsible for sending
 // alert notifications to Telegram.
@@ -161,9 +163,9 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 	// Telegram supports 4096 chars max
-	messageText, truncated := notify.Truncate(tmpl(tn.settings.Message), 4096)
+	messageText, truncated := TruncateInRunes(tmpl(tn.settings.Message), telegramMaxMessageLenRunes)
 	if truncated {
-		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.settings.Message)
+		tn.log.Warn("Truncated message", "runes", telegramMaxMessageLenRunes)
 	}
 
 	m := make(map[string]string)
