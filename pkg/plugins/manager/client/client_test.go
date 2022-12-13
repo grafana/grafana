@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -71,8 +72,142 @@ func TestQueryData(t *testing.T) {
 	})
 }
 
+func TestCallResource(t *testing.T) {
+	registry := fakes.NewFakePluginRegistry()
+	p := &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "pid",
+		},
+	}
+
+	const backendResponse = "I am the backend"
+
+	t.Run("Should strip request and response hop-by-hop headers", func(t *testing.T) {
+		reqHeaders := map[string][]string{
+			"Connection":       {"close, TE"},
+			"Te":               {"foo", "bar, trailers"},
+			"Proxy-Connection": {"should be deleted"},
+			"Upgrade":          {"foo"},
+			"X-Custom":         {"should not be deleted"},
+		}
+
+		resHeaders := make(map[string][]string, len(reqHeaders))
+		for k, v := range reqHeaders {
+			resHeaders[k] = v
+		}
+
+		req := &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "pid",
+			},
+			Headers: reqHeaders,
+		}
+
+		responses := []*backend.CallResourceResponse{}
+		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+			responses = append(responses, res)
+			return nil
+		})
+
+		var actualReq *backend.CallResourceRequest
+		p.RegisterClient(&fakePluginBackend{
+			crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				actualReq = req
+				return sender.Send(&backend.CallResourceResponse{
+					Headers: resHeaders,
+					Status:  http.StatusOK,
+					Body:    []byte(backendResponse),
+				})
+			},
+		})
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry, &config.Cfg{})
+
+		err = client.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+
+		require.NotNil(t, actualReq)
+		require.Len(t, actualReq.Headers, 1)
+		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
+
+		require.Len(t, responses, 1)
+		res := responses[0]
+		require.Equal(t, http.StatusOK, res.Status)
+		require.Equal(t, []byte(backendResponse), res.Body)
+		require.Len(t, res.Headers, 1)
+		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
+	})
+
+	t.Run("Should strip request and response headers present in Connection", func(t *testing.T) {
+		//nolint:gosec
+		const fakeConnectionToken = "X-fake-Connection-Token"
+
+		// someConnHeader is some arbitrary header to be declared as a hop-by-hop header
+		// in the Request's Connection header.
+		const someConnHeader = "X-Some-Conn-Header"
+
+		reqHeaders := map[string][]string{
+			"Connection":        {"Upgrade, " + fakeConnectionToken, someConnHeader},
+			someConnHeader:      {"should be deleted"},
+			fakeConnectionToken: {"should be deleted"},
+			"X-Custom":          {"should not be deleted"},
+		}
+
+		resHeaders := make(map[string][]string, len(reqHeaders))
+		for k, v := range reqHeaders {
+			resHeaders[k] = v
+		}
+
+		req := &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "pid",
+			},
+			Headers: reqHeaders,
+		}
+
+		responses := []*backend.CallResourceResponse{}
+		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+			responses = append(responses, res)
+			return nil
+		})
+
+		var actualReq *backend.CallResourceRequest
+		p.RegisterClient(&fakePluginBackend{
+			crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				actualReq = req
+				return sender.Send(&backend.CallResourceResponse{
+					Headers: resHeaders,
+					Status:  http.StatusOK,
+					Body:    []byte(backendResponse),
+				})
+			},
+		})
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry, &config.Cfg{})
+
+		err = client.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+
+		require.NotNil(t, actualReq)
+		require.Len(t, actualReq.Headers, 1)
+		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
+
+		require.Len(t, responses, 1)
+		res := responses[0]
+		require.Equal(t, http.StatusOK, res.Status)
+		require.Equal(t, []byte(backendResponse), res.Body)
+		require.Len(t, res.Headers, 1)
+		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
+	})
+}
+
 type fakePluginBackend struct {
 	qdr backend.QueryDataHandlerFunc
+	crr backend.CallResourceHandlerFunc
 
 	backendplugin.Plugin
 }
@@ -82,6 +217,14 @@ func (f *fakePluginBackend) QueryData(ctx context.Context, req *backend.QueryDat
 		return f.qdr(ctx, req)
 	}
 	return backend.NewQueryDataResponse(), nil
+}
+
+func (f *fakePluginBackend) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if f.crr != nil {
+		return f.crr(ctx, req, sender)
+	}
+
+	return nil
 }
 
 func (f *fakePluginBackend) IsDecommissioned() bool {
