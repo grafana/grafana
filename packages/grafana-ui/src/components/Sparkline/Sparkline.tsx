@@ -159,11 +159,17 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       }
 
       const scaleKey = config.unit || '__fixed';
+
       builder.addScale({
         scaleKey,
         orientation: ScaleOrientation.Vertical,
         direction: ScaleDirection.Up,
-        range: () => this.getYRange(field),
+        range: () => {
+          const val = this.getYRange(field);
+
+          console.log(val);
+          return val;
+        },
       });
 
       builder.addAxis({
