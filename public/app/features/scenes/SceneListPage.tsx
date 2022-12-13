@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
-import { Card } from '@grafana/ui';
+import { Card, LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 // Types
@@ -26,8 +26,16 @@ export const SceneListPage: FC<Props> = ({}) => {
           <h5>Test scenes</h5>
           <Stack direction="column" gap={0}>
             {scenes.map((scene) => (
-              <Card href={`/scenes/${scene.state.title}`} key={scene.state.title}>
-                <Card.Heading>{scene.state.title}</Card.Heading>
+              <Card key={scene.title}>
+                <Card.Heading>{scene.title}</Card.Heading>
+                <Card.Actions>
+                  <LinkButton size="sm" href={`/scenes/${scene.title}`}>
+                    Open as standalone scene
+                  </LinkButton>
+                  <LinkButton size="sm" variant="secondary" href={`/scenes/embedded/${scene.title}`}>
+                    Open as embedded scene
+                  </LinkButton>
+                </Card.Actions>
               </Card>
             ))}
           </Stack>

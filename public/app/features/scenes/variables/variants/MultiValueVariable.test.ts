@@ -10,6 +10,17 @@ export interface ExampleVariableState extends MultiValueVariableState {
 }
 
 class ExampleVariable extends MultiValueVariable<ExampleVariableState> {
+  public constructor(initialState: Partial<ExampleVariableState>) {
+    super({
+      type: 'custom',
+      optionsToReturn: [],
+      value: '',
+      text: '',
+      name: '',
+      options: [],
+      ...initialState,
+    });
+  }
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     return of(this.state.optionsToReturn);
   }
