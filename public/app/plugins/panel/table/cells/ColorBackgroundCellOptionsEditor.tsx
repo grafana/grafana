@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { BackgroundDisplayMode, TableCellSubOptions } from '@grafana/schema';
+import { BackgroundDisplayMode } from '@grafana/schema';
 import { HorizontalGroup, Select, Field } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../models.gen';

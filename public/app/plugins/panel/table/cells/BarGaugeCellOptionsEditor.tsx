@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { BarGaugeDisplayMode, TableCellSubOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 import { Field, HorizontalGroup, Select } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../models.gen';
