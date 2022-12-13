@@ -15,14 +15,14 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import AccordianKeyValues, { KeyValuesSummary } from './AccordianKeyValues';
+import AccordianKeyValues, { KeyValuesSummary, AccordianKeyValuesProps } from './AccordianKeyValues';
 
 const tags = [
   { key: 'span.kind', value: 'client' },
   { key: 'omg', value: 'mos-def' },
 ];
 
-const setupAccordian = (propOverrides) => {
+const setupAccordian = (propOverrides?: AccordianKeyValuesProps) => {
   const props = {
     compact: false,
     data: tags,
@@ -31,10 +31,10 @@ const setupAccordian = (propOverrides) => {
     onToggle: jest.fn(),
     ...propOverrides,
   };
-  return render(<AccordianKeyValues {...props} />);
+  return render(<AccordianKeyValues {...(props as AccordianKeyValuesProps)} />);
 };
 
-const setupKeyValues = (propOverrides) => {
+const setupKeyValues = (propOverrides?: AccordianKeyValuesProps) => {
   const props = {
     data: tags,
     ...propOverrides,
@@ -48,7 +48,7 @@ describe('KeyValuesSummary tests', () => {
   });
 
   it('returns `null` when props.data is empty', () => {
-    setupKeyValues({ data: null });
+    setupKeyValues({ data: null } as unknown as AccordianKeyValuesProps);
 
     expect(screen.queryAllByRole('table')).toHaveLength(0);
     expect(screen.queryAllByRole('row')).toHaveLength(0);
@@ -95,7 +95,7 @@ describe('AccordianKeyValues test', () => {
   });
 
   it('renders the summary instead of the table when it is not expanded', () => {
-    setupAccordian({ isOpen: false });
+    setupAccordian({ isOpen: false } as AccordianKeyValuesProps);
 
     expect(
       screen.getByRole('switch', { name: 'test accordian: span.kind = client omg = mos-def' })

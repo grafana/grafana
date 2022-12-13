@@ -17,6 +17,7 @@ jest.mock('../utils');
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TraceSpanReference } from 'src/types/trace';
 
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
@@ -24,11 +25,11 @@ import { formatDuration } from '../utils';
 
 import DetailState from './DetailState';
 
-import SpanDetail, { getAbsoluteTime } from './index';
+import SpanDetail, { getAbsoluteTime, SpanDetailProps } from './index';
 
 describe('<SpanDetail>', () => {
   // use `transformTraceData` on a fake trace to get a fully processed span
-  const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 })).spans[0];
+  const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 }))!.spans[0];
   const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
   const traceStartTime = 5;
   const topOfExploreViewRef = jest.fn();
@@ -78,7 +79,7 @@ describe('<SpanDetail>', () => {
       },
       spanID: 'span1',
       traceID: 'trace1',
-    },
+    } as TraceSpanReference,
     {
       refType: 'CHILD_OF',
       span: {
@@ -91,7 +92,7 @@ describe('<SpanDetail>', () => {
       },
       spanID: 'span4',
       traceID: 'trace1',
-    },
+    } as TraceSpanReference,
     {
       refType: 'CHILD_OF',
       span: {
@@ -104,11 +105,11 @@ describe('<SpanDetail>', () => {
       },
       spanID: 'span5',
       traceID: 'trace2',
-    },
+    } as TraceSpanReference,
   ];
 
   beforeEach(() => {
-    formatDuration.mockReset();
+    jest.mocked(formatDuration).mockReset();
     props.tagsToggle.mockReset();
     props.processToggle.mockReset();
     props.logsToggle.mockReset();
@@ -116,24 +117,24 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders without exploding', () => {
-    expect(() => render(<SpanDetail {...props} />)).not.toThrow();
+    expect(() => render(<SpanDetail {...(props as unknown as SpanDetailProps)} />)).not.toThrow();
   });
 
   it('shows the operation name', () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
   });
 
   it('lists the service name, duration and start time', () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByText('Duration:')).toBeInTheDocument();
     expect(screen.getByText('Service:')).toBeInTheDocument();
     expect(screen.getByText('Start Time:')).toBeInTheDocument();
   });
 
   it('start time shows the absolute time', () => {
-    render(<SpanDetail {...props} />);
-    const absoluteTime = getAbsoluteTime(span.startTime);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    const absoluteTime = getAbsoluteTime(span.startTime, 'browser');
     expect(
       screen.getByText((text) => {
         return text.includes(absoluteTime);
@@ -142,19 +143,19 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders the span tags', async () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Attributes/ }));
     expect(props.tagsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the process tags', async () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Resource/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the logs', async () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Events/ }));
     expect(props.logsToggle).toHaveBeenLastCalledWith(span.spanID);
     await userEvent.click(screen.getByRole('switch', { name: /oh the log/ }));
@@ -162,19 +163,19 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders the warnings', async () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Warnings/ }));
     expect(props.warningsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the references', async () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /References/ }));
     expect(props.referencesToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders deep link URL', () => {
-    render(<SpanDetail {...props} />);
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(document.getElementsByTagName('a').length).toBeGreaterThan(1);
   });
 });
