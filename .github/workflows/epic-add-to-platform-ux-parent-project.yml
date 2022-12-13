@@ -1,4 +1,4 @@
-name: When epic issues changed, check if part of specified child projects and update on specified parent project
+name: When epic issues changed in Platform UX squad porjects, check if epic is part of specified child projects and update on Platform UX parent project
 
 on:
   issues:
