@@ -57,7 +57,7 @@ export default function AlertmanagerConfigSelector({
     <>
       {!isFetchingValidAmConfigs && validAmConfigs && validAmConfigs.length > 0 ? (
         <>
-          <div>Select a previous working configuration</div>
+          <div>Select a previous working configuration until you fix this error:</div>
 
           <Select
             className={styles.container}
