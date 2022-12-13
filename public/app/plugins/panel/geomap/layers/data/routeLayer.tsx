@@ -35,7 +35,7 @@ import tinycolor from 'tinycolor2';
 // Configuration options for Circle overlays
 export interface RouteConfig {
   style: StyleConfig;
-  arrow?: number;
+  arrow?: 0 | 1 | -1;
 }
 
 const defaultOptions: RouteConfig = {
@@ -101,16 +101,16 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
         const styles = [];
         const geom = feature.getGeometry();
-
+        const opacity = style.config.opacity ?? 1;
         if (geom instanceof SimpleGeometry && dims.color) {
           const coordinates = geom.getCoordinates();
           if (coordinates) {
             for (let i = 0; i < coordinates.length - 1; i++) {
               const color1 = tinycolor(theme.visualization.getColorByName(dims.color.get(i)))
-                .setAlpha(style.config.opacity ?? 1)
+                .setAlpha(opacity)
                 .toString();
               const color2 = tinycolor(theme.visualization.getColorByName(dims.color.get(i + 1)))
-                .setAlpha(style.config.opacity ?? 1)
+                .setAlpha(opacity)
                 .toString();
 
               const flowStyle = new FlowLine({
