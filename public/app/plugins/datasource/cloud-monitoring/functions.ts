@@ -35,8 +35,8 @@ export const getMetricTypes = (
 };
 
 export const getAlignmentOptionsByMetric = (
-  metricValueType: string,
-  metricKind: string,
+  metricValueType?: string,
+  metricKind?: string,
   preprocessor?: PreprocessorType
 ) => {
   if (preprocessor && preprocessor === PreprocessorType.Rate) {
@@ -78,7 +78,7 @@ export const getAlignmentPickerData = (
   preprocessor?: PreprocessorType
 ) => {
   const templateSrv: TemplateSrv = getTemplateSrv();
-  const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!, preprocessor!).map((option) => ({
+  const alignOptions = getAlignmentOptionsByMetric(valueType, metricKind, preprocessor).map((option) => ({
     ...option,
     label: option.text,
   }));
