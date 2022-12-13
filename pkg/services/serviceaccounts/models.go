@@ -37,26 +37,12 @@ type CreateServiceAccountForm struct {
 	IsDisabled *bool `json:"isDisabled"`
 }
 
-func (f *CreateServiceAccountForm) Validate() error {
-	if f.Role == nil {
-		return ErrServiceAccountInvalidRole
-	}
-	return nil
-}
-
 // swagger:model
 type UpdateServiceAccountForm struct {
 	Name             *string       `json:"name"`
 	ServiceAccountID int64         `json:"serviceAccountId"`
 	Role             *org.RoleType `json:"role"`
 	IsDisabled       *bool         `json:"isDisabled"`
-}
-
-func (f *UpdateServiceAccountForm) Validate() error {
-	if f.Name == nil && f.Role == nil && f.IsDisabled == nil {
-		return ErrServiceAccountUpdateForm
-	}
-	return nil
 }
 
 // swagger: model

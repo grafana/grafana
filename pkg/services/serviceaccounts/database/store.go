@@ -22,7 +22,7 @@ import (
 )
 
 type ServiceAccountsStoreImpl struct {
-	Cfg           *setting.Cfg
+	cfg           *setting.Cfg
 	sqlStore      db.DB
 	apiKeyService apikey.Service
 	kvStore       kvstore.KVStore
@@ -34,7 +34,7 @@ type ServiceAccountsStoreImpl struct {
 func ProvideServiceAccountsStore(cfg *setting.Cfg, store db.DB, apiKeyService apikey.Service,
 	kvStore kvstore.KVStore, userService user.Service, orgService org.Service) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
-		Cfg:           cfg,
+		cfg:           cfg,
 		sqlStore:      store,
 		apiKeyService: apiKeyService,
 		kvStore:       kvStore,
@@ -109,9 +109,6 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
 	orgId, serviceAccountId int64,
 	saForm *serviceaccounts.UpdateServiceAccountForm,
 ) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	if err := saForm.Validate(); err != nil {
-		return nil, err
-	}
 	updatedUser := &serviceaccounts.ServiceAccountProfileDTO{}
 
 	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -119,6 +116,10 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
 		updatedUser, err = s.RetrieveServiceAccount(ctx, orgId, serviceAccountId)
 		if err != nil {
 			return err
+		}
+
+		if saForm.Name == nil && saForm.Role == nil && saForm.IsDisabled == nil {
+			return nil
 		}
 
 		updateTime := time.Now()
@@ -308,7 +309,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				s.sqlStore.GetDialect().Quote("user"),
 				s.sqlStore.GetDialect().BooleanStr(true)))
 
-		if !accesscontrol.IsDisabled(s.Cfg) {
+		if !accesscontrol.IsDisabled(s.cfg) {
 			acFilter, err := accesscontrol.Filter(query.SignedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 			if err != nil {
 				return err

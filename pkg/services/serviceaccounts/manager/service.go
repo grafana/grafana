@@ -145,9 +145,6 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
 	}
-	if err := saForm.Validate(); err != nil {
-		return nil, err
-	}
 	return sa.store.CreateServiceAccount(ctx, orgID, saForm)
 }
 
@@ -188,9 +185,6 @@ func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgI
 	if err := validServiceAccountID(serviceAccountID); err != nil {
 		return nil, err
 	}
-	if err := saForm.Validate(); err != nil {
-		return nil, err
-	}
 	return sa.store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
@@ -226,7 +220,6 @@ func (sa *ServiceAccountsService) DeleteServiceAccountToken(ctx context.Context,
 	return sa.store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
-// migration calls
 func (sa *ServiceAccountsService) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
@@ -241,7 +234,6 @@ func (sa *ServiceAccountsService) HideApiKeysTab(ctx context.Context, orgID int6
 	return sa.store.HideApiKeysTab(ctx, orgID)
 }
 
-// MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
 	if err := validOrgID(orgID); err != nil {
 		return err

@@ -174,9 +174,9 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.Cfg.AutoAssignOrg = true
-			store.Cfg.AutoAssignOrgId = 1
-			store.Cfg.AutoAssignOrgRole = "Viewer"
+			store.cfg.AutoAssignOrg = true
+			store.cfg.AutoAssignOrgId = 1
+			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 			key := tests.SetupApiKey(t, db, c.key)
@@ -262,9 +262,9 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.Cfg.AutoAssignOrg = true
-			store.Cfg.AutoAssignOrgId = 1
-			store.Cfg.AutoAssignOrgRole = "Viewer"
+			store.cfg.AutoAssignOrg = true
+			store.cfg.AutoAssignOrgId = 1
+			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
@@ -335,9 +335,9 @@ func TestStore_RevertApiKey(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.Cfg.AutoAssignOrg = true
-			store.Cfg.AutoAssignOrgId = 1
-			store.Cfg.AutoAssignOrgRole = "Viewer"
+			store.cfg.AutoAssignOrg = true
+			store.cfg.AutoAssignOrgId = 1
+			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
