@@ -81,9 +81,7 @@ export const SharePublicDashboard = (props: Props) => {
     handleSubmit,
     watch,
     register,
-    setValue,
-    getValues,
-    formState: { touchedFields },
+    formState: { dirtyFields },
   } = useForm<SharePublicDashboardInputs>({
     defaultValues: {
       publicAcknowledgment: false,
@@ -129,8 +127,7 @@ export const SharePublicDashboard = (props: Props) => {
       isLoading ||
       isFetching ||
       isGetError ||
-      //CHEQUAR QUE CAMBIA. SINO USAR FORM
-      (!publicDashboardPersisted(publicDashboard) && !touchedFields.enabledSwitch),
+      (!publicDashboardPersisted(publicDashboard) && !dirtyFields.enabledSwitch),
     [
       hasWritePermissions,
       acknowledged,
@@ -139,7 +136,7 @@ export const SharePublicDashboard = (props: Props) => {
       isGetError,
       publicDashboard,
       isFetching,
-      touchedFields.enabledSwitch,
+      dirtyFields.enabledSwitch,
     ]
   );
 
@@ -222,9 +219,6 @@ export const SharePublicDashboard = (props: Props) => {
               register={register}
               dashboard={props.dashboard}
               disabled={!hasWritePermissions || isLoading || isGetError}
-              onEnabledSwitchClick={() => {
-                setValue('enabledSwitch', !getValues('enabledSwitch'), { shouldTouch: true });
-              }}
             />
             {publicDashboardPersisted(publicDashboard) && watch('enabledSwitch') && (
               <Field label="Link URL" className={styles.publicUrl}>

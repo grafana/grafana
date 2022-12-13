@@ -17,12 +17,10 @@ export const Configuration = ({
   disabled,
   dashboard,
   register,
-  onEnabledSwitchClick,
 }: {
   disabled: boolean;
   dashboard: DashboardModel;
   register: UseFormRegister<SharePublicDashboardInputs>;
-  onEnabledSwitchClick: () => void;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
@@ -61,7 +59,6 @@ export const Configuration = ({
                   }),
               })}
               data-testid={selectors.EnableSwitch}
-              onClick={onEnabledSwitchClick}
             />
           </Layout>
         </VerticalGroup>
