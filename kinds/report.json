@@ -35,6 +35,18 @@
         0,
         0
       ]
+    },
+    {
+      "name": "User",
+      "pluralName": "Users",
+      "machineName": "user",
+      "pluralMachineName": "users",
+      "lineageIsGroup": false,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
     }
   ],
   "raw": [
