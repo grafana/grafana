@@ -102,16 +102,23 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         const styles = [];
         const geom = feature.getGeometry();
         const opacity = style.config.opacity ?? 1;
-        if (geom instanceof SimpleGeometry && dims.color) {
+        if (geom instanceof SimpleGeometry) {
           const coordinates = geom.getCoordinates();
           if (coordinates) {
             for (let i = 0; i < coordinates.length - 1; i++) {
-              const color1 = tinycolor(theme.visualization.getColorByName(dims.color.get(i)))
+              const color1 = tinycolor(
+                theme.visualization.getColorByName((dims.color && dims.color.get(i)) ?? style.base.color)
+              )
                 .setAlpha(opacity)
                 .toString();
-              const color2 = tinycolor(theme.visualization.getColorByName(dims.color.get(i + 1)))
+              const color2 = tinycolor(
+                theme.visualization.getColorByName((dims.color && dims.color.get(i + 1)) ?? style.base.color)
+              )
                 .setAlpha(opacity)
                 .toString();
+
+              const arrowSize1 = (dims.size && dims.size.get(i)) ?? style.base.size;
+              const arrowSize2 = (dims.size && dims.size.get(i + 1)) ?? style.base.size;
 
               const flowStyle = new FlowLine({
                 visible: true,
@@ -120,14 +127,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 color2: color2,
                 width: (dims.size && dims.size.get(i)) ?? style.base.size,
                 width2: (dims.size && dims.size.get(i + 1)) ?? style.base.size,
-                arrowSize: (dims.size && Math.max(dims.size.get(i), dims.size.get(i + 1)) * 1.5) ?? style.base.size,
               });
               if (config.arrow) {
                 flowStyle.setArrow(config.arrow);
                 if (config.arrow > 0) {
                   flowStyle.setArrowColor(color2);
+                  flowStyle.setArrowSize((arrowSize2 ?? 0) * 1.5);
                 } else {
                   flowStyle.setArrowColor(color1);
+                  flowStyle.setArrowSize((arrowSize1 ?? 0) * 1.5);
                 }
               }
               const LS = new LineString([coordinates[i], coordinates[i + 1]]);
