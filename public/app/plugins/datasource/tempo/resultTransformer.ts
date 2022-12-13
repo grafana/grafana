@@ -567,7 +567,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__value.raw}',
-                  queryType: 'traceId',
+                  queryType: 'traceql',
                 },
               },
             },
@@ -639,7 +639,7 @@ export function createTableFrameFromTraceQlQuery(
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__value.raw}',
-                  queryType: 'traceId',
+                  queryType: 'traceql',
                 },
               },
             },
@@ -719,7 +719,7 @@ const traceSubFrame = (
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__data.fields.traceIdHidden}',
-                  queryType: 'traceId',
+                  queryType: 'traceql',
                 },
                 panelsState: {
                   trace: {

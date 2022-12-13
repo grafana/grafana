@@ -288,11 +288,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "traceqlEditor",
-			Description: "Show the TraceQL editor in the explore page",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "flameGraph",
 			Description: "Show the flame graph",
 			State:       FeatureStateAlpha,
