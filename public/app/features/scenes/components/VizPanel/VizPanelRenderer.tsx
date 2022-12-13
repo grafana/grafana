@@ -1,7 +1,7 @@
 import React, { RefCallback } from 'react';
 import { useMeasure } from 'react-use';
 
-import { PluginContextProvider } from '@grafana/data';
+import { PluginContextProvider, toIconName } from '@grafana/data';
 import { PanelChrome, ErrorBoundaryAlert } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
@@ -14,11 +14,13 @@ import { SceneDragHandle } from '../SceneDragHandle';
 import { VizPanel } from './VizPanel';
 
 export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, options, fieldConfig, pluginId, pluginLoadError, $data, ...state } = model.useState();
+  const { title, options, fieldConfig, pluginId, pluginLoadError, $data, timeOverrideInfo, ...state } =
+    model.useState();
   const [ref, { width, height }] = useMeasure();
   const plugin = model.getPlugin();
   const { data } = sceneGraph.getData(model).useState();
   const layout = sceneGraph.getLayout(model);
+  const titleItems = [];
 
   const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
   const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
@@ -49,6 +51,13 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
     $data.setContainerWidth(width);
   }
 
+  if (timeOverrideInfo) {
+    titleItems.push({
+      icon: toIconName('clock-nine'),
+      tooltip: timeOverrideInfo,
+    });
+  }
+
   return (
     <div ref={ref as RefCallback<HTMLDivElement>} style={{ position: 'absolute', width: '100%', height: '100%' }}>
       <PanelChrome
@@ -56,6 +65,7 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
         width={width}
         height={height}
         leftItems={isDraggable ? [dragHandle] : undefined}
+        titleItems={titleItems}
       >
         {(innerWidth, innerHeight) => (
           <>

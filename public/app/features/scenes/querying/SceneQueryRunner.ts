@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isString as _isString } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -7,6 +7,7 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceRef,
+  dateMath,
   PanelData,
   rangeUtil,
   ScopedVars,
@@ -27,6 +28,8 @@ export interface QueryRunnerState extends SceneObjectStatePlain {
   datasource?: DataSourceRef;
   minInterval?: string;
   maxDataPoints?: number | null;
+  timeShift?: string;
+  timeFrom?: string;
   // Non persisted state
   maxDataPointsFromWidth?: boolean;
 }
@@ -116,7 +119,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   }
 
   private async runWithTimeRange(timeRange: TimeRange) {
-    const { datasource, minInterval, queries } = this.state;
+    const { datasource, minInterval, queries, timeShift, timeFrom } = this.state;
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
@@ -124,7 +127,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       timezone: 'browser',
       panelId: 1,
       dashboardId: 1,
-      range: timeRange,
+      range: this.applyPanelTimeOverrides({ timeShift, timeFrom }, timeRange),
       interval: '1s',
       intervalMs: 1000,
       targets: cloneDeep(queries),
@@ -169,6 +172,53 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   private onDataReceived = (data: PanelData) => {
     this.setState({ data });
   };
+
+  private applyPanelTimeOverrides(panel: { timeFrom?: string; timeShift?: string }, timeRange: TimeRange): TimeRange {
+    let newTimeRange = timeRange;
+
+    if (panel.timeFrom) {
+      const timeFromInterpolated = sceneGraph.interpolate(this, panel.timeFrom);
+      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
+      if (timeFromInfo.invalid) {
+        return newTimeRange;
+      }
+
+      if (_isString(timeRange.raw.from)) {
+        const timeFromDate = dateMath.parse(timeFromInfo.from)!;
+        newTimeRange = {
+          from: timeFromDate,
+          to: dateMath.parse(timeFromInfo.to)!,
+          raw: {
+            from: timeFromInfo.from,
+            to: timeFromInfo.to,
+          },
+        };
+      }
+    }
+
+    if (panel.timeShift) {
+      const timeShiftInterpolated = sceneGraph.interpolate(this, panel.timeShift);
+      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+      if (timeShiftInfo.invalid) {
+        return newTimeRange;
+      }
+
+      const timeShift = '-' + timeShiftInterpolated;
+      const from = dateMath.parseDateMath(timeShift, newTimeRange.from, false)!;
+      const to = dateMath.parseDateMath(timeShift, newTimeRange.to, true)!;
+
+      newTimeRange = {
+        from,
+        to,
+        raw: {
+          from,
+          to,
+        },
+      };
+    }
+
+    return newTimeRange;
+  }
 }
 
 async function getDataSource(datasource: DataSourceRef | undefined, scopedVars: ScopedVars): Promise<DataSourceApi> {

@@ -153,6 +153,8 @@ function createVizPanelFromPanelModel(panel: PanelModel) {
     pluginVersion: panel.pluginVersion,
     $data: new SceneQueryRunner({
       queries: panel.targets,
+      timeFrom: panel.timeFrom,
+      timeShift: panel.timeShift,
       maxDataPoints: panel.maxDataPoints,
     }),
   });

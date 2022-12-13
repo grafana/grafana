@@ -1,6 +1,7 @@
+import { isString as _isString } from 'lodash';
 import React from 'react';
 
-import { AbsoluteTimeRange, FieldConfigSource, PanelModel, PanelPlugin, toUtc } from '@grafana/data';
+import { AbsoluteTimeRange, FieldConfigSource, PanelModel, PanelPlugin, rangeUtil, toUtc } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Field, Input } from '@grafana/ui';
 import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
@@ -20,6 +21,7 @@ export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLa
   pluginVersion?: string;
   // internal state
   pluginLoadError?: string;
+  timeOverrideInfo: string;
 }
 
 export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
@@ -37,6 +39,7 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
       fieldConfig: { defaults: {}, overrides: [] },
       title: 'Title',
       pluginId: 'timeseries',
+      timeOverrideInfo: '',
       ...state,
     });
   }
@@ -78,6 +81,15 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
     });
 
     this._plugin = plugin;
+
+    sceneGraph.getData(this).subscribeToState({
+      next: (data) => {
+        this.setState({
+          timeOverrideInfo: this.getTimeOverrideInfo(data.timeFrom, data.timeShift),
+        });
+      },
+    });
+
     this.setState({
       options: withDefaults.options,
       fieldConfig: withDefaults.fieldConfig,
@@ -91,6 +103,35 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
 
   public getPlugin(): PanelPlugin | undefined {
     return this._plugin;
+  }
+
+  private getTimeOverrideInfo(timeFrom = '', timeShift = ''): string {
+    let timeInfo = '';
+
+    if (timeFrom) {
+      const timeFromInterpolated = sceneGraph.interpolate(this, timeFrom);
+      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
+
+      if (timeFromInfo.invalid) {
+        return 'invalid time override';
+      }
+
+      timeInfo = timeFromInfo.display;
+    }
+
+    if (timeShift) {
+      const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
+      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+
+      if (timeShiftInfo.invalid) {
+        return 'invalid timeshift';
+      }
+
+      const timeShiftText = '-' + timeShiftInterpolated;
+      timeInfo += ' timeshift ' + timeShiftText;
+    }
+
+    return timeInfo;
   }
 
   public onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
