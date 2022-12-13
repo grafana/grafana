@@ -78,7 +78,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	}
 
 	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "raw_data") {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
@@ -86,8 +86,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		}
 		metric := q.Metrics[0]
 		b.Size(metric.Settings.Get("size").MustInt(500))
-		b.SortDesc("@timestamp", "boolean")
-		b.AddDocValueField("@timestamp")
+		b.SortDesc(e.client.GetTimeField(), "boolean")
+		b.SortDesc("_doc", "")
+		b.AddDocValueField(e.client.GetTimeField())
 		return nil
 	}
 
