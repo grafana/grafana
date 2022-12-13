@@ -138,7 +138,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
 			// We don't use Get here because idTokenHeaderName is not in canonical format
-			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName])
+			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName]) //nolint:staticcheck
 			require.Empty(t, reqClone.Header["X-Id-Token"], "X-ID-Token and X-Id-Token are both present")
 		})
 
@@ -168,7 +168,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
 			// We don't use Get here because idTokenHeaderName is not in canonical format
-			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName])
+			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName]) //nolint:staticcheck
 			require.Empty(t, reqClone.Header["X-Id-Token"], "X-ID-Token and X-Id-Token are both present")
 		})
 
@@ -196,7 +196,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
 			// We don't use Get here because idTokenHeaderName is not in canonical format
-			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName])
+			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName]) //nolint:staticcheck
 			require.Empty(t, reqClone.Header["X-Id-Token"], "X-ID-Token and X-Id-Token are both present")
 		})
 	})
