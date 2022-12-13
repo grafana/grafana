@@ -379,8 +379,11 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 // getCDNPluginAssetRemoteURL takes a plugin and an asset file path and returns the URL for the asset on the CDN
 // configured in hs.Cfg.PluginsCDNBasePath.
 func (hs *HTTPServer) getCDNPluginAssetRemoteURL(plugin plugins.PluginDTO, assetPath string) string {
-	// E.g: https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/MANIFEST.txt
-	return fmt.Sprintf("%s/%s/%s/%s", hs.Cfg.PluginsCDNBasePath, plugin.ID, plugin.Info.Version, assetPath)
+	return strings.NewReplacer(
+		"{id}", plugin.ID,
+		"{version}", plugin.Info.Version,
+		"{assetPath}", assetPath, // TODO: sanitize path
+	).Replace(hs.Cfg.PluginsCDNBasePath)
 }
 
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
