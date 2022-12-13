@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ClientApiKey    = "auth.client.apikey"
+	ClientAPIKey    = "auth.client.apikey"
 	ClientAnonymous = "auth.client.anonymous"
 )
 
@@ -28,6 +28,11 @@ type Client interface {
 type Request struct {
 	HTTPRequest *http.Request
 }
+
+const (
+	APIKeyIDPrefix         = "apikey:"
+	ServiceAccountIDPrefix = "service-account:"
+)
 
 type Identity struct {
 	OrgID       int64

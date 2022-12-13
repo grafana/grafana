@@ -23,7 +23,7 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 		tracer:  tracer,
 	}
 
-	s.clients[authn.ClientApiKey] = clients.ProvideAPIKey(apikeyService)
+	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService)
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
@@ -40,15 +40,15 @@ type Service struct {
 	tracer tracing.Tracer
 }
 
-func (s *Service) Authenticate(ctx context.Context, clientName string, r *authn.Request) (*authn.Identity, error) {
+func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
 	defer span.End()
 
-	span.SetAttributes("authn.client", clientName, attribute.Key("authn.client").String(clientName))
+	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
 
-	client, ok := s.clients[clientName]
+	c, ok := s.clients[client]
 	if !ok {
-		s.log.FromContext(ctx).Warn("auth client not found", "client", clientName)
+		s.log.FromContext(ctx).Warn("auth client not found", "client", client)
 		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client is not configured"}})
 		return nil, authn.ErrClientNotFound
 	}
@@ -61,7 +61,7 @@ func (s *Service) Authenticate(ctx context.Context, clientName string, r *authn.
 	// login handler, but if we want to perform basic auth during a request (called from contexthandler) we don't
 	// want a session to be created.
 
-	return client.Authenticate(ctx, r)
+	return c.Authenticate(ctx, r)
 }
 
 func (s *Service) Test(ctx context.Context, client string, r *authn.Request) bool {
