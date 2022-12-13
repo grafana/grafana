@@ -359,7 +359,7 @@ export const DashNav = React.memo<Props>((props) => {
       buttons.push(
         <ToolbarButton
           tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
-          onClick={() => gotoSnapshotOrigin(snapshotUrl)}
+          onClick={onOpenSnapshotOriginal}
           icon="link"
           key="button-snapshot"
         />

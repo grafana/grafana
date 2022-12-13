@@ -143,6 +143,8 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
+		cmd.Dashboard.SetPath([]string{"snapshot", "originalUrl"}, originalDashboardURL)
+
 		if cmd.Key == "" {
 			var err error
 			cmd.Key, err = util.GetRandomString(32)
