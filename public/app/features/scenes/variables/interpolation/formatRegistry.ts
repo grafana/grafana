@@ -326,6 +326,10 @@ function luceneEscape(value: string) {
  * unicode handling uses UTF-8 as in ECMA-262.
  */
 function encodeURIComponentStrict(str: VariableValueSingle) {
+  if (typeof str === 'object') {
+    str = String(str);
+  }
+
   return encodeURIComponent(str).replace(/[!'()*]/g, (c) => {
     return '%' + c.charCodeAt(0).toString(16).toUpperCase();
   });
