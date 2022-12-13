@@ -72,43 +72,26 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
-
-	if q.RawQuery != "" {
-		filters.AddQueryStringFilter(q.RawQuery, true)
-	}
+	filters.AddQueryStringFilter(q.RawQuery, true)
 
 	if len(q.BucketAggs) == 0 {
-		// If no metrics, then the query is invalid
-		if len(q.Metrics) == 0 {
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_data" || q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "logs") {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
 
+		// Defaults for log and document queries
 		metric := q.Metrics[0]
-		isLogsQuery := metric.Type == "logs"
-		isDocumentQuery := metric.Type == "raw_data" || metric.Type == "raw_document"
-
-		// Only document and logs queries can be without aggregations
-		if !(isDocumentQuery || isLogsQuery) {
-			result.Responses[q.RefID] = backend.DataResponse{
-				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
-			}
-			return nil
-		}
-
-		// Add common defaults for log and document queries
 		b.SortDesc(e.client.GetTimeField(), "boolean")
 		b.SortDesc("_doc", "")
 		b.AddDocValueField(e.client.GetTimeField())
+		b.Size(metric.Settings.Get("size").MustInt(500))
 
-		if isDocumentQuery {
-			b.Size(metric.Settings.Get("size").MustInt(500))
-			return nil
-		}
-
-		if isLogsQuery {
+		if metric.Type == "logs" {
+			// Add additional defaults for log query
 			b.Size(metric.Settings.Get("limit").MustInt(500))
 			b.AddHighlight()
 
@@ -127,8 +110,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 				bucketAgg.generateSettingsForDSL(),
 			)
 			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
-			return nil
 		}
+		return nil
 	}
 
 	aggBuilder := b.Agg()
