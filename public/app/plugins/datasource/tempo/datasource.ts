@@ -95,7 +95,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
-    const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceId');
+    const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceql');
 
     if (targets.clear) {
       return of({ data: [], state: LoadingState.Done });
