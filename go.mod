@@ -19,14 +19,14 @@ replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503
 
 // For some insane reason, client-go seems to have a broken v12.0.0 tag on it that forces us to
 // hoist a replace statement.
-replace k8s.io/client-go => k8s.io/client-go v0.24.8
+replace k8s.io/client-go => k8s.io/client-go v0.25.3
 
 require (
 	k8s.io/api v0.25.3 // indirect
-	k8s.io/apiextensions-apiserver v0.25.0
+	k8s.io/apiextensions-apiserver v0.25.3
 	k8s.io/apimachinery v0.25.3
-	k8s.io/client-go v0.24.8
-	k8s.io/kubectl v0.24.8
+	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/kubectl v0.25.3
 	sigs.k8s.io/controller-runtime v0.13.1
 )
 
@@ -67,7 +67,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/cuetsy v0.1.1
 	github.com/grafana/grafana-aws-sdk v0.11.0
-	github.com/grafana/grafana-azure-sdk-go v1.3.1
+	github.com/grafana/grafana-azure-sdk-go v1.5.0
 	github.com/grafana/grafana-plugin-sdk-go v0.145.0
 	github.com/grafana/thema v0.0.0-20221113112305-b441ed85a1fd
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -248,8 +248,8 @@ require (
 
 require (
 	cloud.google.com/go/kms v1.4.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.1.0
-	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.4.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0
+	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0
 	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.21
 	github.com/armon/go-radix v1.0.0
@@ -329,7 +329,7 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/component-base v0.25.0 // indirect
+	k8s.io/component-base v0.25.3 // indirect
 	k8s.io/klog/v2 v2.80.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
@@ -341,9 +341,9 @@ require (
 require (
 	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/iam v0.6.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.2.1 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v0.5.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
@@ -369,7 +369,6 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.13.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
