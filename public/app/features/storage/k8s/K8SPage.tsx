@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { useStyles2, Spinner } from '@grafana/ui';
+import { useStyles2, Spinner, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -36,13 +36,12 @@ export default function K8SPage(props: Props) {
 
     return (
       <div className={styles.wrapper}>
-        No k8s client configured.
-        <br />
-        The client config is read from:
+        <Alert title="No k8s client configured." severity="warning" />
+        At startup, a service tries to load a client using:
         <ul>
           <li>
-            While running{' '}
-            <a href="https://github.com/kubernetes/client-go/blob/master/rest/config.go#L511">in a cluster</a>
+            Default
+            <a href="https://github.com/kubernetes/client-go/blob/master/rest/config.go#L511">in cluster</a> configs
           </li>
           <li>$HOME/.kube/config, perhaps with minikube running</li>
         </ul>
