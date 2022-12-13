@@ -34,4 +34,17 @@ describe('Azure Monitor Datasource', () => {
       );
     });
   });
+
+  it('should not filter a valid query', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery();
+    expect(ds.filterQuery(query)).toBe(true);
+  });
+
+  it('should not filter query with no query type', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery();
+    delete query.queryType;
+    expect(ds.filterQuery(query)).toBe(false);
+  });
 });
