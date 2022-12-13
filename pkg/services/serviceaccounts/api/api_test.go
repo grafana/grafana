@@ -52,7 +52,7 @@ var (
 // all of the API tests are calling with all of the db store injections
 // which is not ideal
 // this is a bit of a hack to get the tests to pass until we refactor the tests
-// to use fakes
+// to use fakes as in the user service tests
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := db.InitTestDB(t)
