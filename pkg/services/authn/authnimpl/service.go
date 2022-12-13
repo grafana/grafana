@@ -22,6 +22,8 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 		tracer:  tracer,
 	}
 
+	s.clients[authn.ClientApiKey] = clients.ProvideApiKey()
+
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}

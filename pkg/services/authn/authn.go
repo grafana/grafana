@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	ClientApiKey    = "auth.api_key"
 	ClientAnonymous = "auth.anonymous"
 )
 
