@@ -137,7 +137,9 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Len(t, reqClone.Header, 3)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
-			require.Equal(t, "id-token", reqClone.Header.Get(idTokenHeaderName))
+			// We don't use Get here because idTokenHeaderName is not in canonical format
+			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName])
+			require.Empty(t, reqClone.Header["X-Id-Token"], "X-ID-Token and X-Id-Token are both present")
 		})
 
 		t.Run("Should forward OAuth Identity when calling CallResource", func(t *testing.T) {
@@ -165,7 +167,9 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Len(t, reqClone.Header, 3)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
-			require.Equal(t, "id-token", reqClone.Header.Get(idTokenHeaderName))
+			// We don't use Get here because idTokenHeaderName is not in canonical format
+			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName])
+			require.Empty(t, reqClone.Header["X-Id-Token"], "X-ID-Token and X-Id-Token are both present")
 		})
 
 		t.Run("Should forward OAuth Identity when calling CheckHealth", func(t *testing.T) {
@@ -191,7 +195,9 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Len(t, reqClone.Header, 3)
 			require.Equal(t, "test", reqClone.Header.Get(otherHeader))
 			require.Equal(t, "Bearer access-token", reqClone.Header.Get(tokenHeaderName))
-			require.Equal(t, "id-token", reqClone.Header.Get(idTokenHeaderName))
+			// We don't use Get here because idTokenHeaderName is not in canonical format
+			require.Equal(t, []string{"id-token"}, reqClone.Header[idTokenHeaderName])
+			require.Empty(t, reqClone.Header["X-Id-Token"], "X-ID-Token and X-Id-Token are both present")
 		})
 	})
 }
