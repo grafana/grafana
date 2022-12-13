@@ -87,34 +87,32 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		}
 
 		metric := q.Metrics[0]
-		isLogs := metric.Type == "logs"
+		isLogsQuery := metric.Type == "logs"
+		isDocumentQuery := metric.Type == "raw_data" || metric.Type == "raw_document"
 
-		// Let's group these into the same variable, as the resulting query is the same
-		isRawData := metric.Type == "raw_data" || metric.Type == "raw_document"
-
-		// Only raw data and logs queries can be without aggregations
-		if !(isRawData || isLogs) {
+		// Only document and logs queries can be without aggregations
+		if !(isDocumentQuery || isLogsQuery) {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
 
-		if isRawData {
+		// Add common defaults for log and document queries
+		b.SortDesc(e.client.GetTimeField(), "boolean")
+		b.SortDesc("_doc", "")
+		b.AddDocValueField(e.client.GetTimeField())
+
+		if isDocumentQuery {
 			b.Size(metric.Settings.Get("size").MustInt(500))
-			b.SortDesc(e.client.GetTimeField(), "boolean")
-			b.SortDesc("_doc", "")
-			b.AddDocValueField(e.client.GetTimeField())
 			return nil
 		}
 
-		if isLogs {
+		if isLogsQuery {
 			b.Size(metric.Settings.Get("limit").MustInt(500))
-			b.SortDesc(e.client.GetTimeField(), "boolean")
-			b.SortDesc("_doc", "")
-			b.AddDocValueField(e.client.GetTimeField())
 			b.AddHighlight()
 
+			// For log query, we add a date histogram aggregation
 			aggBuilder := b.Agg()
 			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
 				Type:  dateHistType,
