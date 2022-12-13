@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -37,7 +36,7 @@ type OpsgenieNotifier struct {
 	*Base
 	tmpl     *template.Template
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	images   ImageStore
 	settings *opsgenieSettings
 }
@@ -161,7 +160,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return true, nil
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        url,
 		Body:       string(body),
 		HttpMethod: http.MethodPost,
@@ -171,7 +170,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := on.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := on.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Opsgenie: %w", err)
 	}
 

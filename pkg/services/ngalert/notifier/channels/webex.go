@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const webexAPIURL = "https://webexapis.com/v1/messages"
@@ -22,7 +21,7 @@ const webexAPIURL = "https://webexapis.com/v1/messages"
 // WebexNotifier is responsible for sending alert notifications as webex messages.
 type WebexNotifier struct {
 	*Base
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	log      log.Logger
 	images   ImageStore
 	tmpl     *template.Template
@@ -153,7 +152,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, tmplErr
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        parsedURL,
 		Body:       string(body),
 		HttpMethod: http.MethodPost,
@@ -165,7 +164,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		cmd.HttpHeader = headers
 	}
 
-	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, err
 	}
 

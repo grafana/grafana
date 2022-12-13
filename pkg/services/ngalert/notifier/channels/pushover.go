@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -36,7 +35,7 @@ type PushoverNotifier struct {
 	tmpl     *template.Template
 	log      log.Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	settings pushoverSettings
 }
 
@@ -165,14 +164,14 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return false, err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        PushoverEndpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
 	}
 
-	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhook(ctx, cmd); err != nil {
 		pn.log.Error("failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var (
@@ -29,7 +28,7 @@ type TelegramNotifier struct {
 	*Base
 	log      log.Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings telegramSettings
 }
@@ -114,7 +113,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	if err != nil {
 		return false, fmt.Errorf("failed to create telegram message: %w", err)
 	}
-	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("failed to send telegram message: %w", err)
 	}
 
@@ -142,7 +141,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		if err != nil {
 			return fmt.Errorf("failed to create image: %w", err)
 		}
-		if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
+		if err := tn.ns.SendWebhook(ctx, cmd); err != nil {
 			return fmt.Errorf("failed to upload image to telegram: %w", err)
 		}
 		return nil
@@ -172,7 +171,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	return m, nil
 }
 
-func (tn *TelegramNotifier) newWebhookSyncCmd(action string, fn func(writer *multipart.Writer) error) (*models.SendWebhookSync, error) {
+func (tn *TelegramNotifier) newWebhookSyncCmd(action string, fn func(writer *multipart.Writer) error) (*SendWebhookSettings, error) {
 	b := bytes.Buffer{}
 	w := multipart.NewWriter(&b)
 
@@ -199,7 +198,7 @@ func (tn *TelegramNotifier) newWebhookSyncCmd(action string, fn func(writer *mul
 		return nil, fmt.Errorf("failed to close multipart: %w", err)
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        fmt.Sprintf(TelegramAPIURL, tn.settings.BotToken, action),
 		Body:       b.String(),
 		HttpMethod: "POST",

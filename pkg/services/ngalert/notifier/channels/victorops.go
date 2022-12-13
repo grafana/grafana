@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -97,7 +96,7 @@ type VictoropsNotifier struct {
 	*Base
 	log      log.Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings victorOpsSettings
 }
@@ -153,12 +152,12 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	if err != nil {
 		return false, err
 	}
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:  u,
 		Body: string(b),
 	}
 
-	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := vn.ns.SendWebhook(ctx, cmd); err != nil {
 		vn.log.Error("failed to send notification", "error", err, "webhook", vn.Name)
 		return false, err
 	}

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // WebhookNotifier is responsible for sending
@@ -24,7 +23,7 @@ import (
 type WebhookNotifier struct {
 	*Base
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
 	orgID    int64
@@ -204,7 +203,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, tmplErr
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        parsedURL,
 		User:       wn.settings.User,
 		Password:   wn.settings.Password,
@@ -213,7 +212,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		HttpHeader: headers,
 	}
 
-	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, err
 	}
 
