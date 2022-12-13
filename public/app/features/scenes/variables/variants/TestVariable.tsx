@@ -1,4 +1,3 @@
-import React from 'react';
 import { Observable, Subject } from 'rxjs';
 
 import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
@@ -6,7 +5,7 @@ import { queryMetricTree } from 'app/plugins/datasource/testdata/metricTree';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
 import { VariableDependencyConfig } from '../VariableDependencyConfig';
-import { VariableValueSelect } from '../components/VariableValueSelect';
+import { renderSelectForVariable } from '../components/VariableValueSelect';
 import { VariableValueOption } from '../types';
 
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from './MultiValueVariable';
@@ -31,6 +30,7 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
 
   public constructor(initialState: Partial<TestVariableState>) {
     super({
+      type: 'custom',
       name: 'Test',
       value: 'Value',
       text: 'Text',
@@ -88,6 +88,6 @@ export class TestVariable extends MultiValueVariable<TestVariableState> {
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {
-    return <VariableValueSelect model={model} />;
+    return renderSelectForVariable(model);
   };
 }

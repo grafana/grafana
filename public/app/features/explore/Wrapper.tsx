@@ -26,10 +26,8 @@ const styles = {
     width: 100%;
     flex-grow: 1;
     min-height: 0;
-  `,
-  exploreWrapper: css`
-    display: flex;
     height: 100%;
+    position: relative;
   `,
 };
 
@@ -135,35 +133,34 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   return (
     <div className={styles.pageScrollbarWrapper}>
       <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
-      <div className={styles.exploreWrapper}>
-        <SplitPaneWrapper
-          splitOrientation="vertical"
-          paneSize={widthCalc}
-          minSize={minWidth}
-          maxSize={minWidth * -1}
-          primary="second"
-          splitVisible={hasSplit}
-          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
-          onDragFinished={(size) => {
-            if (size) {
-              updateSplitSize(size);
-            }
-          }}
-        >
+
+      <SplitPaneWrapper
+        splitOrientation="vertical"
+        paneSize={widthCalc}
+        minSize={minWidth}
+        maxSize={minWidth * -1}
+        primary="second"
+        splitVisible={hasSplit}
+        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
+        onDragFinished={(size) => {
+          if (size) {
+            updateSplitSize(size);
+          }
+        }}
+      >
+        <ErrorBoundaryAlert style="page">
+          <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
+        </ErrorBoundaryAlert>
+        {hasSplit && (
           <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
+            <ExplorePaneContainer
+              exploreId={ExploreId.right}
+              urlQuery={queryParams.right}
+              eventBus={eventBus.current}
+            />
           </ErrorBoundaryAlert>
-          {hasSplit && (
-            <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer
-                exploreId={ExploreId.right}
-                urlQuery={queryParams.right}
-                eventBus={eventBus.current}
-              />
-            </ErrorBoundaryAlert>
-          )}
-        </SplitPaneWrapper>
-      </div>
+        )}
+      </SplitPaneWrapper>
     </div>
   );
 }

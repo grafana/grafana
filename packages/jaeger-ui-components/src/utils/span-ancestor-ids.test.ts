@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceSpan } from 'src/types/trace';
+
 import spanAncestorIdsSpy from './span-ancestor-ids';
 
 describe('spanAncestorIdsSpy', () => {
@@ -79,11 +81,11 @@ describe('spanAncestorIdsSpy', () => {
       references: [],
     };
 
-    expect(spanAncestorIdsSpy(spanWithoutReferences)).toEqual([]);
+    expect(spanAncestorIdsSpy(spanWithoutReferences as unknown as TraceSpan)).toEqual([]);
   });
 
   it('returns all unique spanIDs from first valid CHILD_OF or FOLLOWS_FROM reference up to the root span', () => {
-    expect(spanAncestorIdsSpy(span)).toEqual(expectedAncestorIds);
+    expect(spanAncestorIdsSpy(span as TraceSpan)).toEqual(expectedAncestorIds);
   });
 
   it('ignores references without a span', () => {
@@ -91,6 +93,6 @@ describe('spanAncestorIdsSpy', () => {
       ...span,
       references: [{ refType: 'CHILD_OF' }, { refType: 'FOLLOWS_FROM', span: {} }, ...span.references],
     };
-    expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences)).toEqual(expectedAncestorIds);
+    expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences as TraceSpan)).toEqual(expectedAncestorIds);
   });
 });

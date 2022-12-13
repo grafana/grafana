@@ -194,6 +194,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/templates/{name}",
 		http.MethodGet + "/api/v1/provisioning/mute-timings",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		fallback = middleware.ReqOrgAdmin
