@@ -98,10 +98,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       timestamp: new Date(),
     };
 
-    if (!external) {
-      this.dashboard.snapshot.originalUrl = window.location.href;
-    }
-
     this.setState({ isLoading: true });
     this.dashboard.startRefresh();
 
