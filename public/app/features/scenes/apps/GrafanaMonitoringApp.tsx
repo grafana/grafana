@@ -2,13 +2,12 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
-import { Tab, TabsBar } from '@grafana/ui';
+import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
 import { EmbeddedScene } from '../components/Scene';
 
 import HttpHandlerScene from './HttpHandlerScene';
-import { PageWithTabs, PageWithTabsBody } from './PageWithTabs';
 import { getOverviewScene, getHttpHandlerListScene } from './state';
 
 export function GrafanaMonitoringApp() {
@@ -17,7 +16,7 @@ export function GrafanaMonitoringApp() {
   return (
     <Switch>
       {tabs.map((tab) => (
-        <Route key={tab.href} exact={true} path={tab.href}>
+        <Route key={tab.url} exact={true} path={tab.url}>
           <AppPageWithTabs activeTab={tab} tabs={tabs} />
         </Route>
       ))}
@@ -33,36 +32,37 @@ export interface AppPageProps {
 
 export function AppPageWithTabs({ tabs, activeTab }: AppPageProps) {
   const scene = activeTab.getScene();
+  const pageNav: NavModelItem = {
+    text: 'Grafana Monitoring',
+    subTitle: 'A custom app with embedded scenes to monitor your Grafana server',
+    hideFromBreadcrumbs: true,
+    children: tabs.map((tab) => ({
+      text: tab.text,
+      active: tab === activeTab,
+      url: tab.url,
+    })),
+  };
 
   return (
-    <Page navId="grafana-monitoring" subTitle="A custom app with embedded scenes to monitor your Grafana server">
+    <Page navId="grafana-monitoring" pageNav={pageNav}>
       <Page.Contents>
-        <PageWithTabs>
-          <TabsBar>
-            {tabs.map((tab) => (
-              <Tab key={tab.href} label={tab.title} active={activeTab === tab} href={tab.href} />
-            ))}
-          </TabsBar>
-          <PageWithTabsBody>
-            <scene.Component model={scene} />
-          </PageWithTabsBody>
-        </PageWithTabs>
+        <scene.Component model={scene} />
       </Page.Contents>
     </Page>
   );
 }
 
-interface AppTab {
-  title: string;
-  href: string;
+interface AppTab extends NavModelItem {
+  text: string;
+  url: string;
   getScene: () => EmbeddedScene;
 }
 
-function getTabs(): AppTab[] {
+export function getTabs(): AppTab[] {
   return [
-    { title: 'Overview', href: '/scenes/grafana-monitoring', getScene: getOverviewScene },
-    { title: 'HTTP handlers', href: '/scenes/grafana-monitoring/handlers', getScene: getHttpHandlerListScene },
-    { title: 'Alerts', href: '/scenes/grafana-monitoring/alerts', getScene: getHttpHandlerListScene },
+    { text: 'Overview', url: '/scenes/grafana-monitoring', getScene: getOverviewScene },
+    { text: 'HTTP handlers', url: '/scenes/grafana-monitoring/handlers', getScene: getHttpHandlerListScene },
+    { text: 'Alerts', url: '/scenes/grafana-monitoring/alerts', getScene: getHttpHandlerListScene },
   ];
 }
 
