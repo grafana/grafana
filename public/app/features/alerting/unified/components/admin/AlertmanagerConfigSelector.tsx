@@ -12,8 +12,8 @@ import { FormValues } from './AlertmanagerConfig';
 import { ConfigEditor } from './ConfigEditor';
 
 export interface ValidAmConfigOption {
-  label: string;
-  value: AlertManagerCortexConfig;
+  label?: string;
+  value?: AlertManagerCortexConfig;
 }
 
 interface AlertmanagerConfigSelectorProps {
@@ -63,7 +63,6 @@ export default function AlertmanagerConfigSelector({
             options={validAmConfigsOptions}
             value={selectedAmConfig}
             onChange={(value: SelectableValue) => {
-              // @ts-ignore
               onChange(value);
             }}
           />
