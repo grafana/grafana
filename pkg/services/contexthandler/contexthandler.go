@@ -272,6 +272,27 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 }
 
 func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		req := &authn.Request{HTTPRequest: reqContext.Req}
+		if !h.authnService.Test(reqContext.Req.Context(), authn.ClientAPIKey, req) {
+			return false
+		}
+
+		// include auth header in context
+		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
+		identity, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientAPIKey, req)
+		if err != nil {
+			// return error
+			return true
+		}
+
+		reqContext.SignedInUser = identity.SignedInUser()
+		reqContext.IsSignedIn = true
+		return true
+	}
+
 	header := reqContext.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	var keyString string
