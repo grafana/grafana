@@ -1,3 +1,5 @@
+import deepEqual from 'fast-deep-equal';
+
 import { config } from '@grafana/runtime';
 
 import { CloudWatchMetricsQuery } from '../types';
@@ -6,7 +8,7 @@ import { CloudWatchMetricsQuery } from '../types';
 export function migrateMetricQuery(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
   //add metric query migrations here
   const migratedQuery = migrateAliasPatterns(query);
-  return migratedQuery;
+  return deepEqual(migratedQuery, query) ? query : migratedQuery;
 }
 
 const aliasPatterns: Record<string, string> = {

@@ -8,6 +8,7 @@ import { Input } from '@grafana/ui';
 import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from '../';
 import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchMetricsQuery } from '../../guards';
+import useMigratedMetricsQuery from '../../migrations/useMigratedMetricsQuery';
 import {
   CloudWatchJsonData,
   CloudWatchMetricsQuery,
@@ -20,7 +21,6 @@ import { DynamicLabelsField } from '../DynamicLabelsField';
 import QueryHeader from '../QueryHeader';
 
 import { Alias } from './Alias';
-import usePreparedMetricsQuery from './usePreparedMetricsQuery';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
@@ -29,7 +29,7 @@ export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatch
 export const MetricsQueryEditor = (props: Props) => {
   const { query, onRunQuery, datasource } = props;
   const [sqlCodeEditorIsDirty, setSQLCodeEditorIsDirty] = useState(false);
-  const preparedQuery = usePreparedMetricsQuery(query, props.onChange);
+  const preparedQuery = useMigratedMetricsQuery(query, props.onChange);
 
   const onChange = (query: CloudWatchQuery) => {
     const { onChange, onRunQuery } = props;

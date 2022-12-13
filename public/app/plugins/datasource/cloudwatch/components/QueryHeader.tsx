@@ -1,4 +1,3 @@
-import { pick } from 'lodash';
 import React from 'react';
 
 import { SelectableValue, ExploreMode } from '@grafana/data';
