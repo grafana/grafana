@@ -302,7 +302,6 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 				repeatInterval = c.Frequency
 			}
 		}
-		defaultRoute.RepeatInterval = &repeatInterval
 	} else {
 		// If there is only a single default channel, we don't need a separate receiver to hold it. We can reuse the existing receiver for that single notifier.
 		defaultRoute.Receiver = defaultChannels[0].Name
