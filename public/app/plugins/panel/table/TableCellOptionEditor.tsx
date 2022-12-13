@@ -49,8 +49,6 @@ export const TableCellOptionEditor: React.FC<Props> = (props) => {
     editor = <Comp options={props.value} />;
   }
 
-  console.log(props);
-
   // Setup and inject editor
   return (
     <>
