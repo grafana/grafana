@@ -13,11 +13,12 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Button, Card, Icon } from '@grafana/ui';
+import { Button, Card, GraphTresholdsStyleMode, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { Graph, Node } from 'app/core/utils/dag';
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQueryType } from 'app/features/expressions/types';
+import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -159,8 +160,8 @@ export class QueryRows extends PureComponent<Props> {
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 
-  getThresholdsForQueries = (queries: AlertQuery[]): Record<string, ThresholdsConfig> => {
-    const thresholds: Record<string, ThresholdsConfig> = {};
+  getThresholdsForQueries = (queries: AlertQuery[]) => {
+    const thresholds: Record<string, { config: ThresholdsConfig; mode: GraphTresholdsStyleMode }> = {};
     const SUPPORTED_EXPRESSION_TYPES = [ExpressionQueryType.threshold, ExpressionQueryType.classic];
 
     for (const query of queries) {
@@ -168,7 +169,7 @@ export class QueryRows extends PureComponent<Props> {
         continue;
       }
 
-      // currently only supporting threshold & classic condition expressions
+      // currently only supporting "threshold" & "classic_condition" expressions
       if (!SUPPORTED_EXPRESSION_TYPES.includes(query.model.type)) {
         continue;
       }
@@ -177,15 +178,16 @@ export class QueryRows extends PureComponent<Props> {
         continue;
       }
 
+      // if any of the conditions are a "range" we switch to an "area" threshold view and ignore single threshold values
+      // the time series panel does not support both.
+      const hasRangeThreshold = query.model.conditions.some(isRangeCondition);
+
       query.model.conditions.forEach((condition, index) => {
-        const threshold = condition.evaluator.params[0];
+        const threshold = condition.evaluator.params;
+
         // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression` *sigh*
         const refId = condition.query.params[0] ?? query.model.expression;
-
-        // TODO support range thresholds
-        if (condition.evaluator.type === 'outside_range' || condition.evaluator.type === 'within_range') {
-          return;
-        }
+        const isRangeThreshold = isRangeCondition(condition);
 
         try {
           // 1. create a DAG so we can find the origin of the current expression
@@ -198,30 +200,28 @@ export class QueryRows extends PureComponent<Props> {
           const originIsDataQuery = !isExpressionQuery(originQuery?.model);
 
           // 3. if yes, add threshold config to the refId of the data Query
-          if (originIsDataQuery && originRefID) {
-            appendThreshold(originRefID, threshold);
-          }
-        } catch (err) {
-          return;
-        }
+          const hasValidOrigin = Boolean(originIsDataQuery && originRefID);
 
-        function appendThreshold(originRefID: string, value: number) {
-          if (!thresholds[originRefID]) {
+          // create the initial data structure for this origin refId
+          if (originRefID && !thresholds[originRefID]) {
             thresholds[originRefID] = {
-              mode: ThresholdsMode.Absolute,
-              steps: [
-                {
-                  value: -Infinity,
-                  color: config.theme2.colors.success.main,
-                },
-              ],
+              config: {
+                mode: ThresholdsMode.Absolute,
+                steps: [],
+              },
+              mode: GraphTresholdsStyleMode.Line,
             };
           }
 
-          thresholds[originRefID].steps.push({
-            value: value,
-            color: config.theme2.colors.error.main,
-          });
+          if (originRefID && hasValidOrigin && !isRangeThreshold && !hasRangeThreshold) {
+            appendSingleThreshold(thresholds, originRefID, threshold[0]);
+          } else if (originRefID && hasValidOrigin && isRangeThreshold) {
+            appendRangeThreshold(thresholds, originRefID, threshold, condition.evaluator.type);
+            thresholds[originRefID].mode = GraphTresholdsStyleMode.LineAndArea;
+          }
+        } catch (err) {
+          console.error('Failed to parse thresholds', err);
+          return;
         }
       });
     }
@@ -282,7 +282,8 @@ export class QueryRows extends PureComponent<Props> {
                       onChangeDataSource={this.onChangeDataSource}
                       onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
-                      thresholds={thresholdByRefId[query.refId]}
+                      thresholds={thresholdByRefId[query.refId]?.config}
+                      thresholdsType={thresholdByRefId[query.refId]?.mode}
                       onChangeThreshold={this.onChangeThreshold}
                       onRunQueries={this.props.onRunQueries}
                       condition={this.props.condition}
@@ -306,6 +307,89 @@ function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'
     model: omit(item.model, 'datasource'),
     datasourceUid: uid,
   };
+}
+
+function isRangeCondition(condition: ClassicCondition) {
+  return (
+    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange
+  );
+}
+
+function appendSingleThreshold(
+  thresholds: Record<string, { config: ThresholdsConfig; mode: GraphTresholdsStyleMode }>,
+  refId: string,
+  value: number
+): void {
+  thresholds[refId].config.steps.push(
+    ...[
+      {
+        value: -Infinity,
+        color: 'transparent',
+      },
+      {
+        value: value,
+        color: config.theme2.colors.error.main,
+      },
+    ]
+  );
+}
+
+// TODO make this work with negative values!
+function appendRangeThreshold(
+  thresholds: Record<string, { config: ThresholdsConfig; mode: GraphTresholdsStyleMode }>,
+  refId: string,
+  values: number[],
+  type: EvalFunction
+): void {
+  if (type === EvalFunction.IsWithinRange) {
+    thresholds[refId].config.steps.push(
+      ...[
+        {
+          value: -Infinity,
+          color: 'transparent',
+        },
+        {
+          value: values[0],
+          color: config.theme2.colors.error.main,
+        },
+        {
+          value: values[1],
+          color: config.theme2.colors.error.main,
+        },
+        {
+          value: values[1],
+          color: 'transparent',
+        },
+      ]
+    );
+  }
+
+  if (type === EvalFunction.IsOutsideRange) {
+    thresholds[refId].config.steps.push(
+      ...[
+        {
+          value: -Infinity,
+          color: config.theme2.colors.error.main,
+        },
+        // we have to duplicate this value, or the graph will not display the handle in the right color
+        {
+          value: values[0],
+          color: config.theme2.colors.error.main,
+        },
+        {
+          value: values[0],
+          color: 'transparent',
+        },
+        {
+          value: values[1],
+          color: config.theme2.colors.error.main,
+        },
+      ]
+    );
+  }
+
+  // now also sort the thresholds
+  thresholds[refId].config.steps.sort((a, b) => a.value - b.value);
 }
 
 interface DatasourceNotFoundProps {
