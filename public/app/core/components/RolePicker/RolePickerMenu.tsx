@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -290,6 +291,7 @@ const convertRolesToGroupOptions = (roles: Role[]) => {
       name: fixedRoleGroupNames[groupName] || capitalize(groupName),
       value: groupName,
       options: roles.sort(sortRolesByName),
+      uid: uuidv4(),
     };
   });
   return groups;
@@ -425,6 +427,7 @@ interface RoleMenuGroupsSectionProps {
     name: string;
     options: Role[];
     value: string;
+    uid: string;
   }>;
   onChange: (value: string) => void;
   onOpenSubMenuRMGS: (value: string) => void;
@@ -478,15 +481,15 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
               ? optionGroups.map((option, i) => (
                   <RoleMenuGroupOption
                     data={option}
-                    key={i}
+                    key={option.uid}
                     isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
                     partiallySelected={groupPartiallySelected(option.value)}
                     disabled={option.options?.every(isNotDelegatable)}
                     onChange={onChange}
-                    onOpenSubMenu={(group: string) => onOpenSubMenuRMGS(group)}
+                    onOpenSubMenu={onOpenSubMenuRMGS}
                     onCloseSubMenu={onCloseSubMenu}
                     root={subMenuNode}
-                    isFocused={showSubMenu && openedMenuGroup === option.value}
+                    isFocused={showSubMenu && openedMenuGroup === option.uid}
                   >
                     {showSubMenu && openedMenuGroup === option.value && (
                       <RolePickerSubMenu
@@ -502,7 +505,7 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
               : roles.map((option, i) => (
                   <RoleMenuOption
                     data={option}
-                    key={i}
+                    key={option.uid}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     disabled={isNotDelegatable(option)}
                     onChange={onChangeSubMenu}
