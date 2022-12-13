@@ -128,7 +128,6 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			)
 			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
 			return nil
-
 		}
 	}
 
