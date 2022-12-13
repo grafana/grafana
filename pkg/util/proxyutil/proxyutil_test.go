@@ -29,6 +29,16 @@ func TestPrepareProxyRequest(t *testing.T) {
 		require.Equal(t, "https://host.com/dashboard", req.Header.Get("X-Grafana-Referer"))
 	})
 
+	t.Run("Prepare proxy request X-Grafana-Referer handles multiline", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("Referer", "https://www.google.ch\r\nOtherHeader:https://www.somethingelse.com")
+
+		PrepareProxyRequest(req)
+		require.Contains(t, req.Header, "X-Grafana-Referer")
+		require.Equal(t, "https://www.google.ch\r\nOtherHeader:https://www.somethingelse.com", req.Header.Get("X-Grafana-Referer"))
+	})
+
 	t.Run("Prepare proxy request should clear X-Forwarded headers", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
