@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -30,8 +30,24 @@ export default function K8SPage(props: Props) {
     if (info.value) {
       return <pre>{JSON.stringify(info.value, null, 2)}</pre>;
     }
+    if (info.loading) {
+      return <Spinner />;
+    }
 
-    return <div className={styles.wrapper}>K8s FTW</div>;
+    return (
+      <div className={styles.wrapper}>
+        No k8s client configured.
+        <br />
+        The client config is read from:
+        <ul>
+          <li>
+            While running{' '}
+            <a href="https://github.com/kubernetes/client-go/blob/master/rest/config.go#L511">in a cluster</a>
+          </li>
+          <li>$HOME/.kube/config, perhaps with minikube running</li>
+        </ul>
+      </div>
+    );
   };
 
   return (
@@ -42,10 +58,7 @@ export default function K8SPage(props: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // TODO: remove `height: 90%`
   wrapper: css`
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    display: block;
   `,
 });
