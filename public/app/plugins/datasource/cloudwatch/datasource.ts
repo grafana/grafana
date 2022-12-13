@@ -179,7 +179,6 @@ export class CloudWatchDatasource
   }
 
   getDefaultQuery(_: CoreApp): Partial<CloudWatchQuery> {
-    console.log('get default query');
     return {
       ...getDefaultLogsQuery(this.defaultLogGroups),
       ...DEFAULT_METRICS_QUERY,

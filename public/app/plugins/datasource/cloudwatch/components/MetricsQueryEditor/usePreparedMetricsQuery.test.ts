@@ -1,76 +1,43 @@
 import { renderHook } from '@testing-library/react-hooks';
 
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../types';
+import { config } from '@grafana/runtime';
 
-import usePreparedMetricsQuery, { DEFAULT_QUERY } from './usePreparedMetricsQuery';
+import { DEFAULT_METRICS_QUERY } from '../../defaultQueries';
+import { migrateAliasPatterns } from '../../migrations/metricQueryMigrations';
+import { CloudWatchMetricsQuery } from '../../types';
 
-interface TestScenario {
-  name: string;
-  query: any;
-  expectedQuery: CloudWatchMetricsQuery;
-}
-
-const baseQuery: CloudWatchMetricsQuery = {
-  refId: 'A',
-  id: '',
-  region: 'us-east-2',
-  namespace: 'AWS/EC2',
-  dimensions: { InstanceId: 'x-123' },
-};
+import usePreparedMetricsQuery from './usePreparedMetricsQuery';
 
 describe('usePrepareMetricsQuery', () => {
-  describe('when an incomplete query is provided', () => {
-    const testTable: TestScenario[] = [
-      { name: 'Empty query', query: { refId: 'A' }, expectedQuery: { ...DEFAULT_QUERY, refId: 'A' } },
-      {
-        name: 'Match exact is not part of the query',
-        query: { ...baseQuery },
-        expectedQuery: { ...DEFAULT_QUERY, ...baseQuery, matchExact: true },
-      },
-      {
-        name: 'Match exact is part of the query',
-        query: { ...baseQuery, matchExact: false },
-        expectedQuery: { ...DEFAULT_QUERY, ...baseQuery, matchExact: false },
-      },
-      {
-        name: 'When editor mode and builder mode different from default is specified',
-        query: { ...baseQuery, metricQueryType: MetricQueryType.Query, metricEditorMode: MetricEditorMode.Code },
-        expectedQuery: {
-          ...DEFAULT_QUERY,
-          ...baseQuery,
-          metricQueryType: MetricQueryType.Query,
-          metricEditorMode: MetricEditorMode.Code,
-        },
-      },
-    ];
-    describe.each(testTable)('scenario %#: $name', (scenario) => {
-      it('should set the default values and trigger onChangeQuery', async () => {
-        const onChangeQuery = jest.fn();
-        const { result } = renderHook(() => usePreparedMetricsQuery(scenario.query, onChangeQuery));
-        expect(onChangeQuery).toHaveBeenLastCalledWith(result.current);
-        expect(result.current).toEqual(scenario.expectedQuery);
-      });
+  describe('when dynamic labels are true and there is no label', () => {
+    config.featureToggles.cloudWatchDynamicLabels = true;
+    const testQuery: CloudWatchMetricsQuery = { ...DEFAULT_METRICS_QUERY, alias: 'test' };
+    const expectedQuery: CloudWatchMetricsQuery = migrateAliasPatterns(testQuery);
+    it('should replace label with alias and trigger onChangeQuery', async () => {
+      const onChangeQuery = jest.fn();
+      const { result } = renderHook(() => usePreparedMetricsQuery(testQuery, onChangeQuery));
+      expect(onChangeQuery).toHaveBeenLastCalledWith(result.current);
+      expect(result.current).toEqual(expectedQuery);
     });
   });
-
-  describe('when a complete query is provided', () => {
-    it('should not change the query and should not call onChangeQuery', async () => {
+  describe('when query has a label', () => {
+    config.featureToggles.cloudWatchDynamicLabels = true;
+    const testQuery: CloudWatchMetricsQuery = { ...DEFAULT_METRICS_QUERY, label: 'test' };
+    it('should not replace label or trigger onChange', async () => {
       const onChangeQuery = jest.fn();
-      const completeQuery: CloudWatchMetricsQuery = {
-        ...baseQuery,
-        expression: '',
-        queryMode: 'Metrics',
-        metricName: '',
-        statistic: 'Sum',
-        period: '300',
-        metricQueryType: MetricQueryType.Query,
-        metricEditorMode: MetricEditorMode.Code,
-        sqlExpression: 'SELECT 1',
-        matchExact: false,
-      };
-      const { result } = renderHook(() => usePreparedMetricsQuery(completeQuery, onChangeQuery));
-      expect(onChangeQuery).not.toHaveBeenCalled();
-      expect(result.current).toEqual(completeQuery);
+      const { result } = renderHook(() => usePreparedMetricsQuery(testQuery, onChangeQuery));
+      expect(result.current).toEqual(testQuery);
+      expect(onChangeQuery).toHaveBeenCalledTimes(0);
+    });
+  });
+  describe('when dynamic labels feature flag is disabled', () => {
+    config.featureToggles.cloudWatchDynamicLabels = false;
+    const testQuery: CloudWatchMetricsQuery = { ...DEFAULT_METRICS_QUERY };
+    it('should not replace label or trigger onChange', async () => {
+      const onChangeQuery = jest.fn();
+      const { result } = renderHook(() => usePreparedMetricsQuery(testQuery, onChangeQuery));
+      expect(result.current).toEqual(testQuery);
+      expect(onChangeQuery).toHaveBeenCalledTimes(0);
     });
   });
 });

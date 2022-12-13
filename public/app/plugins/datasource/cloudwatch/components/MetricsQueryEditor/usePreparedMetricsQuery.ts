@@ -13,7 +13,7 @@ const prepareQuery = (query: CloudWatchMetricsQuery) => {
 };
 
 /**
- * Returns queries with some defaults + migrations, and calls onChange function to notify if it changes
+ * Returns queries with migrations, and calls onChange function to notify if it changes
  */
 const usePreparedMetricsQuery = (
   query: CloudWatchMetricsQuery,
