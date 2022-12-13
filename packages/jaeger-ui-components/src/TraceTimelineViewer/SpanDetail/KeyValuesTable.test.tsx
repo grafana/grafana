@@ -15,7 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import KeyValuesTable, { LinkValue } from './KeyValuesTable';
+import KeyValuesTable, { LinkValue, KeyValuesTableProps } from './KeyValuesTable';
 
 const data = [
   { key: 'span.kind', value: 'client' },
@@ -24,12 +24,12 @@ const data = [
   { key: 'jsonkey', value: JSON.stringify({ hello: 'world' }) },
 ];
 
-const setup = (propOverrides) => {
+const setup = (propOverrides?: KeyValuesTableProps) => {
   const props = {
     data: data,
     ...propOverrides,
   };
-  return render(<KeyValuesTable {...props} />);
+  return render(<KeyValuesTable {...(props as KeyValuesTableProps)} />);
 };
 
 describe('LinkValue', () => {
@@ -79,7 +79,7 @@ describe('KeyValuesTable tests', () => {
               },
             ]
           : [],
-    });
+    } as KeyValuesTableProps);
 
     expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
   });

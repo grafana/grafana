@@ -187,7 +187,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickRunLogsQuery = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
+    reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
       closeType: 'showLogsButton',
     });
@@ -196,7 +196,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickRunMetricsQuery = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
+    reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
       closeType: 'showLogsRateButton',
     });
@@ -206,10 +206,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickClear = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
-      app: this.props.app,
-      closeType: 'clearButton',
-    });
     this.setState((state) => {
       const labels: SelectableLabel[] = state.labels.map((label) => ({
         ...label,

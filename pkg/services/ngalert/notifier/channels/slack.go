@@ -477,6 +477,11 @@ func (sn *SlackNotifier) createImageMultipart(image ngmodels.Image, channel, com
 	if err != nil {
 		return nil, nil, err
 	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			sn.log.Error("Failed to close image file reader", "error", err)
+		}
+	}()
 
 	fw, err := w.CreateFormFile("file", image.Path)
 	if err != nil {
