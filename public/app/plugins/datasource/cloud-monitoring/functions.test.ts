@@ -10,9 +10,10 @@ import {
   labelsToGroupedOptions,
   stringArrayToFilters,
   alignmentPeriodLabel,
+  getMetricType,
 } from './functions';
 import { newMockDatasource } from './specs/testData';
-import { AlignmentTypes, MetricDescriptor, MetricKind, ValueTypes } from './types';
+import { AlignmentTypes, MetricDescriptor, MetricKind, TimeSeriesList, ValueTypes } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -234,6 +235,13 @@ describe('functions', () => {
 
       const label = alignmentPeriodLabel({ perSeriesAligner: 'ALIGN_DELTA', alignmentPeriod: '10' }, datasource);
       expect(label).toBe('10s interval (delta)');
+    });
+  });
+
+  describe('getMetricType', () => {
+    it('returns metric type', () => {
+      const metricType = getMetricType({ filters: ['metric.type', '=', 'test'] } as TimeSeriesList);
+      expect(metricType).toBe('test');
     });
   });
 });

@@ -15,6 +15,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
+import { getMetricType } from './functions';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
@@ -61,7 +62,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    const { metricQuery, sloQuery } = target;
+    const { metricQuery, timeSeriesList, timeSeriesQuery, sloQuery } = target;
+
     return {
       ...target,
       datasource: this.getRef(),
@@ -76,6 +78,23 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
         editorMode: metricQuery.editorMode,
+      },
+      timeSeriesList: timeSeriesList && {
+        ...this.interpolateProps(timeSeriesList, scopedVars),
+        projectName: this.templateSrv.replace(
+          timeSeriesList.projectName ? timeSeriesList.projectName : this.getDefaultProject(),
+          scopedVars
+        ),
+        filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
+        groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
+        view: metricQuery.view || 'FULL',
+      },
+      timeSeriesQuery: timeSeriesQuery && {
+        ...this.interpolateProps(timeSeriesQuery, scopedVars),
+        projectName: this.templateSrv.replace(
+          timeSeriesQuery.projectName ? timeSeriesQuery.projectName : this.getDefaultProject(),
+          scopedVars
+        ),
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
     };
@@ -305,13 +324,25 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       );
     }
 
-    if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
-      return !!query.metricQuery.projectName && !!query.metricQuery.query;
+    if (query.queryType && query.queryType === QueryType.METRICS) {
+      if (query.timeSeriesQuery) {
+        return !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
+      }
+      if (query.timeSeriesList) {
+        return !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
+      }
     }
 
-    const { metricType } = query.metricQuery;
+    // Deprecated
+    if (query.metricQuery) {
+      if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
+        return !!query.metricQuery.projectName && !!query.metricQuery.query;
+      }
+      const { metricType } = query.metricQuery;
+      return !!metricType;
+    }
 
-    return !!metricType;
+    return false;
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {

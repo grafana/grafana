@@ -42,6 +42,15 @@ export const CloudMonitoringAnnotationSupport: (
           intervalMs: ds.intervalMs,
           refId: target?.refId || 'annotationQuery',
           queryType: QueryType.ANNOTATION,
+          timeSeriesList: {
+            projectName: target?.projectName || ds.getDefaultProject(),
+            filters: target?.filters || [],
+            crossSeriesReducer: 'REDUCE_NONE',
+            perSeriesAligner: AlignmentTypes.ALIGN_NONE,
+            title: target?.title || '',
+            text: target?.text || '',
+          },
+          // deprecated
           metricQuery: {
             projectName: target?.projectName || ds.getDefaultProject(),
             editorMode: EditorMode.Visual,
@@ -67,9 +76,6 @@ export const CloudMonitoringAnnotationSupport: (
         ...anno.target,
         queryType: QueryType.METRICS,
         type: 'annotationQuery',
-        metricQuery: {
-          ...anno.target.metricQuery,
-        },
       };
     },
     QueryEditor: AnnotationQueryEditor,

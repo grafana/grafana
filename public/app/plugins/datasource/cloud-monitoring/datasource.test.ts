@@ -15,12 +15,34 @@ describe('Cloud Monitoring Datasource', () => {
       expect(templateVariablesApplied[0]).toEqual(query);
     });
 
-    it('should correctly apply template variables', () => {
+    it('should correctly apply template variables for metricQuery (deprecated)', () => {
       const templateSrv = new TemplateSrv();
       templateSrv.replace = jest.fn().mockReturnValue('project-variable');
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
       const query = createMockQuery({ metricQuery: { projectName: '$testVar' } });
+      const templatedQuery = ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');
+    });
+
+    it('should correctly apply template variables for timeSeriesList', () => {
+      const templateSrv = new TemplateSrv();
+      templateSrv.replace = jest.fn().mockReturnValue('project-variable');
+      const mockInstanceSettings = createMockInstanceSetttings();
+      const ds = new Datasource(mockInstanceSettings, templateSrv);
+      const query = createMockQuery({ timeSeriesList: { projectName: '$testVar', crossSeriesReducer: '' } });
+      const templatedQuery = ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');
+    });
+
+    it('should correctly apply template variables for timeSeriesQuery', () => {
+      const templateSrv = new TemplateSrv();
+      templateSrv.replace = jest.fn().mockReturnValue('project-variable');
+      const mockInstanceSettings = createMockInstanceSetttings();
+      const ds = new Datasource(mockInstanceSettings, templateSrv);
+      const query = createMockQuery({ timeSeriesQuery: { projectName: '$testVar', query: '' } });
       const templatedQuery = ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');
