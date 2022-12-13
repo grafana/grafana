@@ -107,15 +107,16 @@ export default function AlertmanagerConfig(): JSX.Element {
             {loadingError.message || 'Unknown error.'}
           </Alert>
 
-          <AlertmanagerConfigSelector
-            onChange={setSelectedAmConfig}
-            selectedAmConfig={selectedAmConfig}
-            defaultValues={defaultValidValues}
-            readOnly={readOnly}
-            loading={loading}
-            alertManagerSourceName={alertManagerSourceName}
-            onSubmit={onSubmit}
-          />
+          {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+            <AlertmanagerConfigSelector
+              onChange={setSelectedAmConfig}
+              selectedAmConfig={selectedAmConfig}
+              defaultValues={defaultValidValues}
+              readOnly={readOnly}
+              loading={loading}
+              onSubmit={onSubmit}
+            />
+          )}
         </>
       )}
       {isDeleting && alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME && (
