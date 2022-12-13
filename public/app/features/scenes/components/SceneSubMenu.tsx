@@ -13,7 +13,7 @@ function SceneSubMenuRenderer({ model }: SceneComponentProps<SceneSubMenu>) {
   const { children } = model.useState();
 
   return (
-    <div style={{ display: 'flex', gap: '16px' }}>
+    <div style={{ display: 'flex', gap: '16px', justifyContent: 'space-between' }}>
       {children.map((child) => (
         <child.Component key={child.state.key} model={child} />
       ))}

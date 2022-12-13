@@ -153,6 +153,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.scopedVars = Object.assign({}, request.scopedVars, {
         __interval: { text: norm.interval, value: norm.interval },
         __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
+        __sceneObject: { text: '__sceneObject', value: this },
       });
 
       request.interval = norm.interval;

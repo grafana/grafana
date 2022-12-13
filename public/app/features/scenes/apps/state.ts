@@ -6,12 +6,13 @@ import { VariableValueSelectors } from '../variables/components/VariableValueSel
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
-let scene: EmbeddedScene | undefined;
-let handlerScenes: Map<string, EmbeddedScene> = new Map();
+let sceneCache: Map<string, EmbeddedScene> = new Map();
 
-export function getTopLevelScene() {
-  if (scene) {
-    return scene;
+export function getHttpHandlerListScene(): EmbeddedScene {
+  const sceneKey = 'handler level';
+
+  if (sceneCache.has(sceneKey)) {
+    return sceneCache.get(sceneKey)!;
   }
 
   const httpHandlerQueries = new SceneQueryRunner({
@@ -26,19 +27,9 @@ export function getTopLevelScene() {
     ],
   });
 
-  const variables = new SceneVariableSet({
-    variables: [
-      new QueryVariable({
-        name: 'instance',
-        datasource: { uid: 'gdev-prometheus' },
-        query: { query: 'label_values(grafana_http_request_duration_seconds_sum, instance)' },
-      }),
-    ],
-  });
-
-  scene = new EmbeddedScene({
+  const scene = new EmbeddedScene({
     title: 'Grafana Monitoring',
-    $variables: variables,
+    $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({}), new SceneTimePicker({ isOnCanvas: true })],
@@ -48,7 +39,7 @@ export function getTopLevelScene() {
         new VizPanel({
           $data: httpHandlerQueries,
           pluginId: 'table',
-          title: 'HTTP request handlers',
+          title: '',
           displayMode: 'transparent',
           options: {
             footer: {
@@ -103,12 +94,15 @@ export function getTopLevelScene() {
     }),
   });
 
+  sceneCache.set(sceneKey, scene);
   return scene;
 }
 
 export function getHandlerScene(handler: string): EmbeddedScene {
-  if (handlerScenes.has(handler)) {
-    return handlerScenes.get(handler)!;
+  const sceneKey = `handler ${handler}`;
+
+  if (sceneCache.has(sceneKey)) {
+    return sceneCache.get(sceneKey)!;
   }
 
   const reqDurationTimeSeries = new SceneQueryRunner({
@@ -141,6 +135,7 @@ export function getHandlerScene(handler: string): EmbeddedScene {
 
   const scene = new EmbeddedScene({
     title: `Http handler: ${handler}`,
+    $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({}), new SceneTimePicker({ isOnCanvas: true })],
@@ -159,7 +154,7 @@ export function getHandlerScene(handler: string): EmbeddedScene {
         new VizPanel({
           $data: reqCountTimeSeries,
           pluginId: 'timeseries',
-          title: 'Request count',
+          title: 'Request count/s',
           //displayMode: 'transparent',
           options: {},
         }),
@@ -167,7 +162,110 @@ export function getHandlerScene(handler: string): EmbeddedScene {
     }),
   });
 
-  handlerScenes.set(handler, scene);
-
+  sceneCache.set(sceneKey, scene);
   return scene;
+}
+
+export function getOverviewScene(): EmbeddedScene {
+  const sceneKey = 'overview';
+
+  if (sceneCache.has(sceneKey)) {
+    return sceneCache.get(sceneKey)!;
+  }
+
+  const scene = new EmbeddedScene({
+    title: '',
+    $variables: getVariablesDefinitions(),
+    $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
+    subMenu: new SceneSubMenu({
+      children: [new VariableValueSelectors({}), new SceneTimePicker({ isOnCanvas: true })],
+    }),
+    layout: new SceneFlexLayout({
+      direction: 'column',
+      children: [
+        new VizPanel({
+          $data: new SceneQueryRunner({
+            datasource: { uid: 'gdev-prometheus' },
+            queries: [
+              {
+                refId: 'A',
+                expr: `sum(process_resident_memory_bytes{job="grafana", instance=~"$instance"})`,
+                range: true,
+                format: 'time_series',
+                maxDataPoints: 500,
+              },
+            ],
+          }),
+          pluginId: 'timeseries',
+          title: 'Memory usage',
+          size: {},
+          options: {
+            legend: {
+              showLegend: false,
+            },
+          },
+          fieldConfig: {
+            defaults: {
+              unit: 'bytes',
+              min: 0,
+              custom: {
+                lineWidth: 2,
+                fillOpacity: 6,
+                //gradientMode: 'opacity',
+              },
+            },
+            overrides: [],
+          },
+        }),
+        new VizPanel({
+          $data: new SceneQueryRunner({
+            datasource: { uid: 'gdev-prometheus' },
+            queries: [
+              {
+                refId: 'A',
+                expr: `sum(go_goroutines{job="grafana", instance=~"$instance"})`,
+                range: true,
+                format: 'time_series',
+                maxDataPoints: 500,
+              },
+            ],
+          }),
+          pluginId: 'timeseries',
+          title: 'Go routines',
+          size: {},
+          options: {
+            legend: {
+              showLegend: false,
+            },
+          },
+          fieldConfig: {
+            defaults: {
+              min: 0,
+              custom: {
+                lineWidth: 2,
+                fillOpacity: 6,
+                //gradientMode: 'opacity',
+              },
+            },
+            overrides: [],
+          },
+        }),
+      ],
+    }),
+  });
+
+  sceneCache.set(sceneKey, scene);
+  return scene;
+}
+
+function getVariablesDefinitions() {
+  return new SceneVariableSet({
+    variables: [
+      new QueryVariable({
+        name: 'instance',
+        datasource: { uid: 'gdev-prometheus' },
+        query: { query: 'label_values(grafana_http_request_duration_seconds_sum, instance)' },
+      }),
+    ],
+  });
 }
