@@ -41,7 +41,7 @@ describe('Azure Monitor Datasource', () => {
     expect(ds.filterQuery(query)).toBe(true);
   });
 
-  it('should not filter query with no query type', () => {
+  it('should filter out a query with no query type', () => {
     const ds = new Datasource(createMockInstanceSetttings());
     const query = createMockQuery();
     delete query.queryType;
