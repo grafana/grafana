@@ -112,7 +112,6 @@ interface InputProps {
   isFullscreen: boolean;
   onChange: (date: DateTime) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
-  // ref?: React.Ref<HTMLInputElement>
 }
 
 type InputState = {
