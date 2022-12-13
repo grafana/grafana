@@ -23,6 +23,7 @@ type store interface {
 	GetByID(context.Context, int64) (*user.User, error)
 	GetNotServiceAccount(context.Context, int64) (*user.User, error)
 	Delete(context.Context, int64) error
+	LoginConflict(ctx context.Context, login, email string, caseInsensitive bool) error
 	CaseInsensitiveLoginConflict(context.Context, string, string) error
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
@@ -37,6 +38,8 @@ type store interface {
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
 	Disable(context.Context, *user.DisableUserCommand) error
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
+
+	Count(ctx context.Context) (int64, error)
 }
 
 type sqlStore struct {
@@ -56,12 +59,11 @@ func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
 }
 
 func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
-	var userID int64
 	var err error
 	err = ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		sess.UseBool("is_admin")
 
-		if userID, err = sess.Insert(cmd); err != nil {
+		if _, err = sess.Insert(cmd); err != nil {
 			return err
 		}
 		sess.PublishAfterCommit(&events.UserCreated{
@@ -76,7 +78,13 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return userID, nil
+
+	// verify that user was created and cmd.ID was updated with the actual new userID
+	_, err = ss.getAnyUserType(ctx, cmd.ID)
+	if err != nil {
+		return 0, err
+	}
+	return cmd.ID, nil
 }
 
 func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error) {
@@ -182,7 +190,6 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 				where = "LOWER(email)=LOWER(?)"
 			}
 			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
-
 			if err != nil {
 				return err
 			}
@@ -258,6 +265,43 @@ func (ss *sqlStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *
 		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
 	}
 
+	return nil
+}
+
+// LoginConflict returns an error if the provided email or login are already
+// associated with a user. If caseInsensitive is true the search is not case
+// sensitive.
+func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string, caseInsensitive bool) error {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return ss.loginConflict(ctx, sess, login, email, caseInsensitive)
+	})
+	return err
+}
+
+func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, email string, caseInsensitive bool) error {
+	users := make([]user.User, 0)
+	where := "email=? OR login=?"
+	if caseInsensitive {
+		where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+		login = strings.ToLower(login)
+		email = strings.ToLower(email)
+	}
+
+	exists, err := sess.Where(where, email, login).Get(&user.User{})
+	if err != nil {
+		return err
+	}
+	if exists {
+		return user.ErrUserAlreadyExists
+	}
+	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
+		email, login).Find(&users); err != nil {
+		return err
+	}
+
+	if len(users) > 1 {
+		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
+	}
 	return nil
 }
 
@@ -461,6 +505,22 @@ func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin
 	})
 }
 
+func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
+	type result struct {
+		Count int64
+	}
+
+	r := result{}
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s WHERE is_service_account=%s", ss.db.GetDialect().Quote("user"), ss.db.GetDialect().BooleanStr(false))
+		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	})
+	return r.Count, err
+}
+
 // validateOneAdminLeft validate that there is an admin user left
 func validateOneAdminLeft(ctx context.Context, sess *db.Session) error {
 	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
@@ -628,4 +688,20 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		return err
 	})
 	return &result, err
+}
+
+// getAnyUserType searches for a user record by ID. The user account may be a service account.
+func (ss *sqlStore) getAnyUserType(ctx context.Context, userID int64) (*user.User, error) {
+	usr := user.User{ID: userID}
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.Get(&usr)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return user.ErrUserNotFound
+		}
+		return nil
+	})
+	return &usr, err
 }

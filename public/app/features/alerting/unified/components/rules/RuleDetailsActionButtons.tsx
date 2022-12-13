@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { FC, Fragment } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { Button, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
@@ -61,7 +61,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         variant="primary"
         icon="book"
         target="__blank"
-        href={rule.annotations[Annotation.runbookURL]}
+        href={textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL])}
       >
         View runbook
       </LinkButton>

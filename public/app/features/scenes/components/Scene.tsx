@@ -25,6 +25,7 @@ export class Scene extends SceneObjectBase<SceneState> {
   public activate() {
     super.activate();
     this.urlSyncManager = new UrlSyncManager(this);
+    this.urlSyncManager.initSync();
   }
 
   public deactivate() {
@@ -33,6 +34,30 @@ export class Scene extends SceneObjectBase<SceneState> {
   }
 }
 
+export class EmbeddedScene extends Scene {
+  public static Component = EmbeddedSceneRenderer;
+}
+
+function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
+  const { layout, isEditing, subMenu } = model.useState();
+  return (
+    <div
+      style={{
+        flexGrow: 1,
+        display: 'flex',
+        gap: '8px',
+        overflow: 'auto',
+        minHeight: '100%',
+        flexDirection: 'column',
+      }}
+    >
+      {subMenu && <subMenu.Component model={subMenu} />}
+      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
+        <layout.Component model={layout} isEditing={isEditing} />
+      </div>
+    </div>
+  );
+}
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, layout, actions = [], isEditing, $editor, subMenu } = model.useState();
 
@@ -41,6 +66,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   if ($editor) {
     toolbarActions.push(
       <ToolbarButton
+        key="scene-settings"
         icon="cog"
         variant={isEditing ? 'primary' : 'default'}
         onClick={() => model.setState({ isEditing: !model.state.isEditing })}

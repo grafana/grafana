@@ -1,15 +1,14 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel } from '../components';
 import { NestedScene } from '../components/NestedScene';
-import { Scene } from '../components/Scene';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
+import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
-export function getNestedScene(): Scene {
-  const scene = new Scene({
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
+
+export function getNestedScene(standalone: boolean): Scene {
+  const state = {
     title: 'Nested Scene demo',
     layout: new SceneFlexLayout({
       direction: 'column',
@@ -22,29 +21,19 @@ export function getNestedScene(): Scene {
         getInnerScene('Inner scene'),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $timeRange: new SceneTimeRange(),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }
 
 export function getInnerScene(title: string) {
   const scene = new NestedScene({
     title: title,
     canRemove: true,
+    canCollapse: true,
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
@@ -55,19 +44,8 @@ export function getInnerScene(title: string) {
         }),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $timeRange: new SceneTimeRange(),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
 

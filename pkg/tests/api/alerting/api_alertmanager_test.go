@@ -16,13 +16,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -32,7 +34,9 @@ type Response struct {
 	TraceID string `json:"traceID"`
 }
 
-func TestAMConfigAccess(t *testing.T) {
+func TestIntegrationAMConfigAccess(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -390,7 +394,9 @@ func TestAMConfigAccess(t *testing.T) {
 	})
 }
 
-func TestAlertAndGroupsQuery(t *testing.T) {
+func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -547,7 +553,9 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 }
 
-func TestRulerAccess(t *testing.T) {
+func TestIntegrationRulerAccess(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -662,7 +670,9 @@ func TestRulerAccess(t *testing.T) {
 	}
 }
 
-func TestDeleteFolderWithRules(t *testing.T) {
+func TestIntegrationDeleteFolderWithRules(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -822,7 +832,9 @@ func TestDeleteFolderWithRules(t *testing.T) {
 	}
 }
 
-func TestAlertRuleCRUD(t *testing.T) {
+func TestIntegrationAlertRuleCRUD(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -1800,7 +1812,9 @@ func TestAlertRuleCRUD(t *testing.T) {
 	}
 }
 
-func TestAlertmanagerStatus(t *testing.T) {
+func TestIntegrationAlertmanagerStatus(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -1863,7 +1877,9 @@ func TestAlertmanagerStatus(t *testing.T) {
 	}
 }
 
-func TestQuota(t *testing.T) {
+func TestIntegrationQuota(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -1877,6 +1893,8 @@ func TestQuota(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
+		// needs permission to update org quota
+		IsAdmin:        true,
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1917,30 +1935,10 @@ func TestQuota(t *testing.T) {
 	// check quota limits
 	t.Run("when quota limit exceed creating new rule should fail", func(t *testing.T) {
 		// get existing org quota
-		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
-		err = store.GetOrgQuotaByTarget(context.Background(), &query)
-		require.NoError(t, err)
-		used := query.Result.Used
-		limit := query.Result.Limit
-
-		// set org quota limit to equal used
-		orgCmd := models.UpdateOrgQuotaCmd{
-			OrgId:  1,
-			Target: "alert_rule",
-			Limit:  used,
-		}
-		err := store.UpdateOrgQuota(context.Background(), &orgCmd)
-		require.NoError(t, err)
-
+		limit, used := apiClient.GetOrgQuotaLimits(t, 1)
+		apiClient.UpdateAlertRuleOrgQuota(t, 1, used)
 		t.Cleanup(func() {
-			// reset org quota to original value
-			orgCmd := models.UpdateOrgQuotaCmd{
-				OrgId:  1,
-				Target: "alert_rule",
-				Limit:  limit,
-			}
-			err := store.UpdateOrgQuota(context.Background(), &orgCmd)
-			require.NoError(t, err)
+			apiClient.UpdateAlertRuleOrgQuota(t, 1, limit)
 		})
 
 		// try to create an alert rule
@@ -2080,7 +2078,9 @@ func TestQuota(t *testing.T) {
 	})
 }
 
-func TestEval(t *testing.T) {
+func TestIntegrationEval(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -2553,15 +2553,15 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = 1
 
-	u, err := store.CreateUser(context.Background(), cmd)
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+
+	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u.ID
-}
-
-func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {
-	org, err := store.CreateOrgWithMember(name, userID)
-	require.NoError(t, err)
-	return org.Id
 }
 
 func getLongString(t *testing.T, n int) string {

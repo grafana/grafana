@@ -42,7 +42,7 @@ export interface StyleEditorOptions {
   displayRotation?: boolean;
 }
 
-export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions, any>> = ({
+export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions>> = ({
   value,
   context,
   onChange,

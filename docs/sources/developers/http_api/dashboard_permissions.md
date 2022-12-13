@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/dashboard_permissions/
-  - /docs/grafana/latest/http_api/dashboard_permissions/
-  - /docs/grafana/latest/http_api/dashboardpermissions/
+  - ../../http_api/dashboard_permissions/
+  - ../../http_api/dashboardpermissions/
 description: Grafana Dashboard Permissions HTTP API
 keywords:
   - grafana
@@ -13,7 +12,7 @@ keywords:
   - permission
   - permissions
   - acl
-title: 'Dashboard Permissions HTTP API'
+title: Dashboard Permissions HTTP API
 ---
 
 # Dashboard Permissions API

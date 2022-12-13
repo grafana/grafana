@@ -128,34 +128,34 @@ describe('Grouping to Matrix', () => {
       const processed = received[0];
 
       expect(processed[0].fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "config": Object {},
-            "name": "Row\\\\Column",
+        [
+          {
+            "config": {},
+            "name": "Row\\Column",
             "type": "string",
-            "values": Array [
+            "values": [
               "R1",
               "R2",
             ],
           },
-          Object {
-            "config": Object {
+          {
+            "config": {
               "units": "celsius",
             },
             "name": "C1",
             "type": "number",
-            "values": Array [
+            "values": [
               1,
               4,
             ],
           },
-          Object {
-            "config": Object {
+          {
+            "config": {
               "units": "celsius",
             },
             "name": "C2",
             "type": "number",
-            "values": Array [
+            "values": [
               5,
               "",
             ],

@@ -68,7 +68,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -94,7 +94,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.OrgID, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -122,10 +122,17 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgID = c.OrgID
+	cmd.SignedInUser = c.SignedInUser
 
 	folder, err := hs.folderService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	if !hs.AccessControl.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
@@ -211,7 +218,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules")})
+	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -227,31 +234,30 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
-	/*
-		if folder.CreatedBy > 0 {
-			creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
-		}
-		if folder.UpdatedBy > 0 {
-			updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
-		}
-	*/
+	if folder.CreatedBy > 0 {
+		creator = hs.getUserLogin(c.Req.Context(), folder.CreatedBy)
+	}
+	if folder.UpdatedBy > 0 {
+		updater = hs.getUserLogin(c.Req.Context(), folder.UpdatedBy)
+	}
 
 	return dtos.Folder{
-		Id:    folder.ID,
-		Uid:   folder.UID,
-		Title: folder.Title,
-		//Url:           folder.Url,
-		//HasACL:        folder.HasACL,
-		CanSave:   canSave,
-		CanEdit:   canEdit,
-		CanAdmin:  canAdmin,
-		CanDelete: canDelete,
-		CreatedBy: creator,
-		Created:   folder.Created,
-		UpdatedBy: updater,
-		Updated:   folder.Updated,
-		//Version:       folder.Version,
+		Id:            folder.ID,
+		Uid:           folder.UID,
+		Title:         folder.Title,
+		Url:           folder.Url,
+		HasACL:        folder.HasACL,
+		CanSave:       canSave,
+		CanEdit:       canEdit,
+		CanAdmin:      canAdmin,
+		CanDelete:     canDelete,
+		CreatedBy:     creator,
+		Created:       folder.Created,
+		UpdatedBy:     updater,
+		Updated:       folder.Updated,
+		Version:       folder.Version,
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
+		ParentUID:     folder.ParentUID,
 	}
 }
 
