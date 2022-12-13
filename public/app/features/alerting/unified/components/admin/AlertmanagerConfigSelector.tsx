@@ -6,6 +6,7 @@ import { Select, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { FormValues } from './AlertmanagerConfig';
 import { ConfigEditor } from './ConfigEditor';
@@ -22,7 +23,6 @@ interface AlertmanagerConfigSelectorProps {
   onSubmit: (values: FormValues, fetchLatestConfig: boolean, oldConfig?: AlertManagerCortexConfig) => void;
   readOnly: boolean;
   loading: boolean;
-  alertManagerSourceName?: string;
 }
 
 export default function AlertmanagerConfigSelector({
@@ -32,7 +32,6 @@ export default function AlertmanagerConfigSelector({
   onSubmit,
   readOnly,
   loading,
-  alertManagerSourceName,
 }: AlertmanagerConfigSelectorProps): JSX.Element {
   const { useGetValidAlertManagersConfigQuery } = alertmanagerApi;
 
@@ -74,7 +73,7 @@ export default function AlertmanagerConfigSelector({
             onSubmit={(values) => onSubmit(values, false, selectedAmConfig?.value)}
             readOnly={readOnly}
             loading={loading}
-            alertManagerSourceName={alertManagerSourceName}
+            alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
           />
         </>
       ) : null}
