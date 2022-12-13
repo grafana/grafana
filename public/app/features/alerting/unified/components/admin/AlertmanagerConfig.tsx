@@ -100,7 +100,10 @@ export default function AlertmanagerConfig(): JSX.Element {
       />
       {loadingError && !loading && (
         <>
-          <Alert severity="error" title="Error loading Alertmanager configuration">
+          <Alert
+            severity="error"
+            title="Your Alertmanager configuration is incorrect. These are the details of the error:"
+          >
             {loadingError.message || 'Unknown error.'}
           </Alert>
 
