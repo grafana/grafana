@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     gap: theme.spacing(1),
     alignItems: 'center',
-    padding: theme.spacing(0, 2),
+    padding: theme.spacing(0, 1, 0, 2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
 
@@ -78,6 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
   }),
   profileButton: css({
+    padding: theme.spacing(0, 0.25),
     img: {
       borderRadius: '50%',
       height: '24px',
