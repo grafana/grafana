@@ -40,8 +40,8 @@ export default function K8SPage(props: Props) {
         At startup, a service tries to load a client using:
         <ul>
           <li>
-            Default
-            <a href="https://github.com/kubernetes/client-go/blob/master/rest/config.go#L511">in cluster</a> configs
+            Default <a href="https://github.com/kubernetes/client-go/blob/master/rest/config.go#L511">in cluster</a>{' '}
+            configs
           </li>
           <li>$HOME/.kube/config, perhaps with minikube running</li>
         </ul>
