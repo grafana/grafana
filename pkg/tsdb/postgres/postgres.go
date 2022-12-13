@@ -43,6 +43,14 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSource
 	return instance, nil
 }
 
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+	return dsInfo.CheckHealth(ctx, req)
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
