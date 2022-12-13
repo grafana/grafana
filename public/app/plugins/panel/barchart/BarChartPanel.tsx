@@ -73,8 +73,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   width,
   height,
   timeZone,
-  customTooltipFn,
   id,
+  children,
 }) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
@@ -191,9 +191,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
             />
           </div>
         )}
-        {customTooltipFn &&
-          customTooltipFn(info.aligned, datapointIdx!, seriesIdx!, options.tooltip.sort, options.tooltip.mode)}
-        {!customTooltipFn && (
+        {children && typeof children === 'function' ? children(info.aligned, datapointIdx, seriesIdx) : null}
+        {!children && (
           <DataHoverView
             data={info.aligned}
             rowIndex={datapointIdx}

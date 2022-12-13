@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, PropsWithChildren } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -20,7 +20,9 @@ import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanel
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
-export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
+export function PanelRenderer<P extends object = any, F extends object = any>(
+  props: PropsWithChildren<PanelRendererProps<P, F>>
+) {
   const {
     pluginId,
     data,
@@ -33,7 +35,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     onChangeTimeRange = () => {},
     onFieldConfigChange = () => {},
     fieldConfig = defaultFieldConfig,
-    customTooltipFn,
+    children,
   } = props;
 
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
@@ -93,8 +95,9 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
           onFieldConfigChange={onFieldConfigChange}
           onChangeTimeRange={onChangeTimeRange}
           eventBus={appEvents}
-          customTooltipFn={customTooltipFn}
-        />
+        >
+          {pluginId === 'barchart' ? children : null}
+        </PanelComponent>
       </PluginContextProvider>
     </ErrorBoundaryAlert>
   );

@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { AbsoluteTimeRange, DataFrame, FieldConfigSource, PanelData } from '@grafana/data';
-import { TooltipDisplayMode, SortOrder } from '@grafana/ui';
+import { AbsoluteTimeRange, FieldConfigSource, PanelData } from '@grafana/data';
 
 /**
  * Describes the properties that can be passed to the PanelRenderer.
@@ -19,13 +18,6 @@ export interface PanelRendererProps<P extends object = any, F extends object = a
   onOptionsChange?: (options: P) => void;
   onFieldConfigChange?: (config: FieldConfigSource<F>) => void;
   onChangeTimeRange?: (timeRange: AbsoluteTimeRange) => void;
-  customTooltipFn?: (
-    dataframe: DataFrame,
-    rowIdx?: number,
-    colIdx?: number,
-    sortOrder?: SortOrder,
-    mode?: TooltipDisplayMode
-  ) => JSX.Element | null;
   fieldConfig?: FieldConfigSource<Partial<F>>;
   timeZone?: string;
   width: number;

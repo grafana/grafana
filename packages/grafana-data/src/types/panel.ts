@@ -1,7 +1,5 @@
 import { defaultsDeep } from 'lodash';
 
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
-
 import { EventBus } from '../events';
 import { StandardEditorProps } from '../field';
 import { Registry } from '../utils';
@@ -112,15 +110,6 @@ export interface PanelProps<T = any> {
 
   /** Time range change handler */
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
-
-  /** Function that renders a custom tooltip */
-  customTooltipFn?: (
-    dataframe: DataFrame,
-    rowIdx?: number,
-    colIdx?: number,
-    sortOrder?: SortOrder,
-    mode?: TooltipDisplayMode
-  ) => JSX.Element | null;
 }
 
 export interface PanelEditorProps<T = any> {
