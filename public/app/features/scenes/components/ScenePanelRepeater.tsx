@@ -1,20 +1,20 @@
 import React from 'react';
 
-import { LoadingState, PanelData } from '@grafana/data';
+import { LoadingState, PanelData, DataFrame } from '@grafana/data';
 
-import { SceneDataNode } from '../core/SceneDataNode';
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { sceneGraph } from '../core/sceneGraph';
 import {
   SceneComponentProps,
   SceneObject,
-  SceneObjectStatePlain,
   SceneLayoutState,
   SceneLayoutChild,
+  SceneLayoutChildState,
 } from '../core/types';
 
-interface RepeatOptions extends SceneObjectStatePlain {
+interface RepeatOptions extends SceneLayoutChildState {
   layout: SceneObject<SceneLayoutState>;
+  getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneLayoutChild;
 }
 
 export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
@@ -33,22 +33,11 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
   }
 
   private performRepeat(data: PanelData) {
-    // assume parent is a layout
-    const firstChild = this.state.layout.state.children[0]!;
     const newChildren: SceneLayoutChild[] = [];
 
-    for (const series of data.series) {
-      const clone = firstChild.clone({
-        key: `${newChildren.length}`,
-        $data: new SceneDataNode({
-          data: {
-            ...data,
-            series: [series],
-          },
-        }),
-      });
-
-      newChildren.push(clone);
+    for (let seriesIndex = 0; seriesIndex < data.series.length; seriesIndex++) {
+      const layoutChild = this.state.getLayoutChild(data, data.series[seriesIndex], seriesIndex);
+      newChildren.push(layoutChild);
     }
 
     this.state.layout.setState({ children: newChildren });

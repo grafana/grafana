@@ -14,6 +14,7 @@ import { VizPanelRenderer } from './VizPanelRenderer';
 
 export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLayoutChildState {
   title: string;
+  titleHref?: string;
   pluginId: string;
   options: TOptions;
   fieldConfig: FieldConfigSource<TFieldConfig>;

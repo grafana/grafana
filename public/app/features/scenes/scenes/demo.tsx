@@ -8,6 +8,7 @@ import {
   VizPanel,
 } from '../components';
 import { EmbeddedScene } from '../components/Scene';
+import { SceneDataNode } from '../core/SceneDataNode';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
@@ -72,30 +73,38 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene {
     layout: new ScenePanelRepeater({
       layout: new SceneFlexLayout({
         direction: 'column',
-        children: [
-          new SceneFlexLayout({
-            direction: 'row',
-            size: { minHeight: 200 },
-            children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Title',
-                options: {
-                  legend: { displayMode: 'hidden' },
-                },
-              }),
-              new VizPanel({
-                size: { width: 300 },
-                pluginId: 'stat',
-                fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
-                options: {
-                  graphMode: 'none',
-                },
-              }),
-            ],
-          }),
-        ],
+        children: [],
       }),
+      getLayoutChild: (data, frame, frameIndex) => {
+        return new SceneFlexLayout({
+          key: `panel-${frameIndex}`,
+          $data: new SceneDataNode({
+            data: {
+              ...data,
+              series: [frame],
+            },
+          }),
+          direction: 'row',
+          size: { minHeight: 200 },
+          children: [
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'Title',
+              options: {
+                legend: { displayMode: 'hidden' },
+              },
+            }),
+            new VizPanel({
+              size: { width: 300 },
+              pluginId: 'stat',
+              fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
+              options: {
+                graphMode: 'none',
+              },
+            }),
+          ],
+        });
+      },
     }),
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),

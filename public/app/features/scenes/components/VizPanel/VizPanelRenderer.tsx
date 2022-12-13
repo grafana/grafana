@@ -14,7 +14,8 @@ import { SceneDragHandle } from '../SceneDragHandle';
 import { VizPanel } from './VizPanel';
 
 export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, options, fieldConfig, pluginId, pluginLoadError, displayMode, $data, ...state } = model.useState();
+  const { title, titleHref, options, fieldConfig, pluginId, pluginLoadError, displayMode, $data, ...state } =
+    model.useState();
   const [ref, { width, height }] = useMeasure();
   const plugin = model.getPlugin();
   const { data } = sceneGraph.getData(model).useState();
@@ -53,6 +54,7 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
     <div ref={ref as RefCallback<HTMLDivElement>} style={{ position: 'absolute', width: '100%', height: '100%' }}>
       <PanelChrome
         title={titleInterpolated}
+        titleHref={titleHref}
         width={width}
         height={height}
         leftItems={isDraggable ? [dragHandle] : undefined}

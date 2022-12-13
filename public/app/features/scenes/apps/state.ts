@@ -1,13 +1,15 @@
-import { SceneFlexLayout, SceneSubMenu, SceneTimePicker, VizPanel } from '../components';
+import { getFrameDisplayName } from '@grafana/data';
+
+import { SceneFlexLayout, ScenePanelRepeater, SceneSubMenu, SceneTimePicker, VizPanel } from '../components';
 import { EmbeddedScene } from '../components/Scene';
 import { SceneSubMenuSpacer } from '../components/SceneSubMenu';
+import { SceneDataNode } from '../core/SceneDataNode';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
-import { SceneConditional } from './SceneConditional';
 import { SceneRadioToggle } from './SceneRadioToggle';
 
 let sceneCache: Map<string, EmbeddedScene> = new Map();
@@ -29,14 +31,6 @@ export function getHttpHandlerListScene(): EmbeddedScene {
         format: 'table',
       },
     ],
-  });
-
-  const sceneToggle = new SceneRadioToggle({
-    options: [
-      { value: 'table', label: 'Table' },
-      { value: 'graphs', label: 'Graphs' },
-    ],
-    value: 'table',
   });
 
   const httpHandlersTable = new VizPanel({
@@ -94,6 +88,28 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     },
   });
 
+  const graphsScene = getHttpHandlersGraphsScene();
+
+  const sceneToggle = new SceneRadioToggle({
+    options: [
+      { value: 'table', label: 'Table' },
+      { value: 'graphs', label: 'Graphs' },
+    ],
+    value: 'table',
+  });
+
+  sceneToggle.subscribeToState({
+    next: (state) => {
+      if (state.value === 'graphs') {
+        graphsScene.setState({ size: { ...graphsScene.state.size, hidden: false } });
+        httpHandlersTable.setState({ size: { ...httpHandlersTable.state.size, hidden: true } });
+      } else {
+        graphsScene.setState({ size: { ...graphsScene.state.size, hidden: true } });
+        httpHandlersTable.setState({ size: { ...httpHandlersTable.state.size, hidden: false } });
+      }
+    },
+  });
+
   const scene = new EmbeddedScene({
     title: 'Grafana Monitoring',
     $variables: getVariablesDefinitions(),
@@ -107,7 +123,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
       ],
     }),
     layout: new SceneFlexLayout({
-      children: [httpHandlersTable, getHttpHandlersGraphsScene()],
+      children: [httpHandlersTable, graphsScene],
     }),
   });
 
@@ -121,7 +137,8 @@ export function getHttpHandlersGraphsScene() {
     queries: [
       {
         refId: 'A',
-        expr: `avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval])) * 1e3`,
+        //expr: ``,
+        expr: 'sort(topk(8, avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval])) * 1e3))',
         range: true,
         format: 'time_series',
         legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
@@ -130,15 +147,52 @@ export function getHttpHandlersGraphsScene() {
     ],
   });
 
-  const graph = new VizPanel({
+  const graphs = new ScenePanelRepeater({
     $data: reqDurationTimeSeries,
-    pluginId: 'timeseries',
-    title: 'Request duration avg (ms)',
-    size: {},
-    options: {},
+    size: { hidden: true },
+    layout: new SceneFlexLayout({
+      direction: 'column',
+      children: [],
+    }),
+    getLayoutChild: (data, frame, frameIndex) => {
+      return new SceneFlexLayout({
+        key: `panel-${frameIndex}`,
+        direction: 'row',
+        size: { minHeight: 200 },
+        $data: new SceneDataNode({
+          data: {
+            ...data,
+            series: [frame],
+          },
+        }),
+        children: [
+          new VizPanel({
+            pluginId: 'timeseries',
+            titleHref: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
+            title: getFrameDisplayName(frame),
+            options: {
+              legend: { displayMode: 'hidden' },
+            },
+          }),
+          new VizPanel({
+            size: { width: 200 },
+            title: 'Last',
+            pluginId: 'stat',
+            fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
+            options: {
+              graphMode: 'none',
+              textMode: 'value',
+              //   text: {
+              //     titleSize: 14,
+              //   },
+            },
+          }),
+        ],
+      });
+    },
   });
 
-  return graph;
+  return graphs;
 }
 
 export function getHandlerScene(handler: string): EmbeddedScene {

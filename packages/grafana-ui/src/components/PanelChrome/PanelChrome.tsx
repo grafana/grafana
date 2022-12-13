@@ -30,6 +30,7 @@ export interface PanelChromeProps {
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
   title?: string;
+  titleHref?: string;
   titleItems?: PanelChromeInfoState[];
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
@@ -60,6 +61,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   children,
   padding = 'md',
   title = '',
+  titleHref,
   titleItems = [],
   menu,
   // dragClass,
@@ -99,7 +101,13 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
         <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
           {title && (
             <div title={title} className={styles.title}>
-              {title}
+              {titleHref ? (
+                <a href={titleHref} className="external-link">
+                  {title}
+                </a>
+              ) : (
+                title
+              )}
             </div>
           )}
 

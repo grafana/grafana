@@ -3,6 +3,8 @@ import React from 'react';
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneObject, SceneObjectStatePlain } from '../core/types';
 
+// This component did not work due to layout rendering a child for the conditional object even though it was not active.
+
 export interface SceneConditionalState<T extends SceneObject> extends SceneObjectStatePlain {
   source: T;
   eval: (source: T) => boolean;
