@@ -2457,7 +2457,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "79"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "80"],
       [0, 0, 0, "Do not use any type assertions.", "81"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "82"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "82"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "83"],
+      [0, 0, 0, "Do not use any type assertions.", "84"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "85"],
+      [0, 0, 0, "Do not use any type assertions.", "86"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "87"]
     ],
     "public/app/core/components/OptionsUI/string.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

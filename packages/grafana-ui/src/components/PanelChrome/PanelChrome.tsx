@@ -43,6 +43,7 @@ export interface PanelChromeProps {
    * of itself or its header
    * */
   leftItems?: ReactNode[];
+  displayMode?: 'default' | 'transparent';
 }
 
 /**
@@ -66,6 +67,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   // loadingState,
   // states = [],
   leftItems = [],
+  displayMode,
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -81,6 +83,11 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
     minWidth: headerHeight,
   };
   const containerStyles: CSSProperties = { width, height };
+
+  if (displayMode === 'transparent') {
+    containerStyles.background = 'transparent';
+    containerStyles.border = 'none';
+  }
 
   const handleMenuOpen = () => {};
 

@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC } from 'react';
+import React from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
@@ -9,7 +9,7 @@ import { getSceneByTitle } from './scenes';
 
 export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
 
-export const SceneEmbeddedPage: FC<Props> = (props) => {
+export function SceneEmbeddedPage(props: Props) {
   const scene = getSceneByTitle(props.match.params.name, false);
 
   if (!scene) {
@@ -26,6 +26,6 @@ export const SceneEmbeddedPage: FC<Props> = (props) => {
       </Page.Contents>
     </Page>
   );
-};
+}
 
 export default SceneEmbeddedPage;

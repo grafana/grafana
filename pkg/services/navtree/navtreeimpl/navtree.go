@@ -404,6 +404,12 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Url:  s.cfg.AppSubURL + "/scenes",
 			Icon: "apps",
 		})
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text: "Grafana Monitoring",
+			Id:   "grafana-monitoring",
+			Url:  s.cfg.AppSubURL + "/scenes/grafana-monitoring",
+			Icon: "apps",
+		})
 	}
 
 	if hasEditPerm && !s.features.IsEnabled(featuremgmt.FlagTopnav) {

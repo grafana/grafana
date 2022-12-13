@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC } from 'react';
+import React from 'react';
 import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
@@ -13,7 +13,7 @@ import { getScenes } from './scenes';
 
 export interface Props {}
 
-export const SceneListPage: FC<Props> = ({}) => {
+export function SceneListPage({}: Props) {
   const scenes = getScenes();
   const results = useAsync(() => {
     return getGrafanaSearcher().starred({ starred: true });
@@ -55,6 +55,6 @@ export const SceneListPage: FC<Props> = ({}) => {
       </Page.Contents>
     </Page>
   );
-};
+}
 
 export default SceneListPage;

@@ -20,6 +20,7 @@ export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLa
   pluginVersion?: string;
   // internal state
   pluginLoadError?: string;
+  displayMode?: 'default' | 'transparent';
 }
 
 export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
