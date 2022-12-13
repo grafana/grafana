@@ -104,8 +104,15 @@ export class QueryRows extends PureComponent<Props> {
         return item;
       }
 
-      return copyModel(item, settings.uid);
+      const previousDs = this.getDataSourceSettings(item);
+
+      // Copy model if changing to a datasource of same type.
+      if (settings.type === previousDs?.type) {
+        return copyModel(item, settings.uid);
+      }
+      return emptyModel(item, settings.uid);
     });
+
     onQueriesChange(updatedQueries);
   };
 
@@ -275,6 +282,19 @@ function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'
     ...item,
     model: omit(item.model, 'datasource'),
     datasourceUid: uid,
+  };
+}
+
+function emptyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'> {
+  return {
+    refId: item.refId,
+    relativeTimeRange: item.relativeTimeRange,
+    queryType: '',
+    datasourceUid: uid,
+    model: {
+      refId: item.refId,
+      hide: false,
+    },
   };
 }
 
