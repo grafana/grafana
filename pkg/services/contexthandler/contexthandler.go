@@ -201,8 +201,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	defer span.End()
 
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
-		identity, err := h.authnService.Authenticate(ctx, authn.ClientAnonymous, &authn.Request{HTTPRequest: reqContext.Req})
-		if err != nil {
+		identity, ok, err := h.authnService.Authenticate(ctx, authn.ClientAnonymous, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok || err != nil {
 			return false
 		}
 		reqContext.SignedInUser = identity.SignedInUser()
@@ -273,8 +273,8 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 
 func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
-		req := &authn.Request{HTTPRequest: reqContext.Req}
-		if !h.authnService.Test(reqContext.Req.Context(), authn.ClientAPIKey, req) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientAPIKey, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
 			return false
 		}
 
@@ -282,7 +282,6 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
-		identity, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientAPIKey, req)
 		if err != nil {
 			// return error
 			return true

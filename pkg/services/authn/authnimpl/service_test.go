@@ -2,6 +2,7 @@ package authnimpl
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +18,7 @@ func TestService_Authenticate(t *testing.T) {
 	type TestCase struct {
 		desc        string
 		clientName  string
+		expectedOK  bool
 		expectedErr error
 	}
 
@@ -24,62 +26,37 @@ func TestService_Authenticate(t *testing.T) {
 		{
 			desc:       "should succeed with authentication for configured client",
 			clientName: "fake",
+			expectedOK: true,
 		},
 		{
-			desc:        "should fail when client is not configured",
-			clientName:  "gitlab",
-			expectedErr: authn.ErrClientNotFound,
+			desc:       "should return false when client is not configured",
+			clientName: "gitlab",
+			expectedOK: false,
+		},
+		{
+			desc:        "should return true and error when client could be used but failed to authenticate",
+			clientName:  "fake",
+			expectedOK:  true,
+			expectedErr: errors.New("some error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := setupTests(t, func(svc *Service) {
-				svc.clients["fake"] = &authntest.FakeClient{}
+				svc.clients["fake"] = &authntest.FakeClient{
+					ExpectedErr:  tt.expectedErr,
+					ExpectedTest: tt.expectedOK,
+				}
 			})
 
-			_, err := svc.Authenticate(context.Background(), tt.clientName, &authn.Request{})
-			assert.ErrorIs(t, tt.expectedErr, err)
+			_, ok, err := svc.Authenticate(context.Background(), tt.clientName, &authn.Request{})
+			assert.Equal(t, tt.expectedOK, ok)
+			if tt.expectedErr != nil {
+				assert.Error(t, err)
+			}
 		})
 	}
-}
-
-func TestService_Test(t *testing.T) {
-	type TestCase struct {
-		desc     string
-		client   string
-		expected bool
-	}
-
-	tests := []TestCase{
-		{
-			desc:     "should return true for registered client",
-			client:   "fake",
-			expected: true,
-		},
-		{
-			desc:     "should return false for registered client that cannot process request",
-			client:   "fake",
-			expected: false,
-		},
-		{
-			desc:     "should return false for non existing client",
-			client:   "gitlab",
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			svc := setupTests(t, func(svc *Service) {
-				svc.clients["fake"] = &authntest.FakeClient{ExpectedTest: tt.expected}
-			})
-
-			ok := svc.Test(context.Background(), tt.client, &authn.Request{})
-			assert.Equal(t, tt.expected, ok)
-		})
-	}
-
 }
 
 func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
