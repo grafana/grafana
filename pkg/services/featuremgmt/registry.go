@@ -215,11 +215,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheusBufferedClient",
-			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
-			State:       FeatureStateStable,
-		},
-		{
 			Name:        "newDBLibrary",
 			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
 			State:       FeatureStateBeta,
@@ -291,11 +286,6 @@ var (
 			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "traceqlEditor",
-			Description: "Show the TraceQL editor in the explore page",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "flameGraph",

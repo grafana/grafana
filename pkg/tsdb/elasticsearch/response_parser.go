@@ -140,6 +140,16 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 	return nil
 }
 
+func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*float64) *data.Frame {
+	frame := data.NewFrame("",
+		data.NewField("time", nil, timeData),
+		data.NewField("value", tags, values))
+	frame.Meta = &data.FrameMeta{
+		Type: data.FrameTypeTimeSeriesMulti,
+	}
+	return frame
+}
+
 // nolint:gocyclo
 func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
 	props map[string]string) error {
@@ -169,9 +179,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 				tags[k] = v
 			}
 			tags["metric"] = countType
-			frames = append(frames, data.NewFrame("",
-				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values)))
+			frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 		case percentilesType:
 			buckets := esAggBuckets
 			if len(buckets) == 0 {
@@ -203,9 +211,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 					values = append(values, value)
 				}
-				frames = append(frames, data.NewFrame("",
-					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values)))
+				frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 			}
 		case topMetricsType:
 			buckets := esAggBuckets
@@ -245,10 +251,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 					}
 				}
 
-				frames = append(frames, data.NewFrame("",
-					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values),
-				))
+				frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 			}
 
 		case extendedStatsType:
@@ -292,9 +295,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 					values = append(values, value)
 				}
 				labels := tags
-				frames = append(frames, data.NewFrame("",
-					data.NewField("time", nil, timeVector),
-					data.NewField("value", labels, values)))
+				frames = append(frames, newTimeSeriesFrame(timeVector, labels, values))
 			}
 		default:
 			for k, v := range props {
@@ -320,9 +321,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 				values = append(values, value)
 			}
-			frames = append(frames, data.NewFrame("",
-				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values)))
+			frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 		}
 	}
 	if query.Frames != nil {
@@ -534,10 +533,15 @@ func nameFields(queryResult backend.DataResponse, target *Query) {
 		}
 	}
 	metricTypeCount := len(set)
-	for i := range frames {
-		fieldName := getFieldName(*frames[i].Fields[1], target, metricTypeCount)
-		for _, field := range frames[i].Fields {
-			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
+	for _, frame := range frames {
+		if frame.Meta != nil && frame.Meta.Type == data.FrameTypeTimeSeriesMulti {
+			// if it is a time-series-multi, it means it has two columns, one is "time",
+			// another is "number"
+			valueField := frame.Fields[1]
+			fieldName := getFieldName(*valueField, target, metricTypeCount)
+			if fieldName != "" {
+				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
+			}
 		}
 	}
 }

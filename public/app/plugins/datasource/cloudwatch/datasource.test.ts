@@ -11,7 +11,7 @@ import {
 } from './__mocks__/CloudWatchDataSource';
 import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
-import { timeRange } from './__mocks__/timeRange';
+import { TimeRangeMock } from './__mocks__/timeRange';
 import { CloudWatchLogsQuery, CloudWatchMetricsQuery, CloudWatchQuery } from './types';
 
 describe('datasource', () => {
@@ -43,7 +43,7 @@ describe('datasource', () => {
           requestId: '',
           interval: '',
           intervalMs: 0,
-          range: timeRange,
+          range: TimeRangeMock,
           scopedVars: {},
           timezone: '',
           app: '',
@@ -83,7 +83,7 @@ describe('datasource', () => {
           requestId: '',
           interval: '',
           intervalMs: 0,
-          range: timeRange,
+          range: TimeRangeMock,
           scopedVars: {},
           timezone: '',
           app: '',
@@ -106,7 +106,7 @@ describe('datasource', () => {
         requestId: '',
         interval: '',
         intervalMs: 0,
-        range: timeRange,
+        range: TimeRangeMock,
         scopedVars: {},
         timezone: '',
         app: '',
@@ -152,7 +152,7 @@ describe('datasource', () => {
             requestId: '',
             interval: '',
             intervalMs: 0,
-            range: timeRange,
+            range: TimeRangeMock,
             scopedVars: {},
             timezone: '',
             app: '',
@@ -188,7 +188,7 @@ describe('datasource', () => {
             requestId: '',
             interval: '',
             intervalMs: 0,
-            range: timeRange,
+            range: TimeRangeMock,
             scopedVars: {},
             timezone: '',
             app: '',
@@ -232,7 +232,7 @@ describe('datasource', () => {
         requestId: '',
         interval: '',
         intervalMs: 0,
-        range: timeRange,
+        range: TimeRangeMock,
         scopedVars: {},
         timezone: '',
         app: '',

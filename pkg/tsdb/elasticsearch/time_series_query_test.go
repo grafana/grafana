@@ -432,9 +432,40 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
-			// FIXME: { _doc: { order: 'desc' } } is missing
-			// sr := c.multisearchRequests[0].Requests[0]
-			// require.Equal(t, sr, `{"docvalue_fields":["@timestamp"],"query":{"bool":{"filter":{"range":{"@timestamp":{"format":"epoch_millis","gte":1526406600000,"lte":1526406900000}}}}},"script_fields":{},"size":500,"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}, {"_doc": {"order": "desc"}}]}`)
+
+			sr := c.multisearchRequests[0].Requests[0]
+			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
+			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+
+			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
+		})
+
+		t.Run("With raw data metric query (from frontend tests)", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+
+			sr := c.multisearchRequests[0].Requests[0]
+			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
+			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+
+			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
 		})
 
 		t.Run("With raw document metric size set", func(t *testing.T) {
