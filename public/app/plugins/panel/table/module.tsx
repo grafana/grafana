@@ -15,6 +15,7 @@ import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
+const headerCategory = 'Table header';
 const footerCategory = 'Table footer';
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
@@ -112,6 +113,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
     builder
       .addBooleanSwitch({
         path: 'showHeader',
+        category: [headerCategory],
         name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
       })
