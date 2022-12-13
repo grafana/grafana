@@ -2,8 +2,10 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -13,21 +15,28 @@ const (
 	bearerPrefix = "Bearer "
 )
 
-var _ authn.Client = new(ApiKey)
+var _ authn.Client = new(APIKey)
 
-func ProvideApiKey() *ApiKey {
-	return &ApiKey{}
+func ProvideAPIKey(service apikey.Service) *APIKey {
+	return &APIKey{}
 }
 
-type ApiKey struct {
+type APIKey struct {
+	service apikey.Service
 }
 
-func (a *ApiKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+func (a *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	key := getApiKey(r)
+	if key == "" {
+		// TODO: return error
+		return nil, errors.New("temp")
+	}
+
 	//TODO implement me
 	panic("implement me")
 }
 
-func (a *ApiKey) Test(ctx context.Context, r *authn.Request) bool {
+func (a *APIKey) Test(ctx context.Context, r *authn.Request) bool {
 	return looksLikeApiKey(getApiKey(r))
 }
 

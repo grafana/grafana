@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -14,7 +15,7 @@ import (
 
 var _ authn.Service = new(Service)
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service) *Service {
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service) *Service {
 	s := &Service{
 		log:     log.New("authn.service"),
 		cfg:     cfg,
@@ -22,7 +23,7 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 		tracer:  tracer,
 	}
 
-	s.clients[authn.ClientApiKey] = clients.ProvideApiKey()
+	s.clients[authn.ClientApiKey] = clients.ProvideAPIKey(apikeyService)
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)

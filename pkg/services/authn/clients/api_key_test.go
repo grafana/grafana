@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestApiKey_Test(t *testing.T) {
+func TestAPIKey_Test(t *testing.T) {
 	type TestCase struct {
 		desc     string
 		req      *authn.Request
@@ -62,7 +63,7 @@ func TestApiKey_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideApiKey()
+			c := ProvideAPIKey(&apikeytest.Service{})
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
 		})
 	}
