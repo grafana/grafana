@@ -36,6 +36,7 @@ func TestPrepareProxyRequest(t *testing.T) {
 
 		PrepareProxyRequest(req)
 		require.Contains(t, req.Header, "X-Grafana-Referer")
+		require.NotContains(t, req.Header, "OtherHeader")
 		require.Equal(t, "https://www.google.ch\r\nOtherHeader:https://www.somethingelse.com", req.Header.Get("X-Grafana-Referer"))
 	})
 
