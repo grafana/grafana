@@ -26,7 +26,7 @@ export interface QueryRunnerState extends SceneObjectStatePlain {
   queries: DataQueryExtended[];
   datasource?: DataSourceRef;
   minInterval?: string;
-  maxDataPoints?: number;
+  maxDataPoints?: number | null;
   // Non persisted state
   maxDataPointsFromWidth?: boolean;
 }
