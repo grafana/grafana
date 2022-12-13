@@ -61,8 +61,8 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JSONData != nil {
-			if p.JSONData.Locale != "" {
-				res.JSONData.Locale = p.JSONData.Locale
+			if p.JSONData.Language != "" {
+				res.JSONData.Language = p.JSONData.Language
 			}
 
 			if len(p.JSONData.Navbar.SavedItems) > 0 {
@@ -113,7 +113,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Created:         time.Now(),
 				Updated:         time.Now(),
 				JSONData: &pref.PreferenceJSONData{
-					Locale: cmd.Locale,
+					Language: cmd.Language,
 				},
 			}
 			_, err = s.store.Insert(ctx, preference)
@@ -131,7 +131,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Version += 1
 	preference.HomeDashboardID = cmd.HomeDashboardID
 	preference.JSONData = &pref.PreferenceJSONData{
-		Locale: cmd.Locale,
+		Language: cmd.Language,
 	}
 
 	if cmd.Navbar != nil {
@@ -166,11 +166,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		exists = true
 	}
 
-	if cmd.Locale != nil {
+	if cmd.Language != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
 		}
-		preference.JSONData.Locale = *cmd.Locale
+		preference.JSONData.Language = *cmd.Language
 	}
 
 	if cmd.Navbar != nil {
@@ -238,7 +238,7 @@ func (s *Service) GetDefaults() *pref.Preference {
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagInternationalization) {
-		defaults.JSONData.Locale = s.cfg.DefaultLocale
+		defaults.JSONData.Language = s.cfg.DefaultLanguage
 	}
 
 	return defaults

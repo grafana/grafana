@@ -15,6 +15,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { isGrafanaRulerRule } from '../../utils/rules';
 import { InfoIcon } from '../InfoIcon';
 
 import { getIntervalForGroup } from './GrafanaEvaluationBehavior';
@@ -27,7 +28,13 @@ const useGetGroups = (groupfoldersForGrafana: RulerRulesConfigDTO | null | undef
     const groupsForFolderResult: Array<RulerRuleGroupDTO<RulerRuleDTO>> = groupfoldersForGrafana
       ? groupfoldersForGrafana[folderName] ?? []
       : [];
-    return groupsForFolderResult.map((group) => group.name);
+
+    const folderGroups = groupsForFolderResult.map((group) => ({
+      name: group.name,
+      provisioned: group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance)),
+    }));
+
+    return folderGroups.filter((group) => !group.provisioned).map((group) => group.name);
   }, [groupfoldersForGrafana, folderName]);
 
   return groupOptions;
@@ -40,13 +47,13 @@ interface FolderAndGroupProps {
   initialFolder: RuleForm | null;
 }
 
-export const useGetGroupOptionsFromFolder = (folderTilte: string) => {
+export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
-    useGetGroups(groupfoldersForGrafana?.result, folderTilte)
+    useGetGroups(groupfoldersForGrafana?.result, folderTitle)
   );
   const groupsForFolder = groupfoldersForGrafana?.result;
   return { groupOptions, groupsForFolder, loading: groupfoldersForGrafana?.loading };
@@ -203,6 +210,9 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
           control={control}
           rules={{
             required: { value: true, message: 'Must enter a group name' },
+            validate: {
+              pathSeparator: (group_: string) => checkForPathSeparator(group_),
+            },
           }}
         />
       </Field>

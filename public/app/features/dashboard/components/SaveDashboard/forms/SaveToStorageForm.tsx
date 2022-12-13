@@ -96,7 +96,8 @@ export function SaveToStorageForm(props: Props) {
         }
         setSaving(true);
 
-        let uid = saveModel.clone.uid;
+        // Save dashboard without the UID
+        let { uid, ...body } = saveModel.clone;
         if (isNew || isCopy) {
           uid = path;
           if (!uid.endsWith('-dash.json')) {
@@ -104,7 +105,7 @@ export function SaveToStorageForm(props: Props) {
           }
         }
         const rsp = await getGrafanaStorage().write(uid, {
-          body: saveModel.clone,
+          body,
           kind: 'dashboard',
           title: data.title,
           message: data.message,

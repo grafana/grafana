@@ -66,6 +66,7 @@ type JsonData struct {
 	Encrypt             string `json:"encrypt"`
 	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
+	Database            string `json:"database"`
 }
 
 type DataSourceInfo struct {
@@ -297,7 +298,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{frame}
+		queryResult.dataResponse.Frames = data.Frames{}
 		ch <- queryResult
 		return
 	}

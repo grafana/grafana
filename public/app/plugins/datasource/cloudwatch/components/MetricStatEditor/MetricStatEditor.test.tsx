@@ -3,10 +3,14 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
+import { config } from '@grafana/runtime';
+
 import { MetricStatEditor } from '..';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { validMetricSearchBuilderQuery } from '../../__mocks__/queries';
 import { MetricStat } from '../../types';
 
+const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const ds = setupMockedDataSource({
   variables: [],
 });
@@ -33,6 +37,9 @@ const props = {
 };
 
 describe('MetricStatEditor', () => {
+  afterEach(() => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
+  });
   describe('statistics field', () => {
     test.each([['Average', 'p23.23', 'p34', '$statistic']])('should accept valid values', async (statistic) => {
       const onChange = jest.fn();
@@ -197,6 +204,55 @@ describe('MetricStatEditor', () => {
         render(<MetricStatEditor {...props} metricStat={{ ...props.metricStat, metricName: expected }} />);
       });
       expect(await screen.findByText(expected)).toBeInTheDocument();
+    });
+  });
+
+  describe('account id', () => {
+    it('should set value to "all" when its a monitoring account and no account id is defined in the query', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
+      const onChange = jest.fn();
+      props.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+      props.datasource.api.getAccounts = jest.fn().mockResolvedValue([
+        {
+          value: '123456789',
+          label: 'test-account1',
+          description: '123456789',
+        },
+        {
+          value: '432156789013',
+          label: 'test-account2',
+          description: '432156789013',
+        },
+      ]);
+      await act(async () => {
+        render(
+          <MetricStatEditor
+            {...props}
+            metricStat={{ ...validMetricSearchBuilderQuery, accountId: undefined }}
+            onChange={onChange}
+          />
+        );
+      });
+      expect(onChange).toHaveBeenCalledWith({ ...validMetricSearchBuilderQuery, accountId: 'all' });
+      expect(await screen.findByText('Account')).toBeInTheDocument();
+    });
+
+    it('should unset value when no accounts were found and an account id is defined in the query', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
+      const onChange = jest.fn();
+      props.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+      props.datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
+      await act(async () => {
+        render(
+          <MetricStatEditor
+            {...props}
+            metricStat={{ ...validMetricSearchBuilderQuery, accountId: '123456789' }}
+            onChange={onChange}
+          />
+        );
+      });
+      expect(onChange).toHaveBeenCalledWith({ ...validMetricSearchBuilderQuery, accountId: undefined });
+      expect(await screen.queryByText('Account')).not.toBeInTheDocument();
     });
   });
 });

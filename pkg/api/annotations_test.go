@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 )
@@ -282,7 +281,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 }
 
 func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
-	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
+	cmd dtos.PostAnnotationsCmd, store db.DB, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
@@ -358,7 +357,7 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 }
 
 func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
-	cmd dtos.MassDeleteAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
+	cmd dtos.MassDeleteAnnotationsCmd, store db.DB, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
@@ -385,7 +384,7 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 func TestAPI_Annotations_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
-	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
@@ -787,7 +786,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
-	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
 	require.NoError(t, err)
 
 	type args struct {

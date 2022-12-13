@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"io"
 	"net/http"
 	"os"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -32,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -332,8 +332,7 @@ func (nopCloserReadSeeker) Close() error {
 }
 
 var (
-	errAssetNotFound = errutil.NewBase(errutil.StatusNotFound, "plugins.assetNotFound")
-
+	errAssetNotFound   = errutil.NewBase(errutil.StatusNotFound, "plugins.assetNotFound")
 	errLocalAssetLoad  = errutil.NewBase(errutil.StatusInternal, "plugins.localAssetLoad")
 	errRemoteAssetLoad = errutil.NewBase(errutil.StatusInternal, "plugins.remoteAssetLoad")
 )
@@ -345,17 +344,7 @@ var (
 //
 // to close the opened file.
 func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
-	absPluginDir, err := filepath.Abs(plugin.PluginDir)
-	if err != nil {
-		return pluginAsset{}, errLocalAssetLoad.Errorf("failed to get plugin absolute path: %w", err)
-	}
-
-	pluginFilePath := filepath.Join(absPluginDir, path)
-
-	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	// nolint:gosec
-	f, err := os.Open(pluginFilePath)
+	f, err := plugin.File(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return pluginAsset{}, errAssetNotFound.Errorf("plugin file not found")
@@ -369,11 +358,26 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 	if err != nil {
 		return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file exists but could not open: %w", err)
 	}
-	return pluginAsset{
-		readSeekCloser: f,
-		modTime:        fi.ModTime(),
-		path:           pluginFilePath,
-	}, nil
+
+	if rs, ok := f.(io.ReadSeekCloser); ok {
+		return pluginAsset{
+			readSeekCloser: rs,
+			modTime:        fi.ModTime(),
+			path:           path,
+		}, nil
+	} else {
+		b, err := io.ReadAll(f)
+		if err != nil {
+			return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file exists but could not open: %w", err)
+		}
+
+		return pluginAsset{
+			readSeekCloser: nopCloserReadSeeker{bytes.NewReader(b)},
+			modTime:        fi.ModTime(),
+			path:           path,
+		}, nil
+	}
+
 }
 
 // getCDNPluginAssetRemoteURL takes a plugin and an asset file path and returns the URL for the asset on the CDN
@@ -444,22 +448,16 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	// prepend slash for cleaning relative paths
-	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
-	rel, err := filepath.Rel("/", requestedFile)
+	requestedFile, err := util.CleanRelativePath(web.Params(c.Req)["*"])
 	if err != nil {
 		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to get the relative path", err)
+		c.JsonApiErr(500, "Failed to clean relative file path", err)
 		return
-	}
-
-	if !plugin.IncludedInSignature(rel) {
-		hs.log.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
-			"is not included in the plugin signature", "file", requestedFile)
 	}
 
 	if plugin.CDN && hs.Cfg.PluginsCDNMode == setting.PluginsCDNModeRedirect {
 		// Send a redirect to the client
-		hs.redirectCDNPluginAsset(c, plugin, rel)
+		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
 		return
 	}
 
@@ -475,10 +473,10 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	var asset pluginAsset
 	if plugin.CDN {
 		// In-memory proxy from CDN
-		asset, err = hs.proxyCDNPluginAsset(c, plugin, rel)
+		asset, err = hs.proxyCDNPluginAsset(c, plugin, requestedFile)
 	} else {
 		// Local filesystem
-		asset, err = hs.getLocalPluginAssets(c, plugin, rel)
+		asset, err = hs.getLocalPluginAssets(c, plugin, requestedFile)
 	}
 	if err != nil {
 		response.Err(err)
@@ -630,34 +628,24 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	path := filepath.Join(plugin.PluginDir, mdFilepath(strings.ToUpper(name)))
-	exists, err := fs.Exists(path)
+	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
 	if err != nil {
-		return nil, err
+		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		if err != nil {
+			return make([]byte, 0), nil
+		}
 	}
-	if !exists {
-		path = filepath.Join(plugin.PluginDir, mdFilepath(strings.ToLower(name)))
-	}
+	defer func() {
+		if err = md.Close(); err != nil {
+			hs.log.Error("Failed to close plugin markdown file", "err", err)
+		}
+	}()
 
-	exists, err = fs.Exists(path)
+	d, err := io.ReadAll(md)
 	if err != nil {
-		return nil, err
-	}
-	if !exists {
 		return make([]byte, 0), nil
 	}
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return d, nil
 }
 
 func mdFilepath(mdFilename string) string {

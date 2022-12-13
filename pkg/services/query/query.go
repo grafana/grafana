@@ -3,29 +3,22 @@ package query
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -43,7 +36,6 @@ func ProvideService(
 	pluginRequestValidator models.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
-	oAuthTokenService oauthtoken.OAuthTokenService,
 ) *Service {
 	g := &Service{
 		cfg:                    cfg,
@@ -52,7 +44,6 @@ func ProvideService(
 		pluginRequestValidator: pluginRequestValidator,
 		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
-		oAuthTokenService:      oAuthTokenService,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
@@ -66,7 +57,6 @@ type Service struct {
 	pluginRequestValidator models.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
-	oAuthTokenService      oauthtoken.OAuthTokenService
 	log                    log.Logger
 }
 
@@ -93,35 +83,60 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-	byDataSource := parsedReq.parsedQueries
-	resp := backend.NewQueryDataResponse()
+	return s.executeConcurrentQueries(ctx, user, skipCache, reqDTO, parsedReq.parsedQueries)
+}
 
+// executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
+func (s *Service) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
-	results := make([]backend.Responses, len(byDataSource))
+	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
+	rchan := make(chan backend.Responses, len(queriesbyDs))
 
-	for _, queries := range byDataSource {
+	// Create panic recovery function for loop below
+	recoveryFn := func(queries []*simplejson.Json) {
+		if r := recover(); r != nil {
+			var err error
+			s.log.Error("query datasource panic", "error", r, "stack", log.Stack(1))
+			if theErr, ok := r.(error); ok {
+				err = theErr
+			} else if theErrString, ok := r.(string); ok {
+				err = fmt.Errorf(theErrString)
+			} else {
+				err = fmt.Errorf("unexpected error, see the server log for details")
+			}
+			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
+			rchan <- buildErrorResponses(err, queries)
+		}
+	}
+
+	// Query each datasource concurrently
+	for _, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
 		for i := 0; i < len(queries); i++ {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {
 			subDTO := reqDTO.CloneWithQueries(rawQueries)
+			// Handle panics in the datasource qery
+			defer recoveryFn(subDTO.Queries)
 
 			subResp, err := s.QueryData(ctx, user, skipCache, subDTO)
-
 			if err == nil {
-				results = append(results, subResp.Responses)
+				rchan <- subResp.Responses
+			} else {
+				// If there was an error, return an error response for each query for this datasource
+				rchan <- buildErrorResponses(err, subDTO.Queries)
 			}
-
-			return err
+			return nil
 		})
 	}
 
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
-
-	for _, result := range results {
+	close(rchan)
+	resp := backend.NewQueryDataResponse()
+	for result := range rchan {
 		for refId, dataResponse := range result {
 			resp.Responses[refId] = dataResponse
 		}
@@ -130,11 +145,26 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 	return resp, nil
 }
 
+// buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
+func buildErrorResponses(err error, queries []*simplejson.Json) backend.Responses {
+	er := backend.Responses{}
+	for _, query := range queries {
+		er[query.Get("refId").MustString("A")] = backend.DataResponse{
+			Error: err,
+		}
+	}
+	return er
+}
+
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
-		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
+	}
+
+	if user != nil { // for passthrough authentication, SSE does not authenticate
+		exprReq.User = adapters.BackendUserFromSignedInUser(user)
+		exprReq.OrgId = user.OrgID
 	}
 
 	for _, pq := range parsedReq.getFlattenedQueries() {
@@ -198,115 +228,11 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		Queries: []backend.DataQuery{},
 	}
 
-	middlewares := []httpclient.Middleware{}
-	if parsedReq.httpRequest != nil {
-		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
-		)
-	}
-
-	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
-			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Headers["X-ID-Token"] = idToken
-			}
-			middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
-		}
-	}
-
-	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), []string{s.cfg.LoginCookieName})
-		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
-			req.Headers["Cookie"] = cookieStr
-		}
-	}
-
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
 
-	ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
-
 	return s.pluginClient.QueryData(ctx, req)
-}
-
-type parsedQuery struct {
-	datasource *datasources.DataSource
-	query      backend.DataQuery
-	rawQuery   *simplejson.Json
-}
-
-type parsedRequest struct {
-	hasExpression bool
-	parsedQueries map[string][]parsedQuery
-	dsTypes       map[string]bool
-	httpRequest   *http.Request
-}
-
-func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
-	queries := make([]parsedQuery, 0)
-	for _, pq := range pr.parsedQueries {
-		queries = append(queries, pq...)
-	}
-	return queries
-}
-
-func (pr parsedRequest) validateRequest() error {
-	if pr.httpRequest == nil {
-		return nil
-	}
-
-	if pr.hasExpression {
-		hasExpr := pr.httpRequest.URL.Query().Get("expression")
-		if hasExpr == "" || hasExpr == "true" {
-			return nil
-		}
-		return ErrQueryParamMismatch
-	}
-
-	vals := splitHeaders(pr.httpRequest.Header.Values(HeaderDatasourceUID))
-	count := len(vals)
-	if count > 0 { // header exists
-		if count != len(pr.parsedQueries) {
-			return ErrQueryParamMismatch
-		}
-		for _, t := range vals {
-			if pr.parsedQueries[t] == nil {
-				return ErrQueryParamMismatch
-			}
-		}
-	}
-
-	vals = splitHeaders(pr.httpRequest.Header.Values(HeaderPluginID))
-	count = len(vals)
-	if count > 0 { // header exists
-		if count != len(pr.dsTypes) {
-			return ErrQueryParamMismatch
-		}
-		for _, t := range vals {
-			if !pr.dsTypes[t] {
-				return ErrQueryParamMismatch
-			}
-		}
-	}
-	return nil
-}
-
-func splitHeaders(headers []string) []string {
-	out := []string{}
-	for _, v := range headers {
-		if strings.Contains(v, ",") {
-			for _, sub := range strings.Split(v, ",") {
-				out = append(out, strings.TrimSpace(sub))
-			}
-		} else {
-			out = append(out, v)
-		}
-	}
-	return out
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
@@ -368,11 +294,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		})
 	}
 
-	if reqDTO.HTTPRequest != nil {
-		req.httpRequest = reqDTO.HTTPRequest
-	}
-
-	_ = req.validateRequest()
+	_ = req.validateRequest(ctx)
 	return req, nil // TODO req.validateRequest()
 }
 
