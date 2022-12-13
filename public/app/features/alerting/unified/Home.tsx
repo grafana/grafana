@@ -17,9 +17,7 @@ export default function Home() {
         <WelcomeHeader className={styles.ctaContainer} />
         <ContentBox className={styles.flowBlock}>
           <img src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`} alt="Alerting flow chart" />
-        </ContentBox>
-        <ContentBox title="How it works at glance" className={styles.howItWorks}>
-          <ul>
+          <ul className={styles.howItWorks}>
             <li>
               Grafana alerting <strong>periodically queries your data sources and evaluates</strong> the alerting
               condition you define
@@ -41,6 +39,7 @@ export default function Home() {
             </li>
           </ul>
         </ContentBox>
+        {/*<ContentBox title="How it works at glance" className={styles.howItWorks}></ContentBox>*/}
         <ContentBox title="Get started" className={styles.gettingStartedBlock}>
           <Stack direction="column" alignItems="space-between">
             <ul>
@@ -115,7 +114,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   videoBlock: css`
-    grid-column: 3 / span 5;
+    grid-column: 3 / span 3;
     grid-row: 3 / span 1;
 
     // Video required
@@ -140,10 +139,20 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   howItWorks: css`
-    grid-column: 1 / span 2;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(2)};
+    list-style: none inside none;
+    list-style-type: disclosure-closed;
 
-    ul {
-      margin-left: ${theme.spacing(2)};
+    > li {
+      flex: 1;
+      min-width: 150px;
+
+      //::marker {
+      //  content: '\A';
+      //}
     }
   `,
 });
