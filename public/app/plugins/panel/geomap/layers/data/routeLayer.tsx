@@ -122,7 +122,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
               const flowStyle = new FlowLine({
                 visible: true,
-                lineCap: 'square',
+                lineCap: config.arrow == 0 ? 'round' : 'square',
                 color: color1,
                 color2: color2,
                 width: (dims.size && dims.size.get(i)) ?? style.base.size,
