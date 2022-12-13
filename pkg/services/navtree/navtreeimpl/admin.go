@@ -163,7 +163,7 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 
 		if s.features.IsEnabled(featuremgmt.FlagK8s) {
 			storage.Children = append(storage.Children, &navtree.NavLink{
-				Text:     "K8S",
+				Text:     "Kubernetes",
 				Id:       "k8s",
 				SubTitle: "Manage k8s storage",
 				Icon:     "cube",
