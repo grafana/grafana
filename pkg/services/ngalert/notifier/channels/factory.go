@@ -8,12 +8,11 @@ import (
 	"github.com/prometheus/alertmanager/template"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 type FactoryConfig struct {
 	Config              *NotificationChannelConfig
-	NotificationService notifications.Service
+	NotificationService NotificationSender
 	DecryptFunc         GetDecryptedValueFn
 	ImageStore          ImageStore
 	// Used to retrieve image URLs for messages, or data for uploads.
@@ -24,7 +23,7 @@ type ImageStore interface {
 	GetImage(ctx context.Context, token string) (*models.Image, error)
 }
 
-func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
+func NewFactoryConfig(config *NotificationChannelConfig, notificationService NotificationSender,
 	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
 	if config.Settings == nil {
 		return FactoryConfig{}, errors.New("no settings supplied")
