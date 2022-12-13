@@ -1,6 +1,5 @@
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
-import React from 'react';
-import { useEffectOnce } from 'react-use';
+import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
 import { Editor } from 'slate-react';
 
@@ -32,29 +31,27 @@ export interface CloudWatchLogsQueryFieldProps
     Themeable2 {
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
-  ExtraFieldElement?: React.ReactNode;
+  ExtraFieldElement?: ReactNode;
   exploreId: ExploreId;
   query: CloudWatchLogsQuery;
 }
-
+const plugins: Array<Plugin<Editor>> = [
+  BracesPlugin(),
+  SlatePrism(
+    {
+      onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+      getSyntax: (node: Node) => 'cloudwatch',
+    },
+    { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
+  ),
+];
 export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) => {
   const { query, datasource, onChange, onRunQuery, ExtraFieldElement, data } = props;
 
-  const showError = data && data.error && data.error.refId === query.refId;
-  const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
+  const showError = data?.error?.refId === query.refId;
+  const cleanText = datasource.languageProvider.cleanText;
 
-  const plugins: Array<Plugin<Editor>> = [
-    BracesPlugin(),
-    SlatePrism(
-      {
-        onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-        getSyntax: (node: Node) => 'cloudwatch',
-      },
-      { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
-    ),
-  ];
-
-  onChangeQuery = (value: string) => {
+  const onChangeQuery = (value: string) => {
     // Send text change to parent
       const nextQuery = {
         ...query,
