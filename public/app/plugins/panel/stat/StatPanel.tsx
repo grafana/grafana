@@ -18,6 +18,7 @@ import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/Da
 import { config } from 'app/core/config';
 
 import { PanelOptions } from './models.gen';
+import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 
 export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
@@ -86,17 +87,11 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
     let globalRange: NumericRange | undefined = undefined;
 
-    for (let frame of data.series) {
-      for (let field of frame.fields) {
+    const transformedSeries = data.series.map((frame) => {
+      const transformedFrame = nullToValue(frame);
+
+      for (let field of transformedFrame.fields) {
         const transformedValues = field.values.toArray().slice();
-
-        for (let index = 0; index < transformedValues.length; index++) {
-          const value = transformedValues[index];
-
-          if (value === null) {
-            transformedValues[index] = 69;
-          }
-        }
 
         field.values = new ArrayVector(transformedValues);
 
@@ -116,14 +111,16 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
           field.state.range = { min, max, delta: max! - min! };
         }
       }
-    }
+
+      return transformedFrame;
+    });
 
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme2,
-      data: data.series,
+      data: transformedSeries,
       sparkline: options.graphMode !== BigValueGraphMode.None,
       timeZone,
     });
