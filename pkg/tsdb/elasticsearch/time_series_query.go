@@ -116,7 +116,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			b.AddDocValueField(e.client.GetTimeField())
 			b.AddHighlight()
 
-			// Here we don't want to return and we add date histogram aggregation used to get logs
+			aggBuilder := b.Agg()
 			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
 				Type:  dateHistType,
 				Field: e.client.GetTimeField(),
@@ -125,6 +125,13 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					"interval": "auto",
 				}),
 			})
+			bucketAgg := q.BucketAggs[0]
+			bucketAgg.Settings = simplejson.NewFromAny(
+				bucketAgg.generateSettingsForDSL(),
+			)
+			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+			return nil
+
 		}
 	}
 
@@ -151,6 +158,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	for _, m := range q.Metrics {
 		m := m
+
 		if m.Type == countType {
 			continue
 		}
