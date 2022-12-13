@@ -69,7 +69,10 @@ function Editor({
               templateVariableOptions={variableOptionGroup.options}
               query={query}
               customMetaData={customMetaData}
-              onChange={onChange}
+              // TODO: Remove cast when refactoring VisualMetricQueryEditor
+              onChange={(q) => onChange(q as MetricQuery)} // eslint-disable-line
+              metricDescriptor={metric}
+              preprocessor={query.preprocessor}
             />
             <AliasBy
               refId={refId}
