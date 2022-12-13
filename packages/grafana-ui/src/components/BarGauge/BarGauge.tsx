@@ -471,7 +471,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const emptyBar: CSSProperties = {
-    background: `rgba(${theme.isDark ? '255,255,255' : '0,0,0'}, 0.07)`,
+    background: theme.colors.background.secondary,
     flexGrow: 1,
     display: 'flex',
     borderRadius: '3px',
