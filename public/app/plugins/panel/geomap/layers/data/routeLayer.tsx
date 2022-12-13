@@ -115,11 +115,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
               const flowStyle = new FlowLine({
                 visible: true,
-                lineCap: 'round',
+                lineCap: 'square',
                 color: color1,
                 color2: color2,
                 width: (dims.size && dims.size.get(i)) ?? style.base.size,
                 width2: (dims.size && dims.size.get(i + 1)) ?? style.base.size,
+                arrowSize: (dims.size && Math.max(dims.size.get(i), dims.size.get(i + 1)) * 1.5) ?? style.base.size,
               });
               if (config.arrow) {
                 flowStyle.setArrow(config.arrow);
