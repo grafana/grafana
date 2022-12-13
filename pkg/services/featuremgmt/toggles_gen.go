@@ -207,10 +207,6 @@ const (
 	// SQL-based entity store (requires storage flag also)
 	FlagEntityStore = "entityStore"
 
-	// FlagTraceqlEditor
-	// Show the TraceQL editor in the explore page
-	FlagTraceqlEditor = "traceqlEditor"
-
 	// FlagFlameGraph
 	// Show the flame graph
 	FlagFlameGraph = "flameGraph"

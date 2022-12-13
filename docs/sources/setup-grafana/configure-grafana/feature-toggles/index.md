@@ -79,7 +79,6 @@ Alpha features might be changed or removed without prior notice.
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                  |
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
 | `topnav`                           | New top nav and page layouts                                                                                                                                                 |
-| `traceqlEditor`                    | Show the TraceQL editor in the explore page                                                                                                                                  |
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `cloudWatchCrossAccountQuerying`   | Use cross-account querying in CloudWatch datasource                                                                                                                          |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
