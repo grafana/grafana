@@ -68,6 +68,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 		orgService:        orgService,
 		oauthTokenService: oauthTokenService,
 		features:          features,
+		authnService:      authnService,
 	}
 }
 
