@@ -11,6 +11,7 @@ import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';
 
 import { VizPanelRenderer } from './VizPanelRenderer';
+import { VariableDependencyConfig } from '../../variables/VariableDependencyConfig';
 
 export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLayoutChildState {
   title: string;
@@ -27,6 +28,8 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
 > {
   public static Component = VizPanelRenderer;
   public static Editor = VizPanelEditor;
+
+  protected _variableDependency = new VariableDependencyConfig(this, { statePaths: ['options', 'title'] });
 
   // Not part of state as this is not serializable
   private _plugin?: PanelPlugin;

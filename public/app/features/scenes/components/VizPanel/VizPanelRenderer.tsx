@@ -9,6 +9,7 @@ import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
 import { SceneQueryRunner } from '../../querying/SceneQueryRunner';
+import { CustomFormatterFn } from '../../variables/interpolation/sceneInterpolator';
 import { SceneDragHandle } from '../SceneDragHandle';
 
 import { VizPanel } from './VizPanel';
@@ -75,7 +76,9 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
                     width={innerWidth}
                     height={innerHeight}
                     renderCounter={0}
-                    replaceVariables={(str: string) => str}
+                    replaceVariables={(str, scopedVars, format) =>
+                      sceneGraph.interpolate(model, str, scopedVars, format as string | CustomFormatterFn | undefined)
+                    }
                     onOptionsChange={model.onOptionsChange}
                     onFieldConfigChange={model.onFieldConfigChange}
                     onChangeTimeRange={model.onChangeTimeRange}
