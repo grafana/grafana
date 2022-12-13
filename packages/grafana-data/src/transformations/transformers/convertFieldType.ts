@@ -142,9 +142,16 @@ function fieldToNumberField(field: Field): Field {
   const numValues = field.values.toArray().slice();
 
   for (let n = 0; n < numValues.length; n++) {
-    // some numbers returned from datasources have commas
-    // strip the commas, coerce the string to a number
-    const number = +numValues[n].replace(/,/g, '');
+    let toBeConverted = numValues[n];
+
+    if (typeof toBeConverted === 'string') {
+      // some numbers returned from datasources have commas
+      // strip the commas, coerce the string to a number
+      toBeConverted = toBeConverted.replace(/,/g, '');
+    }
+
+    const number = +toBeConverted;
+
     numValues[n] = Number.isFinite(number) ? number : null;
   }
 
