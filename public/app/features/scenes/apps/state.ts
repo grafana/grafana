@@ -1,5 +1,6 @@
 import { SceneFlexLayout, SceneSubMenu, SceneTimePicker, VizPanel } from '../components';
 import { EmbeddedScene } from '../components/Scene';
+import { SceneSubMenuSpacer } from '../components/SceneSubMenu';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
@@ -32,7 +33,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneTimePicker({ isOnCanvas: true })],
+      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     }),
     layout: new SceneFlexLayout({
       children: [
@@ -138,7 +139,7 @@ export function getHandlerScene(handler: string): EmbeddedScene {
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneTimePicker({ isOnCanvas: true })],
+      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     }),
     layout: new SceneFlexLayout({
       direction: 'column',
@@ -178,7 +179,7 @@ export function getOverviewScene(): EmbeddedScene {
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneTimePicker({ isOnCanvas: true })],
+      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     }),
     layout: new SceneFlexLayout({
       direction: 'column',

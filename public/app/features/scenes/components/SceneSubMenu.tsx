@@ -13,10 +13,20 @@ function SceneSubMenuRenderer({ model }: SceneComponentProps<SceneSubMenu>) {
   const { children } = model.useState();
 
   return (
-    <div style={{ display: 'flex', gap: '16px', justifyContent: 'space-between' }}>
+    <div style={{ display: 'flex', gap: '16px' }}>
       {children.map((child) => (
         <child.Component key={child.state.key} model={child} />
       ))}
     </div>
   );
+}
+
+export class SceneSubMenuSpacer extends SceneObjectBase<{}> {
+  public constructor() {
+    super({});
+  }
+
+  public static Component = (_props: SceneComponentProps<SceneSubMenuSpacer>) => {
+    return <div style={{ flexGrow: 1 }} />;
+  };
 }

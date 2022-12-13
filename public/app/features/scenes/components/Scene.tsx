@@ -58,6 +58,7 @@ function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
     </div>
   );
 }
+
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, layout, actions = [], isEditing, $editor, subMenu } = model.useState();
 
