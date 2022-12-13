@@ -256,7 +256,7 @@
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
-    "@kusto/monaco-kusto": "5.2.0",
+    "@kusto/monaco-kusto": "5.3.6",
     "@leeoniya/ufuzzy": "0.8.0",
     "@lezer/common": "1.0.1",
     "@lezer/highlight": "1.1.2",
