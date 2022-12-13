@@ -21,7 +21,7 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 
 	tag, ok := os.LookupEnv("DRONE_TAG")
 	if !ok {
-		fmt.Println("DRONE_TAG envvar not present, %w", err)
+		fmt.Println("DRONE_TAG envvar not present")
 	}
 
 	var releaseMode config.ReleaseMode
