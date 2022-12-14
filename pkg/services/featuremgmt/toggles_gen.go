@@ -290,8 +290,4 @@ const (
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
-
-	// FlagPrometheusExemplarSamplingExperiment
-	// Sample exemplars using a uniform distribution
-	FlagPrometheusExemplarSamplingExperiment = "prometheusExemplarSamplingExperiment"
 )
