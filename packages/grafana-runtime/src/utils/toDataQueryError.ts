@@ -6,7 +6,7 @@ import { DataQueryError } from '@grafana/data';
  *
  * @public
  */
-export function toDataQueryError(err: DataQueryError | string | Object): DataQueryError {
+export function toDataQueryError(err: DataQueryError | string | unknown): DataQueryError {
   const error = (err || {}) as DataQueryError;
 
   if (!error.message) {
