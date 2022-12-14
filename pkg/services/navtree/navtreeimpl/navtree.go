@@ -342,7 +342,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   starredItem.Uid,
+				Id:   "starred/" + starredItem.Uid,
 				Text: starredItem.Title,
 				Url:  starredItem.GetUrl(),
 			})

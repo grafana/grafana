@@ -74,6 +74,8 @@ func TestRequestSnapshots(t *testing.T) {
 		{name: "simple metric test", path: "metric_simple"},
 		{name: "complex metric test", path: "metric_complex"},
 		{name: "multi metric test", path: "metric_multi"},
+		{name: "raw data", path: "raw_data"},
+		{name: "raw document", path: "raw_document"},
 	}
 
 	queryHeader := []byte(`

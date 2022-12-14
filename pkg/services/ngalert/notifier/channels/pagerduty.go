@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -19,11 +20,22 @@ import (
 )
 
 const (
+	// https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTgx-send-an-alert-event - 1024 characters or runes.
+	pagerDutyMaxV2SummaryLenRunes = 1024
+)
+
+const (
 	pagerDutyEventTrigger = "trigger"
 	pagerDutyEventResolve = "resolve"
+
+	defaultSeverity = "critical"
+	defaultClass    = "default"
+	defaultGroup    = "default"
+	defaultClient   = "Grafana"
 )
 
 var (
+	knownSeverity        = map[string]struct{}{defaultSeverity: {}, "error": {}, "warning": {}, "info": {}}
 	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
@@ -35,7 +47,7 @@ type PagerdutyNotifier struct {
 	log      log.Logger
 	ns       notifications.WebhookSender
 	images   ImageStore
-	settings pagerdutySettings
+	settings *pagerdutySettings
 }
 
 type pagerdutySettings struct {
@@ -46,6 +58,59 @@ type pagerdutySettings struct {
 	Component     string `json:"component,omitempty" yaml:"component,omitempty"`
 	Group         string `json:"group,omitempty" yaml:"group,omitempty"`
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Source        string `json:"source,omitempty" yaml:"source,omitempty"`
+	Client        string `json:"client,omitempty" yaml:"client,omitempty"`
+	ClientURL     string `json:"client_url,omitempty" yaml:"client_url,omitempty"`
+}
+
+func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
+	settings := pagerdutySettings{}
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	settings.Key = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "integrationKey", settings.Key)
+	if settings.Key == "" {
+		return nil, errors.New("could not find integration key property in settings")
+	}
+
+	settings.customDetails = map[string]string{
+		"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
+		"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
+		"num_firing":   `{{ .Alerts.Firing | len }}`,
+		"num_resolved": `{{ .Alerts.Resolved | len }}`,
+	}
+
+	if settings.Severity == "" {
+		settings.Severity = defaultSeverity
+	}
+	if settings.Class == "" {
+		settings.Class = defaultClass
+	}
+	if settings.Component == "" {
+		settings.Component = "Grafana"
+	}
+	if settings.Group == "" {
+		settings.Group = defaultGroup
+	}
+	if settings.Summary == "" {
+		settings.Summary = DefaultMessageTitleEmbed
+	}
+	if settings.Client == "" {
+		settings.Client = defaultClient
+	}
+	if settings.ClientURL == "" {
+		settings.ClientURL = "{{ .ExternalURL }}"
+	}
+	if settings.Source == "" {
+		source, err := os.Hostname()
+		if err != nil {
+			source = settings.Client
+		}
+		settings.Source = source
+	}
+	return &settings, nil
 }
 
 func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -61,9 +126,9 @@ func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
 func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
-	key := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "integrationKey", fc.Config.Settings.Get("integrationKey").MustString())
-	if key == "" {
-		return nil, errors.New("could not find integration key property in settings")
+	settings, err := buildPagerdutySettings(fc)
+	if err != nil {
+		return nil, err
 	}
 
 	return &PagerdutyNotifier{
@@ -74,24 +139,11 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 			DisableResolveMessage: fc.Config.DisableResolveMessage,
 			Settings:              fc.Config.Settings,
 		}),
-		tmpl:   fc.Template,
-		log:    log.New("alerting.notifier." + fc.Config.Name),
-		ns:     fc.NotificationService,
-		images: fc.ImageStore,
-		settings: pagerdutySettings{
-			Key:      key,
-			Severity: fc.Config.Settings.Get("severity").MustString("critical"),
-			customDetails: map[string]string{
-				"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
-				"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
-				"num_firing":   `{{ .Alerts.Firing | len }}`,
-				"num_resolved": `{{ .Alerts.Resolved | len }}`,
-			},
-			Class:     fc.Config.Settings.Get("class").MustString("default"),
-			Component: fc.Config.Settings.Get("component").MustString("Grafana"),
-			Group:     fc.Config.Settings.Get("group").MustString("default"),
-			Summary:   fc.Config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
-		},
+		tmpl:     fc.Template,
+		log:      log.New("alerting.notifier." + fc.Config.Name),
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		settings: settings,
 	}, nil
 }
 
@@ -152,9 +204,15 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		details[k] = detail
 	}
 
+	severity := strings.ToLower(tmpl(pn.settings.Severity))
+	if _, ok := knownSeverity[severity]; !ok {
+		pn.log.Warn("Severity is not in the list of known values - using default severity", "actualSeverity", severity, "defaultSeverity", defaultSeverity)
+		severity = defaultSeverity
+	}
+
 	msg := &pagerDutyMessage{
-		Client:      "Grafana",
-		ClientURL:   pn.tmpl.ExternalURL.String(),
+		Client:      tmpl(pn.settings.Client),
+		ClientURL:   tmpl(pn.settings.ClientURL),
 		RoutingKey:  pn.settings.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
@@ -163,9 +221,10 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			Text: "External URL",
 		}},
 		Payload: pagerDutyPayload{
+			Source:        tmpl(pn.settings.Source),
 			Component:     tmpl(pn.settings.Component),
 			Summary:       tmpl(pn.settings.Summary),
-			Severity:      tmpl(pn.settings.Severity),
+			Severity:      severity,
 			CustomDetails: details,
 			Class:         tmpl(pn.settings.Class),
 			Group:         tmpl(pn.settings.Group),
@@ -182,15 +241,11 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 		as...)
 
-	if len(msg.Payload.Summary) > 1024 {
-		// This is the Pagerduty limit.
-		msg.Payload.Summary = msg.Payload.Summary[:1021] + "..."
+	summary, truncated := TruncateInRunes(msg.Payload.Summary, pagerDutyMaxV2SummaryLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated summary", "key", key, "runes", pagerDutyMaxV2SummaryLenRunes)
 	}
-
-	if hostname, err := os.Hostname(); err == nil {
-		// TODO: should this be configured like in Prometheus AM?
-		msg.Payload.Source = hostname
-	}
+	msg.Payload.Summary = summary
 
 	if tmplErr != nil {
 		pn.log.Warn("failed to template PagerDuty message", "error", tmplErr.Error())

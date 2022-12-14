@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/mssql/template-variables/
+  - ../../data-sources/mssql/template-variables/
 description: Using template variables with Microsoft SQL Server in Grafana
 keywords:
   - grafana

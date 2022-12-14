@@ -15,11 +15,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/gcloud/storage"
 	"github.com/grafana/grafana/pkg/build/packaging"
-	"github.com/urfave/cli/v2"
 )
 
 const grafanaAPI = "https://grafana.com/api"
@@ -66,11 +67,11 @@ func GrafanaCom(c *cli.Context) error {
 
 	grafanaAPIKey := strings.TrimSpace(os.Getenv("GRAFANA_COM_API_KEY"))
 	if grafanaAPIKey == "" {
-		return cli.NewExitError("the environment variable GRAFANA_COM_API_KEY must be set", 1)
+		return cli.Exit("the environment variable GRAFANA_COM_API_KEY must be set", 1)
 	}
 	whatsNewURL, releaseNotesURL, err := getReleaseURLs()
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	// TODO: Verify config values
@@ -89,7 +90,7 @@ func GrafanaCom(c *cli.Context) error {
 	}
 
 	if err := publishPackages(cfg); err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	log.Println("Successfully published packages to grafana.com!")
@@ -146,7 +147,7 @@ func publishPackages(cfg packaging.PublishConfig) error {
 	}
 
 	switch cfg.ReleaseMode.Mode {
-	case config.MainMode, config.CustomMode, config.CronjobMode:
+	case config.MainMode, config.DownstreamMode, config.CronjobMode:
 		pth = path.Join(pth, packaging.MainFolder)
 	default:
 		pth = path.Join(pth, packaging.ReleaseFolder)
