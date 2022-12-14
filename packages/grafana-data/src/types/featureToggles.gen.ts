@@ -85,5 +85,4 @@ export interface FeatureToggles {
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   sessionRemoteCache?: boolean;
-  prometheusExemplarSamplingExperiment?: boolean;
 }
