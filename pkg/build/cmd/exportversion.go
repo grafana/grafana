@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/grafana/grafana/pkg/build/config"
 	"os"
 	"path/filepath"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func ExportVersion(c *cli.Context) error {
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

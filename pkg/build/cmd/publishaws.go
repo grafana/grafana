@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/build/config"
 	"io"
 	"os"
 	"strings"
@@ -240,7 +241,7 @@ func (s *AwsMarketplacePublishingService) ReleaseToProduct(ctx context.Context, 
 }
 
 func getPublishAwsMarketplaceFlags(ctx *cli.Context) (*publishAwsMarketplaceFlags, error) {
-	metadata, err := GenerateMetadata(ctx)
+	metadata, err := config.GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/grafana/grafana/pkg/build/config"
 	"log"
 
 	"github.com/grafana/grafana/pkg/build/errutil"
@@ -10,7 +11,7 @@ import (
 )
 
 func BuildFrontend(c *cli.Context) error {
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

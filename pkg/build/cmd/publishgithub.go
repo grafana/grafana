@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/build/config"
 	"os"
 	"path"
 	"strings"
@@ -100,7 +101,7 @@ func githubRepositoryClient(ctx context.Context, token string) githubRepositoryS
 }
 
 func getPublishGithubFlags(ctx *cli.Context) (*publishGithubFlags, error) {
-	metadata, err := GenerateMetadata(ctx)
+	metadata, err := config.GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}
