@@ -122,11 +122,13 @@ func TestFilterReceiversForAlert(t *testing.T) {
 func TestCreateRoute(t *testing.T) {
 	tc := []struct {
 		name     string
+		channel  *notificationChannel
 		recv     *PostableApiReceiver
 		expected *Route
 	}{
 		{
-			name: "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
+			name:    "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
+			channel: &notificationChannel{},
 			recv: &PostableApiReceiver{
 				Name: "recv1",
 			},
@@ -140,7 +142,8 @@ func TestCreateRoute(t *testing.T) {
 			},
 		},
 		{
-			name: "notification channel should be escaped for regex in the matcher",
+			name:    "notification channel should be escaped for regex in the matcher",
+			channel: &notificationChannel{},
 			recv: &PostableApiReceiver{
 				Name: `. ^ $ * + - ? ( ) [ ] { } \ |`,
 			},
@@ -154,11 +157,10 @@ func TestCreateRoute(t *testing.T) {
 			},
 		},
 		{
-			name: "when a receiver has sendReminder=true, the route should use the frequency in repeat interval",
+			name:    "when a channel has sendReminder=true, the route should use the frequency in repeat interval",
+			channel: &notificationChannel{SendReminder: true, Frequency: model.Duration(time.Duration(42) * time.Hour)},
 			recv: &PostableApiReceiver{
-				Name:         "recv1",
-				sendReminder: true,
-				frequency:    model.Duration(time.Duration(42) * time.Hour),
+				Name: "recv1",
 			},
 			expected: &Route{
 				Receiver:       "recv1",
@@ -170,11 +172,10 @@ func TestCreateRoute(t *testing.T) {
 			},
 		},
 		{
-			name: "when a receiver has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
+			name:    "when a channel has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
+			channel: &notificationChannel{SendReminder: false, Frequency: model.Duration(time.Duration(42) * time.Hour)},
 			recv: &PostableApiReceiver{
-				Name:         "recv1",
-				sendReminder: false,
-				frequency:    model.Duration(time.Duration(42) * time.Hour),
+				Name: "recv1",
 			},
 			expected: &Route{
 				Receiver:       "recv1",
@@ -189,7 +190,10 @@ func TestCreateRoute(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := createRoute(tt.recv)
+			res, err := createRoute(channelReceiver{
+				channel:  tt.channel,
+				receiver: tt.recv,
+			})
 			require.NoError(t, err)
 
 			// Order of nested routes is not guaranteed.
@@ -226,7 +230,7 @@ func TestCreateReceivers(t *testing.T) {
 		allChannels     []*notificationChannel
 		defaultChannels []*notificationChannel
 		expRecvMap      map[uidOrID]*PostableApiReceiver
-		expRecv         []*PostableApiReceiver
+		expRecv         []channelReceiver
 		expErr          error
 	}{
 		{
@@ -250,14 +254,20 @@ func TestCreateReceivers(t *testing.T) {
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
 				},
 			},
-			expRecv: []*PostableApiReceiver{
+			expRecv: []channelReceiver{
 				{
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
+					channel: createNotChannel(t, "uid1", int64(1), "name1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name1",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
+					},
 				},
 				{
-					Name:                    "name2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
+					channel: createNotChannel(t, "uid2", int64(2), "name2"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name2",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
+					},
 				},
 			},
 		},
@@ -274,10 +284,13 @@ func TestCreateReceivers(t *testing.T) {
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
 				},
 			},
-			expRecv: []*PostableApiReceiver{
+			expRecv: []channelReceiver{
 				{
-					Name:                    "name_1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+					channel: createNotChannel(t, "uid1", int64(1), "name\"1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name_1",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+					},
 				},
 			},
 		},
@@ -302,14 +315,20 @@ func TestCreateReceivers(t *testing.T) {
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
 				},
 			},
-			expRecv: []*PostableApiReceiver{
+			expRecv: []channelReceiver{
 				{
-					Name:                    "name_1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+					channel: createNotChannel(t, "uid1", int64(1), "name\"1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name_1",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
+					},
 				},
 				{
-					Name:                    "name_1_dba13d",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+					channel: createNotChannel(t, "uid2", int64(2), "name_1"),
+					receiver: &PostableApiReceiver{
+						Name:                    "name_1_dba13d",
+						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
+					},
 				},
 			},
 		},
@@ -329,7 +348,7 @@ func TestCreateReceivers(t *testing.T) {
 
 			// We ignore certain fields for the purposes of this test
 			for _, recv := range recvs {
-				for _, not := range recv.GrafanaManagedReceivers {
+				for _, not := range recv.receiver.GrafanaManagedReceivers {
 					not.UID = ""
 					not.Settings = nil
 					not.SecureSettings = nil

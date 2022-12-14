@@ -47,6 +47,12 @@ type defaultChannelsPerOrg map[int64][]*notificationChannel
 // uidOrID for both uid and ID, primarily used for mapping legacy channel to migrated receiver.
 type uidOrID interface{}
 
+// channelReceiver is a convenience struct that contains a notificationChannel and its corresponding migrated PostableApiReceiver.
+type channelReceiver struct {
+	channel  *notificationChannel
+	receiver *PostableApiReceiver
+}
+
 // setupAlertmanagerConfigs creates Alertmanager configs with migrated receivers and routes.
 func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRule][]uidOrID) (amConfigsPerOrg, error) {
 	// allChannels: channelUID -> channelConfig
@@ -76,7 +82,9 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 			continue
 		}
 
-		amConfig.AlertmanagerConfig.Receivers = receivers
+		for _, cr := range receivers {
+			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, cr.receiver)
+		}
 
 		defaultReceivers := make(map[string]struct{})
 		defaultChannels, ok := defaultChannelsPerOrg[orgID]
@@ -95,10 +103,10 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, defaultReceiver)
 		}
 
-		for _, recv := range receivers {
-			route, err := createRoute(recv)
+		for _, cr := range receivers {
+			route, err := createRoute(cr)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create route for receiver %s in orgId %d: %w", recv.Name, orgID, err)
+				return nil, fmt.Errorf("failed to create route for receiver %s in orgId %d: %w", cr.receiver.Name, orgID, err)
 			}
 
 			amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes, route)
@@ -221,8 +229,8 @@ func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaRece
 }
 
 // Create one receiver for every unique notification channel.
-func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, []*PostableApiReceiver, error) {
-	receivers := make([]*PostableApiReceiver, 0, len(allChannels))
+func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, []channelReceiver, error) {
+	receivers := make([]channelReceiver, 0, len(allChannels))
 	receiversMap := make(map[uidOrID]*PostableApiReceiver)
 
 	set := make(map[string]struct{}) // Used to deduplicate sanitized names.
@@ -243,22 +251,23 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 
 		set[sanitizedName] = struct{}{}
 
-		recv := &PostableApiReceiver{
-			Name:                    sanitizedName, // Channel name is unique within an Org.
-			GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
-			sendReminder:            c.SendReminder,
-			frequency:               c.Frequency,
+		cr := channelReceiver{
+			channel: c,
+			receiver: &PostableApiReceiver{
+				Name:                    sanitizedName, // Channel name is unique within an Org.
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
+			},
 		}
 
-		receivers = append(receivers, recv)
+		receivers = append(receivers, cr)
 
 		// Store receivers for creating routes from alert rules later.
 		if c.Uid != "" {
-			receiversMap[c.Uid] = recv
+			receiversMap[c.Uid] = cr.receiver
 		}
 		if c.ID != 0 {
 			// In certain circumstances, the alert rule uses ID instead of uid. So, we add this to be able to lookup by ID in case.
-			receiversMap[c.ID] = recv
+			receiversMap[c.ID] = cr.receiver
 		}
 	}
 
@@ -318,25 +327,25 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 }
 
 // Create one route per contact point, matching based on ContactLabel.
-func createRoute(recv *PostableApiReceiver) (*Route, error) {
+func createRoute(cr channelReceiver) (*Route, error) {
 	// We create a regex matcher so that each alert rule need only have a single ContactLabel entry for all contact points it sends to.
 	// For example, if an alert needs to send to contact1 and contact2 it will have ContactLabel=`"contact1","contact2"` and will match both routes looking
 	// for `.*"contact1".*` and `.*"contact2".*`.
 
 	// We quote and escape here to ensure the regex will correctly match the ContactLabel on the alerts.
-	name := fmt.Sprintf(`.*%s.*`, regexp.QuoteMeta(quote(recv.Name)))
+	name := fmt.Sprintf(`.*%s.*`, regexp.QuoteMeta(quote(cr.receiver.Name)))
 	mat, err := labels.NewMatcher(labels.MatchRegexp, ContactLabel, name)
 	if err != nil {
 		return nil, err
 	}
 
 	repeatInterval := DisabledRepeatInterval
-	if recv.sendReminder {
-		repeatInterval = recv.frequency
+	if cr.channel.SendReminder {
+		repeatInterval = cr.channel.Frequency
 	}
 
 	return &Route{
-		Receiver:       recv.Name,
+		Receiver:       cr.receiver.Name,
 		ObjectMatchers: ObjectMatchers{mat},
 		Continue:       true, // We continue so that each sibling contact point route can separately match.
 		RepeatInterval: &repeatInterval,
@@ -493,8 +502,6 @@ func (m ObjectMatchers) MarshalJSON() ([]byte, error) {
 type PostableApiReceiver struct {
 	Name                    string                     `yaml:"name" json:"name"`
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
-	sendReminder            bool
-	frequency               model.Duration
 }
 
 type PostableGrafanaReceiver CreateAlertNotificationCommand
