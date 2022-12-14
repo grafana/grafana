@@ -1,8 +1,8 @@
-name: When epic issues changed in Platform UX squad porjects, check if epic is part of specified child projects and update on Platform UX parent project
+name: When epic issues changed in Platform UX squad projects, check if epic is part of specified child projects and update on Platform UX parent project
 
 on:
   issues:
-    types: [opened, edited, reopened, assigned, unassigned, labeled, unlabeled]
+    types: [opened, closed, edited, reopened, assigned, unassigned, labeled, unlabeled]
     labels:
       - 'type/epic'
       
