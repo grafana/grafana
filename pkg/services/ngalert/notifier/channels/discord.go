@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -193,7 +192,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	attachments := make([]discordAttachment, 0)
 
 	_ = withStoredImages(ctx, d.log, d.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if embedQuota < 1 {
 				return ErrImagesDone
 			}
@@ -213,7 +212,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				base := filepath.Base(image.Path)
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
-				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
+				if err != nil && !errors.Is(err, ErrImageNotFound) {
 					d.log.Warn("failed to retrieve image data from store", "error", err)
 					return nil
 				}

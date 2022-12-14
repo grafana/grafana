@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // KafkaNotifier is responsible for sending
@@ -161,7 +160,7 @@ func buildState(as ...*types.Alert) models.AlertStateType {
 func buildContextImages(ctx context.Context, l log.Logger, imageStore ImageStore, as ...*types.Alert) []interface{} {
 	var contexts []interface{}
 	_ = withStoredImages(ctx, l, imageStore,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				imageJSON := simplejson.New()
 				imageJSON.Set("type", "image")
