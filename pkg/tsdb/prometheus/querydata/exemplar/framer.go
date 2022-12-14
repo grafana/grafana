@@ -38,6 +38,7 @@ func (f *Framer) AddFrame(frame *data.Frame) {
 
 func (f *Framer) Frames() (data.Frames, error) {
 	exemplars := f.sampler.Sample()
+	f.sampler.Reset()
 
 	if len(exemplars) == 0 {
 		return f.frames, nil

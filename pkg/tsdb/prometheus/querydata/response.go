@@ -42,8 +42,60 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
-	r = processExemplars(q, r)
+	r = s.processExemplars(q, r)
 	return r, nil
+}
+
+func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
+	s.exemplarSampler.Reset()
+	labelTracker := exemplar.NewLabelTracker()
+
+	// we are moving from a multi-frame response returned
+	// by the converter to a single exemplar frame,
+	// so we need to build a new frame array with the
+	// old exemplar frames filtered out
+	framer := exemplar.NewFramer(s.exemplarSampler, labelTracker)
+
+	for _, frame := range dr.Frames {
+		// we don't need to process non-exemplar frames
+		// so they can be added to the response
+		if !isExemplarFrame(frame) {
+			framer.AddFrame(frame)
+			continue
+		}
+
+		// copy the current exemplar frame metadata
+		framer.SetMeta(frame.Meta)
+		framer.SetRefID(frame.RefID)
+
+		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
+		if sampler, ok := s.exemplarSampler.(*exemplar.UniformSampler); ok {
+			step = sampler.CalculateStep(q.TimeRange())
+		}
+		s.exemplarSampler.SetStep(step)
+
+		seriesLabels := getSeriesLabels(frame)
+		labelTracker.Add(seriesLabels)
+		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
+			row := frame.RowCopy(rowIdx)
+			labels := getLabels(frame, row)
+			labelTracker.Add(labels)
+			ex := models.Exemplar{
+				Labels:       labels,
+				Value:        row[1].(float64),
+				Timestamp:    row[0].(time.Time),
+				SeriesLabels: seriesLabels,
+			}
+			s.exemplarSampler.Add(ex)
+		}
+	}
+
+	frames, err := framer.Frames()
+
+	return &backend.DataResponse{
+		Frames: frames,
+		Error:  err,
+	}
 }
 
 func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
@@ -135,55 +187,6 @@ func getName(q *models.Query, field *data.Field) string {
 	}
 
 	return legend
-}
-
-func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
-	sampler := exemplar.NewStandardDeviationSampler()
-	labelTracker := exemplar.NewLabelTracker()
-
-	// we are moving from a multi-frame response returned
-	// by the converter to a single exemplar frame,
-	// so we need to build a new frame array with the
-	// old exemplar frames filtered out
-	framer := exemplar.NewFramer(sampler, labelTracker)
-
-	for _, frame := range dr.Frames {
-		// we don't need to process non-exemplar frames
-		// so they can be added to the response
-		if !isExemplarFrame(frame) {
-			framer.AddFrame(frame)
-			continue
-		}
-
-		// copy the current exemplar frame metadata
-		framer.SetMeta(frame.Meta)
-		framer.SetRefID(frame.RefID)
-
-		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
-		sampler.SetStep(step)
-
-		seriesLabels := getSeriesLabels(frame)
-		labelTracker.Add(seriesLabels)
-		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
-			row := frame.RowCopy(rowIdx)
-			labels := getLabels(frame, row)
-			labelTracker.Add(labels)
-			ex := models.Exemplar{
-				Labels:       labels,
-				Value:        row[1].(float64),
-				Timestamp:    row[0].(time.Time),
-				SeriesLabels: seriesLabels,
-			}
-			sampler.Add(ex)
-		}
-	}
-
-	frames, err := framer.Frames()
-
-	return &backend.DataResponse{
-		Frames: frames,
-		Error:  err,
-	}
 }
 
 func isExemplarFrame(frame *data.Frame) bool {

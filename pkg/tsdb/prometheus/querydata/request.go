@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
 )
@@ -42,6 +43,7 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	enableWideSeries   bool
+	exemplarSampler    exemplar.Sampler
 }
 
 func New(
@@ -64,6 +66,13 @@ func New(
 
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
+	// standard deviation sampler is the default for backwards compatibility
+	exemplarSampler := exemplar.NewStandardDeviationSampler()
+
+	if features.IsEnabled(featuremgmt.FlagPrometheusUniformExemplarSampler) {
+		exemplarSampler = exemplar.NewUniformSampler(exemplar.UNIFORM_SAMPLER_X_COUNT, exemplar.UNIFORM_SAMPLER_Y_COUNT)
+	}
+
 	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
@@ -73,6 +82,7 @@ func New(
 		ID:                 settings.ID,
 		URL:                settings.URL,
 		enableWideSeries:   features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
+		exemplarSampler:    exemplarSampler,
 	}, nil
 }
 
