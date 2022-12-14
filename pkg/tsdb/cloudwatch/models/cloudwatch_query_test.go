@@ -317,7 +317,7 @@ func TestRequestParser(t *testing.T) {
 			},
 		}
 
-		migratedQueries, err := ParseMetricDataQueries(oldQuery, time.Now(), time.Now(), false, false)
+		migratedQueries, err := ParseMetricDataQueries(oldQuery, time.Now(), time.Now(), "us-east-2", false, false)
 		assert.NoError(t, err)
 		require.Len(t, migratedQueries, 1)
 		require.NotNil(t, migratedQueries[0])
@@ -348,7 +348,7 @@ func TestRequestParser(t *testing.T) {
 			},
 		}
 
-		results, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		results, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, results, 1)
 		res := results[0]
@@ -391,7 +391,7 @@ func TestRequestParser(t *testing.T) {
 			},
 		}
 
-		results, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		results, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		assert.NoError(t, err)
 		require.Len(t, results, 1)
 		res := results[0]
@@ -424,7 +424,7 @@ func TestRequestParser(t *testing.T) {
 			},
 		}
 
-		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.Error(t, err)
 
 		assert.Equal(t, `error parsing query "", failed to parse dimensions: unknown type as dimension value`, err.Error())
@@ -453,7 +453,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			},
 		}
 
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		assert.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -485,7 +485,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.Local().Add(time.Minute * time.Duration(5))
 
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 60, res[0].Period)
@@ -495,7 +495,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -1)
 
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 60, res[0].Period)
@@ -504,7 +504,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		t.Run("Time range is 2 days", func(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -2)
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 300, res[0].Period)
@@ -514,7 +514,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -7)
 
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 900, res[0].Period)
@@ -524,7 +524,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -30)
 
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 3600, res[0].Period)
@@ -534,7 +534,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(0, 0, -90)
 
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 21600, res[0].Period)
@@ -544,7 +544,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(-1, 0, 0)
 
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.Nil(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 21600, res[0].Period)
@@ -554,7 +554,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			to := time.Now()
 			from := to.AddDate(-2, 0, 0)
 
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 86400, res[0].Period)
@@ -563,7 +563,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		t.Run("Time range is 2 days, but 16 days ago", func(t *testing.T) {
 			to := time.Now().AddDate(0, 0, -14)
 			from := to.AddDate(0, 0, -2)
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 300, res[0].Period)
@@ -572,7 +572,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		t.Run("Time range is 2 days, but 90 days ago", func(t *testing.T) {
 			to := time.Now().AddDate(0, 0, -88)
 			from := to.AddDate(0, 0, -2)
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 3600, res[0].Period)
@@ -581,7 +581,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		t.Run("Time range is 2 days, but 456 days ago", func(t *testing.T) {
 			to := time.Now().AddDate(0, 0, -454)
 			from := to.AddDate(0, 0, -2)
-			res, err := ParseMetricDataQueries(query, from, to, false, false)
+			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assert.Equal(t, 21600, res[0].Period)
@@ -596,7 +596,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 				}`),
 			},
 		}
-		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.Error(t, err)
 		assert.Equal(t, `error parsing query "", failed to parse period as duration: time: invalid duration "invalid"`, err.Error())
 	})
@@ -611,7 +611,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			},
 		}
 
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		assert.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -698,7 +698,7 @@ func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query
 					),
 				},
 			}
-			res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), false, false)
+			res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", false, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
 			require.NotNil(t, res[0])
@@ -724,7 +724,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -745,7 +745,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -766,7 +766,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -785,7 +785,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -806,7 +806,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -827,7 +827,7 @@ func Test_ParseMetricDataQueries_hide_and_ReturnData(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -850,7 +850,7 @@ func Test_ParseMetricDataQueries_ID(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -871,7 +871,7 @@ func Test_ParseMetricDataQueries_ID(t *testing.T) {
 				}`),
 			},
 		}
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), false, false)
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", false, false)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
@@ -898,7 +898,7 @@ func Test_ParseMetricDataQueries_sets_label_when_label_is_present_in_json_query(
 		},
 	}
 
-	res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true, false)
+	res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", true, false)
 	assert.NoError(t, err)
 	require.Len(t, res, 1)
 	require.NotNil(t, res[0])
@@ -962,7 +962,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 			},
 		}
 
-		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true, false)
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", true, false)
 		assert.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -1009,7 +1009,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 			},
 		}
 
-		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), true, false)
+		res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", true, false)
 		assert.NoError(t, err)
 		require.Len(t, res, 2)
 
@@ -1078,7 +1078,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 				}`, tc.labelJson)),
 					},
 				}
-				res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), tc.dynamicLabelsFeatureToggleEnabled, false)
+				res, err := ParseMetricDataQueries(query, time.Now(), time.Now(), "us-east-2", tc.dynamicLabelsFeatureToggleEnabled, false)
 				assert.NoError(t, err)
 
 				require.Len(t, res, 1)
@@ -1105,7 +1105,7 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 				{
 					JSON: []byte("{}"),
 				},
-			}, time.Now(), time.Now(), false, false)
+			}, time.Now(), time.Now(), "us-east-2", false, false)
 		assert.Error(t, err)
 		assert.Equal(t, `error parsing query "", query must have either statistic or statistics field`, err.Error())
 
@@ -1118,7 +1118,7 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 				{
 					JSON: []byte(`{"type":"some other type", "statistic":"Average", "matchExact":false}`),
 				},
-			}, time.Now(), time.Now(), false, false)
+			}, time.Now(), time.Now(), "us-east-2", false, false)
 		assert.NoError(t, err)
 
 		assert.Empty(t, actual)
@@ -1130,7 +1130,7 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 				{
 					JSON: []byte(`{"statistic":"Average"}`),
 				},
-			}, time.Now(), time.Now(), false, false)
+			}, time.Now(), time.Now(), "us-east-2", false, false)
 		assert.NoError(t, err)
 
 		assert.NotEmpty(t, actual)
@@ -1142,7 +1142,7 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 				{
 					JSON: []byte(`{"statistic":"Average"}`),
 				},
-			}, time.Now(), time.Now(), false, false)
+			}, time.Now(), time.Now(), "us-east-2", false, false)
 		assert.NoError(t, err)
 
 		assert.Len(t, actual, 1)
@@ -1156,7 +1156,7 @@ func Test_ParseMetricDataQueries_statistics_and_query_type_validation_and_MatchE
 				{
 					JSON: []byte(`{"statistic":"Average","matchExact":false}`),
 				},
-			}, time.Now(), time.Now(), false, false)
+			}, time.Now(), time.Now(), "us-east-2", false, false)
 		assert.NoError(t, err)
 
 		assert.Len(t, actual, 1)
@@ -1172,7 +1172,7 @@ func Test_ParseMetricDataQueries_account_Id(t *testing.T) {
 				{
 					JSON: []byte(`{"accountId":"some account id", "statistic":"Average"}`),
 				},
-			}, time.Now(), time.Now(), false, true)
+			}, time.Now(), time.Now(), "us-east-2", false, true)
 		assert.NoError(t, err)
 
 		require.Len(t, actual, 1)
@@ -1187,11 +1187,42 @@ func Test_ParseMetricDataQueries_account_Id(t *testing.T) {
 				{
 					JSON: []byte(`{"accountId":"some account id", "statistic":"Average"}`),
 				},
-			}, time.Now(), time.Now(), false, false)
+			}, time.Now(), time.Now(), "us-east-2", false, false)
 		assert.NoError(t, err)
 
 		require.Len(t, actual, 1)
 		require.NotNil(t, actual[0])
 		assert.Nil(t, actual[0].AccountId)
+	})
+}
+
+func Test_ParseMetricDataQueries_default_region(t *testing.T) {
+	t.Run("default region is used when when region not set", func(t *testing.T) {
+		query := []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+				   "refId":"ref1",
+				   "region":"default",
+				   "namespace":"ec2",
+				   "metricName":"CPUUtilization",
+				   "id": "",
+				   "expression": "",
+				   "dimensions":{
+					  "InstanceId":["test"],
+					  "InstanceType":["test2"]
+				   },
+				   "statistic":"Average",
+				   "period":"900",
+				   "hide":false
+				}`),
+			},
+		}
+
+		region := "us-east-2"
+		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), region, false, false)
+		assert.NoError(t, err)
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0])
+		assert.Equal(t, region, res[0].Region)
 	})
 }

@@ -14,7 +14,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { AddRootView } from './AddRootView';
 import { Breadcrumb } from './Breadcrumb';
 import { CreateNewFolderModal } from './CreateNewFolderModal';
-import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
@@ -116,13 +115,6 @@ export default function StoragePage(props: Props) {
   const renderView = () => {
     const isRoot = !path?.length || path === '/';
     switch (view) {
-      case StorageView.Export:
-        if (!isRoot) {
-          setPath('');
-          return <Spinner />;
-        }
-        return <ExportView onPathChange={setPath} />;
-
       case StorageView.AddRoot:
         if (!isRoot) {
           setPath('');

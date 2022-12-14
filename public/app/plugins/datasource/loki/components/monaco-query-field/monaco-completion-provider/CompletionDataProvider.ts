@@ -1,3 +1,5 @@
+import { chain } from 'lodash';
+
 import { HistoryItem } from '@grafana/data';
 import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
 
@@ -7,7 +9,10 @@ import { LokiQuery } from '../../../types';
 import { Label } from './situation';
 
 export class CompletionDataProvider {
-  constructor(private languageProvider: LanguageProvider, private history: Array<HistoryItem<LokiQuery>> = []) {}
+  private history: string[] = [];
+  constructor(private languageProvider: LanguageProvider, history: Array<HistoryItem<LokiQuery>> = []) {
+    this.setHistory(history);
+  }
 
   private buildSelector(labels: Label[]): string {
     const allLabelTexts = labels.map(
@@ -17,8 +22,16 @@ export class CompletionDataProvider {
     return `{${allLabelTexts.join(',')}}`;
   }
 
+  setHistory(history: Array<HistoryItem<LokiQuery>> = []) {
+    this.history = chain(history)
+      .map((history: HistoryItem<LokiQuery>) => history.query.expr)
+      .filter()
+      .uniq()
+      .value();
+  }
+
   getHistory() {
-    return this.history.map((entry) => entry.query.expr).filter((expr) => expr !== undefined);
+    return this.history;
   }
 
   async getLabelNames(otherLabels: Label[] = []) {

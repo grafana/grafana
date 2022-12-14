@@ -29,6 +29,9 @@ var (
 	SupportedParseMode = map[string]string{"Markdown": "Markdown", "MarkdownV2": "MarkdownV2", DefaultParseMode: "HTML", "None": ""}
 )
 
+// Telegram supports 4096 chars max - from https://limits.tginfo.me/en.
+const telegramMaxMessageLenRunes = 4096
+
 // TelegramNotifier is responsible for sending
 // alert notifications to Telegram.
 type TelegramNotifier struct {
@@ -184,9 +187,13 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 	// Telegram supports 4096 chars max
-	messageText, truncated := notify.Truncate(tmpl(tn.settings.Message), 4096)
+	messageText, truncated := TruncateInRunes(tmpl(tn.settings.Message), telegramMaxMessageLenRunes)
 	if truncated {
-		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.settings.Message)
+		key, err := notify.ExtractGroupKey(ctx)
+		if err != nil {
+			return nil, err
+		}
+		tn.log.Warn("Truncated message", "alert", key, "max_runes", telegramMaxMessageLenRunes)
 	}
 
 	m := make(map[string]string)

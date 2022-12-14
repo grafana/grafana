@@ -91,4 +91,5 @@ export const validLogsQuery: CloudWatchLogsQuery = {
   id: '',
   region: 'us-east-2',
   refId: 'A',
+  expression: `fields @timestamp, @message | sort @timestamp desc | limit 25`,
 };
