@@ -46,7 +46,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     };
 
     // enrich with dashboard info
-    const dashboard = getDashboardSrv().getCurrent();
+    const dashboard = getDashboardSrv().dashboard;
     if (dashboard) {
       eventData.dashboardId = dashboard.id;
       eventData.dashboardName = dashboard.title;

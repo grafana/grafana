@@ -50,6 +50,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     }
     return getDataSourceSrv().get(dsUid);
   }, [dsUid]);
+
   const QueryEditor = datasource?.components?.QueryEditor;
 
   const handleValidation = (value: DataQuery) => {
