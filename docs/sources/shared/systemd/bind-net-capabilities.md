@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/systemd/bind-net-capabilities/
 title: Serving Grafana on a port < 1024
 ---
 

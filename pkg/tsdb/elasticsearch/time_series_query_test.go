@@ -39,7 +39,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromMs)
 			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toMs)
 		})
-
 		t.Run("Should clean settings from null values (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
@@ -52,8 +51,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			firstLevel := sr.Aggs[0]
 			secondLevel := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings["script"], "1")
-			// FIXME: This is a bug in implementation, missing is set to "null" instead of being removed
-			// require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings["missing"], nil)
+			require.NotContains(t, secondLevel.Aggregation.Aggregation.(*es.MetricAggregation).Settings, "missing")
 		})
 
 		t.Run("With multiple bucket aggs", func(t *testing.T) {
@@ -312,9 +310,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, firstLevel.Key, "2")
-			// FIXME: This is a bug in the current implementation. The min_doc_count is not set.
-			// termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
-			// require.Equal(t, termsAgg.MinDocCount, "1")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			expectedMinDocCount := 1
+			require.Equal(t, termsAgg.MinDocCount, &expectedMinDocCount)
 		})
 
 		t.Run("With metric percentiles", func(t *testing.T) {
@@ -434,9 +432,40 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
-			// FIXME: { _doc: { order: 'desc' } } is missing
-			// sr := c.multisearchRequests[0].Requests[0]
-			// require.Equal(t, sr, `{"docvalue_fields":["@timestamp"],"query":{"bool":{"filter":{"range":{"@timestamp":{"format":"epoch_millis","gte":1526406600000,"lte":1526406900000}}}}},"script_fields":{},"size":500,"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}, {"_doc": {"order": "desc"}}]}`)
+
+			sr := c.multisearchRequests[0].Requests[0]
+			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
+			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+
+			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
+		})
+
+		t.Run("With raw data metric query (from frontend tests)", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+
+			sr := c.multisearchRequests[0].Requests[0]
+			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
+			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+
+			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
 		})
 
 		t.Run("With raw document metric size set", func(t *testing.T) {
@@ -1712,8 +1741,6 @@ func newFakeClient() *fakeClient {
 		multiSearchResponse: &es.MultiSearchResponse{},
 	}
 }
-
-func (c *fakeClient) EnableDebug() {}
 
 func (c *fakeClient) GetTimeField() string {
 	return c.timeField

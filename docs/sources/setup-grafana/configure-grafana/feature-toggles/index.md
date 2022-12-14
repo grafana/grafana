@@ -19,18 +19,17 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
 
-| Feature toggle name          | Description                                                                                                     | Enabled by default |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `promQueryBuilder`           | Show Prometheus query builder                                                                                   | Yes                |
-| `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                                                    |                    |
-| `database_metrics`           | Add Prometheus metrics for database tables                                                                      |                    |
-| `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                                                          | Yes                |
-| `featureHighlights`          | Highlight Grafana Enterprise features                                                                           |                    |
-| `commandPalette`             | Enable command palette                                                                                          | Yes                |
-| `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                                           | Yes                |
-| `prometheusBufferedClient`   | Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new) |                    |
-| `internationalization`       | Enables internationalization                                                                                    | Yes                |
-| `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token                            |                    |
+| Feature toggle name          | Description                                                                          | Enabled by default |
+| ---------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
+| `promQueryBuilder`           | Show Prometheus query builder                                                        | Yes                |
+| `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                         |                    |
+| `database_metrics`           | Add Prometheus metrics for database tables                                           |                    |
+| `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                               | Yes                |
+| `featureHighlights`          | Highlight Grafana Enterprise features                                                |                    |
+| `commandPalette`             | Enable command palette                                                               | Yes                |
+| `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
+| `internationalization`       | Enables internationalization                                                         | Yes                |
+| `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 
 ## Beta feature toggles
 
@@ -53,6 +52,7 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
 | `live-config`                      | Save Grafana Live configuration in SQL tables                                                                                                                                |
@@ -79,7 +79,6 @@ Alpha features might be changed or removed without prior notice.
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                  |
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
 | `topnav`                           | New top nav and page layouts                                                                                                                                                 |
-| `traceqlEditor`                    | Show the TraceQL editor in the explore page                                                                                                                                  |
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `cloudWatchCrossAccountQuerying`   | Use cross-account querying in CloudWatch datasource                                                                                                                          |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
@@ -89,8 +88,10 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |
 | `elasticsearchBackendMigration`    | Use Elasticsearch as backend data source                                                                                                                                     |
+| `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
+| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 
 ## Development feature toggles
 
@@ -100,6 +101,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | -------------------------------------- | --------------------------------------------------------- |
 | `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI |
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                     |
+| `k8s`                                  | Explore native k8s integrations                           |
 | `dashboardsFromStorage`                | Load dashboards from the generic storage interface        |
 | `export`                               | Export grafana instance (to git, etc)                     |
 | `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                    |

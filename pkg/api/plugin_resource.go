@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -78,17 +76,6 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, plu
 		return
 	}
 
-	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
-			req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
-
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Header.Add("X-ID-Token", idToken)
-			}
-		}
-	}
-
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
 	}
@@ -110,24 +97,6 @@ func (hs *HTTPServer) pluginResourceRequest(c *models.ReqContext) (*http.Request
 }
 
 func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	keepCookieModel := struct {
-		KeepCookies []string `json:"keepCookies"`
-	}{}
-	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
-		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
-		if err != nil {
-			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
-		}
-	}
-
-	list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
-	if list != nil {
-		for _, name := range list.Items {
-			req.Header.Del(name)
-		}
-	}
-
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies, []string{hs.Cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
 	body, err := io.ReadAll(req.Body)

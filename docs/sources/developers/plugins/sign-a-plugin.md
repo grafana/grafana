@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/sign-a-plugin/
 title: Sign a plugin
 ---
 

@@ -340,18 +340,6 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 		return err
 	}
 
-	// remove unneeded binaries, these are exposed via wrappers that provide the needed configuration
-	for _, fileName := range []string{
-		cliBinary,
-		cliBinary + ".md5",
-		serverBinary,
-		serverBinary + ".md5",
-	} {
-		if err := os.Remove(filepath.Join(packageRoot, options.homeBinDir, fileName)); err != nil {
-			return fmt.Errorf("failed to remove %q: %w", filepath.Join(options.homeBinDir, fileName), err)
-		}
-	}
-
 	if err := executeFPM(options, packageRoot, srcDir); err != nil {
 		return err
 	}

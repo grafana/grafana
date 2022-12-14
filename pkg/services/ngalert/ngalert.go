@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -62,6 +63,7 @@ func ProvideService(
 	bus bus.Bus,
 	accesscontrolService accesscontrol.Service,
 	annotationsRepo annotations.Repository,
+	pluginsStore plugins.Store,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -85,6 +87,7 @@ func ProvideService(
 		bus:                  bus,
 		accesscontrolService: accesscontrolService,
 		annotationsRepo:      annotationsRepo,
+		pluginsStore:         pluginsStore,
 	}
 
 	if ng.IsDisabled() {
@@ -129,7 +132,8 @@ type AlertNG struct {
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
 
-	bus bus.Bus
+	bus          bus.Bus
+	pluginsStore plugins.Store
 }
 
 func (ng *AlertNG) init() error {
@@ -182,19 +186,23 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
-	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:              ng.Cfg.UnifiedAlerting,
-		C:                clk,
-		EvaluatorFactory: evalFactory,
-		RuleStore:        store,
-		Metrics:          ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:      alertsRouter,
+		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		C:                    clk,
+		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
+		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
+		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		AppURL:               appUrl,
+		EvaluatorFactory:     evalFactory,
+		RuleStore:            store,
+		Metrics:              ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:          alertsRouter,
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
 	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, historian)
-	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {

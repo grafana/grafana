@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -174,38 +173,4 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 func (wn *WebexNotifier) SendResolved() bool {
 	return !wn.GetDisableResolveMessage()
-}
-
-// Copied from https://github.com/prometheus/alertmanager/blob/main/notify/util.go, please remove once we're on-par with upstream.
-// truncationMarker is the character used to represent a truncation.
-const truncationMarker = "…"
-
-// TruncateInBytes truncates a string to fit the given size in Bytes.
-func TruncateInBytes(s string, n int) (string, bool) {
-	// First, measure the string the w/o a to-rune conversion.
-	if len(s) <= n {
-		return s, false
-	}
-
-	// The truncationMarker itself is 3 bytes, we can't return any part of the string when it's less than 3.
-	if n <= 3 {
-		switch n {
-		case 3:
-			return truncationMarker, true
-		default:
-			return strings.Repeat(".", n), true
-		}
-	}
-
-	// Now, to ensure we don't butcher the string we need to remove using runes.
-	r := []rune(s)
-	truncationTarget := n - 3
-
-	// Next, let's truncate the runes to the lower possible number.
-	truncatedRunes := r[:truncationTarget]
-	for len(string(truncatedRunes)) > truncationTarget {
-		truncatedRunes = r[:len(truncatedRunes)-1]
-	}
-
-	return string(truncatedRunes) + truncationMarker, true
 }
