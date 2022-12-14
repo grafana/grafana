@@ -66,7 +66,7 @@ env:
           fieldPath: status.podIP
   ```
 
-3. Create a headless service which is returning the pod IP instead of the service IP, which is what the `ha_peers` need:
+3. Create a headless service that returns the pod IP instead of the service IP, which is what the `ha_peers` need:
 
   ```yaml
   apiVersion: v1
