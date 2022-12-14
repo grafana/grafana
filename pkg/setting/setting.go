@@ -303,6 +303,7 @@ type Cfg struct {
 	SigV4AuthEnabled             bool
 	SigV4VerboseLogging          bool
 	AzureAuthEnabled             bool
+	AzureSkipOrgRoleSync         bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string

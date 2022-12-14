@@ -18,6 +18,7 @@ type SocialAzureAD struct {
 	*SocialBase
 	allowedGroups    []string
 	forceUseGraphAPI bool
+	skipOrgRoleSync  bool
 }
 
 type azureClaims struct {
@@ -132,6 +133,15 @@ func (claims *azureClaims) extractEmail() string {
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
 func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
+		return s.defaultRole(false), false
+	}
+
+	// TODO: to be removed in favor or explicit auth provider configuration
+	if s.skipOrgRoleSyncBase {
+		return s.defaultRole(false), false
+	}
+	// skip org role mapping for azuread setting here
+	if s.skipOrgRoleSync {
 		return s.defaultRole(false), false
 	}
 
