@@ -104,7 +104,9 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 			return nil, err
 		}
 
-		// the legacy folder ID is associated with the permissions
+		// do not get guardian by the folder ID because it differs from the nested folder ID
+		// and the legacy folder ID has been associated with the permissions:
+		// use the folde UID instead that is the same for both
 		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
@@ -171,7 +173,10 @@ func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id
 		return nil, err
 	}
 
-	g, err := guardian.New(ctx, dashFolder.ID, orgID, user)
+	// do not get guardian by the folder ID because it differs from the nested folder ID
+	// and the legacy folder ID has been associated with the permissions:
+	// use the folde UID instead that is the same for both
+	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
 	if err != nil {
 		return nil, err
 	}
@@ -192,6 +197,9 @@ func (s *Service) getFolderByUID(ctx context.Context, user *user.SignedInUser, o
 		return nil, err
 	}
 
+	// do not get guardian by the folder ID because it differs from the nested folder ID
+	// and the legacy folder ID has been associated with the permissions:
+	// use the folde UID instead that is the same for both
 	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
 	if err != nil {
 		return nil, err

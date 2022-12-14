@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -211,7 +210,6 @@ func TestLibraryElementPermissions(t *testing.T) {
 				command := getCreatePanelCommand(-100, "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
-				spew.Dump("<<<<", string(resp.Body()), resp.Status())
 				require.Equal(t, 404, resp.Status())
 			})
 

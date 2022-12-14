@@ -19,7 +19,7 @@ var (
 	ErrGuardianPermissionExists    = errors.New("permission already exists")
 	ErrGuardianOverride            = errors.New("you can only override a permission to be higher")
 	ErrGuardianGetDashboardFailure = errutil.NewBase(errutil.StatusInternal, "guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
-	ErrGuardinDashboardNotFound    = errutil.NewBase(errutil.StatusNotFound, "guardian.dashboardNotFound")
+	ErrGuardianDashboardNotFound   = errutil.NewBase(errutil.StatusNotFound, "guardian.dashboardNotFound")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -83,7 +83,7 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 
 		if err := dashSvc.GetDashboard(ctx, q); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return nil, ErrGuardinDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
+				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
@@ -112,7 +112,7 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 
 		if err := dashSvc.GetDashboard(ctx, q); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return nil, ErrGuardinDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
+				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
@@ -132,8 +132,8 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 }
 
 // newDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
-// This constructor should be preferred over the other two constructors if the dashboard in available
-// since it avoid querying the database for fetching the dashboard.
+// This constructor should be preferred over the other two if the dashboard in available
+// since it avoids querying the database for fetching the dashboard.
 func newDashboardGuardianByDashboard(ctx context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	return &dashboardGuardianImpl{
 		user:             user,

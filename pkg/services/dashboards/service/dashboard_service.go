@@ -197,7 +197,6 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *models.Dashboard,
 	newDashboard := d.Id == 0
 
 	if newDashboard {
-		// return parent folder UID if exists
 		// if it's a new dashboard/folder check the parent folder permissions
 		guard, err := guardian.New(ctx, d.FolderId, d.OrgId, user)
 		if err != nil {

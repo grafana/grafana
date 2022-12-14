@@ -12,10 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
-
-var ErrDashboardNotFound = errutil.NewBase(errutil.StatusNotFound, "guardian.dashbaordNotFound")
 
 var permissionMap = map[string]models.PermissionType{
 	"View":  models.PERMISSION_VIEW,
@@ -42,7 +39,7 @@ func NewAccessControlDashboardGuardian(
 
 		if err := dashboardService.GetDashboard(ctx, q); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return nil, ErrGuardinDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
+				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
@@ -79,7 +76,7 @@ func NewAccessControlDashboardGuardianByUID(
 
 		if err := dashboardService.GetDashboard(ctx, q); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return nil, ErrGuardinDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
+				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
@@ -100,8 +97,8 @@ func NewAccessControlDashboardGuardianByUID(
 }
 
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
-// This constructor should be preferred over the other two constructors if the dashboard in available
-// since it avoid querying the database for fetching the dashboard.
+// This constructor should be preferred over the other two if the dashboard in available
+// since it avoids querying the database for fetching the dashboard.
 func NewAccessControlDashboardGuardianByDashboard(
 	ctx context.Context, dashboard *models.Dashboard, user *user.SignedInUser,
 	store db.DB, ac accesscontrol.AccessControl,
@@ -136,7 +133,7 @@ type AccessControlDashboardGuardian struct {
 
 func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardinDashboardNotFound
+		return false, ErrGuardianDashboardNotFound
 	}
 
 	if a.dashboard.IsFolder {
@@ -150,7 +147,7 @@ func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
 
 func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardinDashboardNotFound
+		return false, ErrGuardianDashboardNotFound
 	}
 
 	if setting.ViewersCanEdit {
@@ -168,7 +165,7 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 
 func (a *AccessControlDashboardGuardian) CanView() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardinDashboardNotFound
+		return false, ErrGuardianDashboardNotFound
 	}
 
 	if a.dashboard.IsFolder {
@@ -182,7 +179,7 @@ func (a *AccessControlDashboardGuardian) CanView() (bool, error) {
 
 func (a *AccessControlDashboardGuardian) CanAdmin() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardinDashboardNotFound
+		return false, ErrGuardianDashboardNotFound
 	}
 
 	if a.dashboard.IsFolder {
@@ -200,7 +197,7 @@ func (a *AccessControlDashboardGuardian) CanAdmin() (bool, error) {
 
 func (a *AccessControlDashboardGuardian) CanDelete() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardinDashboardNotFound
+		return false, ErrGuardianDashboardNotFound
 	}
 
 	if a.dashboard.IsFolder {
