@@ -4532,9 +4532,6 @@ exports[`better eslint`] = {
     "public/app/features/sandbox/TestStuffPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/scenes/apps/SceneConditional.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/scenes/components/VizPanel/VizPanelRenderer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

@@ -57,6 +57,7 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
         title={titleLink ? <PanelTitleLink title={titleInterpolated} link={titleLink} /> : titleInterpolated}
         width={width}
         height={height}
+        padding={plugin.noPadding ? 'none' : undefined}
         leftItems={isDraggable ? [dragHandle] : undefined}
         displayMode={displayMode}
       >

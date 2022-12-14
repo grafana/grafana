@@ -55,7 +55,7 @@ export function AppPageWithTabs({ tabs, activeTab }: AppPageProps) {
   );
 }
 
-interface AppTab extends NavModelItem {
+export interface AppTab extends NavModelItem {
   text: string;
   url: string;
   getScene: () => EmbeddedScene;

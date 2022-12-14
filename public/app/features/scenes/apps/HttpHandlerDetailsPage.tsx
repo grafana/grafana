@@ -6,18 +6,33 @@ import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
 import { getTabs } from './GrafanaMonitoringApp';
-import { getHandlerDetailsScene } from './state';
+import { getHandlerDetailsScene, getHandlerLogsScene } from './state';
 import { getLinkUrlWithAppUrlState, useAppQueryParams } from './utils';
 
 export function HttpHandlerDetailsPage() {
   const routeMatch = useRouteMatch<{ handler: string }>();
-  const scene = getHandlerDetailsScene(decodeURIComponent(routeMatch.params.handler));
+  const handler = decodeURIComponent(routeMatch.params.handler);
+  const metricsScene = getHandlerDetailsScene(handler);
+  const logsScene = getHandlerLogsScene(handler);
   const parent = getTabs().find((x) => x.text === 'HTTP handlers')!;
   const params = useAppQueryParams();
+  const tab = params.tab ?? 'metrics';
 
   const pageNav: NavModelItem = {
-    text: scene.state.title,
+    text: metricsScene.state.title,
     parentItem: { text: parent.text, url: getLinkUrlWithAppUrlState(parent.url, params) },
+    children: [
+      {
+        text: 'Metrics',
+        active: tab === 'metrics',
+        url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'metrics' }),
+      },
+      {
+        text: 'Logs',
+        active: tab === 'logs',
+        url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'logs' }),
+      },
+    ],
   };
 
   return (
@@ -27,7 +42,8 @@ export function HttpHandlerDetailsPage() {
       pageNav={pageNav}
     >
       <Page.Contents>
-        <scene.Component model={scene} />
+        {tab === 'logs' && <logsScene.Component model={logsScene} />}
+        {tab === 'metrics' && <metricsScene.Component model={metricsScene} />}
       </Page.Contents>
     </Page>
   );

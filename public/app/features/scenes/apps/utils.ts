@@ -9,9 +9,5 @@ export function useAppQueryParams() {
 }
 
 export function getLinkUrlWithAppUrlState(path: string, params: UrlQueryMap): string {
-  return urlUtil.renderUrl(path, {
-    from: params.from,
-    to: params.to,
-    'var-instance': params['var-instance'],
-  });
+  return urlUtil.renderUrl(path, params);
 }

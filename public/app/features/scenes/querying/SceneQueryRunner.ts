@@ -100,7 +100,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
           }
         }, 0);
       }
-    } else {
+    } else if (this.state.maxDataPointsFromWidth) {
       // let's just remember the width until next query issue
       this._containerWidth = width;
     }
