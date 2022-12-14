@@ -395,6 +395,11 @@ var (
 		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "prometheusExemplarSamplingExperiment",
+			Description: "Sample exemplars using a uniform distribution",
 			State:       FeatureStateAlpha,
 		},
 	}
