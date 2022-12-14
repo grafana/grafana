@@ -25,7 +25,7 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
@@ -274,7 +274,15 @@ export class PanelQueryRunner {
 
       this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
-      console.error('PanelQueryRunner Error', err);
+      this.pipeToSubject(
+        of({
+          state: LoadingState.Error,
+          error: toDataQueryError(err),
+          series: [],
+          timeRange: request.range,
+        }),
+        panelId
+      );
     }
   }
 

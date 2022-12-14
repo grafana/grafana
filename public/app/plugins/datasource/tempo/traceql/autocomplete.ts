@@ -120,10 +120,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       }
       case 'SPANSET_EMPTY':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
+      case 'SPANSET_ONLY_DOT': {
+        return this.getTagsCompletions();
+      }
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
-        return this.getIntrinsicsCompletions().concat(this.getTagsCompletions());
+        return this.getTagsCompletions();
       case 'SPANSET_AFTER_NAME':
         return CompletionProvider.operators.map((key) => ({
           label: key,
@@ -220,6 +223,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       if (!nameFull) {
         return {
           type: 'SPANSET_EMPTY',
+        };
+      }
+
+      if (nameFull === '.') {
+        return {
+          type: 'SPANSET_ONLY_DOT',
         };
       }
 
@@ -343,6 +352,9 @@ export type Situation =
     }
   | {
       type: 'SPANSET_EMPTY';
+    }
+  | {
+      type: 'SPANSET_ONLY_DOT';
     }
   | {
       type: 'SPANSET_AFTER_NAME';
