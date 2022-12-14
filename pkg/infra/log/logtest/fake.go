@@ -19,8 +19,8 @@ type Logs struct {
 	Ctx     []interface{}
 }
 
-func (f *Fake) New(ctx ...interface{}) *log.ConcreteLogger {
-	return log.NewNopLogger()
+func (f *Fake) New(ctx ...interface{}) log.Logger {
+	return f
 }
 
 func (f *Fake) Log(keyvals ...interface{}) error {
