@@ -92,15 +92,15 @@ export const EvaluateEveryNewGroup = ({ rules }: { rules: RulerRulesConfigDTO | 
       label="Evaluation interval"
       description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."
     >
-      <Stack direction="row" justify-content="left" align-items="center">
-        <InlineLabel
-          htmlFor={evaluateEveryId}
-          width={16}
-          tooltip="How often the alert will be evaluated to see if it fires"
-        >
-          Evaluate every
-        </InlineLabel>
-        <div className={styles.marginTop}>
+      <div className={styles.alignInterval}>
+        <Stack direction="row" justify-content="left" align-items="baseline">
+          <InlineLabel
+            htmlFor={evaluateEveryId}
+            width={16}
+            tooltip="How often the alert will be evaluated to see if it fires"
+          >
+            Evaluate every
+          </InlineLabel>
           <Field
             className={styles.inlineField}
             error={errors.evaluateEvery?.message}
@@ -116,8 +116,8 @@ export const EvaluateEveryNewGroup = ({ rules }: { rules: RulerRulesConfigDTO | 
               )}
             />
           </Field>
-        </div>
-      </Stack>
+        </Stack>
+      </div>
     </Field>
   );
 };
@@ -346,6 +346,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   bold: css`
     font-weight: bold;
+  `,
+  alignInterval: css`
+    margin-top: ${theme.spacing(1)};
+    margin-left: -${theme.spacing(1)};
   `,
   marginTop: css`
     margin-top: ${theme.spacing(1)};
