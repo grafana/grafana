@@ -2,7 +2,7 @@ import { merge } from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { TableCellOptions } from '@grafana/schema';
+import { TableCellOptions, TableCellSubOptions } from '@grafana/schema';
 import { Field, HorizontalGroup, Select, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
@@ -57,9 +57,9 @@ export const TableCellOptionEditor: React.FC<Props> = ({ value, onChange }) => {
   // When options for a cell change we update the corresponding
   // key in the subOptions object merging changes with any
   // previous updates that have been made
-  const onSubOptionsChange = (options: object) => {
-    const displayModeOptions = value.subOptions[value.displayMode];
-    value.subOptions[value.displayMode] = merge({}, displayModeOptions, options);
+  const onSubOptionsChange = (options: TableCellSubOptions) => {
+    value.subOptions[value.displayMode] = merge({}, options);
+    onChange(value);
   };
 
   // console.log(value);
@@ -67,7 +67,7 @@ export const TableCellOptionEditor: React.FC<Props> = ({ value, onChange }) => {
   // Setup specific cell editor
   if (displayMode !== undefined && displayModeComponentMap[displayMode] !== undefined) {
     let Comp: React.FC<TableCellEditorProps> = displayModeComponentMap[displayMode];
-    editor = <Comp subOptions={value.subOptions} onSubOptionsChange={onSubOptionsChange} />;
+    editor = <Comp subOptions={value.subOptions[displayMode]} onSubOptionsChange={onSubOptionsChange} />;
   }
 
   // Setup and inject editor

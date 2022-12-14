@@ -25,7 +25,7 @@ export const BarGaugeCellOptionsEditor: React.FC<TableCellEditorProps> = ({ subO
   return (
     <HorizontalGroup>
       <Field label="Gauge Display Mode">
-        <Select value={subOptions?.diplayMode} onChange={onChange} options={barGaugeOpts} />
+        <Select value={subOptions?.displayMode} onChange={onChange} options={barGaugeOpts} />
       </Field>
     </HorizontalGroup>
   );
