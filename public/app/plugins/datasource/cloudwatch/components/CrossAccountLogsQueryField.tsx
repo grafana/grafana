@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { EditorField, Space } from '@grafana/experimental';
 import { Button, Checkbox, IconButton, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import Search from '../Search';
@@ -101,6 +101,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
             accountId={searchAccountId}
           />
         </div>
+        <Space layout="block" v={1.5} />
         <div>
           <div className={styles.tableScroller}>
             <table className={styles.table}>
