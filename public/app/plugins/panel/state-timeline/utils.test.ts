@@ -174,7 +174,7 @@ describe('getThresholdItems', () => {
 });
 
 describe('prepareTimelineLegendItems', () => {
-  it('should return legend items', () => {
+  it('should return legend items without crashing when single (base) threshold', () => {
     const frame: any = [
       {
         refId: 'A',
