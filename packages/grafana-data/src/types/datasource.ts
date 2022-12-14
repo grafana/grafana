@@ -511,13 +511,13 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
+  title?: string;
   label: string;
   action?: QueryFixAction;
 }
 
 export interface QueryFixAction {
   type: string;
-  hint?: string;
   query?: string;
   preventSubmit?: boolean;
   options?: KeyValue<string>;
