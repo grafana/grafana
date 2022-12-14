@@ -88,11 +88,16 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const vectorLayer = new VectorLayer({ source });
 
     if (!style.fields) {
+      // TODO apply arrow styling for case where size and color are fixed
       // Set a global style
-      vectorLayer.setStyle(routeStyle(style.base));
+      const styleBase = routeStyle(style.base);
+      if (style.config.size && style.config.size.fixed) {
+        // Applies width to base style if specified
+        styleBase.getStroke().setWidth(style.config.size.fixed);
+      }
+      vectorLayer.setStyle(styleBase);
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
-        // TODO better understand how we want to apply color logic functions
         const idx = feature.get('rowIndex') as number;
         const dims = style.dims;
         if (!dims || !isNumber(idx)) {
