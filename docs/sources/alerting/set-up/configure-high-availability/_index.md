@@ -56,7 +56,7 @@ env:
     protocol: TCP
   ```
 
-2. And the environment variables to the Grafana deployment:
+2. Add the environment variables to the Grafana deployment:
 
   ```yaml
   env:
