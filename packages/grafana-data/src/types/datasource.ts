@@ -517,6 +517,7 @@ export interface QueryFix {
 
 export interface QueryFixAction {
   type: string;
+  hint?: string;
   query?: string;
   preventSubmit?: boolean;
   options?: KeyValue<string>;

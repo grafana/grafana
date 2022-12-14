@@ -56,7 +56,7 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
                   size="sm"
                   className={styles.hint}
                 >
-                  {'hint: ' + hint.fix?.action?.type.toLowerCase().split('_').join(' ')}
+                  {hint.fix?.action?.hint}
                 </Button>
               </Tooltip>
             );
