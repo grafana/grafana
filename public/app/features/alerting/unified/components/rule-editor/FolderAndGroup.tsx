@@ -40,8 +40,16 @@ const useGetGroups = (groupfoldersForGrafana: RulerRulesConfigDTO | null | undef
   return groupOptions;
 };
 
-function mapGroupsToOptions(groups: string[]): Array<SelectableValue<string>> {
-  return groups.map((group) => ({ label: group, value: group }));
+function mapGroupsToOptions(
+  groupsForFolder: RulerRulesConfigDTO | null | undefined,
+  groups: string[],
+  folderTitle: string
+): Array<SelectableValue<string>> {
+  return groups.map((group) => ({
+    label: group,
+    value: group,
+    description: `${getIntervalForGroup(groupsForFolder, group, folderTitle)}`,
+  }));
 }
 interface FolderAndGroupProps {
   initialFolder: RuleForm | null;
@@ -52,11 +60,14 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
 
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
-  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
-    useGetGroups(groupfoldersForGrafana?.result, folderTitle)
-  );
   const groupsForFolder = groupfoldersForGrafana?.result;
-  return { groupOptions, groupsForFolder, loading: groupfoldersForGrafana?.loading };
+
+  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
+    groupsForFolder,
+    useGetGroups(groupfoldersForGrafana?.result, folderTitle),
+    folderTitle
+  );
+  return { groupOptions, loading: groupfoldersForGrafana?.loading };
 };
 
 const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
@@ -106,7 +117,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   const [selectedGroup, setSelectedGroup] = useState(group);
   const initialRender = useRef(true);
 
-  const { groupOptions, groupsForFolder, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
+  const { groupOptions, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
 
   useEffect(() => setSelectedGroup(group), [group, setSelectedGroup]);
 
@@ -198,9 +209,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 key={`my_unique_select_key__${folder?.title ?? ''}`}
                 {...field}
                 options={groupOptions}
-                getOptionLabel={(option: SelectableValue<string>) =>
-                  `${option.label}  (${getIntervalForGroup(groupsForFolder, option.label ?? '', folder?.title ?? '')})`
-                }
+                getOptionLabel={(option: SelectableValue<string>) => `${option.label}`}
                 value={selectedGroup}
                 custom={isAddingGroup}
                 onCustomChange={(custom: boolean) => setIsAddingGroup(custom)}

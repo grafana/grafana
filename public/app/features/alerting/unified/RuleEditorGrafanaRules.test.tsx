@@ -128,7 +128,7 @@ describe('RuleEditor grafana managed rules', () => {
     await clickSelectOption(folderInput, 'Folder A');
     const groupInput = await ui.inputs.group.find();
     await userEvent.click(byRole('combobox').get(groupInput));
-    await clickSelectOption(groupInput, 'group1 (1m)');
+    await clickSelectOption(groupInput, 'group1');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
