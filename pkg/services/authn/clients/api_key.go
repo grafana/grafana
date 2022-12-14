@@ -77,7 +77,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	// if the api key don't belong to a service account construct the identity and return it
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
 		return &authn.Identity{
-			ID:       fmt.Sprintf("%s:%d", authn.APIKeyIDPrefix, apiKey.Id),
+			ID:       fmt.Sprintf("%s%d", authn.APIKeyIDPrefix, apiKey.Id),
 			OrgID:    apiKey.OrgId,
 			OrgRoles: map[int64]org.RoleType{apiKey.OrgId: apiKey.Role},
 		}, nil
@@ -96,7 +96,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, ErrServiceAccountDisabled.Errorf("Disabled service account")
 	}
 
-	return authn.IdentityFromSignedInUser(fmt.Sprintf("%s:%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId), usr), nil
+	return authn.IdentityFromSignedInUser(fmt.Sprintf("%s%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId), usr), nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
