@@ -902,6 +902,10 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		if err != nil {
 			return fmt.Errorf("failed to move old configurations to history table: %w", err)
 		}
+		_, err = sess.Exec("DELETE FROM alert_configuration WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)", orgID, orgID)
+		if err != nil {
+			return fmt.Errorf("failed to evict old configurations after moving to history table: %w", err)
+		}
 	}
 	return nil
 }
