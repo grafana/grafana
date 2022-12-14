@@ -19,4 +19,5 @@ var (
 	ErrPublicDashboardHasTemplateVariables = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.hasTemplateVariables", errutil.WithPublicMessage("Public dashboard has template variables"))
 	ErrInvalidInterval                     = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidInterval", errutil.WithPublicMessage("intervalMS should be greater than 0"))
 	ErrInvalidMaxDataPoints                = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.maxDataPoints", errutil.WithPublicMessage("maxDataPoints should be greater than 0"))
+	ErrInvalidTimeRange                    = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidTimeRange", errutil.WithPublicMessage("Invalid time range"))
 )

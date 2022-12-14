@@ -40,7 +40,7 @@ func TestBuildTimeSettings(t *testing.T) {
 			reqDTO: PublicDashboardQueryDTO{},
 		},
 		{
-			name:      "should use dashboard time even if pubdash time exists",
+			name:      "should use dashboard time when time selection is disabled",
 			dashboard: &models.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false, TimeSettings: &TimeSettings{From: "now-12", To: "now"}},
 			timeResult: TimeSettings{
@@ -62,36 +62,6 @@ func TestBuildTimeSettings(t *testing.T) {
 			timeResult: TimeSettings{
 				From: selectionFromMs,
 				To:   selectionToMs,
-			},
-		},
-		{
-			name:      "should use default values if time selection is enabled but the values provided are invalid",
-			dashboard: &models.Dashboard{Data: dashboardData},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: true, TimeSettings: &TimeSettings{From: "now-12", To: "now"}},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeSettings{
-					From: "this is not a valid timestamp",
-					To:   "this is not a valid timestamp",
-				},
-			},
-			timeResult: TimeSettings{
-				From: defaultFromMs,
-				To:   defaultToMs,
-			},
-		},
-		{
-			name:      "should use default values if time selection is enabled but the values provided are blank",
-			dashboard: &models.Dashboard{Data: dashboardData},
-			pubdash:   &PublicDashboard{TimeSelectionEnabled: true, TimeSettings: &TimeSettings{From: "now-12", To: "now"}},
-			reqDTO: PublicDashboardQueryDTO{
-				TimeRange: TimeSettings{
-					From: "",
-					To:   "",
-				},
-			},
-			timeResult: TimeSettings{
-				From: defaultFromMs,
-				To:   defaultToMs,
 			},
 		},
 	}

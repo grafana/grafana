@@ -99,7 +99,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 // GetMetricRequest returns a metric request for the given panel and query
 func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *dashmodels.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, queryDto models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
-	err := validation.ValidateQueryPublicDashboardRequest(queryDto)
+	err := validation.ValidateQueryPublicDashboardRequest(queryDto, publicDashboard)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}

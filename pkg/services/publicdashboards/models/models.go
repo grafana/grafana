@@ -96,15 +96,14 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 
 // BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
 func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
-	if pd.TimeSelectionEnabled && timeRangeIsValid(reqDTO.TimeRange) {
-		return TimeSettings{
-			From: reqDTO.TimeRange.From,
-			To:   reqDTO.TimeRange.To,
-		}
-	}
-
 	from := dashboard.Data.GetPath("time", "from").MustString()
 	to := dashboard.Data.GetPath("time", "to").MustString()
+
+	if pd.TimeSelectionEnabled {
+		from = reqDTO.TimeRange.From
+		to = reqDTO.TimeRange.To
+	}
+
 	timeRange := legacydata.NewDataTimeRange(from, to)
 
 	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which expected the time range in epoch milliseconds.
