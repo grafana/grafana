@@ -577,10 +577,8 @@ func awsServiceNamespace(dsType string, jsonData *simplejson.Json) string {
 	case datasources.DS_ES, datasources.DS_ES_OPEN_DISTRO:
 		return "es"
 	case datasources.DS_ES_OPENSEARCH:
-		serverless, err := jsonData.Get("serverless").Bool()
-		if err != nil {
-			serverless = false
-		}
+		serverless := jsonData.Get("serverless").MustBool()
+
 		if serverless {
 			return "aoss"
 		} else {
