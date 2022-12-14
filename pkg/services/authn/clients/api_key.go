@@ -90,13 +90,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		// TODO: return error
 	}
 
-	// TODO: set all fields required from usr
-	return &authn.Identity{
-		ID:       fmt.Sprintf("%s:%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId),
-		OrgID:    usr.OrgID,
-		OrgName:  usr.OrgName,
-		OrgRoles: map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
-	}, nil
+	return authn.IdentityFromSignedInUser(fmt.Sprintf("%s:%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId), usr), nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {

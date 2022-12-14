@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,26 +38,51 @@ const (
 )
 
 type Identity struct {
-	ID       string
-	OrgID    int64
-	OrgName  string
-	OrgRoles map[int64]org.RoleType
+	ID             string
+	OrgID          int64
+	OrgCount       int
+	OrgName        string
+	OrgRoles       map[int64]org.RoleType
+	Login          string
+	Name           string
+	Email          string
+	AuthID         string
+	AuthModule     string
+	IsGrafanaAdmin bool
+	IsDisabled     bool
+	HelpFlags1     user.HelpFlags1
+	LastSeenAt     time.Time
+	Teams          []int64
 }
 
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
 }
 
+// IsAnonymous will return true if no ID is set on the identity
 func (i *Identity) IsAnonymous() bool {
 	return i.ID == ""
 }
 
+// SignedInUser is used to translate Identity into SignedInUser struct
 func (i *Identity) SignedInUser() *user.SignedInUser {
 	u := &user.SignedInUser{
-		OrgID:       i.OrgID,
-		OrgName:     i.OrgName,
-		OrgRole:     i.Role(),
-		IsAnonymous: i.IsAnonymous(),
+		UserID:             0,
+		OrgID:              i.OrgID,
+		OrgName:            i.OrgName,
+		OrgRole:            i.Role(),
+		ExternalAuthModule: i.AuthModule,
+		ExternalAuthID:     i.AuthID,
+		Login:              i.Login,
+		Name:               i.Name,
+		Email:              i.Email,
+		OrgCount:           i.OrgCount,
+		IsGrafanaAdmin:     i.IsGrafanaAdmin,
+		IsAnonymous:        i.IsAnonymous(),
+		IsDisabled:         i.IsDisabled,
+		HelpFlags1:         user.HelpFlags1(i.HelpFlags1),
+		LastSeenAt:         i.LastSeenAt,
+		Teams:              i.Teams,
 	}
 
 	// For now, we need to set different fields of the signed-in user based on the identity "type"
@@ -66,7 +92,26 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	} else if strings.HasPrefix(i.ID, ServiceAccountIDPrefix) {
 		id, _ := strconv.ParseInt(strings.TrimPrefix(i.ID, ServiceAccountIDPrefix), 10, 64)
 		u.UserID = id
+		u.IsServiceAccount = true
 	}
 
 	return u
+}
+
+func IdentityFromSignedInUser(id string, usr *user.SignedInUser) *Identity {
+	return &Identity{
+		ID:             id,
+		OrgID:          usr.OrgID,
+		OrgName:        usr.OrgName,
+		OrgRoles:       map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
+		Login:          usr.Login,
+		Name:           usr.Name,
+		Email:          usr.Email,
+		OrgCount:       usr.OrgCount,
+		IsGrafanaAdmin: usr.IsGrafanaAdmin,
+		IsDisabled:     usr.IsDisabled,
+		HelpFlags1:     usr.HelpFlags1,
+		LastSeenAt:     usr.LastSeenAt,
+		Teams:          usr.Teams,
+	}
 }
