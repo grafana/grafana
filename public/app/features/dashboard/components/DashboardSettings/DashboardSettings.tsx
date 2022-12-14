@@ -6,6 +6,7 @@ import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, PageToolbar } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
@@ -204,7 +205,7 @@ function getSectionNav(
   };
 }
 
-function MakeEditable({ dashboard }: SettingsPageProps) {
+function MakeEditable({ dashboard, sectionNav }: SettingsPageProps) {
   const onMakeEditable = () => {
     dashboard.editable = true;
     dashboard.meta.canMakeEditable = false;
@@ -214,12 +215,12 @@ function MakeEditable({ dashboard }: SettingsPageProps) {
   };
 
   return (
-    <div>
+    <Page navModel={sectionNav}>
       <div className="dashboard-settings__header">Dashboard not editable</div>
       <Button type="submit" onClick={onMakeEditable}>
         Make editable
       </Button>
-    </div>
+    </Page>
   );
 }
 
