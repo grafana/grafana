@@ -31,7 +31,7 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
 3. Set `[ha_listen_address]` to the instance IP address using a format of `host:port` (or the [Pod's](https://kubernetes.io/docs/concepts/workloads/pods/) IP in the case of using Kubernetes).
    By default, it is set to listen to all interfaces (`0.0.0.0`).
 
-## Using Kubernetes
+## Enable alerting high availability using Kubernetes
 
 If you are using Kubernetes, you can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition.
 
