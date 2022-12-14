@@ -41,6 +41,18 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
+func (service *AlertRuleService) GetAlertRules(ctx context.Context, orgID int64) ([]*models.AlertRule, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+	err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: GET provenance
+	return q.Result, nil
+}
+
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, models.Provenance, error) {
 	query := &models.GetAlertRuleByUIDQuery{
 		OrgID: orgID,

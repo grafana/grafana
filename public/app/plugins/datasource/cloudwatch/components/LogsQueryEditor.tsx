@@ -9,7 +9,7 @@ import { InlineFormLabel } from '@grafana/ui';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 
-import CloudWatchLink from './CloudWatchLink';
+import { CloudWatchLink } from './CloudWatchLink';
 import CloudWatchLogsQueryField from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
