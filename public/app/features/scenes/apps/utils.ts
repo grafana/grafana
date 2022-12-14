@@ -12,6 +12,6 @@ export function getLinkUrlWithAppUrlState(path: string, params: UrlQueryMap): st
   return urlUtil.renderUrl(path, {
     from: params.from,
     to: params.to,
-    'var-instance': params.instance,
+    'var-instance': params['var-instance'],
   });
 }
