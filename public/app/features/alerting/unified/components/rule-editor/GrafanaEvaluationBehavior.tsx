@@ -4,7 +4,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Card, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { logInfo, LogMessages } from '../../Analytics';
@@ -90,10 +90,10 @@ export const EvaluateEveryNewGroup = ({ rules }: { rules: RulerRulesConfigDTO | 
   return (
     <Field
       label="Evaluation interval"
-      description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."
+      description="Applies to every rule within a group. It can overwrite the interval of an existing alert rule."
     >
       <div className={styles.alignInterval}>
-        <Stack direction="row" justify-content="left" align-items="baseline">
+        <Stack direction="row" justify-content="left" align-items="baseline" gap={0}>
           <InlineLabel
             htmlFor={evaluateEveryId}
             width={16}
@@ -178,45 +178,42 @@ function FolderGroupAndEvaluationInterval({
         />
       )}
       {folder && group && (
-        <Card className={styles.cardContainer}>
-          <Card.Heading>Evaluation behavior</Card.Heading>
-          <Card.Meta>
+        <div className={styles.evaluationContainer}>
+          <Stack direction="column" gap={0}>
             <div className={styles.marginTop}>
               {isNewGroup && group ? (
                 <EvaluateEveryNewGroup rules={groupfoldersForGrafana?.result} />
               ) : (
-                <Stack direction="column">
+                <Stack direction="column" gap={1}>
                   <div className={styles.evaluateLabel}>
                     {`Alert rules in the `} <span className={styles.bold}>{group}</span> group are evaluated every{' '}
                     <span className={styles.bold}>{evaluateEvery}</span>.
                   </div>
-                  <br />
                   {!isNewGroup && (
                     <div>
                       {`Evaluation group interval applies to every rule within a group. It overwrites intervals defined for existing alert rules.`}
                     </div>
                   )}
-                  <br />
                 </Stack>
               )}
             </div>
-          </Card.Meta>
-          <Card.Actions>
             <Stack direction="row" justify-content="right" align-items="center">
               {!isNewGroup && (
-                <Button
-                  icon={'edit'}
-                  type="button"
-                  variant="secondary"
-                  disabled={editGroupDisabled}
-                  onClick={onOpenEditGroupModal}
-                >
-                  <span>{'Edit evaluation group'}</span>
-                </Button>
+                <div className={styles.marginTop}>
+                  <Button
+                    icon={'edit'}
+                    type="button"
+                    variant="secondary"
+                    disabled={editGroupDisabled}
+                    onClick={onOpenEditGroupModal}
+                  >
+                    <span>{'Edit evaluation group'}</span>
+                  </Button>
+                </div>
               )}
             </Stack>
-          </Card.Actions>
-        </Card>
+          </Stack>
+        </div>
       )}
     </div>
   );
@@ -330,8 +327,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-self: left;
     margin-right: ${theme.spacing(1)};
   `,
-  cardContainer: css`
+  evaluationContainer: css`
+    background-color: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(2)};
     max-width: ${theme.breakpoints.values.sm}px;
+    font-size: ${theme.typography.size.sm};
   `,
   intervalChangedLabel: css`
     margin-bottom: ${theme.spacing(1)};
