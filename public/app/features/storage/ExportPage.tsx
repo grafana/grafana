@@ -60,9 +60,14 @@ interface ExporterInfo {
   children?: ExporterInfo[];
 }
 
+enum StorageFormat {
+  Git = 'git',
+  EntityStore = 'entityStore',
+}
+
 const formats: Array<SelectableValue<string>> = [
-  { label: 'GIT', value: 'git', description: 'Exports a fresh git repository' },
-  { label: 'Entity store', value: 'entityStore', description: 'Export to the SQL based entity store' },
+  { label: 'GIT', value: StorageFormat.Git, description: 'Exports a fresh git repository' },
+  { label: 'Entity store', value: StorageFormat.EntityStore, description: 'Export to the SQL based entity store' },
 ];
 
 interface Props extends GrafanaRouteComponentProps {}
@@ -147,75 +152,75 @@ export default function ExportPage(props: Props) {
   }, []);
 
   const renderView = () => {
-    return (
+    const isEntityStoreEnabled = body?.format === StorageFormat.EntityStore && config.featureToggles.entityStore;
+    const shouldDisplayContent = isEntityStoreEnabled || body?.format === StorageFormat.Git;
+
+    const statusFragment = status && (
       <div>
-        {status && (
+        <h3>Status</h3>
+        <pre>{JSON.stringify(status, null, 2)}</pre>
+        {status.running && (
           <div>
-            <h3>Status</h3>
-            <pre>{JSON.stringify(status, null, 2)}</pre>
-            {status.running && (
-              <div>
-                <Button variant="secondary" onClick={doStop}>
-                  Stop
-                </Button>
-              </div>
-            )}
+            <Button variant="secondary" onClick={doStop}>
+              Stop
+            </Button>
           </div>
         )}
+      </div>
+    );
 
-        {!Boolean(status?.running) && (
+    const formFragment = !Boolean(status?.running) && (
+      <div>
+        <Field label="Format">
+          <Select
+            options={formats}
+            width={40}
+            value={formats.find((v) => v.value === body?.format)}
+            onChange={(v) => setBody({ ...body!, format: v.value! })}
+          />
+        </Field>
+        {!isEntityStoreEnabled && body?.format !== StorageFormat.Git && (
           <div>
-            <Field label="Format">
-              <Select
-                options={formats}
-                width={40}
-                value={formats.find((v) => v.value === body?.format)}
-                onChange={(v) => setBody({ ...body!, format: v.value! })}
-              />
+            <Alert title="Missing feature flag">Enable the `entityStore` feature flag</Alert>
+          </div>
+        )}
+        {body?.format === StorageFormat.Git && (
+          <>
+            <Field label="Keep history">
+              <Switch value={body?.history} onChange={(v) => setBody({ ...body!, history: v.currentTarget.checked })} />
             </Field>
-            {body?.format === 'entityStore' && !config.featureToggles.entityStore && (
-              <div>
-                <Alert title="Missing feature flag">Enable the `entityStore` feature flag</Alert>
-              </div>
-            )}
-            {body?.format === 'git' && (
+
+            <Field label="Include">
               <>
-                <Field label="Keep history">
-                  <Switch
-                    value={body?.history}
-                    onChange={(v) => setBody({ ...body!, history: v.currentTarget.checked })}
-                  />
-                </Field>
-
-                <Field label="Include">
-                  <>
-                    <InlineFieldRow>
-                      <InlineField label="Toggle all" labelWidth={labelWith}>
-                        <InlineSwitch
-                          value={Object.keys(body?.exclude ?? {}).length === 0}
-                          onChange={(v) => setInclude('*', v.currentTarget.checked)}
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                    {serverOptions.value && (
-                      <div>
-                        {serverOptions.value.exporters.map((ex) => (
-                          <InlineFieldRow key={ex.key}>
-                            <InlineField label={ex.name} labelWidth={labelWith} tooltip={ex.description}>
-                              <InlineSwitch
-                                value={body?.exclude?.[ex.key] !== true}
-                                onChange={(v) => setInclude(ex.key, v.currentTarget.checked)}
-                              />
-                            </InlineField>
-                          </InlineFieldRow>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                </Field>
+                <InlineFieldRow>
+                  <InlineField label="Toggle all" labelWidth={labelWith}>
+                    <InlineSwitch
+                      value={Object.keys(body?.exclude ?? {}).length === 0}
+                      onChange={(v) => setInclude('*', v.currentTarget.checked)}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
+                {serverOptions.value && (
+                  <div>
+                    {serverOptions.value.exporters.map((ex) => (
+                      <InlineFieldRow key={ex.key}>
+                        <InlineField label={ex.name} labelWidth={labelWith} tooltip={ex.description}>
+                          <InlineSwitch
+                            value={body?.exclude?.[ex.key] !== true}
+                            onChange={(v) => setInclude(ex.key, v.currentTarget.checked)}
+                          />
+                        </InlineField>
+                      </InlineFieldRow>
+                    ))}
+                  </div>
+                )}
               </>
-            )}
+            </Field>
+          </>
+        )}
 
+        {shouldDisplayContent && (
+          <>
             <Field label="General folder" description="Set the folder name for items without a real folder">
               <Input
                 width={40}
@@ -233,24 +238,34 @@ export default function ExportPage(props: Props) {
                 Cancel
               </LinkButton>
             </HorizontalGroup>
-          </div>
+          </>
         )}
-        <br />
-        <br />
+      </div>
+    );
 
-        <Collapse label="Request details" isOpen={details} onToggle={setDetails} collapsible={true}>
-          <CodeEditor
-            height={275}
-            value={JSON.stringify(body, null, 2) ?? ''}
-            showLineNumbers={false}
-            readOnly={false}
-            language="json"
-            showMiniMap={false}
-            onBlur={(text: string) => {
-              setBody(JSON.parse(text)); // force JSON?
-            }}
-          />
-        </Collapse>
+    const requestDetailsFragment = (isEntityStoreEnabled || body?.format === StorageFormat.Git) && (
+      <Collapse label="Request details" isOpen={details} onToggle={setDetails} collapsible={true}>
+        <CodeEditor
+          height={275}
+          value={JSON.stringify(body, null, 2) ?? ''}
+          showLineNumbers={false}
+          readOnly={false}
+          language="json"
+          showMiniMap={false}
+          onBlur={(text: string) => {
+            setBody(JSON.parse(text)); // force JSON?
+          }}
+        />
+      </Collapse>
+    );
+
+    return (
+      <div>
+        {statusFragment}
+        {formFragment}
+        <br />
+        <br />
+        {requestDetailsFragment}
       </div>
     );
   };
