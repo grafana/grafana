@@ -28,7 +28,6 @@ func NewUniformSampler(xCount, yCount int) Sampler {
 }
 
 func (e *UniformSampler) CalculateStep(tr models.TimeRange) time.Duration {
-
 	stepNanos := tr.End.Sub(tr.Start).Nanoseconds() / int64(e.X)
 	return time.Duration(stepNanos)
 }
@@ -56,7 +55,11 @@ func (e *UniformSampler) Sample() []models.Exemplar {
 			return b[i].Value > b[j].Value
 		})
 		sampled := []models.Exemplar{}
-		for i := 0; i < len(b); i = i + (len(b) / e.Y) {
+		step := 1
+		if len(b) > e.Y {
+			step = len(b) / e.Y
+		}
+		for i := 0; i < len(b); i = i + step {
 			sampled = append(sampled, b[i])
 		}
 		exemplars = append(exemplars, sampled...)
