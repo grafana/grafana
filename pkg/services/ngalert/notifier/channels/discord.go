@@ -19,15 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
 	*Base
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
 	settings discordSettings
@@ -179,7 +177,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := d.ns.SendWebhook(ctx, cmd); err != nil {
 		d.log.Error("failed to send notification to Discord", "error", err)
 		return false, err
 	}
@@ -194,7 +192,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	attachments := make([]discordAttachment, 0)
 
 	_ = withStoredImages(ctx, d.log, d.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if embedQuota < 1 {
 				return ErrImagesDone
 			}
@@ -214,7 +212,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				base := filepath.Base(image.Path)
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
-				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
+				if err != nil && !errors.Is(err, ErrImageNotFound) {
 					d.log.Warn("failed to retrieve image data from store", "error", err)
 					return nil
 				}
@@ -236,8 +234,8 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	return attachments
 }
 
-func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []discordAttachment) (*models.SendWebhookSync, error) {
-	cmd := &models.SendWebhookSync{
+func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []discordAttachment) (*SendWebhookSettings, error) {
+	cmd := &SendWebhookSettings{
 		Url:        url,
 		HttpMethod: "POST",
 	}

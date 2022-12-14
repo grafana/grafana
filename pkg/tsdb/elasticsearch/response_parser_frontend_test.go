@@ -59,6 +59,21 @@ func requireFloatAt(t *testing.T, expected float64, field *data.Field, index int
 	require.Equal(t, expected, *v, fmt.Sprintf("wrong flaot at index %v", index))
 }
 
+func requireTimeSeriesName(t *testing.T, expected string, frame *data.Frame) {
+	getField := func() *data.Field {
+		for _, field := range frame.Fields {
+			if field.Type() != data.FieldTypeTime {
+				return field
+			}
+		}
+		return nil
+	}
+
+	field := getField()
+	require.NotNil(t, expected, field.Config)
+	require.Equal(t, expected, field.Config.DisplayNameFromDS)
+}
+
 func TestRefIdMatching(t *testing.T) {
 	require.NoError(t, nil)
 	query := []byte(`
@@ -286,7 +301,7 @@ func TestSimpleQueryReturns1Frame(t *testing.T) {
 	frames := result.response.Responses["A"].Frames
 	require.Len(t, frames, 1, "frame-count wrong")
 	frame := frames[0]
-	// require.Equal(t, "Count", frame.Name) // FIXME
+	requireTimeSeriesName(t, "Count", frame)
 
 	requireFrameLength(t, frame, 2)
 	requireTimeValue(t, 1000, frame, 0)
@@ -343,7 +358,7 @@ func TestSimpleQueryCountAndAvg(t *testing.T) {
 	requireTimeValue(t, 1000, frame1, 0)
 	requireNumberValue(t, 10, frame1, 0)
 
-	// require.Equal(t, "average value", frame2.Name) // FIXME
+	requireTimeSeriesName(t, "Average value", frame2)
 
 	requireNumberValue(t, 88, frame2, 0)
 	requireNumberValue(t, 99, frame2, 1)
@@ -407,8 +422,8 @@ func TestSimpleGroupBy1Metric2Frames(t *testing.T) {
 	require.Len(t, frames, 2)
 
 	requireFrameLength(t, frames[0], 2)
-	// require.Equal(t, "server1", frames[0].Name) // FIXME
-	// require.Equal(t, "server2", frames[1].Name) // FIXME
+	requireTimeSeriesName(t, "server1", frames[0])
+	requireTimeSeriesName(t, "server2", frames[1])
 }
 
 func TestSimpleGroupBy2Metrics4Frames(t *testing.T) {
@@ -471,10 +486,10 @@ func TestSimpleGroupBy2Metrics4Frames(t *testing.T) {
 	frames := result.response.Responses["A"].Frames
 	require.Len(t, frames, 4)
 	requireFrameLength(t, frames[0], 2)
-	// require.Equal(t, "server1 Count", frames[0].Name)          // FIXME
-	// require.Equal(t, "server1 Average @value", frames[1].Name) // FIXME
-	// require.Equal(t, "server2 Count", frames[2].Name)          // FIXME
-	// require.Equal(t, "server2 Average @value", frames[3].Name) // FIXME
+	requireTimeSeriesName(t, "server1 Count", frames[0])
+	requireTimeSeriesName(t, "server1 Average @value", frames[1])
+	requireTimeSeriesName(t, "server2 Count", frames[2])
+	requireTimeSeriesName(t, "server2 Average @value", frames[3])
 }
 
 func TestPercentiles2Frames(t *testing.T) {
@@ -531,8 +546,8 @@ func TestPercentiles2Frames(t *testing.T) {
 	require.Len(t, frames, 2)
 
 	requireFrameLength(t, frames[0], 2)
-	// require.Equal(t, "p75 @value", frames[0].Name) // FIXME
-	// require.Equal(t, "p90 @value", frames[1].Name) // FIXME
+	requireTimeSeriesName(t, "p75 @value", frames[0])
+	requireTimeSeriesName(t, "p90 @value", frames[1])
 
 	requireNumberValue(t, 3.3, frames[0], 0)
 	requireTimeValue(t, 1000, frames[0], 0)
@@ -615,8 +630,8 @@ func TestExtendedStats4Frames(t *testing.T) {
 	frames := result.response.Responses["A"].Frames
 	require.Len(t, frames, 4)
 	requireFrameLength(t, frames[0], 1)
-	// require.Equal(t, "server1 Max @value", frames[0].Name) // FIXME
-	// require.Equal(t, "server1 Std Dev Upper @value", frames[1].Name) // FIXME
+	requireTimeSeriesName(t, "server1 Max @value", frames[0])
+	requireTimeSeriesName(t, "server1 Std Dev Upper @value", frames[1])
 
 	requireNumberValue(t, 10.2, frames[0], 0)
 	requireNumberValue(t, 3, frames[1], 0)
@@ -698,14 +713,14 @@ func TestTopMetrics2Frames(t *testing.T) {
 	frame1 := frames[0]
 	frame2 := frames[1]
 
-	// require.Equal(t, "Top Metrics Value", frame1.Name) // FIXME
+	requireTimeSeriesName(t, "Top Metrics @value", frame1)
 	requireFrameLength(t, frame1, 2)
 	requireTimeValue(t, time1.UTC().UnixMilli(), frame1, 0)
 	requireTimeValue(t, time2.UTC().UnixMilli(), frame1, 1)
 	requireNumberValue(t, 1, frame1, 0)
 	requireNumberValue(t, 1, frame1, 1)
 
-	// require.Equal(t, "Top Metrics @anotherValue", frame2.Name) // FIXME
+	requireTimeSeriesName(t, "Top Metrics @anotherValue", frame2)
 	requireFrameLength(t, frame2, 2)
 	requireTimeValue(t, time1.UTC().UnixMilli(), frame2, 0)
 	requireTimeValue(t, time2.UTC().UnixMilli(), frame2, 1)
@@ -782,9 +797,9 @@ func TestSingleGroupWithAliasPattern3Frames(t *testing.T) {
 	require.Len(t, frames, 3)
 
 	requireFrameLength(t, frames[0], 2)
-	// require.Equal(t, "server1 Count and {{not_exist}} server1", frames[0].Name) // FIXME
-	// require.Equal(t, "server2 Count and {{not_exist}} server2", frames[1].Name) // FIXME
-	// require.Equal(t, "0 Count and {{not_exist}} 0", frames[2].Name)             // FIXME
+	requireTimeSeriesName(t, "server1 Count and {{not_exist}} server1", frames[0])
+	requireTimeSeriesName(t, "server2 Count and {{not_exist}} server2", frames[1])
+	requireTimeSeriesName(t, "0 Count and {{not_exist}} 0", frames[2])
 }
 
 func TestHistogramSimple(t *testing.T) {
@@ -841,7 +856,7 @@ func TestHistogramSimple(t *testing.T) {
 	require.Equal(t, "Count", field2.Name)
 
 	// we need to test that the fieldConfig is "empty"
-	require.Equal(t, data.FieldConfig{}, *field2.Config)
+	require.Nil(t, field2.Config)
 }
 
 func TestHistogramWith2FiltersAgg(t *testing.T) {

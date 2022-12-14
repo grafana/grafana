@@ -24,6 +24,7 @@ import {
 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
+import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
 
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
@@ -31,6 +32,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const { options, onOptionsChange } = props;
   const styles = useStyles2(getStyles);
   const jsonData = options.jsonData;
+
+  useMigrateDatabaseField(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -99,9 +102,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           <Input
             width={longWidth}
             name="database"
-            value={options.database || ''}
+            value={jsonData.database || ''}
             placeholder="database name"
-            onChange={onDSOptionChanged('database')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           ></Input>
         </InlineField>
         <InlineField

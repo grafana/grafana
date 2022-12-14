@@ -13,8 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -27,7 +25,7 @@ type EmailNotifier struct {
 	Message     string
 	Subject     string
 	log         log.Logger
-	ns          notifications.EmailSender
+	ns          EmailSender
 	images      ImageStore
 	tmpl        *template.Template
 }
@@ -69,7 +67,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
+func NewEmailNotifier(config *EmailConfig, ns EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -111,7 +109,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	// Extend alerts data with images, if available.
 	var embeddedFiles []string
 	_ = withStoredImages(ctx, en.log, en.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL
 			} else if len(image.Path) != 0 {
@@ -126,33 +124,31 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			return nil
 		}, alerts...)
 
-	cmd := &models.SendEmailCommandSync{
-		SendEmailCommand: models.SendEmailCommand{
-			Subject: subject,
-			Data: map[string]interface{}{
-				"Title":             subject,
-				"Message":           tmpl(en.Message),
-				"Status":            data.Status,
-				"Alerts":            data.Alerts,
-				"GroupLabels":       data.GroupLabels,
-				"CommonLabels":      data.CommonLabels,
-				"CommonAnnotations": data.CommonAnnotations,
-				"ExternalURL":       data.ExternalURL,
-				"RuleUrl":           ruleURL,
-				"AlertPageUrl":      alertPageURL,
-			},
-			EmbeddedFiles: embeddedFiles,
-			To:            en.Addresses,
-			SingleEmail:   en.SingleEmail,
-			Template:      "ng_alert_notification",
+	cmd := &SendEmailSettings{
+		Subject: subject,
+		Data: map[string]interface{}{
+			"Title":             subject,
+			"Message":           tmpl(en.Message),
+			"Status":            data.Status,
+			"Alerts":            data.Alerts,
+			"GroupLabels":       data.GroupLabels,
+			"CommonLabels":      data.CommonLabels,
+			"CommonAnnotations": data.CommonAnnotations,
+			"ExternalURL":       data.ExternalURL,
+			"RuleUrl":           ruleURL,
+			"AlertPageUrl":      alertPageURL,
 		},
+		EmbeddedFiles: embeddedFiles,
+		To:            en.Addresses,
+		SingleEmail:   en.SingleEmail,
+		Template:      "ng_alert_notification",
 	}
 
 	if tmplErr != nil {
 		en.log.Warn("failed to template email message", "error", tmplErr.Error())
 	}
 
-	if err := en.ns.SendEmailCommandHandlerSync(ctx, cmd); err != nil {
+	if err := en.ns.SendEmail(ctx, cmd); err != nil {
 		return false, err
 	}
 
