@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,15 +17,20 @@ var _ authn.Service = new(Service)
 
 func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service) *Service {
 	s := &Service{
-		log:     log.New("authn.service"),
-		cfg:     cfg,
-		clients: make(map[string]authn.Client),
-		tracer:  tracer,
+		log:           log.New("authn.service"),
+		cfg:           cfg,
+		clients:       make(map[string]authn.Client),
+		tracer:        tracer,
+		postAuthHooks: []authn.PostAuthHookFn{},
 	}
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
+
+	// FIXME (jguer): move to User package
+	userSyncService := &usersync.Service{}
+	s.RegisterPostAuthHook(userSyncService.SyncUser)
 
 	return s
 }
@@ -33,6 +39,9 @@ type Service struct {
 	log     log.Logger
 	cfg     *setting.Cfg
 	clients map[string]authn.Client
+
+	// postAuthHooks are called after a successful authentication. They can modify the identity.
+	postAuthHooks []authn.PostAuthHookFn
 
 	tracer tracing.Tracer
 }
@@ -50,6 +59,11 @@ func (s *Service) Authenticate(ctx context.Context, clientName string, r *authn.
 		return nil, authn.ErrClientNotFound
 	}
 
+	identity, err := client.Authenticate(ctx, r)
+	if err != nil {
+		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client failed"}})
+		return nil, err
+	}
 	// FIXME: We want to perform common authentication operations here.
 	// We will add them as we start to implement clients that requires them.
 	// Those operations can be Syncing user, syncing teams, create a session etc.
@@ -58,5 +72,15 @@ func (s *Service) Authenticate(ctx context.Context, clientName string, r *authn.
 	// login handler, but if we want to perform basic auth during a request (called from contexthandler) we don't
 	// want a session to be created.
 
-	return client.Authenticate(ctx, r)
+	for _, hook := range s.postAuthHooks {
+		if err := hook(ctx, &authn.ClientParams{}, identity); err != nil {
+			return nil, err
+		}
+	}
+
+	return identity, err
+}
+
+func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
+	s.postAuthHooks = append(s.postAuthHooks, hook)
 }
