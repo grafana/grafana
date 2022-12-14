@@ -13,6 +13,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
@@ -137,75 +138,51 @@ func getName(q *models.Query, field *data.Field) string {
 }
 
 func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
-	sampler := newExemplarSampler()
+	sampler := exemplar.NewStandardDeviationSampler()
+	labelTracker := exemplar.NewLabelTracker()
 
 	// we are moving from a multi-frame response returned
 	// by the converter to a single exemplar frame,
 	// so we need to build a new frame array with the
 	// old exemplar frames filtered out
-	frames := []*data.Frame{}
-
-	// the new exemplar frame will be a single frame in long format
-	// with a timestamp, metric value, and one or more label fields
-	exemplarFrame := data.NewFrame("exemplar")
+	framer := exemplar.NewFramer(sampler, labelTracker)
 
 	for _, frame := range dr.Frames {
 		// we don't need to process non-exemplar frames
 		// so they can be added to the response
 		if !isExemplarFrame(frame) {
-			frames = append(frames, frame)
+			framer.AddFrame(frame)
 			continue
 		}
 
-		// copy the frame metadata to the new exemplar frame
-		exemplarFrame.Meta = frame.Meta
-		exemplarFrame.RefID = frame.RefID
+		// copy the current exemplar frame metadata
+		framer.SetMeta(frame.Meta)
+		framer.SetRefID(frame.RefID)
 
 		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
+		sampler.SetStep(step)
+
 		seriesLabels := getSeriesLabels(frame)
+		labelTracker.Add(seriesLabels)
 		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
 			row := frame.RowCopy(rowIdx)
-			ts := row[0].(time.Time)
-			val := row[1].(float64)
 			labels := getLabels(frame, row)
-			sampler.update(step, ts, val, seriesLabels, labels)
-		}
-	}
-
-	exemplars := sampler.getSampledExemplars()
-	if len(exemplars) == 0 {
-		return dr
-	}
-
-	// init the fields for the new exemplar frame
-	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, 0, len(exemplars)))
-	valueField := data.NewField(data.TimeSeriesValueFieldName, nil, make([]float64, 0, len(exemplars)))
-	exemplarFrame.Fields = append(exemplarFrame.Fields, timeField, valueField)
-	labelNames := sampler.getLabelNames()
-	for _, labelName := range labelNames {
-		exemplarFrame.Fields = append(exemplarFrame.Fields, data.NewField(labelName, nil, make([]string, 0, len(exemplars))))
-	}
-
-	// add the sampled exemplars to the new exemplar frame
-	for _, b := range exemplars {
-		timeField.Append(b.ts)
-		valueField.Append(b.val)
-		for i, labelName := range labelNames {
-			labelValue, ok := b.labels[labelName]
-			if !ok {
-				// if the label is not present in the exemplar labels, then use the series label
-				labelValue = b.seriesLabels[labelName]
+			labelTracker.Add(labels)
+			ex := exemplar.Exemplar{
+				Labels:       labels,
+				Value:        row[1].(float64),
+				Timestamp:    row[0].(time.Time),
+				SeriesLabels: seriesLabels,
 			}
-			colIdx := i + 2 // +2 to skip time and value fields
-			exemplarFrame.Fields[colIdx].Append(labelValue)
+			sampler.Add(ex)
 		}
 	}
 
-	frames = append(frames, exemplarFrame)
+	frames, err := framer.Frames()
 
 	return &backend.DataResponse{
 		Frames: frames,
-		Error:  dr.Error,
+		Error:  err,
 	}
 }
 
