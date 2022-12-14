@@ -738,7 +738,7 @@ func writeErr(c *models.ReqContext, err error) {
 		c.JsonApiErr(http.StatusInternalServerError, "", err)
 		return
 	}
-	c.JsonApiErr(grfErr.Reason.Status().HTTPStatus(), grfErr.Public().Message, nil)
+	c.JsonApiErr(grfErr.Reason.Status().HTTPStatus(), grfErr.Public().Message, err)
 }
 
 type authHTTPHeaderListContextKey struct{}
