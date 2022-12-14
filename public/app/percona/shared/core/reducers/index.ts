@@ -142,7 +142,9 @@ const toModelOperators = (
   { cluster_to_components }: CheckOperatorUpdateAPI
 ): OperatorsList => {
   const modelOperators = {} as OperatorsList;
-  const componentToUpdate = cluster_to_components[kubernetesClusterName].component_to_update_information;
+  const componentToUpdate = cluster_to_components
+    ? cluster_to_components[kubernetesClusterName]?.component_to_update_information
+    : undefined;
 
   Object.entries(operators).forEach(([operatorKey, operator]: [string, Operator]) => {
     const component = OPERATOR_COMPONENT_TO_UPDATE_MAP[operatorKey as keyof OperatorsList];
