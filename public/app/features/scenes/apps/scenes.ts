@@ -128,7 +128,7 @@ export function getHttpHandlersGraphsScene() {
       {
         refId: 'A',
         //expr: ``,
-        expr: 'sort(topk(8, avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval])) * 1e3))',
+        expr: 'topk(20, avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval])) * 1e3)',
         range: true,
         format: 'time_series',
         legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
@@ -407,7 +407,7 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
     queries: [
       {
         refId: 'A',
-        expr: `{job="grafana"} | logfmt | handler = \`public-assets\` | __error__=\`\``,
+        expr: `{job="grafana"} | logfmt | handler=\`${handler}\` | __error__=\`\``,
         queryType: 'range',
         maxDataPoints: 5000,
       },

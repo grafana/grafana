@@ -47,7 +47,7 @@ export function AppPageWithTabs({ tabs, activeTab }: AppPageProps) {
   };
 
   return (
-    <Page navId="grafana-monitoring" pageNav={pageNav}>
+    <Page navId="grafana-monitoring" pageNav={pageNav} hideFooter={true}>
       <Page.Contents>
         <scene.Component model={scene} />
       </Page.Contents>

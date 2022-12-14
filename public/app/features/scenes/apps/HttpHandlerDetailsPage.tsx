@@ -45,6 +45,7 @@ export function HttpHandlerDetailsPage() {
       navId="grafana-monitoring"
       subTitle="A grafana http handler is responsible for service a specific API request"
       pageNav={pageNav}
+      hideFooter={true}
     >
       <Page.Contents>
         {tab === 'logs' && <logsScene.Component model={logsScene} />}

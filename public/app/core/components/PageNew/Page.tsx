@@ -30,6 +30,7 @@ export const Page: PageType = ({
   toolbar,
   scrollTop,
   scrollRef,
+  hideFooter,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -69,7 +70,7 @@ export const Page: PageType = ({
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
                 <div className={styles.pageContent}>{children}</div>
               </div>
-              <Footer />
+              {!hideFooter && <Footer />}
             </CustomScrollbar>
           </div>
         </div>
