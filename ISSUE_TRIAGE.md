@@ -87,28 +87,27 @@ Given a certain [issue template](https://github.com/grafana/grafana/issues/new/c
 
 Should explain what happened, what was expected and how to reproduce it together with any additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output and any environment related information that's applicable and/or maybe related to the reported problem:
 
-- Grafana version
-- Data source type & version
-- Platform & OS Grafana is installed on
-- User OS & Browser + versions
-- Using docker + what environment
-- Which plugins
-- Configuration database in use (sqlite, mysql, postgres)
-- Reverse proxy in front of Grafana, what version and configuration
-- Non-default configuration settings
-- Development environment like Go and Node versions, if applicable
+- Grafana version:
+- Data source type & version:
+- OS Grafana is installed on:
+- User OS & Browser:
+- Grafana plugins:
+- Others:
 
 #### Enhancement requests
 
-Should explain what enhancement or feature that the author wants to be added and why that is needed.
+Enhancement requests (aka. feature requests) should first be discussed in [Github discussions](https://github.com/grafana/grafana/discussions). When submitting an idea for discussion we welcome users to create a new discussion and use these prompts:
+ 
+- What would you like to be added
+- Why is this needed (describe your use case and goals)**:
 
 #### Accessibility issues
 
-This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant WCAG criteria, if applicable.
+This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant [WCAG criteria](https://www.w3.org/WAI/WCAG21/quickref/?versions=2.0), if applicable.
 
 #### Support requests
 
-In general, if the issue description and title is perceived as a question no more information is needed.
+In general, if the issue description and title is perceived as a question no more information is needed. See how to categorize these requests [here](#support-requests-1).
 
 ### Good practices
 
