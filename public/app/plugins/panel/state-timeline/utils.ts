@@ -478,10 +478,21 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
 
   const fmt = (v: number) => formattedValueToString(disp(v));
 
-  for (let i = 1; i <= steps.length; i++) {
-    const step = steps[i - 1];
+  for (let i = 0; i < steps.length; i++) {
+    let step = steps[i];
+    let value = step.value;
+    let pre = '';
+    let suf = '';
+
+    if (value === -Infinity && i < steps.length - 1) {
+      value = steps[i + 1].value;
+      pre = '< ';
+    } else {
+      suf = '+';
+    }
+
     items.push({
-      label: i > 1 || steps.length === 1 ? `${fmt(step.value)}+` : `< ${fmt(steps[i].value)}`,
+      label: `${pre}${fmt(value)}${suf}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
