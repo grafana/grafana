@@ -15,7 +15,6 @@ const (
 	DroneTag              = "DRONE_TAG"
 	DroneSemverPrerelease = "DRONE_SEMVER_PRERELEASE"
 	DroneBuildNumber      = "DRONE_BUILD_NUMBER"
-	Edition               = "EDITION"
 )
 
 const (
@@ -34,7 +33,7 @@ func TestGetMetadata(t *testing.T) {
 		{map[string]string{DroneBuildEvent: Push, DroneTargetBranch: MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, ReleaseMode{Mode: MainMode}},
 		{map[string]string{DroneBuildEvent: Custom, DroneTargetBranch: versionedBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, ReleaseMode{Mode: ReleaseBranchMode}},
 		{map[string]string{DroneBuildEvent: Custom, DroneTargetBranch: MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, hashedGrafanaVersion, ReleaseMode{Mode: DownstreamMode}},
-		{map[string]string{DroneBuildEvent: Custom, DroneTargetBranch: MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345", Edition: "enterprise2"}, hashedGrafanaVersion, ReleaseMode{Mode: Enterprise2Mode}},
+		{map[string]string{DroneBuildEvent: Custom, DroneTargetBranch: MainBranch, DroneTag: "", DroneSemverPrerelease: "", DroneBuildNumber: "12345", "EDITION": string(EditionEnterprise2)}, hashedGrafanaVersion, ReleaseMode{Mode: Enterprise2Mode}},
 		{map[string]string{DroneBuildEvent: Tag, DroneTargetBranch: "", DroneTag: "v9.2.0", DroneSemverPrerelease: "", DroneBuildNumber: "12345"}, "9.2.0", ReleaseMode{Mode: TagMode, IsBeta: false, IsTest: false}},
 		{map[string]string{DroneBuildEvent: Tag, DroneTargetBranch: "", DroneTag: "v9.2.0-beta", DroneSemverPrerelease: "beta", DroneBuildNumber: "12345"}, "9.2.0-beta", ReleaseMode{Mode: TagMode, IsBeta: true, IsTest: false}},
 		{map[string]string{DroneBuildEvent: Tag, DroneTargetBranch: "", DroneTag: "v9.2.0-test", DroneSemverPrerelease: "test", DroneBuildNumber: "12345"}, "9.2.0-test", ReleaseMode{Mode: TagMode, IsBeta: false, IsTest: true}},
