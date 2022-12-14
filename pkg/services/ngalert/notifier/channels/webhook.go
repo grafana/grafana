@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -21,7 +20,7 @@ import (
 // alert notifications as webhooks.
 type WebhookNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
@@ -118,7 +117,7 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 	return &WebhookNotifier{
 		Base:     NewBase(factoryConfig.Config),
 		orgID:    factoryConfig.Config.OrgID,
-		log:      log.New("alerting.notifier.webhook"),
+		log:      factoryConfig.Logger,
 		ns:       factoryConfig.NotificationService,
 		images:   factoryConfig.ImageStore,
 		tmpl:     factoryConfig.Template,

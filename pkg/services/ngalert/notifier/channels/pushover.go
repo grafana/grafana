@@ -16,8 +16,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -39,7 +37,7 @@ var (
 type PushoverNotifier struct {
 	*Base
 	tmpl     *template.Template
-	log      log.Logger
+	log      Logger
 	images   ImageStore
 	ns       WebhookSender
 	settings pushoverSettings
@@ -148,7 +146,7 @@ func NewPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 	return &PushoverNotifier{
 		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
-		log:      log.New("alerting.notifier.pushover"),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		settings: settings,
