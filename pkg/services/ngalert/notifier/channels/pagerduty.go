@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -130,13 +129,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 	}
 
 	return &PagerdutyNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, false, fc.Config.DisableResolveMessage),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier." + fc.Config.Name),
 		ns:       fc.NotificationService,

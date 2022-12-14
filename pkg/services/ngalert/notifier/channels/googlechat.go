@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -57,13 +56,7 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 	}
 
 	return &GoogleChatNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:   NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, false, fc.Config.DisableResolveMessage),
 		log:    log.New("alerting.notifier.googlechat"),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,

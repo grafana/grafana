@@ -13,7 +13,6 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 var weComEndpoint = "https://qyapi.weixin.qq.com"
@@ -110,13 +109,7 @@ func buildWecomNotifier(factoryConfig FactoryConfig) (*WeComNotifier, error) {
 		return nil, err
 	}
 	return &WeComNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
+		Base:     NewBase(factoryConfig.Config.UID, factoryConfig.Config.Name, factoryConfig.Config.Type, false, factoryConfig.Config.DisableResolveMessage),
 		tmpl:     factoryConfig.Template,
 		log:      log.New("alerting.notifier.wecom"),
 		ns:       factoryConfig.NotificationService,
