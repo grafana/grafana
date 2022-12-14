@@ -41,6 +41,6 @@ export const defaultPanelFieldConfig: TableFieldOptions = {
 };
 
 export interface TableCellEditorProps {
-  options?: TableCellSubOptions,
+  subOptions?: TableCellSubOptions;
+  onSubOptionsChange: Function;
 }
-

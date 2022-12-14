@@ -12,13 +12,20 @@ const barGaugeOpts: SelectableValue[] = [
   { value: BarGaugeDisplayMode.Lcd, label: 'Retro LCD' },
 ];
 
-export const BarGaugeCellOptionsEditor: React.FC<TableCellEditorProps> = (props) => {
-  const onChange = () => {};
+export const BarGaugeCellOptionsEditor: React.FC<TableCellEditorProps> = ({ subOptions, onSubOptionsChange }) => {
+  const onChange = (v: SelectableValue) => {
+    if (subOptions === undefined) {
+      subOptions = {};
+    }
+
+    subOptions.displayMode = v.value;
+    onSubOptionsChange(subOptions);
+  };
 
   return (
     <HorizontalGroup>
       <Field label="Gauge Display Mode">
-        <Select onChange={onChange} options={barGaugeOpts} />
+        <Select value={subOptions?.diplayMode} onChange={onChange} options={barGaugeOpts} />
       </Field>
     </HorizontalGroup>
   );

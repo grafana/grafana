@@ -496,9 +496,11 @@ export type TableCellSubOptionGroup = Partial<Record<TableCellDisplayMode, Table
 
 /**
  * Each cell will have it's own properties so
- * the basic subOptions is simply empty.
+ * the sub-options can contain keys to any value.
  */
-export interface TableCellSubOptions {};
+export interface TableCellSubOptions {
+  [key: string]: any;
+};
 
 
 export const defaultTableCellOptions: Partial<TableCellOptions> = {
