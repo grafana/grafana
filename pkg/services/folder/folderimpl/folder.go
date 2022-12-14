@@ -283,18 +283,11 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	var nestedFolder *folder.Folder
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		// when uid is in the input, use the input uid for nested folder, otherwise use the uid of the legacy folder
-		var uid string
-		if cmd.UID != "" {
-			uid = cmd.UID
-		} else {
-			uid = dash.Uid
-		}
 		cmd := &folder.CreateFolderCommand{
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
 			// well, but for now we take the UID from the newly created folder.
-			UID:         uid,
+			UID:         dash.Uid,
 			OrgID:       cmd.OrgID,
 			Title:       cmd.Title,
 			Description: cmd.Description,
