@@ -9,6 +9,7 @@ import MySQLQueryModel from './MySqlQueryModel';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
+import { toRawSql } from './sqlUtil';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
@@ -62,10 +63,10 @@ export class MySqlDatasource extends SqlDatasource {
     const defaultDB = this.instanceSettings.jsonData.database;
     if (!identifier?.schema && defaultDB) {
       const tables = await this.fetchTables(defaultDB);
-      return tables.map((t) => ({ name: t, completion: `${defaultDB}.${t}`, kind: CompletionItemKind.Class }));
+      return tables.map((t) => ({ name: t, completion: `\`${defaultDB}\`.\`${t}\``, kind: CompletionItemKind.Class }));
     } else if (!identifier?.schema && !defaultDB) {
       const datasets = await this.fetchDatasets();
-      return datasets.map((d) => ({ name: d, completion: `${d}.`, kind: CompletionItemKind.Module }));
+      return datasets.map((d) => ({ name: d, completion: `\`${d}\`.`, kind: CompletionItemKind.Module }));
     } else {
       if (!identifier?.table && !defaultDB) {
         const tables = await this.fetchTables(identifier?.schema);
@@ -90,6 +91,7 @@ export class MySqlDatasource extends SqlDatasource {
       validateQuery: (query: SQLQuery, range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
       dsID: () => this.id,
+      toRawSql,
       functions: () => ['VARIANCE', 'STDDEV'],
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(this.db),
     };

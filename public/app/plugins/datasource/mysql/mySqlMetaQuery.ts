@@ -6,7 +6,7 @@ export function buildTableQuery(dataset?: string) {
 }
 
 export function showDatabases() {
-  return `SELECT DISTINCT TABLE_SCHEMA from information_schema.TABLES where TABLE_TYPE != 'SYSTEM VIEW' ORDER BY TABLE_SCHEMA`;
+  return `SHOW DATABASES`;
 }
 
 export function buildColumnQuery(queryModel: MySQLQueryModel, table: string, type?: string, timeColumn?: string) {
