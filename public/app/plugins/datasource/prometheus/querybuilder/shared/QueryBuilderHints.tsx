@@ -56,7 +56,9 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
                   size="sm"
                   className={styles.hint}
                 >
-                  {hint.fix?.action?.hint}
+                  {datasource.type === 'loki'
+                    ? hint.fix?.action?.hint
+                    : 'hint: ' + hint.fix?.action?.type.toLowerCase().replace('_', ' ') + '()'}
                 </Button>
               </Tooltip>
             );

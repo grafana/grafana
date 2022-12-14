@@ -23,7 +23,6 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
         label: 'Consider calculating aggregated quantile by adding histogram_quantile().',
         action: {
           type: 'ADD_HISTOGRAM_QUANTILE',
-          hint: 'hint: add histogram quantile',
           query,
         },
       } as QueryFix,
@@ -72,7 +71,6 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
           label: 'Consider calculating rate of counter by adding rate().',
           action: {
             type: 'ADD_RATE',
-            hint: 'hint: add rate',
             query,
           },
         };
@@ -109,7 +107,6 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
           label: 'Expand rules',
           action: {
             type: 'EXPAND_RULES',
-            hint: 'hint: expand rules',
             query,
             options: mappingForQuery,
           },
@@ -128,7 +125,6 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
           label: 'Consider aggregating with sum().',
           action: {
             type: 'ADD_SUM',
-            hint: 'hint: add sum',
             query: query,
             preventSubmit: true,
           },
