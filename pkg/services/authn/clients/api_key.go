@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -27,16 +29,18 @@ var (
 
 var _ authn.Client = new(APIKey)
 
-func ProvideAPIKey(service apikey.Service) *APIKey {
+func ProvideAPIKey(apiKeyService apikey.Service, userService user.Service) *APIKey {
 	return &APIKey{
-		service: service,
-		log:     log.New(authn.ClientAPIKey),
+		log:           log.New(authn.ClientAPIKey),
+		userService:   userService,
+		apiKeyService: apiKeyService,
 	}
 }
 
 type APIKey struct {
-	service apikey.Service
-	log     log.Logger
+	log           log.Logger
+	userService   user.Service
+	apiKeyService apikey.Service
 }
 
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -54,17 +58,45 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	go func(id int64) {
-		if err := s.service.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Error("api key authentication panic", "err", err)
+			}
+		}()
+		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
 			s.log.Warn("failed to update last use date for api key", "id", id)
 		}
 	}(apiKey.Id)
 
-	identity := &authn.Identity{}
-	identity.OrgID = apiKey.OrgId
-	// Not correct for a service account
-	identity.OrgRoles = map[int64]org.RoleType{apiKey.OrgId: apiKey.Role}
+	// if the api key don't belong to a service account construct the identity and return it
+	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
+		return &authn.Identity{
+			ID:       fmt.Sprintf("%s:%d", authn.APIKeyIDPrefix, apiKey.Id),
+			OrgID:    apiKey.OrgId,
+			OrgRoles: map[int64]org.RoleType{apiKey.OrgId: apiKey.Role},
+		}, nil
+	}
 
-	return identity, nil
+	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+		UserID: *apiKey.ServiceAccountId,
+		OrgID:  apiKey.OrgId,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if usr.IsDisabled {
+		// TODO: return error
+	}
+
+	// TODO: set all fields required from usr
+	return &authn.Identity{
+		ID:       fmt.Sprintf("%s:%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId),
+		OrgID:    usr.OrgID,
+		OrgName:  usr.OrgName,
+		OrgRoles: map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
+	}, nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
@@ -92,7 +124,7 @@ func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey
 		return nil, err
 	}
 
-	return s.service.GetAPIKeyByHash(ctx, hash)
+	return s.apiKeyService.GetAPIKeyByHash(ctx, hash)
 }
 
 func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.APIKey, error) {
@@ -103,7 +135,7 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 
 	// fetch key
 	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := s.service.GetApiKeyByName(ctx, &keyQuery); err != nil {
+	if err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
 

@@ -33,10 +33,9 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	}
 
 	return &authn.Identity{
-		OrgID:       o.ID,
-		OrgName:     o.Name,
-		OrgRoles:    map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
-		IsAnonymous: true,
+		OrgID:    o.ID,
+		OrgName:  o.Name,
+		OrgRoles: map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
 	}, nil
 }
 

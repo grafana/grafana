@@ -9,21 +9,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 )
 
 var _ authn.Service = new(Service)
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service) *Service {
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service, userService user.Service) *Service {
 	s := &Service{
-		log:     log.New("authn.service"),
-		cfg:     cfg,
-		clients: make(map[string]authn.Client),
-		tracer:  tracer,
+		log:         log.New("authn.service"),
+		cfg:         cfg,
+		clients:     make(map[string]authn.Client),
+		tracer:      tracer,
+		userService: userService,
 	}
 
-	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService)
+	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
@@ -37,7 +39,8 @@ type Service struct {
 	cfg     *setting.Cfg
 	clients map[string]authn.Client
 
-	tracer tracing.Tracer
+	tracer      tracing.Tracer
+	userService user.Service
 }
 
 func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {

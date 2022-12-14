@@ -287,8 +287,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 			return true
 		}
 
-		reqContext.SignedInUser = identity.SignedInUser()
 		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
 		return true
 	}
 

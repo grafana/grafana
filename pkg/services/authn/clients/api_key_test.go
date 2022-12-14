@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,7 +64,7 @@ func TestAPIKey_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideAPIKey(&apikeytest.Service{})
+			c := ProvideAPIKey(&apikeytest.Service{}, usertest.NewUserServiceFake())
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
 		})
 	}

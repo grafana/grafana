@@ -32,26 +32,41 @@ type Request struct {
 }
 
 const (
-	APIKeyIDPrefix         = "apikey:"
+	APIKeyIDPrefix         = "api-key:"
 	ServiceAccountIDPrefix = "service-account:"
 )
 
 type Identity struct {
-	OrgID       int64
-	OrgName     string
-	IsAnonymous bool
-	OrgRoles    map[int64]org.RoleType
+	ID       string
+	OrgID    int64
+	OrgName  string
+	OrgRoles map[int64]org.RoleType
 }
 
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
 }
 
+func (i *Identity) IsAnonymous() bool {
+	return i.ID == ""
+}
+
 func (i *Identity) SignedInUser() *user.SignedInUser {
-	return &user.SignedInUser{
+	u := &user.SignedInUser{
 		OrgID:       i.OrgID,
 		OrgName:     i.OrgName,
 		OrgRole:     i.Role(),
-		IsAnonymous: i.IsAnonymous,
+		IsAnonymous: i.IsAnonymous(),
 	}
+
+	// For now, we need to set different fields of the signed-in user based on the identity "type"
+	if strings.HasPrefix(i.ID, APIKeyIDPrefix) {
+		id, _ := strconv.ParseInt(strings.TrimPrefix(i.ID, APIKeyIDPrefix), 10, 64)
+		u.ApiKeyID = id
+	} else if strings.HasPrefix(i.ID, ServiceAccountIDPrefix) {
+		id, _ := strconv.ParseInt(strings.TrimPrefix(i.ID, ServiceAccountIDPrefix), 10, 64)
+		u.UserID = id
+	}
+
+	return u
 }
