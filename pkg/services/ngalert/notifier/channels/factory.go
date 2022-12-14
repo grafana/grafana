@@ -17,7 +17,7 @@ type FactoryConfig struct {
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService NotificationSender,
-	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
+	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore, loggerFactory LoggerFactory) (FactoryConfig, error) {
 	if config.Settings == nil {
 		return FactoryConfig{}, errors.New("no settings supplied")
 	}
