@@ -113,19 +113,6 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard, reqDTO 
 	}
 }
 
-func timeRangeIsValid(tr TimeSettings) bool {
-	_, err := strconv.ParseInt(tr.From, 10, 64)
-	if err != nil {
-		return false
-	}
-	_, err = strconv.ParseInt(tr.To, 10, 64)
-	if err != nil {
-		return false
-	}
-
-	return true
-}
-
 // DTO for transforming user input in the api
 type SavePublicDashboardDTO struct {
 	DashboardUid    string
