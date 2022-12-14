@@ -110,7 +110,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			bucketAgg.Settings = simplejson.NewFromAny(
 				bucketAgg.generateSettingsForDSL(),
 			)
-			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 		}
 		return nil
 	}
