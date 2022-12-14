@@ -58,7 +58,7 @@ func newKafkaNotifier(fc FactoryConfig) (*KafkaNotifier, error) {
 	details := fc.Config.Settings.Get("details").MustString(DefaultMessageEmbed)
 
 	return &KafkaNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.kafka"),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,

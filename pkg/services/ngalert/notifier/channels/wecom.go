@@ -109,7 +109,7 @@ func buildWecomNotifier(factoryConfig FactoryConfig) (*WeComNotifier, error) {
 		return nil, err
 	}
 	return &WeComNotifier{
-		Base:     NewBase(factoryConfig.Config.UID, factoryConfig.Config.Name, factoryConfig.Config.Type, factoryConfig.Config.DisableResolveMessage),
+		Base:     NewBase(factoryConfig.Config),
 		tmpl:     factoryConfig.Template,
 		log:      log.New("alerting.notifier.wecom"),
 		ns:       factoryConfig.NotificationService,

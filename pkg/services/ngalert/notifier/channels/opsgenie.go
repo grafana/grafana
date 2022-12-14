@@ -124,7 +124,7 @@ func NewOpsgenieNotifier(fc FactoryConfig) (*OpsgenieNotifier, error) {
 		return nil, err
 	}
 	return &OpsgenieNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.opsgenie"),
 		ns:       fc.NotificationService,

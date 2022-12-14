@@ -83,7 +83,7 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 	logger := log.New("alerting.notifier.webex")
 
 	return &WebexNotifier{
-		Base:     NewBase(factoryConfig.Config.UID, factoryConfig.Config.Name, factoryConfig.Config.Type, factoryConfig.Config.DisableResolveMessage),
+		Base:     NewBase(factoryConfig.Config),
 		orgID:    factoryConfig.Config.OrgID,
 		log:      logger,
 		ns:       factoryConfig.NotificationService,

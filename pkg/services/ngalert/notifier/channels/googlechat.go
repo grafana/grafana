@@ -56,7 +56,7 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 	}
 
 	return &GoogleChatNotifier{
-		Base:   NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
+		Base:   NewBase(fc.Config),
 		log:    log.New("alerting.notifier.googlechat"),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,

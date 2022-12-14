@@ -70,7 +70,7 @@ func NewSensuGoNotifier(fc FactoryConfig) (*SensuGoNotifier, error) {
 		return nil, err
 	}
 	return &SensuGoNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.sensugo"),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,

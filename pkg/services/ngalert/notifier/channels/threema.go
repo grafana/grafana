@@ -94,7 +94,7 @@ func NewThreemaNotifier(fc FactoryConfig) (*ThreemaNotifier, error) {
 		return nil, err
 	}
 	return &ThreemaNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.threema"),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,

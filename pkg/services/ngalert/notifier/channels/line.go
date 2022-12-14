@@ -54,7 +54,7 @@ func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
 	description := fc.Config.Settings.Get("description").MustString(DefaultMessageEmbed)
 
 	return &LineNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.line"),
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,

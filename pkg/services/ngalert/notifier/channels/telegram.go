@@ -100,7 +100,7 @@ func NewTelegramNotifier(fc FactoryConfig) (*TelegramNotifier, error) {
 		return nil, err
 	}
 	return &TelegramNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.telegram"),
 		images:   fc.ImageStore,

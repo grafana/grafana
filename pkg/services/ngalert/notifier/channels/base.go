@@ -12,11 +12,11 @@ func (n *Base) GetDisableResolveMessage() bool {
 	return n.DisableResolveMessage
 }
 
-func NewBase(uid, name, notifierType string, DisableResolveMessage bool) *Base {
+func NewBase(cfg *NotificationChannelConfig) *Base {
 	return &Base{
-		UID:                   uid,
-		Name:                  name,
-		Type:                  notifierType,
-		DisableResolveMessage: DisableResolveMessage,
+		UID:                   cfg.UID,
+		Name:                  cfg.Name,
+		Type:                  cfg.Type,
+		DisableResolveMessage: cfg.DisableResolveMessage,
 	}
 }
