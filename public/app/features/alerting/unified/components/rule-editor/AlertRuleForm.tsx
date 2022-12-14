@@ -159,12 +159,14 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   };
 
   const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
-    trackNewAlerRuleFormError({
-      grafana_version: config.buildInfo.version,
-      org_id: contextSrv.user.orgId,
-      user_id: contextSrv.user.id,
-      error: Object.keys(errors).toString(),
-    });
+    if (!existing) {
+      trackNewAlerRuleFormError({
+        grafana_version: config.buildInfo.version,
+        org_id: contextSrv.user.orgId,
+        user_id: contextSrv.user.id,
+        error: Object.keys(errors).toString(),
+      });
+    }
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
