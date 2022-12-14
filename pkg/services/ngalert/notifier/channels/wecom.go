@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var weComEndpoint = "https://qyapi.weixin.qq.com"
@@ -130,7 +129,7 @@ type WeComNotifier struct {
 	*Base
 	tmpl        *template.Template
 	log         log.Logger
-	ns          notifications.WebhookSender
+	ns          WebhookSender
 	settings    wecomSettings
 	tok         *WeComAccessToken
 	tokExpireAt time.Time
@@ -183,12 +182,12 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		w.log.Warn("failed to template WeCom message", "error", tmplErr.Error())
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:  url,
 		Body: string(body),
 	}
 
-	if err = w.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err = w.ns.SendWebhook(ctx, cmd); err != nil {
 		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
 		return false, err
 	}

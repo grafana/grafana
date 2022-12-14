@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -67,7 +66,7 @@ type SlackNotifier struct {
 	log           log.Logger
 	tmpl          *template.Template
 	images        ImageStore
-	webhookSender notifications.WebhookSender
+	webhookSender WebhookSender
 	sendFn        sendFunc
 	settings      slackSettings
 }

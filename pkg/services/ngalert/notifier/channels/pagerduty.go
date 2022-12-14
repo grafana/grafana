@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -45,7 +44,7 @@ type PagerdutyNotifier struct {
 	*Base
 	tmpl     *template.Template
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	images   ImageStore
 	settings *pagerdutySettings
 }
@@ -166,7 +165,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	pn.log.Info("notifying Pagerduty", "event_type", eventType)
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
@@ -174,7 +173,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
