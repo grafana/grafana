@@ -168,7 +168,7 @@ func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataRe
 			row := frame.RowCopy(rowIdx)
 			labels := getLabels(frame, row)
 			labelTracker.Add(labels)
-			ex := exemplar.Exemplar{
+			ex := models.Exemplar{
 				Labels:       labels,
 				Value:        row[1].(float64),
 				Timestamp:    row[0].(time.Time),

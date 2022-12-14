@@ -10,15 +10,15 @@ import (
 
 type StandardDeviationSampler struct {
 	step    time.Duration
-	buckets map[time.Time][]Exemplar
+	buckets map[time.Time][]models.Exemplar
 	count   int
 	mean    float64
 	m2      float64
 }
 
-func NewStandardDeviationSampler() ExemplarSampler {
+func NewStandardDeviationSampler() Sampler {
 	return &StandardDeviationSampler{
-		buckets: map[time.Time][]Exemplar{},
+		buckets: map[time.Time][]models.Exemplar{},
 	}
 }
 
@@ -26,12 +26,12 @@ func (e *StandardDeviationSampler) SetStep(step time.Duration) {
 	e.step = step
 }
 
-func (e *StandardDeviationSampler) Add(ex Exemplar) {
+func (e *StandardDeviationSampler) Add(ex models.Exemplar) {
 	bucketTs := models.AlignTimeRange(ex.Timestamp, e.step, 0)
 	e.updateAggregations(ex.Value)
 
 	if _, exists := e.buckets[bucketTs]; !exists {
-		e.buckets[bucketTs] = []Exemplar{ex}
+		e.buckets[bucketTs] = []models.Exemplar{ex}
 		return
 	}
 
@@ -57,15 +57,14 @@ func (e *StandardDeviationSampler) standardDeviation() float64 {
 	return math.Sqrt(e.m2 / float64(e.count-1))
 }
 
-// getSampledExemplars returns the exemplars sorted by timestamp
-func (e *StandardDeviationSampler) Sample() []Exemplar {
-	exemplars := make([]Exemplar, 0, len(e.buckets))
+func (e *StandardDeviationSampler) Sample() []models.Exemplar {
+	exemplars := make([]models.Exemplar, 0, len(e.buckets))
 	for _, b := range e.buckets {
 		// sort by value in descending order
 		sort.SliceStable(b, func(i, j int) bool {
 			return b[i].Value > b[j].Value
 		})
-		sampled := []Exemplar{}
+		sampled := []models.Exemplar{}
 		for _, ex := range b {
 			if len(sampled) == 0 {
 				sampled = append(sampled, ex)

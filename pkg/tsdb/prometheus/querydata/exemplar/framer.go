@@ -10,13 +10,13 @@ var _ data.Framer = (*Framer)(nil)
 
 type Framer struct {
 	frames       data.Frames
-	sampler      ExemplarSampler
+	sampler      Sampler
 	labelTracker LabelTracker
 	meta         *data.FrameMeta
 	refID        string
 }
 
-func NewFramer(sampler ExemplarSampler, labelTracker LabelTracker) *Framer {
+func NewFramer(sampler Sampler, labelTracker LabelTracker) *Framer {
 	return &Framer{
 		frames:       data.Frames{},
 		sampler:      sampler,
