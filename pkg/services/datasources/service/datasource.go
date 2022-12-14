@@ -441,7 +441,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
-			Service:       awsServiceNamespace(ds.Type),
+			Service:       awsServiceNamespace(ds.Type, ds.JsonData),
 			Region:        ds.JsonData.Get("sigV4Region").MustString(),
 			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
 			AuthType:      ds.JsonData.Get("sigV4AuthType").MustString(),
@@ -572,10 +572,20 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 	return headers
 }
 
-func awsServiceNamespace(dsType string) string {
+func awsServiceNamespace(dsType string, jsonData *simplejson.Json) string {
 	switch dsType {
-	case datasources.DS_ES, datasources.DS_ES_OPEN_DISTRO, datasources.DS_ES_OPENSEARCH:
+	case datasources.DS_ES, datasources.DS_ES_OPEN_DISTRO:
 		return "es"
+	case datasources.DS_ES_OPENSEARCH:
+		serverless, err := jsonData.Get("serverless").Bool()
+		if err != nil {
+			serverless = false
+		}
+		if serverless {
+			return "aoss"
+		} else {
+			return "es"
+		}
 	case datasources.DS_PROMETHEUS, datasources.DS_ALERTMANAGER:
 		return "aps"
 	default:

@@ -540,6 +540,74 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, configuredOpts.SigV4)
 		require.Equal(t, "es", configuredOpts.SigV4.Service)
 	})
+
+	t.Run("Should use 'es' if OpenSearch and not serverless configured in JsonData", func(t *testing.T) {
+		var configuredOpts sdkhttpclient.Options
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredOpts = opts
+			},
+		})
+
+		origSigV4Enabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origSigV4Enabled
+		})
+
+		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true, "serverless": false }`))
+		require.NoError(t, err)
+
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+		require.NoError(t, err)
+
+		ds := datasources.DataSource{
+			Type:     datasources.DS_ES_OPENSEARCH,
+			JsonData: sjson,
+		}
+
+		_, err = dsService.GetHTTPTransport(context.Background(), &ds, provider)
+
+		require.Equal(t, "es", configuredOpts.SigV4.Service)
+	})
+
+	t.Run("Should use 'aoss' if OpenSearch and serverless configured in JsonData", func(t *testing.T) {
+		var configuredOpts sdkhttpclient.Options
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredOpts = opts
+			},
+		})
+
+		origSigV4Enabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origSigV4Enabled
+		})
+
+		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true, "serverless": true }`))
+		require.NoError(t, err)
+
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+		require.NoError(t, err)
+
+		ds := datasources.DataSource{
+			Type:     datasources.DS_ES_OPENSEARCH,
+			JsonData: sjson,
+		}
+
+		_, err = dsService.GetHTTPTransport(context.Background(), &ds, provider)
+
+		require.Equal(t, "aoss", configuredOpts.SigV4.Service)
+	})
 }
 
 func TestService_getTimeout(t *testing.T) {
