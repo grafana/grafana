@@ -90,22 +90,21 @@ export function getHttpHandlerListScene(): EmbeddedScene {
 
   const graphsScene = getHttpHandlersGraphsScene();
 
+  const layout = new SceneFlexLayout({
+    children: [httpHandlersTable],
+  });
+
   const sceneToggle = new SceneRadioToggle({
     options: [
       { value: 'table', label: 'Table' },
       { value: 'graphs', label: 'Graphs' },
     ],
     value: 'table',
-  });
-
-  sceneToggle.subscribeToState({
-    next: (state) => {
-      if (state.value === 'graphs') {
-        graphsScene.setState({ size: { ...graphsScene.state.size, hidden: false } });
-        httpHandlersTable.setState({ size: { ...httpHandlersTable.state.size, hidden: true } });
+    onChange: (value) => {
+      if (value === 'table') {
+        layout.setState({ children: [httpHandlersTable] });
       } else {
-        graphsScene.setState({ size: { ...graphsScene.state.size, hidden: true } });
-        httpHandlersTable.setState({ size: { ...httpHandlersTable.state.size, hidden: false } });
+        layout.setState({ children: [graphsScene] });
       }
     },
   });
@@ -122,9 +121,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
         new SceneTimePicker({ isOnCanvas: true }),
       ],
     }),
-    layout: new SceneFlexLayout({
-      children: [httpHandlersTable, graphsScene],
-    }),
+    layout,
   });
 
   sceneCache.set(sceneKey, scene);
@@ -149,7 +146,6 @@ export function getHttpHandlersGraphsScene() {
 
   const graphs = new ScenePanelRepeater({
     $data: reqDurationTimeSeries,
-    size: { hidden: true },
     layout: new SceneFlexLayout({
       direction: 'column',
       children: [],

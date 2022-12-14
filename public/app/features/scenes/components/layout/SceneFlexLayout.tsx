@@ -45,10 +45,6 @@ function FlexLayoutChildComponent({
 }) {
   const { size } = item.useState();
 
-  if (size?.hidden) {
-    return null;
-  }
-
   return (
     <div style={getItemStyles(direction, size)}>
       <item.Component model={item} isEditing={isEditing} />

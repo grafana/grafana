@@ -9,11 +9,13 @@ import { SceneComponentProps, SceneObjectStatePlain } from '../core/types';
 export interface SceneRadioToggleState extends SceneObjectStatePlain {
   options: Array<SelectableValue<string>>;
   value: string;
+  onChange: (value: string) => void;
 }
 
 export class SceneRadioToggle extends SceneObjectBase<SceneRadioToggleState> {
   public onChange = (value: string) => {
     this.setState({ value });
+    this.state.onChange(value);
   };
 
   public static Component = ({ model }: SceneComponentProps<SceneRadioToggle>) => {
