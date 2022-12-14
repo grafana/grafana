@@ -51,6 +51,9 @@ func TestIntegrationAzureMonitor(t *testing.T) {
 		"customizedRoutes": map[string]interface{}{
 			"Azure Monitor": map[string]interface{}{
 				"URL": outgoingServer.URL,
+				"Headers": map[string]string{
+					"custom-azure-header": "custom-azure-value",
+				},
 			},
 		},
 	})
@@ -113,5 +116,6 @@ func TestIntegrationAzureMonitor(t *testing.T) {
 		require.Equal(t, "/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.storage/storageaccounts/testacct/providers/microsoft.insights/metrics?aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=UsedCapacity&metricnamespace=microsoft.storage%2Fstorageaccounts&timespan=2022-11-10T11%3A01%3A20Z%2F2022-11-10T12%3A01%3A20Z",
 			outgoingRequest.URL.String())
 		require.Equal(t, "custom-header-value", outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		require.Equal(t, "custom-azure-value", outgoingRequest.Header.Get("custom-azure-header"))
 	})
 }
