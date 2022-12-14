@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // WebhookNotifier is responsible for sending
@@ -160,7 +159,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	// Augment our Alert data with ImageURLs if available.
 	_ = withStoredImages(ctx, wn.log, wn.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL
 			}

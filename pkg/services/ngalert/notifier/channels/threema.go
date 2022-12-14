@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -158,7 +157,7 @@ func (tn *ThreemaNotifier) buildMessage(ctx context.Context, as ...*types.Alert)
 	}
 
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				message += fmt.Sprintf("*Image:* %s\n", image.URL)
 			}

@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -139,7 +138,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	_ = withStoredImages(ctx, vn.log, vn.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if image.URL != "" {
 				bodyJSON["image_url"] = image.URL
 				return ErrImagesDone

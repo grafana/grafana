@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -309,7 +308,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	var s AdaptiveCardImageSetItem
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				s.AppendImage(AdaptiveCardImageItem{URL: image.URL})
 			}

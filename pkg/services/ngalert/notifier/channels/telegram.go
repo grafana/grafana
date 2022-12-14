@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -144,7 +143,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	// Create the cmd to upload each image
-	_ = withStoredImages(ctx, tn.log, tn.images, func(index int, image ngmodels.Image) error {
+	_ = withStoredImages(ctx, tn.log, tn.images, func(index int, image Image) error {
 		cmd, err = tn.newWebhookSyncCmd("sendPhoto", func(w *multipart.Writer) error {
 			f, err := os.Open(image.Path)
 			if err != nil {

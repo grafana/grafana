@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -110,7 +109,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	// Extend alerts data with images, if available.
 	var embeddedFiles []string
 	_ = withStoredImages(ctx, en.log, en.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL
 			} else if len(image.Path) != 0 {
