@@ -24,7 +24,7 @@ weight: 200
 
 # Create and edit message templates
 
-You can use message templates to customize notification messages for the contact point types.
+You can use message templates to customize notification messages for the contact point integrations.
 
 ## Create a message template:
 
