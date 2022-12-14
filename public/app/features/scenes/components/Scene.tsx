@@ -40,6 +40,7 @@ export class EmbeddedScene extends Scene {
 
 function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { layout, isEditing, subMenu } = model.useState();
+
   return (
     <div
       style={{

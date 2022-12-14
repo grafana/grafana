@@ -92,7 +92,6 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const handleMenuOpen = () => {};
 
   const hasHeader = title || titleItems.length > 0 || menu;
-  console.log('typeof title', typeof title);
 
   return (
     <div className={styles.container} style={containerStyles}>
