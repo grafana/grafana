@@ -239,10 +239,8 @@ export class PanelQueryRunner {
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
+      rangeRaw: timeRange.raw,
     };
-
-    // Add deprecated property
-    (request as any).rangeRaw = timeRange.raw;
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
