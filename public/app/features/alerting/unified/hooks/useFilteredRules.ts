@@ -58,8 +58,9 @@ const reduceGroups = (filters: FilterState) => {
         const doesNameContainsQueryString = rule.name?.toLocaleLowerCase().includes(normalizedQueryString);
         const matchers = parseMatchers(filters.queryString);
 
-        const doRuleLabelsMatchQuery = labelsMatchMatchers(rule.labels, matchers);
+        const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels, matchers);
         const doAlertsContainMatchingLabels =
+          matchers.length > 0 &&
           rule.promRule &&
           rule.promRule.type === PromRuleType.Alerting &&
           rule.promRule.alerts &&
@@ -67,6 +68,8 @@ const reduceGroups = (filters: FilterState) => {
 
         if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
           return false;
+        } else {
+          console.log(rule.rulerRule);
         }
       }
       if (
