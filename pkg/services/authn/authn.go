@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ClientAPIKey    = "auth.client.api-key"
+	ClientAPIKey    = "auth.client.api-key" // #nosec G101
 	ClientAnonymous = "auth.client.anonymous"
 )
 
@@ -80,7 +80,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsGrafanaAdmin:     i.IsGrafanaAdmin,
 		IsAnonymous:        i.IsAnonymous(),
 		IsDisabled:         i.IsDisabled,
-		HelpFlags1:         user.HelpFlags1(i.HelpFlags1),
+		HelpFlags1:         i.HelpFlags1,
 		LastSeenAt:         i.LastSeenAt,
 		Teams:              i.Teams,
 	}
