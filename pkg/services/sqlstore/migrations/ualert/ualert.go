@@ -897,10 +897,13 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 	if err := sess.Table("alert_configuration").Distinct("org_id").Find(&orgs); err != nil {
 		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)
 	}
+
+	// Quote the column called "default" because it's a reserved keyword in SQL.
+	fields := fmt.Sprintf("org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, %s", migrator.Dialect.Quote("default"))
 	for _, orgID := range orgs {
 		_, err := sess.Exec(`
-			INSERT INTO alert_configuration_history (org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, default)
-			SELECT org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, default
+			INSERT INTO alert_configuration_history (`+fields+`)
+			SELECT `+fields+`
 			FROM alert_configuration
 			WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)`,
 			orgID, orgID)
