@@ -39,6 +39,8 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   useEffect(() => {
     dashboard.events.subscribe(DashboardMetaChangedEvent, () => setUpdateId((v) => v + 1));
   }, [dashboard]);
+
+  // updateId in deps so we can revaluate when dashboard is mutated
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const pages = useMemo(() => getSettingsPages(dashboard), [dashboard, updateId]);
 
