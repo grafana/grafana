@@ -29,6 +29,7 @@ spec:
                 required:
                     - spec
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
     names:
         kind: Dashboard
         plural: dashboards
