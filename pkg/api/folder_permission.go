@@ -34,7 +34,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.New(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -98,7 +98,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.New(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}

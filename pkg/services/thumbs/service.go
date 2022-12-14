@@ -469,7 +469,7 @@ func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!
 func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) (int, error) {
-	guardian, err := guardian.New(c.Req.Context(), uid, c.OrgID, c.SignedInUser)
+	guardian, err := guardian.NewByUID(c.Req.Context(), uid, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return 0, err
 	}

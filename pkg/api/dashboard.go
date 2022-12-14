@@ -133,7 +133,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 			return response.Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
 		}
 	}
-	guardian, err := guardian.New(c.Req.Context(), dash.Uid, c.OrgID, c.SignedInUser)
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -312,7 +312,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	if rsp != nil {
 		return rsp
 	}
-	guardian, err := guardian.New(c.Req.Context(), dash.Uid, c.OrgID, c.SignedInUser)
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -645,7 +645,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		return rsp
 	}
 
-	guardian, err := guardian.New(c.Req.Context(), dash.Uid, c.OrgID, c.SignedInUser)
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -729,7 +729,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 		return rsp
 	}
 
-	guardian, err := guardian.New(c.Req.Context(), dash.Uid, c.OrgID, c.SignedInUser)
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -852,14 +852,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	if err := web.Bind(c.Req, &apiOptions); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
-	// TODO deprecate usage of ID
-	dashUID, err := hs.getDashboardUID(c.Req.Context(), apiOptions.Base.DashboardId, c.OrgID)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "failed to get dashboard by ID", err)
-	}
-
-	guardianBase, err := guardian.New(c.Req.Context(), dashUID, c.OrgID, c.SignedInUser)
+	guardianBase, err := guardian.New(c.Req.Context(), apiOptions.Base.DashboardId, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -869,12 +862,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	}
 
 	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
-		dashUID, err := hs.getDashboardUID(c.Req.Context(), apiOptions.New.DashboardId, c.OrgID)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "failed to get dashboard by ID", err)
-		}
-
-		guardianNew, err := guardian.New(c.Req.Context(), dashUID, c.OrgID, c.SignedInUser)
+		guardianNew, err := guardian.New(c.Req.Context(), apiOptions.New.DashboardId, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.Err(err)
 		}
@@ -993,7 +981,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 		return rsp
 	}
 
-	guardian, err := guardian.New(c.Req.Context(), dash.Uid, c.OrgID, c.SignedInUser)
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}

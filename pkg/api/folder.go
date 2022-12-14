@@ -73,7 +73,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.New(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -103,7 +103,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.New(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -142,7 +142,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
-	g, err := guardian.New(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -201,7 +201,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g, err := guardian.New(c.Req.Context(), result.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), result.UID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}

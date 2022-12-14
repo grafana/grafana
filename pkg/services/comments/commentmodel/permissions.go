@@ -57,7 +57,7 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard, err := guardian.New(ctx, dash.Uid, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
 		if err != nil {
 			return false, err
 		}
@@ -84,7 +84,7 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard, err := guardian.New(ctx, dash.Uid, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
 		if err != nil {
 			return false, err
 		}
@@ -109,7 +109,7 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, err
 		}
-		guard, err := guardian.New(ctx, dash.Uid, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
 		if err != nil {
 			return false, err
 		}
@@ -142,7 +142,7 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, nil
 		}
-		guard, err := guardian.New(ctx, dash.Uid, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
 		if err != nil {
 			return false, err
 		}

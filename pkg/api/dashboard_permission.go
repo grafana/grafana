@@ -56,7 +56,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return rsp
 	}
 
-	g, err := guardian.New(c.Req.Context(), dash.Uid, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -146,7 +146,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return rsp
 	}
 
-	g, err := guardian.New(c.Req.Context(), dash.Uid, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}

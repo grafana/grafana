@@ -693,12 +693,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 			return response.Error(500, "Get Alert failed", err)
 		}
 
-		dashUID, err := hs.getDashboardUID(c.Req.Context(), query.Result.DashboardId, c.OrgID)
-		if err != nil {
-			return response.Error(500, "Get dashboard failed", err)
-		}
-
-		guardian, err := guardian.New(c.Req.Context(), dashUID, c.OrgID, c.SignedInUser)
+		guardian, err := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Error while creating permission guardian", err)
 		}

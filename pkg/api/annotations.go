@@ -494,12 +494,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 
 func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annotations.ItemDTO) (bool, error) {
 	if annotation.GetType() == annotations.Dashboard {
-		dashUID, err := hs.getDashboardUID(c.Req.Context(), c.OrgID, annotation.DashboardId)
-		if err != nil {
-			return false, err
-		}
-
-		return canEditDashboard(c, dashUID)
+		return canEditDashboard(c, annotation.DashboardId)
 	} else {
 		if hs.AccessControl.IsDisabled() {
 			return c.SignedInUser.HasRole(org.RoleEditor), nil
@@ -508,8 +503,8 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 	}
 }
 
-func canEditDashboard(c *models.ReqContext, dashboardUID string) (bool, error) {
-	guard, err := guardian.New(c.Req.Context(), dashboardUID, c.OrgID, c.SignedInUser)
+func canEditDashboard(c *models.ReqContext, dashboardID int64) (bool, error) {
+	guard, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return false, err
 	}
@@ -616,12 +611,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 			}
 		}
 
-		dashUID, err := hs.getDashboardUID(c.Req.Context(), c.OrgID, dashboardId)
-		if err != nil {
-			return false, err
-		}
-
-		return canEditDashboard(c, dashUID)
+		return canEditDashboard(c, dashboardId)
 	} else { // organization annotations
 		if !hs.AccessControl.IsDisabled() {
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
@@ -643,12 +633,7 @@ func (hs *HTTPServer) canMassDeleteAnnotations(c *models.ReqContext, dashboardID
 			return false, err
 		}
 
-		dashUID, err := hs.getDashboardUID(c.Req.Context(), c.OrgID, dashboardID)
-		if err != nil {
-			return false, err
-		}
-
-		canSave, err = canEditDashboard(c, dashUID)
+		canSave, err = canEditDashboard(c, dashboardID)
 		if err != nil || !canSave {
 			return false, err
 		}

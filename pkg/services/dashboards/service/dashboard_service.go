@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -120,7 +121,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	if isParentFolderChanged {
 		// Check that the user is allowed to add a dashboard to the folder
-		guardian, err := guardian.New(ctx, dash.Uid, dto.OrgId, dto.User)
+		guardian, err := guardian.NewByDashboard(ctx, dash, dto.OrgId, dto.User)
 		if err != nil {
 			return nil, err
 		}
@@ -143,12 +144,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
-	uid, err := dr.GetDashboardIdForSavePermissionCheck(ctx, *dash)
-	if err != nil {
-		return nil, err
-	}
-
-	guard, err := guardian.New(ctx, uid, dto.OrgId, dto.User)
+	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)
 	if err != nil {
 		return nil, err
 	}
@@ -195,26 +191,25 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
 }
 
-// GetDashboardIdForSavePermissionCheck return the dashboard id to be used for checking permission of dashboard
+// getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
 // It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func (dr *DashboardServiceImpl) GetDashboardIdForSavePermissionCheck(ctx context.Context, d models.Dashboard) (string, error) {
+func getGuardianForSavePermissionCheck(ctx context.Context, d *models.Dashboard, user *user.SignedInUser) (guardian.DashboardGuardian, error) {
 	newDashboard := d.Id == 0
 
 	if newDashboard {
 		// return parent folder UID if exists
-		if d.FolderId != 0 {
-			q := &models.GetDashboardQuery{
-				Id: d.FolderId,
-			}
-			if err := dr.GetDashboard(ctx, q); err != nil {
-				return "", err
-			}
-			return q.Result.Uid, nil
+		// if it's a new dashboard/folder check the parent folder permissions
+		guard, err := guardian.New(ctx, d.FolderId, d.OrgId, user)
+		if err != nil {
+			return nil, err
 		}
-		return "", nil
+		return guard, nil
 	}
-
-	return d.Uid, nil
+	guard, err := guardian.NewByDashboard(ctx, d, d.OrgId, user)
+	if err != nil {
+		return nil, err
+	}
+	return guard, nil
 }
 
 func validateDashboardRefreshInterval(dash *models.Dashboard) error {

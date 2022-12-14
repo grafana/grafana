@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -40,12 +39,8 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return dashboards.ErrFolderAccessDenied
 	}
-	folder, err := l.folderService.Get(ctx, &folder.GetFolderQuery{ID: &folderID, OrgID: user.OrgID, SignedInUser: user})
-	if err != nil {
-		return err
-	}
 
-	g, err := guardian.New(ctx, folder.UID, user.OrgID, user)
+	g, err := guardian.New(ctx, folderID, user.OrgID, user)
 	if err != nil {
 		return err
 	}
@@ -66,12 +61,7 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 		return nil
 	}
 
-	folder, err := l.folderService.Get(ctx, &folder.GetFolderQuery{ID: &folderID, OrgID: user.OrgID, SignedInUser: user})
-	if err != nil {
-		return err
-	}
-
-	g, err := guardian.New(ctx, folder.UID, user.OrgID, user)
+	g, err := guardian.New(ctx, folderID, user.OrgID, user)
 	if err != nil {
 		return err
 	}

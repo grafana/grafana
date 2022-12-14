@@ -105,7 +105,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		}
 
 		// the legacy folder ID is associated with the permissions
-		g, err := guardian.New(ctx, f.UID, f.OrgID, cmd.SignedInUser)
+		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id
 		return nil, err
 	}
 
-	g, err := guardian.New(ctx, dashFolder.UID, orgID, user)
+	g, err := guardian.New(ctx, dashFolder.ID, orgID, user)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (s *Service) getFolderByUID(ctx context.Context, user *user.SignedInUser, o
 		return nil, err
 	}
 
-	g, err := guardian.New(ctx, dashFolder.UID, orgID, user)
+	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser,
 		return nil, err
 	}
 
-	g, err := guardian.New(ctx, dashFolder.UID, orgID, user)
+	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +440,7 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return err
 	}
 
-	guard, err := guardian.New(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
+	guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
 		return err
 	}

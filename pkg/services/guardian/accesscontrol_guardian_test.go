@@ -628,7 +628,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 		dashboardSvc = fakeDashboardService
 	}
 
-	g, err := NewAccessControlDashboardGuardian(context.Background(), dash.Uid, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
+	g, err := NewAccessControlDashboardGuardian(context.Background(), dash.Id, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
 	require.NoError(t, err)
 	return g, dash
 }

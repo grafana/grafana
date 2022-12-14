@@ -18,7 +18,8 @@ import (
 var (
 	ErrGuardianPermissionExists    = errors.New("permission already exists")
 	ErrGuardianOverride            = errors.New("you can only override a permission to be higher")
-	ErrGuardianGetDashboardFailure = errutil.NewBase(errutil.StatusInternal, "guardian.get-dashboard-failure", errutil.WithPublicMessage("Failed to get dashboard"))
+	ErrGuardianGetDashboardFailure = errutil.NewBase(errutil.StatusInternal, "guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
+	ErrGuardinDashboardNotFound    = errutil.NewBase(errutil.StatusNotFound, "guardian.dashboardNotFound")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -56,11 +57,52 @@ type dashboardGuardianImpl struct {
 
 // New factory for creating a new dashboard guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var New = func(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+var New = func(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
-func newDashboardGuardian(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+// NewByUID factory for creating a new dashboard guardian instance
+// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
+var NewByUID = func(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	panic("no guardian factory implementation provided")
+}
+
+// NewByDashboard factory for creating a new dashboard guardian instance
+// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
+var NewByDashboard = func(ctx context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	panic("no guardian factory implementation provided")
+}
+
+// newDashboardGuardian creates a dashboard guardian by the provided dashId.
+func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+	if dashId != 0 {
+		q := &models.GetDashboardQuery{
+			Id:    dashId,
+			OrgId: orgId,
+		}
+
+		if err := dashSvc.GetDashboard(ctx, q); err != nil {
+			if errors.Is(err, dashboards.ErrDashboardNotFound) {
+				return nil, ErrGuardinDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
+			}
+			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
+		}
+	}
+
+	return &dashboardGuardianImpl{
+		user:             user,
+		dashId:           dashId,
+		orgId:            orgId,
+		log:              log.New("dashboard.permissions"),
+		ctx:              ctx,
+		store:            store,
+		dashboardService: dashSvc,
+		teamService:      teamSvc,
+	}, nil
+}
+
+// newDashboardGuardianByUID creates a dashboard guardian by the provided dashUID.
+func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	dashID := int64(0)
 	if dashUID != "" {
 		q := &models.GetDashboardQuery{
@@ -69,6 +111,9 @@ func newDashboardGuardian(ctx context.Context, dashUID string, orgId int64, user
 		}
 
 		if err := dashSvc.GetDashboard(ctx, q); err != nil {
+			if errors.Is(err, dashboards.ErrDashboardNotFound) {
+				return nil, ErrGuardinDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
+			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
 		dashID = q.Result.Id
@@ -77,6 +122,22 @@ func newDashboardGuardian(ctx context.Context, dashUID string, orgId int64, user
 	return &dashboardGuardianImpl{
 		user:             user,
 		dashId:           dashID,
+		orgId:            orgId,
+		log:              log.New("dashboard.permissions"),
+		ctx:              ctx,
+		store:            store,
+		dashboardService: dashSvc,
+		teamService:      teamSvc,
+	}, nil
+}
+
+// newDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
+// This constructor should be preferred over the other two constructors if the dashboard in available
+// since it avoid querying the database for fetching the dashboard.
+func newDashboardGuardianByDashboard(ctx context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+	return &dashboardGuardianImpl{
+		user:             user,
+		dashId:           dash.Id,
 		orgId:            orgId,
 		log:              log.New("dashboard.permissions"),
 		ctx:              ctx,
@@ -334,6 +395,7 @@ func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 // nolint:unused
 type FakeDashboardGuardian struct {
+	DashID                           int64
 	DashUID                          string
 	OrgId                            int64
 	User                             *user.SignedInUser
@@ -394,9 +456,24 @@ func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 // nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
-	New = func(_ context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	New = func(_ context.Context, dashID int64, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+		mock.OrgId = orgId
+		mock.DashID = dashID
+		mock.User = user
+		return mock, nil
+	}
+
+	NewByUID = func(_ context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 		mock.OrgId = orgId
 		mock.DashUID = dashUID
+		mock.User = user
+		return mock, nil
+	}
+
+	NewByDashboard = func(_ context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+		mock.OrgId = orgId
+		mock.DashUID = dash.Uid
+		mock.DashID = dash.Id
 		mock.User = user
 		return mock, nil
 	}

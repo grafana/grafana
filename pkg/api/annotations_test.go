@@ -158,13 +158,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := org.RoleViewer
 			dashSvc := dashboards.NewFakeDashboardService(t)
-			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-				q := args.Get(1).(*models.GetDashboardQuery)
-				q.Result = &models.Dashboard{
-					Id:  q.Id,
-					Uid: q.Uid,
-				}
-			}).Return(nil)
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, dashSvc, func(sc *scenarioContext) {
 					setUpACL()
@@ -198,13 +191,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := org.RoleEditor
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				dashSvc := dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
-						Id:  q.Id,
-						Uid: q.Uid,
-					}
-				}).Return(nil)
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, dashSvc, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()

@@ -327,12 +327,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
 	if dashboardID != 0 {
-		dashUID, err := hs.getDashboardUID(c.Req.Context(), dashboardID, c.OrgID)
-		if err != nil {
-			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get dashboard", err)
-		}
-
-		guardian, err := guardian.New(c.Req.Context(), dashUID, c.OrgID, c.SignedInUser)
+		guardian, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.Err(err)
 		}

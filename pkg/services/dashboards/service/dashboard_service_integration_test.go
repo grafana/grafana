@@ -128,7 +128,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					assert.Equal(t, sc.otherSavedFolder.Uid, sc.dashboardGuardianMock.DashUID)
+					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashID)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})

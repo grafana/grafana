@@ -49,12 +49,11 @@ func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFu
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardQuery)
 			q.Result = &models.Dashboard{
-				Id:    q.Id,
-				Uid:   q.Uid,
-				OrgId: q.OrgId,
+				Id:  q.Id,
+				Uid: q.Uid,
 			}
 		}).Return(nil)
-		guard, err := newDashboardGuardian(context.Background(), dashboardUID, orgID, user, store, fakeDashboardService, &teamtest.FakeService{})
+		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, fakeDashboardService, &teamtest.FakeService{})
 		require.NoError(t, err)
 
 		sc := &scenarioContext{
@@ -81,12 +80,11 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardQuery)
 			q.Result = &models.Dashboard{
-				Id:    q.Id,
-				Uid:   q.Uid,
-				OrgId: q.OrgId,
+				Id:  q.Id,
+				Uid: q.Uid,
 			}
 		}).Return(nil)
-		guard, err := newDashboardGuardian(context.Background(), dashboardUID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 		require.NoError(t, err)
 
 		sc := &scenarioContext{
@@ -129,7 +127,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		}).Return(nil)
 
 		sc.permissionScenario = desc
-		g, err := newDashboardGuardian(context.Background(), dashboardUID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
+		g, err := newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
 		require.NoError(t, err)
 		sc.g = g
 

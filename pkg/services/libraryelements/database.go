@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
@@ -139,7 +140,9 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
+		spew.Dump(">>>>> requireEditPermissionsOnFolder", cmd.FolderID)
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
+			spew.Dump("<<<< requireEditPermissionsOnFolder", err)
 			return err
 		}
 		if _, err := session.Insert(&element); err != nil {

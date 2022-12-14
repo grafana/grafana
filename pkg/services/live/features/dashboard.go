@@ -73,7 +73,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *user.SignedInU
 		}
 
 		dash := query.Result
-		guard, err := guardian.New(ctx, dash.Uid, user.OrgID, user)
+		guard, err := guardian.NewByDashboard(ctx, dash, user.OrgID, user)
 		if err != nil {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, err
 		}
@@ -122,7 +122,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *user.SignedInUse
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
-		guard, err := guardian.New(ctx, query.Result.Uid, user.OrgID, user)
+		guard, err := guardian.NewByDashboard(ctx, query.Result, user.OrgID, user)
 		if err != nil {
 			logger.Error("Failed to create guardian", "err", err)
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
