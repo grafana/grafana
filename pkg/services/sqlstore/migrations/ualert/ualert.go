@@ -898,7 +898,12 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)
 	}
 	for _, orgID := range orgs {
-		_, err := sess.Exec("INSERT INTO alert_configuration_history SELECT * FROM alert_configuration WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)", orgID, orgID)
+		_, err := sess.Exec(`
+			INSERT INTO alert_configuration_history (org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, default)
+			SELECT org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, default
+			FROM alert_configuration
+			WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)`,
+			orgID, orgID)
 		if err != nil {
 			return fmt.Errorf("failed to move old configurations to history table: %w", err)
 		}
