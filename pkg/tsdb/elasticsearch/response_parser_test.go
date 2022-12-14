@@ -853,7 +853,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			require.Equal(t, frame.Fields[2].Name, "Count")
 			require.Equal(t, frame.Fields[2].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
+			require.Nil(t, frame.Fields[1].Config)
 		})
 
 		t.Run("Multiple metrics of same type", func(t *testing.T) {
@@ -900,7 +900,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			require.Equal(t, frame.Fields[2].Name, "Average test2")
 			require.Equal(t, frame.Fields[2].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
+			require.Nil(t, frame.Fields[1].Config)
 		})
 
 		t.Run("With bucket_script", func(t *testing.T) {
@@ -1057,7 +1057,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[3].Len(), 2)
 			require.Equal(t, frame.Fields[4].Name, "params.var1 * params.var2 * 2")
 			require.Equal(t, frame.Fields[4].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
+			require.Nil(t, frame.Fields[1].Config)
 		})
 	})
 

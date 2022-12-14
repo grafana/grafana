@@ -10,7 +10,9 @@ import (
 	"mime/multipart"
 	"os"
 	"strconv"
+	"strings"
 
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -23,6 +25,12 @@ import (
 
 const (
 	pushoverMaxFileSize = 1 << 21 // 2MB
+	// https://pushover.net/api#limits - 250 characters or runes.
+	pushoverMaxTitleLenRunes = 250
+	// https://pushover.net/api#limits - 1024 characters or runes.
+	pushoverMaxMessageLenRunes = 1024
+	// https://pushover.net/api#limits - 512 characters or runes.
+	pushoverMaxURLLenRunes = 512
 )
 
 var (
@@ -184,6 +192,11 @@ func (pn *PushoverNotifier) SendResolved() bool {
 }
 
 func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Alert) (map[string]string, bytes.Buffer, error) {
+	key, err := notify.ExtractGroupKey(ctx)
+	if err != nil {
+		return nil, bytes.Buffer{}, err
+	}
+
 	b := bytes.Buffer{}
 	w := multipart.NewWriter(&b)
 
@@ -204,6 +217,27 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	if err := w.WriteField("token", pn.settings.apiToken); err != nil {
 		return nil, b, fmt.Errorf("failed to write the token: %w", err)
+	}
+
+	title, truncated := TruncateInRunes(tmpl(pn.settings.title), pushoverMaxTitleLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated title", "incident", key, "max_runes", pushoverMaxTitleLenRunes)
+	}
+	message := tmpl(pn.settings.message)
+	message, truncated = TruncateInRunes(message, pushoverMaxMessageLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated message", "incident", key, "max_runes", pushoverMaxMessageLenRunes)
+	}
+	message = strings.TrimSpace(message)
+	if message == "" {
+		// Pushover rejects empty messages.
+		message = "(no details)"
+	}
+
+	supplementaryURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
+	supplementaryURL, truncated = TruncateInRunes(supplementaryURL, pushoverMaxURLLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated URL", "incident", key, "max_runes", pushoverMaxURLLenRunes)
 	}
 
 	status := types.Alerts(as...).Status()
@@ -231,12 +265,11 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		}
 	}
 
-	if err := w.WriteField("title", tmpl(pn.settings.title)); err != nil {
+	if err := w.WriteField("title", title); err != nil {
 		return nil, b, fmt.Errorf("failed to write the title: %w", err)
 	}
 
-	ruleURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
-	if err := w.WriteField("url", ruleURL); err != nil {
+	if err := w.WriteField("url", supplementaryURL); err != nil {
 		return nil, b, fmt.Errorf("failed to write the URL: %w", err)
 	}
 
@@ -244,7 +277,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		return nil, b, fmt.Errorf("failed to write the URL title: %w", err)
 	}
 
-	if err := w.WriteField("message", tmpl(pn.settings.message)); err != nil {
+	if err := w.WriteField("message", message); err != nil {
 		return nil, b, fmt.Errorf("failed write the message: %w", err)
 	}
 

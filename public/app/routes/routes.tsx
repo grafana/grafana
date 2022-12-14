@@ -360,6 +360,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/storage/k8s',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "K8SStoragePage" */ 'app/features/storage/k8s/K8SPage')
+      ),
+    },
+    {
+      path: '/admin/storage/export',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
+      ),
+    },
+    {
       path: '/admin/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(

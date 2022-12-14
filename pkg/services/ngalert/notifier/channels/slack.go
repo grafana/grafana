@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -55,6 +56,9 @@ var (
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 type sendFunc func(ctx context.Context, req *http.Request, logger log.Logger) (string, error)
+
+// https://api.slack.com/reference/messaging/attachments#legacy_fields - 1024, no units given, assuming runes or characters.
+const slackMaxTitleLenRunes = 1024
 
 // SlackNotifier is responsible for sending
 // alert notification to Slack.
@@ -357,6 +361,15 @@ func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
+	title, truncated := TruncateInRunes(tmpl(sn.settings.Title), slackMaxTitleLenRunes)
+	if truncated {
+		key, err := notify.ExtractGroupKey(ctx)
+		if err != nil {
+			return nil, err
+		}
+		sn.log.Warn("Truncated title", "key", key, "max_runes", slackMaxTitleLenRunes)
+	}
+
 	req := &slackMessage{
 		Channel:   tmpl(sn.settings.Recipient),
 		Username:  tmpl(sn.settings.Username),
@@ -367,8 +380,8 @@ func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types
 		Attachments: []attachment{
 			{
 				Color:      getAlertStatusColor(types.Alerts(alerts...).Status()),
-				Title:      tmpl(sn.settings.Title),
-				Fallback:   tmpl(sn.settings.Title),
+				Title:      title,
+				Fallback:   title,
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),

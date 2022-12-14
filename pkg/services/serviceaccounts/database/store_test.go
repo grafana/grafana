@@ -121,7 +121,7 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
 	require.NoError(t, err)
-	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore, userSvc, orgService)
+	return db, ProvideServiceAccountsStore(db.Cfg, db, apiKeyService, kvStore, userSvc, orgService)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
@@ -174,9 +174,9 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.sqlStore.Cfg.AutoAssignOrg = true
-			store.sqlStore.Cfg.AutoAssignOrgId = 1
-			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			store.cfg.AutoAssignOrg = true
+			store.cfg.AutoAssignOrgId = 1
+			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 			key := tests.SetupApiKey(t, db, c.key)
@@ -186,11 +186,22 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-					key.OrgId: {
-						"serviceaccounts:read": {"serviceaccounts:id:*"},
+				q := serviceaccounts.SearchOrgServiceAccountsQuery{
+					OrgID: key.OrgId,
+					Query: "",
+					Page:  1,
+					Limit: 50,
+					SignedInUser: &user.SignedInUser{
+						UserID: 1,
+						OrgID:  1,
+						Permissions: map[int64]map[string][]string{
+							key.OrgId: {
+								"serviceaccounts:read": {"serviceaccounts:id:*"},
+							},
+						},
 					},
-				}})
+				}
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
 				require.NoError(t, err)
 				require.Equal(t, int64(1), serviceAccounts.TotalCount)
 				saMigrated := serviceAccounts.ServiceAccounts[0]
@@ -251,9 +262,9 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.sqlStore.Cfg.AutoAssignOrg = true
-			store.sqlStore.Cfg.AutoAssignOrgId = 1
-			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			store.cfg.AutoAssignOrg = true
+			store.cfg.AutoAssignOrgId = 1
+			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
@@ -267,11 +278,22 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), c.orgId, "", "all", 1, 50, &user.SignedInUser{UserID: 101, OrgID: c.orgId, Permissions: map[int64]map[string][]string{
-					c.orgId: {
-						"serviceaccounts:read": {"serviceaccounts:id:*"},
+				q := serviceaccounts.SearchOrgServiceAccountsQuery{
+					OrgID: c.orgId,
+					Query: "",
+					Page:  1,
+					Limit: 50,
+					SignedInUser: &user.SignedInUser{
+						UserID: 1,
+						OrgID:  1,
+						Permissions: map[int64]map[string][]string{
+							c.orgId: {
+								"serviceaccounts:read": {"serviceaccounts:id:*"},
+							},
+						},
 					},
-				}})
+				}
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
 				require.NoError(t, err)
 				require.Equal(t, c.expectedServiceAccouts, serviceAccounts.TotalCount)
 				if c.expectedServiceAccouts > 0 {
@@ -313,9 +335,9 @@ func TestStore_RevertApiKey(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
-			store.sqlStore.Cfg.AutoAssignOrg = true
-			store.sqlStore.Cfg.AutoAssignOrgId = 1
-			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			store.cfg.AutoAssignOrg = true
+			store.cfg.AutoAssignOrgId = 1
+			store.cfg.AutoAssignOrgRole = "Viewer"
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 
@@ -327,11 +349,22 @@ func TestStore_RevertApiKey(t *testing.T) {
 			if c.forceMismatchServiceAccount {
 				saId = rand.Int63()
 			} else {
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-					key.OrgId: {
-						"serviceaccounts:read": {"serviceaccounts:id:*"},
+				q := serviceaccounts.SearchOrgServiceAccountsQuery{
+					OrgID: key.OrgId,
+					Query: "",
+					Page:  1,
+					Limit: 50,
+					SignedInUser: &user.SignedInUser{
+						UserID: 1,
+						OrgID:  1,
+						Permissions: map[int64]map[string][]string{
+							key.OrgId: {
+								"serviceaccounts:read": {"serviceaccounts:id:*"},
+							},
+						},
 					},
-				}})
+				}
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
 				require.NoError(t, err)
 				saId = serviceAccounts.ServiceAccounts[0].Id
 			}
@@ -342,12 +375,22 @@ func TestStore_RevertApiKey(t *testing.T) {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
 				require.NoError(t, err)
-
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-					key.OrgId: {
-						"serviceaccounts:read": {"serviceaccounts:id:*"},
+				q := serviceaccounts.SearchOrgServiceAccountsQuery{
+					OrgID: key.OrgId,
+					Query: "",
+					Page:  1,
+					Limit: 50,
+					SignedInUser: &user.SignedInUser{
+						UserID: 1,
+						OrgID:  1,
+						Permissions: map[int64]map[string][]string{
+							key.OrgId: {
+								"serviceaccounts:read": {"serviceaccounts:id:*"},
+							},
+						},
 					},
-				}})
+				}
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
 				require.NoError(t, err)
 				// Service account should be deleted
 				require.Equal(t, int64(0), serviceAccounts.TotalCount)

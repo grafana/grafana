@@ -115,6 +115,10 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagK8s
+	// Explore native k8s integrations
+	FlagK8s = "k8s"
+
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
 	FlagDashboardsFromStorage = "dashboardsFromStorage"
@@ -206,10 +210,6 @@ const (
 	// FlagEntityStore
 	// SQL-based entity store (requires storage flag also)
 	FlagEntityStore = "entityStore"
-
-	// FlagTraceqlEditor
-	// Show the TraceQL editor in the explore page
-	FlagTraceqlEditor = "traceqlEditor"
 
 	// FlagFlameGraph
 	// Show the flame graph

@@ -155,6 +155,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "k8s",
+			Description:     "Explore native k8s integrations",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
@@ -286,11 +292,6 @@ var (
 			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "traceqlEditor",
-			Description: "Show the TraceQL editor in the explore page",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "flameGraph",

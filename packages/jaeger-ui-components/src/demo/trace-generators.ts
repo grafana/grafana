@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import Chance from 'chance';
+import { TraceSpanData, TraceProcess } from 'src/types/trace';
 
 import { getSpanId } from '../selectors/span';
 
@@ -30,12 +31,16 @@ export const OPERATIONS_LIST = [
   'MongoDB::update',
 ];
 
-function setupParentSpan(spans, parentSpanValues) {
+type Process = TraceProcess & {
+  processID: string;
+};
+
+function setupParentSpan(spans: TraceSpanData[], parentSpanValues: TraceSpanData) {
   Object.assign(spans[0], parentSpanValues);
   return spans;
 }
 
-function getParentSpanId(span, levels) {
+function getParentSpanId(span: TraceSpanData, levels: string[][]) {
   let nestingLevel = chance.integer({ min: 1, max: levels.length });
 
   // pick the correct nesting level if allocated by the levels calculation
@@ -49,10 +54,10 @@ function getParentSpanId(span, levels) {
 }
 
 /* this simulates the hierarchy created by CHILD_OF tags */
-function attachReferences(spans, depth, spansPerLevel) {
-  let levels = [[getSpanId(spans[0])]];
+function attachReferences(spans: TraceSpanData[], depth: number, spansPerLevel: null) {
+  let levels: string[][] = [[getSpanId(spans[0])]];
 
-  const duplicateLevelFilter = (currentLevels) => (span) =>
+  const duplicateLevelFilter = (currentLevels: string[][]) => (span: TraceSpanData) =>
     !currentLevels.find((level) => level.indexOf(span.spanID) >= 0);
 
   while (levels.length < depth) {
@@ -60,6 +65,7 @@ function attachReferences(spans, depth, spansPerLevel) {
     if (remainingSpans.length <= 0) {
       break;
     }
+
     const newLevel = chance.pickset(remainingSpans, spansPerLevel || chance.integer({ min: 4, max: 8 })).map(getSpanId);
     levels.push(newLevel);
   }
@@ -99,10 +105,10 @@ export default chance.mixin({
     spansPerLevel = null,
   }) {
     const traceID = chance.guid();
-    const duration = chance.integer({ min: 10000, max: 5000000 });
+    const duration: number = chance.integer({ min: 10000, max: 5000000 });
     const timestamp = (new Date().getTime() - chance.integer({ min: 0, max: 1000 }) * 1000) * 1000;
 
-    const processArray = chance.processes({ numberOfProcesses });
+    const processArray: Process[] = chance.processes({ numberOfProcesses });
     const processes = processArray.reduce((pMap, p) => ({ ...pMap, [p.processID]: p }), {});
 
     let spans = chance.n(chance.span, numberOfSpans, {
@@ -113,7 +119,8 @@ export default chance.mixin({
     });
     spans = attachReferences(spans, maxDepth, spansPerLevel);
     if (spans.length > 1) {
-      spans = setupParentSpan(spans, { startTime: timestamp, duration });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      spans = setupParentSpan(spans, { startTime: timestamp, duration } as TraceSpanData);
     }
 
     return {
@@ -132,10 +139,14 @@ export default chance.mixin({
   span({
     traceID = chance.guid(),
     processes = {},
-    traceStartTime = chance.timestamp() * 1000 * 1000,
-    traceEndTime = traceStartTime + 100000,
+    traceStartTime = 0,
+    traceEndTime = 0,
     operations = OPERATIONS_LIST,
   }) {
+    // Set default values for trace start/end time.
+    traceStartTime = traceStartTime || chance.timestamp() * 1000 * 1000;
+    traceEndTime = traceEndTime || traceStartTime + 100000;
+
     const startTime = chance.integer({
       min: traceStartTime,
       max: traceEndTime,
