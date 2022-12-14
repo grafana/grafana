@@ -210,14 +210,11 @@ async function getParserCompletions(
 async function getAfterSelectorCompletions(
   logQuery: string,
   afterPipe: boolean,
-  parser: string | undefined,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(logQuery);
 
-  const completions: Completion[] = parser
-    ? []
-    : await getParserCompletions(afterPipe, hasJSON, hasLogfmt, extractedLabelKeys);
+  const completions: Completion[] = await getParserCompletions(afterPipe, hasJSON, hasLogfmt, extractedLabelKeys);
 
   const prefix = afterPipe ? ' ' : '| ';
 
@@ -310,7 +307,7 @@ export async function getCompletions(
         dataProvider
       );
     case 'AFTER_SELECTOR':
-      return getAfterSelectorCompletions(situation.logQuery, situation.afterPipe, situation.parser, dataProvider);
+      return getAfterSelectorCompletions(situation.logQuery, situation.afterPipe, dataProvider);
     case 'AFTER_UNWRAP':
       return getAfterUnwrapCompletions(situation.logQuery, dataProvider);
     case 'IN_AGGREGATION':

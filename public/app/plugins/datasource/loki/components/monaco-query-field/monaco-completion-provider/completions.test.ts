@@ -337,40 +337,6 @@ describe('getCompletions', () => {
     }
   );
 
-  test('Returns completion options when the situation is AFTER_SELECTOR with no parser and no line filter', async () => {
-    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
-      extractedLabelKeys,
-      hasJSON: false,
-      hasLogfmt: true,
-    });
-    const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe: false };
-    const completions = await getCompletions(situation, completionProvider);
-
-    const expected = buildAfterSelectorCompletions('logfmt', 'json', false);
-    expect(completions).toEqual(expected);
-  });
-
-  test('Returns completion options when the situation is AFTER_SELECTOR with parser and no line filter', async () => {
-    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
-      extractedLabelKeys,
-      hasJSON: false,
-      hasLogfmt: true,
-    });
-    const situation: Situation = {
-      type: 'AFTER_SELECTOR',
-      logQuery: '',
-      afterPipe: false,
-      parser: 'logfmt',
-    };
-    const completions = await getCompletions(situation, completionProvider);
-
-    // Exclude parsers because we already have one
-    const expected = buildAfterSelectorCompletions('logfmt', 'json', false).filter(
-      (completion) => completion.type !== 'PARSER'
-    );
-    expect(completions).toEqual(expected);
-  });
-
   test('Returns completion options when the situation is IN_AGGREGATION', async () => {
     const situation: Situation = { type: 'IN_AGGREGATION' };
     const completions = await getCompletions(situation, completionProvider);
