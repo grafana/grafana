@@ -86,9 +86,9 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorLayer({ source });
+    const hasArrows = config.arrow == 1 || config.arrow == -1;
 
-    if (!style.fields) {
-      // TODO apply arrow styling for case where size and color are fixed
+    if (!style.fields && !hasArrows) {
       // Set a global style
       const styleBase = routeStyle(style.base);
       if (style.config.size && style.config.size.fixed) {
@@ -230,7 +230,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         }
 
         for (const frame of data.series) {
-          if (style.fields) {
+          if (style.fields || hasArrows) {
             style.dims = getStyleDimension(frame, style, theme);
           }
 
