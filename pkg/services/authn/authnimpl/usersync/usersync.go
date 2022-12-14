@@ -3,38 +3,30 @@ package usersync
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type postSyncHookFn func(ctx context.Context, identity *authn.Identity) error
 
-type Service struct {
-	postSyncHooks   []postSyncHookFn
+// TODO: move to user package
+type UserSync struct {
 	userService     user.Service
 	authInfoService login.AuthInfoService
 	quotaService    quota.Service
-	accessControl   accesscontrol.Service
-	orgService      org.Service
 	log             log.Logger
 }
 
-// RegisterPostSyncHook registers a hook that is called after a successful user sync.
-func (s *Service) RegisterPostSyncHook(ctx context.Context, fn postSyncHookFn) error {
-	s.postSyncHooks = append(s.postSyncHooks, fn)
-	return nil
-}
-
 // SyncUser syncs a user with the database
-func (s *Service) SyncUser(ctx context.Context, clientParams *authn.ClientParams, id *authn.Identity) error {
+func (s *UserSync) SyncUser(ctx context.Context, clientParams *authn.ClientParams, id *authn.Identity) error {
 	if !clientParams.SyncUser {
+		s.log.Debug("Not syncing user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil
 	}
 
@@ -64,40 +56,46 @@ func (s *Service) SyncUser(ctx context.Context, clientParams *authn.ClientParams
 		return errUpdate
 	}
 
+	syncUserToIdentity(usr, id)
+
 	// persist latest auth info token
 	if errAuthInfo := s.updateAuthInfo(ctx, id); errAuthInfo != nil {
 		return errAuthInfo
 	}
 
-	syncUserToIdentity(usr, id)
-
 	return nil
 }
 
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+	id.ID = fmt.Sprintf("user:%d", usr.ID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
+	id.IsGrafanaAdmin = &usr.IsAdmin
 }
 
-// FIXME: UserID should come from the identity namespaced ID
-func (s *Service) updateAuthInfo(ctx context.Context, id *authn.Identity) error {
+func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error {
 	if id.AuthModule != "" && id.OAuthToken != nil && id.AuthID != "" {
 		return nil
+	}
+
+	namespace, userID := id.NamespacedID()
+	if namespace != "user" { // FIXME: constant namespace
+		return nil // FIXME: we should return an error here
 	}
 
 	updateCmd := &models.UpdateAuthInfoCommand{
 		AuthModule: id.AuthModule,
 		AuthId:     id.AuthID,
-		UserId:     *id.LookUpParams.UserID,
+		UserId:     userID,
 		OAuthToken: id.OAuthToken,
 	}
 
-	s.log.Debug("Updating user_auth info", "user_id", id.LookUpParams.UserID)
+	s.log.Debug("Updating user_auth info", "user_id", userID)
 	return s.authInfoService.UpdateAuthInfo(ctx, updateCmd)
 }
 
-func (s *Service) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity) error {
+func (s *UserSync) updateUserAttributes(ctx context.Context, clientParams *authn.ClientParams, usr *user.User, id *authn.Identity) error {
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
 		UserID: usr.ID,
@@ -122,7 +120,15 @@ func (s *Service) updateUserAttributes(ctx context.Context, usr *user.User, id *
 		needsUpdate = true
 	}
 
-	if usr.IsDisabled {
+	if needsUpdate {
+		s.log.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
+		if err := s.userService.Update(ctx, updateCmd); err != nil {
+			return err
+		}
+	}
+
+	if usr.IsDisabled && clientParams.EnableDisabledUsers {
+		usr.IsDisabled = false
 		if errDisableUser := s.userService.Disable(ctx,
 			&user.DisableUserCommand{
 				UserID: usr.ID, IsDisabled: false}); errDisableUser != nil {
@@ -130,15 +136,18 @@ func (s *Service) updateUserAttributes(ctx context.Context, usr *user.User, id *
 		}
 	}
 
-	if !needsUpdate {
-		return nil
+	// Sync isGrafanaAdmin permission
+	if id.IsGrafanaAdmin != nil && *id.IsGrafanaAdmin != usr.IsAdmin {
+		usr.IsAdmin = *id.IsGrafanaAdmin
+		if errPerms := s.userService.UpdatePermissions(ctx, usr.ID, *id.IsGrafanaAdmin); errPerms != nil {
+			return errPerms
+		}
 	}
 
-	s.log.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
-	return s.userService.Update(ctx, updateCmd)
+	return nil
 }
 
-func (s *Service) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
+func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
 	// TODO: add quota check
 	usr, errCreateUser := s.userService.Create(ctx, &user.CreateUserCommand{
 		Login:        id.Login,
@@ -167,7 +176,7 @@ func (s *Service) createUser(ctx context.Context, id *authn.Identity) (*user.Use
 // Does user exist in the database?
 // Check first authinfo table, then user table
 // return user id if found, 0 if not found
-func (s *Service) UserInDB(ctx context.Context,
+func (s *UserSync) UserInDB(ctx context.Context,
 	authID *string,
 	authModule *string,
 	params models.UserLookupParams) (*user.User, error) {
@@ -198,7 +207,7 @@ func (s *Service) UserInDB(ctx context.Context,
 	return s.LookupByOneOf(ctx, &params)
 }
 
-func (s *Service) LookupByOneOf(ctx context.Context, params *models.UserLookupParams) (*user.User, error) {
+func (s *UserSync) LookupByOneOf(ctx context.Context, params *models.UserLookupParams) (*user.User, error) {
 	var usr *user.User
 	var err error
 

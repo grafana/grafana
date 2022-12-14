@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
+	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,8 +29,10 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 	}
 
 	// FIXME (jguer): move to User package
-	userSyncService := &usersync.Service{}
+	userSyncService := &sync.UserSync{}
+	orgUserSyncService := &sync.OrgSync{}
 	s.RegisterPostAuthHook(userSyncService.SyncUser)
+	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
 
 	return s
 }

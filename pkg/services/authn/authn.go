@@ -2,6 +2,7 @@ package authn
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -15,8 +16,9 @@ const (
 )
 
 type ClientParams struct {
-	SyncUser    bool
-	AllowSignUp bool
+	SyncUser            bool
+	AllowSignUp         bool
+	EnableDisabledUsers bool
 }
 
 type PostAuthHookFn func(ctx context.Context, clientParams *ClientParams, identity *Identity) error
@@ -42,17 +44,31 @@ type Identity struct {
 	IsAnonymous bool
 	OrgRoles    map[int64]org.RoleType
 
-	Login        string
-	Name         string
-	Email        string
-	AuthModule   string // AuthModule is the name of the external system
-	AuthID       string // AuthId is the unique identifier for the user in the external system
-	OAuthToken   *oauth2.Token
-	LookUpParams models.UserLookupParams
+	ID             string
+	Login          string
+	Name           string
+	Email          string
+	IsGrafanaAdmin *bool
+	AuthModule     string // AuthModule is the name of the external system
+	AuthID         string // AuthId is the unique identifier for the user in the external system
+	OAuthToken     *oauth2.Token
+	LookUpParams   models.UserLookupParams
 }
 
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
+}
+
+// TODO: improve and safeguard
+func (i *Identity) NamespacedID() (string, int64) {
+	var (
+		id        int64
+		namespace string
+	)
+
+	fmt.Sscanf(i.ID, "%s:%d", &namespace, &id)
+
+	return namespace, id
 }
 
 func (i *Identity) SignedInUser() *user.SignedInUser {
