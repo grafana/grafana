@@ -80,6 +80,18 @@ export const dbClustersStub: DBCluster[] = [
     finishedSteps: 5,
     totalSteps: 10,
   },
+  {
+    kubernetesClusterName: 'Kubernetes Cluster 1',
+    clusterName: 'dbcluster5',
+    databaseType: Databases.mysql,
+    clusterSize: 3,
+    memory: 1024,
+    cpu: 1,
+    disk: 25,
+    status: DBClusterStatus.suspended,
+    finishedSteps: 5,
+    totalSteps: 10,
+  },
 ];
 
 export const xtraDBClusterConnectionStub: DBClusterConnection = {
