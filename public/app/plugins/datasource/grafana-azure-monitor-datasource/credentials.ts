@@ -44,7 +44,10 @@ function getDefaultAzureCloud(): string {
   }
 }
 
-export function getAzurePortalUrl(azureCloud: string): string {
+export function getAzurePortalUrl(
+  azureCloud: string,
+  options: AzureDataSourceSettings | AzureDataSourceInstanceSettings
+): string {
   switch (azureCloud) {
     case 'azuremonitor':
       return 'https://portal.azure.com';
@@ -54,6 +57,11 @@ export function getAzurePortalUrl(azureCloud: string): string {
       return 'https://portal.azure.us';
     case 'germanyazuremonitor':
       return 'https://portal.microsoftazure.de';
+    case 'customizedazuremonitor':
+      if (!options.jsonData.customizedCloudSettings?.customizedAzurePortalUrl) {
+        throw new Error('The customized Azure portal URL not provided.');
+      }
+      return options.jsonData.customizedCloudSettings.customizedAzurePortalUrl;
     default:
       throw new Error('The cloud not supported.');
   }

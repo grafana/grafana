@@ -53,6 +53,10 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
 
 export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
 
+export interface AzureMonitorCustomizedCloudSettings {
+  customizedAzurePortalUrl: string;
+}
+
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   cloudName: string;
   azureAuthType?: AzureAuthType;
@@ -76,6 +80,9 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // App Insights
   appInsightsAppId?: string;
+
+  // Customized cloud settings
+  customizedCloudSettings?: AzureMonitorCustomizedCloudSettings;
 }
 
 export interface AzureDataSourceSecureJsonData {

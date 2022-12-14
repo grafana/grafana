@@ -28,14 +28,16 @@ type AzRoute struct {
 }
 
 type AzureMonitorSettings struct {
-	SubscriptionId               string `json:"subscriptionId"`
-	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
-	AppInsightsAppId             string `json:"appInsightsAppId"`
+	SubscriptionId               string                              `json:"subscriptionId"`
+	LogAnalyticsDefaultWorkspace string                              `json:"logAnalyticsDefaultWorkspace"`
+	AppInsightsAppId             string                              `json:"appInsightsAppId"`
+	CustomizedCloudSettings      AzureMonitorCustomizedCloudSettings `json:"customizedCloudSettings"`
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
 type AzureMonitorCustomizedCloudSettings struct {
-	CustomizedRoutes map[string]AzRoute `json:"customizedRoutes"`
+	CustomizedRoutes         map[string]AzRoute `json:"customizedRoutes"`
+	CustomizedAzurePortalUrl string             `json:"customizedAzurePortalUrl"`
 }
 
 type DatasourceService struct {

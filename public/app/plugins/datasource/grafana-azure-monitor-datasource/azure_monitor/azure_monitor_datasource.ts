@@ -58,7 +58,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     const cloud = getAzureCloud(instanceSettings);
     this.resourcePath = routeNames.azureMonitor;
-    this.azurePortalUrl = getAzurePortalUrl(cloud);
+    this.azurePortalUrl = getAzurePortalUrl(cloud, instanceSettings);
   }
 
   isConfigured(): boolean {

@@ -55,7 +55,7 @@ func TestNewInstanceSettings(t *testing.T) {
 		{
 			name: "creates an instance for customized cloud",
 			settings: backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
+				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedCloudSettings":{"customizedRoutes":{"Route":{"URL":"url"}},"customizedAzurePortalUrl":"Portal"},"azureAuthType":"clientsecret"}`),
 				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
 				ID:                      50,
 			},
@@ -65,7 +65,16 @@ func TestNewInstanceSettings(t *testing.T) {
 					AzureCloud:   "AzureCustomizedCloud",
 					ClientSecret: "secret",
 				},
-				Settings: types.AzureMonitorSettings{},
+				Settings: types.AzureMonitorSettings{
+					CustomizedCloudSettings: types.AzureMonitorCustomizedCloudSettings{
+						CustomizedRoutes: map[string]types.AzRoute{
+							"Route": {
+								URL: "url",
+							},
+						},
+						CustomizedAzurePortalUrl: "Portal",
+					},
+				},
 				Routes: map[string]types.AzRoute{
 					"Route": {
 						URL: "url",
@@ -74,10 +83,13 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: map[string]interface{}{
 					"azureAuthType": "clientsecret",
 					"cloudName":     "customizedazuremonitor",
-					"customizedRoutes": map[string]interface{}{
-						"Route": map[string]interface{}{
-							"URL": "url",
+					"customizedCloudSettings": map[string]interface{}{
+						"customizedRoutes": map[string]interface{}{
+							"Route": map[string]interface{}{
+								"URL": "url",
+							},
 						},
+						"customizedAzurePortalUrl": "Portal",
 					},
 				},
 				DatasourceID:            50,

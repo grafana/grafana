@@ -52,7 +52,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
     const cloud = getAzureCloud(instanceSettings);
-    this.azurePortalUrl = getAzurePortalUrl(cloud);
+    this.azurePortalUrl = getAzurePortalUrl(cloud, instanceSettings);
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
   }

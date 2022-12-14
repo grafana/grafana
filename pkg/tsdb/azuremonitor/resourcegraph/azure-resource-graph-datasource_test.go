@@ -141,20 +141,41 @@ func TestAddConfigData(t *testing.T) {
 }
 
 func TestGetAzurePortalUrl(t *testing.T) {
-	clouds := []string{azsettings.AzurePublic, azsettings.AzureChina, azsettings.AzureUSGovernment, azsettings.AzureGermany}
+	dsInfos := []types.DatasourceInfo{
+		{
+			Cloud: azsettings.AzurePublic,
+		},
+		{
+			Cloud: azsettings.AzureChina},
+		{
+			Cloud: azsettings.AzureUSGovernment,
+		},
+		{
+			Cloud: azsettings.AzureGermany,
+		},
+		{
+			Cloud: azsettings.AzureCustomized,
+			Settings: types.AzureMonitorSettings{
+				CustomizedCloudSettings: types.AzureMonitorCustomizedCloudSettings{
+					CustomizedAzurePortalUrl: "Portal",
+				},
+			},
+		},
+	}
 	expectedAzurePortalUrl := map[string]interface{}{
 		azsettings.AzurePublic:       "https://portal.azure.com",
 		azsettings.AzureChina:        "https://portal.azure.cn",
 		azsettings.AzureUSGovernment: "https://portal.azure.us",
 		azsettings.AzureGermany:      "https://portal.microsoftazure.de",
+		azsettings.AzureCustomized:   "Portal",
 	}
 
-	for _, cloud := range clouds {
-		azurePortalUrl, err := GetAzurePortalUrl(cloud)
+	for _, dsInfo := range dsInfos {
+		azurePortalUrl, err := GetAzurePortalUrl(dsInfo)
 		if err != nil {
 			t.Errorf("The cloud not supported")
 		}
-		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
+		assert.Equal(t, expectedAzurePortalUrl[dsInfo.Cloud], azurePortalUrl)
 	}
 }
 

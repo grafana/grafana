@@ -197,7 +197,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		return dataResponse
 	}
 
-	azurePortalUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
+	azurePortalUrl, err := GetAzurePortalUrl(dsInfo)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -269,8 +269,8 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(logger log.Logger, res 
 	return data, nil
 }
 
-func GetAzurePortalUrl(azureCloud string) (string, error) {
-	switch azureCloud {
+func GetAzurePortalUrl(dsInfo types.DatasourceInfo) (string, error) {
+	switch dsInfo.Cloud {
 	case azsettings.AzurePublic:
 		return "https://portal.azure.com", nil
 	case azsettings.AzureChina:
@@ -279,6 +279,11 @@ func GetAzurePortalUrl(azureCloud string) (string, error) {
 		return "https://portal.azure.us", nil
 	case azsettings.AzureGermany:
 		return "https://portal.microsoftazure.de", nil
+	case azsettings.AzureCustomized:
+		if dsInfo.Settings.CustomizedCloudSettings.CustomizedAzurePortalUrl == "" {
+			return "", fmt.Errorf("the customized Azure portal URL is not provided")
+		}
+		return dsInfo.Settings.CustomizedCloudSettings.CustomizedAzurePortalUrl, nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")
 	}
