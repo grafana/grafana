@@ -1,5 +1,5 @@
 import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneGridLayout } from '../components/layout/SceneGridLayout';
@@ -8,8 +8,8 @@ import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getMultipleGridLayoutTest(): Scene {
-  const scene = new Scene({
+export function getMultipleGridLayoutTest(standalone: boolean): Scene {
+  const state = {
     title: 'Multiple grid layouts test',
     layout: new SceneFlexLayout({
       children: [
@@ -102,7 +102,7 @@ export function getMultipleGridLayoutTest(): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

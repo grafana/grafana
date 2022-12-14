@@ -514,7 +514,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			SecureSettings:        secureSettings,
 		}
 	)
-	factoryConfig, err := channels.NewFactoryConfig(cfg, am.NotificationService, am.decryptFn, tmpl, am.Store)
+	factoryConfig, err := channels.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, am.Store)
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,

@@ -24,6 +24,13 @@ const history = [
     },
   },
   {
+    ts: 87654321,
+    query: {
+      refId: 'test-1',
+      expr: '{unit: test}',
+    },
+  },
+  {
     ts: 0,
     query: {
       refId: 'test-0',
