@@ -173,16 +173,24 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					continue
 				}
 			} else {
-				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
+				// In frontend we are using "Field" as pipelineAggField
+				// In backend were originally using "PipelineAggregate" as pipelineAggField
+				// Therefore we are going to check Field first and then PipelineAggregate to ensure that we are not breaking anything
+				pipelineAggField := m.Field
+				if pipelineAggField == "" {
+					pipelineAggField = m.PipelineAggregate
+				}
+
+				if _, err := strconv.Atoi(pipelineAggField); err == nil {
 					var appliedAgg *MetricAgg
 					for _, pipelineMetric := range q.Metrics {
-						if pipelineMetric.ID == m.PipelineAggregate {
+						if pipelineMetric.ID == pipelineAggField {
 							appliedAgg = pipelineMetric
 							break
 						}
 					}
 					if appliedAgg != nil {
-						bucketPath := m.PipelineAggregate
+						bucketPath := pipelineAggField
 						if appliedAgg.Type == countType {
 							bucketPath = "_count"
 						}
