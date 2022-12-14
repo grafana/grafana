@@ -23,8 +23,9 @@ const (
 )
 
 var (
-	ErrAPIKeyExpired = errutil.NewBase(errutil.StatusUnauthorized, "apikey.expired", errutil.WithPublicMessage("Expired API key"))
-	ErrAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "apikey.revoked", errutil.WithPublicMessage("Revoked API key"))
+	ErrAPIKeyExpired          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
+	ErrAPIKeyRevoked          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
+	ErrServiceAccountDisabled = errutil.NewBase(errutil.StatusUnauthorized, "service-account.disabled", errutil.WithPublicMessage("Disabled service account"))
 )
 
 var _ authn.Client = new(APIKey)
@@ -87,7 +88,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	if usr.IsDisabled {
-		// TODO: return error
+		return nil, ErrServiceAccountDisabled
 	}
 
 	return authn.IdentityFromSignedInUser(fmt.Sprintf("%s:%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId), usr), nil
