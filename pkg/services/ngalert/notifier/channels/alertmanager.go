@@ -69,7 +69,7 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
 func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
-		Base:              NewBase(config.UID, config.Name, config.Type, false, config.DisableResolveMessage),
+		Base:              NewBase(config.UID, config.Name, config.Type, config.DisableResolveMessage),
 		images:            images,
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,

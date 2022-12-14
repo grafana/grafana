@@ -116,7 +116,7 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 		return nil, err
 	}
 	return &WebhookNotifier{
-		Base:     NewBase(factoryConfig.Config.UID, factoryConfig.Config.Name, factoryConfig.Config.Type, false, factoryConfig.Config.DisableResolveMessage),
+		Base:     NewBase(factoryConfig.Config.UID, factoryConfig.Config.Name, factoryConfig.Config.Type, factoryConfig.Config.DisableResolveMessage),
 		orgID:    factoryConfig.Config.OrgID,
 		log:      log.New("alerting.notifier.webhook"),
 		ns:       factoryConfig.NotificationService,

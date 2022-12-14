@@ -53,7 +53,7 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 		return nil, err
 	}
 	return &DingDingNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, false, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
 		log:      log.New("alerting.notifier.dingding"),
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,

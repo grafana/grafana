@@ -146,7 +146,7 @@ func NewPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 		return nil, err
 	}
 	return &PushoverNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, false, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.pushover"),
 		images:   fc.ImageStore,

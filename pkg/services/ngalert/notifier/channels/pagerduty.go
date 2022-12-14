@@ -129,7 +129,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 	}
 
 	return &PagerdutyNotifier{
-		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, false, fc.Config.DisableResolveMessage),
+		Base:     NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier." + fc.Config.Name),
 		ns:       fc.NotificationService,

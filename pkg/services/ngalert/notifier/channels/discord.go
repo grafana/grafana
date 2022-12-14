@@ -66,7 +66,7 @@ func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
 	}
 
 	return &DiscordNotifier{
-		Base:   NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, false, fc.Config.DisableResolveMessage),
+		Base:   NewBase(fc.Config.UID, fc.Config.Name, fc.Config.Type, fc.Config.DisableResolveMessage),
 		log:    log.New("alerting.notifier.discord"),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,

@@ -68,7 +68,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 // for the EmailNotifier.
 func NewEmailNotifier(config *EmailConfig, ns EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
-		Base:        NewBase(config.UID, config.Name, config.Type, false, config.DisableResolveMessage),
+		Base:        NewBase(config.UID, config.Name, config.Type, config.DisableResolveMessage),
 		Addresses:   config.Addresses,
 		SingleEmail: config.SingleEmail,
 		Message:     config.Message,

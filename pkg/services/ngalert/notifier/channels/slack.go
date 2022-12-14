@@ -155,7 +155,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 		settings.Title = DefaultMessageTitleEmbed
 	}
 	return &SlackNotifier{
-		Base:     NewBase(factoryConfig.Config.UID, factoryConfig.Config.Name, factoryConfig.Config.Type, false, factoryConfig.Config.DisableResolveMessage),
+		Base:     NewBase(factoryConfig.Config.UID, factoryConfig.Config.Name, factoryConfig.Config.Type, factoryConfig.Config.DisableResolveMessage),
 		settings: settings,
 
 		images:        factoryConfig.ImageStore,
