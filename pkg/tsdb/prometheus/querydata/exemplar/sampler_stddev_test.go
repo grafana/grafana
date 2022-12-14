@@ -17,7 +17,7 @@ func TestStdDevSampler(t *testing.T) {
 			End:   time.Unix(100000, 0),
 		}
 		ex := generateTestExemplars(tr)
-		sampler.SetStep(time.Duration(600 * time.Second))
+		sampler.SetStep(600 * time.Second)
 		for i := 0; i < len(ex); i++ {
 			sampler.Add(ex[i])
 		}

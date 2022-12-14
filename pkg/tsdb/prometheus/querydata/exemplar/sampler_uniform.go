@@ -56,6 +56,7 @@ func (e *UniformSampler) Sample() []models.Exemplar {
 		})
 		sampled := []models.Exemplar{}
 		step := 1
+		// don't sample if there are less than Y exemplars in the current bucket
 		if len(b) > e.Y {
 			step = len(b) / e.Y
 		}

@@ -28,19 +28,3 @@ func TestUniformSampler(t *testing.T) {
 		experimental.CheckGoldenJSONFramer(t, "testdata", "uniform_sampler", framer, update)
 	})
 }
-
-func generateTestExemplars(tr models.TimeRange) []models.Exemplar {
-	exemplars := []models.Exemplar{}
-	next := tr.Start.UTC()
-	for {
-		if next.Equal(tr.End) || next.After(tr.End) {
-			break
-		}
-		exemplars = append(exemplars, models.Exemplar{
-			Timestamp: next,
-			Value:     float64(next.Unix()),
-		})
-		next = next.Add(time.Second).UTC()
-	}
-	return exemplars
-}
