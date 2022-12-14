@@ -2,9 +2,15 @@ package parallel
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -13,8 +19,8 @@ var ErrPanicked = errutil.NewBase(errutil.StatusInternal, "parallel.panic")
 
 // RunFuture creates a new [Future] using [NewFuture] and starts it in
 // the background before returning.
-func RunFuture[T any](ctx context.Context, fn func(context.Context) (T, error), opts FutureOpts) *Future[T] {
-	f := NewFuture(ctx, fn, opts)
+func RunFuture[T any](ctx context.Context, name string, fn func(context.Context) (T, error), opts FutureOpts) *Future[T] {
+	f := NewFuture(ctx, name, fn, opts)
 	f.Start()
 	return f
 }
@@ -25,9 +31,10 @@ func RunFuture[T any](ctx context.Context, fn func(context.Context) (T, error), 
 // The Future is not started automatically and must be started manually
 // using either [Future.Start] or a [Scheduler]
 // (possibly via a [Group], to simplify the collection of the result).
-func NewFuture[T any](ctx context.Context, fn func(context.Context) (T, error), opts FutureOpts) *Future[T] {
+func NewFuture[T any](ctx context.Context, name string, fn func(context.Context) (T, error), opts FutureOpts) *Future[T] {
 	done := make(chan struct{})
 	future := &Future[T]{
+		name: name,
 		fn:   fn,
 		ctx:  ctx,
 		done: done,
@@ -46,12 +53,19 @@ type FutureOpts struct {
 	// NowFunc allows overriding the function used to determine the
 	// start and end time of a [Future]. Primarily for testing.
 	NowFunc func() time.Time
+	// Tracer, if set, will be used to create a span for the [Future].
+	Tracer tracing.Tracer
+	// Logger, if set, will log the beginning of the execution of the
+	// [Future] with debug level and the end of the execution at info
+	// level.
+	Logger log.Logger
 }
 
 // A Future is a concurrency primitive running a given task in the
 // background yielding either a value or an error in a [Result] when
 // completed.
 type Future[T any] struct {
+	name     string
 	fn       func(context.Context) (T, error)
 	ctx      context.Context
 	once     sync.Once
@@ -89,9 +103,17 @@ func (f *Future[T]) Start() {
 	}
 
 	go f.once.Do(func() {
+		var span tracing.Span
+		if f.opts.Tracer != nil {
+			f.ctx, span = f.opts.Tracer.Start(f.ctx, fmt.Sprintf("Future"))
+			span.SetAttributes("name", f.name, attribute.String("name", f.name))
+		}
+		if f.opts.Logger != nil {
+			f.opts.Logger.Debug("starting execution of Future", "name", f.name)
+		}
+
 		f.startTime = f.opts.Now()
 
-		defer finishFn()
 		if !f.opts.CrashOnPanic {
 			defer recoverFn()
 		}
@@ -100,6 +122,27 @@ func (f *Future[T]) Start() {
 		f.result = Result[T]{
 			Value: val,
 			Error: err,
+		}
+
+		finishFn()
+
+		if span != nil {
+			if err != nil {
+				span.SetStatus(codes.Error, "future returned an error")
+				span.RecordError(err)
+				span.End()
+			}
+		}
+
+		if f.opts.Logger != nil {
+			args := []any{
+				"name", f.name,
+				"duration", f.Duration(),
+			}
+			if err != nil {
+				args = append(args, "error", err.Error())
+			}
+			f.opts.Logger.Info("finished execution of Future", args...)
 		}
 	})
 }

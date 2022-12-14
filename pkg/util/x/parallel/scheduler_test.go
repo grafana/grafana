@@ -23,7 +23,7 @@ func TestBlockingScheduler_concurrencyOne(t *testing.T) {
 
 	const target = 32
 	for i := 0; i < target; i++ {
-		future := NewFuture(ctx, func(ctx context.Context) (int, error) {
+		future := NewFuture(ctx, "", func(ctx context.Context) (int, error) {
 			old := n
 			time.Sleep(time.Millisecond)
 			n = old + 1
@@ -53,7 +53,7 @@ func TestBlockingScheduler_waiting(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	wg.Add(target)
 	for i := 0; i < target; i++ {
-		future := NewFuture(context.Background(), func(ctx context.Context) (int, error) {
+		future := NewFuture(context.Background(), "", func(ctx context.Context) (int, error) {
 			wg.Done()
 			return 0, nil
 		}, FutureOpts{})
@@ -74,7 +74,7 @@ func TestQueueScheduler(t *testing.T) {
 	var eoq bool
 	sched := NewQueueScheduler[int](ctx, 4, target)
 	for !eoq {
-		future := NewFuture(context.Background(), func(ctx context.Context) (int, error) {
+		future := NewFuture(context.Background(), "", func(ctx context.Context) (int, error) {
 			for !eoq {
 				if len(sched.queue) == cap(sched.queue) {
 					eoq = true

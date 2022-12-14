@@ -16,7 +16,7 @@ func TestGroup(t *testing.T) {
 
 	for _, c := range characters {
 		c := c
-		err := g.Go(func(ctx context.Context) (rune, error) {
+		err := g.Go("", func(ctx context.Context) (rune, error) {
 			return c, nil
 		})
 		require.NoError(t, err)
@@ -39,7 +39,7 @@ func TestGroup_Cancel(t *testing.T) {
 
 	for i := 0; i < 32; i++ {
 		i := i
-		err := g.Go(func(ctx context.Context) (int, error) {
+		err := g.Go("", func(ctx context.Context) (int, error) {
 			select {
 			case <-ch:
 				return i, nil

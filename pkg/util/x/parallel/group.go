@@ -62,14 +62,14 @@ func NewGroup[T any](ctx context.Context, opts GroupOpts[T]) *Group[T] {
 //
 // Go will return an error if [Group.Get] or [Group.Wait] has already
 // been called.
-func (g *Group[T]) Go(fn func(context.Context) (T, error)) error {
+func (g *Group[T]) Go(name string, fn func(context.Context) (T, error)) error {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if g.collected {
 		return ErrGroupCollected.Errorf("The future group has already been collected, cannot add more futures to it")
 	}
 
-	future := NewFuture(g.ctx, fn, g.opts.FutureOptions)
+	future := NewFuture(g.ctx, name, fn, g.opts.FutureOptions)
 	g.wg.Add(1)
 	future.finishFn = func() {
 		g.wg.Done()

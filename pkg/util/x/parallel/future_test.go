@@ -14,7 +14,7 @@ import (
 func TestFutureCatchPanic(t *testing.T) {
 	const msg = "Panicking in the Future"
 	ctx := context.Background()
-	f := RunFuture(ctx, func(ctx context.Context) (int, error) {
+	f := RunFuture(ctx, "", func(ctx context.Context) (int, error) {
 		panic(msg)
 	}, FutureOpts{})
 
@@ -25,7 +25,7 @@ func TestFutureCatchPanic(t *testing.T) {
 
 func TestFuture_Wait_RunTwice(t *testing.T) {
 	ctx := context.Background()
-	f := RunFuture(ctx, func(ctx context.Context) (int, error) {
+	f := RunFuture(ctx, "", func(ctx context.Context) (int, error) {
 		return 42, nil
 	}, FutureOpts{})
 
@@ -42,7 +42,7 @@ func TestFuture_Get(t *testing.T) {
 	ctx := context.Background()
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	f := RunFuture(ctx, func(ctx context.Context) (int, error) {
+	f := RunFuture(ctx, "", func(ctx context.Context) (int, error) {
 		wg.Wait()
 		return 42, nil
 	}, FutureOpts{})
