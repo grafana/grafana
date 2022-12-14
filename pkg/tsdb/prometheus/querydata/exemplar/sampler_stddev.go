@@ -83,3 +83,11 @@ func (e *StandardDeviationSampler) Sample() []models.Exemplar {
 	})
 	return exemplars
 }
+
+func (e *StandardDeviationSampler) Reset() {
+	e.step = 0
+	e.buckets = map[time.Time][]models.Exemplar{}
+	e.count = 0
+	e.mean = 0
+	e.m2 = 0
+}

@@ -395,7 +395,7 @@ var (
 		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
-			State:       FeatureStateStable,
+			State:       FeatureStateAlpha,
 		},
 	}
 )

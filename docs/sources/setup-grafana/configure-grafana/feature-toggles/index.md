@@ -30,7 +30,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `internationalization`              | Enables internationalization                                                         | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 | `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
-| `alertingBacktesting`               | Rule backtesting API for alerting                                                    |                    |
 
 ## Beta feature toggles
 
@@ -94,6 +93,7 @@ Alpha features might be changed or removed without prior notice.
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
+| `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 
 ## Development feature toggles
 
