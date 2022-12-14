@@ -22,6 +22,7 @@ export function GrafanaMonitoringApp() {
         </Route>
       ))}
       <Route exact={true} path="/scenes/grafana-monitoring/handlers/:handler" component={HttpHandlerDetailsPage} />
+      <Route exact={true} path="/scenes/grafana-monitoring/handlers/:handler/:tab" component={HttpHandlerDetailsPage} />
     </Switch>
   );
 }

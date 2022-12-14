@@ -10,17 +10,18 @@ import { getHandlerDetailsScene, getHandlerLogsScene } from './scenes';
 import { getLinkUrlWithAppUrlState, useAppQueryParams } from './utils';
 
 export function HttpHandlerDetailsPage() {
-  const routeMatch = useRouteMatch<{ handler: string }>();
+  const routeMatch = useRouteMatch<{ handler: string; tab: string }>();
   const handler = decodeURIComponent(routeMatch.params.handler);
   const metricsScene = getHandlerDetailsScene(handler);
   const logsScene = getHandlerLogsScene(handler);
   const parent = getTabs().find((x) => x.text === 'HTTP handlers')!;
   const params = useAppQueryParams();
-  const tab = params.tab ?? 'metrics';
+  const baseUrl = `/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}`;
+  const tab = routeMatch.params.tab ?? 'metrics';
 
   const pageNav: NavModelItem = {
     text: metricsScene.state.title,
-    url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'metrics' }),
+    url: getLinkUrlWithAppUrlState(baseUrl, params),
     parentItem: { text: parent.text, url: getLinkUrlWithAppUrlState(parent.url, params) },
     children: [],
   };
@@ -29,13 +30,13 @@ export function HttpHandlerDetailsPage() {
     {
       text: 'Metrics',
       active: tab === 'metrics',
-      url: pageNav.url,
+      url: baseUrl,
       parentItem: pageNav,
     },
     {
       text: 'Logs',
       active: tab === 'logs',
-      url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'logs' }),
+      url: getLinkUrlWithAppUrlState(baseUrl + '/logs', params),
       parentItem: pageNav,
     }
   );
