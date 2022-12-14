@@ -3,13 +3,15 @@ package authn
 import (
 	"context"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
-	ClientAPIKey    = "auth.client.apikey"
+	ClientAPIKey    = "auth.client.api-key"
 	ClientAnonymous = "auth.client.anonymous"
 )
 
