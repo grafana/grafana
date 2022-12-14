@@ -157,6 +157,7 @@ allowed_domains =
 allowed_groups =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
+skip_org_role_sync = false
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:
@@ -244,3 +245,8 @@ To force fetching groups from Microsoft Graph API instead of the `id_token`. You
 ```
 force_use_graph_api = true
 ```
+
+## Disable org role synchronization
+
+If you use AzureAD to authenticate users but don't use role mapping, and prefer to manually assign organizations
+and roles, you can use the `skip_org_role_sync` configuration option.
