@@ -41,6 +41,7 @@ func main() {
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
 	coreKindsGen.AddPostprocessors(codegen.SlashHeaderMapper("kinds/gen.go"))
