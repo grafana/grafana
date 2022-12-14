@@ -55,9 +55,9 @@ const dummyData = [
         'World Map panel for Grafana. Displays time series data or geohash data from Elasticsearch overlaid on a world map.',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg',
       },
       version: '0.3.3',
     },
@@ -71,9 +71,9 @@ const dummyData = [
       description: 'Clock panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/grafana-clock-panel/2.1.1/public/plugins/grafana-clock-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-clock-panel/2.1.1/public/plugins/grafana-clock-panel/img/clock.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/grafana-clock-panel/2.1.1/public/plugins/grafana-clock-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-clock-panel/2.1.1/public/plugins/grafana-clock-panel/img/clock.svg',
       },
       version: '2.1.1',
     },
@@ -87,9 +87,9 @@ const dummyData = [
       description: 'A Cesium based 3D Globe panel plugin.',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/satellogic-3d-globe-panel/0.1.1/public/plugins/satellogic-3d-globe-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/satellogic-3d-globe-panel/0.1.1/public/plugins/satellogic-3d-globe-panel/img/earth.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/satellogic-3d-globe-panel/0.1.1/public/plugins/satellogic-3d-globe-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/satellogic-3d-globe-panel/0.1.1/public/plugins/satellogic-3d-globe-panel/img/earth.svg',
       },
       version: '0.1.1',
     },
@@ -103,9 +103,9 @@ const dummyData = [
       description: 'SVG Visualization Panel',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/aceiot-svg-panel/0.0.11/public/plugins/aceiot-svg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/aceiot-svg-panel/0.0.11/public/plugins/aceiot-svg-panel/img/logo-small-background.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/aceiot-svg-panel/0.0.11/public/plugins/aceiot-svg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/aceiot-svg-panel/0.0.11/public/plugins/aceiot-svg-panel/img/logo-type.svg',
       },
       version: '0.0.11',
     },
@@ -119,9 +119,9 @@ const dummyData = [
       description: 'AJAX panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/ryantxu-ajax-panel/0.1.0/public/plugins/ryantxu-ajax-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/ryantxu-ajax-panel/0.1.0/public/plugins/ryantxu-ajax-panel/img/ajax_panel_logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/ryantxu-ajax-panel/0.1.0/public/plugins/ryantxu-ajax-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/ryantxu-ajax-panel/0.1.0/public/plugins/ryantxu-ajax-panel/img/ajax_panel_logo.svg',
       },
       version: '0.1.0',
     },
@@ -151,9 +151,9 @@ const dummyData = [
       description: 'List of builtin Annotations',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/ryantxu-annolist-panel/0.0.2/public/plugins/ryantxu-annolist-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/ryantxu-annolist-panel/0.0.2/public/plugins/ryantxu-annolist-panel/img/annolist-icon.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/ryantxu-annolist-panel/0.0.2/public/plugins/ryantxu-annolist-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/ryantxu-annolist-panel/0.0.2/public/plugins/ryantxu-annolist-panel/img/annolist-icon.svg',
       },
       version: '0.0.2',
     },
@@ -167,9 +167,9 @@ const dummyData = [
       description: 'Annotations panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/novalabs-annotations-panel/0.0.2/public/plugins/novalabs-annotations-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/novalabs-annotations-panel/0.0.2/public/plugins/novalabs-annotations-panel/img/annotations_logo_small.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/novalabs-annotations-panel/0.0.2/public/plugins/novalabs-annotations-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/novalabs-annotations-panel/0.0.2/public/plugins/novalabs-annotations-panel/img/annotations_logo_large.png',
       },
       version: '0.0.2',
     },
@@ -184,9 +184,9 @@ const dummyData = [
         'Enhanced version of built-in SingleStat panel, with specialized display of thresholds and value-sensative presentation',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-annunciator-panel/1.1.0/public/plugins/michaeldmoore-annunciator-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-annunciator-panel/1.1.0/public/plugins/michaeldmoore-annunciator-panel/img/michaeldmoore-annunciator-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-annunciator-panel/1.1.0/public/plugins/michaeldmoore-annunciator-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-annunciator-panel/1.1.0/public/plugins/michaeldmoore-annunciator-panel/img/michaeldmoore-annunciator-panel.svg',
       },
       version: '1.1.0',
     },
@@ -232,9 +232,9 @@ const dummyData = [
       description: 'Blendstat Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/farski-blendstat-panel/1.0.3/public/plugins/farski-blendstat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/farski-blendstat-panel/1.0.3/public/plugins/farski-blendstat-panel/img/icn-blendstat-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/farski-blendstat-panel/1.0.3/public/plugins/farski-blendstat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/farski-blendstat-panel/1.0.3/public/plugins/farski-blendstat-panel/img/icn-blendstat-panel.svg',
       },
       version: '1.0.3',
     },
@@ -248,9 +248,9 @@ const dummyData = [
       description: 'Boom table panel for Graphite, InfluxDB, Prometheus',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtable-panel/1.4.1/public/plugins/yesoreyeram-boomtable-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtable-panel/1.4.1/public/plugins/yesoreyeram-boomtable-panel/',
         large:
-          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtable-panel/1.4.1/public/plugins/yesoreyeram-boomtable-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtable-panel/1.4.1/public/plugins/yesoreyeram-boomtable-panel/',
       },
       version: '1.4.1',
     },
@@ -264,9 +264,9 @@ const dummyData = [
       description: 'Themes for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtheme-panel/0.2.1/public/plugins/yesoreyeram-boomtheme-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtheme-panel/0.2.1/public/plugins/yesoreyeram-boomtheme-panel/img/logo.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtheme-panel/0.2.1/public/plugins/yesoreyeram-boomtheme-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtheme-panel/0.2.1/public/plugins/yesoreyeram-boomtheme-panel/img/logo.png',
       },
       version: '0.2.1',
     },
@@ -280,9 +280,9 @@ const dummyData = [
       description: 'Breadcrumb Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/timomyl-breadcrumb-panel/1.2.0/public/plugins/timomyl-breadcrumb-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/timomyl-breadcrumb-panel/1.2.0/public/plugins/timomyl-breadcrumb-panel/img/breadcrumb-icon.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/timomyl-breadcrumb-panel/1.2.0/public/plugins/timomyl-breadcrumb-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/timomyl-breadcrumb-panel/1.2.0/public/plugins/timomyl-breadcrumb-panel/img/breadcrumb-icon.svg',
       },
       version: '1.2.0',
     },
@@ -296,9 +296,9 @@ const dummyData = [
       description: 'Bubblechart panel',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/digrich-bubblechart-panel/1.2.1/public/plugins/digrich-bubblechart-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/digrich-bubblechart-panel/1.2.1/public/plugins/digrich-bubblechart-panel/img/BC.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/digrich-bubblechart-panel/1.2.1/public/plugins/digrich-bubblechart-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/digrich-bubblechart-panel/1.2.1/public/plugins/digrich-bubblechart-panel/img/BC.png',
       },
       version: '1.2.1',
     },
@@ -360,9 +360,9 @@ const dummyData = [
       description: 'Cal-HeatMap panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/neocat-cal-heatmap-panel/0.0.4/public/plugins/neocat-cal-heatmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/neocat-cal-heatmap-panel/0.0.4/public/plugins/neocat-cal-heatmap-panel/images/icon-small.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/neocat-cal-heatmap-panel/0.0.4/public/plugins/neocat-cal-heatmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/neocat-cal-heatmap-panel/0.0.4/public/plugins/neocat-cal-heatmap-panel/images/icon-large.png',
       },
       version: '0.0.4',
     },
@@ -392,9 +392,9 @@ const dummyData = [
       description: 'Carpet plot panel plugin for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/petrslavotinek-carpetplot-panel/0.1.2/public/plugins/petrslavotinek-carpetplot-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/petrslavotinek-carpetplot-panel/0.1.2/public/plugins/petrslavotinek-carpetplot-panel/src/img/logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/petrslavotinek-carpetplot-panel/0.1.2/public/plugins/petrslavotinek-carpetplot-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/petrslavotinek-carpetplot-panel/0.1.2/public/plugins/petrslavotinek-carpetplot-panel/src/img/logo.svg',
       },
       version: '0.1.2',
     },
@@ -408,9 +408,9 @@ const dummyData = [
       description: 'Panel for CDF visualizations',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/sebastiangunreben-cdf-panel/0.2.4/public/plugins/sebastiangunreben-cdf-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/sebastiangunreben-cdf-panel/0.2.4/public/plugins/sebastiangunreben-cdf-panel/img/logo_small.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/sebastiangunreben-cdf-panel/0.2.4/public/plugins/sebastiangunreben-cdf-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/sebastiangunreben-cdf-panel/0.2.4/public/plugins/sebastiangunreben-cdf-panel/img/logo_large.svg',
       },
       version: '0.2.4',
     },
@@ -424,9 +424,9 @@ const dummyData = [
       description: 'Chartwerk panel with extended chart customization',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/corpglory-chartwerk-panel/0.5.0/public/plugins/corpglory-chartwerk-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/corpglory-chartwerk-panel/0.5.0/public/plugins/corpglory-chartwerk-panel/assets/logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/corpglory-chartwerk-panel/0.5.0/public/plugins/corpglory-chartwerk-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/corpglory-chartwerk-panel/0.5.0/public/plugins/corpglory-chartwerk-panel/assets/logo.svg',
       },
       version: '0.5.0',
     },
@@ -440,9 +440,9 @@ const dummyData = [
       description: 'A panel that displays values as colored svg images',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/snuids-svg-panel/1.0.0/public/plugins/snuids-svg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/snuids-svg-panel/1.0.0/public/plugins/snuids-svg-panel/img/svg-panel.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/snuids-svg-panel/1.0.0/public/plugins/snuids-svg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/snuids-svg-panel/1.0.0/public/plugins/snuids-svg-panel/img/svg-panel.png',
       },
       version: '1.0.0',
     },
@@ -472,9 +472,9 @@ const dummyData = [
       description: '',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/integrationmatters-comparison-panel/1.1.0/public/plugins/integrationmatters-comparison-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/integrationmatters-comparison-panel/1.1.0/public/plugins/integrationmatters-comparison-panel/assets/images/logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/integrationmatters-comparison-panel/1.1.0/public/plugins/integrationmatters-comparison-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/integrationmatters-comparison-panel/1.1.0/public/plugins/integrationmatters-comparison-panel/assets/images/logo.svg',
       },
       version: '1.1.0',
     },
@@ -489,9 +489,9 @@ const dummyData = [
       description: 'D3-based Gauge panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/briangann-gauge-panel/0.0.9/public/plugins/briangann-gauge-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/briangann-gauge-panel/0.0.9/public/plugins/briangann-gauge-panel/img/Logo_D3.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/briangann-gauge-panel/0.0.9/public/plugins/briangann-gauge-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/briangann-gauge-panel/0.0.9/public/plugins/briangann-gauge-panel/img/Logo_D3.svg',
       },
       version: '0.0.9',
     },
@@ -521,9 +521,9 @@ const dummyData = [
       description: 'Datatable panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/briangann-datatable-panel/1.0.3/public/plugins/briangann-datatable-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/briangann-datatable-panel/1.0.3/public/plugins/briangann-datatable-panel/img/nav-dt.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/briangann-datatable-panel/1.0.3/public/plugins/briangann-datatable-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/briangann-datatable-panel/1.0.3/public/plugins/briangann-datatable-panel/img/nav-dt.png',
       },
       version: '1.0.3',
     },
@@ -553,9 +553,9 @@ const dummyData = [
       description: 'Discrete Events grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/natel-discrete-panel/0.1.1/public/plugins/natel-discrete-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/natel-discrete-panel/0.1.1/public/plugins/natel-discrete-panel/img/discrete_logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/natel-discrete-panel/0.1.1/public/plugins/natel-discrete-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/natel-discrete-panel/0.1.1/public/plugins/natel-discrete-panel/img/discrete_logo.svg',
       },
       version: '0.1.1',
     },
@@ -601,9 +601,9 @@ const dummyData = [
       description: 'Echarts panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/bilibala-echarts-panel/2.2.4/public/plugins/bilibala-echarts-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/bilibala-echarts-panel/2.2.4/public/plugins/bilibala-echarts-panel/img/logo.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/bilibala-echarts-panel/2.2.4/public/plugins/bilibala-echarts-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/bilibala-echarts-panel/2.2.4/public/plugins/bilibala-echarts-panel/img/logo.png',
       },
       version: '2.2.4',
     },
@@ -666,9 +666,9 @@ const dummyData = [
         'Flowcharting is a Grafana plugin. Use it to display complexe diagrams using the online graphing library draw.io like a vsio',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/agenty-flowcharting-panel/0.9.1/public/plugins/agenty-flowcharting-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/agenty-flowcharting-panel/0.9.1/public/plugins/agenty-flowcharting-panel/img/agenty-flowcharting.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/agenty-flowcharting-panel/0.9.1/public/plugins/agenty-flowcharting-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/agenty-flowcharting-panel/0.9.1/public/plugins/agenty-flowcharting-panel/img/agenty-flowcharting.svg',
       },
       version: '0.9.1',
     },
@@ -714,9 +714,9 @@ const dummyData = [
       description: 'Looping animated map for Grafana.',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/citilogics-geoloop-panel/1.1.2/public/plugins/citilogics-geoloop-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/citilogics-geoloop-panel/1.1.2/public/plugins/citilogics-geoloop-panel/images/geoloop-icon.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/citilogics-geoloop-panel/1.1.2/public/plugins/citilogics-geoloop-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/citilogics-geoloop-panel/1.1.2/public/plugins/citilogics-geoloop-panel/images/geoloop-icon.png',
       },
       version: '1.1.2',
     },
@@ -730,9 +730,9 @@ const dummyData = [
       description: 'Guided tour for Grafana dashboards',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/grafana-guidedtour-panel/0.2.0/public/plugins/grafana-guidedtour-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-guidedtour-panel/0.2.0/public/plugins/grafana-guidedtour-panel/img/guided-tour.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/grafana-guidedtour-panel/0.2.0/public/plugins/grafana-guidedtour-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-guidedtour-panel/0.2.0/public/plugins/grafana-guidedtour-panel/img/guided-tour.png',
       },
       version: '0.2.0',
     },
@@ -746,9 +746,9 @@ const dummyData = [
       description: 'Heatmap panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/savantly-heatmap-panel/0.2.1/public/plugins/savantly-heatmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/savantly-heatmap-panel/0.2.1/public/plugins/savantly-heatmap-panel/img/icn-heatmap-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/savantly-heatmap-panel/0.2.1/public/plugins/savantly-heatmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/savantly-heatmap-panel/0.2.1/public/plugins/savantly-heatmap-panel/img/icn-heatmap-panel.svg',
       },
       version: '0.2.1',
     },
@@ -762,9 +762,9 @@ const dummyData = [
       description: 'Heatmap Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-heatmap-epoch-panel/0.1.8/public/plugins/mtanda-heatmap-epoch-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/mtanda-heatmap-epoch-panel/0.1.8/public/plugins/mtanda-heatmap-epoch-panel/',
         large:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-heatmap-epoch-panel/0.1.8/public/plugins/mtanda-heatmap-epoch-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/mtanda-heatmap-epoch-panel/0.1.8/public/plugins/mtanda-heatmap-epoch-panel/',
       },
       version: '0.1.8',
     },
@@ -794,9 +794,9 @@ const dummyData = [
       description: 'Histogram Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-histogram-panel/0.1.7/public/plugins/mtanda-histogram-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/mtanda-histogram-panel/0.1.7/public/plugins/mtanda-histogram-panel/',
         large:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-histogram-panel/0.1.7/public/plugins/mtanda-histogram-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/mtanda-histogram-panel/0.1.7/public/plugins/mtanda-histogram-panel/',
       },
       version: '0.1.7',
     },
@@ -827,9 +827,9 @@ const dummyData = [
       description: 'HTML panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/aidanmountford-html-panel/0.0.2/public/plugins/aidanmountford-html-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/aidanmountford-html-panel/0.0.2/public/plugins/aidanmountford-html-panel/img/html-panel-logo-small.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/aidanmountford-html-panel/0.0.2/public/plugins/aidanmountford-html-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/aidanmountford-html-panel/0.0.2/public/plugins/aidanmountford-html-panel/img/html-panel-logo-large.png',
       },
       version: '0.0.2',
     },
@@ -859,9 +859,9 @@ const dummyData = [
       description: 'Add Measurements to a Picture in Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/pierosavi-imageit-panel/1.0.7/public/plugins/pierosavi-imageit-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/pierosavi-imageit-panel/1.0.7/public/plugins/pierosavi-imageit-panel/img/imageit_logo.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/pierosavi-imageit-panel/1.0.7/public/plugins/pierosavi-imageit-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/pierosavi-imageit-panel/1.0.7/public/plugins/pierosavi-imageit-panel/img/imageit_logo.png',
       },
       version: '1.0.7',
     },
@@ -875,9 +875,9 @@ const dummyData = [
       description: 'InfluxDB admin for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/natel-influx-admin-panel/0.0.6/public/plugins/natel-influx-admin-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/natel-influx-admin-panel/0.0.6/public/plugins/natel-influx-admin-panel/img/influx_admin_logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/natel-influx-admin-panel/0.0.6/public/plugins/natel-influx-admin-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/natel-influx-admin-panel/0.0.6/public/plugins/natel-influx-admin-panel/img/influx_admin_logo.svg',
       },
       version: '0.0.6',
     },
@@ -956,9 +956,9 @@ const dummyData = [
       description: 'Enhanced version of built-in SingleStat panel, for queries involving multi-valued recordsets',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-multistat-panel/1.7.2/public/plugins/michaeldmoore-multistat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-multistat-panel/1.7.2/public/plugins/michaeldmoore-multistat-panel/img/michaeldmoore-multistat-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-multistat-panel/1.7.2/public/plugins/michaeldmoore-multistat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/michaeldmoore-multistat-panel/1.7.2/public/plugins/michaeldmoore-multistat-panel/img/michaeldmoore-multistat-panel.svg',
       },
       version: '1.7.2',
     },
@@ -988,9 +988,9 @@ const dummyData = [
       description: '',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/orchestracities-iconstat-panel/1.2.3/public/plugins/orchestracities-iconstat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/orchestracities-iconstat-panel/1.2.3/public/plugins/orchestracities-iconstat-panel/img/icn-iconstat-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/orchestracities-iconstat-panel/1.2.3/public/plugins/orchestracities-iconstat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/orchestracities-iconstat-panel/1.2.3/public/plugins/orchestracities-iconstat-panel/img/icn-iconstat-panel.svg',
       },
       version: '1.2.3',
     },
@@ -1004,9 +1004,9 @@ const dummyData = [
       description: 'Orchestra Cities Map',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/orchestracities-map-panel/1.4.4/public/plugins/orchestracities-map-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/orchestracities-map-panel/1.4.4/public/plugins/orchestracities-map-panel/img/icn-map-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/orchestracities-map-panel/1.4.4/public/plugins/orchestracities-map-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/orchestracities-map-panel/1.4.4/public/plugins/orchestracities-map-panel/img/icn-map-panel.svg',
       },
       version: '1.4.4',
     },
@@ -1020,9 +1020,9 @@ const dummyData = [
       description: 'Organisations Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/timomyl-organisations-panel/1.4.0/public/plugins/timomyl-organisations-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/timomyl-organisations-panel/1.4.0/public/plugins/timomyl-organisations-panel/img/organisations-icon.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/timomyl-organisations-panel/1.4.0/public/plugins/timomyl-organisations-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/timomyl-organisations-panel/1.4.0/public/plugins/timomyl-organisations-panel/img/organisations-icon.svg',
       },
       version: '1.4.0',
     },
@@ -1052,9 +1052,9 @@ const dummyData = [
       description: 'Parity report plugin to compare metrics',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/zuburqan-parity-report-panel/1.2.2/public/plugins/zuburqan-parity-report-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/zuburqan-parity-report-panel/1.2.2/public/plugins/zuburqan-parity-report-panel/img/logo.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/zuburqan-parity-report-panel/1.2.2/public/plugins/zuburqan-parity-report-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/zuburqan-parity-report-panel/1.2.2/public/plugins/zuburqan-parity-report-panel/img/logo.png',
       },
       version: '1.2.2',
     },
@@ -1133,9 +1133,9 @@ const dummyData = [
       description: 'Add Measurements to a Picture in Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/bessler-pictureit-panel/1.0.1/public/plugins/bessler-pictureit-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/bessler-pictureit-panel/1.0.1/public/plugins/bessler-pictureit-panel/img/pictureit_logo.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/bessler-pictureit-panel/1.0.1/public/plugins/bessler-pictureit-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/bessler-pictureit-panel/1.0.1/public/plugins/bessler-pictureit-panel/img/pictureit_logo.png',
       },
       version: '1.0.1',
     },
@@ -1149,9 +1149,9 @@ const dummyData = [
       description: 'Scatter plots and more',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/natel-plotly-panel/0.0.7/public/plugins/natel-plotly-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/natel-plotly-panel/0.0.7/public/plugins/natel-plotly-panel/img/plotly_logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/natel-plotly-panel/0.0.7/public/plugins/natel-plotly-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/natel-plotly-panel/0.0.7/public/plugins/natel-plotly-panel/img/plotly_logo.svg',
       },
       version: '0.0.7',
     },
@@ -1165,9 +1165,9 @@ const dummyData = [
       description: 'Render charts with Plotly.js',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/nline-plotlyjs-panel/1.1.0/public/plugins/nline-plotlyjs-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/nline-plotlyjs-panel/1.1.0/public/plugins/nline-plotlyjs-panel/img/plotly-small.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/nline-plotlyjs-panel/1.1.0/public/plugins/nline-plotlyjs-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/nline-plotlyjs-panel/1.1.0/public/plugins/nline-plotlyjs-panel/img/plotly-large.png',
       },
       version: '1.1.0',
     },
@@ -1181,9 +1181,9 @@ const dummyData = [
       description: 'Render chart from any datasource with Plotly javascript library',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/ae3e-plotly-panel/0.5.0/public/plugins/ae3e-plotly-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/ae3e-plotly-panel/0.5.0/public/plugins/ae3e-plotly-panel/img/plotly.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/ae3e-plotly-panel/0.5.0/public/plugins/ae3e-plotly-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/ae3e-plotly-panel/0.5.0/public/plugins/ae3e-plotly-panel/img/plotly.svg',
       },
       version: '0.5.0',
     },
@@ -1197,9 +1197,9 @@ const dummyData = [
       description: 'Polystat panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/grafana-polystat-panel/2.0.4/public/plugins/grafana-polystat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-polystat-panel/2.0.4/public/plugins/grafana-polystat-panel/img/polystat.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/grafana-polystat-panel/2.0.4/public/plugins/grafana-polystat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-polystat-panel/2.0.4/public/plugins/grafana-polystat-panel/img/polystat.svg',
       },
       version: '2.0.4',
     },
@@ -1213,9 +1213,9 @@ const dummyData = [
       description: 'A panel showing list of progress-like items in one board',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/corpglory-progresslist-panel/1.0.6/public/plugins/corpglory-progresslist-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/corpglory-progresslist-panel/1.0.6/public/plugins/corpglory-progresslist-panel/assets/logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/corpglory-progresslist-panel/1.0.6/public/plugins/corpglory-progresslist-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/corpglory-progresslist-panel/1.0.6/public/plugins/corpglory-progresslist-panel/assets/logo.svg',
       },
       version: '1.0.6',
     },
@@ -1245,9 +1245,9 @@ const dummyData = [
       description: 'Radar Graph for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/snuids-radar-panel/1.5.1/public/plugins/snuids-radar-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/snuids-radar-panel/1.5.1/public/plugins/snuids-radar-panel/img/radar_logo.jpg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/snuids-radar-panel/1.5.1/public/plugins/snuids-radar-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/snuids-radar-panel/1.5.1/public/plugins/snuids-radar-panel/img/radar_logo.jpg',
       },
       version: '1.5.1',
     },
@@ -1277,9 +1277,9 @@ const dummyData = [
       description: 'SCADA-like synoptic panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/scadavis-synoptic-panel/1.0.5/public/plugins/scadavis-synoptic-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/scadavis-synoptic-panel/1.0.5/public/plugins/scadavis-synoptic-panel/img/scadavis-small.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/scadavis-synoptic-panel/1.0.5/public/plugins/scadavis-synoptic-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/scadavis-synoptic-panel/1.0.5/public/plugins/scadavis-synoptic-panel/img/scadavis-large.png',
       },
       version: '1.0.5',
     },
@@ -1309,9 +1309,9 @@ const dummyData = [
       description: 'A simple separator panel',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/mxswat-separator-panel/1.0.1/public/plugins/mxswat-separator-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/mxswat-separator-panel/1.0.1/public/plugins/mxswat-separator-panel/img/icon.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/mxswat-separator-panel/1.0.1/public/plugins/mxswat-separator-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/mxswat-separator-panel/1.0.1/public/plugins/mxswat-separator-panel/img/icon.png',
       },
       version: '1.0.1',
     },
@@ -1326,9 +1326,9 @@ const dummyData = [
         'Service Dependency Graph panel for Grafana. Shows metric-based, dynamic dependency graph between services, indicates responsetime, load and error rate statistic for individual services and communication edges. Shows communication to external services, such as Web calls, database calls, message queues, LDAP calls, etc. Provides a details dialog for each selected service that shows statistics about incoming and outgoing traffic.',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/novatec-sdg-panel/4.0.3/public/plugins/novatec-sdg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/novatec-sdg-panel/4.0.3/public/plugins/novatec-sdg-panel/img/novatec_sdg_panel_logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/novatec-sdg-panel/4.0.3/public/plugins/novatec-sdg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/novatec-sdg-panel/4.0.3/public/plugins/novatec-sdg-panel/img/novatec_sdg_panel_logo.svg',
       },
       version: '4.0.3',
     },
@@ -1375,9 +1375,9 @@ const dummyData = [
       description: 'Singlestat Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/grafana-singlestat-panel/2.0.0/public/plugins/grafana-singlestat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-singlestat-panel/2.0.0/public/plugins/grafana-singlestat-panel/img/icn-singlestat-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/grafana-singlestat-panel/2.0.0/public/plugins/grafana-singlestat-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/grafana-singlestat-panel/2.0.0/public/plugins/grafana-singlestat-panel/img/icn-singlestat-panel.svg',
       },
       version: '2.0.0',
     },
@@ -1391,9 +1391,9 @@ const dummyData = [
       description: 'Single Stat panel with math.',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/blackmirror1-singlestat-math-panel/1.1.8/public/plugins/blackmirror1-singlestat-math-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/blackmirror1-singlestat-math-panel/1.1.8/public/plugins/blackmirror1-singlestat-math-panel/img/icn-singlestatmath-panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/blackmirror1-singlestat-math-panel/1.1.8/public/plugins/blackmirror1-singlestat-math-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/blackmirror1-singlestat-math-panel/1.1.8/public/plugins/blackmirror1-singlestat-math-panel/img/icn-singlestatmath-panel.svg',
       },
       version: '1.1.8',
     },
@@ -1424,9 +1424,9 @@ const dummyData = [
       description: 'Status By Group Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/blackmirror1-statusbygroup-panel/1.1.2/public/plugins/blackmirror1-statusbygroup-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/blackmirror1-statusbygroup-panel/1.1.2/public/plugins/blackmirror1-statusbygroup-panel/img/icon_status_panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/blackmirror1-statusbygroup-panel/1.1.2/public/plugins/blackmirror1-statusbygroup-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/blackmirror1-statusbygroup-panel/1.1.2/public/plugins/blackmirror1-statusbygroup-panel/img/icon_status_panel.svg',
       },
       version: '1.1.2',
     },
@@ -1440,9 +1440,9 @@ const dummyData = [
       description: 'Status Panel for Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/vonage-status-panel/1.0.11/public/plugins/vonage-status-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/vonage-status-panel/1.0.11/public/plugins/vonage-status-panel/img/icon_status_panel.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/vonage-status-panel/1.0.11/public/plugins/vonage-status-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/vonage-status-panel/1.0.11/public/plugins/vonage-status-panel/img/icon_status_panel.svg',
       },
       version: '1.0.11',
     },
@@ -1472,9 +1472,9 @@ const dummyData = [
       description: 'SVG panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/marcuscalidus-svg-panel/0.3.4/public/plugins/marcuscalidus-svg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/marcuscalidus-svg-panel/0.3.4/public/plugins/marcuscalidus-svg-panel/img/svgpanel_logo_small.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/marcuscalidus-svg-panel/0.3.4/public/plugins/marcuscalidus-svg-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/marcuscalidus-svg-panel/0.3.4/public/plugins/marcuscalidus-svg-panel/img/svgpanel_logo_large.png',
       },
       version: '0.3.4',
     },
@@ -1506,9 +1506,9 @@ const dummyData = [
       description: 'Sigma.js graph panel for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/gretamosa-topology-panel/1.0.1/public/plugins/gretamosa-topology-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/gretamosa-topology-panel/1.0.1/public/plugins/gretamosa-topology-panel/',
         large:
-          'https://plugin-cdn.storage.googleapis.com/gretamosa-topology-panel/1.0.1/public/plugins/gretamosa-topology-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/gretamosa-topology-panel/1.0.1/public/plugins/gretamosa-topology-panel/',
       },
       version: '1.0.1',
     },
@@ -1539,9 +1539,9 @@ const dummyData = [
         'Map plugin to visualize timeseries data from geo:json or NGSIv2 sources as either a Ant-path, Hexbin, or Heatmap.',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/alexandra-trackmap-panel/1.2.6/public/plugins/alexandra-trackmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/alexandra-trackmap-panel/1.2.6/public/plugins/alexandra-trackmap-panel/',
         large:
-          'https://plugin-cdn.storage.googleapis.com/alexandra-trackmap-panel/1.2.6/public/plugins/alexandra-trackmap-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/alexandra-trackmap-panel/1.2.6/public/plugins/alexandra-trackmap-panel/',
       },
       version: '1.2.6',
     },
@@ -1571,9 +1571,9 @@ const dummyData = [
       description: 'Traffic lights for grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/snuids-trafficlights-panel/1.5.1/public/plugins/snuids-trafficlights-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/snuids-trafficlights-panel/1.5.1/public/plugins/snuids-trafficlights-panel/src/img/traffic_light_logo.jpg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/snuids-trafficlights-panel/1.5.1/public/plugins/snuids-trafficlights-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/snuids-trafficlights-panel/1.5.1/public/plugins/snuids-trafficlights-panel/src/img/traffic_light_logo.jpg',
       },
       version: '1.5.1',
     },
@@ -1587,9 +1587,9 @@ const dummyData = [
       description: 'Add colour indicator for measurements to a picture in Grafana',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/smartmakers-trafficlight-panel/1.0.1/public/plugins/smartmakers-trafficlight-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/smartmakers-trafficlight-panel/1.0.1/public/plugins/smartmakers-trafficlight-panel/img/trafficlight_logo.jpg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/smartmakers-trafficlight-panel/1.0.1/public/plugins/smartmakers-trafficlight-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/smartmakers-trafficlight-panel/1.0.1/public/plugins/smartmakers-trafficlight-panel/img/trafficlight_logo.jpg',
       },
       version: '1.0.1',
     },
@@ -1636,9 +1636,9 @@ const dummyData = [
       description: 'Grafana panel for displaying time series data as function of distance',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/factry-untimely-panel/0.3.0/public/plugins/factry-untimely-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/factry-untimely-panel/0.3.0/public/plugins/factry-untimely-panel/img/logo.png',
         large:
-          'https://plugin-cdn.storage.googleapis.com/factry-untimely-panel/0.3.0/public/plugins/factry-untimely-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/factry-untimely-panel/0.3.0/public/plugins/factry-untimely-panel/img/logo.png',
       },
       version: '0.3.0',
     },
@@ -1700,9 +1700,9 @@ const dummyData = [
       description: 'Make windrose plots',
       logos: {
         small:
-          'https://plugin-cdn.storage.googleapis.com/fatcloud-windrose-panel/0.7.1/public/plugins/fatcloud-windrose-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/fatcloud-windrose-panel/0.7.1/public/plugins/fatcloud-windrose-panel/img/windrose_logo.svg',
         large:
-          'https://plugin-cdn.storage.googleapis.com/fatcloud-windrose-panel/0.7.1/public/plugins/fatcloud-windrose-panel/img/logo.svg',
+          'https://plugin-cdn.storage.googleapis.com/fatcloud-windrose-panel/0.7.1/public/plugins/fatcloud-windrose-panel/img/windrose_logo.svg',
       },
       version: '0.7.1',
     },
