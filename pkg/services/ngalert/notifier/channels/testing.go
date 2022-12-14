@@ -129,28 +129,50 @@ func resetTimeNow() {
 }
 
 type notificationServiceMock struct {
-	Webhook     models.SendWebhookSync
-	EmailSync   models.SendEmailCommandSync
-	Emailx      models.SendEmailCommand
+	Webhook     SendWebhookSettings
+	EmailSync   SendEmailSettings
 	ShouldError error
 }
 
-func (ns *notificationServiceMock) SendWebhookSync(ctx context.Context, cmd *models.SendWebhookSync) error {
+func (ns *notificationServiceMock) SendWebhook(ctx context.Context, cmd *SendWebhookSettings) error {
 	ns.Webhook = *cmd
 	return ns.ShouldError
 }
-func (ns *notificationServiceMock) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (ns *notificationServiceMock) SendEmail(ctx context.Context, cmd *SendEmailSettings) error {
 	ns.EmailSync = *cmd
-	return ns.ShouldError
-}
-func (ns *notificationServiceMock) SendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error {
-	ns.Emailx = *cmd
 	return ns.ShouldError
 }
 
 func mockNotificationService() *notificationServiceMock { return &notificationServiceMock{} }
 
-func CreateNotificationService(t *testing.T) *notifications.NotificationService {
+type emailSender struct {
+	ns *notifications.NotificationService
+}
+
+func (e emailSender) SendEmail(ctx context.Context, cmd *SendEmailSettings) error {
+	attached := make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
+	for _, file := range cmd.AttachedFiles {
+		attached = append(attached, &models.SendEmailAttachFile{
+			Name:    file.Name,
+			Content: file.Content,
+		})
+	}
+	return e.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
+		SendEmailCommand: models.SendEmailCommand{
+			To:            cmd.To,
+			SingleEmail:   cmd.SingleEmail,
+			Template:      cmd.Template,
+			Subject:       cmd.Subject,
+			Data:          cmd.Data,
+			Info:          cmd.Info,
+			ReplyTo:       cmd.ReplyTo,
+			EmbeddedFiles: cmd.EmbeddedFiles,
+			AttachedFiles: attached,
+		},
+	})
+}
+
+func createEmailSender(t *testing.T) *emailSender {
 	t.Helper()
 
 	tracer := tracing.InitializeTracerForTest()
@@ -170,5 +192,5 @@ func CreateNotificationService(t *testing.T) *notifications.NotificationService 
 	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
 	require.NoError(t, err)
 
-	return ns
+	return &emailSender{ns: ns}
 }

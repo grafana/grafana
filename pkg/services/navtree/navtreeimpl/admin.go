@@ -36,14 +36,16 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Users",
-			Id:       "users",
-			SubTitle: "Invite and assign roles to users",
-			Icon:     "user",
-			Url:      s.cfg.AppSubURL + "/org/users",
-		})
+	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
+			configNodes = append(configNodes, &navtree.NavLink{
+				Text:     "Users",
+				Id:       "users",
+				SubTitle: "Invite and assign roles to users",
+				Icon:     "user",
+				Url:      s.cfg.AppSubURL + "/org/users",
+			})
+		}
 	}
 
 	if hasAccess(s.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
@@ -123,10 +125,18 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	adminNavLinks := []*navtree.NavLink{}
 
-	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
-		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
-			Text: "Users", SubTitle: "Manage and create users across the whole Grafana server", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
-		})
+	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
+			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+				Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+			})
+		}
+	} else {
+		if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
+			adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+				Text: "Users", SubTitle: "Manage and create users across the whole Grafana server", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+			})
+		}
 	}
 
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
@@ -142,13 +152,34 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 	}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
-		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+		storage := &navtree.NavLink{
 			Text:     "Storage",
 			Id:       "storage",
 			SubTitle: "Manage file storage",
 			Icon:     "cube",
 			Url:      s.cfg.AppSubURL + "/admin/storage",
-		})
+		}
+		adminNavLinks = append(adminNavLinks, storage)
+
+		if s.features.IsEnabled(featuremgmt.FlagExport) {
+			storage.Children = append(storage.Children, &navtree.NavLink{
+				Text:     "Export",
+				Id:       "export",
+				SubTitle: "Export grafana settings",
+				Icon:     "cube",
+				Url:      s.cfg.AppSubURL + "/admin/storage/export",
+			})
+		}
+
+		if s.features.IsEnabled(featuremgmt.FlagK8s) {
+			storage.Children = append(storage.Children, &navtree.NavLink{
+				Text:     "Kubernetes",
+				Id:       "k8s",
+				SubTitle: "Manage k8s storage",
+				Icon:     "cube",
+				Url:      s.cfg.AppSubURL + "/admin/storage/k8s",
+			})
+		}
 	}
 
 	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {

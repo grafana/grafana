@@ -2,6 +2,7 @@ import { cloneDeep, find, isEmpty } from 'lodash';
 import { merge, Observable, of } from 'rxjs';
 
 import {
+  CoreApp,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -20,6 +21,7 @@ import { RowContextOptions } from '../../../features/logs/components/LogRowConte
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { CloudWatchAPI } from './api';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
@@ -43,6 +45,7 @@ export class CloudWatchDatasource
   languageProvider: CloudWatchLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
+  defaultLogGroups?: string[];
 
   type = 'cloudwatch';
 
@@ -67,6 +70,7 @@ export class CloudWatchDatasource
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
     this.variables = new CloudWatchVariableSupport(this.api);
     this.annotations = CloudWatchAnnotationSupport;
+    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
   }
 
   filterQuery(query: CloudWatchQuery) {
@@ -172,5 +176,12 @@ export class CloudWatchDatasource
       return this.defaultRegion ?? '';
     }
     return region;
+  }
+
+  getDefaultQuery(_: CoreApp): Partial<CloudWatchQuery> {
+    return {
+      ...getDefaultLogsQuery(this.defaultLogGroups),
+      ...DEFAULT_METRICS_QUERY,
+    };
   }
 }

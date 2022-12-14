@@ -1,18 +1,18 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/expressions/
-  - /docs/grafana/latest/panels/inspect-panel/
-  - /docs/grafana/latest/panels/queries/
-  - /docs/grafana/latest/panels/query-a-data-source/
-  - /docs/grafana/latest/panels/share-query-results/
-  - /docs/grafana/latest/panels/query-a-data-source/about-queries/
-  - /docs/grafana/latest/panels/query-a-data-source/navigate-query-tab/
-  - /docs/grafana/latest/panels/query-a-data-source/add-a-query/
-  - /docs/grafana/latest/panels/query-a-data-source/manage-queries/
-  - /docs/grafana/latest/panels-visualizations/manage-queries/
-  - /docs/grafana/latest/panels/query-options/
-  - /docs/grafana/latest/panels/reference-query-options/
-  - /docs/grafana/latest/panels-visualizations/query-options/
+  - ../panels/expressions/
+  - ../panels/inspect-panel/
+  - ../panels/queries/
+  - ../panels/query-a-data-source/
+  - ../panels/query-a-data-source/about-queries/
+  - ../panels/query-a-data-source/add-a-query/
+  - ../panels/query-a-data-source/manage-queries/
+  - ../panels/query-a-data-source/navigate-query-tab/
+  - ../panels/query-options/
+  - ../panels/reference-query-options/
+  - ../panels/share-query-results/
+  - manage-queries/
+  - query-options/
 title: Query and transform data
 weight: 200
 ---

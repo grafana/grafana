@@ -56,7 +56,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)
 	}
-	cmd.RemoteAddr = c.Req.RemoteAddr
+	cmd.RemoteAddr = c.RemoteAddr()
 
 	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create signup", err)

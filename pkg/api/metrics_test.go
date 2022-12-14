@@ -13,15 +13,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -46,31 +43,6 @@ func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) 
 	return rv.err
 }
 
-type fakeOAuthTokenService struct {
-	passThruEnabled bool
-	token           *oauth2.Token
-}
-
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
-	return ts.token
-}
-
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
-	return ts.passThruEnabled
-}
-
-func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
-	return nil, false, nil
-}
-
-func (ts *fakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
-	return nil
-}
-
-func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
-	return nil
-}
-
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(
@@ -83,13 +55,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
 					"A": backend.DataResponse{
-						Error: fmt.Errorf("query failed"),
+						Error: errors.New("query failed"),
 					},
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		&fakeOAuthTokenService{},
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -132,13 +103,12 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
 					"A": backend.DataResponse{
-						Error: fmt.Errorf("query failed"),
+						Error: errors.New("query failed"),
 					},
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		&fakeOAuthTokenService{},
 	)
 	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -292,7 +262,6 @@ func TestDataSourceQueryError(t *testing.T) {
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
 					pluginClient.ProvideService(r, &config.Cfg{}),
-					&fakeOAuthTokenService{},
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})
