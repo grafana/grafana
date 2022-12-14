@@ -151,7 +151,7 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { alertName } }) => {
           return <>{alertName}</>;
         },
-        size: 0.6,
+        size: '330px',
       },
       {
         id: 'for',
@@ -174,7 +174,7 @@ export const RulesForGroupTable = ({
             return <>{numberEvaluations}</>;
           }
         },
-        size: 0.2,
+        size: 0.6,
       },
     ];
   }, [currentInterval]);
