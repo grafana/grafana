@@ -5,5 +5,5 @@ module.exports = async ({ name, github, context, core }) => {
     const result = await github.request(url);
     const job = result.jobs.find(j => j.name === name);
     
-    core.setOutput('link', job.html_url);
+    core.setOutput('link', `${job.html_url}?check_suite_focus=true`);
 }
