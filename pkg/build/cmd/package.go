@@ -22,12 +22,12 @@ func Package(c *cli.Context) error {
 
 	releaseMode, err := metadata.GetReleaseMode()
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	releaseModeConfig, err := config.GetBuildConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	cfg := config.Config{

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/grafana/grafana/pkg/build/config"
 	"log"
 
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/frontend"
 	"github.com/grafana/grafana/pkg/build/syncutil"

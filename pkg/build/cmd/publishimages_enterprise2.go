@@ -15,9 +15,9 @@ import (
 func Enterprise2(c *cli.Context) error {
 	if c.NArg() > 0 {
 		if err := cli.ShowSubcommandHelp(c); err != nil {
-			return cli.NewExitError(err.Error(), 1)
+			return cli.Exit(err.Error(), 1)
 		}
-		return cli.NewExitError("", 1)
+		return cli.Exit("", 1)
 	}
 
 	if err := gcloud.ActivateServiceAccount(); err != nil {

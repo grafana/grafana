@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/build/config"
 	"io"
 	"os"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
 )
 
