@@ -481,7 +481,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   for (let i = 1; i <= steps.length; i++) {
     const step = steps[i - 1];
     items.push({
-      label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
+      label: i > 1 || steps.length === 1 ? `${fmt(step.value)}+` : `< ${fmt(steps[i].value)}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
@@ -510,10 +510,9 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   const items: VizLegendItem[] = [];
   const fieldConfig = fields[0].config;
   const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
-  const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
-  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
+  if (colorMode === FieldColorModeId.Thresholds) {
     return getThresholdItems(fieldConfig, theme);
   }
 
