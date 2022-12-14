@@ -247,10 +247,8 @@ const dummyData = [
     info: {
       description: 'Boom table panel for Graphite, InfluxDB, Prometheus',
       logos: {
-        small:
-          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtable-panel/1.4.1/public/plugins/yesoreyeram-boomtable-panel/',
-        large:
-          'https://plugin-cdn.storage.googleapis.com/yesoreyeram-boomtable-panel/1.4.1/public/plugins/yesoreyeram-boomtable-panel/',
+        small: '',
+        large: '',
       },
       version: '1.4.1',
     },
@@ -761,10 +759,8 @@ const dummyData = [
     info: {
       description: 'Heatmap Panel for Grafana',
       logos: {
-        small:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-heatmap-epoch-panel/0.1.8/public/plugins/mtanda-heatmap-epoch-panel/',
-        large:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-heatmap-epoch-panel/0.1.8/public/plugins/mtanda-heatmap-epoch-panel/',
+        small: '',
+        large: '',
       },
       version: '0.1.8',
     },
@@ -793,10 +789,8 @@ const dummyData = [
     info: {
       description: 'Histogram Panel for Grafana',
       logos: {
-        small:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-histogram-panel/0.1.7/public/plugins/mtanda-histogram-panel/',
-        large:
-          'https://plugin-cdn.storage.googleapis.com/mtanda-histogram-panel/0.1.7/public/plugins/mtanda-histogram-panel/',
+        small: '',
+        large: '',
       },
       version: '0.1.7',
     },
@@ -1505,10 +1499,8 @@ const dummyData = [
     info: {
       description: 'Sigma.js graph panel for grafana',
       logos: {
-        small:
-          'https://plugin-cdn.storage.googleapis.com/gretamosa-topology-panel/1.0.1/public/plugins/gretamosa-topology-panel/',
-        large:
-          'https://plugin-cdn.storage.googleapis.com/gretamosa-topology-panel/1.0.1/public/plugins/gretamosa-topology-panel/',
+        small: '',
+        large: '',
       },
       version: '1.0.1',
     },
@@ -1538,10 +1530,8 @@ const dummyData = [
       description:
         'Map plugin to visualize timeseries data from geo:json or NGSIv2 sources as either a Ant-path, Hexbin, or Heatmap.',
       logos: {
-        small:
-          'https://plugin-cdn.storage.googleapis.com/alexandra-trackmap-panel/1.2.6/public/plugins/alexandra-trackmap-panel/',
-        large:
-          'https://plugin-cdn.storage.googleapis.com/alexandra-trackmap-panel/1.2.6/public/plugins/alexandra-trackmap-panel/',
+        small: '',
+        large: '',
       },
       version: '1.2.6',
     },

@@ -74,6 +74,19 @@ describe('Plugin CDN', () => {
       const translatedLoad = translateForCDN({ ...load, source });
       expect(translatedLoad).toBe(expectedSource);
     });
+
+    it('should replace sourcemap locations', () => {
+      const source = `
+        Zn(t,e)},t.Rectangle=ui,t.rectangle=function(t,e){return new ui(t,e)},t.Map=He,t.map=function(t,e){return new He(t,e)}}(e)}])});
+        //# sourceMappingURL=module.js.map
+      `;
+      const expectedSource = `
+        Zn(t,e)},t.Rectangle=ui,t.rectangle=function(t,e){return new ui(t,e)},t.Map=He,t.map=function(t,e){return new He(t,e)}}(e)}])});
+        //# sourceMappingURL=https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js.map
+      `;
+      const translatedLoad = translateForCDN({ ...load, source });
+      expect(translatedLoad).toBe(expectedSource);
+    });
   });
 
   describe('extractPluginDeets', () => {
