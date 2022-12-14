@@ -7,8 +7,9 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { EmbeddedScene } from '../components/Scene';
 
-import HttpHandlerScene from './HttpHandlerScene';
+import { HttpHandlerDetailsPage } from './HttpHandlerDetailsPage';
 import { getOverviewScene, getHttpHandlerListScene } from './state';
+import { getLinkUrlWithAppUrlState, useAppQueryParams } from './utils';
 
 export function GrafanaMonitoringApp() {
   const tabs = getTabs();
@@ -20,7 +21,7 @@ export function GrafanaMonitoringApp() {
           <AppPageWithTabs activeTab={tab} tabs={tabs} />
         </Route>
       ))}
-      <Route exact={true} path="/scenes/grafana-monitoring/handlers/:handler" component={HttpHandlerScene} />
+      <Route exact={true} path="/scenes/grafana-monitoring/handlers/:handler" component={HttpHandlerDetailsPage} />
     </Switch>
   );
 }
@@ -32,6 +33,8 @@ export interface AppPageProps {
 
 export function AppPageWithTabs({ tabs, activeTab }: AppPageProps) {
   const scene = activeTab.getScene();
+  const params = useAppQueryParams();
+
   const pageNav: NavModelItem = {
     text: 'Grafana Monitoring',
     subTitle: 'A custom app with embedded scenes to monitor your Grafana server',
@@ -39,7 +42,7 @@ export function AppPageWithTabs({ tabs, activeTab }: AppPageProps) {
     children: tabs.map((tab) => ({
       text: tab.text,
       active: tab === activeTab,
-      url: tab.url,
+      url: getLinkUrlWithAppUrlState(tab.url, params),
     })),
   };
 

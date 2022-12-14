@@ -1,20 +1,21 @@
 import React, { RefCallback } from 'react';
-import { useMeasure } from 'react-use';
+import { useLocation, useMeasure } from 'react-use';
 
-import { PluginContextProvider } from '@grafana/data';
+import { PluginContextProvider, urlUtil } from '@grafana/data';
+import { locationSearchToObject } from '@grafana/runtime';
 import { PanelChrome, ErrorBoundaryAlert } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
 
 import { sceneGraph } from '../../core/sceneGraph';
-import { SceneComponentProps } from '../../core/types';
+import { SceneComponentProps, UrlLinkDef } from '../../core/types';
 import { SceneQueryRunner } from '../../querying/SceneQueryRunner';
 import { SceneDragHandle } from '../SceneDragHandle';
 
 import { VizPanel } from './VizPanel';
 
 export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, titleHref, options, fieldConfig, pluginId, pluginLoadError, displayMode, $data, ...state } =
+  const { title, titleLink, options, fieldConfig, pluginId, pluginLoadError, displayMode, $data, ...state } =
     model.useState();
   const [ref, { width, height }] = useMeasure();
   const plugin = model.getPlugin();
@@ -53,8 +54,7 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   return (
     <div ref={ref as RefCallback<HTMLDivElement>} style={{ position: 'absolute', width: '100%', height: '100%' }}>
       <PanelChrome
-        title={titleInterpolated}
-        titleHref={titleHref}
+        title={titleLink ? <PanelTitleLink title={titleInterpolated} link={titleLink} /> : titleInterpolated}
         width={width}
         height={height}
         leftItems={isDraggable ? [dragHandle] : undefined}
@@ -95,3 +95,12 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
 }
 
 VizPanelRenderer.displayName = 'ScenePanelRenderer';
+
+function PanelTitleLink({ title, link }: { title: string; link: UrlLinkDef }) {
+  const location = useLocation();
+  const queryParms = locationSearchToObject(location.search || '');
+  // TODO only include query params that are specified in UrlLinkDef definition
+  const url = urlUtil.renderUrl(link.path, queryParms);
+
+  return <a href={url}>{title}</a>;
+}

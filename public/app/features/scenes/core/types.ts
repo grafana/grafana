@@ -164,3 +164,8 @@ export interface SceneObjectUrlSyncHandler<TState> {
 
 export type SceneObjectUrlValue = string | string[] | undefined | null;
 export type SceneObjectUrlValues = Record<string, SceneObjectUrlValue>;
+
+export interface UrlLinkDef {
+  path: string;
+  queryKeys: string[];
+}

@@ -164,7 +164,10 @@ export function getHttpHandlersGraphsScene() {
         children: [
           new VizPanel({
             pluginId: 'timeseries',
-            titleHref: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
+            titleLink: {
+              path: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
+              queryKeys: ['from', 'to', 'var-instance'],
+            },
             title: getFrameDisplayName(frame),
             options: {
               legend: { displayMode: 'hidden' },
@@ -191,7 +194,7 @@ export function getHttpHandlersGraphsScene() {
   return graphs;
 }
 
-export function getHandlerScene(handler: string): EmbeddedScene {
+export function getHandlerDetailsScene(handler: string): EmbeddedScene {
   const sceneKey = `handler ${handler}`;
 
   if (sceneCache.has(sceneKey)) {

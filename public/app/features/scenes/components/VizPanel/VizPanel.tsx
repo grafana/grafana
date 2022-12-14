@@ -8,13 +8,13 @@ import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/impo
 import { getPanelOptionsWithDefaults } from '../../../dashboard/state/getPanelOptionsWithDefaults';
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { sceneGraph } from '../../core/sceneGraph';
-import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';
+import { SceneComponentProps, SceneLayoutChildState, UrlLinkDef } from '../../core/types';
 
 import { VizPanelRenderer } from './VizPanelRenderer';
 
 export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLayoutChildState {
   title: string;
-  titleHref?: string;
+  titleLink?: UrlLinkDef;
   pluginId: string;
   options: TOptions;
   fieldConfig: FieldConfigSource<TFieldConfig>;

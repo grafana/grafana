@@ -29,8 +29,7 @@ export interface PanelChromeProps {
   height: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
-  title?: string;
-  titleHref?: string;
+  title?: string | ReactNode;
   titleItems?: PanelChromeInfoState[];
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
@@ -61,7 +60,6 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   children,
   padding = 'md',
   title = '',
-  titleHref,
   titleItems = [],
   menu,
   // dragClass,
@@ -94,22 +92,18 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const handleMenuOpen = () => {};
 
   const hasHeader = title || titleItems.length > 0 || menu;
+  console.log('typeof title', typeof title);
 
   return (
     <div className={styles.container} style={containerStyles}>
       {hasHeader && !hoverHeader && (
         <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
-          {title && (
+          {typeof title === 'string' && (
             <div title={title} className={styles.title}>
-              {titleHref ? (
-                <a href={titleHref} className="external-link">
-                  {title}
-                </a>
-              ) : (
-                title
-              )}
+              {title}
             </div>
           )}
+          {typeof title === 'object' && <div className={styles.title}>{title}</div>}
 
           {titleItems.length > 0 && (
             <div className={styles.items} data-testid="title-items-container">
@@ -161,11 +155,12 @@ const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => Rea
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, title: string, items: ReactNode[]) => {
-  if (title.length > 0 || items.length > 0) {
-    return theme.spacing.gridSize * theme.components.panel.headerHeight;
+const getHeaderHeight = (theme: GrafanaTheme2, title: string | ReactNode, items: ReactNode[]) => {
+  if ((title === '' || title == null) && items.length === 0) {
+    return 0;
   }
-  return 0;
+
+  return theme.spacing.gridSize * theme.components.panel.headerHeight;
 };
 
 const getContentStyle = (
@@ -230,6 +225,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       fontWeight: theme.typography.fontWeightMedium,
+      '> a:hover': {
+        textDecoration: 'underline',
+        color: theme.colors.text.link,
+      },
     }),
     items: css({
       display: 'flex',

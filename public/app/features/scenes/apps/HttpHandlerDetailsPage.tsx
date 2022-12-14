@@ -6,16 +6,18 @@ import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
 import { getTabs } from './GrafanaMonitoringApp';
-import { getHandlerScene } from './state';
+import { getHandlerDetailsScene } from './state';
+import { getLinkUrlWithAppUrlState, useAppQueryParams } from './utils';
 
-export function HttpHandlerScene() {
+export function HttpHandlerDetailsPage() {
   const routeMatch = useRouteMatch<{ handler: string }>();
-  const scene = getHandlerScene(decodeURIComponent(routeMatch.params.handler));
+  const scene = getHandlerDetailsScene(decodeURIComponent(routeMatch.params.handler));
   const parent = getTabs().find((x) => x.text === 'HTTP handlers')!;
+  const params = useAppQueryParams();
 
   const pageNav: NavModelItem = {
     text: scene.state.title,
-    parentItem: { text: parent.text, url: parent.url },
+    parentItem: { text: parent.text, url: getLinkUrlWithAppUrlState(parent.url, params) },
   };
 
   return (
@@ -30,5 +32,3 @@ export function HttpHandlerScene() {
     </Page>
   );
 }
-
-export default HttpHandlerScene;
