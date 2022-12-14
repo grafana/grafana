@@ -53,12 +53,12 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   const onChangeQuery = (value: string) => {
     // Send text change to parent
-      const nextQuery = {
-        ...query,
-        expression: value,
-        statsGroups: getStatsGroups(value),
-      };
-      onChange(nextQuery);
+    const nextQuery = {
+      ...query,
+      expression: value,
+      statsGroups: getStatsGroups(value),
+    };
+    onChange(nextQuery);
   };
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
