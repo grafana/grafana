@@ -4,7 +4,7 @@ import React, { FC, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon, HorizontalGroup } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useGetOnCallIntegrations } from 'app/features/alerting/unified/api/onCallApi';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -31,7 +31,15 @@ interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
 }
 export const OnCallBadge = () => {
-  return <Badge text={'OnCall'} color={'blue'} />;
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.onCallBadgeWrapper}>
+      <HorizontalGroup align="center" spacing="xs">
+        <img src={'public/img/alerting/oncall_logo.svg'} alt="" height="12px" />
+        <span>OnCall</span>
+      </HorizontalGroup>
+    </div>
+  );
 };
 
 function UpdateActions({ permissions, alertManagerName, receiverName, onClickDeleteReceiver }: UpdateActionProps) {
@@ -384,9 +392,10 @@ function useGetColumns(
       id: 'name',
       label: 'Contact point name',
       renderCell: ({ data: { name, provisioned, isOnCall } }) => (
-        <>
-          {name} {isOnCall && <OnCallBadge />} {provisioned && <ProvisioningBadge />}
-        </>
+        <Stack alignItems="center">
+          <div>{name}</div>
+          {isOnCall && <OnCallBadge />} {provisioned && <ProvisioningBadge />}
+        </Stack>
       ),
       size: 1,
     },
@@ -449,4 +458,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.warning.text};
   `,
   countMessage: css``,
+  onCallBadgeWrapper: css`
+    text-align: left;
+    height: 22px;
+    display: inline-flex;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid rgba(245, 95, 62, 1);
+    color: rgba(245, 95, 62, 1);
+    font-weight: ${theme.typography.fontWeightRegular};
+  `,
 });
