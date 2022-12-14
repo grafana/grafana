@@ -42,7 +42,7 @@ func (f *ConfigurationApiHandler) RoutePostNGalertConfig(ctx *models.ReqContext)
 	// Parse Request Body
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRoutePostNGalertConfig(ctx, conf)
 }

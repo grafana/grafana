@@ -28,7 +28,7 @@ func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Re
 	// Parse Request Body
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRouteEvalQueries(ctx, conf)
 }
@@ -38,7 +38,7 @@ func (f *TestingApiHandler) RouteTestRuleConfig(ctx *models.ReqContext) response
 	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
@@ -46,7 +46,7 @@ func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) r
 	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRouteTestRuleGrafanaConfig(ctx, conf)
 }

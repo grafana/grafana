@@ -25,7 +25,7 @@ func (f *{{classname}}Handler) {{nickname}}(ctx *models.ReqContext) response.Res
 	// Parse Request Body
 	conf := apimodels.{{dataType}}{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	{{/bodyParams}}return f.handle{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
 }
