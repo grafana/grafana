@@ -1,6 +1,12 @@
 import { DataFrame, QueryHint } from '@grafana/data';
 
-import { isQueryPipelineErrorFiltering, isQueryWithLabelFormat, isQueryWithParser } from './queryUtils';
+import {
+  isQueryWithLabelFilter,
+  isQueryPipelineErrorFiltering,
+  isQueryWithLabelFormat,
+  isQueryWithParser,
+  isQueryWithLogFmt,
+} from './queryUtils';
 import {
   dataFrameHasLevelLabel,
   extractHasErrorLabelFromDataFrame,
@@ -91,6 +97,23 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         },
       });
     }
+  }
+
+  const hasLabelFilter = isQueryWithLabelFilter(query);
+  const hasLogfmt = isQueryWithLogFmt(query);
+
+  if (hasLogfmt && !hasLabelFilter) {
+    hints.push({
+      type: 'ADD_LABEL_FILTER',
+      label: '',
+      fix: {
+        label: 'Consider filtering logs by their label and value.',
+        action: {
+          type: 'ADD_LABEL_FILTER',
+          query,
+        },
+      },
+    });
   }
 
   return hints;

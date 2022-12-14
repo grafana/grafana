@@ -14,6 +14,7 @@ import {
   LabelParser,
   JsonExpressionParser,
   LabelFilter,
+  Logfmt,
   MetricExpr,
   Matcher,
   Identifier,
@@ -220,4 +221,37 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   });
 
   return selector + pipelineExpr;
+}
+
+export function isQueryWithLabelFilter(query: string): string {
+  const tree = parser.parse(query);
+  let labelName = '';
+
+  tree.iterate({
+    enter: ({ type, node }): false | void => {
+      if (type.id === LabelFilter) {
+        const label = node.getChild(Matcher)?.getChild(Identifier);
+        if (label) {
+          labelName = query.substring(label.from, label.to);
+        }
+        return false;
+      }
+    },
+  });
+
+  return labelName;
+}
+
+export function isQueryWithLogFmt(query: string): boolean {
+  const tree = parser.parse(query);
+  let queryWithLogFmt = false;
+
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === Logfmt) {
+        queryWithLogFmt = true;
+      }
+    },
+  });
+  return queryWithLogFmt;
 }

@@ -267,7 +267,7 @@ function getLogQueryPositions(query: string): Position[] {
   return positions;
 }
 
-function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
+export function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
   // We need to make sure that we convert the value back to string because it may be a number
   return { label: key, op: operator, value };
 }
@@ -314,7 +314,7 @@ function addFilterToStreamSelector(
  * @param positionsToAddAfter
  * @param filter
  */
-function addFilterAsLabelFilter(
+export function addFilterAsLabelFilter(
   query: string,
   positionsToAddAfter: Position[],
   filter: QueryBuilderLabelFilter

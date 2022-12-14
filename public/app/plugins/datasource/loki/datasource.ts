@@ -57,6 +57,9 @@ import {
   addNoPipelineErrorToQuery,
   addParserToQuery,
   removeCommentsFromQuery,
+  addFilterAsLabelFilter,
+  getParserPositions,
+  toLabelFilter,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
@@ -493,6 +496,12 @@ export class LokiDatasource
             originalLabel: action.options.originalLabel,
           });
         }
+        break;
+      }
+      case 'ADD_LABEL_FILTER': {
+        const parserPositions = getParserPositions(query.expr);
+        const filter = toLabelFilter('', '', '=');
+        expression = addFilterAsLabelFilter(expression, parserPositions, filter);
         break;
       }
       default:
