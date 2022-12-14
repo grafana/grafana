@@ -26,12 +26,15 @@ func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettin
 }
 
 func (s sender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
-	attached := make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
-	for _, file := range cmd.AttachedFiles {
-		attached = append(attached, &models.SendEmailAttachFile{
-			Name:    file.Name,
-			Content: file.Content,
-		})
+	var attached []*models.SendEmailAttachFile
+	if cmd.AttachedFiles != nil {
+		attached = make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
+		for _, file := range cmd.AttachedFiles {
+			attached = append(attached, &models.SendEmailAttachFile{
+				Name:    file.Name,
+				Content: file.Content,
+			})
+		}
 	}
 	return s.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
