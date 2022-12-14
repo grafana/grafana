@@ -1,5 +1,4 @@
 import { omit } from 'lodash';
-import memoize from 'memoize-one';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
@@ -10,20 +9,16 @@ import {
   PanelData,
   RelativeTimeRange,
   ThresholdsConfig,
-  ThresholdsMode,
 } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Button, Card, GraphTresholdsStyleMode, Icon } from '@grafana/ui';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { Graph, Node } from 'app/core/utils/dag';
-import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
-import { errorFromSeries } from './util';
+import { errorFromSeries, getThresholdsForQueries } from './util';
 
 interface Props {
   // The query configuration
@@ -160,78 +155,9 @@ export class QueryRows extends PureComponent<Props> {
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 
-  getThresholdsForQueries = (queries: AlertQuery[]) => {
-    const thresholds: Record<string, { config: ThresholdsConfig; mode: GraphTresholdsStyleMode }> = {};
-    const SUPPORTED_EXPRESSION_TYPES = [ExpressionQueryType.threshold, ExpressionQueryType.classic];
-
-    for (const query of queries) {
-      if (!isExpressionQuery(query.model)) {
-        continue;
-      }
-
-      // currently only supporting "threshold" & "classic_condition" expressions
-      if (!SUPPORTED_EXPRESSION_TYPES.includes(query.model.type)) {
-        continue;
-      }
-
-      if (!Array.isArray(query.model.conditions)) {
-        continue;
-      }
-
-      // if any of the conditions are a "range" we switch to an "area" threshold view and ignore single threshold values
-      // the time series panel does not support both.
-      const hasRangeThreshold = query.model.conditions.some(isRangeCondition);
-
-      query.model.conditions.forEach((condition, index) => {
-        const threshold = condition.evaluator.params;
-
-        // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression` *sigh*
-        const refId = condition.query.params[0] ?? query.model.expression;
-        const isRangeThreshold = isRangeCondition(condition);
-
-        try {
-          // 1. create a DAG so we can find the origin of the current expression
-          const graph = createDagFromQueries(queries);
-
-          // 2. check if the origin is a data query
-          // TODO memoize this
-          const originRefID = getOriginOfRefId(refId, graph);
-          const originQuery = queries.find((query) => query.refId === originRefID);
-          const originIsDataQuery = !isExpressionQuery(originQuery?.model);
-
-          // 3. if yes, add threshold config to the refId of the data Query
-          const hasValidOrigin = Boolean(originIsDataQuery && originRefID);
-
-          // create the initial data structure for this origin refId
-          if (originRefID && !thresholds[originRefID]) {
-            thresholds[originRefID] = {
-              config: {
-                mode: ThresholdsMode.Absolute,
-                steps: [],
-              },
-              mode: GraphTresholdsStyleMode.Line,
-            };
-          }
-
-          if (originRefID && hasValidOrigin && !isRangeThreshold && !hasRangeThreshold) {
-            appendSingleThreshold(thresholds, originRefID, threshold[0]);
-          } else if (originRefID && hasValidOrigin && isRangeThreshold) {
-            appendRangeThreshold(thresholds, originRefID, threshold, condition.evaluator.type);
-            thresholds[originRefID].mode = GraphTresholdsStyleMode.LineAndArea;
-          }
-        } catch (err) {
-          console.error('Failed to parse thresholds', err);
-          return;
-        }
-      });
-    }
-
-    return thresholds;
-  };
-
   render() {
     const { queries, expressions } = this.props;
-    const thresholdByRefId = this.getThresholdsForQueries([...queries, ...expressions]);
+    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions]);
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -309,89 +235,6 @@ function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'
   };
 }
 
-function isRangeCondition(condition: ClassicCondition) {
-  return (
-    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange
-  );
-}
-
-function appendSingleThreshold(
-  thresholds: Record<string, { config: ThresholdsConfig; mode: GraphTresholdsStyleMode }>,
-  refId: string,
-  value: number
-): void {
-  thresholds[refId].config.steps.push(
-    ...[
-      {
-        value: -Infinity,
-        color: 'transparent',
-      },
-      {
-        value: value,
-        color: config.theme2.colors.error.main,
-      },
-    ]
-  );
-}
-
-// TODO make this work with negative values!
-function appendRangeThreshold(
-  thresholds: Record<string, { config: ThresholdsConfig; mode: GraphTresholdsStyleMode }>,
-  refId: string,
-  values: number[],
-  type: EvalFunction
-): void {
-  if (type === EvalFunction.IsWithinRange) {
-    thresholds[refId].config.steps.push(
-      ...[
-        {
-          value: -Infinity,
-          color: 'transparent',
-        },
-        {
-          value: values[0],
-          color: config.theme2.colors.error.main,
-        },
-        {
-          value: values[1],
-          color: config.theme2.colors.error.main,
-        },
-        {
-          value: values[1],
-          color: 'transparent',
-        },
-      ]
-    );
-  }
-
-  if (type === EvalFunction.IsOutsideRange) {
-    thresholds[refId].config.steps.push(
-      ...[
-        {
-          value: -Infinity,
-          color: config.theme2.colors.error.main,
-        },
-        // we have to duplicate this value, or the graph will not display the handle in the right color
-        {
-          value: values[0],
-          color: config.theme2.colors.error.main,
-        },
-        {
-          value: values[0],
-          color: 'transparent',
-        },
-        {
-          value: values[1],
-          color: config.theme2.colors.error.main,
-        },
-      ]
-    );
-  }
-
-  // now also sort the thresholds
-  thresholds[refId].config.steps.sort((a, b) => a.value - b.value);
-}
-
 interface DatasourceNotFoundProps {
   index: number;
   model: AlertDataQuery;
@@ -454,69 +297,3 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
     </EmptyQueryWrapper>
   );
 };
-
-// TODO maybe move this to the DAG util?
-function getOriginOfRefId(refId: string, graph: Graph): string | undefined {
-  const node = graph.getNode(refId);
-
-  let origin: Node | undefined;
-
-  // recurse through "node > inputEdges > inputNode"
-  function findChildNode(node: Node) {
-    const inputEdges = node.inputEdges;
-
-    // if we still have input edges, keep looking
-    if (inputEdges.length > 0) {
-      // check each edge for input nodes
-      inputEdges.forEach((edge) => {
-        // if the edge still has a child node, keep looking
-        if (edge.inputNode) {
-          findChildNode(edge.inputNode);
-        }
-      });
-    } else {
-      // if we have no more input edges it means we we've found our origin
-      origin = node;
-    }
-  }
-
-  findChildNode(node);
-
-  return origin?.name;
-}
-
-// memoized version of _createDagFromQueries to prevent recreating the DAG if no sources or targets are modified
-const createDagFromQueries = memoize(
-  _createDagFromQueries,
-  (previous: Parameters<typeof _createDagFromQueries>, next: Parameters<typeof _createDagFromQueries>) => {
-    return fingerPrintQueries(previous[0]) === fingerPrintQueries(next[0]);
-  }
-);
-
-function fingerPrintQueries(queries: AlertQuery[]) {
-  return queries.map((query) => query.refId + query.model.expression).join();
-}
-
-/**
- * Turn the array of alert queries (this means data queries and expressions)
- * in to a DAG, a directed acyclical graph
- */
-function _createDagFromQueries(queries: AlertQuery[]): Graph {
-  const graph = new Graph();
-
-  queries.forEach((query) => {
-    const source = query.refId;
-    const target = query.model.expression;
-    const isSelf = source === target;
-
-    if (!graph.getNode(source)) {
-      graph.createNode(source);
-    }
-
-    if (source && target && !isSelf) {
-      graph.link(target, source);
-    }
-  });
-
-  return graph;
-}
