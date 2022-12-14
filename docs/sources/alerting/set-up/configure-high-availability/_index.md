@@ -17,7 +17,7 @@ weight: 300
 
 You can enable alerting high availability support by updating the Grafana configuration file, additional steps are required to make this work if you run Grafana in a Kubernetes cluster. Both setups are described in this tutorial.
 
-## In Grafana
+## Enable alerting high availability in Grafana
 
 ### Before you begin
 
