@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { Unsubscribable } from 'rxjs';
+import { mergeMap, MonoTypeOperatorFunction, Unsubscribable, map, of } from 'rxjs';
 
 import {
   CoreApp,
@@ -7,10 +7,12 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceRef,
+  DataTransformerConfig,
   PanelData,
   rangeUtil,
   ScopedVars,
   TimeRange,
+  transformDataFrame,
 } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
@@ -24,6 +26,7 @@ import { VariableDependencyConfig } from '../variables/VariableDependencyConfig'
 export interface QueryRunnerState extends SceneObjectStatePlain {
   data?: PanelData;
   queries: DataQueryExtended[];
+  transformations?: DataTransformerConfig[];
   datasource?: DataSourceRef;
   minInterval?: string;
   maxDataPoints?: number;
@@ -158,7 +161,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this._querySub = runRequest(ds, request).subscribe({
+      this._querySub = runRequest(ds, request).pipe(getTransformationsStream(this.state.transformations)).subscribe({
         next: this.onDataReceived,
       });
     } catch (err) {
@@ -177,3 +180,25 @@ async function getDataSource(datasource: DataSourceRef | undefined, scopedVars: 
   }
   return await getDatasourceSrv().get(datasource as string, scopedVars);
 }
+
+export const getTransformationsStream: (
+  transformations?: DataTransformerConfig[]
+) => MonoTypeOperatorFunction<PanelData> = (transformations) => (inputStream) => {
+  return inputStream.pipe(
+    mergeMap((data) => {
+      if (!transformations || transformations.length === 0) {
+        return of(data);
+      }
+
+      // TODO: use scene interpolation
+      // const replace = (option: string): string => {
+      //   return getTemplateSrv().replace(option, data?.request?.scopedVars);
+      // };
+      // transformations.forEach((transform: any) => {
+      //   transform.replace = replace;
+      // });
+
+      return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
+    })
+  );
+};
