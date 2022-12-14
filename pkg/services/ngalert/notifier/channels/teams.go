@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -263,13 +262,7 @@ func NewTeamsNotifier(fc FactoryConfig) (*TeamsNotifier, error) {
 		return nil, err
 	}
 	return &TeamsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.teams"),
 		ns:       fc.NotificationService,
 		images:   fc.ImageStore,

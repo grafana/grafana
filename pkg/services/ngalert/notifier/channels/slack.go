@@ -23,7 +23,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -156,13 +155,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 		settings.Title = DefaultMessageTitleEmbed
 	}
 	return &SlackNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
+		Base:     NewBase(factoryConfig.Config),
 		settings: settings,
 
 		images:        factoryConfig.ImageStore,

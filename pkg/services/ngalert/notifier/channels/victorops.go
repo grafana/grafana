@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,13 +75,7 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 		return nil, err
 	}
 	return &VictoropsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.victorops"),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,

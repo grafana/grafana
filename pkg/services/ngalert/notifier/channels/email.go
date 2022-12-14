@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -69,13 +68,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 // for the EmailNotifier.
 func NewEmailNotifier(config *EmailConfig, ns EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
+		Base:        NewBase(config.NotificationChannelConfig),
 		Addresses:   config.Addresses,
 		SingleEmail: config.SingleEmail,
 		Message:     config.Message,

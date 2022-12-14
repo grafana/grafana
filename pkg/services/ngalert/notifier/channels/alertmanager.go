@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
@@ -70,12 +69,7 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
 func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
+		Base:              NewBase(config.NotificationChannelConfig),
 		images:            images,
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,

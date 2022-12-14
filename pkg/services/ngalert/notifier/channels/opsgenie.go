@@ -16,7 +16,6 @@ import (
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -125,13 +124,7 @@ func NewOpsgenieNotifier(fc FactoryConfig) (*OpsgenieNotifier, error) {
 		return nil, err
 	}
 	return &OpsgenieNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.opsgenie"),
 		ns:       fc.NotificationService,

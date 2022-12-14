@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
@@ -55,13 +54,7 @@ func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
 	description := fc.Config.Settings.Get("description").MustString(DefaultMessageEmbed)
 
 	return &LineNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.line"),
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,

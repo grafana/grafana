@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const webexAPIURL = "https://webexapis.com/v1/messages"
@@ -84,13 +83,7 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 	logger := log.New("alerting.notifier.webex")
 
 	return &WebexNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
+		Base:     NewBase(factoryConfig.Config),
 		orgID:    factoryConfig.Config.OrgID,
 		log:      logger,
 		ns:       factoryConfig.NotificationService,

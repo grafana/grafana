@@ -18,7 +18,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -67,14 +66,7 @@ func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
 	}
 
 	return &DiscordNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-			SecureSettings:        fc.Config.SecureSettings,
-		}),
+		Base:   NewBase(fc.Config),
 		log:    log.New("alerting.notifier.discord"),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
