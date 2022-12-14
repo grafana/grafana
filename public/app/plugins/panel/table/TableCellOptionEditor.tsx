@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
@@ -17,10 +17,20 @@ const cellDisplayModeOptions = [
   { value: TableCellDisplayMode.Image, label: 'Image' },
 ];
 
+// Maps display modes to editor components
 interface ComponentMap {
   [key: string]: React.FC<TableCellEditorProps>;
 }
 
+/*
+  Map of display modes to editor components
+  Additional cell types can be placed here
+  ---
+  A cell editor is expected to be a functional
+  component (per the above type) that accepts a
+  sub-options object and an onSubOptions change 
+  callback
+*/
 const displayModeComponentMap: ComponentMap = {
   [TableCellDisplayMode.Gauge]: BarGaugeCellOptionsEditor,
   [TableCellDisplayMode.ColorBackground]: ColorBackgroundCellOptionsEditor,
@@ -32,16 +42,21 @@ interface Props {
 }
 
 export const TableCellOptionEditor: React.FC<Props> = (props) => {
-  //const { value } = props;
-  const [displayMode, setDisplayMode] = useState(TableCellDisplayMode.Auto);
+  const { value, onChange } = props;
+  const displayMode = value.displayMode;
   let editor: ReactNode | null = null;
 
   // Update display mode on change
   const onDisplayModeChange = (v: SelectableValue<TableCellDisplayMode>) => {
     if (v.value !== undefined) {
-      setDisplayMode(v.value);
+      value.displayMode = v.value;
+      onChange(value);
     }
   };
+
+  // When options for a cell change we update the corresponding
+  // key in the subOptions object
+  const onSubOptionsChange = () => {};
 
   // Setup specific cell editor
   if (displayMode !== undefined && displayModeComponentMap[displayMode] !== undefined) {
