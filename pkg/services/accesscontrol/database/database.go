@@ -69,24 +69,24 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 			SELECT ur.user_id, ur.org_id, p.action, p.scope
 				FROM permission AS p
 				INNER JOIN user_role AS ur on ur.role_id = p.role_id
-			 UNION ALL
+			UNION ALL
 				SELECT tm.user_id, tr.org_id, p.action, p.scope
 					FROM permission AS p
 					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
 					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
-			 UNION ALL
+			UNION ALL
 				SELECT ou.user_id, br.org_id, p.action, p.scope
 					FROM permission AS p
 					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
 					INNER JOIN org_user AS ou ON ou.role = br.role
-			 UNION ALL
+			UNION ALL
 				SELECT sa.user_id, br.org_id, p.action, p.scope
 					FROM permission AS p
 					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
 					INNER JOIN (
 						SELECT u.id AS user_id
 						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
-			) AS sa ON 1 = 1
+					) AS sa ON 1 = 1
 					WHERE br.role = ?
 		) AS up
 		WHERE (org_id = ? OR org_id = ?)
