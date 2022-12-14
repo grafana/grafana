@@ -373,7 +373,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 	user := cmd.SignedInUser
 
-	prepareForUpdare(dashFolder, cmd.OrgID, cmd.SignedInUser.UserID, cmd)
+	prepareForUpdate(dashFolder, cmd.OrgID, cmd.SignedInUser.UserID, cmd)
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
@@ -412,8 +412,8 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	return foldr, nil
 }
 
-// prepareForUpdare updates an existing dashboard model from command into model for folder update
-func prepareForUpdare(dashFolder *models.Dashboard, orgId int64, userId int64, cmd *folder.UpdateFolderCommand) {
+// prepareForUpdate updates an existing dashboard model from command into model for folder update
+func prepareForUpdate(dashFolder *models.Dashboard, orgId int64, userId int64, cmd *folder.UpdateFolderCommand) {
 	dashFolder.OrgId = orgId
 
 	title := dashFolder.Title
