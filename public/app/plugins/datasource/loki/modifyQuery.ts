@@ -393,6 +393,16 @@ function addLabelFormat(
   return newQuery;
 }
 
+// Add filter as line filter
+export function addLineFilter(query: string): string {
+  const streamSelectorPositions = getStreamSelectorPositions(query);
+  const streamSelectorEnd = streamSelectorPositions[0].to;
+
+  const newQueryExpr = query.slice(0, streamSelectorEnd) + ' |= ``' + query.slice(streamSelectorEnd);
+
+  return newQueryExpr;
+}
+
 function getLineCommentPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];

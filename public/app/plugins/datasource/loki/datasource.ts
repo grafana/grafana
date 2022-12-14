@@ -60,6 +60,7 @@ import {
   addFilterAsLabelFilter,
   getParserPositions,
   toLabelFilter,
+  addLineFilter,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
@@ -502,6 +503,10 @@ export class LokiDatasource
         const parserPositions = getParserPositions(query.expr);
         const filter = toLabelFilter('', '', '=');
         expression = addFilterAsLabelFilter(expression, parserPositions, filter);
+        break;
+      }
+      case 'ADD_LINE_FILTER': {
+        expression = addLineFilter(expression);
         break;
       }
       default:

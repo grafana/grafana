@@ -6,6 +6,7 @@ import {
   isQueryWithLabelFormat,
   isQueryWithParser,
   isQueryWithLogFmt,
+  isQueryWithLineFilter,
 } from './queryUtils';
 import {
   dataFrameHasLevelLabel,
@@ -110,6 +111,22 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         label: 'Consider filtering logs by their label and value.',
         action: {
           type: 'ADD_LABEL_FILTER',
+          query,
+        },
+      },
+    });
+  }
+
+  const hasLineFilter = isQueryWithLineFilter(query);
+
+  if (!hasLineFilter) {
+    hints.push({
+      type: 'ADD_LINE_FILTER',
+      label: '',
+      fix: {
+        label: 'Consider filtering logs by ...',
+        action: {
+          type: 'ADD_LINE_FILTER',
           query,
         },
       },

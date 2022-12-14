@@ -253,5 +253,21 @@ export function isQueryWithLogFmt(query: string): boolean {
       }
     },
   });
+
   return queryWithLogFmt;
+}
+
+export function isQueryWithLineFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let queryWithLineFilter = false;
+
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === LineFilter) {
+        queryWithLineFilter = true;
+      }
+    },
+  });
+
+  return queryWithLineFilter;
 }
