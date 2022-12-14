@@ -20,14 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
 	*Base
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
 	settings discordSettings
@@ -179,7 +178,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := d.ns.SendWebhook(ctx, cmd); err != nil {
 		d.log.Error("failed to send notification to Discord", "error", err)
 		return false, err
 	}
@@ -236,8 +235,8 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	return attachments
 }
 
-func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []discordAttachment) (*models.SendWebhookSync, error) {
-	cmd := &models.SendWebhookSync{
+func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []discordAttachment) (*SendWebhookSettings, error) {
+	cmd := &SendWebhookSettings{
 		Url:        url,
 		HttpMethod: "POST",
 	}

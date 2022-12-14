@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var (
@@ -24,7 +23,7 @@ var (
 type LineNotifier struct {
 	*Base
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings lineSettings
 }
@@ -79,7 +78,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	form := url.Values{}
 	form.Add("message", body)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        LineNotifyURL,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -89,7 +88,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: form.Encode(),
 	}
 
-	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := ln.ns.SendWebhook(ctx, cmd); err != nil {
 		ln.log.Error("failed to send notification to LINE", "error", err, "body", body)
 		return false, err
 	}

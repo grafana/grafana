@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // KafkaNotifier is responsible for sending
@@ -23,7 +22,7 @@ type KafkaNotifier struct {
 	*Base
 	log      log.Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings kafkaSettings
 }
@@ -91,7 +90,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		kn.log.Warn("failed to template Kafka message", "error", tmplErr.Error())
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        topicURL,
 		Body:       body,
 		HttpMethod: "POST",
@@ -101,7 +100,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	}
 
-	if err = kn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err = kn.ns.SendWebhook(ctx, cmd); err != nil {
 		kn.log.Error("Failed to send notification to Kafka", "error", err, "body", body)
 		return false, err
 	}

@@ -456,9 +456,36 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, err
 	}
 
+	// if the new parent is the same as the current parent, we don't need to do anything
+	if foldr.ParentUID == cmd.NewParentUID {
+		return foldr, nil
+	}
+
+	// here we get the folder, we need to get the height of current folder
+	// and the depth of the new parent folder, the sum can't bypass 8
+	folderHeight, err := s.store.GetHeight(ctx, foldr.UID, cmd.OrgID, &cmd.NewParentUID)
+	if err != nil {
+		return nil, err
+	}
+	parents, err := s.GetParents(ctx, &folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
+	if err != nil {
+		return nil, err
+	}
+
+	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
+	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
+		return nil, folder.ErrMaximumDepthReached
+	}
+
+	// if the current folder is already a parent of newparent, we should return error
+	for _, parent := range parents {
+		if parent.UID == foldr.UID {
+			return nil, folder.ErrCircularReference
+		}
+	}
+
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
 		Folder: foldr,
-		// NewParentUID: &cmd.NewParentUID,
 	})
 }
 
@@ -516,14 +543,14 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 
 func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.ParentUID != "" {
-		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID); err != nil {
+		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID, cmd.UID); err != nil {
 			return nil, err
 		}
 	}
 	return s.store.Create(ctx, *cmd)
 }
 
-func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string) error {
+func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string, UID string) error {
 	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: parentUID, OrgID: orgID})
 	if err != nil {
 		return fmt.Errorf("failed to get parents: %w", err)
@@ -531,6 +558,18 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 
 	if len(ancestors) == folder.MaxNestedFolderDepth {
 		return folder.ErrMaximumDepthReached
+	}
+
+	// Create folder under itself is not allowed
+	if parentUID == UID {
+		return folder.ErrCircularReference
+	}
+
+	// check there is no circular reference
+	for _, ancestor := range ancestors {
+		if ancestor.UID == UID {
+			return folder.ErrCircularReference
+		}
 	}
 
 	return nil

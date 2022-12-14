@@ -9,10 +9,10 @@ import { FormatVariable } from './formatRegistry';
 export class ScopedVarsVariable implements FormatVariable {
   private static fieldAccessorCache: FieldAccessorCache = {};
 
-  public state: { name: string; value: ScopedVar };
+  public state: { name: string; value: ScopedVar; type: string };
 
   public constructor(name: string, value: ScopedVar) {
-    this.state = { name, value };
+    this.state = { name, value, type: 'scopedvar' };
   }
 
   public getValue(fieldPath: string): VariableValue {

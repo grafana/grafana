@@ -1,18 +1,17 @@
 import React from 'react';
+import { UseFormRegister } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Checkbox, FieldSet, HorizontalGroup, LinkButton, VerticalGroup } from '@grafana/ui/src';
 
-import { Acknowledgements } from './SharePublicDashboardUtils';
+import { SharePublicDashboardInputs } from './SharePublicDashboard';
 
 export const AcknowledgeCheckboxes = ({
   disabled,
-  acknowledgements,
-  onAcknowledge,
+  register,
 }: {
   disabled: boolean;
-  acknowledgements: Acknowledgements;
-  onAcknowledge: (key: string, val: boolean) => void;
+  register: UseFormRegister<SharePublicDashboardInputs>;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -23,11 +22,11 @@ export const AcknowledgeCheckboxes = ({
         <VerticalGroup spacing="md">
           <HorizontalGroup spacing="none">
             <Checkbox
+              {...register('publicAcknowledgment')}
               label="Your entire dashboard will be public"
-              value={acknowledgements.public}
               data-testid={selectors.WillBePublicCheckbox}
-              onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
             />
+
             <LinkButton
               variant="primary"
               href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
@@ -40,10 +39,9 @@ export const AcknowledgeCheckboxes = ({
           </HorizontalGroup>
           <HorizontalGroup spacing="none">
             <Checkbox
+              {...register('dataSourcesAcknowledgment')}
               label="Publishing currently only works with a subset of datasources"
-              value={acknowledgements.datasources}
               data-testid={selectors.LimitedDSCheckbox}
-              onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
             />
             <LinkButton
               variant="primary"
@@ -57,10 +55,9 @@ export const AcknowledgeCheckboxes = ({
           </HorizontalGroup>
           <HorizontalGroup spacing="none">
             <Checkbox
+              {...register('usageAcknowledgment')}
               label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
-              value={acknowledgements.usage}
               data-testid={selectors.CostIncreaseCheckbox}
-              onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
             />
             <LinkButton
               variant="primary"
