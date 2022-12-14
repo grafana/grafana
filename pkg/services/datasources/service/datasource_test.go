@@ -364,6 +364,9 @@ func TestService_GetHttpTransport(t *testing.T) {
 		tr := configuredTransport
 
 		require.False(t, tr.TLSClientConfig.InsecureSkipVerify)
+		// Ignoring deprecation, the system will not include the root CA
+		// used in this scenario.
+		//nolint:staticcheck
 		require.Len(t, tr.TLSClientConfig.RootCAs.Subjects(), 1)
 		require.Equal(t, "server-name", tr.TLSClientConfig.ServerName)
 	})
