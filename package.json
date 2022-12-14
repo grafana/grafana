@@ -97,7 +97,7 @@
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.8",
-    "@react-types/button": "3.6.2",
+    "@react-types/button": "3.7.0",
     "@react-types/menu": "3.7.2",
     "@react-types/overlays": "3.6.4",
     "@react-types/shared": "3.15.0",
