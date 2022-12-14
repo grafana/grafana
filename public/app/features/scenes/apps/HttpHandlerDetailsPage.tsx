@@ -6,7 +6,7 @@ import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
 import { getTabs } from './GrafanaMonitoringApp';
-import { getHandlerDetailsScene, getHandlerLogsScene } from './state';
+import { getHandlerDetailsScene, getHandlerLogsScene } from './scenes';
 import { getLinkUrlWithAppUrlState, useAppQueryParams } from './utils';
 
 export function HttpHandlerDetailsPage() {
@@ -20,20 +20,25 @@ export function HttpHandlerDetailsPage() {
 
   const pageNav: NavModelItem = {
     text: metricsScene.state.title,
+    url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'metrics' }),
     parentItem: { text: parent.text, url: getLinkUrlWithAppUrlState(parent.url, params) },
-    children: [
-      {
-        text: 'Metrics',
-        active: tab === 'metrics',
-        url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'metrics' }),
-      },
-      {
-        text: 'Logs',
-        active: tab === 'logs',
-        url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'logs' }),
-      },
-    ],
+    children: [],
   };
+
+  pageNav.children!.push(
+    {
+      text: 'Metrics',
+      active: tab === 'metrics',
+      url: pageNav.url,
+      parentItem: pageNav,
+    },
+    {
+      text: 'Logs',
+      active: tab === 'logs',
+      url: getLinkUrlWithAppUrlState(routeMatch.url, { ...params, tab: 'logs' }),
+      parentItem: pageNav,
+    }
+  );
 
   return (
     <Page

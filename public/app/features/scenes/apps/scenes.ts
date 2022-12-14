@@ -1,4 +1,5 @@
-import { getFrameDisplayName } from '@grafana/data';
+import { FieldColorModeId, getFrameDisplayName } from '@grafana/data';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { SceneFlexLayout, ScenePanelRepeater, SceneSubMenu, SceneTimePicker, VizPanel } from '../components';
 import { EmbeddedScene } from '../components/Scene';
@@ -21,16 +22,8 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     return sceneCache.get(sceneKey)!;
   }
 
-  const httpHandlerQueries = new SceneQueryRunner({
-    datasource: { uid: 'gdev-prometheus' },
-    queries: [
-      {
-        refId: 'A',
-        expr: 'sort_desc(avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval]) * 1e3))',
-        instant: true,
-        format: 'table',
-      },
-    ],
+  const httpHandlerQueries = getInstantQuery({
+    expr: 'sort_desc(avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval]) * 1e3)) ',
   });
 
   const httpHandlersTable = new VizPanel({
@@ -201,36 +194,18 @@ export function getHandlerDetailsScene(handler: string): EmbeddedScene {
     return sceneCache.get(sceneKey)!;
   }
 
-  const reqDurationTimeSeries = new SceneQueryRunner({
-    datasource: { uid: 'gdev-prometheus' },
-    queries: [
-      {
-        refId: 'A',
-        expr: `avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum{handler="${handler}"}[$__rate_interval])) * 1e3`,
-        range: true,
-        format: 'time_series',
-        legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
-        maxDataPoints: 500,
-      },
-    ],
+  const reqDurationTimeSeries = getTimeSeriesQuery({
+    expr: `avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum{handler="${handler}"}[$__rate_interval])) * 1e3`,
+    legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
   });
 
-  const reqCountTimeSeries = new SceneQueryRunner({
-    datasource: { uid: 'gdev-prometheus' },
-    queries: [
-      {
-        refId: 'A',
-        expr: `sum without(job, instance) (rate(grafana_http_request_duration_seconds_count{handler="${handler}"}[$__rate_interval])) `,
-        range: true,
-        format: 'time_series',
-        legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
-        maxDataPoints: 500,
-      },
-    ],
+  const reqCountTimeSeries = getTimeSeriesQuery({
+    expr: `sum without(job, instance) (rate(grafana_http_request_duration_seconds_count{handler="${handler}"}[$__rate_interval])) `,
+    legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
   });
 
   const scene = new EmbeddedScene({
-    title: `Http handler: ${handler}`,
+    title: `${handler}`,
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({
@@ -262,6 +237,36 @@ export function getHandlerDetailsScene(handler: string): EmbeddedScene {
   return scene;
 }
 
+function getInstantQuery(query: Partial<PromQuery>): SceneQueryRunner {
+  return new SceneQueryRunner({
+    datasource: { uid: 'gdev-prometheus' },
+    queries: [
+      {
+        refId: 'A',
+        instant: true,
+        format: 'table',
+        maxDataPoints: 500,
+        ...query,
+      },
+    ],
+  });
+}
+
+function getTimeSeriesQuery(query: Partial<PromQuery>): SceneQueryRunner {
+  return new SceneQueryRunner({
+    datasource: { uid: 'gdev-prometheus' },
+    queries: [
+      {
+        refId: 'A',
+        range: true,
+        format: 'time_series',
+        maxDataPoints: 500,
+        ...query,
+      },
+    ],
+  });
+}
+
 export function getOverviewScene(): EmbeddedScene {
   const sceneKey = 'overview';
 
@@ -279,6 +284,15 @@ export function getOverviewScene(): EmbeddedScene {
     layout: new SceneFlexLayout({
       direction: 'column',
       children: [
+        new SceneFlexLayout({
+          size: { height: 150 },
+          children: [
+            getInstantStatPanel('grafana_stat_totals_dashboard', 'Dashboards'),
+            getInstantStatPanel('grafana_stat_total_users', 'Users'),
+            getInstantStatPanel('sum(grafana_stat_totals_datasource)', 'Data sources'),
+            getInstantStatPanel('grafana_stat_total_service_account_tokens', 'Service account tokens'),
+          ],
+        }),
         new VizPanel({
           $data: new SceneQueryRunner({
             datasource: { uid: 'gdev-prometheus' },
@@ -363,6 +377,21 @@ function getVariablesDefinitions() {
         query: { query: 'label_values(grafana_http_request_duration_seconds_sum, instance)' },
       }),
     ],
+  });
+}
+
+function getInstantStatPanel(query: string, title: string) {
+  return new VizPanel({
+    $data: getInstantQuery({ expr: query }),
+    pluginId: 'stat',
+    title,
+    options: {},
+    fieldConfig: {
+      defaults: {
+        color: { fixedColor: 'text', mode: FieldColorModeId.Fixed },
+      },
+      overrides: [],
+    },
   });
 }
 

@@ -8,7 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { EmbeddedScene } from '../components/Scene';
 
 import { HttpHandlerDetailsPage } from './HttpHandlerDetailsPage';
-import { getOverviewScene, getHttpHandlerListScene } from './state';
+import { getOverviewScene, getHttpHandlerListScene } from './scenes';
 import { getLinkUrlWithAppUrlState, useAppQueryParams } from './utils';
 
 export function GrafanaMonitoringApp() {
