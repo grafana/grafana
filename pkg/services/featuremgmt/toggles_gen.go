@@ -282,4 +282,8 @@ const (
 	// FlagSessionRemoteCache
 	// Enable using remote cache for user sessions
 	FlagSessionRemoteCache = "sessionRemoteCache"
+
+	// FlagPrometheusUniformExemplarSampler
+	// Sample exemplars using a uniform distribution
+	FlagPrometheusUniformExemplarSampler = "prometheusUniformExemplarSampler"
 )

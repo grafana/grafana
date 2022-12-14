@@ -389,5 +389,10 @@ var (
 			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "prometheusUniformExemplarSampler",
+			Description: "Sample exemplars using a uniform distribution",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

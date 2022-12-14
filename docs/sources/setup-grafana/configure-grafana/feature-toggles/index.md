@@ -92,6 +92,7 @@ Alpha features might be changed or removed without prior notice.
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
+| `prometheusUniformExemplarSampler` | Sample exemplars using a uniform distribution                                                                                                                                |
 
 ## Development feature toggles
 
