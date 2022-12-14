@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -23,6 +24,7 @@ const (
 )
 
 var (
+	ErrAPIKeyInvalid          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
 	ErrAPIKeyExpired          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
 	ErrAPIKeyRevoked          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 	ErrServiceAccountDisabled = errutil.NewBase(errutil.StatusUnauthorized, "service-account.disabled", errutil.WithPublicMessage("Disabled service account"))
@@ -47,15 +49,18 @@ type APIKey struct {
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
+		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
+			return nil, ErrAPIKeyInvalid.Errorf("API key is invalid")
+		}
 		return nil, err
 	}
 
 	if apiKey.Expires != nil && *apiKey.Expires <= time.Now().Unix() {
-		return nil, ErrAPIKeyExpired
+		return nil, ErrAPIKeyExpired.Errorf("API key has expired")
 	}
 
 	if apiKey.IsRevoked != nil && *apiKey.IsRevoked {
-		return nil, ErrAPIKeyRevoked
+		return nil, ErrAPIKeyRevoked.Errorf("Api key is revoked")
 	}
 
 	go func(id int64) {
@@ -88,7 +93,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	if usr.IsDisabled {
-		return nil, ErrServiceAccountDisabled
+		return nil, ErrServiceAccountDisabled.Errorf("Disabled service account")
 	}
 
 	return authn.IdentityFromSignedInUser(fmt.Sprintf("%s:%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId), usr), nil
