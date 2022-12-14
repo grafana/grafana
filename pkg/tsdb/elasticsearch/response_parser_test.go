@@ -912,7 +912,6 @@ func TestResponseParser(t *testing.T) {
             { "id": "3", "type": "max", "field": "@value" },
             {
               "id": "4",
-              "field": "select field",
               "pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
               "settings": { "script": "params.var1 * params.var2" },
               "type": "bucket_script"
@@ -991,14 +990,12 @@ func TestResponseParser(t *testing.T) {
             			{ "id": "3", "type": "max", "field": "@value" },
             			{
               				"id": "4",
-              				"field": "select field",
               				"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
               				"settings": { "script": "params.var1 * params.var2" },
               				"type": "bucket_script"
 						},
             			{
 							"id": "5",
-							"field": "select field",
 							"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
 							"settings": { "script": "params.var1 * params.var2 * 2" },
 							"type": "bucket_script"

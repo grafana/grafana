@@ -587,8 +587,8 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 		return frameName
 	}
 	// todo, if field and pipelineAgg
-	if field != "" && isPipelineAgg(metricType) {
-		if isPipelineAggWithMultipleBucketPaths(metricType) {
+	if isPipelineAgg(metricType) {
+		if metricType != "" && isPipelineAggWithMultipleBucketPaths(metricType) {
 			metricID := ""
 			if v, ok := dataField.Labels["metricId"]; ok {
 				metricID = v
@@ -607,15 +607,17 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 				}
 			}
 		} else {
-			found := false
-			for _, metric := range target.Metrics {
-				if metric.ID == field {
-					metricName += " " + describeMetric(metric.Type, field)
-					found = true
+			if field != "" {
+				found := false
+				for _, metric := range target.Metrics {
+					if metric.ID == field {
+						metricName += " " + describeMetric(metric.Type, field)
+						found = true
+					}
 				}
-			}
-			if !found {
-				metricName = "Unset"
+				if !found {
+					metricName = "Unset"
+				}
 			}
 		}
 	} else if field != "" {
