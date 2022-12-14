@@ -162,30 +162,34 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
         const graph = createDagFromQueries(queries);
 
         // 2. check if the origin is a data query
-        const originRefID = getOriginOfRefId(refId, graph);
-        const originQuery = queries.find((query) => query.refId === originRefID);
-        const originIsDataQuery = !isExpressionQuery(originQuery?.model);
+        const originRefIDs = getOriginOfRefId(refId, graph);
+        const originQueries = queries.filter((query) => originRefIDs.includes(query.refId));
 
-        // 3. if yes, add threshold config to the refId of the data Query
-        const hasValidOrigin = Boolean(originIsDataQuery && originRefID);
+        originQueries.forEach((originQuery) => {
+          const originRefID = originQuery.refId;
+          const originIsDataQuery = !isExpressionQuery(originQuery?.model);
 
-        // create the initial data structure for this origin refId
-        if (originRefID && !thresholds[originRefID]) {
-          thresholds[originRefID] = {
-            config: {
-              mode: ThresholdsMode.Absolute,
-              steps: [],
-            },
-            mode: GraphTresholdsStyleMode.Line,
-          };
-        }
+          // 3. if yes, add threshold config to the refId of the data Query
+          const hasValidOrigin = Boolean(originIsDataQuery && originRefID);
 
-        if (originRefID && hasValidOrigin && !isRangeThreshold && !hasRangeThreshold) {
-          appendSingleThreshold(originRefID, threshold[0]);
-        } else if (originRefID && hasValidOrigin && isRangeThreshold) {
-          appendRangeThreshold(originRefID, threshold, condition.evaluator.type);
-          thresholds[originRefID].mode = GraphTresholdsStyleMode.LineAndArea;
-        }
+          // create the initial data structure for this origin refId
+          if (originRefID && !thresholds[originRefID]) {
+            thresholds[originRefID] = {
+              config: {
+                mode: ThresholdsMode.Absolute,
+                steps: [],
+              },
+              mode: GraphTresholdsStyleMode.Line,
+            };
+          }
+
+          if (originRefID && hasValidOrigin && !isRangeThreshold && !hasRangeThreshold) {
+            appendSingleThreshold(originRefID, threshold[0]);
+          } else if (originRefID && hasValidOrigin && isRangeThreshold) {
+            appendRangeThreshold(originRefID, threshold, condition.evaluator.type);
+            thresholds[originRefID].mode = GraphTresholdsStyleMode.LineAndArea;
+          }
+        });
       } catch (err) {
         console.error('Failed to parse thresholds', err);
         return;

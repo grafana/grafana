@@ -20,18 +20,17 @@ export const createDagFromQueries = memoizeOne(
 export function _createDagFromQueries(queries: AlertQuery[]): Graph {
   const graph = new Graph();
 
+  const nodes = queries.map((query) => query.refId);
+  graph.createNodes(nodes);
+
   queries.forEach((query) => {
     const source = query.refId;
-    const targets =
-      isExpressionQuery(query.model) && query.model.type === 'math'
-        ? parseTargetsFromMathExpression(query.model.expression ?? '')
-        : query.model.expression
-        ? [query.model.expression]
-        : [];
+    const isMathExpression = isExpressionQuery(query.model) && query.model.type === 'math';
 
-    if (!graph.getNode(source)) {
-      graph.createNode(source);
-    }
+    // some expressions have multiple targets (like the math expression)
+    const targets = isMathExpression
+      ? parseRefsFromMathExpression(query.model.expression ?? '')
+      : [query.model.expression];
 
     targets.forEach((target) => {
       const isSelf = source === target;
@@ -48,9 +47,9 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
 /**
  * parse an expression like "$A > $B" or "${FOO BAR} > 0" to an array of refIds
  */
-export function parseTargetsFromMathExpression(input: string): string[] {
+export function parseRefsFromMathExpression(input: string): string[] {
   // we'll use two regular expressions, one for "${var}" and one for "$var"
-  const r1 = new RegExp(/\$\{(?<var>[a-zA-Z0-9_]+?)\}/gm);
+  const r1 = new RegExp(/\$\{(?<var>[a-zA-Z0-9_ ]+?)\}/gm);
   const r2 = new RegExp(/\$(?<var>[a-zA-Z0-9_]+)/gm);
 
   const m1 = Array.from(input.matchAll(r1)).map((m) => m.groups?.var);
@@ -59,12 +58,12 @@ export function parseTargetsFromMathExpression(input: string): string[] {
   return compact(uniq([...m1, ...m2]));
 }
 
-export const getOriginOfRefId = memoize(_getOriginOfRefId, (refId, graph) => refId + fingerprintGraph(graph));
+export const getOriginOfRefId = memoize(_getOriginsOfRefId, (refId, graph) => refId + fingerprintGraph(graph));
 
-export function _getOriginOfRefId(refId: string, graph: Graph): string | undefined {
+export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
 
-  let origin: Node | undefined;
+  let origins: Node[] = [];
 
   // recurse through "node > inputEdges > inputNode"
   function findChildNode(node: Node) {
@@ -77,13 +76,13 @@ export function _getOriginOfRefId(refId: string, graph: Graph): string | undefin
         }
       });
     } else {
-      origin = node;
+      origins?.push(node);
     }
   }
 
   findChildNode(node);
 
-  return origin?.name;
+  return origins.map((origin) => origin.name);
 }
 
 // create a unique fingerprint of the DAG
