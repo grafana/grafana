@@ -81,7 +81,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
 
   return (
     <>
-      <Modal className={styles.modal} title="Select Log Groups" isOpen={isModalOpen} onDismiss={toggleModal}>
+      <Modal className={styles.modal} title="Select Log Groups" isOpen={true} onDismiss={toggleModal}>
         <div className={styles.logGroupSelectionArea}>
           <EditorField label="Log Group Name">
             <Search
@@ -92,6 +92,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
               searchPhrase={searchPhrase}
             />
           </EditorField>
+
           <Account
             onChange={(accountId?: string) => {
               searchFn(searchPhrase, accountId);
@@ -129,14 +130,17 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
                   selectableLogGroups.map((row) => (
                     <tr className={styles.row} key={`${row.value}`}>
                       <td className={styles.cell}>
-                        <Checkbox
-                          id={row.value}
-                          onChange={(ev) => handleSelectCheckbox(row, ev.currentTarget.checked)}
-                          value={!!(row.value && selectedLogGroups.some((lg) => lg.value === row.value))}
-                        />
-                        <label className={styles.logGroupSearchResults} htmlFor={row.value}>
-                          {row.label}
-                        </label>
+                        <div className={styles.nestedEntry}>
+                          <Checkbox
+                            id={row.value}
+                            onChange={(ev) => handleSelectCheckbox(row, ev.currentTarget.checked)}
+                            value={!!(row.value && selectedLogGroups.some((lg) => lg.value === row.value))}
+                          />
+                          <Space layout="inline" h={2} />
+                          <label className={styles.logGroupSearchResults} htmlFor={row.value}>
+                            {row.label}
+                          </label>
+                        </div>
                       </td>
                       <td className={styles.cell}>{accountNameById[row.text]}</td>
                       <td className={styles.cell}>{row.text}</td>
