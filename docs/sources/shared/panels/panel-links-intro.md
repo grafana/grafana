@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/panels/panel-links-intro/
 title: Panel links intro
 ---
 

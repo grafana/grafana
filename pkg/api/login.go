@@ -195,7 +195,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		ReqContext: c,
 		Username:   cmd.User,
 		Password:   cmd.Password,
-		IpAddress:  c.Req.RemoteAddr,
+		IpAddress:  c.RemoteAddr(),
 		Cfg:        hs.Cfg,
 	}
 

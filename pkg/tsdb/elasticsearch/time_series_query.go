@@ -57,8 +57,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
-	return rp.getTimeSeries()
+	return parseResponse(res.Responses, queries)
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
@@ -79,7 +78,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	}
 
 	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "raw_data") {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
@@ -87,8 +86,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		}
 		metric := q.Metrics[0]
 		b.Size(metric.Settings.Get("size").MustInt(500))
-		b.SortDesc("@timestamp", "boolean")
-		b.AddDocValueField("@timestamp")
+		b.SortDesc(e.client.GetTimeField(), "boolean")
+		b.SortDesc("_doc", "")
+		b.AddDocValueField(e.client.GetTimeField())
 		return nil
 	}
 
@@ -227,11 +227,7 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 }
 
 func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
-	// TODO: This might also need to be applied to other bucket aggregations and other fields.
-	switch bucketAgg.Type {
-	case "date_histogram":
-		setIntPath(bucketAgg.Settings, "min_doc_count")
-	}
+	setIntPath(bucketAgg.Settings, "min_doc_count")
 
 	return bucketAgg.Settings.MustMap()
 }
@@ -454,7 +450,16 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 		metric.Hide = metricJSON.Get("hide").MustBool(false)
 		metric.ID = metricJSON.Get("id").MustString()
 		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
-		metric.Settings = simplejson.NewFromAny(metricJSON.Get("settings").MustMap())
+		// In legacy editors, we were storing empty settings values as "null"
+		// The new editor doesn't store empty strings at all
+		// We need to ensures backward compatibility with old queries and remove empty fields
+		settings := metricJSON.Get("settings").MustMap()
+		for k, v := range settings {
+			if v == "null" {
+				delete(settings, k)
+			}
+		}
+		metric.Settings = simplejson.NewFromAny(settings)
 		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
 		metric.Type, err = metricJSON.Get("type").String()
 		if err != nil {

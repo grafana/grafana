@@ -105,8 +105,14 @@ export interface CloudWatchLogsQuery extends DataQuery {
   /* not quite deprecated yet, but will be soon */
   logGroupNames?: string[];
 }
+// We want to allow setting defaults for both Logs and Metrics queries
+export type CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
+export type CloudWatchQuery =
+  | CloudWatchMetricsQuery
+  | CloudWatchLogsQuery
+  | CloudWatchAnnotationQuery
+  | CloudWatchDefaultQuery;
 
 export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
   queryMode: 'Annotations';
@@ -331,7 +337,8 @@ export interface StartQueryRequest {
   /**
    * The list of log groups to be queried. You can include up to 20 log groups. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
-  logGroupNames?: string[];
+  logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
+  logGroups?: SelectableResourceValue[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */

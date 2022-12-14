@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/graphite/query-editor/
+  - ../../data-sources/graphite/query-editor/
 description: Guide for using the Graphite data source's query editor
 keywords:
   - grafana

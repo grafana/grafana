@@ -11,7 +11,7 @@ import (
 
 func TestKindRegistry(t *testing.T) {
 	registry := NewKindRegistry()
-	err := registry.Register(dummy.GetObjectKindInfo("test"), dummy.GetObjectSummaryBuilder("test"))
+	err := registry.Register(dummy.GetEntityKindInfo("test"), dummy.GetEntitySummaryBuilder("test"))
 	require.NoError(t, err)
 
 	ids := []string{}

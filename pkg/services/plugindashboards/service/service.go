@@ -116,7 +116,7 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 	}
 
 	defer func() {
-		if err := resp.Content.Close(); err != nil {
+		if err = resp.Content.Close(); err != nil {
 			s.logger.Warn("Failed to close plugin dashboard file", "reference", req.Reference, "err", err)
 		}
 	}()

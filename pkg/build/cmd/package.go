@@ -5,11 +5,12 @@ import (
 	"log"
 	"strings"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gpg"
 	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/grafana/grafana/pkg/build/syncutil"
-	"github.com/urfave/cli/v2"
 )
 
 func Package(c *cli.Context) error {
@@ -22,12 +23,12 @@ func Package(c *cli.Context) error {
 
 	releaseMode, err := metadata.GetReleaseMode()
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	releaseModeConfig, err := config.GetBuildConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	cfg := config.Config{

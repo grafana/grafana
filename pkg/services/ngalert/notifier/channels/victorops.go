@@ -20,6 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// https://help.victorops.com/knowledge-base/incident-fields-glossary/ - 20480 characters.
+const victorOpsMaxMessageLenRunes = 20480
+
 const (
 	// victoropsAlertStateCritical - Victorops uses "CRITICAL" string to indicate "Alerting" state
 	victoropsAlertStateCritical = "CRITICAL"
@@ -116,12 +119,17 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, err
 	}
 
+	stateMessage, truncated := TruncateInRunes(tmpl(vn.settings.Description), victorOpsMaxMessageLenRunes)
+	if truncated {
+		vn.log.Warn("Truncated stateMessage", "incident", groupKey, "max_runes", victorOpsMaxMessageLenRunes)
+	}
+
 	bodyJSON := map[string]interface{}{
 		"message_type":        messageType,
 		"entity_id":           groupKey.Hash(),
 		"entity_display_name": tmpl(vn.settings.Title),
 		"timestamp":           time.Now().Unix(),
-		"state_message":       tmpl(vn.settings.Description),
+		"state_message":       stateMessage,
 		"monitoring_tool":     "Grafana v" + setting.BuildVersion,
 	}
 

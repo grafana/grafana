@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/mssql/query-editor/
+  - ../../data-sources/mssql/query-editor/
 description: Guide for using the Microsoft SQL Server data source's query editor
 keywords:
   - grafana

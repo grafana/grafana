@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -16,25 +17,68 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const batchSize = 500
+const concurrency = 10
+const batchSize = 1000
 
-func batch(count, size int, eachFn func(start, end int) error) error {
-	for i := 0; i < count; {
-		end := i + size
-		if end > count {
-			end = count
-		}
+type bounds struct {
+	start, end int
+}
 
-		if err := eachFn(i, end); err != nil {
-			return err
-		}
+// concurrentBatch spawns the requested amount of workers then ask them to run eachFn on chunks of the requested size
+func concurrentBatch(workers, count, size int, eachFn func(start, end int) error) error {
+	var wg sync.WaitGroup
+	alldone := make(chan bool) // Indicates that all workers have finished working
+	chunk := make(chan bounds) // Gives the workers the bounds they should work with
+	ret := make(chan error)    // Allow workers to notify in case of errors
+	defer close(ret)
 
-		i = end
+	// Launch all workers
+	for x := 0; x < workers; x++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for ck := range chunk {
+				if err := eachFn(ck.start, ck.end); err != nil {
+					ret <- err
+					return
+				}
+			}
+		}()
 	}
 
+	go func() {
+		// Tell the workers the chunks they have to work on
+		for i := 0; i < count; {
+			end := i + size
+			if end > count {
+				end = count
+			}
+
+			chunk <- bounds{start: i, end: end}
+
+			i = end
+		}
+		close(chunk)
+
+		// Wait for the workers
+		wg.Wait()
+		close(alldone)
+	}()
+
+	// wait for an error or for all workers to be done
+	select {
+	case err := <-ret:
+		return err
+	case <-alldone:
+		break
+	}
 	return nil
 }
 
+// setupBenchEnv will create userCount users, userCount managed roles with resourceCount managed permission each
+// Example: setupBenchEnv(b, 2, 3):
+// - will create 2 users and assign them 2 managed roles
+// - each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
 	sqlStore := db.InitTestDB(b)
@@ -57,84 +101,85 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	err = acService.RegisterFixedRoles(context.Background())
 	require.NoError(b, err)
 
-	// Prepare managed permissions
-	action2 := "resources:action2"
-	users := make([]user.User, 0, usersCount)
-	orgUsers := make([]org.OrgUser, 0, usersCount)
-	roles := make([]accesscontrol.Role, 0, usersCount)
-	userRoles := make([]accesscontrol.UserRole, 0, usersCount)
-	permissions := make([]accesscontrol.Permission, 0, resourceCount*usersCount)
-	for u := 1; u < usersCount+1; u++ {
-		users = append(users, user.User{
-			ID:      int64(u),
-			Name:    fmt.Sprintf("user%v", u),
-			Login:   fmt.Sprintf("user%v", u),
-			Email:   fmt.Sprintf("user%v@example.org", u),
-			Created: now,
-			Updated: now,
-		})
-		orgUsers = append(orgUsers, org.OrgUser{
-			ID:      int64(u),
-			UserID:  int64(u),
-			OrgID:   1,
-			Role:    org.RoleViewer,
-			Created: now,
-			Updated: now,
-		})
-		roles = append(roles, accesscontrol.Role{
-			ID:      int64(u),
-			UID:     fmt.Sprintf("managed_users_%v_permissions", u),
-			Name:    fmt.Sprintf("managed:users:%v:permissions", u),
-			Version: 1,
-			Created: now,
-			Updated: now,
-		})
-		userRoles = append(userRoles, accesscontrol.UserRole{
-			ID:      int64(u),
-			OrgID:   1,
-			RoleID:  int64(u),
-			UserID:  int64(u),
-			Created: now,
-		})
-
-		for r := 1; r < resourceCount+1; r++ {
-			permissions = append(permissions, accesscontrol.Permission{
+	// Populate users, roles and assignments
+	if errInsert := concurrentBatch(concurrency, usersCount, batchSize, func(start, end int) error {
+		n := end - start
+		users := make([]user.User, 0, n)
+		orgUsers := make([]org.OrgUser, 0, n)
+		roles := make([]accesscontrol.Role, 0, n)
+		userRoles := make([]accesscontrol.UserRole, 0, n)
+		for u := start + 1; u < end+1; u++ {
+			users = append(users, user.User{
+				ID:      int64(u),
+				Name:    fmt.Sprintf("user%v", u),
+				Login:   fmt.Sprintf("user%v", u),
+				Email:   fmt.Sprintf("user%v@example.org", u),
+				Created: now,
+				Updated: now,
+			})
+			orgUsers = append(orgUsers, org.OrgUser{
+				ID:      int64(u),
+				UserID:  int64(u),
+				OrgID:   1,
+				Role:    org.RoleViewer,
+				Created: now,
+				Updated: now,
+			})
+			roles = append(roles, accesscontrol.Role{
+				ID:      int64(u),
+				UID:     fmt.Sprintf("managed_users_%v_permissions", u),
+				Name:    fmt.Sprintf("managed:users:%v:permissions", u),
+				OrgID:   1,
+				Version: 1,
+				Created: now,
+				Updated: now,
+			})
+			userRoles = append(userRoles, accesscontrol.UserRole{
+				ID:      int64(u),
+				OrgID:   1,
 				RoleID:  int64(u),
+				UserID:  int64(u),
+				Created: now,
+			})
+		}
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			if _, err := sess.Insert(users); err != nil {
+				return err
+			}
+			if _, err := sess.Insert(orgUsers); err != nil {
+				return err
+			}
+			if _, err := sess.Insert(roles); err != nil {
+				return err
+			}
+			_, err := sess.Insert(userRoles)
+			return err
+		})
+		return err
+	}); errInsert != nil {
+		require.NoError(b, err, "could not insert users and roles")
+		return nil, nil
+	}
+
+	// Populate permissions
+	action2 := "resources:action2"
+	if errInsert := concurrentBatch(concurrency, resourceCount*usersCount, batchSize, func(start, end int) error {
+		permissions := make([]accesscontrol.Permission, 0, end-start)
+		for i := start; i < end; i++ {
+			permissions = append(permissions, accesscontrol.Permission{
+				RoleID:  int64(i/resourceCount + 1),
 				Action:  action2,
-				Scope:   fmt.Sprintf("resources:id:%v", r),
+				Scope:   fmt.Sprintf("resources:id:%v", i%resourceCount+1),
 				Created: now,
 				Updated: now,
 			})
 		}
-	}
 
-	// Populate store
-	if err := batch(len(roles), batchSize, func(start, end int) error {
-		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			if _, err := sess.Insert(users[start:end]); err != nil {
-				return err
-			}
-			if _, err := sess.Insert(orgUsers[start:end]); err != nil {
-				return err
-			}
-			if _, err := sess.Insert(roles[start:end]); err != nil {
-				return err
-			}
-			_, err := sess.Insert(userRoles[start:end])
+		return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Insert(permissions)
 			return err
 		})
-		return err
-	}); err != nil {
-		require.NoError(b, err, "could not insert users and roles")
-		return nil, nil
-	}
-	if err := batch(len(permissions), batchSize, func(start, end int) error {
-		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			_, err := sess.Insert(permissions[start:end])
-			return err
-		})
-		return err
-	}); err != nil {
+	}); errInsert != nil {
 		require.NoError(b, err, "could not insert permissions")
 		return nil, nil
 	}
@@ -208,3 +253,41 @@ func BenchmarkSearchUsersPermissions_10K_1K(b *testing.B) {
 	}
 	benchSearchUsersPermissions(b, 10000, 1000)
 } // ~50s/op
+
+// Benchmarking search when we specify Action and Scope
+func benchSearchUsersWithPerm(b *testing.B, usersCount, resourceCount int) {
+	if testing.Short() {
+		b.Skip("Skipping benchmark in short mode")
+	}
+	acService, siu := setupBenchEnv(b, usersCount, resourceCount)
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		usersPermissions, err := acService.SearchUsersPermissions(context.Background(), siu, 1,
+			accesscontrol.SearchOptions{Action: "resources:action2", Scope: "resources:id:1"})
+		require.NoError(b, err)
+		require.Len(b, usersPermissions, usersCount)
+		for _, permissions := range usersPermissions {
+			require.Len(b, permissions, 1)
+		}
+	}
+}
+
+func BenchmarkSearchUsersWithPerm_1K_10(b *testing.B)   { benchSearchUsersWithPerm(b, 1000, 10) }     // ~0.045s/op
+func BenchmarkSearchUsersWithPerm_1K_100(b *testing.B)  { benchSearchUsersWithPerm(b, 1000, 100) }    // ~0.038s/op
+func BenchmarkSearchUsersWithPerm_1K_1K(b *testing.B)   { benchSearchUsersWithPerm(b, 1000, 1000) }   // ~0.033s/op
+func BenchmarkSearchUsersWithPerm_1K_10K(b *testing.B)  { benchSearchUsersWithPerm(b, 1000, 10000) }  // ~0.033s/op
+func BenchmarkSearchUsersWithPerm_1K_100K(b *testing.B) { benchSearchUsersWithPerm(b, 1000, 100000) } // ~0.056s/op
+
+func BenchmarkSearchUsersWithPerm_10K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 10000, 10) }    // ~0.11s/op
+func BenchmarkSearchUsersWithPerm_10K_100(b *testing.B) { benchSearchUsersWithPerm(b, 10000, 100) }   // ~0.12s/op
+func BenchmarkSearchUsersWithPerm_10K_1K(b *testing.B)  { benchSearchUsersWithPerm(b, 10000, 1000) }  // ~0.12s/op
+func BenchmarkSearchUsersWithPerm_10K_10K(b *testing.B) { benchSearchUsersWithPerm(b, 10000, 10000) } // ~0.17s/op
+
+func BenchmarkSearchUsersWithPerm_20K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 20000, 10) }    // ~0.22s/op
+func BenchmarkSearchUsersWithPerm_20K_100(b *testing.B) { benchSearchUsersWithPerm(b, 20000, 100) }   // ~0.22s/op
+func BenchmarkSearchUsersWithPerm_20K_1K(b *testing.B)  { benchSearchUsersWithPerm(b, 20000, 1000) }  // ~0.25s/op
+func BenchmarkSearchUsersWithPerm_20K_10K(b *testing.B) { benchSearchUsersWithPerm(b, 20000, 10000) } // ~s/op
+
+func BenchmarkSearchUsersWithPerm_100K_10(b *testing.B)  { benchSearchUsersWithPerm(b, 100000, 10) }  // ~0.88s/op
+func BenchmarkSearchUsersWithPerm_100K_100(b *testing.B) { benchSearchUsersWithPerm(b, 100000, 100) } // ~0.72s/op

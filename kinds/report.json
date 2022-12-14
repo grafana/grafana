@@ -1,0 +1,54 @@
+{
+  "core": [
+    {
+      "name": "Dashboard",
+      "pluralName": "Dashboards",
+      "machineName": "dashboard",
+      "pluralMachineName": "dashboards",
+      "lineageIsGroup": false,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Playlist",
+      "pluralName": "Playlists",
+      "machineName": "playlist",
+      "pluralMachineName": "playlists",
+      "lineageIsGroup": false,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Team",
+      "pluralName": "Teams",
+      "machineName": "team",
+      "pluralMachineName": "teams",
+      "lineageIsGroup": false,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    }
+  ],
+  "raw": [
+    {
+      "name": "SVG",
+      "pluralName": "SVGs",
+      "machineName": "svg",
+      "pluralMachineName": "svgs",
+      "lineageIsGroup": false,
+      "maturity": "merged",
+      "extensions": [
+        "svg"
+      ]
+    }
+  ],
+  "composable": []
+}

@@ -130,7 +130,10 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       from: from.valueOf(),
       to: to.valueOf(),
     };
-    const annotations = await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params);
+
+    const annotations = accessToken
+      ? await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params)
+      : [];
 
     return { data: [toDataFrame(annotations)] };
   }
