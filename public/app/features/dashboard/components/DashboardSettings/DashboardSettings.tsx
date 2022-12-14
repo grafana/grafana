@@ -1,5 +1,5 @@
 import * as H from 'history';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
@@ -10,6 +10,7 @@ import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
+import { DashboardMetaChangedEvent } from 'app/types/events';
 
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -34,7 +35,12 @@ export interface Props {
 const onClose = () => locationService.partial({ editview: null, editIndex: null });
 
 export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: Props) {
-  const pages = useMemo(() => getSettingsPages(dashboard), [dashboard]);
+  const [updateId, setUpdateId] = useState(0);
+  useEffect(() => {
+    dashboard.events.subscribe(DashboardMetaChangedEvent, () => setUpdateId((v) => v + 1));
+  }, [dashboard]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const pages = useMemo(() => getSettingsPages(dashboard), [dashboard, updateId]);
 
   const onPostSave = () => {
     dashboard.meta.hasUnsavedFolderChange = false;
@@ -206,18 +212,10 @@ function getSectionNav(
 }
 
 function MakeEditable({ dashboard, sectionNav }: SettingsPageProps) {
-  const onMakeEditable = () => {
-    dashboard.editable = true;
-    dashboard.meta.canMakeEditable = false;
-    dashboard.meta.canEdit = true;
-    dashboard.meta.canSave = true;
-    // TODO add some kind of reload
-  };
-
   return (
     <Page navModel={sectionNav}>
       <div className="dashboard-settings__header">Dashboard not editable</div>
-      <Button type="submit" onClick={onMakeEditable}>
+      <Button type="submit" onClick={() => dashboard.makeEditable()}>
         Make editable
       </Button>
     </Page>
