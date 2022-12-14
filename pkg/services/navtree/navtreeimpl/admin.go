@@ -165,7 +165,7 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 			storage.Children = append(storage.Children, &navtree.NavLink{
 				Text:     "Export",
 				Id:       "export",
-				SubTitle: "Export grafana settigns",
+				SubTitle: "Export grafana settings",
 				Icon:     "cube",
 				Url:      s.cfg.AppSubURL + "/admin/storage/export",
 			})
