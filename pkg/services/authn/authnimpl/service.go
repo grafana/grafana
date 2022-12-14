@@ -65,7 +65,7 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		logger.Warn("auth client could not authenticate request", "client", client)
+		logger.Warn("auth client could not authenticate request", "client", client, "err", err)
 		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client could not authenticate request"}})
 		return nil, true, err
 	}
