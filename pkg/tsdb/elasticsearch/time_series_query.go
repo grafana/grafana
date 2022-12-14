@@ -72,23 +72,45 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
-
-	if q.RawQuery != "" {
-		filters.AddQueryStringFilter(q.RawQuery, true)
-	}
+	filters.AddQueryStringFilter(q.RawQuery, true)
 
 	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "raw_data") {
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_data" || q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "logs") {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
+
+		// Defaults for log and document queries
 		metric := q.Metrics[0]
-		b.Size(metric.Settings.Get("size").MustInt(500))
 		b.SortDesc(e.client.GetTimeField(), "boolean")
 		b.SortDesc("_doc", "")
 		b.AddDocValueField(e.client.GetTimeField())
+		b.Size(metric.Settings.Get("size").MustInt(500))
+
+		if metric.Type == "logs" {
+			// Add additional defaults for log query
+			b.Size(metric.Settings.Get("limit").MustInt(500))
+			b.AddHighlight()
+
+			// For log query, we add a date histogram aggregation
+			aggBuilder := b.Agg()
+			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
+				Type:  dateHistType,
+				Field: e.client.GetTimeField(),
+				ID:    "1",
+				Settings: simplejson.NewFromAny(map[string]interface{}{
+					"interval": "auto",
+				}),
+			})
+			bucketAgg := q.BucketAggs[0]
+			bucketAgg.Settings = simplejson.NewFromAny(
+				bucketAgg.generateSettingsForDSL(),
+			)
+			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+		}
 		return nil
 	}
 
@@ -115,6 +137,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	for _, m := range q.Metrics {
 		m := m
+
 		if m.Type == countType {
 			continue
 		}
