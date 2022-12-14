@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const webexAPIURL = "https://webexapis.com/v1/messages"
@@ -130,7 +129,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	// Augment our Alert data with ImageURLs if available.
-	_ = withStoredImages(ctx, wn.log, wn.images, func(index int, image ngmodels.Image) error {
+	_ = withStoredImages(ctx, wn.log, wn.images, func(index int, image Image) error {
 		// Cisco Webex only supports a single image per request: https://developer.webex.com/docs/basics#message-attachments
 		if image.HasURL() {
 			data.Alerts[index].ImageURL = image.URL

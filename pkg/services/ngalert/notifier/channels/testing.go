@@ -13,23 +13,22 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeImageStore struct {
-	Images []*ngmodels.Image
+	Images []*Image
 }
 
 // getImage returns an image with the same token.
-func (f *fakeImageStore) GetImage(_ context.Context, token string) (*ngmodels.Image, error) {
+func (f *fakeImageStore) GetImage(_ context.Context, token string) (*Image, error) {
 	for _, img := range f.Images {
 		if img.Token == token {
 			return img, nil
 		}
 	}
-	return nil, ngmodels.ErrImageNotFound
+	return nil, ErrImageNotFound
 }
 
 // newFakeImageStore returns an image store with N test images.
@@ -37,7 +36,7 @@ func (f *fakeImageStore) GetImage(_ context.Context, token string) (*ngmodels.Im
 func newFakeImageStore(n int) ImageStore {
 	s := fakeImageStore{}
 	for i := 1; i <= n; i++ {
-		s.Images = append(s.Images, &ngmodels.Image{
+		s.Images = append(s.Images, &Image{
 			Token:     fmt.Sprintf("test-image-%d", i),
 			URL:       fmt.Sprintf("https://www.example.com/test-image-%d.jpg", i),
 			CreatedAt: time.Now().UTC(),
@@ -72,7 +71,7 @@ func newFakeImageStoreWithFile(t *testing.T, n int) ImageStore {
 			t.Fatalf("failed to create test image: %s", err)
 		}
 		files = append(files, file)
-		s.Images = append(s.Images, &ngmodels.Image{
+		s.Images = append(s.Images, &Image{
 			Token:     fmt.Sprintf("test-image-%d", i),
 			Path:      file,
 			URL:       fmt.Sprintf("https://www.example.com/test-image-%d", i),
