@@ -102,7 +102,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
             accountId={searchAccountId}
           />
         </div>
-        <Space layout="block" v={1.5} />
+        <Space layout="block" v={2} />
         <div>
           <div className={styles.tableScroller}>
             <table className={styles.table}>
@@ -150,6 +150,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
             </table>
           </div>
         </div>
+        <Space layout="block" v={2} />
         <div>
           <Button onClick={handleApply} type="button" className={styles.addBtn}>
             Add log groups
