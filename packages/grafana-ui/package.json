@@ -169,7 +169,7 @@
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "8.3.4",
-    "@wojtekmaj/enzyme-adapter-react-17": "0.7.0",
+    "@wojtekmaj/enzyme-adapter-react-17": "0.8.0",
     "common-tags": "1.8.2",
     "css-loader": "6.7.1",
     "csstype": "3.1.1",
