@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Icon, LinkButton, useStyles2, useTheme2 } from '@grafana/ui/src';
+import { Icon, LinkButton, useStyles2, useTheme2, Tooltip } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 
@@ -23,44 +23,42 @@ export default function Home() {
               condition you define
             </li>
             <li>
-              If the condition is true longer than the specified time period,{' '}
-              <strong>the alert rule starts firing</strong>
+              If the condition is breached, the alert rule fires and produces <strong>alert instances</strong>{' '}
+              <Tooltip content="If a query returns multiple time series an alert instance will be created for each of them">
+                <Icon name="info-circle" />
+              </Tooltip>
             </li>
             <li>
-              <strong>The alert rule takes the labels</strong> you defined and labels defined in the data source{' '}
-              <strong>to produce alerts</strong>
+              Firing instances are sent to <strong>the Alertmanager</strong>{' '}
+              <Tooltip content="Alertmanager receives alert instances, deduplicates and groups them and then send notification to the matching notification policy">
+                <Icon name="info-circle" />
+              </Tooltip>
             </li>
             <li>
-              <strong>Alerts are sent to the Alertmanager</strong> (by default to the built-in Grafana Alertmanager)
+              Alertmanager routes firing alert instances to <strong>notification policies</strong> based on whether the
+              labels match
             </li>
             <li>
-              Alertmanager keeps the configuration of what to do with the incoming alerts.{' '}
-              <strong>It groups them and sends them to appropriate contact points</strong> (e.g. Slack, email etc.)
+              Notifications are sent out to <strong>the contact point</strong> defined in the matching notification
+              policy
             </li>
           </ul>
         </ContentBox>
-        {/*<ContentBox title="How it works at glance" className={styles.howItWorks}></ContentBox>*/}
         <ContentBox title="Get started" className={styles.gettingStartedBlock}>
           <Stack direction="column" alignItems="space-between">
             <ul>
               <li>
-                <strong>Create an alert rule</strong> by creating queries and expressions from multiple data sources.
+                <strong>Create an alert rule</strong> by adding queries and expressions from multiple data sources.
               </li>
               <li>
-                <strong>Add labels</strong> to your alert rule{' '}
-                <strong>to connect alerts to notification policies</strong> and silence alert instances that have
-                matching labels.
+                <strong>Add labels</strong> to your alert rules{' '}
+                <strong>to connect them to notification policies</strong>
               </li>
               <li>
-                <strong>Create contact points</strong> to define where to send your alert notifications to.
+                <strong>Configure contact points</strong> to define where to send your notifications to.
               </li>
               <li>
-                <strong>Configure notification policies</strong> to decide where, when, and how your alerts are routed
-                to contact points.
-              </li>
-              <li>
-                <strong>Add mute timings or silences</strong> for times when you don&apos;t want notifications to be
-                sent out.
+                <strong>Configure notification policies</strong> to route your alert instances to contact points.
               </li>
             </ul>
             <div>
