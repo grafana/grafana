@@ -70,8 +70,7 @@
       "mimeType": "image/svg+xml",
       "extensions": [
         "svg"
-      ],
-      "summaryHandler": "generic"
+      ]
     }
   ],
   "composable": []

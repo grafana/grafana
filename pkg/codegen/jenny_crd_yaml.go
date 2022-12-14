@@ -47,7 +47,6 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-
 	resource := customResourceDefinition{
 		APIVersion: "apiextensions.k8s.io/v1",
 		Kind:       "CustomResourceDefinition",

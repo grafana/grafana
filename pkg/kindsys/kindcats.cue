@@ -8,7 +8,7 @@ import (
 
 // A Kind specifies a type of Grafana object.
 //
-// An instance of a Kind is called a resource. An resource is a sequence of bytes -
+// An instance of a Kind is called a resource. A resource is a sequence of bytes -
 // for example, a JSON file or HTTP request body - that conforms to the
 // constraints defined in a Kind, and enforced by Grafana's kind system.
 //
